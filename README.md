@@ -1,13 +1,9 @@
 
 
-
-
-
-
+![Clouseau](docs/clouseau.png)
 
 
 ##
-
 ```
 cd app
 npm install
