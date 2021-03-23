@@ -1,0 +1,29 @@
+version: "3"
+services:
+
+  cato:
+    image: jataware/clouseau:cato_1.0.0-dev
+    container_name: cato1
+    ports:
+      - 3000:3000
+    env_file:
+      - .dockerenv
+    environment:
+      ENV_DOCKER_HOST: 54.152.48.230
+      ENV_DOCKER_PORT: 8375
+      ENV_SSH_HOST: 54.152.48.230
+      ENV_SSH_PORT: 2224
+      ENV_DOCKER_BASE_IMAGE: jataware/clouseau:claudine_1.0.0-dev
+
+  phantom:
+    image: jataware/clouseau:phantom_1.0.0-dev
+    container_name: phantom1
+    ports:
+      - 8080:80
+    environment:
+      API_HOST: cato
+      WEBSOCKET_HOST: 54.152.48.230
+    depends_on:
+      - cato
+
+

@@ -1,0 +1,7 @@
+
+
+fd=/tmp/.histfile
+
+preexec() {
+  echo "${1}" >> "${fd}"
+}
