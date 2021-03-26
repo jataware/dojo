@@ -62,9 +62,13 @@ module.exports = {
             secure: false,
             changeOrigin: true,
           },
+          '/websocket': {
+            target: 'http://localhost:6010',
+            pathRewrite: { '^/websocket': '' },
+            ws: true
+          },
         }
     },
-
     plugins: [
         new webpack.HotModuleReplacementPlugin(),
         //new ESLintPlugin(),
