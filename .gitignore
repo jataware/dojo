@@ -116,5 +116,4 @@ dist
 .pnp.*
 
 tmp/
-
-**build**
+build/
