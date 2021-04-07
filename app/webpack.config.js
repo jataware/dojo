@@ -46,29 +46,40 @@ module.exports = {
         extensions: ['*', '.js', '.jsx']
     },
 
-    devServer: {
-        contentBase: path.resolve(__dirname, './dist'),
-        port: 8080,
-        historyApiFallback: true,
-        proxy: {
-          '/api': {
-            target: 'http://localhost:3000',
-            pathRewrite: { '^/api': '' },
-            secure: false,
-            changeOrigin: true,
-          },
-          '/socket.io': {
-            target: 'http://localhost:3000/socket.io',
-            secure: false,
-            changeOrigin: true,
-          },
-          '/websocket': {
-            target: 'http://localhost:6010',
-            pathRewrite: { '^/websocket': '' },
-            ws: true
-          },
-        }
+  devServer: {
+    contentBase: path.resolve(__dirname, './dist'),
+    port: 8080,
+    historyApiFallback: true,
+    headers: {
+      'Access-Control-Allow-Origin': '*',
+      'Access-Control-Allow-Headers': 'Origin, X-Requested-With, Content-Type, Accept'
     },
+    proxy: {
+      '/api': {
+        target: 'http://localhost:3000',
+        pathRewrite: { '^/api': '' },
+        secure: false,
+        changeOrigin: true,
+      },
+      '/socket.io': {
+        target: 'http://localhost:3000/socket.io',
+        secure: false,
+        changeOrigin: true,
+        ws: true
+      },
+      '/websocket': {
+        target: 'http://localhost:6010',
+        pathRewrite: { '^/websocket': '' },
+        ws: true,
+        changeOrigin: true,
+      },
+      '/container': {
+        target: 'http://localhost:6010',
+        pathRewrite: { '^/container': '' },
+        changeOrigin: true,
+      },
+    }
+  },
     plugins: [
         new webpack.HotModuleReplacementPlugin(),
         //new ESLintPlugin(),

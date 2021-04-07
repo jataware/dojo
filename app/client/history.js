@@ -3,34 +3,32 @@ import React, {
 } from 'react';
 
 import DeleteIcon from '@material-ui/icons/Delete';
-import Divider from '@material-ui/core/Divider';
-import Grid from '@material-ui/core/Grid';
+import ForwardIcon from '@material-ui/icons/Forward';
 import IconButton from '@material-ui/core/IconButton';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
-
 import ListItemText from '@material-ui/core/ListItemText';
-import NewReleasesIcon from '@material-ui/icons/NewReleases';
-import WarningIcon from '@material-ui/icons/Warning';
-
-import Switch from '@material-ui/core/Switch';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
 import TableContainer from '@material-ui/core/TableContainer';
-
+import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
-
 import { useHistoryContext, useHistoryUpdateContext, useSocketIOClient } from './context';
 
-export const HiddenWS = ({ setAlert, setAlertVisible, setWsConnected }) => {
+export const ContainerWebSocket = ({
+  setAlert, setAlertVisible, setWsConnected, setDialogOpen, setDialogContents, setEditorContents
+}) => {
   const ws = useRef(null);
   const { addHistoryItem } = useHistoryUpdateContext();
 
   useEffect(async () => {
-    ws.current = new WebSocket(`ws://${window.location.host}/websocket`);
+    const url = `ws://${window.location.host}/websocket`;
+    console.log(`connecting ${url}`);
+
+    ws.current = new WebSocket(url);
     ws.current.onopen = () => {
       console.log('ws opened');
       setWsConnected(true);
@@ -58,16 +56,31 @@ export const HiddenWS = ({ setAlert, setAlertVisible, setWsConnected }) => {
       setWsConnected(true);
       setAlertVisible(true);
     };
-    ws.current.onmessage = (evt) => {
+    ws.current.onmessage = async (evt) => {
       console.log(evt.data);
       const data = JSON.parse(evt.data);
       if (data.type === 'message') {
-        const historyItem = data.payload;
-        addHistoryItem({ text: `${historyItem}` });
+        const { command, cwd } = JSON.parse(data.payload);
+        addHistoryItem({ text: command, cwd });
+      }
+      if (data.type === 'prompt') {
+        const { command, cwd } = JSON.parse(data.payload);
+        setDialogContents({ text: command, cwd });
+        setDialogOpen(true);
+      }
+      if (data.type === 'blocked') {
+        const { command, cwd } = JSON.parse(data.payload);
+        const s = command.trim();
+        if (s.startsWith('edit ')) {
+          const f = `${cwd}/${s.substring(5)}`;
+          const rsp = await fetch(`/container/cat?path=${f}`);
+          if (rsp.ok) {
+            setEditorContents({ text: await rsp.text(), file: f });
+          }
+        }
       }
     };
-
-    return () => {
+    return async () => {
       console.log('websocket closed');
       ws.current.close();
     };
@@ -76,79 +89,73 @@ export const HiddenWS = ({ setAlert, setAlertVisible, setWsConnected }) => {
   return (<> </>);
 };
 
-export const History = ({ setAlert, setAlertVisible }) => {
+export const History = () => {
   const history = useHistoryContext();
-  const { removeHistoryItem, markRunCommand } = useHistoryUpdateContext();
+  const { removeHistoryItem } = useHistoryUpdateContext();
 
-  const gridStyle = {
-    textAlign: 'middle'
-  };
+  const tableRef = React.createRef(null);
 
-  const toggleChecked = (checked, item) => {
-    markRunCommand(item, checked);
-  };
+  useEffect(() => {
+    if (tableRef.current.lastChild != null) {
+      tableRef.current.lastChild.scrollIntoView({ behavior: 'smooth' });
+    }
+  });
 
   return (
     <div style={{ margin: '2px', padding: '2px' }}>
-      <div style={{ margin: '2px', padding: '2px' }}>
-        <Grid container spacing={1} alignItems="flex-end">
-          <Grid item xs={12} sm={12} style={gridStyle}>
-            <Typography
-              component="div"
-              style={{
-                fontSize: '1.0rem',
-                lineHeight: '1.0',
-                backgroundColor: 'black',
-                padding: '10px',
-                color: 'white'
-              }}
-            >
-              Shell History
-            </Typography>
-          </Grid>
-        </Grid>
-      </div>
-      <Divider style={{ margin: '2px' }} />
-      <TableContainer>
+      <TableContainer style={{ height: 200, overflow: 'auto' }}>
         <Table
           aria-labelledby="tableTitle"
           size="small"
           aria-label="enhanced table"
+          stickyHeader
         >
-          <TableBody>
+          <TableHead>
+            <TableRow>
+              <TableCell colSpan={3}>
+                <Typography
+                  component="div"
+                  style={{
+                    fontSize: '1.0rem',
+                    lineHeight: '1.0',
+                    backgroundColor: 'black',
+                    padding: '10px',
+                    color: 'white'
+                  }}
+                >
+                  Shell History
+                </Typography>
+              </TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody ref={tableRef}>
             {history.map((item) => (
               <TableRow
                 hover
                 tabIndex={-1}
                 key={item.id}
               >
-                <TableCell align="left" width="5%" style={{ padding: 0 }}>
-                  <Switch checked={!!item.runCommand} onChange={(e, val) => toggleChecked(val, item)} />
+                <TableCell align="left" width="2%" style={{ padding: 0 }}>
+                  {item.runCommand && (
+                    <Tooltip title="Run" arrow>
+                      <ForwardIcon fontSize="small" />
+                    </Tooltip>
+                  )}
                 </TableCell>
                 <TableCell align="left">
                   <div style={{
-                    padding: '5px 0 5px 5px', fontFamily: 'monospace', backgroundColor: 'black', fontWeight: 'bold', color: 'white'
+                    padding: '5px 0 5px 5px', fontFamily: 'monospace', fontWeight: 'bold', color: 'white'
                   }}
                   >
                     {item.text}
                   </div>
-                  {item.flag
-                   && (
-                   <div style={{
-                     marginTop: '3px', display: 'flex', alignItems: 'center', flexWrap: 'wrap'
-                   }}
-                   >
-                     <WarningIcon style={{ fontSize: '1.0rem', marginRight: '8px', color: 'yellow' }} />
-                     <span>{item.message}</span>
-                   </div>
-                   )}
                 </TableCell>
                 <TableCell align="left" width="5%">
                   <Tooltip title="Delete" arrow>
                     <IconButton
                       edge="end"
                       aria-label="delete"
-                      style={{ padding: '1px' }}
+                      style={{ padding: '1px', margin: 0 }}
                       onClick={() => removeHistoryItem(item)}
                     >
                       <DeleteIcon fontSize="small" />

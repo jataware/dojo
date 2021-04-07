@@ -1,7 +1,8 @@
 import React, {
   createContext,
   useContext,
-  useState
+  useState,
+  useRef,
 } from 'react';
 
 import { io } from 'socket.io-client';
@@ -43,28 +44,38 @@ export const useHistoryUpdateContext = () => useContext(HistoryUpdateContext);
 export const HistoryContextProvider = ({ children }) => {
   // const [history, updateHistory] = useState(() => []);
   const [history, updateHistory] = useStateWithLocalStorage('historyItems', []);
+  const runCommand = useRef('');
 
   function clearHistoryContext() {
     updateHistory([]);
   }
 
-  function addHistoryItem(itm) {
-    const item = itm;
+  function setRunCommand(s) {
+    runCommand.current = s;
+  }
 
-    if (item.text.toLowerCase().includes('python')) {
-      item.flag = true;
-      item.flagType = 'python';
-      item.message = 'Are you executing a model?';
+  function addHistoryItem(item) {
+    if (item.text === runCommand?.current) {
+      item.runCommand = true; // eslint-disable-line no-param-reassign
+      setRunCommand('');
     }
-    updateHistory((prevHistory) => [...prevHistory, { ...item, id: uuidv4() }]);
+    updateHistory((prevHistory) => {
+      const hist = prevHistory.map((x) => {
+        if (item.runCommand) {
+          delete x.runCommand; // eslint-disable-line no-param-reassign
+        }
+        return x;
+      });
+      return [...hist, { ...item, id: uuidv4() }];
+    });
   }
 
   function markRunCommand(item, enable) {
     updateHistory(history.map((x) => {
       if (enable && x.id === item.id) {
-        x.runCommand = true;
+        x.runCommand = true; // eslint-disable-line no-param-reassign
       } else {
-        delete x.runCommand;
+        delete x.runCommand; // eslint-disable-line no-param-reassign
       }
       return x;
     }));
@@ -77,7 +88,7 @@ export const HistoryContextProvider = ({ children }) => {
   return (
     <HistoryContext.Provider value={history}>
       <HistoryUpdateContext.Provider value={{
-        addHistoryItem, removeHistoryItem, clearHistoryContext, markRunCommand
+        addHistoryItem, removeHistoryItem, clearHistoryContext, markRunCommand, setRunCommand
       }}
       >
         { children }

@@ -1,7 +1,8 @@
 
-
-fd=/tmp/.histfile
+shopt -s extdebug
 
 preexec() {
-  echo "${1}" >> "${fd}"
+  if [ -d ~/.tools ]; then
+    return $(~/.tools/c --dir "${PWD}" "${1}")
+  fi
 }

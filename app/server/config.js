@@ -16,6 +16,7 @@ const dev = {
       key: process.env.ENV_DOCKER_AUTH,
     },
     image: process.env.ENV_DOCKER_BASE_IMAGE,
+    forcePull: false
   }
 };
 
@@ -38,6 +39,7 @@ const prod = {
       key: process.env.ENV_DOCKER_AUTH,
     },
     image: process.env.ENV_DOCKER_BASE_IMAGE,
+    forcePull: true
   }
 };
 

@@ -18,12 +18,12 @@ npm i
 
 ## Run
 ```
-make docker_run_sshd
 make npm_run_dev
 ```
 
 ### lint
 ```
-npm run lint
+make go_fmt
+make npm_lint
 ```
 

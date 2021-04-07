@@ -4,7 +4,7 @@ const config = require('./config');
 console.log(config.docker.connection);
 const docker = new Docker(config.docker.connection);
 
-const emitContainerChanges = (socket, container) => {
+const emitContainerChanges = (socket, container) => { // eslint-disable-line no-unused-vars
   container.changes((err, data) => {
     if (err) {
       console.log(err.message);
@@ -27,11 +27,13 @@ const listContainers = async () => {
 };
 
 const launch = async (name) => {
-  const pullStream = await docker.pull(config.docker.image);
+  if (config.docker.forcePull) {
+    const pullStream = await docker.pull(config.docker.image);
 
-  await new Promise((resolve, reject) => {
-    docker.modem.followProgress(pullStream, (err, res) => (err ? reject(err) : resolve(res)));
-  });
+    await new Promise((resolve, reject) => {
+      docker.modem.followProgress(pullStream, (err, res) => (err ? reject(err) : resolve(res)));
+    });
+  }
 
   const container = await docker.createContainer({
     Image: config.docker.image,
@@ -61,9 +63,13 @@ const launch = async (name) => {
   return container.id;
 };
 
-const commit = async (id, name) => {
+const commit = async (id, name, cwd, entrypoint) => {
   const container = docker.getContainer(id);
-  const res = await container.commit();
+  const res = await container.commit({
+    WorkingDir: cwd,
+    Entrypoint: entrypoint,
+    Cmd: []
+  });
   const image = await docker.getImage(res.Id);
   await image.tag({ repo: 'jataware/clouseau', tag: `${name}-latest` });
   const img = docker.getImage(`jataware/clouseau:${name}-latest`);
@@ -100,17 +106,6 @@ const exec = async (containerid, cmd) => {
       return inspect.ExitCode;
     }
   }
-
-  // const inspect = await new Promise(async (resolve, reject) => {
-  //   let inspect = await execContainer.inspect();
-  //   while (inspect.Running) {
-  //     await delay(1000);
-  //     inspect = await execContainer.inspect();
-  //   }
-  //   resolve(inspect);
-  // });
-
-  // return inspect.ExitCode;
 };
 
 module.exports = {

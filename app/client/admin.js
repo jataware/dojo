@@ -1,15 +1,12 @@
 import React, {
-  useEffect, useState, useRef
+  useEffect
 } from 'react';
 
-import { useHistory } from 'react-router-dom';
-
+import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
 import Paper from '@material-ui/core/Paper';
-import Button from '@material-ui/core/Button';
 
 const Admin = () => {
-  const history = useHistory();
   const [containers, setContainers] = React.useState([]);
 
   const refreshContainers = async () => {

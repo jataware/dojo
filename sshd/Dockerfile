@@ -4,6 +4,7 @@ WORKDIR /src
 ENV CGO_ENABLED=0
 COPY ./claudine .
 RUN GOOS=linux GOARCH=amd64 go build -o /out/claudine main.go
+RUN GOOS=linux GOARCH=amd64 go build -o /out/c client.go
 
 FROM ubuntu:20.04
 
@@ -41,10 +42,13 @@ if [ -n \$BASH ] && [ -r ~/.bashrc ]; then\n\
 fi\n" >> /home/clouseau/.bash_profile
 
 COPY --from=build /out/claudine /home/clouseau/.tools/claudine
+COPY --from=build /out/c /home/clouseau/.tools/c
+COPY assets/settings.yaml /home/clouseau/.tools/settings.yaml
 
 COPY assets/.bash-preexec /home/clouseau/.bash-preexec
 COPY assets/.bashrc /home/clouseau/.bashrc
 COPY assets/.hooks /home/clouseau/.hooks
+
 
 RUN chown -v -R clouseau:clouseau /home/clouseau
 

@@ -1,5 +1,5 @@
-const config = require('./config');
 const SSHClient = require('ssh2').Client;
+const config = require('./config');
 
 const socketHandler = (socket) => {
   console.log(socket.request.session);

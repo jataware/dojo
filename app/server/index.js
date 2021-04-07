@@ -85,8 +85,9 @@ app.get('/containers', async (req, res) => {
 app.put('/commit', async (req, res) => {
   try {
     const { container: { id, name } } = JSON.parse(req.cookies.docker);
-    console.log(`commit container name: ${name} id: ${id}`);
-    const stream = await docker.commit(id, name);
+    const { cwd, entrypoint } = req.body;
+    console.log(`commit container name: ${name} id: ${id}, cwd: ${cwd}, entrypoint: ${entrypoint}`);
+    const stream = await docker.commit(id, name, cwd, entrypoint);
     stream.on('data', (data) => {
       const j = data.toString();
       console.log(j);
@@ -130,7 +131,7 @@ app.delete('/shutdown/container/:id', async (req, res) => {
 app.post('/exec/container', async (req, res) => {
   console.log(`executing command: ${req.body.cmd}`);
   console.log(req.session);
-  const { docker: { container: { id, name } } } = req.session;
+  const { docker: { container: { id } } } = req.session;
   console.log(id);
   const exitcode = await docker.exec(id, req.body.cmd);
   if (exitcode === 0) {
@@ -153,10 +154,13 @@ app.post('/exec/container/:id', async (req, res) => {
 
 // socket.io
 // expose express session with socket.request.session
+
+/* eslint-disable no-unused-expressions */
 io.use((socket, next) => {
   (socket.request.res) ? session(socket.request, socket.request.res, next)
     : next(next);
 });
+/* eslint-enable no-unused-expressions */
 
 const socketHandler = require('./socket');
 

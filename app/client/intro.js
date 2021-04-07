@@ -1,22 +1,22 @@
-import React, { useState } from 'react';
-
-import InputLabel from '@material-ui/core/InputLabel';
-import MenuItem from '@material-ui/core/MenuItem';
-import Select from '@material-ui/core/Select';
+import React, { useEffect, useState } from 'react';
 
 import Button from '@material-ui/core/Button';
-import TextField from '@material-ui/core/TextField';
-
-import Typography from '@material-ui/core/Typography';
-
+import Card from '@material-ui/core/Card';
+import CardActionArea from '@material-ui/core/CardActionArea';
+import CardActions from '@material-ui/core/CardActions';
+import CardContent from '@material-ui/core/CardContent';
 import FormControl from '@material-ui/core/FormControl';
-import { makeStyles } from '@material-ui/core/styles';
-
-import Paper from '@material-ui/core/Paper';
 import Grid from '@material-ui/core/Grid';
-
+import InputLabel from '@material-ui/core/InputLabel';
 import LinearProgress from '@material-ui/core/LinearProgress';
+import MenuItem from '@material-ui/core/MenuItem';
+import Paper from '@material-ui/core/Paper';
+import Select from '@material-ui/core/Select';
+import TextField from '@material-ui/core/TextField';
+import Typography from '@material-ui/core/Typography';
+import WarningIcon from '@material-ui/icons/Warning';
 
+import { makeStyles } from '@material-ui/core/styles';
 import { useHistory } from 'react-router-dom';
 
 import { Alert } from './alert';
@@ -37,6 +37,21 @@ const useStyles = makeStyles((theme) => ({
   }
 }));
 
+const getProvisioning = (imageType) => {
+  switch (imageType) {
+    case 'ubuntu':
+      return [['sudo', 'apt', 'update']];
+    case 'ubuntu-python':
+      return [
+        ['sudo', 'apt', 'update'],
+        ['sudo', 'apt', 'install', '-y', 'python3', 'python3-pip']
+      ];
+    default:
+      break;
+  }
+  return [];
+};
+
 const Intro = () => {
   const classes = useStyles();
   const history = useHistory();
@@ -49,6 +64,7 @@ const Intro = () => {
   });
   const [loading, setLoading] = React.useState(false);
   const [executing, setExecuting] = React.useState('');
+  const [imageType, setImageType] = React.useState('ubuntu');
 
   const launchTerm = async (e) => {
     e.preventDefault();
@@ -100,9 +116,12 @@ const Intro = () => {
         return response;
       };
 
-      await execute(['sudo', 'apt', 'update']);
-      await execute(['sudo', 'apt', 'install', '-y', 'python3', 'python3-pip']);
-      await execute(['git', 'clone', giturl]);
+      const provision = [...getProvisioning(imageType), ['git', 'clone', giturl]];
+
+      await provision.reduce(async (memo, cmd) => {
+        await memo;
+        await execute(cmd);
+      }, undefined);
 
       setTimeout(() => {
         setLoading(false);
@@ -118,8 +137,72 @@ const Intro = () => {
 
   const formatImageString = (s) => s.replace(/\s+/g, '').replace(/[^a-zA-Z0-9_.-]/, '_');
 
+  const [containers, setContainers] = React.useState([]);
+
+  const refreshContainers = async () => {
+    const resp = await fetch('/api/containers');
+    const cs = (await resp.json()).filter((c) => c.Image.includes('claudine'));
+    setContainers(cs);
+  };
+
+  useEffect(async () => {
+    await refreshContainers();
+  }, []);
+
+  const clearHistory = () => {
+    localStorage.setItem('historyItems', JSON.stringify([]));
+  };
+
+  const destroyContainer = async (id) => {
+    await fetch(`api/shutdown/container/${id}`, { method: 'DELETE' });
+    clearHistory();
+    await refreshContainers();
+  };
+
+  const handleDestroy = async (e) => {
+    e.preventDefault();
+    containers.reduce(async (memo, c) => {
+      await memo;
+      await destroyContainer(c.Id);
+    }, undefined);
+  };
+
+  const ContainersCard = () => (
+    <Card
+      style={{
+        position: 'absolute', top: 0, margin: '10px', maxWidth: 280
+      }}
+      hidden={containers.length === 0}
+    >
+      <CardActionArea>
+        <CardContent>
+          <Typography variant="body2" color="textSecondary" component="p">
+            <WarningIcon style={{ fontSize: '1.0rem', marginRight: '8px', color: 'yellow' }} />
+            A container is already running would you like to connect or destroy it?
+          </Typography>
+          {containers.map((v) => (
+            <div key={v.Id}>
+              <span>{v.Id.substring(0, 8)}</span>
+              {'  '}
+              <span>{v.Image}</span>
+            </div>
+          ))}
+        </CardContent>
+      </CardActionArea>
+      <CardActions>
+        <Button size="small" variant="contained" color="primary" onClick={() => history.push('/term')}>
+          Reconnect
+        </Button>
+        <Button size="small" variant="contained" color="primary" onClick={handleDestroy}>
+          Destroy
+        </Button>
+      </CardActions>
+    </Card>
+  );
+
   return (
     <div className={classes.root}>
+      <ContainersCard containers={containers} />
       <Grid
         container
         spacing={3}
@@ -128,7 +211,6 @@ const Intro = () => {
         justify="center"
         style={{ minHeight: '100vh' }}
       >
-
         <Paper className={classes.paper} elevation={3} style={{ minWidth: '600px' }}>
           <Typography variant="h5" id="tableTitle" component="div" style={{ paddingLeft: '10px' }}>
             Clouseau
@@ -173,8 +255,9 @@ const Intro = () => {
           <Grid item xs={12} className={classes.gridItem}>
             <FormControl className={classes.formControl} fullWidth>
               <InputLabel id="label">Base Image</InputLabel>
-              <Select labelId="label" id="select" defaultValue="ubuntu-python">
-                <MenuItem value="ubuntu-python">Ubuntu - Python</MenuItem>
+              <Select labelId="label" id="select" defaultValue="ubuntu" onChange={(_, { props: { value } }) => setImageType(value)}>
+                <MenuItem value="ubuntu">Ubuntu</MenuItem>
+                <MenuItem value="ubuntu-python">Ubuntu - Python3</MenuItem>
               </Select>
             </FormControl>
           </Grid>

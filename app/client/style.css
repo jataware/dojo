@@ -5,16 +5,16 @@ body {
     font-family: helvetica, sans-serif, arial;
     font-size: 1em;
     color: #111;
-    min-height: 100vh;
+    min-height: 99vh;
 }
+
 #app {
     min-height: 100vh;
 }
 
 .terminal-container {
-    min-height: 90vh;
-    margin: 0 auto;
-    padding: 2px;
+    min-height: calc(100vh - 20px);
+    margin: 10px auto;
 }
 
 .terminal {

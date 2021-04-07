@@ -5,7 +5,7 @@
 # gnumake curl git
 # docker docker-compose
 
-VERSION := 1.0.0
+VERSION := 1.1.0
 
 DEV ?= $(strip $(if $(findstring y,$(prod)),,dev))
 
@@ -59,8 +59,27 @@ docker_push-%:| docker_login-dockerhub
 	@echo "push $* ${VERSION}"
 	docker push "jataware/clouseau:$*_${VERSION}"
 
+.PHONY: go_fmt
+go_fmt:
+	(cd sshd/claudine && \
+		 go fmt *.go && \
+		 go fmt claudine/*.go )
 
+.PHONY: npm_lint
+npm_lint:
+	(cd app && npm run lint)
+
+.PHONY: npm_build
+npm_build:
+	(cd app && npm run buildprod)
+
+.PHONY: go_build
+go_build:
+	(cd sshd/claudine && \
+		 go build -o build/claudine main.go && \
+		 go build -o build/c client.go )
 
 .PHONY: npm_run_dev
 npm_run_dev:
 	(cd app && npm run dev)
+
