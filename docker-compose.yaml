@@ -2,7 +2,7 @@ version: "3"
 services:
 
   cato:
-    image: jataware/clouseau:cato_1.1.0-dev
+    image: jataware/clouseau:cato_1.1.1-dev
     container_name: cato1
     ports:
       - 3000:3000
@@ -13,10 +13,10 @@ services:
       ENV_DOCKER_PORT: 8375
       ENV_SSH_HOST: 100.26.173.89
       ENV_SSH_PORT: 2224
-      ENV_DOCKER_BASE_IMAGE: jataware/clouseau:claudine_1.1.0
+      ENV_DOCKER_BASE_IMAGE: jataware/clouseau:claudine_1.1.1
 
   phantom:
-    image: jataware/clouseau:phantom_1.1.0-dev
+    image: jataware/clouseau:phantom_1.1.1-dev
     container_name: phantom1
     ports:
       - 8080:80

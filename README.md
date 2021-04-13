@@ -2,6 +2,7 @@
 
 ![Clouseau](docs/clouseau.png)
 
+v1.1.1
 
 ```
 node v15.10.0

@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
-import Backdrop from '@material-ui/core/Backdrop';
+import Box from '@material-ui/core/Box';
 import Button from '@material-ui/core/Button';
-import CancelOutlinedIcon from '@material-ui/icons/CancelOutlined';
 import ClearIcon from '@material-ui/icons/Clear';
 import Container from '@material-ui/core/Container';
 import Dialog from '@material-ui/core/Dialog';
@@ -15,9 +14,10 @@ import EditIcon from '@material-ui/icons/Edit';
 import Fab from '@material-ui/core/Fab';
 import Grid from '@material-ui/core/Grid';
 import IconButton from '@material-ui/core/IconButton';
+import LinearProgress from '@material-ui/core/LinearProgress';
 import Link from '@material-ui/core/Link';
 import NavigateNextIcon from '@material-ui/icons/NavigateNext';
-import Paper from '@material-ui/core/Paper';
+import OpenInNewIcon from '@material-ui/icons/OpenInNew';
 import SaveIcon from '@material-ui/icons/Save';
 import SyncDisabledIcon from '@material-ui/icons/SyncDisabled';
 import SyncIcon from '@material-ui/icons/Sync';
@@ -265,11 +265,11 @@ const CenteredGrid = ({ handlePublish }) => {
   return (
     <div className={theme.root}>
       <Grid container spacing={1} style={{ width: 'auto', margin: 0 }}>
-        <Grid item xs={8}>
+        <Grid item xs={8} style={{ padding: "0 2px" }}>
           <Term setSocketIoConnected={setSocketIoConnected} />
         </Grid>
 
-        <Grid item xs={4}>
+        <Grid item xs={4} style={{ padding: "0 2px" }}>
           <History
             setAlert={setAlert}
             setAlertVisible={setAlertVisible}
@@ -379,17 +379,19 @@ const CenteredGrid = ({ handlePublish }) => {
   );
 };
 
+
 const Publisher = ({ children }) => {
   const classes = useStyles();
   const historyContext = useHistoryContext();
   const { clearHistoryContext } = useHistoryUpdateContext();
   const history = useHistory();
   const ioclient = useSocketIOClient();
-  const [openBackdrop, setOpenBackdrop] = React.useState(false);
-  const [allowCloseBackdrop, setAllowCloseBackdrop] = React.useState(false);
+  const [openDialog, setOpenDialog] = React.useState(false);
+  const [closing, setClosing] = React.useState(false);
+  const [enableFinished, setEnableFinished] = React.useState(false);
   const [publishStatus, setPublishStatus] = useState('');
   const [publishMessage, setPublishMessage] = useState('');
-  const [githubLink, setGithubLink] = useState('');
+  const [dockerhubLink, setDockerhubLink] = useState('');
   const [tagName, setTagName] = useState('');
   const [runCommand, setRunCommand] = useState('');
 
@@ -408,13 +410,13 @@ const Publisher = ({ children }) => {
       if (error) {
         setPublishStatus('error');
         setPublishMessage(error);
-        setAllowCloseBackdrop(true);
+        setEnableFinished(true);
       } else if (Tag) {
         setPublishStatus('finished');
+        setEnableFinished(true);
         setPublishMessage('');
-        setGithubLink(`https://hub.docker.com/layers/jataware/clouseau/${Tag}/images/${Digest.replaceAll(':', '-')}?context=repo`);
+        setDockerhubLink(`https://hub.docker.com/layers/jataware/clouseau/${Tag}/images/${Digest.replaceAll(':', '-')}?context=repo`);
         setTagName(Tag);
-        setAllowCloseBackdrop(true);
       } else {
         setPublishStatus(status);
         setPublishMessage(progress);
@@ -443,77 +445,71 @@ const Publisher = ({ children }) => {
       },
       body: JSON.stringify(postBody)
     });
-    setOpenBackdrop(true);
+    setOpenDialog(true);
   };
   const handleClose = async () => {
-    setAllowCloseBackdrop(false);
+    setClosing(true);
+    setEnableFinished(false);
     await fetch('api/shutdown/container', { method: 'DELETE' });
     clearHistoryContext();
-    setOpenBackdrop(false);
     history.push('/');
   };
 
   return (
     <div>
-      <Backdrop className={classes.backdrop} open={openBackdrop}>
-        <div style={{ flexGrow: 1 }}>
-          <Grid container spacing={2}>
-            <Grid item xs={12}>
-              <Grid container justify="center" spacing={2}>
-                <Grid item>
-                  <Paper style={{
-                    minHeight: 400, width: 600, padding: '20px', backgroundColor: 'black', color: 'white'
-                  }}
-                  >
-                    <IconButton
-                      variant="contained"
-                      component="span"
-                      disabled={!allowCloseBackdrop}
-                      onClick={handleClose}
-                      style={{ left: '-24px' }}
-                    >
-                      <CancelOutlinedIcon size="small" />
-                    </IconButton>
-                    <div style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
-                      <div style={{ marginBottom: '5px' }}>{publishStatus}</div>
-                      {!githubLink
-                      && (
-                      <div style={{ marginTop: '10px' }}>
-                        {publishMessage}
-                      </div>
-                      )}
-                      {githubLink
-                       && (
-                         <div>
-                           <Link href={githubLink} target="_blank" rel="noreferrer">
-                             {githubLink}
-                           </Link>
-                           <div style={{ paddingTop: '10px' }}>
-                             docker pull jataware/clouseau:
-                             {tagName}
-                           </div>
-                           <div style={{
-                             marginTop: '10px',
-                             backgroundColor: '#445d6e',
-                             display: 'flex',
-                             alignItems: 'center',
-                             flexWrap: 'wrap'
-                           }}
-                           >
-                             <NavigateNextIcon style={{ color: 'yellow' }} />
-                             {' '}
-                             <span>{runCommand}</span>
-                           </div>
-                         </div>
-                       )}
-                    </div>
-                  </Paper>
-                </Grid>
-              </Grid>
-            </Grid>
-          </Grid>
-        </div>
-      </Backdrop>
+      <Dialog open={openDialog} onClose={handleClose} aria-labelledby="form-dialog-title">
+        <DialogTitle id="form-dialog-title">Publishing</DialogTitle>
+        <DialogContent style={{ width: '600px' }}>
+          {!dockerhubLink
+            ? (
+              <DialogContentText style={{
+                backgroundColor: '#000', color: '#fff', padding: '7px', fontFamily: 'monospace', fontWeight: 'bold'
+              }}
+              >
+                {publishStatus}
+                <br />
+                <span style={{ fontSize: '10px' }}>{publishMessage}</span>
+              </DialogContentText>
+            )
+            : (
+              <>
+                <Box style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  flexWrap: 'wrap'
+                }}
+                >
+                  <Link href={dockerhubLink} target="_blank" rel="noreferrer" color="inherit">
+                    <OpenInNewIcon style={{ fontSize: '14px' }} />
+                    {' '}
+                    <span>
+                      docker pull jataware/clouseau:
+                      {tagName}
+                    </span>
+                  </Link>
+                </Box>
+                <Box style={{
+                  marginTop: '10px',
+                  backgroundColor: '#445d6e',
+                  display: 'flex',
+                  alignItems: 'center',
+                  flexWrap: 'wrap'
+                }}
+                >
+                  <NavigateNextIcon style={{ color: 'yellow' }} />
+                  {' '}
+                  <span>{runCommand}</span>
+                </Box>
+              </>
+            )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleClose} disabled={!enableFinished}>
+            Finsihed
+          </Button>
+        </DialogActions>
+        {closing && <LinearProgress />}
+      </Dialog>
       <CenteredGrid handlePublish={handlePublish} />
     </div>
   );
