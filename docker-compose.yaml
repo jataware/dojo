@@ -2,27 +2,26 @@ version: "3"
 services:
 
   cato:
-    image: jataware/clouseau:cato_1.1.1-dev
+    image: jataware/clouseau:cato-dev
     container_name: cato1
+    command: -debug -trace -pull-images=false
     ports:
       - 3000:3000
     env_file:
       - .dockerenv
     environment:
-      ENV_DOCKER_HOST: 100.26.173.89
-      ENV_DOCKER_PORT: 8375
-      ENV_SSH_HOST: 100.26.173.89
-      ENV_SSH_PORT: 2224
-      ENV_DOCKER_BASE_IMAGE: jataware/clouseau:claudine_1.1.1
+      DOCKER_IP: ${PRIVATE_IP}
+    volumes:
+      - ${PWD}/claudine/server/settings.yaml:/home/app/cato/settings.yaml
 
   phantom:
-    image: jataware/clouseau:phantom_1.1.1-dev
+    image: jataware/clouseau:phantom-dev
     container_name: phantom1
     ports:
       - 8080:80
     environment:
-      API_HOST: cato
-      WEBSOCKET_HOST: 100.26.173.89
+      API_HOST: ${PRIVATE_IP}
+      WEBSOCKET_HOST: ${PRIVATE_IP}
     depends_on:
       - cato
 

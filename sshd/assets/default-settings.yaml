@@ -1,0 +1,11 @@
+---
+
+rules:
+  block:
+    - vim
+    - vi
+    - emacs
+    - edit
+  prompt:
+    - python
+    - bash

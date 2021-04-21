@@ -5,7 +5,7 @@
 # gnumake curl git
 # docker docker-compose
 
-VERSION := 1.1.1
+VERSION := 2.0.0
 
 DEV ?= $(strip $(if $(findstring y,$(prod)),,dev))
 
@@ -20,9 +20,6 @@ CMD_ARGUMENTS ?= $(cmd)
 check-%:
 	@: $(if $(value $*),,$(error $* is undefined))
 
-.PHONY: all
-all: | check-DOCKERHUB_USER check-DOCKERHUB_PASS ## Run build all projects and push to docker hub. Requires DOCKERHUB_USER and DOCKERHUB_PASS to be set in the environment
-
 help:
 	@echo ""
 	@echo "By default make targets assume DEV to run production pass in prod=y as a command line argument"
@@ -31,55 +28,104 @@ help:
 	@echo ""
 	@grep -E '^([a-zA-Z_-])+%*:.*?## .*$$' $(MAKEFILE_LIST) | sort | awk 'BEGIN {FS = ":.*?## "}; {printf "\033[36m%-40s\033[0m %s\n", $$1, $$2}'
 
+ip-addr:
+ifeq ($(DETECTED_OS),Darwin) # Mac OS X
+	$(eval ip_address=$(shell ipconfig getifaddr en0))
+else
+	$(eval ip_address=$(shell hostname -i))
+endif
+
+.PHONE: ip
+ip:| ip-addr
+	@echo ${ip_address}
 
 .PHONY: docker_build
 docker_build: docker_build-claudine docker_build-cato docker_build-phantom  ## Build all docker containers
 
 .PHONY: docker_build-claudine
-docker_build-claudine: ## build claudine containers
-	(cd sshd && ./build-docker.sh)
+docker_build-claudine:| go_build ## Build Claudine container
+	./build-claudine.sh
 
 .PHONY: docker_build-cato
-docker_build-cato: ## build cato containers
+docker_build-cato: ## Build Cato container
 	./build-cato.sh
 
 .PHONY: docker_build-phantom
-docker_build-phantom: ## build phantom containers
-	(cd app && npm run buildprod && cd - && \
-			./build-phantom.sh)
+docker_build-phantom: | npm_build ## Build Phantom container
+	./build-phantom.sh
+
 
 .PHONY: docker_login-dockerhub
 docker_login-dockerhub:| check-DOCKERHUB_USER check-DOCKERHUB_PASS  ## Login to docker registery. Requires DOCKERHUB_USER and DOCKERHUB_PASS to be set in the environment
 	@printf "${DOCKERHUB_PASS}\n" | docker login -u "${DOCKERHUB_USER}" --password-stdin
 
 .PHONY: docker_push-dockerhub
-docker_push-dockerhub: docker_push-claudine docker_push-cato docker_push-phantom | docker_login-dockerhub  ## push all containers to docker registry
+docker_push-dockerhub: docker_push-claudine docker_push-cato docker_push-phantom | docker_login-dockerhub  ## Push all containers to docker registry
 
 docker_push-%:| docker_login-dockerhub
 	@echo "push $* ${VERSION}"
 	docker push "jataware/clouseau:$*_${VERSION}"
 
 .PHONY: go_fmt
-go_fmt:
-	(cd sshd/claudine && \
-		 go fmt *.go && \
-		 go fmt claudine/*.go )
+go_fmt:   ## format go files
+	(cd claudine/embedded && \
+		 go fmt claudine/embedded claudine/embedded/app && \
+	 cd - && \
+	 cd claudine/preexec && \
+		 go fmt claudine/preexec && \
+	 cd - && \
+	 cd claudine/server && \
+		 go fmt claudine/server claudine/server/app )
 
 .PHONY: npm_lint
-npm_lint:
-	(cd app && npm run lint)
+npm_lint:   ## Format js files
+	(cd ui && npm run lint)
 
 .PHONY: npm_build
-npm_build:
-	(cd app && npm run buildprod)
+npm_build:  ## Build npm package
+	(cd ui && npm run build)
 
 .PHONY: go_build
-go_build:
-	(cd sshd/claudine && \
-		 go build -o build/claudine main.go && \
-		 go build -o build/c client.go )
+go_build:  ## Build go binaries
+	(cd claudine/embedded && \
+		 go mod tidy && \
+		 go build -o ../build/claudine main.go && \
+	 cd - && \
+	 cd claudine/preexec && \
+		 go mod tidy && \
+		 go build -o ../build/c main.go && \
+	 cd - && \
+	 cd claudine/server && \
+		 go mod tidy && \
+		 go build -o ../build/cato main.go )
+
+.PHONY: fmt
+fmt:| go_fmt npm_lint ## Format all
+
+.PHONY: compile
+compile:| go_build npm_build ## Compile all builds
 
 .PHONY: npm_run_dev
-npm_run_dev:
-	(cd app && npm run dev)
+npm_run_dev:  ## Dev - run react dev server locally
+	(cd ui && npm run dev)
+
+.PHONY: cato_run_dev
+cato_run_dev: ## Dev - run cato dev server locally
+	(cd claudine/server && \
+			go run main.go -settings settings.yaml -debug -trace -env -pull-images=false)
+
+.PHONY: socat-start
+socat-start:  ## Dev - start socat dev server
+	@echo Starting socat
+	@docker run -d --rm --name socat1 -v /var/run/docker.sock:/var/run/docker.sock -p 8375:8375 alpine/socat tcp-listen:8375,fork,reuseaddr unix-connect:/var/run/docker.sock
+
+.PHONY: socat-stop
+socat-stop:  ## Dev - stop socat dev server
+	@echo Stopping socat
+	@docker stop socat1
+
+
+.PHONY: docker-compose_up
+docker-compose_up:|ip-addr  ## Dev - run local cluster
+	PRIVATE_IP=${ip_address} docker compose up
 

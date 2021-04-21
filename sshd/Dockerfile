@@ -3,8 +3,12 @@ FROM golang:stretch AS build
 WORKDIR /src
 ENV CGO_ENABLED=0
 COPY ./claudine .
-RUN GOOS=linux GOARCH=amd64 go build -o /out/claudine main.go
-RUN GOOS=linux GOARCH=amd64 go build -o /out/c client.go
+
+WORKDIR /src/embedded/
+RUN GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o /out/claudine main.go
+
+WORKDIR /src/preexec/
+RUN GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o /out/c main.go
 
 FROM ubuntu:20.04
 
@@ -43,11 +47,11 @@ fi\n" >> /home/clouseau/.bash_profile
 
 COPY --from=build /out/claudine /home/clouseau/.tools/claudine
 COPY --from=build /out/c /home/clouseau/.tools/c
-COPY assets/settings.yaml /home/clouseau/.tools/settings.yaml
+COPY sshd/assets/default-settings.yaml /home/clouseau/.tools/default-settings.yaml
 
-COPY assets/.bash-preexec /home/clouseau/.bash-preexec
-COPY assets/.bashrc /home/clouseau/.bashrc
-COPY assets/.hooks /home/clouseau/.hooks
+COPY sshd/assets/.bash-preexec /home/clouseau/.bash-preexec
+COPY sshd/assets/.bashrc /home/clouseau/.bashrc
+COPY sshd/assets/.hooks /home/clouseau/.hooks
 
 
 RUN chown -v -R clouseau:clouseau /home/clouseau
@@ -55,7 +59,7 @@ RUN chown -v -R clouseau:clouseau /home/clouseau
 USER clouseau
 WORKDIR /home/clouseau
 
-COPY entrypoint.sh /usr/local/bin/
+COPY sshd/entrypoint.sh /usr/local/bin/entrypoint.sh
 
 ENTRYPOINT []
 CMD ["entrypoint.sh"]

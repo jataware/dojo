@@ -1,0 +1,279 @@
+package app
+
+import (
+	"bytes"
+	"context"
+	//"time"
+	"errors"
+	"fmt"
+	"log"
+	//"io/ioutil"
+	"io"
+
+	"bufio"
+	"github.com/docker/docker/api/types"
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/client"
+	"github.com/docker/docker/pkg/stdcopy"
+	"github.com/docker/go-connections/nat"
+	//"github.com/docker/docker/api/types/network"
+	//specs "github.com/opencontainers/image-spec/specs-go/v1"
+)
+
+type Docker struct {
+	Client *client.Client
+}
+
+func NewDocker(settings *Settings) (*Docker, error) {
+	host := client.WithHost(fmt.Sprintf("tcp://%s:8375", settings.Docker.Host))
+	cli, err := client.NewClientWithOpts(host, client.WithAPIVersionNegotiation())
+	if err != nil {
+		return nil, err
+	}
+
+	return &Docker{Client: cli}, nil
+}
+
+func (docker *Docker) ListContainers() ([]types.Container, error) {
+	return docker.Client.ContainerList(context.Background(), types.ContainerListOptions{})
+}
+
+func (docker *Docker) InspectContainer(containerID string) (types.ContainerJSON, error) {
+	return docker.Client.ContainerInspect(context.Background(), containerID)
+}
+
+func (docker *Docker) PullImage(image string) error {
+	resp, err := docker.Client.ImagePull(context.Background(), image, types.ImagePullOptions{})
+	if err != nil {
+		LogError("Container ImagePull", err)
+		return err
+	}
+
+	reader := bufio.NewReader(resp)
+	for {
+		line, err := reader.ReadBytes('\n')
+		if err != nil {
+			if err != io.EOF {
+				LogError("Reading Response", err)
+				return err
+			}
+			break
+		}
+
+		log.Printf("%s", string(line))
+	}
+
+	return err
+}
+
+func (docker *Docker) Changes(containerID string) ([]container.ContainerChangeResponseItem, error) {
+	changes, err := docker.Client.ContainerDiff(context.Background(), containerID)
+	return changes, err
+}
+
+func (docker *Docker) Commit(
+	auth string,
+	containerID string,
+	name string,
+	cwd string,
+	entrypoint []string,
+	pool *WebSocketPool,
+	listenClients []string,
+) error {
+
+	ctx := context.Background()
+
+	options := types.ContainerCommitOptions{
+		Config: &container.Config{
+			WorkingDir: cwd,
+			Entrypoint: entrypoint,
+			Cmd:        []string{},
+		},
+	}
+
+	img, err := docker.Client.ContainerCommit(ctx, containerID, options)
+	if err != nil {
+		LogError("Container Commit", err)
+		return err
+	}
+
+	tag := fmt.Sprintf("jataware/clouseau:%s-latest", name)
+	if err := docker.Client.ImageTag(ctx, img.ID, tag); err != nil {
+		LogError("Image Tag", err)
+		return err
+	}
+
+	resp, err := docker.Client.ImagePush(ctx, tag, types.ImagePushOptions{RegistryAuth: auth})
+	if err != nil {
+		LogError("Image Push", err)
+		return err
+	}
+
+	reader := bufio.NewReader(resp)
+	for {
+		line, err := reader.ReadBytes('\n')
+		if err != nil {
+			if err != io.EOF {
+				LogError("Reading Response", err)
+				return err
+			}
+			break
+		}
+
+		pool.Direct <- DirectMessage{
+			Clients: listenClients,
+			Message: WebSocketMessage{Channel: "docker/publish", Payload: string(line)},
+		}
+
+		log.Printf("%s", string(line))
+	}
+
+	// body, err := ioutil.ReadAll(resp)
+	// if err != nil {
+	//	log.Printf("[ERROR] %+v", err)
+	//	return err
+	// }
+
+	//log.Printf("PUSH %s", body)
+
+	return nil
+}
+
+func (docker *Docker) Stop(containerID string) error {
+	//timeout := 60 * time.Second
+	err := docker.Client.ContainerStop(context.Background(), containerID, nil)
+	if err != nil {
+		LogError("Container Stop", err)
+		return err
+	}
+	return nil
+}
+
+type ExecResult struct {
+	ExitCode  int
+	outBuffer *bytes.Buffer
+	errBuffer *bytes.Buffer
+}
+
+func (res *ExecResult) StdOut() string {
+	return res.outBuffer.String()
+}
+
+func (res *ExecResult) StdErr() string {
+	return res.errBuffer.String()
+}
+
+func (res *ExecResult) Combined() string {
+	return res.outBuffer.String() + res.errBuffer.String()
+}
+
+func (docker *Docker) Exec(containerID string, cmd []string) error {
+	ctx := context.Background()
+	id, err := docker.Client.ContainerExecCreate(ctx,
+		containerID,
+		types.ExecConfig{
+			AttachStdout: true,
+			AttachStderr: true,
+			Cmd:          cmd,
+		})
+	if err != nil {
+		LogError("Container Exec Create", err)
+		return err
+	}
+
+	log.Printf("Attach: %+v", cmd)
+	aresp, err := docker.Client.ContainerExecAttach(ctx, id.ID, types.ExecStartCheck{})
+	if err != nil {
+		LogError("Container Exec Attach", err)
+		return err
+	}
+	defer aresp.Close()
+
+	// read the output
+	var outBuf, errBuf bytes.Buffer
+	outputDone := make(chan error)
+
+	go func() {
+		// StdCopy demultiplexes the stream into two buffers
+		_, err = stdcopy.StdCopy(&outBuf, &errBuf, aresp.Reader)
+		outputDone <- err
+	}()
+
+	select {
+	case err := <-outputDone:
+		if err != nil {
+			LogError("Output", err)
+			return err
+		}
+		break
+
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+
+	// get the exit code
+	log.Printf("Inspect: %+v", id)
+	iresp, err := docker.Client.ContainerExecInspect(ctx, id.ID)
+	if err != nil {
+		LogError("Containe Exec Inspect", err)
+		return err
+	}
+
+	exec := ExecResult{ExitCode: iresp.ExitCode, outBuffer: &outBuf, errBuffer: &errBuf}
+
+	log.Printf("exit: %d, out: %s", exec.ExitCode, exec.Combined())
+
+	if exec.ExitCode != 0 {
+		return errors.New(exec.StdErr())
+	}
+	return nil
+
+}
+
+func (docker *Docker) Launch(image string, name string) (string, error) {
+	if *PULL_IMAGES {
+		if err := docker.PullImage(image); err != nil {
+			return "", err
+		}
+	}
+	hostConfig := &container.HostConfig{
+		AutoRemove: true,
+		PortBindings: nat.PortMap{
+			"22/tcp": []nat.PortBinding{
+				{
+					HostPort: "2224",
+				},
+			},
+			"6010/tcp": []nat.PortBinding{
+				{
+					HostPort: "6010",
+				},
+			},
+		},
+	}
+
+	container, err := docker.Client.ContainerCreate(context.Background(),
+		&container.Config{
+			Image: image,
+			ExposedPorts: nat.PortSet{
+				"22/tcp":   {},
+				"6010/tcp": {},
+			},
+		},
+		hostConfig,
+		nil, //&network.NetworkingConfig{},
+		nil, //&specs.Platform{},
+		name,
+	)
+
+	if err != nil {
+		return "", err
+	}
+
+	err = docker.Client.ContainerStart(context.Background(),
+		container.ID,
+		types.ContainerStartOptions{})
+
+	return container.ID, err
+
+}

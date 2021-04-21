@@ -1,0 +1,9 @@
+
+
+
+docker:
+  image: jataware/clouseau:claudine-dev
+
+ssh:
+  user: clouseau
+  password: clouseau

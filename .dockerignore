@@ -1,4 +1,5 @@
-.git
+.git/
+.github/
 __pycache__
 **/__pycache__/
 *.py[cod]
@@ -36,10 +37,12 @@ share/python-wheels/
 **/*.egg-info/
 
 data
-sshd/
 docs/
 tmp/
 
 
 **/node_modules/
 npm-debug.log
+
+
+
