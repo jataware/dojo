@@ -18,9 +18,13 @@ import WarningIcon from '@material-ui/icons/Warning';
 
 import { makeStyles } from '@material-ui/core/styles';
 import { useHistory } from 'react-router-dom';
-import { useHistoryUpdateContext } from './context';
 
 import { Alert } from './alert';
+
+const clearHistory = () => {
+  // HACK
+  localStorage.setItem('historyItems', JSON.stringify([]));
+};
 
 const useStyles = makeStyles((theme) => ({
   formControl: {
@@ -56,7 +60,6 @@ const getProvisioning = (imageType) => {
 const Intro = () => {
   const classes = useStyles();
   const history = useHistory();
-  const { clearHistoryContext } = useHistoryUpdateContext();
   const [giturl, setGitUrl] = useState('https://github.com/jataware/dummy-model');
   const [imageName, setImageName] = useState('');
   const [alertVisible, setAlertVisible] = React.useState(false);
@@ -102,7 +105,7 @@ const Intro = () => {
 
       console.log(`launched container: ${containerid}`);
 
-      clearHistoryContext();
+      clearHistory();
 
       const execute = async (cmd) => {
         console.log(`exec ${cmd}`);
@@ -152,10 +155,6 @@ const Intro = () => {
   useEffect(async () => {
     await refreshContainers();
   }, []);
-
-  const clearHistory = () => {
-    localStorage.setItem('historyItems', JSON.stringify([]));
-  };
 
   const destroyContainer = async (id) => {
     await fetch(`api/docker/stop/${id}`, { method: 'DELETE' });

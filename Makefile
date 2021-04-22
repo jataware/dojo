@@ -5,7 +5,7 @@
 # gnumake curl git
 # docker docker-compose
 
-VERSION := 2.0.0
+VERSION := 2.0.1
 
 DEV ?= $(strip $(if $(findstring y,$(prod)),,dev))
 
@@ -127,5 +127,5 @@ socat-stop:  ## Dev - stop socat dev server
 
 .PHONY: docker-compose_up
 docker-compose_up:|ip-addr  ## Dev - run local cluster
-	PRIVATE_IP=${ip_address} docker compose up
+	PRIVATE_IP=${ip_address} docker compose up --force-recreate
 
