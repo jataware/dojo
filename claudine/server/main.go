@@ -1,9 +1,9 @@
 package main
 
 import (
-	"claudine/server/app"
+	"claudine/server/cato"
 )
 
 func main() {
-	app.Run()
+	cato.Run()
 }

@@ -1,11 +1,10 @@
 
-
 # Dependencies
 
 # gnumake curl git
 # docker docker-compose
 
-VERSION := 2.0.1
+VERSION := 2.1.0
 
 DEV ?= $(strip $(if $(findstring y,$(prod)),,dev))
 
@@ -55,6 +54,7 @@ docker_build-phantom: | npm_build ## Build Phantom container
 	./build-phantom.sh
 
 
+
 .PHONY: docker_login-dockerhub
 docker_login-dockerhub:| check-DOCKERHUB_USER check-DOCKERHUB_PASS  ## Login to docker registery. Requires DOCKERHUB_USER and DOCKERHUB_PASS to be set in the environment
 	@printf "${DOCKERHUB_PASS}\n" | docker login -u "${DOCKERHUB_USER}" --password-stdin
@@ -66,16 +66,25 @@ docker_push-%:| docker_login-dockerhub
 	@echo "push $* ${VERSION}"
 	docker push "jataware/clouseau:$*_${VERSION}"
 
+
+
+.PHONY: go_fmt-embedded
+go_fmt-embedded:   ## format claudine/embedded
+	(cd claudine/embedded/app && go fmt claudine/embedded/app)
+	(cd claudine/embedded && go fmt claudine/embedded)
+
+.PHONY: go_fmt-preexec
+go_fmt-preexec:
+	(cd claudine/preexec && go fmt claudine/preexec)
+
+.PHONY: go_fmt-server
+go_fmt-server:
+	(cd claudine/server/cato && go fmt claudine/server/cato)
+	(cd claudine/server && go fmt claudine/server)
+
 .PHONY: go_fmt
-go_fmt:   ## format go files
-	(cd claudine/embedded && \
-		 go fmt claudine/embedded claudine/embedded/app && \
-	 cd - && \
-	 cd claudine/preexec && \
-		 go fmt claudine/preexec && \
-	 cd - && \
-	 cd claudine/server && \
-		 go fmt claudine/server claudine/server/app )
+go_fmt:| go_fmt-embedded go_fmt-preexec go_fmt-server   ## format go files
+
 
 .PHONY: npm_lint
 npm_lint:   ## Format js files
@@ -85,19 +94,35 @@ npm_lint:   ## Format js files
 npm_build:  ## Build npm package
 	(cd ui && npm run build)
 
-.PHONY: go_build
-go_build:  ## Build go binaries
+
+.PHONY: go_build-embedded
+go_build-embedded:  ## Compile claudine/embedded
+	(cd claudine/embedded/app && \
+		 go mod tidy && \
+		 go build -gcflags="-m=2 -l" claudine/embedded/app)
 	(cd claudine/embedded && \
 		 go mod tidy && \
-		 go build -o ../build/claudine main.go && \
-	 cd - && \
-	 cd claudine/preexec && \
+		 go build -gcflags="-m=2 -l" -o ../build/claudine claudine/embedded)
+
+.PHONY: go_build-preexec
+go_build-preexec: ## Compile claudine/preexec
+	(cd claudine/preexec && \
 		 go mod tidy && \
-		 go build -o ../build/c main.go && \
-	 cd - && \
-	 cd claudine/server && \
+		 go build -gcflags="-m=2 -l" -o ../build/c main.go)
+
+.PHONY: go_build-server
+go_build-server: ## Compile claudine/server
+	(cd claudine/server/cato && \
 		 go mod tidy && \
-		 go build -o ../build/cato main.go )
+		 go build -gcflags="-m=2 -l" claudine/server/cato)
+	(cd claudine/server && \
+		 go mod tidy && \
+		 go build -gcflags="-m=2 -l" -o ../build/cato main.go)
+
+GO_BUILDS := go_build-embedded go_build-server go_build-preexec
+
+.PHONY: go_build
+go_build:| $(GO_BUILDS) ## Build go binaries
 
 .PHONY: fmt
 fmt:| go_fmt npm_lint ## Format all

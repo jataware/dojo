@@ -22,9 +22,11 @@ RUN apt-get update && apt-get clean && apt-get install -y \
     curl \
     git \
     zip \
+    gpg-agent \
     openssh-server
 
 RUN mkdir /var/run/sshd
+RUN mkdir -p /var/log/claudine && chmod 777 /var/log/claudine
 RUN echo 'root:root' |chpasswd
 RUN ssh-keygen -A
 RUN sed -ri 's/^#?PermitRootLogin\s+.*/PermitRootLogin yes/' /etc/ssh/sshd_config
@@ -40,6 +42,7 @@ RUN useradd --user-group --create-home clouseau && \
     echo "clouseau:clouseau" | chpasswd clouseau && \
     echo 'Defaults    env_keep += "DEBIAN_FRONTEND"' >> /etc/sudoers.d/env_keep && \
     mkdir /home/clouseau/.ssh /home/clouseau/.tools && \
+    mkdir -p /home/clouseau/.local/bin && \
     echo "\n\
 if [ -n \$BASH ] && [ -r ~/.bashrc ]; then\n\
     . ~/.bashrc\n\
@@ -49,6 +52,7 @@ COPY --from=build /out/claudine /home/clouseau/.tools/claudine
 COPY --from=build /out/c /home/clouseau/.tools/c
 COPY sshd/assets/default-settings.yaml /home/clouseau/.tools/default-settings.yaml
 
+COPY sshd/assets/10-bash-hooks.sh /etc/profile.d/10-bash-hooks.sh
 COPY sshd/assets/.bash-preexec /home/clouseau/.bash-preexec
 COPY sshd/assets/.bashrc /home/clouseau/.bashrc
 COPY sshd/assets/.hooks /home/clouseau/.hooks

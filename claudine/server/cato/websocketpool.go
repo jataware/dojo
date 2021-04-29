@@ -1,4 +1,4 @@
-package app
+package cato
 
 import (
 	ws "github.com/gorilla/websocket"

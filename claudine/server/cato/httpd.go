@@ -1,4 +1,4 @@
-package app
+package cato
 
 import (
 	"fmt"
@@ -103,6 +103,18 @@ func changesContainer(docker *Docker) gin.HandlerFunc {
 	}
 }
 
+func diffGetContainer(docker *Docker) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id := c.Param("id")
+		changes, err := docker.Changes(id)
+		if err != nil {
+			c.String(http.StatusInternalServerError, fmt.Sprintf("%+v", err))
+			return
+		}
+		c.JSON(http.StatusOK, changes)
+	}
+}
+
 type CommitDocker struct {
 	Name       string   `json:"name" binding:"required"`
 	Cwd        string   `json:"cwd" binding:"required"`
@@ -168,6 +180,8 @@ func SetupRoutes(pool *WebSocketPool, settings *Settings) *gin.Engine {
 	{
 		docker.POST("/commit/:id", commitContainer(settings, d, pool))
 		docker.GET("/changes/:id", changesContainer(d))
+		//docker.PUT("/diff/changes/:id", diffSetContainer(d))
+		docker.GET("/diff/changes/:id", diffGetContainer(d))
 		docker.GET("/containers", listContainers(d))
 		docker.POST("/exec/:id", execContainer(d))
 		docker.GET("/inspect/:id", inspectContainer(d))

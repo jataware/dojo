@@ -51,6 +51,14 @@ const getProvisioning = (imageType) => {
         ['sudo', 'apt-get', 'update'],
         ['sudo', 'apt-get', 'install', '-y', 'python3', 'python3-pip']
       ];
+    case 'ubuntu-r':
+      return [
+        ['sudo', 'apt-get', 'update'],
+        ['sudo', 'apt-get', 'install', '-y', '--no-install-recommends', 'software-properties-common', 'dirmngr'],
+        ['sudo', 'apt-key', 'adv', '--keyserver', 'keyserver.ubuntu.com', '--recv-keys', 'E298A3A825C0D65DFD57CBB651716619E084DAB9'],
+        ['sudo', 'add-apt-repository', 'deb https://cloud.r-project.org/bin/linux/ubuntu focal-cran40/'],
+        ['sudo', 'apt-get', 'install', '-y', '--no-install-recommends', 'r-base'],
+      ];
     default:
       break;
   }
@@ -261,6 +269,7 @@ const Intro = () => {
               <Select labelId="label" id="select" defaultValue="ubuntu" onChange={(_, { props: { value } }) => setImageType(value)}>
                 <MenuItem value="ubuntu">Ubuntu</MenuItem>
                 <MenuItem value="ubuntu-python">Ubuntu - Python3</MenuItem>
+                <MenuItem value="ubuntu-r">Ubuntu - R</MenuItem>
               </Select>
             </FormControl>
           </Grid>
