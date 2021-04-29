@@ -81,6 +81,8 @@ export const ContainerWebSocket = ({
     };
     return async () => {
       console.log('websocket closed');
+      ws.current.onclose = null;
+      setWsConnected(false);
       ws.current.close();
     };
   }, []);

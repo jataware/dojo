@@ -67,6 +67,12 @@ module.exports = {
         changeOrigin: true,
         ws: true,
       },
+      '/websocket': {
+        target: 'http://localhost:6010',
+        secure: false,
+        changeOrigin: true,
+        ws: true,
+      },
       '/container': {
         target: 'http://localhost:6010',
         pathRewrite: { '^/container': '' },
