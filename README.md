@@ -4,7 +4,7 @@
 
 ![Build](https://github.com/jataware/clouseau/workflows/Build/badge.svg)
 
-v2.1.0
+v2.2.0
 
 
 ## Demo
@@ -13,8 +13,6 @@ https://user-images.githubusercontent.com/969727/115638877-3bd3a700-a2e1-11eb-8f
 
 ```
 go  v1.16.3
-node v15.14.0
-npm v7.7.6
 ```
 
 
@@ -44,13 +42,11 @@ make docker-compose_up
 ### lint
 ```
 make go_fmt
-make npm_lint
 ```
 
 ### Build
 ```
 make go_build
-make npm_build
 ```
 
 
@@ -65,16 +61,6 @@ Start server
 ```
 make cato_run_dev
 ```
-
-Start UI
-```
-(cd ui && npm i)
-make npm_run_dev
-```
-
-open [http://localhost:8080](http://localhost:8080)
-
-
 
 ### Bump Version
 

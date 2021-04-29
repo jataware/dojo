@@ -4,7 +4,7 @@
 # gnumake curl git
 # docker docker-compose
 
-VERSION := 2.1.0
+VERSION := 2.2.0
 
 DEV ?= $(strip $(if $(findstring y,$(prod)),,dev))
 
@@ -39,7 +39,7 @@ ip:| ip-addr
 	@echo ${ip_address}
 
 .PHONY: docker_build
-docker_build: docker_build-claudine docker_build-cato docker_build-phantom  ## Build all docker containers
+docker_build: docker_build-claudine docker_build-cato  ## Build all docker containers
 
 .PHONY: docker_build-claudine
 docker_build-claudine:| go_build ## Build Claudine container
@@ -49,23 +49,16 @@ docker_build-claudine:| go_build ## Build Claudine container
 docker_build-cato: ## Build Cato container
 	./build-cato.sh
 
-.PHONY: docker_build-phantom
-docker_build-phantom: | npm_build ## Build Phantom container
-	./build-phantom.sh
-
-
-
 .PHONY: docker_login-dockerhub
 docker_login-dockerhub:| check-DOCKERHUB_USER check-DOCKERHUB_PASS  ## Login to docker registery. Requires DOCKERHUB_USER and DOCKERHUB_PASS to be set in the environment
 	@printf "${DOCKERHUB_PASS}\n" | docker login -u "${DOCKERHUB_USER}" --password-stdin
 
 .PHONY: docker_push-dockerhub
-docker_push-dockerhub: docker_push-claudine docker_push-cato docker_push-phantom | docker_login-dockerhub  ## Push all containers to docker registry
+docker_push-dockerhub: docker_push-claudine docker_push-cato | docker_login-dockerhub  ## Push all containers to docker registry
 
 docker_push-%:| docker_login-dockerhub
 	@echo "push $* ${VERSION}"
 	docker push "jataware/clouseau:$*_${VERSION}"
-
 
 
 .PHONY: go_fmt-embedded
@@ -84,15 +77,6 @@ go_fmt-server:
 
 .PHONY: go_fmt
 go_fmt:| go_fmt-embedded go_fmt-preexec go_fmt-server   ## format go files
-
-
-.PHONY: npm_lint
-npm_lint:   ## Format js files
-	(cd ui && npm run lint)
-
-.PHONY: npm_build
-npm_build:  ## Build npm package
-	(cd ui && npm run build)
 
 
 .PHONY: go_build-embedded
@@ -125,14 +109,10 @@ GO_BUILDS := go_build-embedded go_build-server go_build-preexec
 go_build:| $(GO_BUILDS) ## Build go binaries
 
 .PHONY: fmt
-fmt:| go_fmt npm_lint ## Format all
+fmt:| go_fmt  ## Format all
 
 .PHONY: compile
-compile:| go_build npm_build ## Compile all builds
-
-.PHONY: npm_run_dev
-npm_run_dev:  ## Dev - run react dev server locally
-	(cd ui && npm run dev)
+compile:| go_build  ## Compile all builds
 
 .PHONY: cato_run_dev
 cato_run_dev: ## Dev - run cato dev server locally
@@ -148,7 +128,6 @@ socat-start:  ## Dev - start socat dev server
 socat-stop:  ## Dev - stop socat dev server
 	@echo Stopping socat
 	@docker stop socat1
-
 
 .PHONY: docker-compose_up
 docker-compose_up:|ip-addr  ## Dev - run local cluster

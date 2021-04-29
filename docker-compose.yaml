@@ -15,7 +15,7 @@ services:
       - ${PWD}/claudine/server/settings.yaml:/home/app/cato/settings.yaml
 
   phantom:
-    image: jataware/clouseau:phantom-dev
+    image: jataware/phantom:dev
     container_name: phantom1
     ports:
       - 8080:80
