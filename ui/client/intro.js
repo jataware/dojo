@@ -19,7 +19,7 @@ import WarningIcon from '@material-ui/icons/Warning';
 import { makeStyles } from '@material-ui/core/styles';
 import { useHistory } from 'react-router-dom';
 
-import { Alert } from './alert';
+import BasicAlert from './components/BasicAlert';
 
 const clearHistory = () => {
   // HACK
@@ -188,7 +188,7 @@ const Intro = () => {
       <CardActionArea>
         <CardContent>
           <Typography variant="body2" color="textSecondary" component="p">
-            <WarningIcon style={{ fontSize: '1.0rem', marginRight: '8px', color: 'yellow' }} />
+            <WarningIcon style={{ fontSize: '1.0rem', marginRight: '8px' }} />
             A container is already running would you like to connect or destroy it?
           </Typography>
           {containers.map((v) => (
@@ -294,7 +294,7 @@ const Intro = () => {
         </Paper>
       </Grid>
 
-      <Alert alert={alert} visible={alertVisible} setVisible={setAlertVisible} />
+      <BasicAlert alert={alert} visible={alertVisible} setVisible={setAlertVisible} />
     </div>
   );
 };

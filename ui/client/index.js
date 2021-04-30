@@ -1,29 +1,37 @@
+import React from 'react';
+
 import './style.css';
 
 import CssBaseline from '@material-ui/core/CssBaseline';
-import React from 'react';
 import ReactDOM from 'react-dom';
 import {
+  Route,
   BrowserRouter as Router,
   Switch,
-  Route,
 } from 'react-router-dom';
-import { createMuiTheme, ThemeProvider } from '@material-ui/core/styles';
-import Intro from './intro';
-import App from './app';
-import Admin from './admin';
+import { ThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 
+import Admin from './admin';
+import App from './app';
+import Intro from './intro';
 import { WebSocketContextProvider } from './context';
 
-const darkTheme = createMuiTheme({
+const theme = createMuiTheme({
   palette: {
-    type: 'dark',
+    // type: 'dark',
     background: {
-      default: '#000'
+      default: '#fff'
     }
   },
   body: {
-    backgroundColor: '#000'
+    backgroundColor: '#fff'
+  },
+  overrides: {
+    MuiTableCell: {
+      root: {
+        padding: 0
+      }
+    }
   }
 });
 
@@ -51,7 +59,7 @@ export default function Main() {
 }
 
 ReactDOM.render(
-  <ThemeProvider theme={darkTheme}>
+  <ThemeProvider theme={theme}>
     <CssBaseline />
     <Main />
   </ThemeProvider>,

@@ -3,7 +3,7 @@ import React from 'react';
 import MuiAlert from '@material-ui/lab/Alert';
 import Snackbar from '@material-ui/core/Snackbar';
 
-export const Alert = ({ alert, visible, setVisible }) => {
+const BasicAlert = ({ alert, visible, setVisible }) => {
   const { message, severity } = alert;
 
   const handleAlertClose = async () => {
@@ -18,3 +18,5 @@ export const Alert = ({ alert, visible, setVisible }) => {
     </Snackbar>
   );
 };
+
+export default BasicAlert;

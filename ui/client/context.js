@@ -1,8 +1,8 @@
 import React, {
   createContext,
   useContext,
-  useRef,
   useEffect,
+  useRef,
 } from 'react';
 
 import { v4 as uuidv4 } from 'uuid';
@@ -153,7 +153,14 @@ export const HistoryContextProvider = ({ children }) => {
     runCommand.current = s;
   }
 
+  function historyIgnore(cmd) {
+    return ['ls', 'll', 'pwd', 'clear'].includes(cmd);
+  }
+
   function addHistoryItem(item) {
+    if (historyIgnore(item.text)) {
+      return;
+    }
     if (item.text === runCommand?.current) {
       item.runCommand = true; // eslint-disable-line no-param-reassign
       setRunCommand('');

@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 
 import Box from '@material-ui/core/Box';
 import Button from '@material-ui/core/Button';
-import ClearIcon from '@material-ui/icons/Clear';
 import Container from '@material-ui/core/Container';
 import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
@@ -10,37 +9,34 @@ import DialogContent from '@material-ui/core/DialogContent';
 import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import Divider from '@material-ui/core/Divider';
-import EditIcon from '@material-ui/icons/Edit';
 import Fab from '@material-ui/core/Fab';
 import Grid from '@material-ui/core/Grid';
-import IconButton from '@material-ui/core/IconButton';
 import LinearProgress from '@material-ui/core/LinearProgress';
 import Link from '@material-ui/core/Link';
 import NavigateNextIcon from '@material-ui/icons/NavigateNext';
 import OpenInNewIcon from '@material-ui/icons/OpenInNew';
-import SaveIcon from '@material-ui/icons/Save';
 import SyncDisabledIcon from '@material-ui/icons/SyncDisabled';
 import SyncIcon from '@material-ui/icons/Sync';
-import TextareaAutosize from '@material-ui/core/TextareaAutosize';
-import Tooltip from '@material-ui/core/Tooltip';
 import WarningIcon from '@material-ui/icons/Warning';
 
 import { useHistory } from 'react-router-dom';
-import { useTheme, makeStyles } from '@material-ui/core/styles';
-import { Alert } from './alert';
-
-import Term from './term';
+import { makeStyles, useTheme } from '@material-ui/core/styles';
 
 import {
-  useWebSocketContext, useWebSocketUpdateContext,
-  HistoryContextProvider,
-  useHistoryContext,
+  HistoryContextProvider, useHistoryContext,
   useHistoryUpdateContext,
+  useWebSocketContext,
+  useWebSocketUpdateContext,
 } from './context';
 
-import { ContainerWebSocket, History } from './history';
+import BasicAlert from './components/BasicAlert';
+import FullScreenDialog from './components/FullScreenDialog';
+import SimpleEditor from './components/SimpleEditor';
+import Term from './components/Term';
+import { ContainerWebSocket, ShellHistory } from './components/ShellHistory';
 
-/* eslint-disable no-unused-vars */
+import { findRunCommand } from './utils';
+
 const useStyles = makeStyles((theme) => ({
   connected: {
     color: 'green'
@@ -52,24 +48,9 @@ const useStyles = makeStyles((theme) => ({
     zIndex: theme.zIndex.drawer + 1,
     color: '#fff',
   },
-  textareaAutosize: {
-    overflow: 'auto',
-    height: '200px',
-    width: '100%',
-    color: '#fff',
-    backgroundColor: '#000',
-    borderWidth: 0,
-
-    '&:focus': {
-      outlineColor: '#000',
-      outlineWidth: 0,
-      boxShadow: '0 0 10px white',
-    }
-  },
 }));
 
 export const ExecutionDialog = ({ open, setOpen, dialogContents }) => {
-  const historyContext = useHistoryContext();
   const { setRunCommand } = useHistoryUpdateContext();
   const handleClose = async (isRunCommand) => {
     if (isRunCommand) {
@@ -89,7 +70,7 @@ export const ExecutionDialog = ({ open, setOpen, dialogContents }) => {
         aria-describedby="alert-dialog-description"
       >
         <DialogTitle id="alert-dialog-title">
-          <WarningIcon style={{ fontSize: '1.0rem', marginRight: '8px', color: 'yellow' }} />
+          <WarningIcon style={{ fontSize: '1.0rem', marginRight: '8px' }} />
           Are you executing a model?
         </DialogTitle>
         <DialogContent>
@@ -98,6 +79,7 @@ export const ExecutionDialog = ({ open, setOpen, dialogContents }) => {
             style={{
               marginTop: '10px',
               backgroundColor: '#445d6e',
+              color: '#fff',
               display: 'flex',
               alignItems: 'center',
               flexWrap: 'wrap'
@@ -114,10 +96,10 @@ export const ExecutionDialog = ({ open, setOpen, dialogContents }) => {
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => handleClose(true)} autoFocus>
+          <Button onClick={() => handleClose(true)} autoFocus color="primary">
             Yes
           </Button>
-          <Button onClick={() => handleClose(false)}>
+          <Button onClick={() => handleClose(false)} color="secondary">
             No
           </Button>
         </DialogActions>
@@ -125,8 +107,6 @@ export const ExecutionDialog = ({ open, setOpen, dialogContents }) => {
     </div>
   );
 };
-
-const findRunCommand = (h) => h.find((x) => x.runCommand) || {};
 
 export const PublishDialog = ({
   open, setOpen, accept, reject
@@ -152,7 +132,7 @@ export const PublishDialog = ({
         aria-describedby="alert-dialog-description"
       >
         <DialogTitle id="alert-dialog-title">
-          <WarningIcon style={{ fontSize: '1.0rem', marginRight: '8px', color: 'yellow' }} />
+          <WarningIcon style={{ fontSize: '1.0rem', marginRight: '8px' }} />
           Are you ready to publish the container?
         </DialogTitle>
         <DialogContent>
@@ -162,6 +142,7 @@ export const PublishDialog = ({
             style={{
               marginTop: '10px',
               backgroundColor: '#445d6e',
+              color: '#fff',
               display: 'flex',
               alignItems: 'center',
               flexWrap: 'wrap'
@@ -173,10 +154,10 @@ export const PublishDialog = ({
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => handleClose(true)} autoFocus>
+          <Button onClick={() => handleClose(true)} autoFocus color="primary">
             Yes
           </Button>
-          <Button onClick={() => handleClose(false)}>
+          <Button onClick={() => handleClose(false)} color="secondary">
             No
           </Button>
         </DialogActions>
@@ -231,20 +212,24 @@ export const Footer = ({ wsConnected, socketIoConnected }) => {
 
 const CenteredGrid = ({ handlePublish }) => {
   const theme = useTheme();
-  const classes = useStyles();
-  const inputRef = React.createRef();
-  const [openAlert, setOpenAlert] = React.useState(false);
   const [alertVisible, setAlertVisible] = React.useState(false);
   const [alert, setAlert] = React.useState({
     severity: 'error',
     message: ''
   });
-  const [wsConnected, setWsConnected] = useState(false);
-  const [socketIoConnected, setSocketIoConnected] = useState(false);
   const [dialogContents, setDialogContents] = React.useState({});
   const [openDialog, setDialogOpen] = React.useState(false);
   const [openPublishDialog, setPublishDialogOpen] = React.useState(false);
   const [editorContents, setEditorContents] = React.useState({});
+  const [openEditor, setOpenEditor] = React.useState(false);
+  const [openFullScreen, setOpenFullScreen] = React.useState(false);
+
+  const saveEditor = async () => {
+    await fetch(`/container/save?path=${editorContents.file}`, {
+      method: 'POST',
+      body: editorContents.text
+    });
+  };
 
   const { awaitEmit } = useWebSocketContext();
 
@@ -259,42 +244,24 @@ const CenteredGrid = ({ handlePublish }) => {
     }
   }, []);
 
-  const saveEditor = async () => {
-    await fetch(`/container/save?path=${editorContents.file}`, {
-      method: 'POST',
-      body: editorContents.text
-    });
-  };
-
-  const clearEditor = async () => {
-    setEditorContents({});
-  };
-
-  const updateEditorContents = (e) => {
-    setEditorContents((state) => ({
-      ...state, text: e.target.value
-    }));
-  };
-
   return (
     <div className={theme.root}>
       <Grid container spacing={1} style={{ width: 'auto', margin: 0 }}>
-        <Grid item xs={8} style={{ padding: '0 2px' }}>
-          <Term setSocketIoConnected={setSocketIoConnected} />
+        <Grid item xs={8} style={{ padding: '0 2px', backgroundColor: '#272d33' }}>
+          <Term />
         </Grid>
 
         <Grid item xs={4} style={{ padding: '0 2px' }}>
-          <History
+          <ShellHistory
             setAlert={setAlert}
             setAlertVisible={setAlertVisible}
           />
           <ContainerWebSocket
             setAlert={setAlert}
             setAlertVisible={setAlertVisible}
-            setWsConnected={setWsConnected}
-            setSocketIoConnected={setSocketIoConnected}
             setDialogOpen={setDialogOpen}
             setEditorContents={setEditorContents}
+            openEditor={() => setOpenEditor(true)}
             setDialogContents={setDialogContents}
           />
           <ExecutionDialog
@@ -303,80 +270,25 @@ const CenteredGrid = ({ handlePublish }) => {
             dialogContents={dialogContents}
           />
           <Divider />
-          <div style={{ fontFamily: 'monospace' }}>
-            <div style={{
-              backgroundColor: 'black',
-              color: 'white',
-              display: 'flex',
-              justifyContent: 'flex-start',
-              flexDirection: 'row',
-              flexWrap: 'nowrap',
-              alignContent: 'stretch',
-              alignItems: 'flex-start',
-              marginBottom: '10px',
-            }}
-            >
-              <Tooltip title="edit" arrow style={{ alignSelf: 'auto' }}>
-                <IconButton
-                  edge="end"
-                  aria-label="edit"
-                  style={{ alignSelf: 'auto', marginRight: '3px', padding: '2px' }}
-                >
-                  <EditIcon fontSize="small" />
-                  {'  '}
-                </IconButton>
-              </Tooltip>
-              <div style={{ marginTop: '4px' }}>
-                <span style={{ fontSize: '12px', marginLeft: '5px' }}>
-                  {editorContents?.file || ''}
-                </span>
-              </div>
-              <Tooltip title="Clear" arrow>
-                <IconButton
-                  style={{
-                    marginLeft: 'auto', alignSelf: 'auto', marginRight: '3px', padding: '2px'
-                  }}
-                  edge="end"
-                  aria-label="clear"
-                  onClick={clearEditor}
-                >
-                  <ClearIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-              <Tooltip title="Save" arrow>
-                <IconButton
-                  style={{
-                    alignSelf: 'auto', marginRight: '3px', padding: '2px'
-                  }}
-                  edge="end"
-                  aria-label="save"
-                  onClick={saveEditor}
-                >
-                  <SaveIcon fontSize="small" />
-                </IconButton>
-              </Tooltip>
-            </div>
 
-            <TextareaAutosize
-              rowsMin={10}
-              rowsMax={10}
-              placeholder=""
-              value={editorContents?.text || ''}
-              onChange={updateEditorContents}
-              className={classes.textareaAutosize}
-            />
+          <FullScreenDialog open={openFullScreen} setOpen={setOpenFullScreen}>
+            <iframe title="itest" style={{ height: 'calc(100vh - 70px)', width: '100%' }} src="http://wttr.in" />
+          </FullScreenDialog>
 
-          </div>
+          <FullScreenDialog open={openEditor} setOpen={setOpenEditor} onSave={saveEditor} title={`Editing ${editorContents?.file}`}>
+            <SimpleEditor editorContents={editorContents} setEditorContents={setEditorContents} />
+          </FullScreenDialog>
         </Grid>
       </Grid>
-      <Alert alert={alert} visible={alertVisible} setVisible={setAlertVisible} />
-      <Footer wsConnected={wsConnected} socketIoConnected={socketIoConnected} />
+      <BasicAlert alert={alert} visible={alertVisible} setVisible={setAlertVisible} />
+
       <div style={{
         position: 'absolute', right: 0, bottom: '2px', zIndex: 10
       }}
       >
         <Fab
           variant="extended"
+          color="primary"
           style={{ margin: '10px' }}
           onClick={(e) => { e.preventDefault(); setPublishDialogOpen(true); }}
         >
@@ -393,8 +305,7 @@ const CenteredGrid = ({ handlePublish }) => {
   );
 };
 
-const Publisher = ({ children }) => {
-  const classes = useStyles();
+const Publisher = () => {
   const historyContext = useHistoryContext();
   const { clearHistoryContext } = useHistoryUpdateContext();
   const history = useHistory();
@@ -432,7 +343,6 @@ const Publisher = ({ children }) => {
         error,
         status,
         aux: { Tag, Digest } = { Tag: null, Digest: null },
-        progressDetail: { current, total } = { current: '', total: '' },
         progress
       } = JSON.parse(item);
       if (error) {
@@ -457,7 +367,7 @@ const Publisher = ({ children }) => {
     });
   }, []);
 
-  const handlePublish = async (e) => {
+  const handlePublish = async () => {
     const wsid = getWebSocketId();
     console.log(`listener: ${wsid}`);
     console.log(historyContext);
@@ -525,6 +435,7 @@ const Publisher = ({ children }) => {
                 <Box style={{
                   marginTop: '10px',
                   backgroundColor: '#445d6e',
+                  color: '#fff',
                   display: 'flex',
                   alignItems: 'center',
                   flexWrap: 'wrap'

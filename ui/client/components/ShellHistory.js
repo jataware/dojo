@@ -3,7 +3,7 @@ import React, {
 } from 'react';
 
 import DeleteIcon from '@material-ui/icons/Delete';
-import ForwardIcon from '@material-ui/icons/Forward';
+
 import IconButton from '@material-ui/core/IconButton';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
@@ -13,28 +13,23 @@ import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
-import { useHistoryContext, useHistoryUpdateContext } from './context';
+import { useHistoryContext, useHistoryUpdateContext } from '../context';
+
+import RunCommandBox from './RunCommandBox';
 
 export const ContainerWebSocket = ({
-  setAlert, setAlertVisible, setWsConnected, setDialogOpen, setDialogContents, setEditorContents
+  setAlert, setAlertVisible, setDialogOpen, setDialogContents, setEditorContents, openEditor
 }) => {
   const ws = useRef(null);
   const { addHistoryItem } = useHistoryUpdateContext();
 
   useEffect(async () => {
-    // const url = `ws://${window.location.host}/websocket`;
     const url = `ws://${window.location.host}/websocket`;
     console.log(`connecting ${url}`);
 
     ws.current = new WebSocket(url);
     ws.current.onopen = () => {
       console.log('ws opened');
-      setWsConnected(true);
-      // setAlert({
-      //   severity: 'success',
-      //   message: 'Websocket connect'
-      // });
-      // setAlertVisible(true);
     };
     ws.current.onerror = (evt) => {
       console.log(`ws error ${evt}`);
@@ -43,7 +38,6 @@ export const ContainerWebSocket = ({
         message: `Websocket Error: ${evt}`
       });
       setAlertVisible(true);
-      setWsConnected(false);
     };
     ws.current.onclose = () => {
       console.log('ws closed');
@@ -51,7 +45,7 @@ export const ContainerWebSocket = ({
         severity: 'warning',
         message: 'Websocket closed'
       });
-      setWsConnected(true);
+
       setAlertVisible(true);
     };
     ws.current.onmessage = async (evt) => {
@@ -75,6 +69,7 @@ export const ContainerWebSocket = ({
           const rsp = await fetch(`/container/cat?path=${f}`);
           if (rsp.ok) {
             setEditorContents({ text: await rsp.text(), file: f });
+            openEditor();
           }
         }
       }
@@ -82,7 +77,7 @@ export const ContainerWebSocket = ({
     return async () => {
       console.log('websocket closed');
       ws.current.onclose = null;
-      setWsConnected(false);
+
       ws.current.close();
     };
   }, []);
@@ -90,7 +85,7 @@ export const ContainerWebSocket = ({
   return (<> </>);
 };
 
-export const History = () => {
+export const ShellHistory = () => {
   const history = useHistoryContext();
   const { removeHistoryItem } = useHistoryUpdateContext();
 
@@ -104,24 +99,22 @@ export const History = () => {
 
   return (
     <div style={{ margin: '2px', padding: '2px' }}>
-      <TableContainer style={{ height: 200, overflow: 'auto' }}>
+      <TableContainer style={{ height: '400px', overflow: 'auto' }}>
         <Table
           aria-labelledby="tableTitle"
-          size="small"
           aria-label="enhanced table"
           stickyHeader
         >
           <TableHead>
             <TableRow>
-              <TableCell colSpan={3}>
+              <TableCell colSpan={2} style={{ backgroundColor: '#272d33' }}>
                 <Typography
                   component="div"
                   style={{
-                    fontSize: '1.0rem',
+                    fontSize: '1.2rem',
                     lineHeight: '1.0',
-                    backgroundColor: 'black',
                     padding: '10px',
-                    color: 'white'
+                    color: '#fff'
                   }}
                 >
                   Shell History
@@ -135,28 +128,25 @@ export const History = () => {
                 hover
                 tabIndex={-1}
                 key={item.id}
+                style={item.runCommand && { backgroundColor: '#445d6e' }}
               >
-                <TableCell align="left" width="2%" style={{ padding: 0 }}>
-                  {item.runCommand && (
-                    <Tooltip title="Run" arrow>
-                      <ForwardIcon fontSize="small" />
-                    </Tooltip>
-                  )}
-                </TableCell>
                 <TableCell align="left">
-                  <div style={{
-                    padding: '5px 0 5px 5px', fontFamily: 'monospace', fontWeight: 'bold', color: 'white'
-                  }}
-                  >
-                    {item.text}
-                  </div>
+                  {item.runCommand
+                    ? <RunCommandBox text={item.text} />
+                    : (
+                      <div style={{
+                        padding: '5px 0 5px 5px', fontFamily: 'monospace', fontWeight: 'bold'
+                      }}
+                      >
+                        {item.text}
+                      </div>
+                    )}
                 </TableCell>
                 <TableCell align="left" width="5%">
                   <Tooltip title="Delete" arrow>
                     <IconButton
-                      edge="end"
                       aria-label="delete"
-                      style={{ padding: '1px', margin: 0 }}
+                      style={{ ...{ padding: '1px', margin: 0 }, ...(item.runCommand && { color: '#fff' }) }}
                       onClick={() => removeHistoryItem(item)}
                     >
                       <DeleteIcon fontSize="small" />

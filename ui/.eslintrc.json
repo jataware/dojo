@@ -11,6 +11,14 @@
     "react/jsx-filename-extension": "off",
     "react/prop-types": "off",
     "consistent-return": "off",
-    "import/prefer-default-export": "off"
+    "import/prefer-default-export": "off",
+    "sort-imports": ["error", {
+      "ignoreCase": false,
+      "ignoreDeclarationSort": false,
+      "ignoreMemberSort": false,
+      "memberSyntaxSortOrder": ["none", "all", "single", "multiple" ],
+      "allowSeparatedGroups": true
+    }]
   }
+
 }
