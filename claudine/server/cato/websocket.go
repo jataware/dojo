@@ -67,3 +67,23 @@ func ServeWebSocket(settings *Settings, pool *WebSocketPool) gin.HandlerFunc {
 		client.Read()
 	}
 }
+
+func ConnectionKeepAlive(id string, conn *ws.Conn) {
+	ticker := time.NewTicker(pingPeriod)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ticker.C:
+			conn.SetWriteDeadline(time.Now().Add(writeWait))
+			log.Printf("Send Keep Alive Id: %s\n", id)
+			if err := conn.WriteMessage(ws.PingMessage, nil); err != nil {
+				if ws.IsUnexpectedCloseError(err, ws.CloseGoingAway, ws.CloseAbnormalClosure) {
+					LogError("Unexpected Error Keep Alive:", err)
+				} else {
+					log.Printf("Keep Alive Client gone - Id: %s\n", id)
+				}
+				return
+			}
+		}
+	}
+}

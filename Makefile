@@ -4,7 +4,7 @@
 # gnumake curl git
 # docker docker-compose
 
-VERSION := 2.2.0
+VERSION := 2.2.1
 
 DEV ?= $(strip $(if $(findstring y,$(prod)),,dev))
 
@@ -60,7 +60,6 @@ docker_push-%:| docker_login-dockerhub
 	@echo "push $* ${VERSION}"
 	docker push "jataware/clouseau:$*_${VERSION}"
 
-
 .PHONY: go_fmt-embedded
 go_fmt-embedded:   ## format claudine/embedded
 	(cd claudine/embedded/app && go fmt claudine/embedded/app)
@@ -77,7 +76,6 @@ go_fmt-server:
 
 .PHONY: go_fmt
 go_fmt:| go_fmt-embedded go_fmt-preexec go_fmt-server   ## format go files
-
 
 .PHONY: go_build-embedded
 go_build-embedded:  ## Compile claudine/embedded

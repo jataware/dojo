@@ -15,7 +15,7 @@ type WebSocketClient struct {
 }
 
 type WebSocketMessage struct {
-	Type    string `json:"type"`
+	Channel string `json:"channel"`
 	Payload string `json:"payload"`
 }
 
@@ -42,7 +42,7 @@ func (c *WebSocketClient) Read() {
 			return
 		}
 
-		message := WebSocketMessage{Type: "message", Payload: string(payload)}
+		message := WebSocketMessage{Channel: "client/message", Payload: string(payload)}
 		c.Pool.Broadcast <- message
 		log.Printf("Message Received: %+v\n", message)
 	}

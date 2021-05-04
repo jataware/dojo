@@ -5,6 +5,8 @@ import (
 	"github.com/gin-gonic/gin"
 	"log"
 	"net/http"
+	"net/http/httputil"
+	"net/url"
 )
 
 func root() gin.HandlerFunc {
@@ -158,6 +160,31 @@ func checkStatus() gin.HandlerFunc {
 	}
 }
 
+func proxy(settings *Settings, docker *Docker) gin.HandlerFunc {
+	//TODO determine the IP of the container that client is trying to proxy too
+	//for now it will just be the IP of the docker api
+	server := fmt.Sprintf("http://%s:6010", settings.Docker.Host)
+	remote, err := url.Parse(server)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return func(c *gin.Context) {
+		proxy := httputil.NewSingleHostReverseProxy(remote)
+
+		proxy.Director = func(req *http.Request) {
+			req.Header = c.Request.Header
+			req.Host = remote.Host
+			req.URL.Scheme = remote.Scheme
+			req.URL.Host = remote.Host
+			req.URL.Path = c.Param("proxyPath")
+		}
+
+		log.Printf("Proxying %s => %s\n", c.Param("proxyPath"), server)
+		proxy.ServeHTTP(c.Writer, c.Request)
+	}
+}
+
 func SetupRoutes(pool *WebSocketPool, settings *Settings) *gin.Engine {
 
 	router := gin.Default()
@@ -174,6 +201,12 @@ func SetupRoutes(pool *WebSocketPool, settings *Settings) *gin.Engine {
 	d, err := NewDocker(settings)
 	if err != nil {
 		log.Fatal(err)
+	}
+
+	container := router.Group("/container/ops")
+	{
+		//proxy to containers api
+		container.Any("/*proxyPath", proxy(settings, d))
 	}
 
 	docker := router.Group("/docker")

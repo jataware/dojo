@@ -12,28 +12,32 @@ import (
 
 type WebSocketClient struct {
 	ID       string
+	Server   string
 	Conn     *ws.Conn
 	Pool     *WebSocketPool
 	Ssh      *SSHD
 	Settings *Settings
+	ProxyWS  *WebSocketProxyClient
 	mu       sync.Mutex
 }
 
 func NewWebSocketClient(conn *ws.Conn, pool *WebSocketPool, settings *Settings) *WebSocketClient {
-	server := fmt.Sprintf("%s:2224", settings.Docker.Host)
+	server := settings.Docker.Host
+	ssh_server := fmt.Sprintf("%s:2224", settings.Docker.Host)
 	user := settings.SSH.User
 	pass := settings.SSH.Password
-
+	id := xid.New().String()
 	return &WebSocketClient{
-		ID:       xid.New().String(),
+		ID:       id,
 		Conn:     conn,
 		Pool:     pool,
 		Settings: settings,
-		Ssh:      NewSSHD(server, user, pass),
+		Ssh:      NewSSHD(ssh_server, user, pass),
+		ProxyWS:  NewWebSocketProxyClient(id, server),
 	}
 }
 
-func (c *WebSocketClient) Route(message WebSocketMessage, replyChan chan WebSocketMessage) {
+func (c *WebSocketClient) RouteClientMessages(message WebSocketMessage, replyClientChan chan WebSocketMessage) {
 
 	switch message.Channel {
 	case "xterm":
@@ -54,16 +58,27 @@ func (c *WebSocketClient) Route(message WebSocketMessage, replyChan chan WebSock
 		c.Ssh.Terminal = &term
 	case "ping":
 		// testing channel
-		replyChan <- WebSocketMessage{Channel: "pong", Payload: fmt.Sprintf("PONG %s", message.Payload)}
+		replyClientChan <- WebSocketMessage{Channel: "pong", Payload: fmt.Sprintf("PONG %s", message.Payload)}
+
 	case "ssh":
 		switch message.Payload {
 		case "connect":
+			// attempt to connect the WS first
+			if err := c.ProxyWS.Connect(); err != nil {
+				LogError("Proxy Connect Failed", err)
+				replyClientChan <- WebSocketMessage{Channel: "fatal", Payload: fmt.Sprintf("[ERROR] %+v", err)}
+			} else {
+				go c.ProxyWS.Start(replyClientChan)
+				log.Printf("Proxy Connected")
+			}
 			log.Printf("Message SSH Connect: %+v\n", message)
-			go c.Ssh.Start(replyChan)
+			go c.Ssh.Start(replyClientChan)
+
 		case "disconnect":
-			log.Printf("Message SSH Disconnect: %+v\n", message)
+			c.ProxyWS.Stop()
 			c.Ssh.Stop()
-			replyChan <- WebSocketMessage{Channel: "xterm", Payload: "\r\n** Disconnected **\r\n"}
+			log.Printf("Message SSH Disconnect: %+v\n", message)
+			replyClientChan <- WebSocketMessage{Channel: "xterm", Payload: "\r\n** Disconnected **\r\n"}
 		}
 	}
 }
@@ -71,12 +86,13 @@ func (c *WebSocketClient) Route(message WebSocketMessage, replyChan chan WebSock
 func (c *WebSocketClient) Read() {
 
 	doneChan := make(chan bool)
-	replyChan := make(chan WebSocketMessage)
+	replyClientChan := make(chan WebSocketMessage)
 	defer func() {
 		c.Ssh.Stop()
+		c.ProxyWS.Stop()
 		c.Pool.Unregister <- c
 		c.Conn.Close()
-		close(replyChan)
+		close(replyClientChan)
 	}()
 
 	c.Conn.SetReadLimit(512)
@@ -89,7 +105,7 @@ func (c *WebSocketClient) Read() {
 	go func() {
 		for {
 			select {
-			case msg := <-replyChan:
+			case msg := <-replyClientChan:
 				c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
 				if err := c.Conn.WriteJSON(msg); err != nil {
 					if ws.IsUnexpectedCloseError(err, ws.CloseGoingAway, ws.CloseAbnormalClosure) {
@@ -122,30 +138,12 @@ func (c *WebSocketClient) Read() {
 		}
 
 		LogTrace("Message Received: %+v", message)
-		c.Route(message, replyChan)
+		c.RouteClientMessages(message, replyClientChan)
 	}
 	<-doneChan
 }
 
 func (c *WebSocketClient) KeepAlive() {
-	ticker := time.NewTicker(pingPeriod)
-	defer func() {
-		ticker.Stop()
-		c.Conn.Close()
-	}()
-	for {
-		select {
-		case <-ticker.C:
-			c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
-			log.Printf("Send Keep Alive Id: %s\n", c.ID)
-			if err := c.Conn.WriteMessage(ws.PingMessage, nil); err != nil {
-				if ws.IsUnexpectedCloseError(err, ws.CloseGoingAway, ws.CloseAbnormalClosure) {
-					LogError("Unexpected Error Keep Alive:", err)
-				} else {
-					log.Printf("Keep Alive Client gone - Id: %s\n", c.ID)
-				}
-				return
-			}
-		}
-	}
+	defer c.Conn.Close()
+	ConnectionKeepAlive(c.ID, c.Conn)
 }

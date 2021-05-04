@@ -3,7 +3,7 @@
 DT=$(date +"%Y%m%d")
 GIT=${DT}.git.$(git rev-parse --short HEAD)
 PROJECT="claudine"
-VERSION="2.2.0"
+VERSION="2.2.1"
 TAG="${PROJECT}_${VERSION}"
 
 GROUP=jataware

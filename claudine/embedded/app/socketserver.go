@@ -120,11 +120,11 @@ func (server *HistorySocketServer) Handle(c net.Conn) {
 
 	if wait {
 		if block {
-			message := WebSocketMessage{Type: "blocked", Payload: string(bytes)}
+			message := WebSocketMessage{Channel: "term/blocked", Payload: string(bytes)}
 			server.Pool.Broadcast <- message
 			msg = BLOCK
 		} else {
-			message := WebSocketMessage{Type: "prompt", Payload: string(bytes)}
+			message := WebSocketMessage{Channel: "term/prompt", Payload: string(bytes)}
 			server.Pool.Broadcast <- message
 			response := make(chan uint8)
 			server.WaitingQueue <- response
@@ -144,7 +144,7 @@ func (server *HistorySocketServer) Handle(c net.Conn) {
 	}
 
 	if msg == PASS {
-		message := WebSocketMessage{Type: "message", Payload: string(bytes)}
+		message := WebSocketMessage{Channel: "term/message", Payload: string(bytes)}
 		server.Pool.Broadcast <- message
 	}
 
