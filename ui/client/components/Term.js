@@ -1,4 +1,6 @@
-import React, { useContext, useEffect, useRef } from 'react'; // eslint-disable-line no-unused-vars
+import React, {
+  useCallback, useEffect, useRef
+} from 'react'; // eslint-disable-line no-unused-vars
 
 import { FitAddon } from 'xterm-addon-fit';
 import { Terminal } from 'xterm';
@@ -14,7 +16,7 @@ const Term = () => {
   const term = useRef(null);
   const fitAddon = new FitAddon();
 
-  useEffect(async () => {
+  useEffect(() => {
     term.current = new Terminal({
       cursorBlink: true,
       theme: {
@@ -37,21 +39,25 @@ const Term = () => {
     fitAddon.fit();
   }, []);
 
-  useEffect(async () => {
+  const initTerm = useCallback(async () => {
+    console.log({ cols: term.current.cols, rows: term.current.rows });
+    await emit('terminal/resize', JSON.stringify({ cols: term.current.cols, rows: term.current.rows }));
+    await emit('ssh', 'connect');
+  }, []);
+
+  useEffect(() => {
     const xtermHandler = (d) => {
       console.log(`<- ${d}`);
       term.current.write(d);
     };
 
     register('xterm', xtermHandler);
-
-    console.log({ cols: term.current.cols, rows: term.current.rows });
-    await emit('terminal/resize', JSON.stringify({ cols: term.current.cols, rows: term.current.rows }));
-    await emit('ssh', 'connect');
-
-    return () => {
+    initTerm();
+    return (() => {
+      console.log('ssh/disconnect');
+      emit('ssh', 'disconnect');
       unregister('xterm', xtermHandler);
-    };
+    });
   }, []);
 
   return (

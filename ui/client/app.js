@@ -57,7 +57,8 @@ export const ExecutionDialog = ({ open, setOpen, dialogContents }) => {
       setRunCommand(dialogContents.text);
     }
 
-    await fetch('/container/clear?code=0');
+    await fetch('/api/container/ops/clear?code=0');
+
     setOpen(false);
   };
 
@@ -225,7 +226,7 @@ const CenteredGrid = ({ handlePublish }) => {
   const [openFullScreen, setOpenFullScreen] = React.useState(false);
 
   const saveEditor = async () => {
-    await fetch(`/container/save?path=${editorContents.file}`, {
+    await fetch(`/api/container/ops/save?path=${editorContents.file}`, {
       method: 'POST',
       body: editorContents.text
     });
@@ -322,7 +323,7 @@ const Publisher = () => {
   const { getWebSocketId, register, unregister } = useWebSocketUpdateContext();
 
   useEffect(async () => {
-    const respID = await fetch('/container/container');
+    const respID = await fetch('/api/container/ops/container');
     const { id } = await respID.json();
     console.log(`set container id ${id}`);
     setContainerId(id);
@@ -383,7 +384,7 @@ const Publisher = () => {
     console.log(postBody);
     setOpenDialog(true);
 
-    await fetch(`api/docker/commit/${containerId}`, {
+    await fetch(`/api/docker/commit/${containerId}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -394,7 +395,7 @@ const Publisher = () => {
   const handleClose = async () => {
     setClosing(true);
     setEnableFinished(false);
-    await fetch(`api/docker/stop/${containerId}`, { method: 'DELETE' });
+    await fetch(`/api/docker/stop/${containerId}`, { method: 'DELETE' });
     clearHistoryContext();
     history.push('/');
   };

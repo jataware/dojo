@@ -1,5 +1,5 @@
 import React, {
-  useEffect, useRef
+  useEffect
 } from 'react';
 
 import DeleteIcon from '@material-ui/icons/Delete';
@@ -13,73 +13,55 @@ import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
-import { useHistoryContext, useHistoryUpdateContext } from '../context';
+import {
+  useHistoryContext,
+  useHistoryUpdateContext,
+  useWebSocketUpdateContext,
+} from '../context';
 
 import RunCommandBox from './RunCommandBox';
 
 export const ContainerWebSocket = ({
-  setAlert, setAlertVisible, setDialogOpen, setDialogContents, setEditorContents, openEditor
+  setDialogOpen, setDialogContents, setEditorContents, openEditor
 }) => {
-  const ws = useRef(null);
+  const { register, unregister } = useWebSocketUpdateContext();
   const { addHistoryItem } = useHistoryUpdateContext();
 
-  useEffect(async () => {
-    const url = `ws://${window.location.host}/websocket`;
-    console.log(`connecting ${url}`);
+  const onMessage = (data) => {
+    const { command, cwd } = JSON.parse(data);
+    addHistoryItem({ text: command, cwd });
+  };
 
-    ws.current = new WebSocket(url);
-    ws.current.onopen = () => {
-      console.log('ws opened');
-    };
-    ws.current.onerror = (evt) => {
-      console.log(`ws error ${evt}`);
-      setAlert({
-        severity: 'error',
-        message: `Websocket Error: ${evt}`
-      });
-      setAlertVisible(true);
-    };
-    ws.current.onclose = () => {
-      console.log('ws closed');
-      setAlert({
-        severity: 'warning',
-        message: 'Websocket closed'
-      });
+  const onPrompt = (data) => {
+    const { command, cwd } = JSON.parse(data);
+    setDialogContents({ text: command, cwd });
+    setDialogOpen(true);
+  };
 
-      setAlertVisible(true);
-    };
-    ws.current.onmessage = async (evt) => {
-      console.log(evt.data);
-      const data = JSON.parse(evt.data);
-      if (data.type === 'message') {
-        const { command, cwd } = JSON.parse(data.payload);
-        addHistoryItem({ text: command, cwd });
+  const onBlocked = async (data) => {
+    const { command, cwd } = JSON.parse(data);
+    const s = command.trim();
+    if (s.startsWith('edit ')) {
+      const p = `${s.substring(5)}`;
+      const f = (p.startsWith('/')) ? p : `${cwd}/${p}`;
+      const rsp = await fetch(`/api/container/ops/cat?path=${f}`);
+      if (rsp.ok) {
+        setEditorContents({ text: await rsp.text(), file: f });
+        openEditor();
       }
-      if (data.type === 'prompt') {
-        const { command, cwd } = JSON.parse(data.payload);
-        setDialogContents({ text: command, cwd });
-        setDialogOpen(true);
-      }
-      if (data.type === 'blocked') {
-        const { command, cwd } = JSON.parse(data.payload);
-        const s = command.trim();
-        if (s.startsWith('edit ')) {
-          const p = `${s.substring(5)}`;
-          const f = (p.startsWith('/')) ? p : `${cwd}/${p}`;
-          const rsp = await fetch(`/container/cat?path=${f}`);
-          if (rsp.ok) {
-            setEditorContents({ text: await rsp.text(), file: f });
-            openEditor();
-          }
-        }
-      }
-    };
-    return async () => {
-      console.log('websocket closed');
-      ws.current.onclose = null;
+    }
+  };
 
-      ws.current.close();
-    };
+  useEffect(() => {
+    register('term/message', onMessage);
+    register('term/prompt', onPrompt);
+    register('term/blocked', onBlocked);
+
+    return (() => {
+      unregister('term/message', onMessage);
+      unregister('term/prompt', onPrompt);
+      unregister('term/blocked', onBlocked);
+    });
   }, []);
 
   return (<> </>);

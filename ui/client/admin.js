@@ -27,7 +27,7 @@ const Admin = () => {
   };
 
   const destroyContainer = async (id) => {
-    await fetch(`api/docker/stop/${id}`, { method: 'DELETE' });
+    await fetch(`/api/docker/stop/${id}`, { method: 'DELETE' });
     await refreshContainers();
   };
 
