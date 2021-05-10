@@ -25,7 +25,8 @@ func setup() *gin.Engine {
 	pool := NewPool()
 	go pool.Start()
 
-	engine := SetupRoutes(pool, settings)
+	memstore := NewMemStore()
+	engine := SetupRoutes(pool, settings, memstore)
 	return engine
 }
 

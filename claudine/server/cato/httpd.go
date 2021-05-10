@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"time"
 )
 
 func root() gin.HandlerFunc {
@@ -42,7 +43,7 @@ type LaunchCmd struct {
 	Name string `json:"name" binding:"required"`
 }
 
-func launchContainer(settings *Settings, docker *Docker) gin.HandlerFunc {
+func launchContainer(settings *Settings, docker *Docker, store *MemStore) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var cmd LaunchCmd
 		if err := c.BindJSON(&cmd); err != nil {
@@ -55,7 +56,13 @@ func launchContainer(settings *Settings, docker *Docker) gin.HandlerFunc {
 			c.String(http.StatusInternalServerError, fmt.Sprintf("%+v", err))
 			return
 		}
-		c.JSON(http.StatusOK, gin.H{"id": id})
+
+		container := store.Add(id)
+		container.Name = cmd.Name
+		container.Image = settings.Docker.Image
+		container.Launched = time.Now().Format(time.RFC3339)
+
+		c.JSON(http.StatusOK, container)
 	}
 }
 
@@ -185,7 +192,114 @@ func proxy(settings *Settings, docker *Docker) gin.HandlerFunc {
 	}
 }
 
-func SetupRoutes(pool *WebSocketPool, settings *Settings) *gin.Engine {
+func storeDump(store *MemStore) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.JSON(200, store.Dump())
+	}
+}
+
+func storeGetKeys(store *MemStore) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.JSON(200, gin.H{"keys": store.Keys()})
+	}
+}
+
+func storePutKeyVal(store *MemStore) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id := c.Param("id")
+		var json map[string]interface{}
+		if err := c.BindJSON(&json); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		if s, found := store.Get(id); found {
+			s.AppendMeta(json)
+		} else {
+			c.String(http.StatusNotFound, fmt.Sprintf("key not found: %s", id))
+		}
+		v, _ := store.Get(id)
+		c.JSON(http.StatusOK, v)
+	}
+}
+
+func storeDeleteKey(store *MemStore) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id := c.Param("id")
+		store.Delete(id)
+		c.String(http.StatusOK, id)
+	}
+}
+
+func storeGetKey(store *MemStore) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id := c.Param("id")
+		if val, found := store.Get(id); found {
+			c.JSON(200, val)
+			return
+		}
+		c.String(http.StatusNotFound, fmt.Sprintf("key not found: %s", id))
+	}
+}
+
+func listHistory(store *MemStore) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id := c.Param("id")
+		if s, found := store.Get(id); found {
+			c.JSON(200, s.History)
+			return
+		}
+		c.String(http.StatusNotFound, fmt.Sprintf("key not found: %s", id))
+	}
+}
+
+func listEdits(store *MemStore) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id := c.Param("id")
+		if s, found := store.Get(id); found {
+			c.JSON(200, s.Edits)
+			return
+		}
+		c.String(http.StatusNotFound, fmt.Sprintf("key not found: %s", id))
+	}
+}
+
+func appendHistory(store *MemStore) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id := c.Param("id")
+		var json []string
+		if err := c.BindJSON(&json); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		if s, found := store.Get(id); found {
+			s.AddHistory(json)
+			c.JSON(200, s.History)
+			return
+		}
+		c.String(http.StatusNotFound, fmt.Sprintf("key not found: %s", id))
+	}
+}
+
+func appendEdits(store *MemStore) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		id := c.Param("id")
+		var json []string
+		if err := c.BindJSON(&json); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+
+		if s, found := store.Get(id); found {
+			s.AddEdits(json)
+			c.JSON(200, s.Edits)
+			return
+		}
+		c.String(http.StatusNotFound, fmt.Sprintf("key not found: %s", id))
+	}
+}
+
+func SetupRoutes(pool *WebSocketPool, settings *Settings, memstore *MemStore) *gin.Engine {
 
 	router := gin.Default()
 	router.GET("/", root())
@@ -203,6 +317,25 @@ func SetupRoutes(pool *WebSocketPool, settings *Settings) *gin.Engine {
 		log.Fatal(err)
 	}
 
+	store := router.Group("/store")
+	{
+		store.GET("/dump", storeDump(memstore))
+		store.GET("/keys", storeGetKeys(memstore))
+		store.GET("/key/:id", storeGetKey(memstore))
+		store.PUT("/key/:id", storePutKeyVal(memstore))
+		store.DELETE("/key/:id", storeDeleteKey(memstore))
+	}
+
+	containerStore := router.Group("/container/store/:id")
+	{
+		containerStore.GET("/history", listHistory(memstore))
+		containerStore.PUT("/history", appendHistory(memstore))
+		containerStore.GET("/edits", listEdits(memstore))
+		containerStore.PUT("/edits", appendEdits(memstore))
+		//containerStore.GET("/provisions", listHistory(memstore))
+		//containerStore.GET("/provisions", listHistory(memstore))
+	}
+
 	container := router.Group("/container/ops")
 	{
 		//proxy to containers api
@@ -218,7 +351,7 @@ func SetupRoutes(pool *WebSocketPool, settings *Settings) *gin.Engine {
 		docker.GET("/containers", listContainers(d))
 		docker.POST("/exec/:id", execContainer(d))
 		docker.GET("/inspect/:id", inspectContainer(d))
-		docker.POST("/launch", launchContainer(settings, d))
+		docker.POST("/launch", launchContainer(settings, d, memstore))
 		docker.DELETE("/stop/:id", stopContainer(d))
 	}
 
