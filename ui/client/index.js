@@ -14,6 +14,7 @@ import { ThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 import Admin from './admin';
 import App from './app';
 import Intro from './intro';
+import LandingPage from './landingpage';
 import { WebSocketContextProvider } from './context';
 
 const theme = createMuiTheme({
@@ -43,6 +44,9 @@ export default function Main() {
       <Router>
         <Switch>
           <Route exact path="/">
+            <LandingPage />
+          </Route>
+          <Route exact path="/intro">
             <Intro />
           </Route>
           <Route path="/term">

@@ -66,7 +66,12 @@ module.exports = {
         secure: false,
         changeOrigin: true,
         ws: true,
-      }
+      },
+      '/dojo': {
+        target: 'http://localhost:8000',
+        secure: false,
+        changeOrigin: true,
+      },
     }
   },
     plugins: [

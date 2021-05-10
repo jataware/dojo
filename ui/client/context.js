@@ -3,6 +3,7 @@ import React, {
   useContext,
   useEffect,
   useRef,
+  useState,
 } from 'react';
 
 import { v4 as uuidv4 } from 'uuid';
@@ -201,5 +202,38 @@ export const HistoryContextProvider = ({ children }) => {
       </HistoryUpdateContext.Provider>
     </HistoryContext.Provider>
 
+  );
+};
+
+export const ContainerInfoContext = createContext({});
+export const ContainerInfoUpdateContext = createContext({});
+export const useContainerInfoContext = () => useContext(ContainerInfoContext);
+export const useContainerInfoUpdateContext = () => useContext(ContainerInfoUpdateContext);
+export const ContainerInfoContextProvider = ({ children }) => {
+  const [containerInfo, updateContainerInfo] = useState(() => {});
+
+  const fetchContainerInfo = async () => {
+    const respID = await fetch('/api/container/ops/container');
+    const { id } = await respID.json();
+    console.log(`set containerID ${id}`);
+
+    const respName = await fetch(`/api/docker/inspect/${id}`);
+    const { Name } = await respName.json();
+    const name = Name?.substring(1) ?? '';
+    console.log(`set container Name ${name}`);
+
+    updateContainerInfo((prevInfo) => ({ ...prevInfo, id, name }));
+  };
+
+  useEffect(() => {
+    fetchContainerInfo();
+  }, []);
+
+  return (
+    <ContainerInfoContext.Provider value={containerInfo}>
+      <ContainerInfoUpdateContext.Provider value={{ fetchContainerInfo, updateContainerInfo }}>
+        { children }
+      </ContainerInfoUpdateContext.Provider>
+    </ContainerInfoContext.Provider>
   );
 };

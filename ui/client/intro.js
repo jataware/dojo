@@ -133,6 +133,16 @@ const Intro = () => {
 
       const provision = [...getProvisioning(imageType), ['git', 'clone', giturl]];
 
+      await fetch(`/api/store/key/${containerid}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          provision
+        })
+      });
+
       await provision.reduce(async (memo, cmd) => {
         await memo;
         await execute(cmd);

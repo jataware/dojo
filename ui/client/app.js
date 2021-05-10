@@ -23,7 +23,9 @@ import { useHistory } from 'react-router-dom';
 import { makeStyles, useTheme } from '@material-ui/core/styles';
 
 import {
-  HistoryContextProvider, useHistoryContext,
+  ContainerInfoContextProvider, HistoryContextProvider,
+  useContainerInfoContext,
+  useHistoryContext,
   useHistoryUpdateContext,
   useWebSocketContext,
   useWebSocketUpdateContext,
@@ -213,6 +215,7 @@ export const Footer = ({ wsConnected, socketIoConnected }) => {
 
 const CenteredGrid = ({ handlePublish }) => {
   const theme = useTheme();
+  const containerInfo = useContainerInfoContext();
   const [alertVisible, setAlertVisible] = React.useState(false);
   const [alert, setAlert] = React.useState({
     severity: 'error',
@@ -229,6 +232,11 @@ const CenteredGrid = ({ handlePublish }) => {
     await fetch(`/api/container/ops/save?path=${editorContents.file}`, {
       method: 'POST',
       body: editorContents.text
+    });
+
+    await fetch(`/api/container/store/${containerInfo.id}/edits`, {
+      method: 'PUT',
+      body: JSON.stringify([editorContents.file])
     });
   };
 
@@ -293,7 +301,7 @@ const CenteredGrid = ({ handlePublish }) => {
           style={{ margin: '10px' }}
           onClick={(e) => { e.preventDefault(); setPublishDialogOpen(true); }}
         >
-          Publish
+          End Session
         </Fab>
       </div>
       <PublishDialog
@@ -308,6 +316,7 @@ const CenteredGrid = ({ handlePublish }) => {
 
 const Publisher = () => {
   const historyContext = useHistoryContext();
+  const containerInfo = useContainerInfoContext();
   const { clearHistoryContext } = useHistoryUpdateContext();
   const history = useHistory();
   const [openDialog, setOpenDialog] = React.useState(false);
@@ -318,23 +327,9 @@ const Publisher = () => {
   const [dockerhubLink, setDockerhubLink] = useState('');
   const [tagName, setTagName] = useState('');
   const [runCommand, setRunCommand] = useState('');
-  const [containerId, setContainerId] = useState('');
-  const [containerName, setContainerName] = useState('');
   const { getWebSocketId, register, unregister } = useWebSocketUpdateContext();
 
-  useEffect(async () => {
-    const respID = await fetch('/api/container/ops/container');
-    const { id } = await respID.json();
-    console.log(`set container id ${id}`);
-    setContainerId(id);
-
-    const respName = await fetch(`/api/docker/inspect/${id}`);
-    const { Name } = await respName.json();
-    console.log(`set container Name ${Name}`);
-    setContainerName(Name?.substring(1) ?? '');
-  }, []);
-
-  useEffect(async () => {
+  useEffect(() => {
     console.log('bind docker/publish');
 
     const publishHandler = (data) => {
@@ -376,15 +371,15 @@ const Publisher = () => {
     const rc = findRunCommand(historyContext);
     setRunCommand(rc.text);
     const postBody = {
-      name: containerName,
+      name: containerInfo.name,
       cwd: rc.cwd,
-      entrypoint: rc.text.split(' '),
+      entrypoint: rc.text?.split(' ') ?? [],
       listeners: [wsid],
     };
     console.log(postBody);
     setOpenDialog(true);
 
-    await fetch(`/api/docker/commit/${containerId}`, {
+    await fetch(`/api/docker/commit/${containerInfo.id}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -395,7 +390,7 @@ const Publisher = () => {
   const handleClose = async () => {
     setClosing(true);
     setEnableFinished(false);
-    await fetch(`/api/docker/stop/${containerId}`, { method: 'DELETE' });
+    await fetch(`/api/docker/stop/${containerInfo.id}`, { method: 'DELETE' });
     clearHistoryContext();
     history.push('/');
   };
@@ -461,11 +456,12 @@ const Publisher = () => {
   );
 };
 
-// TODO bind new Websocket
 const App = () => (
-  <HistoryContextProvider>
-    <Publisher />
-  </HistoryContextProvider>
+  <ContainerInfoContextProvider>
+    <HistoryContextProvider>
+      <Publisher />
+    </HistoryContextProvider>
+  </ContainerInfoContextProvider>
 );
 
 export default App;
