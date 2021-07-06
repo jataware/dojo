@@ -15,7 +15,11 @@ import Admin from './admin';
 import App from './app';
 import Intro from './intro';
 import LandingPage from './landingpage';
-import { WebSocketContextProvider } from './context';
+import Model from './model';
+import PublishContainer from './publish_container';
+import Summary from './summary';
+import TermLoading from './term_loading';
+import TheKing from './theking';
 
 const theme = createMuiTheme({
   palette: {
@@ -37,28 +41,21 @@ const theme = createMuiTheme({
 });
 
 export default function Main() {
-  const url = `ws://${window.location.host}/ws`;
-
   return (
-    <WebSocketContextProvider url={url} autoConnect>
-      <Router>
-        <Switch>
-          <Route exact path="/">
-            <LandingPage />
-          </Route>
-          <Route exact path="/intro">
-            <Intro />
-          </Route>
-          <Route path="/term">
-            <App />
-          </Route>
-          <Route path="/admin">
-            <Admin />
-          </Route>
-          <Route path="/*" render={() => <h2>404 Not Found</h2>} />
-        </Switch>
-      </Router>
-    </WebSocketContextProvider>
+    <Router>
+      <Switch>
+        <Route component={LandingPage} exact path="/" />
+        <Route component={Model} exact path="/model" />
+        <Route component={Intro} exact path="/intro" />
+        <Route component={TermLoading} exact path="/loadingterm" />
+        <Route component={App} exact path="/term/:worker/:model" />
+        <Route component={Summary} exact path="/summary/:worker" />
+        <Route component={PublishContainer} exact path="/publishcontainer/:worker" />
+        <Route component={Admin} exact path="/admin" />
+        <Route component={TheKing} exact path="/theking" />
+        <Route path="/*" render={() => <h2>404 Not Found</h2>} />
+      </Switch>
+    </Router>
   );
 }
 

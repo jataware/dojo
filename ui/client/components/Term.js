@@ -19,7 +19,7 @@ class TermHelperAddon {
   }
 
   activate(term) {
-    console.log('addon activate');
+    console.debug('addon activate');
     this._term = term;
     this._active = true;
   }
@@ -49,7 +49,7 @@ class TermHelperAddon {
 
   dispose() {
     this._active = false;
-    console.log('addon deactivate');
+    console.debug('addon deactivate');
   }
 }
 
@@ -108,12 +108,12 @@ const Term = () => {
       }
     });
 
-    term.current.setOption('logLevel', 'debug');
+    // term.current.setOption('logLevel', 'debug');
 
-    console.log('loading terminal');
+    console.info('loading terminal');
 
     term.current.onData(async (data) => {
-      console.log(`-> ${data}`);
+      console.debug(`-> ${data}`);
       await emit('xterm', data);
     });
 
@@ -124,17 +124,17 @@ const Term = () => {
   }, []);
 
   const initTerm = useCallback(async () => {
-    console.log({ cols: term.current.cols, rows: term.current.rows });
+    console.debug({ cols: term.current.cols, rows: term.current.rows });
     await emit('terminal/resize', JSON.stringify({ cols: term.current.cols, rows: term.current.rows }));
-    await emit('ssh', 'connect');
+    await emit('ssh/connect', 'connect');
   }, []);
 
   useEffect(() => {
     const xtermHandler = (d) => {
-      console.log(`<- ${d}`);
+      console.debug(`<- ${d}`);
       term.current.write(d, () => {
-        console.log('write done');
         /* exprimental
+           console.debug('write done');
            termHelperAddon.update()
         */
       });
@@ -143,8 +143,8 @@ const Term = () => {
     register('xterm', xtermHandler);
     initTerm();
     return (() => {
-      console.log('ssh/disconnect');
-      emit('ssh', 'disconnect');
+      console.info('ssh/disconnect');
+      emit('ssh/disconnect', 'disconnect');
       unregister('xterm', xtermHandler);
     });
   }, []);

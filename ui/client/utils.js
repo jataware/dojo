@@ -1,1 +1,1 @@
-export const findRunCommand = (h) => h.find((x) => x.runCommand) || {};
+export const sleep = async (t) => new Promise((r) => setTimeout(r, t));

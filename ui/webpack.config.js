@@ -4,6 +4,7 @@ const path = require('path');
 
 const NodemonPlugin = require('nodemon-webpack-plugin');
 const { CleanWebpackPlugin } = require('clean-webpack-plugin')
+const CopyWebpackPlugin = require("copy-webpack-plugin");
 
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
@@ -29,15 +30,10 @@ module.exports = {
                 use: [MiniCssExtractPlugin.loader, 'css-loader'],
                 sideEffects: true
             },
-            {
-                test: /\.(png|woff|woff2|eot|ttf|svg)$/,
-                use: [{
-                    loader: 'url-loader',
-                    options: {
-                        limit: 10000
-                    }
-                }]
-            }
+          {
+            test: /\.(png|jpg|gif|woff|woff2|eot|ttf|svg|mp4)$/,
+            loader: 'file-loader',
+          },
         ]
     },
 
@@ -50,25 +46,34 @@ module.exports = {
     contentBase: path.resolve(__dirname, './dist'),
     port: 8080,
     historyApiFallback: true,
+    disableHostCheck: true,
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Headers': 'Origin, X-Requested-With, Content-Type, Accept'
     },
     proxy: {
-      '/api': {
+      '/api/clouseau': {
+        target: 'http://localhost:3000',
+        pathRewrite: { '^/api/clouseau': '' },
+        secure: false,
+        changeOrigin: true,
+      },
+      '/api/ws': {
         target: 'http://localhost:3000',
         pathRewrite: { '^/api': '' },
         secure: false,
         changeOrigin: true,
-      },
-      '/ws': {
-        target: 'http://localhost:3000',
-        secure: false,
-        changeOrigin: true,
         ws: true,
       },
-      '/dojo': {
+      '/api/dojo': {
         target: 'http://localhost:8000',
+        pathRewrite: { '^/api/dojo': '' },
+        secure: false,
+        changeOrigin: true,
+      },
+      '/api/shorthand': {
+        target: 'http://localhost:5000',
+        pathRewrite: { '^/api/shorthand': '' },
         secure: false,
         changeOrigin: true,
       },
@@ -83,6 +88,11 @@ module.exports = {
         }),
         new MiniCssExtractPlugin({
             filename: "[name].css",}),
-        new webpack.HotModuleReplacementPlugin()
+      new webpack.HotModuleReplacementPlugin(),
+      new CopyWebpackPlugin({
+        patterns: [
+          { from: "client/assets", to: "assets" }
+        ],
+      }),
     ],
 };

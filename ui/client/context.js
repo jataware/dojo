@@ -6,7 +6,7 @@ import React, {
   useState,
 } from 'react';
 
-import { v4 as uuidv4 } from 'uuid';
+import { sleep } from './utils';
 
 export const WebSocketContext = createContext({});
 export const WebSocketUpdateContext = createContext({});
@@ -27,10 +27,8 @@ export const WebSocketContextProvider = ({ url, children }) => {
 
   const setWebSocketId = (id) => {
     clientId.current = id;
-    console.log(`New Client ID ${clientId.current}`);
+    console.info(`New Client ID ${clientId.current}`);
   };
-
-  const sleep = async (t) => new Promise((r) => setTimeout(r, t));
 
   const getWebSocketId = () => clientId.current;
 
@@ -79,123 +77,108 @@ export const WebSocketContextProvider = ({ url, children }) => {
       }
     });
 
-    console.log(`Resolved response in: ${channel}, out: ${responseChannel}, resp: ${resp}`);
+    console.info(`Resolved response in: ${channel}, out: ${responseChannel}, resp: ${resp}`);
     return resp;
   };
 
-  useEffect(async () => {
-    console.log('websocket connecting...');
+  const closeSocket = () => {
+    try {
+      ws.current.close();
+    } finally {
+      console.debug('Websocket Close called');
+    }
+  };
+
+  useEffect(() => {
+    console.info('websocket connecting...');
     // ws.current = new WebSocket(url);
     ws.current.onopen = () => {
-      console.log('ws opened');
+      console.info('ws opened');
     };
     ws.current.onerror = (evt) => {
-      console.log(`ws error ${evt}`);
+      console.debug(`ws error ${evt}`);
     };
     ws.current.onclose = () => {
-      console.log('ws closed');
+      console.info('ws closed');
     };
 
-    ws.current.onmessage = async (evt) => {
-      console.log(evt.data);
+    ws.current.onmessage = (evt) => {
+      console.debug(evt.data);
       const data = JSON.parse(evt.data);
+
+      if (data.channel === 'fatal') {
+        console.error(`%cServer Error ${data.payload}`, 'background: #f00; color: #fff');
+      }
 
       if (data.channel === 'id') {
         setWebSocketId(data.payload);
-      } else {
-        dispatch(data.channel, data.payload);
+        return;
       }
+
+      dispatch(data.channel, data.payload);
     };
 
-    return async () => {
-      console.log('websocket disconnecting');
-      ws.current.close();
+    return () => {
+      console.info('websocket disconnecting');
+      closeSocket();
     };
   }, []);
 
   return (
     <WebSocketContext.Provider value={{ emit, awaitEmit }}>
-      <WebSocketUpdateContext.Provider value={{ getWebSocketId, register, unregister }}>
+      <WebSocketUpdateContext.Provider value={{
+        getWebSocketId, register, unregister, closeSocket
+      }}
+      >
         { children }
       </WebSocketUpdateContext.Provider>
     </WebSocketContext.Provider>
   );
 };
 
-const useStateWithLocalStorage = (localStorageKey, init) => {
-  const [value, setValue] = React.useState(
-    JSON.parse(localStorage.getItem(localStorageKey)) || init
-  );
-
-  React.useEffect(() => {
-    localStorage.setItem(localStorageKey, JSON.stringify(value));
-  }, [value]);
-
-  return [value, setValue];
-};
-
 export const HistoryContext = createContext({});
 export const HistoryUpdateContext = createContext({});
-
 export const useHistoryContext = () => useContext(HistoryContext);
-
 export const useHistoryUpdateContext = () => useContext(HistoryUpdateContext);
-
 export const HistoryContextProvider = ({ children }) => {
-  // const [history, updateHistory] = useState(() => []);
-  const [history, updateHistory] = useStateWithLocalStorage('historyItems', []);
-  const runCommand = useRef('');
+  const [historyContext, setHistoryContext] = useState(() => []);
+  const [runCommand, setRunCommand] = useState(() => {});
 
-  function clearHistoryContext() {
-    updateHistory([]);
-  }
-
-  function setRunCommand(s) {
-    runCommand.current = s;
-  }
-
-  function historyIgnore(cmd) {
-    return ['ls', 'll', 'pwd', 'clear'].includes(cmd);
-  }
-
-  function addHistoryItem(item) {
-    if (historyIgnore(item.text)) {
-      return;
+  const fetchHistory = async (containerId) => {
+    const resp = await fetch(`/api/dojo/clouseau/container/${containerId}/history`);
+    if (resp.ok) {
+      setHistoryContext(await resp.json());
     }
-    if (item.text === runCommand?.current) {
-      item.runCommand = true; // eslint-disable-line no-param-reassign
-      setRunCommand('');
+  };
+
+  const fetchRunCommand = async (containerId) => {
+    const resp = await fetch(`/api/dojo/clouseau/container/${containerId}/runcommand`);
+
+    if (resp.ok) {
+      setRunCommand(await resp.json());
     }
-    updateHistory((prevHistory) => {
-      const hist = prevHistory.map((x) => {
-        if (item.runCommand) {
-          delete x.runCommand; // eslint-disable-line no-param-reassign
-        }
-        return x;
-      });
-      return [...hist, { ...item, id: uuidv4() }];
+  };
+
+  const markRunCommand = async (containerId, item) => {
+    await fetch(`/api/clouseau/container/store/${containerId}/meta`, {
+      method: 'PUT',
+      body: JSON.stringify({ run_command: item.command, run_cwd: item.cwd })
     });
-  }
+    setRunCommand(item);
+  };
 
-  function markRunCommand(item, enable) {
-    updateHistory(history.map((x) => {
-      if (enable && x.id === item.id) {
-        x.runCommand = true; // eslint-disable-line no-param-reassign
-      } else {
-        delete x.runCommand; // eslint-disable-line no-param-reassign
-      }
-      return x;
-    }));
-  }
-
-  function removeHistoryItem(item) {
-    updateHistory(history.filter((x) => x.id !== item.id));
-  }
+  const removeHistoryItem = async (containerId, item) => {
+    const resp = await fetch(`/api/dojo/clouseau/container/${containerId}/history/${item.idx}`,
+      { method: 'DELETE' });
+    if (resp.ok) {
+      await fetchHistory(containerId);
+    }
+  };
 
   return (
-    <HistoryContext.Provider value={history}>
+    <HistoryContext.Provider value={{ historyContext, runCommand }}>
       <HistoryUpdateContext.Provider value={{
-        addHistoryItem, removeHistoryItem, clearHistoryContext, markRunCommand, setRunCommand
+        fetchHistory, removeHistoryItem, fetchRunCommand, markRunCommand
       }}
       >
         { children }
@@ -209,20 +192,25 @@ export const ContainerInfoContext = createContext({});
 export const ContainerInfoUpdateContext = createContext({});
 export const useContainerInfoContext = () => useContext(ContainerInfoContext);
 export const useContainerInfoUpdateContext = () => useContext(ContainerInfoUpdateContext);
-export const ContainerInfoContextProvider = ({ children }) => {
+export const ContainerInfoContextProvider = ({ workerNode, children }) => {
   const [containerInfo, updateContainerInfo] = useState(() => {});
 
   const fetchContainerInfo = async () => {
-    const respID = await fetch('/api/container/ops/container');
-    const { id } = await respID.json();
-    console.log(`set containerID ${id}`);
+    try {
+      const respID = await fetch(`/api/clouseau/container/${workerNode}/ops/container`);
+      if (!respID.ok) {
+        throw new Error('failed fetching container id');
+      }
+      const { id } = await respID.json();
+      console.debug(`set containerID ${id}`);
 
-    const respName = await fetch(`/api/docker/inspect/${id}`);
-    const { Name } = await respName.json();
-    const name = Name?.substring(1) ?? '';
-    console.log(`set container Name ${name}`);
-
-    updateContainerInfo((prevInfo) => ({ ...prevInfo, id, name }));
+      const respCInfo = await fetch(`/api/dojo/clouseau/container/${id}`);
+      const cInfo = await respCInfo.json();
+      console.debug(`set container Info ${JSON.stringify(cInfo)}`);
+      updateContainerInfo((prevInfo) => ({ ...prevInfo, ...cInfo }));
+    } catch (err) {
+      console.error(err);
+    }
   };
 
   useEffect(() => {
@@ -235,5 +223,20 @@ export const ContainerInfoContextProvider = ({ children }) => {
         { children }
       </ContainerInfoUpdateContext.Provider>
     </ContainerInfoContext.Provider>
+  );
+};
+
+export const ModelInfoContext = createContext({});
+export const ModelInfoUpdateContext = createContext({});
+export const useModelInfoContext = () => useContext(ModelInfoContext);
+export const useModelInfoUpdateContext = () => useContext(ModelInfoUpdateContext);
+export const ModelInfoContextProvider = ({ model, children }) => {
+  const [modelInfo, updateModelInfo] = useState(() => model);
+  return (
+    <ModelInfoContext.Provider value={modelInfo}>
+      <ModelInfoUpdateContext.Provider value={{ updateModelInfo }}>
+        { children }
+      </ModelInfoUpdateContext.Provider>
+    </ModelInfoContext.Provider>
   );
 };

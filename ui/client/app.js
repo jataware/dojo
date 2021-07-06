@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 
-import Box from '@material-ui/core/Box';
 import Button from '@material-ui/core/Button';
 import Container from '@material-ui/core/Container';
 import Dialog from '@material-ui/core/Dialog';
@@ -12,32 +11,33 @@ import Divider from '@material-ui/core/Divider';
 import Fab from '@material-ui/core/Fab';
 import Grid from '@material-ui/core/Grid';
 import LinearProgress from '@material-ui/core/LinearProgress';
-import Link from '@material-ui/core/Link';
 import NavigateNextIcon from '@material-ui/icons/NavigateNext';
-import OpenInNewIcon from '@material-ui/icons/OpenInNew';
 import SyncDisabledIcon from '@material-ui/icons/SyncDisabled';
 import SyncIcon from '@material-ui/icons/Sync';
 import WarningIcon from '@material-ui/icons/Warning';
 
-import { useHistory } from 'react-router-dom';
 import { makeStyles, useTheme } from '@material-ui/core/styles';
 
+import { useHistory, useParams } from 'react-router-dom';
+
 import {
-  ContainerInfoContextProvider, HistoryContextProvider,
+  ContainerInfoContextProvider,
+  HistoryContextProvider,
+  ModelInfoContextProvider,
+  WebSocketContextProvider,
   useContainerInfoContext,
   useHistoryContext,
   useHistoryUpdateContext,
-  useWebSocketContext,
-  useWebSocketUpdateContext,
+  useModelInfoContext,
 } from './context';
 
 import BasicAlert from './components/BasicAlert';
 import FullScreenDialog from './components/FullScreenDialog';
+import RunCommandBox from './components/RunCommandBox';
 import SimpleEditor from './components/SimpleEditor';
 import Term from './components/Term';
 import { ContainerWebSocket, ShellHistory } from './components/ShellHistory';
-
-import { findRunCommand } from './utils';
+import { ShorthandEditor, shorthandShouldLoad, shorthandShouldSave } from './components/ShorthandEditor';
 
 const useStyles = makeStyles((theme) => ({
   connected: {
@@ -52,15 +52,49 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-export const ExecutionDialog = ({ open, setOpen, dialogContents }) => {
-  const { setRunCommand } = useHistoryUpdateContext();
+export const ExecutionDialog = ({
+  workerNode,
+  open, setOpen, dialogContents,
+  setIsShorthandOpen, setIsShorthandSaving, setShorthandContents, setShorthandMode
+}) => {
+  const { markRunCommand } = useHistoryUpdateContext();
+  const containerInfo = useContainerInfoContext();
   const handleClose = async (isRunCommand) => {
     if (isRunCommand) {
-      setRunCommand(dialogContents.text);
+      // listen for messages from shorthand iframe
+      window.onmessage = function shorthandOnMessage(e) {
+        let postMessageBody;
+
+        try {
+          postMessageBody = JSON.parse(e.data);
+        } catch {
+          return; // not a json event
+        }
+
+        if (postMessageBody.type === 'editor_loaded') {
+          // editor has loaded, send in the command
+          setShorthandContents({
+            editor_content: dialogContents.command,
+            content_id: dialogContents.command,
+          });
+        }
+        if (postMessageBody.type === 'params_saved') {
+          // console.log("Params Saved :)")
+          setIsShorthandOpen(false);
+          markRunCommand(containerInfo.id, dialogContents);
+        }
+        if (postMessageBody.type === 'params_not_saved') {
+          // console.log("Params Not Saved :(")
+          setIsShorthandOpen(true); // keep shorthand open
+          setIsShorthandSaving(false); // stop the saving spinner
+        }
+      };
+
+      setShorthandMode('directive');
+      setIsShorthandSaving(false);
+      setIsShorthandOpen(true);
     }
-
-    await fetch('/api/container/ops/clear?code=0');
-
+    await fetch(`/api/clouseau/container/${workerNode}/ops/clear?code=0`);
     setOpen(false);
   };
 
@@ -92,7 +126,7 @@ export const ExecutionDialog = ({ open, setOpen, dialogContents }) => {
             <>
               <NavigateNextIcon style={{ color: 'yellow' }} />
               {' '}
-              <span>{dialogContents.text}</span>
+              <span>{dialogContents.command}</span>
             </>
 
             )}
@@ -111,12 +145,9 @@ export const ExecutionDialog = ({ open, setOpen, dialogContents }) => {
   );
 };
 
-export const PublishDialog = ({
-  open, setOpen, accept, reject
+export const EndSessionDialog = ({
+  open, setOpen, runCommand, accept, reject
 }) => {
-  const historyContext = useHistoryContext();
-  const runCommand = findRunCommand(historyContext);
-
   const handleClose = async (yes) => {
     setOpen(false);
     if (yes) {
@@ -153,7 +184,7 @@ export const PublishDialog = ({
           >
             <NavigateNextIcon style={{ color: 'yellow' }} />
             {' '}
-            <span>{runCommand.text}</span>
+            <span>{runCommand?.command}</span>
           </DialogContentText>
         </DialogContent>
         <DialogActions>
@@ -161,6 +192,60 @@ export const PublishDialog = ({
             Yes
           </Button>
           <Button onClick={() => handleClose(false)} color="secondary">
+            No
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </div>
+  );
+};
+
+export const AbandonSessionDialog = ({
+  open, accept, reject
+}) => {
+  const [isClosing, setClosing] = useState(false);
+  const handleClose = async (yes) => {
+    if (yes) {
+      setClosing(true);
+      accept();
+    } else {
+      reject();
+    }
+  };
+
+  return (
+    <div>
+      <Dialog
+        open={open}
+        onClose={handleClose}
+        aria-labelledby="alert-dialog-title"
+        aria-describedby="alert-dialog-description"
+      >
+        <DialogTitle id="alert-dialog-title">
+          <WarningIcon style={{ fontSize: '1.0rem', marginRight: '8px' }} />
+          Are you sure you want to abandon this session?
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText
+            id="alert-dialog-description"
+            style={{
+              marginTop: '10px',
+              display: 'flex',
+              alignItems: 'center',
+              flexWrap: 'wrap'
+            }}
+          >
+            This will kill your terminal session and is not recoverable
+          </DialogContentText>
+          <div style={{ height: '20px', display: (isClosing) ? 'unset' : 'none' }}>
+            <LinearProgress color="primary" />
+          </div>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => handleClose(true)} autoFocus color="primary" disabled={isClosing}>
+            Yes
+          </Button>
+          <Button onClick={() => handleClose(false)} color="secondary" disabled={isClosing}>
             No
           </Button>
         </DialogActions>
@@ -213,78 +298,135 @@ export const Footer = ({ wsConnected, socketIoConnected }) => {
   );
 };
 
-const CenteredGrid = ({ handlePublish }) => {
+const CenteredGrid = ({ workerNode }) => {
   const theme = useTheme();
   const containerInfo = useContainerInfoContext();
-  const [alertVisible, setAlertVisible] = React.useState(false);
-  const [alert, setAlert] = React.useState({
+  const { runCommand } = useHistoryContext();
+  const { fetchRunCommand } = useHistoryUpdateContext();
+
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alert, setAlert] = useState({
     severity: 'error',
     message: ''
   });
-  const [dialogContents, setDialogContents] = React.useState({});
-  const [openDialog, setDialogOpen] = React.useState(false);
-  const [openPublishDialog, setPublishDialogOpen] = React.useState(false);
-  const [editorContents, setEditorContents] = React.useState({});
-  const [openEditor, setOpenEditor] = React.useState(false);
-  const [openFullScreen, setOpenFullScreen] = React.useState(false);
+  const [dialogContents, setDialogContents] = useState({});
+  const [openDialog, setDialogOpen] = useState(false);
+  const [openEndSessionDialog, setEndSessionDialogOpen] = useState(false);
+  const [openAbandonSessionDialog, setAbandonSessionDialogOpen] = useState(false);
+  const [editorContents, setEditorContents] = useState({});
+  const [openEditor, setOpenEditor] = useState(false);
+  const [isShorthandOpen, setIsShorthandOpen] = useState(false);
+
+  const [isShorthandSaving, setIsShorthandSaving] = useState(false);
+  const [shorthandContents, setShorthandContents] = useState({});
+  const [shorthandMode, setShorthandMode] = useState({});
+
+  const history = useHistory();
+  const modelInfo = useModelInfoContext();
+
+  const handleAbandonSession = async () => {
+    // yolo
+    fetch(`/api/clouseau/docker/${workerNode}/stop/${containerInfo.id}`, { method: 'DELETE' });
+    history.push('/');
+  };
+
+  const handleEndSession = () => {
+    // go to summary screen
+    history.push(`/summary/${workerNode}`, containerInfo);
+  };
+
+  useEffect(() => {
+    if (containerInfo) {
+      fetchRunCommand(containerInfo.id);
+    }
+  }, [containerInfo]);
+
+  useEffect(() => {
+    if (shorthandContents) {
+      shorthandShouldLoad(shorthandContents);
+    }
+  }, [shorthandContents]);
+
+  useEffect(() => {
+    if (isShorthandSaving) {
+      shorthandShouldSave();
+    }
+  }, [isShorthandSaving]);
+
+  const setIsShorthandSavingForFullScreenDialog = () => {
+    setIsShorthandSaving(true);
+    return false; // don't close FullScreenDialog
+  };
 
   const saveEditor = async () => {
-    await fetch(`/api/container/ops/save?path=${editorContents.file}`, {
+    await fetch(`/api/clouseau/container/${workerNode}/ops/save?path=${editorContents.file}`, {
       method: 'POST',
       body: editorContents.text
     });
 
-    await fetch(`/api/container/store/${containerInfo.id}/edits`, {
+    await fetch(`/api/clouseau/container/store/${containerInfo.id}/edits`, {
       method: 'PUT',
-      body: JSON.stringify([editorContents.file])
+      body: JSON.stringify(editorContents)
     });
+    return true; // should close FullScreenDialog
   };
 
-  const { awaitEmit } = useWebSocketContext();
-
-  useEffect(async () => {
-    try {
-      // testing socket connection
-      const resp = await awaitEmit('ping', 'test', 'pong');
-      console.log(resp);
-    } catch (err) {
-      console.log(err);
-      throw (err);
-    }
-  }, []);
-
   return (
-    <div className={theme.root}>
+    <div className={theme.root} style={{ backgroundColor: '#272d33' }}>
       <Grid container spacing={1} style={{ width: 'auto', margin: 0 }}>
         <Grid item xs={8} style={{ padding: '0 2px', backgroundColor: '#272d33' }}>
           <Term />
         </Grid>
 
-        <Grid item xs={4} style={{ padding: '0 2px' }}>
+        <Grid item xs={4} style={{ padding: '0 5px 0 0', zIndex: 5 }}>
           <ShellHistory
             setAlert={setAlert}
             setAlertVisible={setAlertVisible}
           />
           <ContainerWebSocket
+            workerNode={workerNode}
             setAlert={setAlert}
             setAlertVisible={setAlertVisible}
             setDialogOpen={setDialogOpen}
             setEditorContents={setEditorContents}
             openEditor={() => setOpenEditor(true)}
             setDialogContents={setDialogContents}
+            setIsShorthandOpen={setIsShorthandOpen}
+            setIsShorthandSaving={setIsShorthandSaving}
+            setShorthandContents={setShorthandContents}
+            setShorthandMode={setShorthandMode}
           />
           <ExecutionDialog
+            workerNode={workerNode}
             open={openDialog}
             setOpen={setDialogOpen}
+            setIsShorthandOpen={setIsShorthandOpen}
+            setIsShorthandSaving={setIsShorthandSaving}
+            setShorthandContents={setShorthandContents}
+            setShorthandMode={setShorthandMode}
             dialogContents={dialogContents}
           />
           <Divider />
+          <RunCommandBox command={runCommand} />
 
-          <FullScreenDialog open={openFullScreen} setOpen={setOpenFullScreen}>
-            <iframe title="itest" style={{ height: 'calc(100vh - 70px)', width: '100%' }} src="http://wttr.in" />
+          <FullScreenDialog
+            open={isShorthandOpen}
+            setOpen={setIsShorthandOpen}
+            onSave={setIsShorthandSavingForFullScreenDialog}
+          >
+            <ShorthandEditor
+              modelInfo={modelInfo}
+              isSaving={isShorthandSaving}
+              mode={shorthandMode}
+            />
           </FullScreenDialog>
 
-          <FullScreenDialog open={openEditor} setOpen={setOpenEditor} onSave={saveEditor} title={`Editing ${editorContents?.file}`}>
+          <FullScreenDialog
+            open={openEditor}
+            setOpen={setOpenEditor}
+            onSave={saveEditor}
+            title={`Editing ${editorContents?.file}`}
+          >
             <SimpleEditor editorContents={editorContents} setEditorContents={setEditorContents} />
           </FullScreenDialog>
         </Grid>
@@ -299,169 +441,78 @@ const CenteredGrid = ({ handlePublish }) => {
           variant="extended"
           color="primary"
           style={{ margin: '10px' }}
-          onClick={(e) => { e.preventDefault(); setPublishDialogOpen(true); }}
+          onClick={(e) => { e.preventDefault(); setEndSessionDialogOpen(true); }}
         >
           End Session
         </Fab>
+
+        <Fab
+          variant="extended"
+          color="secondary"
+          style={{ margin: '10px' }}
+          onClick={(e) => { e.preventDefault(); setAbandonSessionDialogOpen(true); }}
+        >
+          Abandon Session
+        </Fab>
+
       </div>
-      <PublishDialog
-        open={openPublishDialog}
-        setOpen={setPublishDialogOpen}
-        accept={handlePublish}
+      <AbandonSessionDialog
+        open={openAbandonSessionDialog}
+        accept={handleAbandonSession}
+        reject={() => { setAbandonSessionDialogOpen(false); }}
+      />
+      <EndSessionDialog
+        open={openEndSessionDialog}
+        setOpen={setEndSessionDialogOpen}
+        runCommand={runCommand}
+        accept={handleEndSession}
         reject={() => {}}
       />
     </div>
   );
 };
 
-const Publisher = () => {
-  const historyContext = useHistoryContext();
-  const containerInfo = useContainerInfoContext();
-  const { clearHistoryContext } = useHistoryUpdateContext();
-  const history = useHistory();
-  const [openDialog, setOpenDialog] = React.useState(false);
-  const [closing, setClosing] = React.useState(false);
-  const [enableFinished, setEnableFinished] = React.useState(false);
-  const [publishStatus, setPublishStatus] = useState('');
-  const [publishMessage, setPublishMessage] = useState('');
-  const [dockerhubLink, setDockerhubLink] = useState('');
-  const [tagName, setTagName] = useState('');
-  const [runCommand, setRunCommand] = useState('');
-  const { getWebSocketId, register, unregister } = useWebSocketUpdateContext();
+const App = () => {
+  const { worker, modelid } = useParams();
+  const [model, setModel] = useState(() => null);
+
+  let proto = 'ws:';
+  if (window.location.protocol === 'https:') {
+    proto = 'wss:';
+  }
+  const url = `${proto}//${window.location.host}/api/ws/${worker}`;
+
+  const [isLoading, setIsLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
 
   useEffect(() => {
-    console.log('bind docker/publish');
-
-    const publishHandler = (data) => {
-      const item = data.split(/\r?\n/).reduce((acc, s) => (s || acc));
-      console.log(item);
-      const {
-        error,
-        status,
-        aux: { Tag, Digest } = { Tag: null, Digest: null },
-        progress
-      } = JSON.parse(item);
-      if (error) {
-        setPublishStatus('error');
-        setPublishMessage(error);
-        setEnableFinished(true);
-      } else if (Tag) {
-        setPublishStatus('finished');
-        setEnableFinished(true);
-        setPublishMessage('');
-        setDockerhubLink(`https://hub.docker.com/layers/jataware/clouseau/${Tag}/images/${Digest.replaceAll(':', '-')}?context=repo`);
-        setTagName(Tag);
-      } else {
-        setPublishStatus(status);
-        setPublishMessage(progress);
-      }
-    };
-    register('docker/publish', publishHandler);
-    return (() => {
-      console.log('unbind docker/publish');
-      unregister('docker/publish', publishHandler);
+    fetch(`/api/dojo/models/${modelid}`).then((r) => r.json().then((m) => {
+      console.debug(m);
+      setModel(m);
+      setIsLoading(false);
+    })).catch(() => {
+      setHasError(true);
+      setIsLoading(false);
     });
   }, []);
 
-  const handlePublish = async () => {
-    const wsid = getWebSocketId();
-    console.log(`listener: ${wsid}`);
-    console.log(historyContext);
-
-    const rc = findRunCommand(historyContext);
-    setRunCommand(rc.text);
-    const postBody = {
-      name: containerInfo.name,
-      cwd: rc.cwd,
-      entrypoint: rc.text?.split(' ') ?? [],
-      listeners: [wsid],
-    };
-    console.log(postBody);
-    setOpenDialog(true);
-
-    await fetch(`/api/docker/commit/${containerInfo.id}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(postBody)
-    });
-  };
-  const handleClose = async () => {
-    setClosing(true);
-    setEnableFinished(false);
-    await fetch(`/api/docker/stop/${containerInfo.id}`, { method: 'DELETE' });
-    clearHistoryContext();
-    history.push('/');
-  };
-
   return (
-    <div>
-      <Dialog open={openDialog} onClose={handleClose} aria-labelledby="form-dialog-title">
-        <DialogTitle id="form-dialog-title">Publishing</DialogTitle>
-        <DialogContent style={{ width: '600px' }}>
-          {!dockerhubLink
-            ? (
-              <DialogContentText style={{
-                backgroundColor: '#000', color: '#fff', padding: '7px', fontFamily: 'monospace', fontWeight: 'bold'
-              }}
-              >
-                {publishStatus}
-                <br />
-                <span style={{ fontSize: '10px' }}>{publishMessage}</span>
-              </DialogContentText>
-            )
-            : (
-              <>
-                <Box style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  flexWrap: 'wrap'
-                }}
-                >
-                  <Link href={dockerhubLink} target="_blank" rel="noreferrer" color="inherit">
-                    <OpenInNewIcon style={{ fontSize: '14px' }} />
-                    {' '}
-                    <span>
-                      docker pull jataware/clouseau:
-                      {tagName}
-                    </span>
-                  </Link>
-                </Box>
-                <Box style={{
-                  marginTop: '10px',
-                  backgroundColor: '#445d6e',
-                  color: '#fff',
-                  display: 'flex',
-                  alignItems: 'center',
-                  flexWrap: 'wrap'
-                }}
-                >
-                  <NavigateNextIcon style={{ color: 'yellow' }} />
-                  {' '}
-                  <span>{runCommand}</span>
-                </Box>
-              </>
-            )}
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleClose} disabled={!enableFinished}>
-            Finsihed
-          </Button>
-        </DialogActions>
-        {closing && <LinearProgress />}
-      </Dialog>
-      <CenteredGrid handlePublish={handlePublish} />
-    </div>
+    <>
+      { isLoading ? <div> loading ... </div>
+        : hasError ? <div> error ... </div>
+          : (
+            <ModelInfoContextProvider model={model}>
+              <ContainerInfoContextProvider workerNode={worker}>
+                <WebSocketContextProvider url={url} autoConnect>
+                  <HistoryContextProvider>
+                    <CenteredGrid workerNode={worker} />
+                  </HistoryContextProvider>
+                </WebSocketContextProvider>
+              </ContainerInfoContextProvider>
+            </ModelInfoContextProvider>
+          )}
+    </>
   );
 };
-
-const App = () => (
-  <ContainerInfoContextProvider>
-    <HistoryContextProvider>
-      <Publisher />
-    </HistoryContextProvider>
-  </ContainerInfoContextProvider>
-);
 
 export default App;

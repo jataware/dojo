@@ -31,8 +31,10 @@ const FullScreenDialog = ({
   };
 
   const handleSave = () => {
-    onSave();
-    setOpen(false);
+    // let the onSave() handler decide whether we close this FullScreenDialog window
+    const shouldClose = onSave();
+
+    setOpen(!shouldClose);
   };
 
   return (

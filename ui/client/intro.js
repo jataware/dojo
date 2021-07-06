@@ -12,7 +12,6 @@ import LinearProgress from '@material-ui/core/LinearProgress';
 import MenuItem from '@material-ui/core/MenuItem';
 import Paper from '@material-ui/core/Paper';
 import Select from '@material-ui/core/Select';
-import TextField from '@material-ui/core/TextField';
 import Typography from '@material-ui/core/Typography';
 import WarningIcon from '@material-ui/icons/Warning';
 
@@ -20,11 +19,6 @@ import { makeStyles } from '@material-ui/core/styles';
 import { useHistory } from 'react-router-dom';
 
 import BasicAlert from './components/BasicAlert';
-
-const clearHistory = () => {
-  // HACK
-  localStorage.setItem('historyItems', JSON.stringify([]));
-};
 
 const useStyles = makeStyles((theme) => ({
   formControl: {
@@ -39,9 +33,20 @@ const useStyles = makeStyles((theme) => ({
   },
   gridItem: {
     paddingBottom: '12px'
-  }
+  },
+  paperRoot: {
+    display: 'flex',
+    flexWrap: 'wrap',
+    '& > *': {
+      margin: theme.spacing(1),
+      width: theme.spacing(16),
+      height: theme.spacing(16),
+    },
+  },
 }));
 
+// todo delete
+// eslint-disable-next-line no-unused-vars
 const getProvisioning = (imageType) => {
   switch (imageType) {
     case 'ubuntu':
@@ -65,165 +70,173 @@ const getProvisioning = (imageType) => {
   return [];
 };
 
-const Intro = () => {
+const formatImageString = (s) => s.replace(/\s+/g, '').replace(/[^a-zA-Z0-9_.-]/, '_');
+
+const Intro = ({ location }) => {
+  const modelInfo = location?.state;
   const classes = useStyles();
   const history = useHistory();
-  const [giturl, setGitUrl] = useState('https://github.com/jataware/dummy-model');
-  const [imageName, setImageName] = useState('');
-  const [alertVisible, setAlertVisible] = React.useState(false);
-  const [alert, setAlert] = React.useState({
+  const [imageInfo, setImageInfo] = useState({
+    modelInfo,
+    imageName: formatImageString(modelInfo.name),
+    dockerImage: 'jataware/clouseau:claudine-latest',
+    size: 't2-nano',
+    gitUrl: modelInfo.maintainer?.website ?? '',
+    worker: '',
+  });
+  const [alertVisible, setAlertVisible] = useState(false);
+
+  const [alert, setAlert] = useState({
     severity: 'error',
     message: ''
   });
-  const [loading, setLoading] = React.useState(false);
-  const [executing, setExecuting] = React.useState('');
-  const [imageType, setImageType] = React.useState('ubuntu');
+
+  const onImageInfoUpdate = (val, type) => {
+    // const val = e.target?.value ?? '';
+    setImageInfo((prev) => ({ ...prev, ...{ [type]: val } }));
+  };
 
   const launchTerm = async (e) => {
     e.preventDefault();
-    setLoading(true);
-    try {
-      await fetch('/api/cors/test', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ url: giturl }),
-      }).then(async (response) => {
-        if (!response.ok) {
-          throw new Error(`Invalid giturl ${giturl}`);
-        }
-      }).catch((error) => {
-        throw error;
-      });
 
-      const containerid = await fetch('/api/docker/launch', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ name: imageName })
-      }).then(async (response) => {
-        const body = await response.json();
-        if (response.ok) {
-          return body.id;
-        }
-        throw new Error(`Failed to launch container ${body}`);
-      }).catch((error) => { throw error; });
-
-      console.log(`launched container: ${containerid}`);
-
-      clearHistory();
-
-      const execute = async (cmd) => {
-        console.log(`exec ${cmd}`);
-        setExecuting(cmd.join(' '));
-        const response = await fetch(`/api/docker/exec/${containerid}`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({ cmd }),
-        });
-        if (!response.ok) {
-          throw new Error(`Failed to configure container - cmd: ${cmd}`);
-        }
-        return response;
-      };
-
-      const provision = [...getProvisioning(imageType), ['git', 'clone', giturl]];
-
-      await fetch(`/api/store/key/${containerid}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          provision
-        })
-      });
-
-      await provision.reduce(async (memo, cmd) => {
-        await memo;
-        await execute(cmd);
-      }, undefined);
-
-      setTimeout(() => {
-        setLoading(false);
-        history.push('/term');
-      }, 5000);
-    } catch (err) {
-      setLoading(false);
-      console.log(err);
-      setAlert({ severity: 'error', message: err.message });
+    // validate
+    if (imageInfo.worker === '') {
+      setAlert({ severity: 'error', message: 'Please select a worker' });
       setAlertVisible(true);
+      return;
     }
+    history.push('/loadingterm', imageInfo);
   };
 
-  const formatImageString = (s) => s.replace(/\s+/g, '').replace(/[^a-zA-Z0-9_.-]/, '_');
+  const fetchTimeout = () => new Promise((resolve, reject) => {
+    setTimeout(() => {
+      reject(new Error('fetch timed out'));
+    }, 5000);
+  });
 
+  // eslint-disable-next-line no-unused-vars
   const [containers, setContainers] = React.useState([]);
+  const [workerNodes, setWorkerNodes] = React.useState([]);
+  const [workersIsLoaded, setWorkersIsLoaded] = React.useState(false);
 
-  const refreshContainers = async () => {
-    const resp = await fetch('/api/docker/containers');
-    const cs = (await resp.json()).filter((c) => c.Image.includes('claudine'));
+  const refreshNodeInfo = async () => {
+    const resp = await fetch('/api/clouseau/docker/nodes');
+    const nodes = await resp.json();
+
+    const nodeContainers = await Promise.all(nodes.map(async (n, i) => {
+      try {
+        const r = await Promise.race([fetch(`/api/clouseau/docker/${n.i}/containers`),
+          fetchTimeout()]);
+
+        if (!r.ok) {
+          return { ...n, i, status: 'down' };
+        }
+
+        return {
+          ...n,
+          i,
+          status: 'up',
+          containers: await r.json()
+        };
+      } catch (e) {
+        return { ...n, i, status: 'timeout' };
+      }
+    }));
+
+    setWorkerNodes(nodeContainers);
+    console.debug(nodeContainers);
+
+    const cs = nodeContainers.reduce((acc, n) => {
+      n.containers?.forEach((c) => acc.push({ node: n, container: c }));
+      return acc;
+    }, []);
+
     setContainers(cs);
+    setWorkersIsLoaded(true);
   };
 
-  useEffect(async () => {
-    await refreshContainers();
+  useEffect(() => {
+    refreshNodeInfo();
   }, []);
 
-  const destroyContainer = async (id) => {
-    await fetch(`/api/docker/stop/${id}`, { method: 'DELETE' });
-    clearHistory();
-    await refreshContainers();
+  const destroyContainer = async (node, id) => {
+    await fetch(`/api/clouseau/docker/${node}/stop/${id}`, { method: 'DELETE' });
+    await refreshNodeInfo();
   };
 
-  const handleDestroy = async (e) => {
-    e.preventDefault();
-    containers.reduce(async (memo, c) => {
-      await memo;
-      await destroyContainer(c.Id);
-    }, undefined);
+  const handleDestroy = async (node) => {
+    await destroyContainer(node.node.i, node.container.Id);
   };
 
-  const ContainersCard = () => (
-    <Card
-      style={{
-        position: 'absolute', top: 0, margin: '10px', maxWidth: 280
-      }}
-      hidden={containers.length === 0}
-    >
-      <CardActionArea>
-        <CardContent>
-          <Typography variant="body2" color="textSecondary" component="p">
-            <WarningIcon style={{ fontSize: '1.0rem', marginRight: '8px' }} />
-            A container is already running would you like to connect or destroy it?
-          </Typography>
-          {containers.map((v) => (
-            <div key={v.Id}>
-              <span>{v.Id.substring(0, 8)}</span>
-              {'  '}
-              <span>{v.Image}</span>
+  // eslint-disable-next-line no-unused-vars
+  const ContainerCard = ({ node }) => {
+    console.debug(node);
+    return (
+      <Card
+        style={{
+          // position: 'absolute', top: 0,
+          margin: '10px', maxWidth: 280
+        }}
+      >
+        <CardActionArea>
+          <CardContent>
+            <Typography variant="body2" component="p">
+              <WarningIcon style={{ fontSize: '1.0rem', marginRight: '8px' }} />
+              <span style={{ fontWeight: 'bold' }}>
+                Worker-
+                {node.node.i}
+              </span>
+              has a container running would you like to connect or destroy it?
+            </Typography>
+            <div style={{ marginTop: '5px' }}>
+              Active Clients:
+              {' '}
+              <span style={{ fontWeight: 'bold' }}>
+                {node.node.clients}
+                {' '}
+              </span>
             </div>
-          ))}
-        </CardContent>
-      </CardActionArea>
-      <CardActions>
-        <Button size="small" variant="contained" color="primary" onClick={() => history.push('/term')}>
-          Reconnect
-        </Button>
-        <Button size="small" variant="contained" color="primary" onClick={handleDestroy}>
-          Destroy
-        </Button>
-      </CardActions>
-    </Card>
-  );
+            <div>
+              Image:
+              {' '}
+              {node.container.Id.substring(0, 8)}
+            </div>
+            <div>
+              Name:
+              {' '}
+              {node.container.Names[0]}
+            </div>
+            <div>
+              <span style={{ fontWeight: 'bold' }}>{node.container.Status}</span>
+            </div>
+          </CardContent>
+        </CardActionArea>
+        <CardActions>
+          <Button size="small" variant="contained" color="primary" disabled>
+            Reconnect
+          </Button>
+          <Button
+            size="small"
+            variant="contained"
+            color="primary"
+            onClick={(e) => {
+              e.preventDefault();
+              handleDestroy(node);
+            }}
+          >
+            Destroy
+          </Button>
+        </CardActions>
+      </Card>
+    );
+  };
 
   return (
     <div className={classes.root}>
-      <ContainersCard containers={containers} />
+      <div style={{ position: 'absolute', top: 0 }}>
+        {/* containers.map((v) => (<ContainerCard node={v} />)) */}
+      </div>
+
       <Grid
         container
         spacing={3}
@@ -232,74 +245,76 @@ const Intro = () => {
         justify="center"
         style={{ minHeight: '100vh' }}
       >
+        <Typography variant="h5" id="tableTitle" component="div" style={{ marginBottom: '20px' }}>
+          Setup a Container
+        </Typography>
+
         <Paper className={classes.paper} elevation={3} style={{ minWidth: '600px' }}>
-          <Typography variant="h5" id="tableTitle" component="div" style={{ paddingLeft: '10px' }}>
-            Clouseau
+          <Typography variant="h5" id="tableTitle" component="div">
+            {modelInfo.name}
           </Typography>
 
           <Grid item xs={12} className={classes.gridItem}>
             <FormControl className={classes.formControl} fullWidth>
-              <TextField
-                label="Repo"
-                placeholder="Placeholder"
-                helperText="Enter Github checkout url"
-                fullWidth
-                margin="normal"
-                InputLabelProps={{
-                  shrink: true,
-                }}
-                variant="outlined"
-                value={giturl}
-                onChange={(e) => setGitUrl(e.target.value)}
-              />
-            </FormControl>
-          </Grid>
+              <InputLabel id="label">Select a Base Image</InputLabel>
 
-          <Grid item xs={12} className={classes.gridItem}>
-            <FormControl className={classes.formControl} fullWidth>
-              <TextField
-                label="Image Name"
-                placeholder="Placeholder"
-                helperText="Enter name of image to create (characters allowed [a-zA-Z0-9_.-])"
-                fullWidth
-                margin="normal"
-                InputLabelProps={{
-                  shrink: true,
-                }}
-                variant="outlined"
-                value={imageName}
-                onChange={(e) => setImageName(formatImageString(e.target.value))}
-              />
-            </FormControl>
-          </Grid>
-
-          <Grid item xs={12} className={classes.gridItem}>
-            <FormControl className={classes.formControl} fullWidth>
-              <InputLabel id="label">Base Image</InputLabel>
-              <Select labelId="label" id="select" defaultValue="ubuntu" onChange={(_, { props: { value } }) => setImageType(value)}>
-                <MenuItem value="ubuntu">Ubuntu</MenuItem>
-                <MenuItem value="ubuntu-python">Ubuntu - Python3</MenuItem>
-                <MenuItem value="ubuntu-r">Ubuntu - R</MenuItem>
+              <Select labelId="label" id="select" defaultValue={imageInfo.dockerImage} value={imageInfo.dockerImage} onChange={(e) => onImageInfoUpdate(e.target.value, 'dockerImage')}>
+                <MenuItem value="jataware/clouseau:claudine-latest">Ubuntu</MenuItem>
+                <MenuItem value="jataware/clouseau:claudine_ki_models">Kimetrica</MenuItem>
+                <MenuItem value="jataware/clouseau:pythia_22jun_1-latest">Pythia</MenuItem>
               </Select>
             </FormControl>
+
+          </Grid>
+
+          <Grid item xs={12} className={classes.gridItem}>
+            <div>Select a Worker</div>
+            <Grid container spacing={1}>
+              { workersIsLoaded ? workerNodes.map((n) => (
+                <Grid item key={n.i} xs={4}>
+                  <Card style={{ backgroundColor: (n.status !== 'up') ? '#ff0000' : (n.clients > 0) ? '#ffcccc' : 'unset' }}>
+                    <div style={{ backgroundColor: (n.status !== 'up' || n.clients > 0) ? '#f00000' : '#00f000', height: '10px' }} />
+                    <CardActionArea onClick={() => onImageInfoUpdate(n.i, 'worker')} disabled={(n.status !== 'up' || n.clients > 0)} style={{ backgroundColor: (n.i === imageInfo.worker) ? '#e8fee4' : 'unset' }}>
+                      <CardContent>
+                        <span style={{ fontWeight: 'bold' }}>
+                          Worker-
+                          {n.i}
+                        </span>
+                        <span>
+                          {' - '}
+                          {(n.status !== 'up') ? 'Down' : (n.clients > 0) ? 'Busy' : 'Available'}
+                        </span>
+                        <br />
+                        <span style={{ fontSize: 'smaller' }}>
+                          Connections:
+                          {n.clients}
+                        </span>
+                        <br />
+                        <span style={{ fontSize: 'smaller' }}>
+                          Containers:
+                          {n.containers?.length ?? 0}
+                        </span>
+                      </CardContent>
+                    </CardActionArea>
+                  </Card>
+                </Grid>
+              )) : (
+                <Grid item xs={6}>
+                  Loading Workers...
+                  <div style={{ height: '20px' }}>
+                    <LinearProgress color="primary" />
+                  </div>
+                </Grid>
+              )}
+            </Grid>
           </Grid>
 
           <Grid item xs={12} className={classes.gridItem}>
             <FormControl className={classes.formControl}>
-              <Button variant="contained" color="primary" onClick={launchTerm} disabled={loading}>
+              <Button variant="contained" color="primary" onClick={launchTerm}>
                 Launch
               </Button>
             </FormControl>
-
-          </Grid>
-          <Grid item xs={12} className={classes.gridItem}>
-            {loading
-             && (
-             <div style={{ fontFamily: 'monospace', fontWeight: 'bold' }}>
-               <LinearProgress />
-               {executing}
-             </div>
-             )}
           </Grid>
         </Paper>
       </Grid>

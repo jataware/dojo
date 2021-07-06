@@ -56,7 +56,7 @@ docker_push-dockerhub: docker_push-phantom | docker_login-dockerhub  ## Push all
 
 docker_push-%:| docker_login-dockerhub
 	@echo "push $* ${VERSION}"
-	docker push "jataware/phantom:$*_${VERSION}"
+	docker push "jataware/phantom:${VERSION}"
 
 .PHONY: npm_lint
 npm_lint:   ## Format js files
