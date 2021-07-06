@@ -3,10 +3,17 @@ package cato
 import (
 	"fmt"
 	"log"
+	"runtime"
+	"time"
 )
 
 func LogError(msg string, err error) {
-	log.Printf("[ERROR] %s, %+v\n", msg, err)
+	pc, fn, line, _ := runtime.Caller(1)
+	log.Printf("[ERROR] %s, %s[%s:%d] %v\n", msg, runtime.FuncForPC(pc).Name(), fn, line, err)
+}
+
+func LogDuration(msg string, start time.Time) {
+	log.Printf("PREF %v: %v\n", msg, time.Since(start))
 }
 
 func LogTrace(format string, args ...interface{}) {

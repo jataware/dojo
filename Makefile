@@ -84,13 +84,17 @@ go_build-embedded:  ## Compile claudine/embedded
 		 go build -gcflags="-m=2 -l" claudine/embedded/app)
 	(cd claudine/embedded && \
 		 go mod tidy && \
-		 go build -gcflags="-m=2 -l" -o ../build/claudine claudine/embedded)
+		 go build -gcflags="-m=2 -l" \
+							-ldflags "-X main.Version=${VERSION} -X main.Build=$(shell date +%FT%T%Z) -X main.Commit=$(shell git rev-parse --short HEAD)" \
+							-o ../build/claudine claudine/embedded)
 
 .PHONY: go_build-preexec
 go_build-preexec: ## Compile claudine/preexec
 	(cd claudine/preexec && \
 		 go mod tidy && \
-		 go build -gcflags="-m=2 -l" -o ../build/c main.go)
+		 go build -gcflags="-m=2 -l" \
+							-ldflags "-X main.Version=${VERSION} -X main.Build=$(shell date +%FT%T%Z) -X main.Commit=$(shell git rev-parse --short HEAD)" \
+							-o ../build/c main.go)
 
 .PHONY: go_build-server
 go_build-server: ## Compile claudine/server
@@ -99,7 +103,9 @@ go_build-server: ## Compile claudine/server
 		 go build -gcflags="-m=2 -l" claudine/server/cato)
 	(cd claudine/server && \
 		 go mod tidy && \
-		 go build -gcflags="-m=2 -l" -o ../build/cato main.go)
+		 go build -gcflags="-m=2 -l" \
+							-ldflags "-X main.Version=${VERSION} -X main.Build=$(shell date +%FT%T%Z) -X main.Commit=$(shell git rev-parse --short HEAD)" \
+							-o ../build/cato main.go)
 
 GO_BUILDS := go_build-embedded go_build-server go_build-preexec
 
@@ -115,7 +121,9 @@ compile:| go_build  ## Compile all builds
 .PHONY: cato_run_dev
 cato_run_dev: ## Dev - run cato dev server locally
 	(cd claudine/server && \
-			go run main.go -settings settings.yaml -debug -trace -env -pull-images=false)
+			go run \
+				 -ldflags "-X main.Version=${VERSION} -X main.Build=$(shell date +%FT%T%Z) -X main.Commit=$(shell git rev-parse --short HEAD)" \
+				 main.go -settings settings.yaml -debug -trace -env -pull-images=false)
 
 .PHONY: socat-start
 socat-start:  ## Dev - start socat dev server

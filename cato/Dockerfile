@@ -3,10 +3,17 @@ RUN apk --no-cache add gcc g++ make git
 WORKDIR /src
 COPY ./claudine .
 
-WORKDIR /src/server
-RUN GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o /out/cato main.go
+ARG CLOUSEAU_VERSION
+ARG CLOUSEAU_BUILD
+ARG CLOUSEAU_COMMIT
 
-FROM alpine:3.13
+WORKDIR /src/server
+RUN GOOS=linux GOARCH=amd64 go build \
+        -ldflags="-s -w" \
+        -ldflags "-X main.Version=${CLOUSEAU_VERSION} -X main.Build=${CLOUSEAU_BUILD} -X main.Commit=${CLOUSEAU_COMMIT}" \
+        -o /out/cato main.go
+
+FROM alpine:3.14
 RUN apk --no-cache add ca-certificates
 WORKDIR /usr/bin
 

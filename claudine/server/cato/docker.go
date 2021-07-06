@@ -22,16 +22,17 @@ import (
 
 type Docker struct {
 	Client *client.Client
+	Host   string
 }
 
-func NewDocker(settings *Settings) (*Docker, error) {
-	host := client.WithHost(fmt.Sprintf("tcp://%s:8375", settings.Docker.Host))
-	cli, err := client.NewClientWithOpts(host, client.WithAPIVersionNegotiation())
+func NewDocker(host string) (*Docker, error) {
+	client_host := client.WithHost(fmt.Sprintf("tcp://%s:8375", host))
+	cli, err := client.NewClientWithOpts(client_host, client.WithAPIVersionNegotiation())
 	if err != nil {
 		return nil, err
 	}
 
-	return &Docker{Client: cli}, nil
+	return &Docker{Client: cli, Host: host}, nil
 }
 
 func (docker *Docker) ListContainers() ([]types.Container, error) {
@@ -230,7 +231,7 @@ func (docker *Docker) Exec(containerID string, cmd []string) error {
 
 }
 
-func (docker *Docker) Launch(image string, name string) (string, error) {
+func (docker *Docker) Launch(image string, name string, entryPoint []string) (string, error) {
 	if *PULL_IMAGES {
 		if err := docker.PullImage(image); err != nil {
 			return "", err
@@ -252,14 +253,20 @@ func (docker *Docker) Launch(image string, name string) (string, error) {
 		},
 	}
 
-	container, err := docker.Client.ContainerCreate(context.Background(),
-		&container.Config{
-			Image: image,
-			ExposedPorts: nat.PortSet{
-				"22/tcp":   {},
-				"6010/tcp": {},
-			},
+	containerConfig := &container.Config{
+		Image: image,
+		ExposedPorts: nat.PortSet{
+			"22/tcp":   {},
+			"6010/tcp": {},
 		},
+	}
+
+	if entryPoint != nil {
+		containerConfig.Entrypoint = entryPoint
+	}
+
+	container, err := docker.Client.ContainerCreate(context.Background(),
+		containerConfig,
 		hostConfig,
 		nil, //&network.NetworkingConfig{},
 		nil, //&specs.Platform{},

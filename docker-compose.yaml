@@ -1,6 +1,5 @@
 version: "3"
 services:
-
   cato:
     image: jataware/clouseau:cato-dev
     container_name: cato1
@@ -9,20 +8,7 @@ services:
       - 3000:3000
     env_file:
       - .dockerenv
-    environment:
-      DOCKER_IP: ${PRIVATE_IP}
     volumes:
       - ${PWD}/claudine/server/settings.yaml:/home/app/cato/settings.yaml
-
-  phantom:
-    image: jataware/phantom:dev
-    container_name: phantom1
-    ports:
-      - 8080:80
-    environment:
-      API_HOST: ${PRIVATE_IP}
-      WEBSOCKET_HOST: ${PRIVATE_IP}
-    depends_on:
-      - cato
 
 

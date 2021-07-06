@@ -7,21 +7,20 @@ import (
 	"log"
 	"os"
 	"path/filepath"
+	"strings"
 )
 
 type DockerSettings struct {
-	Image string `yaml:"image"`
-	Host  string
+	Hosts []string
 	Auth  string
 }
 
 func (d DockerSettings) String() string {
-
 	l := 8
 	if l >= len(d.Auth) {
 		l = len(d.Auth)
 	}
-	return fmt.Sprintf("{Image:%s Host:%s Auth:%s...}", d.Image, d.Host, d.Auth[0:l])
+	return fmt.Sprintf("{Hosts:%s Auth:%s...}", d.Hosts, d.Auth[0:l])
 }
 
 type SSHSettings struct {
@@ -29,18 +28,39 @@ type SSHSettings struct {
 	Password string `yaml:"password"`
 }
 
+type RedisSettings struct {
+	Host string `yaml:"host"`
+	Port string `yaml:"port"`
+}
+
 type Settings struct {
 	Docker DockerSettings `yaml:"docker"`
 	SSH    SSHSettings    `yaml:"ssh"`
+	Redis  RedisSettings  `yaml:"redis"`
 }
 
 func GetEnvFatal(key string) string {
 	v := os.Getenv(key)
 
-	if key == "" {
+	if v == "" {
 		log.Fatalf("Missing Env Configuration: %s", key)
 	}
 	return v
+}
+
+func SetEnvOptional(set *string, key string) {
+	v := os.Getenv(key)
+	if v == "" {
+		log.Printf("No Env override for key: %s", key)
+	} else {
+		*set = v
+	}
+}
+
+func GetEnvAsSlice(name string, sep string) []string {
+	valStr := GetEnvFatal(name)
+	val := strings.Split(valStr, sep)
+	return val
 }
 
 func NewSettings(fp string) *Settings {
@@ -59,8 +79,14 @@ func NewSettings(fp string) *Settings {
 		return &settings
 	}
 
+	SetEnvOptional(&settings.Redis.Host, "REDIS_HOST")
+	SetEnvOptional(&settings.Redis.Port, "REDIS_PORT")
 	settings.Docker.Auth = GetEnvFatal("DOCKERHUB_AUTH")
-	settings.Docker.Host = GetEnvFatal("DOCKER_IP")
+	settings.Docker.Hosts = GetEnvAsSlice("CLOUSEAU_WORKERS", ",")
+
+	if len(settings.Docker.Hosts) == 0 {
+		log.Fatalf("Missing CLOUSEAU_WORKERS")
+	}
 
 	return &settings
 }

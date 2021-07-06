@@ -8,10 +8,11 @@ import (
 )
 
 type WebSocketClient struct {
-	ID   string
-	Conn *ws.Conn
-	Pool *WebSocketPool
-	mu   sync.Mutex
+	ID          string
+	ContainerID string
+	Conn        *ws.Conn
+	Pool        *WebSocketPool
+	mu          sync.Mutex
 }
 
 type WebSocketMessage struct {
@@ -31,6 +32,8 @@ func (c *WebSocketClient) Read() {
 		c.Conn.SetReadDeadline(time.Now().Add(pongWait))
 		return nil
 	})
+
+	c.Pool.Broadcast <- WebSocketMessage{Channel: "client/containerID", Payload: c.ContainerID}
 
 	for {
 		_, payload, err := c.Conn.ReadMessage()

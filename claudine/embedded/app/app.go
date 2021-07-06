@@ -14,6 +14,16 @@ var (
 	LOGGER        = log.New(os.Stderr, "", LOGGER_FLAGS)
 )
 
+type BuildInfo struct {
+	Version string `json:"version"`
+	Commit  string `json:"commit"`
+	Build   string `json:"build"`
+}
+
+var (
+	GlobalBuildInfo = &BuildInfo{}
+)
+
 func setup() *gin.Engine {
 	settings := NewSettings(*SETTINGS_FILE)
 	pool := NewPool()

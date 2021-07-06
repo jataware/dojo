@@ -1,11 +1,13 @@
 package cato
 
 import (
+	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	ws "github.com/gorilla/websocket"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 )
 
@@ -48,8 +50,17 @@ func WebSocketUpgrade(w http.ResponseWriter, r *http.Request) (*ws.Conn, error) 
 	return conn, nil
 }
 
-func ServeWebSocket(settings *Settings, pool *WebSocketPool) gin.HandlerFunc {
+func ServeWebSocket(settings *Settings, pool *WebSocketPool, clouseauWorkerPool *ClouseauWorkerPool, redisStore *RedisStore) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		idx := c.Param("idx")
+		i, err := strconv.Atoi(idx)
+
+		if err != nil {
+			c.String(http.StatusInternalServerError, fmt.Sprintf("%+v", err))
+			return
+		}
+		dockerServer := clouseauWorkerPool.Workers[i].Docker.Host
+
 		log.Printf("WebSocket Upgrade\n")
 		conn, err := WebSocketUpgrade(c.Writer, c.Request)
 		if err != nil {
@@ -57,18 +68,18 @@ func ServeWebSocket(settings *Settings, pool *WebSocketPool) gin.HandlerFunc {
 			return
 		}
 
-		client := NewWebSocketClient(conn, pool, settings)
+		client := NewWebSocketClient(conn, pool, dockerServer, settings, redisStore)
 
 		pool.Register <- client
 		pool.Direct <- DirectMessage{
 			Clients: []string{client.ID},
 			Message: WebSocketMessage{Channel: "id", Payload: client.ID}}
 		go client.KeepAlive()
-		client.Read()
+		go client.Read()
 	}
 }
 
-func ConnectionKeepAlive(id string, conn *ws.Conn) {
+func ConnectionKeepAlive(ctx context.Context, id string, conn *ws.Conn) {
 	ticker := time.NewTicker(pingPeriod)
 	defer ticker.Stop()
 	for {
@@ -84,6 +95,9 @@ func ConnectionKeepAlive(id string, conn *ws.Conn) {
 				}
 				return
 			}
+		case <-ctx.Done():
+			log.Printf("Keep Alive Client cancelled - Id: %s\n", id)
+			return
 		}
 	}
 }

@@ -6,6 +6,10 @@ import (
 	"time"
 )
 
+const (
+	poolTickPeriod = 60 * time.Second
+)
+
 type WebSocketPool struct {
 	Register   chan *WebSocketClient
 	Unregister chan *WebSocketClient
@@ -25,8 +29,11 @@ func NewPool() *WebSocketPool {
 }
 
 func (pool *WebSocketPool) Start() {
+	ticker := time.NewTicker(poolTickPeriod)
 	for {
 		select {
+		case <-ticker.C:
+			LogTrace("TickSize of Connection Pool: %d", len(pool.Clients))
 		case client := <-pool.Register:
 			pool.Clients[client] = true
 			log.Printf("New Client Connected ID: %s\n", client.ID)

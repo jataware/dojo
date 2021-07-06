@@ -114,6 +114,16 @@ func rulesDeleteHandler(settings *Settings) gin.HandlerFunc {
 	}
 }
 
+func containerID() (string, error) {
+	data, err := ioutil.ReadFile("/proc/1/cpuset")
+	if err != nil {
+		return "", err
+	}
+	contents := strings.TrimSpace(string(data))
+	containerID := strings.Replace(contents, "/docker/", "", 1)
+	return containerID, nil
+}
+
 func serveWebSocket(pool *WebSocketPool) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		fmt.Println("WebSocket Connecting...")
@@ -123,10 +133,17 @@ func serveWebSocket(pool *WebSocketPool) gin.HandlerFunc {
 			return
 		}
 
+		containerID, err := containerID()
+		if err != nil {
+			fmt.Fprintf(c.Writer, "%+v\n", err)
+			return
+		}
+
 		client := &WebSocketClient{
-			ID:   xid.New().String(),
-			Conn: conn,
-			Pool: pool,
+			ID:          xid.New().String(),
+			ContainerID: containerID,
+			Conn:        conn,
+			Pool:        pool,
 		}
 
 		pool.Register <- client
@@ -137,14 +154,18 @@ func serveWebSocket(pool *WebSocketPool) gin.HandlerFunc {
 
 func containerHandler() gin.HandlerFunc {
 	return func(c *gin.Context) {
-		data, err := ioutil.ReadFile("/proc/1/cpuset")
+		containerID, err := containerID()
 		if err != nil {
 			c.String(http.StatusInternalServerError, fmt.Sprintf("%+v", err))
 			return
 		}
-		contents := strings.TrimSpace(string(data))
-		containerId := strings.Replace(contents, "/docker/", "", 1)
-		c.JSON(http.StatusOK, gin.H{"id": containerId})
+		c.JSON(http.StatusOK, gin.H{"id": containerID})
+	}
+}
+
+func showBuild() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		c.JSON(http.StatusOK, GlobalBuildInfo)
 	}
 }
 
@@ -162,5 +183,11 @@ func SetupRoutes(pool *WebSocketPool, settings *Settings, historyServer *History
 	router.GET("/rules", rulesGetHandler(settings))
 	router.POST("/rules", rulesPostHandler(settings))
 	router.DELETE("/rules", rulesDeleteHandler(settings))
+
+	adminGroup := router.Group("/admin")
+	{
+		adminGroup.GET("/build", showBuild())
+	}
+
 	return router
 }

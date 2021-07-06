@@ -1,6 +1,7 @@
 package cato
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	ws "github.com/gorilla/websocket"
@@ -10,54 +11,63 @@ import (
 )
 
 type WebSocketProxyClient struct {
-	ID    string
-	Url   url.URL
-	Conn  *ws.Conn
-	In    chan WebSocketMessage
-	Out   chan WebSocketMessage
-	Close chan bool
-	Open  bool
+	ID                 string
+	Url                url.URL
+	Conn               *ws.Conn
+	RouteProxyMessages func(WebSocketMessage)
+	In                 chan WebSocketMessage
+	Out                chan WebSocketMessage
+	Open               bool
+	parentCtx          context.Context
+	ctx                context.Context
+	cancel             context.CancelFunc
 }
 
-func NewWebSocketProxyClient(parentID string, server string) *WebSocketProxyClient {
+func NewWebSocketProxyClient(parentCtx context.Context, parentID string, server string,
+	messageRouter func(WebSocketMessage)) *WebSocketProxyClient {
 	addr := fmt.Sprintf("%s:6010", server)
 	u := url.URL{Scheme: "ws", Host: addr, Path: "/websocket"}
 	return &WebSocketProxyClient{
-		ID:    fmt.Sprintf("proxy-%s", parentID),
-		Url:   u,
-		Conn:  nil,
-		In:    make(chan WebSocketMessage),
-		Out:   make(chan WebSocketMessage),
-		Open:  false,
-		Close: make(chan bool),
+		ID:                 fmt.Sprintf("proxy-%s", parentID),
+		Url:                u,
+		Conn:               nil,
+		RouteProxyMessages: messageRouter,
+		In:                 make(chan WebSocketMessage),
+		Out:                make(chan WebSocketMessage),
+		Open:               false,
+		parentCtx:          parentCtx,
 	}
 }
 
 func (c *WebSocketProxyClient) KeepAlive() {
-	defer c.Conn.Close()
-	ConnectionKeepAlive(c.ID, c.Conn)
+	ConnectionKeepAlive(c.ctx, c.ID, c.Conn)
 }
 
 func (c *WebSocketProxyClient) Stop() {
+	defer c.Conn.Close()
 	if c.Open {
-		c.Close <- true
+		c.cancel()
+		c.Open = false
+	} else {
+		log.Printf("Proxy WebSocket Stopping %s", c.ID)
 	}
-	c.Open = false
 	log.Printf("Proxy WebSocket Stopped %s", c.ID)
 }
 
-func (c *WebSocketProxyClient) Start(replyClientChan chan WebSocketMessage) {
+func (c *WebSocketProxyClient) Start() {
 	if c.Open {
 		log.Printf("Proxy already Running\n")
 		return
 	}
-	defer func() {
-		log.Printf("Proxy defer Stopped %s ", c.Url)
-		c.Stop()
-	}()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	c.ctx = ctx
+	c.cancel = cancel
+
+	defer c.Stop()
 	c.Open = true
 	go c.KeepAlive()
-	c.Read(replyClientChan)
+	c.Read()
 }
 
 func (c *WebSocketProxyClient) Connect() error {
@@ -75,13 +85,7 @@ func (c *WebSocketProxyClient) Connect() error {
 	return nil
 }
 
-func (c *WebSocketProxyClient) RouteProxyMessages(message WebSocketMessage, replyClientChan chan<- WebSocketMessage) {
-	LogTrace("Proxy Message: %+v", message)
-	replyClientChan <- message
-}
-
-func (c *WebSocketProxyClient) Read(replyClientChan chan<- WebSocketMessage) {
-	defer c.Conn.Close()
+func (c *WebSocketProxyClient) Read() {
 	c.Conn.SetReadLimit(512)
 	c.Conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.Conn.SetPongHandler(func(string) error {
@@ -90,27 +94,49 @@ func (c *WebSocketProxyClient) Read(replyClientChan chan<- WebSocketMessage) {
 	})
 
 	go func() {
+		ticker := time.NewTicker(5 * time.Millisecond)
+		defer ticker.Stop()
+		c.RouteProxyMessages(WebSocketMessage{Channel: "proxy/connected", Payload: "connected"})
 		for {
-			_, payload, err := c.Conn.ReadMessage()
+			select {
+			case <-ticker.C:
+				_, payload, err := c.Conn.ReadMessage()
 
-			if err != nil {
-				if ws.IsUnexpectedCloseError(err, ws.CloseGoingAway, ws.CloseAbnormalClosure) {
-					LogError("Proxy Conn ReadMessage Error", err)
+				if err != nil {
+					if ws.IsUnexpectedCloseError(err, ws.CloseGoingAway, ws.CloseAbnormalClosure) {
+						LogError("Proxy Conn ReadMessage Error", err)
+					}
+					return
 				}
+
+				LogTrace("Proxy Message Payload: %+v", string(payload))
+				var message WebSocketMessage
+				err = json.Unmarshal(payload, &message)
+				if err != nil {
+					LogError("Unmarshall error", err)
+					return
+				}
+				LogTrace("Proxy Message Received: %+v", message)
+				c.RouteProxyMessages(message)
+
+			case <-c.ctx.Done():
+				LogTrace("Proxy Messaged Reader Stopped")
+				return
+			case <-c.parentCtx.Done():
+				LogTrace("Proxy Messaged Reader Stopped by Parent")
 				return
 			}
-
-			LogTrace("Proxy Message Payload: %+v", string(payload))
-			var message WebSocketMessage
-			err = json.Unmarshal(payload, &message)
-			if err != nil {
-				LogError("Unmarshall error", err)
-				return
-			}
-
-			LogTrace("Proxy Message Received: %+v", message)
-			c.RouteProxyMessages(message, replyClientChan)
 		}
+	}()
+
+	defer func() {
+		err := c.Conn.WriteMessage(ws.CloseMessage, ws.FormatCloseMessage(ws.CloseNormalClosure, ""))
+		if err != nil {
+			LogError("Proxy Write close:", err)
+			return
+		}
+		log.Printf("Normal Closing Proxy\n")
+		return
 	}()
 
 	for {
@@ -123,17 +149,12 @@ func (c *WebSocketProxyClient) Read(replyClientChan chan<- WebSocketMessage) {
 				}
 				return
 			}
-		case <-c.Close:
-			err := c.Conn.WriteMessage(ws.CloseMessage, ws.FormatCloseMessage(ws.CloseNormalClosure, ""))
-			if err != nil {
-				LogError("Proxy Write close:", err)
-				return
-			}
-			c.Conn.Close()
-			log.Printf("Normal Closing Proxy\n")
+		case <-c.ctx.Done():
+			LogTrace("Proxy Messaged Writer Stopped")
+			return
+		case <-c.parentCtx.Done():
+			LogTrace("Proxy Messaged Writer Stopped by Parent")
 			return
 		}
 	}
-
-	LogTrace("Stop Reading")
 }

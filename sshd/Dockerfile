@@ -1,14 +1,21 @@
-
 FROM golang:stretch AS build
 WORKDIR /src
 ENV CGO_ENABLED=0
 COPY ./claudine .
 
+ARG CLOUSEAU_VERSION
+ARG CLOUSEAU_BUILD
+ARG CLOUSEAU_COMMIT
+
 WORKDIR /src/embedded/
-RUN GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o /out/claudine main.go
+RUN GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" \
+    -ldflags "-X main.Version=${CLOUSEAU_VERSION} -X main.Build=${CLOUSEAU_BUILD} -X main.Commit=${CLOUSEAU_COMMIT}" \
+    -o /out/claudine main.go
 
 WORKDIR /src/preexec/
-RUN GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" -o /out/c main.go
+RUN GOOS=linux GOARCH=amd64 go build -ldflags="-s -w" \
+     -ldflags "-X main.Version=${CLOUSEAU_VERSION} -X main.Build=${CLOUSEAU_BUILD} -X main.Commit=${CLOUSEAU_COMMIT}" \
+     -o /out/c main.go
 
 FROM ubuntu:20.04
 

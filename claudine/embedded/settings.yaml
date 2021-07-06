@@ -9,3 +9,4 @@ rules:
   prompt:
     - python
     - bash
+    - luigi

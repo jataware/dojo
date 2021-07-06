@@ -21,7 +21,9 @@ go  v1.16.3
 make docker_build
 ```
 
-Add Docker Hub Auth Token to `.dockerenv` and `claudine/server/.env`
+`CLOUSEAU_WORKERS` - is a comma seperated list of "docker engines" for dev this will be your local ip
+
+Add `DOCKERHUB_AUTH` Token and `REDIS_HOST` and `CLOUSEAU_WORKERS` to `.dockerenv` and `claudine/server/.env`
 
 Generate base64 auth token
 ```
@@ -30,11 +32,16 @@ echo '{"username":"<username>","password":"<password>","email":"<email>"}' | bas
 
 ```
 DOCKERHUB_AUTH=<auth token>
+REDIS_HOST=192.168.1.6
+CLOUSEAU_WORKERS=192.168.1.6,192.168.1.7
 ```
 
 
 ## Run
 ```
+# start a redis
+docker run --rm --name redis1 --hostname redis1 -p 6378:6379 -d redis
+
 make socat-start
 make docker-compose_up
 ```

@@ -2,6 +2,7 @@ package cato
 
 import (
 	"bufio"
+	"context"
 	"golang.org/x/crypto/ssh"
 	"io"
 	"log"
@@ -13,29 +14,31 @@ type Terminal struct {
 }
 
 type SSHD struct {
-	Server   string
-	User     string
-	Password string
-	In       chan WebSocketMessage
-	Out      chan WebSocketMessage
-	Close    chan bool
-	Open     bool
-	Terminal *Terminal
+	Server    string
+	User      string
+	Password  string
+	In        chan WebSocketMessage
+	Out       func(WebSocketMessage)
+	Close     chan bool
+	Open      bool
+	Terminal  *Terminal
+	parentCtx context.Context
 }
 
-func NewSSHD(server string, user string, password string) *SSHD {
+func NewSSHD(parentCtx context.Context, server string, user string, password string, out func(WebSocketMessage)) *SSHD {
 	return &SSHD{
 		Server:   server,
 		User:     user,
 		Password: password,
 		In:       nil,
-		Out:      nil,
+		Out:      out,
 		Close:    make(chan bool),
 		Open:     false,
 		Terminal: &Terminal{
 			Height: 40,
 			Width:  120,
 		},
+		parentCtx: parentCtx,
 	}
 }
 
@@ -47,13 +50,12 @@ func (sshd *SSHD) Stop() {
 	log.Printf("SSH Stopped %v ", sshd.Server)
 }
 
-func (sshd *SSHD) Start(out chan WebSocketMessage) {
+func (sshd *SSHD) Start() {
 	if sshd.Open {
 		log.Printf("SSH Already Connected\n")
 		return
 	}
 	sshd.In = make(chan WebSocketMessage)
-	sshd.Out = out
 	sshd.Open = true
 
 	defer func() {
@@ -116,6 +118,7 @@ func (sshd *SSHD) Start(out chan WebSocketMessage) {
 	errbuf := bufio.NewReader(e)
 
 	go func() {
+		sshd.Out(WebSocketMessage{Channel: "ssh/connected", Payload: "connected"})
 		for {
 			ob := make([]byte, 1024)
 			n, err := outbuf.Read(ob)
@@ -126,7 +129,7 @@ func (sshd *SSHD) Start(out chan WebSocketMessage) {
 				return
 			}
 			LogTrace("sending stdout %v", ob[0:n])
-			sshd.Out <- WebSocketMessage{Channel: "xterm", Payload: string(ob[0:n])}
+			sshd.Out(WebSocketMessage{Channel: "xterm", Payload: string(ob[0:n])})
 		}
 	}()
 
@@ -142,7 +145,7 @@ func (sshd *SSHD) Start(out chan WebSocketMessage) {
 			}
 			LogTrace("sending stderr %v", eb[0:n])
 			//std err
-			sshd.Out <- WebSocketMessage{Channel: "xterm", Payload: string(eb[0:n])}
+			sshd.Out(WebSocketMessage{Channel: "xterm", Payload: string(eb[0:n])})
 		}
 	}()
 

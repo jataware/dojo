@@ -6,6 +6,9 @@ rules:
     - vi
     - emacs
     - edit
+    - config
   prompt:
     - python
     - bash
+    - luigi
+

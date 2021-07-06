@@ -1,9 +1,8 @@
 
-
-
-docker:
-  image: jataware/clouseau:claudine-dev
-
 ssh:
   user: clouseau
   password: clouseau
+
+redis:
+  host: localhost
+  port: 6379
