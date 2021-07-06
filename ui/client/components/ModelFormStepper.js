@@ -49,6 +49,7 @@ function getStepContent(step) {
 
 const defaultModelState = {
   name: '',
+  family_name: '',
   description: '',
   type: 'model',
   email: '',

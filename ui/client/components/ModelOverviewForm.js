@@ -24,7 +24,10 @@ const validationSchema = yup.object({
   website: yup
     .string('Enter your repository URL')
     .url()
-    .required('Repository URL is required'),
+    .required('Model website is required'),
+  family_name: yup
+    .string('Enter the model family name')
+    .required('Model family is required'),
   description: yup
     .string('Enter a model description')
     .min(8, 'Description should be at least 250 characters')
@@ -54,9 +57,14 @@ export const ModelOverview = ({
         />
         <FormikTextField
           name="website"
-          label="Repository URL"
+          label="Model Website"
           formik={formik}
           type="url"
+        />
+        <FormikTextField
+          name="family_name"
+          label="Model Family"
+          formik={formik}
         />
         <FormikTextField
           name="description"
