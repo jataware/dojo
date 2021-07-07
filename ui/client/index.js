@@ -48,7 +48,7 @@ export default function Main() {
         <Route component={Model} exact path="/model" />
         <Route component={Intro} exact path="/intro" />
         <Route component={TermLoading} exact path="/loadingterm" />
-        <Route component={App} exact path="/term/:worker/:model" />
+        <Route component={App} exact path="/term/:worker/:modelid" />
         <Route component={Summary} exact path="/summary/:worker" />
         <Route component={PublishContainer} exact path="/publishcontainer/:worker" />
         <Route component={Admin} exact path="/admin" />

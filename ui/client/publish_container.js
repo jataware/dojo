@@ -105,7 +105,7 @@ const Page = ({ workerNode }) => {
         setPublishInfo((p) => ({
           ...p,
           tag: Tag,
-          url: `https://hub.docker.com/layers/jataware/clouseau/${Tag}/images/${Digest.replaceAll(':', '-')}?context=repo`,
+          url: `https://hub.docker.com/layers/jataware/dojo-publish/${Tag}/images/${Digest.replaceAll(':', '-')}?context=repo`,
           publish: { status: 'finished', message: '' }
         }));
         setEnableFinished(true);
@@ -153,7 +153,7 @@ const Page = ({ workerNode }) => {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ image: `jataware/clouseau:${publishInfo?.tag}` })
+          body: JSON.stringify({ image: `jataware/dojo-publish:${publishInfo?.tag}` })
         });
       // cleanup
       fetch(`/api/clouseau/docker/${workerNode}/stop/${containerInfo.id}`, { method: 'DELETE' });
@@ -191,7 +191,7 @@ const Page = ({ workerNode }) => {
                   <OpenInNewIcon style={{ fontSize: '14px' }} />
                   {' '}
                   <span>
-                    docker pull jataware/clouseau:
+                    docker pull jataware/dojo-publish:
                     {publishInfo?.tag}
                   </span>
                 </Link>

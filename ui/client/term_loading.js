@@ -67,6 +67,31 @@ const PingContainer = async (worker) => {
   }
 };
 
+const ConfigureRules = async (worker) => {
+  const resp = await fetch(`/api/clouseau/container/${worker}/ops/rules`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      block: [
+        'vim',
+        'config',
+        'vi',
+        'emacs',
+        'nano',
+        'edit',
+        'tag'
+      ]
+    }),
+  });
+  if (!resp.ok) {
+    throw new Error('Container configuration failed');
+  }
+  console.debug('Container rules');
+  console.debug(await resp.json());
+};
+
 const Provision = async (worker, containerId, cmd) => {
   // store provision
   fetch(`/api/clouseau/container/store/${containerId}/provisions`, {
@@ -101,7 +126,7 @@ const TermLoading = ({ location }) => {
 
   async function* Steps() {
     // update this when new yields are added to keep the percentage bar correct
-    const totalSteps = 6;
+    const totalSteps = 8;
     function* percentage() {
       let index = 0;
       while (true) {
@@ -135,6 +160,10 @@ const TermLoading = ({ location }) => {
       yield n(`${M.I}Testing container connectivity`);
       await PingContainer(imageInfo.worker, containerId);
       yield n(`${M.OK}Connection succeded`);
+
+      yield n(`${M.I}Configuring container`);
+      await ConfigureRules(imageInfo.worker, containerId);
+      yield n(`${M.OK}Configuration complete`);
 
       // yield n(`${M.I}Cloning Repo ${imageInfo.gitUrl}`);
       // await Provision(imageInfo.worker, containerId, ['git', 'clone', imageInfo.gitUrl]);

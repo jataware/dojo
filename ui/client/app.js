@@ -315,6 +315,9 @@ const CenteredGrid = ({ workerNode }) => {
   const [openAbandonSessionDialog, setAbandonSessionDialogOpen] = useState(false);
   const [editorContents, setEditorContents] = useState({});
   const [openEditor, setOpenEditor] = useState(false);
+  const [isSpacetagOpen, setIsSpacetagOpen] = useState(false);
+  const [spacetagUrl, setSpacetagUrl] = useState('');
+  const [spacetagFile, setSpacetagFile] = useState('');
   const [isShorthandOpen, setIsShorthandOpen] = useState(false);
 
   const [isShorthandSaving, setIsShorthandSaving] = useState(false);
@@ -395,6 +398,9 @@ const CenteredGrid = ({ workerNode }) => {
             setIsShorthandSaving={setIsShorthandSaving}
             setShorthandContents={setShorthandContents}
             setShorthandMode={setShorthandMode}
+            setIsSpacetagOpen={setIsSpacetagOpen}
+            setSpacetagUrl={setSpacetagUrl}
+            setSpacetagFile={setSpacetagFile}
           />
           <ExecutionDialog
             workerNode={workerNode}
@@ -428,6 +434,21 @@ const CenteredGrid = ({ workerNode }) => {
             title={`Editing ${editorContents?.file}`}
           >
             <SimpleEditor editorContents={editorContents} setEditorContents={setEditorContents} />
+          </FullScreenDialog>
+
+          <FullScreenDialog
+            open={isSpacetagOpen}
+            setOpen={setIsSpacetagOpen}
+            onSave={() => {}}
+            showSave={false}
+            title={`${spacetagFile}`}
+          >
+            <iframe
+              id="spacetag"
+              title="spacetag"
+              style={{ height: 'calc(100vh - 70px)', width: '100%' }}
+              src={spacetagUrl}
+            />
           </FullScreenDialog>
         </Grid>
       </Grid>

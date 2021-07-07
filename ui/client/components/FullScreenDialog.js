@@ -23,8 +23,9 @@ const useStyles = makeStyles((theme) => ({
 const Transition = React.forwardRef((props, ref) => <Slide direction="up" ref={ref} {...props} />);
 
 const FullScreenDialog = ({
-  open, setOpen, onSave, children, title
+  open, setOpen, onSave, children, title, showSave
 }) => {
+  const saveVisible = showSave !== false;
   const classes = useStyles();
   const handleClose = () => {
     setOpen(false);
@@ -47,7 +48,7 @@ const FullScreenDialog = ({
           <Typography variant="h6" className={classes.title}>
             {title || ''}
           </Typography>
-          <Button autoFocus color="inherit" onClick={handleSave}>
+          <Button autoFocus color="inherit" onClick={handleSave} style={{ display: saveVisible ? 'unset' : 'none' }}>
             save
           </Button>
         </Toolbar>

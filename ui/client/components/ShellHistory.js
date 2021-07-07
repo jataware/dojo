@@ -26,7 +26,8 @@ import {
 export const ContainerWebSocket = ({
   workerNode,
   setDialogOpen, setDialogContents, setEditorContents, openEditor,
-  setIsShorthandOpen, setIsShorthandSaving, setShorthandContents, setShorthandMode
+  setIsShorthandOpen, setIsShorthandSaving, setShorthandContents, setShorthandMode,
+  setSpacetagUrl, setIsSpacetagOpen, setSpacetagFile
 }) => {
   const { register, unregister } = useWebSocketUpdateContext();
   const { fetchHistory } = useHistoryUpdateContext();
@@ -57,6 +58,22 @@ export const ContainerWebSocket = ({
     //     }
     //   }
     // );
+  };
+
+  const storeFileRequest = async (info) => {
+    const rsp = await fetch('/api/dojo/clouseau/file', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(info)
+    });
+
+    if (!rsp.ok) {
+      throw new Error(`Failed to send file info ${rsp.status}`);
+    }
+
+    return rsp.json();
   };
 
   const onPrompt = (data) => {
@@ -118,6 +135,19 @@ export const ContainerWebSocket = ({
         setIsShorthandSaving(false);
         setIsShorthandOpen(true); // open the <FullScreenDialog>
       }
+    } else if (s.startsWith('tag ')) {
+      const p = `${s.substring(4)}`;
+      const f = (p.startsWith('/')) ? p : `${cwd}/${p}`;
+
+      const { id: reqid } = await storeFileRequest({
+        model_id: containerInfo.model_id,
+        file_path: f,
+        request_path: `/container/${workerNode}/ops/cat?path=${f}`
+      });
+
+      setSpacetagFile(`${f}`);
+      setSpacetagUrl(`/api/spacetag/byom?reqid=${reqid}`);
+      setIsSpacetagOpen(true);
     }
   };
 
