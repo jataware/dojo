@@ -87,10 +87,24 @@ func (settings *Settings) RemoveRules(rules *Rules) {
 	settings.SetRules(newRules)
 }
 
+func appendUniq(a []string, b []string) []string {
+	check := make(map[string]int)
+	xs := append(a, b...)
+	res := make([]string, 0)
+	for _, val := range xs {
+		check[val] = 1
+	}
+	for s, _ := range check {
+		res = append(res, s)
+	}
+	return res
+}
+
 func (settings *Settings) MergeRules(rules *Rules) {
+
 	newRules := Rules{
-		Block:  append(settings.Rules.Block, rules.Block...),
-		Prompt: append(settings.Rules.Prompt, rules.Prompt...),
+		Block:  appendUniq(settings.Rules.Block, rules.Block),
+		Prompt: appendUniq(settings.Rules.Prompt, rules.Prompt),
 	}
 	settings.SetRules(newRules)
 }

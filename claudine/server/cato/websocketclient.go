@@ -90,6 +90,7 @@ func (c *WebSocketClient) RouteClientMessages(message WebSocketMessage) {
 		if err := c.ProxyWS.Connect(); err != nil {
 			LogError("Proxy Connect Failed", err)
 			c.clientReplyChan <- WebSocketMessage{Channel: "fatal", Payload: fmt.Sprintf("[ERROR] %+v", err)}
+			return
 		} else {
 			go c.ProxyWS.Start()
 			log.Printf("Proxy Connected")
@@ -129,11 +130,12 @@ func (c *WebSocketClient) InspectReplyMessage(message WebSocketMessage) {
 }
 
 func (c *WebSocketClient) Stop() {
+	log.Printf("Stopping WebSocketClient %s\n", c.ID)
 	defer c.Conn.Close()
 	c.cancel()
+	c.Pool.Unregister <- c
 	c.Ssh.Stop()
 	c.containerID = ""
-	c.Pool.Unregister <- c
 	log.Printf("WebSocketClient Stopped %s\n", c.ID)
 }
 

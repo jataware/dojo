@@ -98,7 +98,7 @@ func (docker *Docker) Commit(
 		return err
 	}
 
-	tag := fmt.Sprintf("jataware/clouseau:%s-latest", name)
+	tag := fmt.Sprintf("jataware/dojo-publish:%s-latest", name)
 	if err := docker.Client.ImageTag(ctx, img.ID, tag); err != nil {
 		LogError("Image Tag", err)
 		return err
