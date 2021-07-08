@@ -55,7 +55,7 @@ func (pool *WebSocketPool) Start() {
 			for client, _ := range pool.Clients {
 				if StringsContains(directMessage.Clients, client.ID) {
 					log.Printf("Sending direct message to client %s", client.ID)
-					client.Conn.SetWriteDeadline(time.Now().Add(writeWait))
+					client.Conn.SetWriteDeadline(time.Now().Add(WRITE_WAIT_DEADLINE))
 					if err := client.Conn.WriteJSON(directMessage.Message); err != nil {
 						if ws.IsUnexpectedCloseError(err, ws.CloseGoingAway, ws.CloseAbnormalClosure) {
 							log.Printf("Broadcast Error: %+v\n", err)
@@ -67,7 +67,7 @@ func (pool *WebSocketPool) Start() {
 		case message := <-pool.Broadcast:
 			log.Printf("Sending message to all clients in Pool\n")
 			for client, _ := range pool.Clients {
-				client.Conn.SetWriteDeadline(time.Now().Add(writeWait))
+				client.Conn.SetWriteDeadline(time.Now().Add(WRITE_WAIT_DEADLINE))
 				if err := client.Conn.WriteJSON(message); err != nil {
 					if ws.IsUnexpectedCloseError(err, ws.CloseGoingAway, ws.CloseAbnormalClosure) {
 						log.Printf("Broadcast Error: %+v\n", err)

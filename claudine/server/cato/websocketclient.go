@@ -133,8 +133,8 @@ func (c *WebSocketClient) Stop() {
 	log.Printf("Stopping WebSocketClient %s\n", c.ID)
 	defer c.Conn.Close()
 	c.cancel()
-	c.Pool.Unregister <- c
 	c.Ssh.Stop()
+	c.DockerServer = ""
 	c.containerID = ""
 	log.Printf("WebSocketClient Stopped %s\n", c.ID)
 }
@@ -144,9 +144,9 @@ func (c *WebSocketClient) Read() {
 	defer c.Stop()
 
 	c.Conn.SetReadLimit(512)
-	c.Conn.SetReadDeadline(time.Now().Add(pongWait))
+	c.Conn.SetReadDeadline(time.Now().Add(PONG_WAIT))
 	c.Conn.SetPongHandler(func(string) error {
-		c.Conn.SetReadDeadline(time.Now().Add(pongWait))
+		c.Conn.SetReadDeadline(time.Now().Add(PONG_WAIT))
 		return nil
 	})
 
@@ -155,7 +155,7 @@ func (c *WebSocketClient) Read() {
 			select {
 			case msg := <-c.clientReplyChan:
 				c.InspectReplyMessage(msg)
-				c.Conn.SetWriteDeadline(time.Now().Add(writeWait))
+				c.Conn.SetWriteDeadline(time.Now().Add(WRITE_WAIT_DEADLINE))
 				if err := c.Conn.WriteJSON(msg); err != nil {
 					if ws.IsUnexpectedCloseError(err, ws.CloseGoingAway, ws.CloseAbnormalClosure) {
 						LogError("Reply Error", err)
@@ -205,6 +205,26 @@ func (c *WebSocketClient) Read() {
 }
 
 func (c *WebSocketClient) KeepAlive() {
+	ticker := time.NewTicker(PING_PERIOD)
 	defer c.Stop()
-	ConnectionKeepAlive(c.ctx, c.ID, c.Conn)
+	defer ticker.Stop()
+	for {
+		select {
+		case <-ticker.C:
+			c.Conn.SetWriteDeadline(time.Now().Add(WRITE_WAIT_DEADLINE))
+			log.Printf("Send Keep Alive Id: %s\n", c.ID)
+			if err := c.Conn.WriteMessage(ws.PingMessage, nil); err != nil {
+				if ws.IsUnexpectedCloseError(err, ws.CloseGoingAway, ws.CloseAbnormalClosure) {
+					LogError("Unexpected Error Keep Alive:", err)
+				} else {
+					log.Printf("Keep Alive Client gone - Id: %s\n", c.ID)
+				}
+				return
+			}
+		case <-c.ctx.Done():
+			log.Printf("Keep Alive Client cancelled, Unregistered - Id: %s\n", c.ID)
+			c.Pool.Unregister <- c
+			return
+		}
+	}
 }

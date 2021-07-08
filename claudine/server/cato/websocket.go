@@ -1,7 +1,6 @@
 package cato
 
 import (
-	"context"
 	"fmt"
 	"github.com/gin-gonic/gin"
 	ws "github.com/gorilla/websocket"
@@ -13,13 +12,13 @@ import (
 
 const (
 	// Time allowed to write the file to the client.
-	writeWait = 15 * time.Second
+	WRITE_WAIT_DEADLINE = 15 * time.Second
 
 	// Time allowed to read the next pong message from the client.
-	pongWait = 60 * time.Second
+	PONG_WAIT = 30 * time.Second
 
-	// Send pings to client with this period. Must be less than pongWait.
-	pingPeriod = (pongWait * 9) / 10
+	// Send pings to client with this period. Must be less than PONG_WAIT.
+	PING_PERIOD = (PONG_WAIT * 8) / 10
 )
 
 type WebSocketMessage struct {
@@ -76,28 +75,5 @@ func ServeWebSocket(settings *Settings, pool *WebSocketPool, clouseauWorkerPool 
 			Message: WebSocketMessage{Channel: "id", Payload: client.ID}}
 		go client.KeepAlive()
 		go client.Read()
-	}
-}
-
-func ConnectionKeepAlive(ctx context.Context, id string, conn *ws.Conn) {
-	ticker := time.NewTicker(pingPeriod)
-	defer ticker.Stop()
-	for {
-		select {
-		case <-ticker.C:
-			conn.SetWriteDeadline(time.Now().Add(writeWait))
-			log.Printf("Send Keep Alive Id: %s\n", id)
-			if err := conn.WriteMessage(ws.PingMessage, nil); err != nil {
-				if ws.IsUnexpectedCloseError(err, ws.CloseGoingAway, ws.CloseAbnormalClosure) {
-					LogError("Unexpected Error Keep Alive:", err)
-				} else {
-					log.Printf("Keep Alive Client gone - Id: %s\n", id)
-				}
-				return
-			}
-		case <-ctx.Done():
-			log.Printf("Keep Alive Client cancelled - Id: %s\n", id)
-			return
-		}
 	}
 }
