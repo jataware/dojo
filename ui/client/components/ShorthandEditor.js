@@ -10,7 +10,13 @@ export const ShorthandEditor = ({ modelInfo, isSaving, mode }) => {
   return (
     <div>
       { isSaving ? <LinearProgress /> : null }
-      <iframe id="shorthand" title="shorthand" style={{ height: 'calc(100vh - 70px)', width: '100%' }} src={editorUrl} ref={shorthandRef} />
+      <iframe
+        id="shorthand"
+        title="shorthand"
+        style={{ height: 'calc(100vh - 70px)', width: '100%' }}
+        src={editorUrl}
+        ref={shorthandRef}
+      />
     </div>
   );
 };

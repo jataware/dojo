@@ -4,6 +4,7 @@ import React, {
 
 import DeleteIcon from '@material-ui/icons/Delete';
 
+import Button from '@material-ui/core/Button';
 import IconButton from '@material-ui/core/IconButton';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
@@ -25,7 +26,7 @@ import {
 
 export const ContainerWebSocket = ({
   workerNode,
-  setDialogOpen, setDialogContents, setEditorContents, openEditor,
+  setEditorContents, openEditor,
   setIsShorthandOpen, setIsShorthandSaving, setShorthandContents, setShorthandMode,
   setSpacetagUrl, setIsSpacetagOpen, setSpacetagFile
 }) => {
@@ -74,12 +75,6 @@ export const ContainerWebSocket = ({
     }
 
     return rsp.json();
-  };
-
-  const onPrompt = (data) => {
-    const { command, cwd } = JSON.parse(data);
-    setDialogContents({ command, cwd });
-    setDialogOpen(true);
   };
 
   const onBlocked = async (data) => {
@@ -154,13 +149,11 @@ export const ContainerWebSocket = ({
   useEffect(() => {
     if (containerInfo?.id) {
       register('term/message', onMessage);
-      register('term/prompt', onPrompt);
       register('term/blocked', onBlocked);
     }
 
     return (() => {
       unregister('term/message', onMessage);
-      unregister('term/prompt', onPrompt);
       unregister('term/blocked', onBlocked);
     });
   }, [containerInfo]);
@@ -199,19 +192,28 @@ const useStyles = makeStyles(() => ({
   },
 }));
 
-export const ShellHistory = () => {
-  const { historyContext } = useHistoryContext();
-  const { fetchHistory, removeHistoryItem } = useHistoryUpdateContext();
+export const ShellHistory = ({
+  setIsShorthandOpen,
+  setIsShorthandSaving,
+  setShorthandMode,
+  setShorthandContents,
+}) => {
+  const { historyContext, runCommand } = useHistoryContext();
+  const {
+    fetchHistory,
+    fetchRunCommand,
+    removeHistoryItem,
+    markRunCommand
+  } = useHistoryUpdateContext();
   const containerInfo = useContainerInfoContext();
-  const removeItem = (item) => {
-    removeHistoryItem(containerInfo.id, item);
-  };
+  const removeItem = (item) => removeHistoryItem(containerInfo.id, item);
   const classes = useStyles();
   const tableRef = React.createRef(null);
 
   useEffect(() => {
     if (containerInfo?.id) {
       fetchHistory(containerInfo.id);
+      fetchRunCommand(containerInfo.id);
     }
   }, [containerInfo]);
 
@@ -220,6 +222,129 @@ export const ShellHistory = () => {
       tableRef.current.lastChild.scrollIntoView({ behavior: 'smooth' });
     }
   }, [historyContext]);
+
+  const handleAnnotationClick = async (directive) => {
+    // toggle <ShorthandEditor> to open in <App>, which loads the iframe
+    setIsShorthandOpen(true);
+    // set mode to directive before we load in content
+    // or we get [Object][Object] showing in the iframe before content loads
+    setShorthandMode('directive');
+
+    // listen for messages from shorthand iframe
+    window.onmessage = function shorthandOnMessage(e) {
+      let postMessageBody;
+
+      try {
+        postMessageBody = JSON.parse(e.data);
+      } catch {
+        return; // not a json event
+      }
+
+      // shorthand will return one of the following messages
+      switch (postMessageBody.type) {
+        case 'editor_loaded':
+          // editor has loaded, send in the command
+          setShorthandContents({
+            editor_content: directive.command,
+            content_id: directive.command,
+          });
+          break;
+        case 'params_saved':
+          // mark the command as the run command (the directive)
+          markRunCommand(containerInfo.id, directive);
+          // stop the spinner
+          setIsShorthandSaving(false);
+          // close the shorthand editor
+          setIsShorthandOpen(false);
+          break;
+        case 'params_not_saved':
+          setIsShorthandOpen(true); // keep shorthand open
+          setIsShorthandSaving(false); // stop the saving spinner
+          break;
+        default:
+          throw new Error(`There was an error: ${postMessageBody}`);
+      }
+    };
+  };
+
+  const isRunCommand = (command) => {
+    if (!runCommand) return false;
+
+    return command === runCommand.command;
+  };
+
+  const displayHistoryItems = () => {
+    // keep track of whether we've already marked a run command
+    let foundRunCommand = false;
+
+    return historyContext.map((item) => {
+      let runCommandItem = false;
+      let runCommandDuplicate = false;
+      // three options for the text, so control it here instead of a ternary
+      let buttonText = 'Mark as directive';
+
+      if (!foundRunCommand && isRunCommand(item.command)) {
+        // only mark one item as the run command even if we have duplicates
+        runCommandItem = true;
+        foundRunCommand = true;
+        buttonText = 'Edit Directive';
+      } else if (foundRunCommand && isRunCommand(item.command)) {
+        // mark the duplicates as duplicates
+        runCommandDuplicate = true;
+        buttonText = 'Directive (duplicate)';
+      }
+
+      return (
+        <TableRow
+          hover
+          tabIndex={-1}
+          key={item.idx}
+          className={classes.tr}
+          style={{
+            backgroundColor:
+              runCommandItem || runCommandDuplicate ? '#445d6e' : '',
+            opacity: runCommandDuplicate ? 0.5 : 1,
+          }}
+        >
+          <TableCell align="left">
+            <div style={{ paddingLeft: '2px' }}>
+              {item.command}
+            </div>
+          </TableCell>
+          <TableCell align="right">
+            <Button
+              color={runCommandItem ? 'primary' : 'default'}
+              disabled={runCommandDuplicate}
+              disableElevation
+              onClick={() => handleAnnotationClick(item)}
+              size="small"
+              style={{
+                // use an off white color so the disabled duplicate text
+                // is legible on the directive background
+                color: runCommandDuplicate ? '#B2B2B2' : '',
+                margin: '4px 8px',
+                width: '164px',
+              }}
+              variant="contained"
+            >
+              {buttonText}
+            </Button>
+          </TableCell>
+          <TableCell align="left" width="8%">
+            <Tooltip title="Delete" arrow>
+              <IconButton
+                aria-label="delete"
+                className={classes.iconButton}
+                onClick={() => removeItem(item)}
+              >
+                <DeleteIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </TableCell>
+        </TableRow>
+      );
+    });
+  };
 
   return (
     <div style={{
@@ -251,32 +376,7 @@ export const ShellHistory = () => {
             </TableRow>
           </TableHead>
           <TableBody ref={tableRef} className={classes.tableBody}>
-            {historyContext.map((item) => (
-              <TableRow
-                hover
-                tabIndex={-1}
-                key={item.idx}
-                className={classes.tr}
-                style={item.runCommand && { backgroundColor: '#445d6e' }}
-              >
-                <TableCell align="left">
-                  <div style={{ paddingLeft: '2px' }}>
-                    {item.command}
-                  </div>
-                </TableCell>
-                <TableCell align="left" width="8%">
-                  <Tooltip title="Delete" arrow>
-                    <IconButton
-                      aria-label="delete"
-                      className={classes.iconButton}
-                      onClick={() => removeItem(item)}
-                    >
-                      <DeleteIcon fontSize="small" />
-                    </IconButton>
-                  </Tooltip>
-                </TableCell>
-              </TableRow>
-            ))}
+            {displayHistoryItems()}
           </TableBody>
         </Table>
       </TableContainer>

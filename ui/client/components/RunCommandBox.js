@@ -2,6 +2,7 @@ import React from 'react';
 
 import Box from '@material-ui/core/Box';
 import NavigateNextIcon from '@material-ui/icons/NavigateNext';
+import Typography from '@material-ui/core/Typography';
 
 const RunCommandBox = ({ command }) => (
   <Box style={{
@@ -15,9 +16,15 @@ const RunCommandBox = ({ command }) => (
   }}
   >
     <span>
-      <NavigateNextIcon style={{ color: 'yellow', verticalAlign: '-.3em' }} />
-      {' '}
-      {command?.command}
+      <Typography variant="subtitle2">Model Directive:</Typography>
+      <NavigateNextIcon
+        style={{
+          color: 'yellow',
+          verticalAlign: '-.3em',
+          marginRight: '4px'
+        }}
+      />
+      <Typography variant="subtitle2" component="span">{command?.command}</Typography>
     </span>
   </Box>
 );

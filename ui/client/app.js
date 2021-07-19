@@ -31,7 +31,6 @@ import {
   useModelInfoContext,
 } from './context';
 
-import BasicAlert from './components/BasicAlert';
 import FullScreenDialog from './components/FullScreenDialog';
 import RunCommandBox from './components/RunCommandBox';
 import SimpleEditor from './components/SimpleEditor';
@@ -51,99 +50,6 @@ const useStyles = makeStyles((theme) => ({
     color: '#fff',
   },
 }));
-
-export const ExecutionDialog = ({
-  workerNode,
-  open, setOpen, dialogContents,
-  setIsShorthandOpen, setIsShorthandSaving, setShorthandContents, setShorthandMode
-}) => {
-  const { markRunCommand } = useHistoryUpdateContext();
-  const containerInfo = useContainerInfoContext();
-  const handleClose = async (isRunCommand) => {
-    if (isRunCommand) {
-      // listen for messages from shorthand iframe
-      window.onmessage = function shorthandOnMessage(e) {
-        let postMessageBody;
-
-        try {
-          postMessageBody = JSON.parse(e.data);
-        } catch {
-          return; // not a json event
-        }
-
-        if (postMessageBody.type === 'editor_loaded') {
-          // editor has loaded, send in the command
-          setShorthandContents({
-            editor_content: dialogContents.command,
-            content_id: dialogContents.command,
-          });
-        }
-        if (postMessageBody.type === 'params_saved') {
-          // console.log("Params Saved :)")
-          setIsShorthandOpen(false);
-          markRunCommand(containerInfo.id, dialogContents);
-        }
-        if (postMessageBody.type === 'params_not_saved') {
-          // console.log("Params Not Saved :(")
-          setIsShorthandOpen(true); // keep shorthand open
-          setIsShorthandSaving(false); // stop the saving spinner
-        }
-      };
-
-      setShorthandMode('directive');
-      setIsShorthandSaving(false);
-      setIsShorthandOpen(true);
-    }
-    await fetch(`/api/clouseau/container/${workerNode}/ops/clear?code=0`);
-    setOpen(false);
-  };
-
-  return (
-    <div>
-      <Dialog
-        open={open}
-        onClose={handleClose}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-      >
-        <DialogTitle id="alert-dialog-title">
-          <WarningIcon style={{ fontSize: '1.0rem', marginRight: '8px' }} />
-          Are you executing a model?
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText
-            id="alert-dialog-description"
-            style={{
-              marginTop: '10px',
-              backgroundColor: '#445d6e',
-              color: '#fff',
-              display: 'flex',
-              alignItems: 'center',
-              flexWrap: 'wrap'
-            }}
-          >
-            {open && dialogContents && (
-            <>
-              <NavigateNextIcon style={{ color: 'yellow' }} />
-              {' '}
-              <span>{dialogContents.command}</span>
-            </>
-
-            )}
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={() => handleClose(true)} autoFocus color="primary">
-            Yes
-          </Button>
-          <Button onClick={() => handleClose(false)} color="secondary">
-            No
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </div>
-  );
-};
 
 export const EndSessionDialog = ({
   open, setOpen, runCommand, accept, reject
@@ -304,13 +210,6 @@ const CenteredGrid = ({ workerNode }) => {
   const { runCommand } = useHistoryContext();
   const { fetchRunCommand } = useHistoryUpdateContext();
 
-  const [alertVisible, setAlertVisible] = useState(false);
-  const [alert, setAlert] = useState({
-    severity: 'error',
-    message: ''
-  });
-  const [dialogContents, setDialogContents] = useState({});
-  const [openDialog, setDialogOpen] = useState(false);
   const [openEndSessionDialog, setEndSessionDialogOpen] = useState(false);
   const [openAbandonSessionDialog, setAbandonSessionDialogOpen] = useState(false);
   const [editorContents, setEditorContents] = useState({});
@@ -383,17 +282,15 @@ const CenteredGrid = ({ workerNode }) => {
 
         <Grid item xs={4} style={{ padding: '0 5px 0 0', zIndex: 5 }}>
           <ShellHistory
-            setAlert={setAlert}
-            setAlertVisible={setAlertVisible}
+            setIsShorthandOpen={setIsShorthandOpen}
+            setIsShorthandSaving={setIsShorthandSaving}
+            setShorthandContents={setShorthandContents}
+            setShorthandMode={setShorthandMode}
           />
           <ContainerWebSocket
             workerNode={workerNode}
-            setAlert={setAlert}
-            setAlertVisible={setAlertVisible}
-            setDialogOpen={setDialogOpen}
             setEditorContents={setEditorContents}
             openEditor={() => setOpenEditor(true)}
-            setDialogContents={setDialogContents}
             setIsShorthandOpen={setIsShorthandOpen}
             setIsShorthandSaving={setIsShorthandSaving}
             setShorthandContents={setShorthandContents}
@@ -401,16 +298,6 @@ const CenteredGrid = ({ workerNode }) => {
             setIsSpacetagOpen={setIsSpacetagOpen}
             setSpacetagUrl={setSpacetagUrl}
             setSpacetagFile={setSpacetagFile}
-          />
-          <ExecutionDialog
-            workerNode={workerNode}
-            open={openDialog}
-            setOpen={setDialogOpen}
-            setIsShorthandOpen={setIsShorthandOpen}
-            setIsShorthandSaving={setIsShorthandSaving}
-            setShorthandContents={setShorthandContents}
-            setShorthandMode={setShorthandMode}
-            dialogContents={dialogContents}
           />
           <Divider />
           <RunCommandBox command={runCommand} />
@@ -452,7 +339,6 @@ const CenteredGrid = ({ workerNode }) => {
           </FullScreenDialog>
         </Grid>
       </Grid>
-      <BasicAlert alert={alert} visible={alertVisible} setVisible={setAlertVisible} />
 
       <div style={{
         position: 'absolute', right: 0, bottom: '2px', zIndex: 10
