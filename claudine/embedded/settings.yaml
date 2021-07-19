@@ -7,6 +7,3 @@ rules:
     - emacs
     - edit
   prompt:
-    - python
-    - bash
-    - luigi
