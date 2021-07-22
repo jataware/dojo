@@ -33,10 +33,10 @@ import {
 
 import FullScreenDialog from './components/FullScreenDialog';
 import RunCommandBox from './components/RunCommandBox';
+import ShorthandEditor from './components/ShorthandEditor';
 import SimpleEditor from './components/SimpleEditor';
 import Term from './components/Term';
 import { ContainerWebSocket, ShellHistory } from './components/ShellHistory';
-import { ShorthandEditor, shorthandShouldLoad, shorthandShouldSave } from './components/ShorthandEditor';
 
 const useStyles = makeStyles((theme) => ({
   connected: {
@@ -217,11 +217,19 @@ const CenteredGrid = ({ workerNode }) => {
   const [isSpacetagOpen, setIsSpacetagOpen] = useState(false);
   const [spacetagUrl, setSpacetagUrl] = useState('');
   const [spacetagFile, setSpacetagFile] = useState('');
-  const [isShorthandOpen, setIsShorthandOpen] = useState(false);
 
+  // the following control the state of the ShorthandEditor
+  // opens the FullScreenDialog that holds the shorthand iframe
+  const [isShorthandOpen, setIsShorthandOpen] = useState(false);
+  // triggers shorthand to save on click
   const [isShorthandSaving, setIsShorthandSaving] = useState(false);
+  // loads contents into the shorthand iframe
   const [shorthandContents, setShorthandContents] = useState({});
+  // modes: 'directive', 'config'
   const [shorthandMode, setShorthandMode] = useState({});
+
+  // the command to pass into ShorthandEditor when we're marking a directive
+  const [directive, setDirective] = useState({});
 
   const history = useHistory();
   const modelInfo = useModelInfoContext();
@@ -243,19 +251,8 @@ const CenteredGrid = ({ workerNode }) => {
     }
   }, [containerInfo]);
 
-  useEffect(() => {
-    if (shorthandContents) {
-      shorthandShouldLoad(shorthandContents);
-    }
-  }, [shorthandContents]);
-
-  useEffect(() => {
-    if (isShorthandSaving) {
-      shorthandShouldSave();
-    }
-  }, [isShorthandSaving]);
-
-  const setIsShorthandSavingForFullScreenDialog = () => {
+  const shorthandDialogOnSave = () => {
+    // trigger ShorthandEditor to tell the shorthand app to save
     setIsShorthandSaving(true);
     return false; // don't close FullScreenDialog
   };
@@ -286,6 +283,7 @@ const CenteredGrid = ({ workerNode }) => {
             setIsShorthandSaving={setIsShorthandSaving}
             setShorthandContents={setShorthandContents}
             setShorthandMode={setShorthandMode}
+            setDirective={setDirective}
           />
           <ContainerWebSocket
             workerNode={workerNode}
@@ -305,12 +303,16 @@ const CenteredGrid = ({ workerNode }) => {
           <FullScreenDialog
             open={isShorthandOpen}
             setOpen={setIsShorthandOpen}
-            onSave={setIsShorthandSavingForFullScreenDialog}
+            onSave={shorthandDialogOnSave}
           >
             <ShorthandEditor
+              directive={directive}
               modelInfo={modelInfo}
               isSaving={isShorthandSaving}
+              setIsSaving={setIsShorthandSaving}
               mode={shorthandMode}
+              shorthandContents={shorthandContents}
+              setIsShorthandOpen={setIsShorthandOpen}
             />
           </FullScreenDialog>
 

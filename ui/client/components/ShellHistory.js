@@ -27,7 +27,7 @@ import {
 export const ContainerWebSocket = ({
   workerNode,
   setEditorContents, openEditor,
-  setIsShorthandOpen, setIsShorthandSaving, setShorthandContents, setShorthandMode,
+  setIsShorthandOpen, setShorthandContents, setShorthandMode,
   setSpacetagUrl, setIsSpacetagOpen, setSpacetagFile
 }) => {
   const { register, unregister } = useWebSocketUpdateContext();
@@ -97,37 +97,13 @@ export const ContainerWebSocket = ({
       const rsp = await fetch(`/api/clouseau/container/${workerNode}/ops/cat?path=${fullPath}`);
       if (rsp.ok) {
         const fileContent = await rsp.text();
-
-        // listen for messages from shorthand iframe
-        window.onmessage = function shorthandOnMessage(e) {
-          let postMessageBody;
-          try {
-            postMessageBody = JSON.parse(e.data);
-          } catch {
-            return; // not a json event
-          }
-
-          // more info: https://github.com/jataware/shorthand/pull/13
-          if (postMessageBody.type === 'editor_loaded') {
-            // editor has loaded, send in the file contents
-            setShorthandContents({
-              editor_content: fileContent,
-              content_id: fullPath,
-            });
-          }
-          if (postMessageBody.type === 'params_saved') {
-            // console.log("Params Saved :)")
-            setIsShorthandOpen(false);
-          }
-          if (postMessageBody.type === 'params_not_saved') {
-            // console.log("Params Not Saved :(")
-            setIsShorthandOpen(true); // keep shorthand open
-            setIsShorthandSaving(false); // stop the saving spinner
-          }
-        };
-
+        // pass them along to shorthand
+        setShorthandContents({
+          editor_content: fileContent,
+          content_id: fullPath,
+        });
+        // set the mode to config rather than directive
         setShorthandMode('config');
-        setIsShorthandSaving(false);
         setIsShorthandOpen(true); // open the <FullScreenDialog>
       }
     } else if (s.startsWith('tag ')) {
@@ -193,17 +169,15 @@ const useStyles = makeStyles(() => ({
 }));
 
 export const ShellHistory = ({
+  setDirective,
   setIsShorthandOpen,
-  setIsShorthandSaving,
   setShorthandMode,
   setShorthandContents,
 }) => {
   const { historyContext, runCommand } = useHistoryContext();
   const {
     fetchHistory,
-    fetchRunCommand,
     removeHistoryItem,
-    markRunCommand
   } = useHistoryUpdateContext();
   const containerInfo = useContainerInfoContext();
   const removeItem = (item) => removeHistoryItem(containerInfo.id, item);
@@ -213,7 +187,6 @@ export const ShellHistory = ({
   useEffect(() => {
     if (containerInfo?.id) {
       fetchHistory(containerInfo.id);
-      fetchRunCommand(containerInfo.id);
     }
   }, [containerInfo]);
 
@@ -229,42 +202,11 @@ export const ShellHistory = ({
     // set mode to directive before we load in content
     // or we get [Object][Object] showing in the iframe before content loads
     setShorthandMode('directive');
-
-    // listen for messages from shorthand iframe
-    window.onmessage = function shorthandOnMessage(e) {
-      let postMessageBody;
-
-      try {
-        postMessageBody = JSON.parse(e.data);
-      } catch {
-        return; // not a json event
-      }
-
-      // shorthand will return one of the following messages
-      switch (postMessageBody.type) {
-        case 'editor_loaded':
-          // editor has loaded, send in the command
-          setShorthandContents({
-            editor_content: directive.command,
-            content_id: directive.command,
-          });
-          break;
-        case 'params_saved':
-          // mark the command as the run command (the directive)
-          markRunCommand(containerInfo.id, directive);
-          // stop the spinner
-          setIsShorthandSaving(false);
-          // close the shorthand editor
-          setIsShorthandOpen(false);
-          break;
-        case 'params_not_saved':
-          setIsShorthandOpen(true); // keep shorthand open
-          setIsShorthandSaving(false); // stop the saving spinner
-          break;
-        default:
-          throw new Error(`There was an error: ${postMessageBody}`);
-      }
-    };
+    setShorthandContents({
+      editor_content: directive.command,
+      content_id: directive.command,
+    });
+    setDirective(directive);
   };
 
   const isRunCommand = (command) => {
