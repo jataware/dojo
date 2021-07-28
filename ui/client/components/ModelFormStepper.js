@@ -66,6 +66,12 @@ const defaultModelState = {
   outputs: [],
   parameters: [],
   image: '',
+  period: {
+    // model coverage start date
+    gte: null,
+    // model coverage end date
+    lte: null,
+  },
 };
 
 export const HorizontalLinearStepper = () => {
@@ -87,15 +93,21 @@ export const HorizontalLinearStepper = () => {
       email,
       organization,
       selectedRegions,
+      period,
       ...parsedModelInfo
     } = model;
     // and then add in the ones we do want
     parsedModelInfo.id = uuidv4();
     parsedModelInfo.maintainer = {
-      website: modelInfo.website,
-      name: modelInfo.maintainerName,
-      email: modelInfo.email,
-      organization: modelInfo.organization,
+      website: model.website,
+      name: model.maintainerName,
+      email: model.email,
+      organization: model.organization,
+    };
+    // we want the epoch value for the start and end dates
+    parsedModelInfo.period = {
+      gte: model.period.gte.valueOf(),
+      lte: model.period.lte.valueOf(),
     };
 
     const settings = {

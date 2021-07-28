@@ -3,7 +3,13 @@ import React from 'react';
 import * as yup from 'yup';
 import Button from '@material-ui/core/Button';
 
+import DateFnsUtils from '@date-io/date-fns';
+import {
+  MuiPickersUtilsProvider,
+} from '@material-ui/pickers';
+
 import { ChipInput } from 'material-ui-formik-components/ChipInput';
+import { KeyboardDatePicker } from 'material-ui-formik-components/KeyboardDatePicker';
 import { RadioGroup } from 'material-ui-formik-components/RadioGroup';
 import { makeStyles } from '@material-ui/core/styles';
 import { Field, FormikProvider, useFormik } from 'formik';
@@ -18,6 +24,13 @@ const useStyles = makeStyles((theme) => ({
     marginTop: theme.spacing(2),
     '& :first-child': {
       marginRight: theme.spacing(1),
+    },
+  },
+  datePickerContainer: {
+    display: 'flex',
+    '& > *': {
+      marginRight: theme.spacing(10),
+      maxWidth: '220px',
     },
   },
 }));
@@ -35,6 +48,12 @@ const validationSchema = yup.object({
   stochastic: yup
     .string('Is the model stocashtic?')
     .required('Is your model stochastic?'),
+  period: yup.object().shape({
+    gte: yup
+      .date(),
+    lte: yup
+      .date(),
+  }),
   // category: yup
   // .array('What categories apply to the model?')
   // .required('What categories apply to the model?')
@@ -71,6 +90,26 @@ export const ModelDetail = ({
             label="Maintainer Organization"
             formik={formik}
           />
+          <MuiPickersUtilsProvider utils={DateFnsUtils}>
+            <div className={classes.datePickerContainer}>
+              <Field
+                component={KeyboardDatePicker}
+                format="MM/dd/yyyy"
+                label="Model Start Date"
+                name="period.gte"
+                placeholder="mm/dd/yyyy"
+                variant="inline"
+              />
+              <Field
+                format="MM/dd/yyyy"
+                component={KeyboardDatePicker}
+                label="Model End Date"
+                name="period.lte"
+                placeholder="mm/dd/yyyy"
+                variant="inline"
+              />
+            </div>
+          </MuiPickersUtilsProvider>
           <Field
             required
             name="stochastic"
