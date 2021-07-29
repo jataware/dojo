@@ -50,6 +50,10 @@ const LandingPage = () => {
     history.push('/model');
   };
 
+  const registerData = () => {
+    window.location.replace('https://data.dojo-test.com');
+  };
+
   return (
     <Container component="main" maxWidth="md">
       <CssBaseline />
@@ -100,7 +104,7 @@ const LandingPage = () => {
                 </Typography>
               </CardContent>
               <CardActions>
-                <Button size="small" variant="contained" color="primary">Go!</Button>
+                <Button size="small" variant="contained" color="primary" onClick={registerData}>Go!</Button>
               </CardActions>
             </Card>
 

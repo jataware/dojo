@@ -155,6 +155,16 @@ const Page = ({ workerNode }) => {
           },
           body: JSON.stringify({ image: `jataware/dojo-publish:${publishInfo?.tag}` })
         });
+
+      // register model
+      fetch(`/api/dojo/models/register/${containerInfo.model_id}`,
+        {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
       // cleanup
       fetch(`/api/clouseau/docker/${workerNode}/stop/${containerInfo.id}`, { method: 'DELETE' });
 
