@@ -9,7 +9,7 @@ import OpenInNewIcon from '@material-ui/icons/OpenInNew';
 // import { v4 as uuidv4 } from 'uuid';
 
 import { makeStyles } from '@material-ui/core/styles';
-import { useHistory, useParams } from 'react-router-dom';
+import { useParams } from 'react-router-dom';
 
 import {
   ContainerInfoContextProvider,
@@ -42,7 +42,6 @@ const useStyles = makeStyles((theme) => ({
 const Page = ({ workerNode }) => {
   const containerInfo = useContainerInfoContext();
   const classes = useStyles();
-  const history = useHistory();
   const [open] = useState(true);
   const [totalProgress, setTotalProgress] = useState(0);
   const [container, setContainer] = useState(() => ({}));
@@ -146,6 +145,8 @@ const Page = ({ workerNode }) => {
     if (enableFinished) {
       console.debug('manually close socket');
       closeSocket();
+
+      console.debug('patching model');
       // link image to model
       fetch(`/api/dojo/models/${containerInfo.model_id}`,
         {
@@ -154,16 +155,17 @@ const Page = ({ workerNode }) => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({ image: `jataware/dojo-publish:${publishInfo?.tag}` })
-        });
-
-      // register model
-      fetch(`/api/dojo/models/register/${containerInfo.model_id}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        });
+        }).then(() => {
+        console.debug('registering model');
+        // register model
+        fetch(`/api/dojo/models/register/${containerInfo.model_id}`,
+          {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+          });
+      });
 
       // cleanup
       fetch(`/api/clouseau/docker/${workerNode}/stop/${containerInfo.id}`, { method: 'DELETE' });
@@ -174,6 +176,13 @@ const Page = ({ workerNode }) => {
       console.debug(container);
     }
   }, [enableFinished]);
+
+  const completeNav = async () => {
+    const resp = await fetch(`/api/dojo/models/${containerInfo.model_id}`);
+    const model = await resp.json();
+    const url = `https://causemos.uncharted.software/#/model/${model.family_name}/model-publishing-experiment?datacubeid=${model.id}`;
+    window.location.replace(url);
+  };
 
   return (
     <div>
@@ -208,8 +217,8 @@ const Page = ({ workerNode }) => {
               </div>
 
               <div style={{ padding: '15px 5px' }}>
-                <Button variant="contained" color="primary" onClick={() => history.push('/')}>
-                  Back to Main
+                <Button variant="contained" color="primary" onClick={completeNav}>
+                  Publish in CauseMos
                 </Button>
               </div>
             </>
