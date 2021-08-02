@@ -49,10 +49,8 @@ const validationSchema = yup.object({
     .string('Is the model stocashtic?')
     .required('Is your model stochastic?'),
   period: yup.object().shape({
-    gte: yup
-      .date(),
-    lte: yup
-      .date(),
+    gte: yup.date().nullable(),
+    lte: yup.date().nullable(),
   }),
   // category: yup
   // .array('What categories apply to the model?')
