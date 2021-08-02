@@ -172,7 +172,7 @@ const Page = ({ workerNode }) => {
       });
 
       // cleanup
-      // fetch(`/api/clouseau/docker/${workerNode}/stop/${containerInfo.id}`, { method: 'DELETE' });
+      fetch(`/api/clouseau/docker/${workerNode}/stop/${containerInfo.id}`, { method: 'DELETE' });
 
       console.debug('%cPublished Info', 'background: #fff; color: #000');
       console.debug(publishInfo);
