@@ -60,6 +60,7 @@ const Page = ({ workerNode }) => {
 
   const publishContainer = async () => {
     const wsid = getWebSocketId();
+    console.debug(`wsid = ${wsid}`);
     const postBody = {
       name: containerInfo.name,
       cwd: runCommand?.cwd,
@@ -69,6 +70,7 @@ const Page = ({ workerNode }) => {
 
     console.debug(runCommand);
 
+    console.debug('start publish');
     await fetch(`/api/clouseau/docker/${workerNode}/commit/${containerInfo.id}`, {
       method: 'POST',
       headers: {
@@ -125,21 +127,23 @@ const Page = ({ workerNode }) => {
   }, []);
 
   useEffect(() => {
+    if (runCommand?.command) {
+      console.debug('Run');
+      run();
+    }
+  }, [runCommand]);
+
+  useEffect(() => {
     if (containerInfo?.id) {
       fetch(`/api/dojo/clouseau/container/${containerInfo.id}`).then((resp) => {
         if (resp.ok) {
           resp.json().then((c) => setContainer(c));
         }
       });
+      console.debug('fetch runcommand');
       fetchRunCommand(containerInfo.id);
     }
   }, [containerInfo]);
-
-  useEffect(() => {
-    if (runCommand?.command) {
-      run();
-    }
-  }, [runCommand]);
 
   useEffect(() => {
     if (enableFinished) {
@@ -168,7 +172,7 @@ const Page = ({ workerNode }) => {
       });
 
       // cleanup
-      fetch(`/api/clouseau/docker/${workerNode}/stop/${containerInfo.id}`, { method: 'DELETE' });
+      // fetch(`/api/clouseau/docker/${workerNode}/stop/${containerInfo.id}`, { method: 'DELETE' });
 
       console.debug('%cPublished Info', 'background: #fff; color: #000');
       console.debug(publishInfo);
