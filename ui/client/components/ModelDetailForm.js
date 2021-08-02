@@ -71,7 +71,7 @@ export const ModelDetail = ({
     <FormikProvider value={formik}>
       <div>
         {/* eslint-disable-next-line react/no-unknown-property */}
-        <form onSubmit={formik.handleSubmit} autocomplete="off">
+        <form onSubmit={formik.handleSubmit}>
           <FormikTextField
             autoFocus
             name="maintainerName"

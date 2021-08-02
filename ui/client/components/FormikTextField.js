@@ -18,6 +18,7 @@ function FormikTextField({
     <TextField
       /* eslint-disable react/jsx-props-no-spreading */
       {...props}
+      InputProps={{ autoComplete: 'off' }}
       className={classes.root}
       fullWidth
       id={name}
