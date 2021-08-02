@@ -64,7 +64,7 @@ const Page = ({ workerNode }) => {
     const postBody = {
       name: containerInfo.name,
       cwd: runCommand?.cwd,
-      entrypoint: runCommand?.command.split(' ') ?? [],
+      entrypoint: [],
       listeners: [wsid],
     };
 
