@@ -21,7 +21,7 @@ import {
   useWebSocketUpdateContext,
 } from './context';
 
-// import { sleep } from './utils';
+import { sleep } from './utils';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -58,9 +58,7 @@ const Page = ({ workerNode }) => {
   const { runCommand } = useHistoryContext();
   const { fetchRunCommand } = useHistoryUpdateContext();
 
-  const publishContainer = async () => {
-    const wsid = getWebSocketId();
-    console.debug(`wsid = ${wsid}`);
+  const publishContainer = async (wsid) => {
     const postBody = {
       name: containerInfo.name,
       cwd: runCommand?.cwd,
@@ -69,8 +67,8 @@ const Page = ({ workerNode }) => {
     };
 
     console.debug(runCommand);
-
     console.debug('start publish');
+    console.debug(postBody);
     await fetch(`/api/clouseau/docker/${workerNode}/commit/${containerInfo.id}`, {
       method: 'POST',
       headers: {
@@ -82,7 +80,15 @@ const Page = ({ workerNode }) => {
 
   const run = async () => {
     console.debug(containerInfo);
-    await publishContainer();
+    let wsid = getWebSocketId();
+    console.debug(`wsid = ${wsid}`);
+    while (wsid == null) {
+      // eslint-disable-next-line no-await-in-loop
+      await sleep(50);
+      wsid = getWebSocketId();
+      console.debug(`sleep 50 wsid = ${wsid}`);
+    }
+    await publishContainer(wsid);
   };
 
   useEffect(() => {
