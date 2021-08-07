@@ -95,7 +95,10 @@ const Admin = () => {
                 {workerNodes.map((n) => (
                   <Grid item xs={3}>
                     <Paper style={style.paper}>
-                      <div style={{ backgroundColor: (n.status === 'up') ? '#90ee90' : '#ffaaab' }}>
+                      <div style={{
+                        backgroundColor: (n.status === 'up') ? '#90ee90' : '#ffaaab'
+                      }}
+                      >
                         <div>
                           Worker -
                           {' '}
@@ -181,7 +184,9 @@ const Admin = () => {
                             color="primary"
                             disabled={v.info?.ok !== true}
                             style={{ marginRight: '20px' }}
-                            onClick={() => { history.push(`/term/${v.node?.i}/${v.info?.model_id}`); }}
+                            onClick={
+                              () => { history.push(`/term/${v.node?.i}/${v.info?.model_id}`); }
+                            }
                           >
                             Reconnect
                           </Button>
