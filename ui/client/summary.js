@@ -1,65 +1,68 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 
-import AppBar from '@material-ui/core/AppBar';
-import DeleteIcon from '@material-ui/icons/Delete';
+import Container from '@material-ui/core/Container';
 import Fab from '@material-ui/core/Fab';
 import Grid from '@material-ui/core/Grid';
-import IconButton from '@material-ui/core/IconButton';
 import Paper from '@material-ui/core/Paper';
-import TextareaAutosize from '@material-ui/core/TextareaAutosize';
 import Typography from '@material-ui/core/Typography';
 
-import { makeStyles } from '@material-ui/core/styles';
+import { darken, makeStyles } from '@material-ui/core/styles';
 import { useHistory, useParams } from 'react-router-dom';
 
+import FullScreenDialog from './components/FullScreenDialog';
 import RunCommandBox from './components/RunCommandBox';
+import ShorthandEditor from './components/ShorthandEditor';
+import SimpleEditor from './components/SimpleEditor';
+
+import { useContainer, useModel } from './components/SWRHooks';
 
 import {
-  ContainerInfoContextProvider, HistoryContextProvider,
+  ContainerInfoContextProvider,
+  HistoryContextProvider,
   useContainerInfoContext,
 } from './context';
 
 const useStyles = makeStyles((theme) => ({
+  root: {
+    padding: [[theme.spacing(10), theme.spacing(2), theme.spacing(2)]],
+  },
+  header: {
+    marginBottom: theme.spacing(3),
+  },
   textareaAutosize: {
-    overflow: 'auto',
-    height: '200px',
-    width: '100%',
-    color: '#000',
-    backgroundColor: '#fff',
+    backgroundColor: theme.palette.grey[300],
+    padding: theme.spacing(1),
+    borderRadius: '5px',
     borderWidth: 0,
-
+    width: '100%',
     '&:focus': {
       outlineColor: '#fff',
       outlineWidth: 0,
       boxShadow: '0 0 10px #0c0c0c',
-    }
+    },
   },
-  container: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(12, 1fr)',
-    gridGap: '2px',
+  tilePanel: {
+    maxHeight: '400px',
+    overflow: 'auto',
+    fontSize: '10px',
+    '& > *': {
+      marginRight: '2px',
+    },
   },
-  title: {
-    fontSize: '18px',
-    padding: '4px'
-  },
-  typo: {
+  sectionHeader: {
     color: theme.palette.text.secondary,
     fontWeight: 'bold',
     padding: '0 5px',
   },
-  editor: {
-    height: '400px',
-    fontFamily: 'monospace',
-    fontSize: '12px',
-    color: '#000',
-    overflow: 'scroll',
-  },
   paper: {
-    padding: '4px',
+    backgroundColor: theme.palette.grey[300],
     color: theme.palette.text.secondary,
-    whiteSpace: 'nowrap',
     marginBottom: theme.spacing(1),
+    padding: '4px',
+    whiteSpace: 'nowrap',
+    '&:hover': {
+      backgroundColor: darken(theme.palette.grey[300], 0.1),
+    },
   },
   fileName: {
     color: '#000',
@@ -68,65 +71,42 @@ const useStyles = makeStyles((theme) => ({
   filePath: {
     fontSize: '10px'
   },
-  command: {
-    color: '#000',
-    fontSize: '14px'
+  publishButton: {
+    position: 'absolute',
+    right: 0,
+    bottom: '2px',
+    zIndex: 10
   },
-  cwd: {
-    fontSize: '10px'
+  subsection: {
+    marginLeft: theme.spacing(1),
   },
-  p: {
-    '&:hover': {
-      backgroundColor: '#ccc',
-    },
-    '&:active': {
-      backgroundColor: '#444',
-    }
-  },
-  divider: {
-    margin: theme.spacing(1, 0),
+  modelHeader: {
+    fontWeight: 'bold',
   },
 }));
 
 const Page = ({ workerNode }) => {
   const containerInfo = useContainerInfoContext();
   const history = useHistory();
-  const [container, setContainer] = useState(() => ({
-    history: [],
-    edits: [],
+  const {
+    container, containerIsLoading, containerIsError, mutateContainer
+  } = useContainer(containerInfo?.id);
+  const { model, modelIsLoading, modelIsError } = useModel(container?.model_id);
+
+  const [openEditor, setOpenEditor] = useState(false);
+  const [editor, setEditor] = useState(() => ({
+    text: '', file: ''
   }));
 
-  const [editor, setEditor] = useState(() => ({
-    text: ''
-  }));
+  const [openShorthand, setOpenShorthand] = useState(false);
+  const [isShorthandSaving, setIsShorthandSaving] = useState(false);
 
   const classes = useStyles();
 
-  const fetchContainer = async (containerId) => {
-    const resp = await fetch(`/api/dojo/clouseau/container/${containerId}`);
-    if (resp.ok) {
-      const c = await resp.json();
-      setContainer(c);
-    }
-  };
-
-  const editHistoryHandler = (item) => {
-    setEditor((p) => ({ ...p, text: item.command }));
-  };
-
   const editEditHandler = (item) => {
-    setEditor((p) => ({ ...p, text: item.text }));
+    setEditor((p) => ({ ...p, text: item.text, file: item.file }));
+    setOpenEditor(true);
   };
-
-  const updateEditor = (e) => {
-    setEditor((state) => ({ ...state, text: e.target.value }));
-  };
-
-  useEffect(() => {
-    if (containerInfo?.id) {
-      fetchContainer(containerInfo?.id);
-    }
-  }, [containerInfo]);
 
   const publishContainer = () => {
     history.push(`/publishcontainer/${workerNode}`, containerInfo);
@@ -144,105 +124,247 @@ const Page = ({ workerNode }) => {
     );
   };
 
-  const EditTile = ({ item }) => {
-    const cwd = item?.cwd.replace('/home/clouseau', '~');
+  const shorthandDialogOnSave = () => {
+    // trigger ShorthandEditor to tell the shorthand app to save
+    setIsShorthandSaving(true);
+    return false; // don't close FullScreenDialog
+  };
+
+  const saveEditor = async () => {
+    await fetch(`/api/clouseau/container/${workerNode}/ops/save?path=${editor.file}`, {
+      method: 'POST',
+      body: editor.text
+    });
+
+    await fetch(`/api/clouseau/container/store/${containerInfo.id}/edits`, {
+      method: 'PUT',
+      body: JSON.stringify(editor)
+    });
+
+    // refetch the container after our request
+    // potential TODO: return the container after the post request so we don't need to do this
+    mutateContainer();
+    return true; // should close FullScreenDialog
+  };
+
+  const displayModelDetails = () => {
+    let parsedCoordinates = [];
+
+    if (modelIsLoading) {
+      return <div>Loading...</div>;
+    }
+
+    if (modelIsError) {
+      return <div>There was an error, please refresh the page</div>;
+    }
+
+    if (model.geography?.coordinates.length) {
+      parsedCoordinates = model.geography?.coordinates.map((coords, i, arr) => {
+        // only display the separator if we aren't at the end of the list
+        const separator = i !== arr.length - 1 ? ', ' : '';
+        return (
+          <span key={coords}>
+            {`[${coords[0].join()};${coords[1].join()}]`}
+            {separator}
+          </span>
+        );
+      });
+    }
+
+    // no need to spread the following out onto a million lines
+    /* eslint-disable react/jsx-one-expression-per-line */
     return (
-      <div style={{ display: 'flex' }}>
-        <div style={{ flexGrow: 1 }}>
-          <span className={classes.command}>{item.command}</span>
-          <p className={classes.cwd}>{cwd}</p>
+      <>
+        <div>
+          <Typography variant="subtitle2" className={classes.modelHeader}>
+            Overview:
+          </Typography>
+          <Typography variant="body2" className={classes.subsection}>
+            Model Name: {model.name}
+          </Typography>
+          <Typography variant="body2" className={classes.subsection}>
+            Model Website: {model.maintainer?.website}
+          </Typography>
+          <Typography variant="body2" className={classes.subsection}>
+            Model Family: {model.family_name}
+          </Typography>
+          <Typography variant="body2" className={classes.subsection}>
+            Model Description: {model.description}
+          </Typography>
+          <Typography variant="body2" className={classes.subsection}>
+            Model Start Date: {new Date(model.period?.gte).toLocaleDateString()}
+          </Typography>
+          <Typography variant="body2" className={classes.subsection}>
+            Model End Date: {new Date(model.period?.lte).toLocaleDateString()}
+          </Typography>
+          <Typography variant="body2" className={classes.subsection}>
+            Stochastic Model: {model.stochastic}
+          </Typography>
+
+          <Typography variant="subtitle2" className={classes.modelHeader}>Maintainer:</Typography>
+          <Typography variant="body2" className={classes.subsection}>
+            Name: {model.maintainer?.name}
+          </Typography>
+          <Typography variant="body2" className={classes.subsection}>
+            Email: {model.maintainer?.email}
+          </Typography>
+          <Typography variant="body2" className={classes.subsection}>
+            Organization: {model.maintainer?.organization}
+          </Typography>
+
+          <Typography variant="subtitle2" className={classes.modelHeader}>Geography:</Typography>
+          <Typography variant="body2" className={classes.subsection}>
+            Admin 1: {model.geography?.admin1.join(', ')}
+          </Typography>
+          <Typography variant="body2" className={classes.subsection}>
+            Admin 2: {model.geography?.admin2.join(', ')}
+          </Typography>
+          <Typography variant="body2" className={classes.subsection}>
+            Admin 3: {model.geography?.admin3.join(', ')}
+          </Typography>
+          <Typography variant="body2" className={classes.subsection}>
+            Coordinates: {parsedCoordinates}
+          </Typography>
+          <Typography variant="subtitle2" className={classes.modelHeader}>Categories:</Typography>
+          <Typography variant="body2" className={classes.subsection}>
+            {model.category.join(', ')}
+          </Typography>
         </div>
-        <IconButton aria-label="delete">
-          <DeleteIcon />
-        </IconButton>
-      </div>
+      </>
     );
   };
 
+  const displayEdits = () => {
+    // get rid of duplicate file edits, because we only care about the most recent for each file
+    const reducedEdits = container.edits.reduce((results, current) => {
+      if (Object.prototype.hasOwnProperty.call(results, current.file)
+        && results[current.file].idx > current.idx) {
+        return results;
+      }
+
+      return { ...results, [current.file]: current };
+    }, {});
+
+    // then loop through our remaining unique edits and display them
+    return Object.keys(reducedEdits).map((file) => (
+      <Paper
+        key={reducedEdits[file].file}
+        className={classes.paper}
+        onClick={() => editEditHandler(reducedEdits[file])}
+      >
+        <FileTile item={reducedEdits[file]} />
+      </Paper>
+    ));
+  };
+
+  if (containerIsLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (containerIsError) {
+    return <div>There was an error, please refresh the page</div>;
+  }
+
   return (
-    <>
-      <AppBar position="static">
-        <Typography className={classes.title}>
-          Summary
+    <Container component="main" maxWidth="md" className={classes.root}>
+      <div>
+        <Typography
+          className={classes.header}
+          component="h3"
+          variant="h4"
+          align="center"
+        >
+          Model Summary
         </Typography>
-      </AppBar>
-      <Grid container spacing={1}>
-        <Grid item xs={3}>
-          <Typography className={classes.typo}>
-            History
-          </Typography>
-          <div style={{ maxHeight: '500px', overflow: 'auto' }}>
-            {container.history.map((v) => (
-              <Paper
-                key={v.idx}
-                className={`${classes.paper} ${classes.p}`}
-                onClick={() => editHistoryHandler(v)}
-              >
-                <EditTile item={v} />
-              </Paper>
-            ))}
-          </div>
-        </Grid>
-        <Grid item xs={3}>
-          <Typography className={classes.typo}>
-            File Edits
-          </Typography>
-          <div style={{ maxHeight: '500px', overflow: 'auto', fontSize: '10px' }}>
-            {container.edits.map((v) => (
-              <Paper
-                key={v.idx}
-                className={`${classes.paper} ${classes.p}`}
-                onClick={() => editEditHandler(v)}
-              >
-                <FileTile item={v} />
-              </Paper>
-            ))}
-          </div>
-        </Grid>
-        <Grid item xs={6}>
-          <div>
+        <Grid container spacing={2}>
+          <Grid item xs={5}>
             <div style={{ paddingBottom: '8px' }}>
-              <Typography className={classes.typo}>
+              <Typography
+                align="center"
+                color="textSecondary"
+                variant="h6"
+                gutterBottom
+              >
                 Run Command
               </Typography>
               <RunCommandBox
                 command={{ command: container?.run_command, cwd: container?.run_cwd }}
+                summaryPage
+                handleClick={() => setOpenShorthand(true)}
               />
             </div>
 
-            <Typography className={classes.typo}>
-              Editor
+            <Typography
+              align="center"
+              color="textSecondary"
+              variant="h6"
+              gutterBottom
+            >
+              File Edits
             </Typography>
-
-            <div className={classes.editor}>
-              <TextareaAutosize
-                rowsMin={25}
-                placeholder=""
-                onChange={updateEditor}
-                className={classes.textareaAutosize}
-                value={editor?.text || ''}
-              />
+            <div className={classes.tilePanel}>
+              {displayEdits()}
             </div>
-
-          </div>
+          </Grid>
+          <Grid item xs={7}>
+            <Typography
+              align="center"
+              color="textSecondary"
+              variant="h6"
+              gutterBottom
+            >
+              Model Details
+            </Typography>
+            <div className={classes.textareaAutosize}>
+              {displayModelDetails()}
+            </div>
+          </Grid>
         </Grid>
-      </Grid>
 
-      <div style={{
-        position: 'absolute', right: 0, bottom: '2px', zIndex: 10
-      }}
-      >
-        <Fab
-          variant="extended"
-          color="primary"
-          style={{ margin: '10px' }}
-          onClick={(e) => { e.preventDefault(); publishContainer(); }}
-        >
-          Publish
-        </Fab>
+        <div className={classes.publishButton}>
+          <Fab
+            variant="extended"
+            color="primary"
+            style={{ margin: '10px' }}
+            onClick={(e) => { e.preventDefault(); publishContainer(); }}
+          >
+            Publish
+          </Fab>
+        </div>
+
       </div>
 
-    </>
+      <FullScreenDialog
+        open={openEditor}
+        setOpen={setOpenEditor}
+        onSave={saveEditor}
+        title={`Editing ${editor?.file}`}
+      >
+        <SimpleEditor editorContents={editor} setEditorContents={setEditor} />
+      </FullScreenDialog>
+
+      <FullScreenDialog
+        open={openShorthand}
+        setOpen={setOpenShorthand}
+        onSave={shorthandDialogOnSave}
+      >
+        <ShorthandEditor
+          directive={{
+            command: container?.run_command,
+            cwd: container?.run_cwd
+          }}
+          modelInfo={{ id: container?.model_id }}
+          isSaving={isShorthandSaving}
+          setIsSaving={setIsShorthandSaving}
+          mode="directive"
+          shorthandContents={{
+            editor_content: container?.run_command,
+            content_id: container?.run_command,
+          }}
+          setIsShorthandOpen={setOpenShorthand}
+        />
+      </FullScreenDialog>
+    </Container>
   );
 };
 
