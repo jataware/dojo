@@ -79,7 +79,7 @@ const Intro = ({ location }) => {
   const [imageInfo, setImageInfo] = useState({
     modelInfo,
     imageName: formatImageString(modelInfo.name),
-    dockerImage: 'jataware/clouseau:claudine-latest',
+    dockerImage: '',
     size: 't2-nano',
     gitUrl: modelInfo.maintainer?.website ?? '',
     worker: '',
@@ -100,6 +100,12 @@ const Intro = ({ location }) => {
     e.preventDefault();
 
     // validate
+    if (imageInfo.dockerImage === '') {
+      setAlert({ severity: 'error', message: 'Please select an Image' });
+      setAlertVisible(true);
+      return;
+    }
+
     if (imageInfo.worker === '') {
       setAlert({ severity: 'error', message: 'Please select a worker' });
       setAlertVisible(true);
@@ -114,6 +120,7 @@ const Intro = ({ location }) => {
     }, 5000);
   });
 
+  const [baseImageList, setBaseImageList] = React.useState([]);
   // eslint-disable-next-line no-unused-vars
   const [containers, setContainers] = React.useState([]);
   const [workerNodes, setWorkerNodes] = React.useState([]);
@@ -157,6 +164,7 @@ const Intro = ({ location }) => {
 
   useEffect(() => {
     refreshNodeInfo();
+    fetch('/api/dojo/phantom/base_images').then(async (r) => setBaseImageList(await r.json()));
   }, []);
 
   const destroyContainer = async (node, id) => {
@@ -257,12 +265,19 @@ const Intro = ({ location }) => {
           <Grid item xs={12} className={classes.gridItem}>
             <FormControl className={classes.formControl} fullWidth>
               <InputLabel id="label">Select a Base Image</InputLabel>
-
-              <Select labelId="label" id="select" defaultValue={imageInfo.dockerImage} value={imageInfo.dockerImage} onChange={(e) => onImageInfoUpdate(e.target.value, 'dockerImage')}>
-                <MenuItem value="jataware/clouseau:claudine-latest">Ubuntu</MenuItem>
-                <MenuItem value="jataware/clouseau:claudine_ki_models">Kimetrica</MenuItem>
-                <MenuItem value="jataware/clouseau:pythia_22jun_1-latest">Pythia</MenuItem>
-              </Select>
+              {baseImageList ? (
+                <Select
+                  labelId="label"
+                  id="select"
+                  defaultValue={imageInfo.dockerImage}
+                  value={imageInfo.dockerImage}
+                  onChange={(e) => onImageInfoUpdate(e.target.value, 'dockerImage')}
+                >
+                  { baseImageList.map((img) => (
+                    <MenuItem key={img.image} value={img.image}>{img.display_name}</MenuItem>
+                  ))}
+                </Select>
+              ) : <span> loading ... </span>}
             </FormControl>
 
           </Grid>
@@ -274,7 +289,11 @@ const Intro = ({ location }) => {
                 <Grid item key={n.i} xs={4}>
                   <Card style={{ backgroundColor: (n.status !== 'up') ? '#ff0000' : (n.clients > 0) ? '#ffcccc' : 'unset' }}>
                     <div style={{ backgroundColor: (n.status !== 'up' || n.clients > 0) ? '#f00000' : '#00f000', height: '10px' }} />
-                    <CardActionArea onClick={() => onImageInfoUpdate(n.i, 'worker')} disabled={(n.status !== 'up' || n.clients > 0)} style={{ backgroundColor: (n.i === imageInfo.worker) ? '#e8fee4' : 'unset' }}>
+                    <CardActionArea
+                      onClick={() => onImageInfoUpdate(n.i, 'worker')}
+                      disabled={(n.status !== 'up' || n.clients > 0)}
+                      style={{ backgroundColor: (n.i === imageInfo.worker) ? '#e8fee4' : 'unset' }}
+                    >
                       <CardContent>
                         <span style={{ fontWeight: 'bold' }}>
                           Worker-
