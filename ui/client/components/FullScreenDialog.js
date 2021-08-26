@@ -48,7 +48,12 @@ const FullScreenDialog = ({
           <Typography variant="h6" className={classes.title}>
             {title || ''}
           </Typography>
-          <Button autoFocus color="inherit" onClick={handleSave} style={{ display: saveVisible ? 'unset' : 'none' }}>
+          <Button
+            autoFocus
+            color="inherit"
+            onClick={handleSave}
+            style={{ display: saveVisible ? 'unset' : 'none' }}
+          >
             save
           </Button>
         </Toolbar>

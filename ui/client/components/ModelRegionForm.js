@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import AddCircleOutlineIcon from '@material-ui/icons/AddCircleOutline';
 import Autocomplete from '@material-ui/lab/Autocomplete';
@@ -69,7 +69,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 function ModelRegionForm({
-  handleBack, handleNext, storedRegions
+  handleBack, handleNext, storedRegions, storedCoords, autoSave
 }) {
   const classes = useStyles();
   const [searchQuery, setSearchQuery] = useState('');
@@ -79,7 +79,7 @@ function ModelRegionForm({
   const [selectedRegions, setSelectedRegions] = useState(storedRegions);
   const [showSnackbar, setShowSnackbar] = useState(false);
   const [snackbarText, setSnackbarText] = useState('');
-  const [mapCoords, setMapCoords] = useState([]);
+  const [mapCoords, setMapCoords] = useState(storedCoords);
   const [showMap, setShowMap] = useState(false);
   const [showSearch, setShowSearch] = useState(false);
 
@@ -115,7 +115,6 @@ function ModelRegionForm({
       }
       regions[region.level].push(region.value);
     });
-
     // add in the coordinates from the ModelRegionMap component
     regions.coordinates = mapCoords;
     return { geography: regions };
@@ -126,9 +125,22 @@ function ModelRegionForm({
     handleNext(regions);
   };
 
+  useEffect(() => {
+    // only do this if we're in the ModelSummaryEditor, where we have no submit button
+    if (autoSave) {
+      // parse the regions and call handleNext
+      onSubmit();
+    }
+    // anytime selectedRegions or mapCoords changes
+  }, [autoSave, selectedRegions, mapCoords]);
+
   const onBack = () => {
     const regions = parseRegions();
-    handleBack({ ...regions, selectedRegions });
+    // store regions parsed as the DB wants them (ie organized into admin levels)
+    // then store selected regions to line up with our local list of regions so we can repopulate
+    // the 'selected regions' box without duplicates
+    // and store mapCoords so we can repopulate the box and the map
+    handleBack({ ...regions, selectedRegions, storedCoords: mapCoords });
   };
 
   const clearAutocomplete = () => {
@@ -141,10 +153,7 @@ function ModelRegionForm({
   const onRegionSubmit = () => {
     if (!autocompleteValue) return;
 
-    setSelectedRegions((regions) => {
-      regions.push(autocompleteValue);
-      return regions;
-    });
+    setSelectedRegions((regions) => [...regions, autocompleteValue]);
 
     clearAutocomplete();
   };
@@ -165,7 +174,10 @@ function ModelRegionForm({
   };
 
   const formatRegionLabel = (region) => (
-    `${region.value}, ${region.level} (${region.country})`
+    // only include country if we have it - we won't get the country back from the server
+    // if a user is viewing this in the summary step
+    // eslint-disable-next-line prefer-template
+    `${region.value}, ${region.level}` + (region.country ? ` (${region.country})` : '')
   );
 
   const checkRegionEquality = (region1, region2) => (
@@ -346,20 +358,22 @@ function ModelRegionForm({
 
       <ModelRegionMap mapCoords={mapCoords} updateMapCoords={setMapCoords} showMap={showMap} />
 
-      <div className={classes.buttonContainer}>
-        <Button
-          onClick={() => onBack()}
-        >
-          Back
-        </Button>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={() => onSubmit()}
-        >
-          Submit Model
-        </Button>
-      </div>
+      {!autoSave && (
+        <div className={classes.buttonContainer}>
+          <Button
+            onClick={() => onBack()}
+          >
+            Back
+          </Button>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={() => onSubmit()}
+          >
+            Submit Model
+          </Button>
+        </div>
+      )}
 
       <Snackbar
         anchorOrigin={{

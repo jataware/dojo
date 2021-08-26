@@ -3,6 +3,8 @@ import React from 'react';
 import { TextField } from '@material-ui/core';
 import { makeStyles } from '@material-ui/core/styles';
 
+import get from 'lodash/get';
+
 const useStyles = makeStyles((theme) => ({
   root: {
     margin: [[theme.spacing(1), 0]],
@@ -24,10 +26,13 @@ function FormikTextField({
       id={name}
       name={name}
       label={label}
-      value={formik.values[name]}
+      /* Use lodash.get() to handle nested object names, eg 'maintainer.website' */
+      value={get(formik, `values.${[name]}`)}
       onChange={formik.handleChange}
-      error={formik.touched[name] && Boolean(formik.errors[name])}
-      helperText={formik.touched[name] && formik.errors[name]}
+      error={
+        get(formik, `touched.${[name]}`, null) && Boolean(get(formik, `errors.${[name]}`, null))
+      }
+      helperText={get(formik, `touched.${[name]}`, null) && get(formik, `errors.${[name]}`, null)}
     />
   );
 }

@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 
+import Button from '@material-ui/core/Button';
 import Container from '@material-ui/core/Container';
 import Fab from '@material-ui/core/Fab';
 import Grid from '@material-ui/core/Grid';
@@ -10,6 +11,7 @@ import { darken, makeStyles } from '@material-ui/core/styles';
 import { useHistory, useParams } from 'react-router-dom';
 
 import FullScreenDialog from './components/FullScreenDialog';
+import { ModelSummaryEditor } from './components/ModelSummaryEditor';
 import RunCommandBox from './components/RunCommandBox';
 import ShorthandEditor from './components/ShorthandEditor';
 import SimpleEditor from './components/SimpleEditor';
@@ -83,6 +85,10 @@ const useStyles = makeStyles((theme) => ({
   modelHeader: {
     fontWeight: 'bold',
   },
+  modelEditButton: {
+    float: 'right',
+    backgroundColor: theme.palette.grey[400],
+  },
 }));
 
 const Page = ({ workerNode }) => {
@@ -100,6 +106,8 @@ const Page = ({ workerNode }) => {
 
   const [openShorthand, setOpenShorthand] = useState(false);
   const [isShorthandSaving, setIsShorthandSaving] = useState(false);
+
+  const [openModelEdit, setOpenModelEdit] = useState(false);
 
   const classes = useStyles();
 
@@ -162,6 +170,9 @@ const Page = ({ workerNode }) => {
       parsedCoordinates = model.geography?.coordinates.map((coords, i, arr) => {
         // only display the separator if we aren't at the end of the list
         const separator = i !== arr.length - 1 ? ', ' : '';
+
+        if (!coords[0].length || !coords[1].length) return null;
+
         return (
           <span key={coords}>
             {`[${coords[0].join()};${coords[1].join()}]`}
@@ -174,63 +185,64 @@ const Page = ({ workerNode }) => {
     // no need to spread the following out onto a million lines
     /* eslint-disable react/jsx-one-expression-per-line */
     return (
-      <>
-        <div>
-          <Typography variant="subtitle2" className={classes.modelHeader}>
-            Overview:
-          </Typography>
-          <Typography variant="body2" className={classes.subsection}>
-            Model Name: {model.name}
-          </Typography>
-          <Typography variant="body2" className={classes.subsection}>
-            Model Website: {model.maintainer?.website}
-          </Typography>
-          <Typography variant="body2" className={classes.subsection}>
-            Model Family: {model.family_name}
-          </Typography>
-          <Typography variant="body2" className={classes.subsection}>
-            Model Description: {model.description}
-          </Typography>
-          <Typography variant="body2" className={classes.subsection}>
-            Model Start Date: {new Date(model.period?.gte).toLocaleDateString()}
-          </Typography>
-          <Typography variant="body2" className={classes.subsection}>
-            Model End Date: {new Date(model.period?.lte).toLocaleDateString()}
-          </Typography>
-          <Typography variant="body2" className={classes.subsection}>
-            Stochastic Model: {model.stochastic}
-          </Typography>
+      <div>
+        <Typography variant="subtitle2" className={classes.modelHeader}>
+          Overview:
+        </Typography>
+        <Typography variant="body2" className={classes.subsection}>
+          Model Name: {model.name}
+        </Typography>
+        <Typography variant="body2" className={classes.subsection}>
+          Model Website: {model.maintainer?.website}
+        </Typography>
+        <Typography variant="body2" className={classes.subsection}>
+          Model Family: {model.family_name}
+        </Typography>
+        <Typography variant="body2" className={classes.subsection}>
+          Model Description: {model.description}
+        </Typography>
+        <Typography variant="body2" className={classes.subsection}>
+          Model Start Date: {new Date(model.period?.gte).toLocaleDateString()}
+        </Typography>
+        <Typography variant="body2" className={classes.subsection}>
+          Model End Date: {new Date(model.period?.lte).toLocaleDateString()}
+        </Typography>
+        <Typography variant="body2" className={classes.subsection}>
+          Stochastic Model: {model.stochastic}
+        </Typography>
 
-          <Typography variant="subtitle2" className={classes.modelHeader}>Maintainer:</Typography>
-          <Typography variant="body2" className={classes.subsection}>
-            Name: {model.maintainer?.name}
-          </Typography>
-          <Typography variant="body2" className={classes.subsection}>
-            Email: {model.maintainer?.email}
-          </Typography>
-          <Typography variant="body2" className={classes.subsection}>
-            Organization: {model.maintainer?.organization}
-          </Typography>
+        <Typography variant="subtitle2" className={classes.modelHeader}>Maintainer:</Typography>
+        <Typography variant="body2" className={classes.subsection}>
+          Name: {model.maintainer?.name}
+        </Typography>
+        <Typography variant="body2" className={classes.subsection}>
+          Email: {model.maintainer?.email}
+        </Typography>
+        <Typography variant="body2" className={classes.subsection}>
+          Organization: {model.maintainer?.organization}
+        </Typography>
 
-          <Typography variant="subtitle2" className={classes.modelHeader}>Geography:</Typography>
-          <Typography variant="body2" className={classes.subsection}>
-            Admin 1: {model.geography?.admin1.join(', ')}
-          </Typography>
-          <Typography variant="body2" className={classes.subsection}>
-            Admin 2: {model.geography?.admin2.join(', ')}
-          </Typography>
-          <Typography variant="body2" className={classes.subsection}>
-            Admin 3: {model.geography?.admin3.join(', ')}
-          </Typography>
-          <Typography variant="body2" className={classes.subsection}>
-            Coordinates: {parsedCoordinates}
-          </Typography>
-          <Typography variant="subtitle2" className={classes.modelHeader}>Categories:</Typography>
-          <Typography variant="body2" className={classes.subsection}>
-            {model.category.join(', ')}
-          </Typography>
-        </div>
-      </>
+        <Typography variant="subtitle2" className={classes.modelHeader}>Geography:</Typography>
+        <Typography variant="body2" className={classes.subsection}>
+          Country: {model.geography?.country?.join(', ')}
+        </Typography>
+        <Typography variant="body2" className={classes.subsection}>
+          Admin 1: {model.geography?.admin1?.join(', ')}
+        </Typography>
+        <Typography variant="body2" className={classes.subsection}>
+          Admin 2: {model.geography?.admin2?.join(', ')}
+        </Typography>
+        <Typography variant="body2" className={classes.subsection}>
+          Admin 3: {model.geography?.admin3?.join(', ')}
+        </Typography>
+        <Typography variant="body2" className={classes.subsection}>
+          Coordinates: {parsedCoordinates}
+        </Typography>
+        <Typography variant="subtitle2" className={classes.modelHeader}>Categories:</Typography>
+        <Typography variant="body2" className={classes.subsection}>
+          {model.category.join(', ')}
+        </Typography>
+      </div>
     );
   };
 
@@ -316,6 +328,12 @@ const Page = ({ workerNode }) => {
               Model Details
             </Typography>
             <div className={classes.textareaAutosize}>
+              <Button
+                onClick={() => setOpenModelEdit(true)}
+                className={classes.modelEditButton}
+              >
+                Edit
+              </Button>
               {displayModelDetails()}
             </div>
           </Grid>
@@ -364,6 +382,9 @@ const Page = ({ workerNode }) => {
           setIsShorthandOpen={setOpenShorthand}
         />
       </FullScreenDialog>
+      {model && openModelEdit
+        && <ModelSummaryEditor model={model} open={openModelEdit} setOpen={setOpenModelEdit} />}
+
     </Container>
   );
 };

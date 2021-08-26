@@ -52,20 +52,22 @@ const defaultModelState = {
   family_name: '',
   description: '',
   type: 'model',
-  email: '',
-  maintainerName: '',
-  stochastic: 'true',
-  website: 'https://github.com/jataware/dummy-model',
-  organization: '',
   category: [],
   geography: {},
   // this is just to store the selected regions from the final step
   // so we don't lose the them if the user goes back a step
   selectedRegions: [],
-  // none of the following are currently being used in any of the forms
+  storedCoords: [],
   outputs: [],
   parameters: [],
   image: '',
+  stochastic: 'true',
+  maintainer: {
+    email: '',
+    name: '',
+    website: 'https://github.com/jataware/dummy-model',
+    organization: '',
+  },
   period: {
     // model coverage start date
     gte: null,
@@ -86,29 +88,21 @@ export const HorizontalLinearStepper = () => {
   const steps = getSteps();
 
   const createModel = async (model) => {
-    // create a new object without the attributes we don't want
+    // create a new object without the attributes we use for display
     const {
-      website,
-      maintainerName,
-      email,
-      organization,
       selectedRegions,
+      storedCoords,
+      // and remove the 'period' that uses JS Date objects
       period,
       ...parsedModelInfo
     } = model;
-    // and then add in the ones we do want
-    parsedModelInfo.id = uuidv4();
-    parsedModelInfo.maintainer = {
-      website: model.website,
-      name: model.maintainerName,
-      email: model.email,
-      organization: model.organization,
-    };
-    // we want the epoch value for the start and end dates
+    // instead we want the epoch value for the start and end dates
     parsedModelInfo.period = {
-      gte: model.period.gte.valueOf(),
-      lte: model.period.lte.valueOf(),
+      gte: model.period.gte?.valueOf(),
+      lte: model.period.lte?.valueOf(),
     };
+    // then add in an ID
+    parsedModelInfo.id = uuidv4();
 
     const settings = {
       method: 'POST',
@@ -163,9 +157,6 @@ export const HorizontalLinearStepper = () => {
       case 0:
         return (
           <ModelOverview
-            steps={steps}
-            activeStep={activeStep}
-            handleBack={handleBack}
             handleNext={handleNext}
             modelInfo={modelInfo}
           />
@@ -186,6 +177,7 @@ export const HorizontalLinearStepper = () => {
             handleNext={handleNext}
             handleBack={handleBack}
             storedRegions={modelInfo.selectedRegions}
+            storedCoords={modelInfo.storedCoords}
           />
         );
       default:

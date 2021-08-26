@@ -35,16 +35,18 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const validationSchema = yup.object({
-  maintainerName: yup
-    .string('Enter the name of the model maintainer')
-    .required('Maintainer information is required'),
-  email: yup
-    .string('Enter the email address of the model maintainer')
-    .email()
-    .required('Maintainer information is required'),
-  organization: yup
-    .string("Enter the name of the maintainer's organization"),
+export const detailValidationSchema = yup.object({
+  maintainer: yup.object().shape({
+    name: yup
+      .string('Enter the name of the model maintainer')
+      .required('Maintainer information is required'),
+    email: yup
+      .string('Enter the email address of the model maintainer')
+      .email()
+      .required('Maintainer information is required'),
+    organization: yup
+      .string("Enter the name of the maintainer's organization"),
+  }),
   stochastic: yup
     .string('Is the model stocashtic?')
     .required('Is your model stochastic?'),
@@ -52,10 +54,72 @@ const validationSchema = yup.object({
     gte: yup.date().nullable(),
     lte: yup.date().nullable(),
   }),
-  // category: yup
-  // .array('What categories apply to the model?')
-  // .required('What categories apply to the model?')
 });
+
+export const ModelDetailFields = ({
+  formik
+}) => {
+  const classes = useStyles();
+
+  return (
+    <>
+      <FormikTextField
+        autoFocus
+        name="maintainer.name"
+        label="Maintainer Name"
+        formik={formik}
+      />
+      <FormikTextField
+        name="maintainer.email"
+        label="Maintainer Email"
+        formik={formik}
+      />
+      <FormikTextField
+        name="maintainer.organization"
+        label="Maintainer Organization"
+        formik={formik}
+      />
+      <MuiPickersUtilsProvider utils={DateFnsUtils}>
+        <div className={classes.datePickerContainer}>
+          <Field
+            component={KeyboardDatePicker}
+            format="MM/dd/yyyy"
+            label="Model Start Date"
+            name="period.gte"
+            placeholder="mm/dd/yyyy"
+            variant="inline"
+          />
+          <Field
+            format="MM/dd/yyyy"
+            component={KeyboardDatePicker}
+            label="Model End Date"
+            name="period.lte"
+            placeholder="mm/dd/yyyy"
+            variant="inline"
+          />
+        </div>
+      </MuiPickersUtilsProvider>
+      <Field
+        required
+        name="stochastic"
+        component={RadioGroup}
+        value={formik.values.stochastic}
+        label="Is this model stochastic?"
+        options={[
+          { value: 'true', label: 'Yes' },
+          { value: 'false', label: 'No' }
+        ]}
+        groupProps={{ row: true }}
+      />
+      <Field
+        name="category"
+        component={ChipInput}
+        value={formik.values.category}
+        label="Category (type a category and press space)"
+      />
+    </>
+  );
+};
 
 export const ModelDetail = ({
   modelInfo, handleBack, handleNext
@@ -63,7 +127,7 @@ export const ModelDetail = ({
   const classes = useStyles();
   const formik = useFormik({
     initialValues: modelInfo,
-    validationSchema,
+    validationSchema: detailValidationSchema,
     onSubmit: (values) => handleNext(values),
   });
 
@@ -72,60 +136,7 @@ export const ModelDetail = ({
       <div>
         {/* eslint-disable-next-line react/no-unknown-property */}
         <form onSubmit={formik.handleSubmit}>
-          <FormikTextField
-            autoFocus
-            name="maintainerName"
-            label="Maintainer Name"
-            formik={formik}
-          />
-          <FormikTextField
-            name="email"
-            label="Maintainer Email"
-            formik={formik}
-          />
-          <FormikTextField
-            name="organization"
-            label="Maintainer Organization"
-            formik={formik}
-          />
-          <MuiPickersUtilsProvider utils={DateFnsUtils}>
-            <div className={classes.datePickerContainer}>
-              <Field
-                component={KeyboardDatePicker}
-                format="MM/dd/yyyy"
-                label="Model Start Date"
-                name="period.gte"
-                placeholder="mm/dd/yyyy"
-                variant="inline"
-              />
-              <Field
-                format="MM/dd/yyyy"
-                component={KeyboardDatePicker}
-                label="Model End Date"
-                name="period.lte"
-                placeholder="mm/dd/yyyy"
-                variant="inline"
-              />
-            </div>
-          </MuiPickersUtilsProvider>
-          <Field
-            required
-            name="stochastic"
-            component={RadioGroup}
-            value={formik.values.stochastic}
-            label="Is this model stochastic?"
-            options={[
-              { value: 'true', label: 'Yes' },
-              { value: 'false', label: 'No' }
-            ]}
-            groupProps={{ row: true }}
-          />
-          <Field
-            name="category"
-            component={ChipInput}
-            value={formik.values.category}
-            label="Category (type a category and press space)"
-          />
+          <ModelDetailFields formik={formik} />
           <div className={classes.buttonContainer}>
             <Button onClick={() => handleBack(formik.values)}>
               Back

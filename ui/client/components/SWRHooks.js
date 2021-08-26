@@ -3,11 +3,13 @@ import useSWR from 'swr';
 const fetcher = (...args) => fetch(...args).then((res) => res.json());
 
 export function useModel(modelId) {
-  const { data, error } = useSWR(modelId ? `/api/dojo/models/${modelId}` : null, fetcher);
+  const { data, error, mutate } = useSWR(modelId ? `/api/dojo/models/${modelId}` : null, fetcher);
+
   return {
     model: data,
     modelIsLoading: !error && !data,
     modelIsError: error,
+    mutateModel: mutate,
   };
 }
 
