@@ -25,3 +25,13 @@ export function useContainer(containerId) {
     containerIsError: error,
   };
 }
+
+export function useConfigs(modelId) {
+  const { data, error } = useSWR(modelId ? `/api/dojo/dojo/config/${modelId}` : null, fetcher);
+
+  return {
+    configs: data,
+    configsLoading: !error && !data,
+    configsError: error,
+  };
+}

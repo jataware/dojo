@@ -16,7 +16,7 @@ import RunCommandBox from './components/RunCommandBox';
 import ShorthandEditor from './components/ShorthandEditor';
 import SimpleEditor from './components/SimpleEditor';
 
-import { useContainer, useModel } from './components/SWRHooks';
+import { useConfigs, useContainer, useModel } from './components/SWRHooks';
 
 import {
   ContainerInfoContextProvider,
@@ -98,6 +98,7 @@ const Page = ({ workerNode }) => {
     container, containerIsLoading, containerIsError, mutateContainer
   } = useContainer(containerInfo?.id);
   const { model, modelIsLoading, modelIsError } = useModel(container?.model_id);
+  const { configs, configsLoading, configsError } = useConfigs(container?.model_id);
 
   const [openEditor, setOpenEditor] = useState(false);
   const [editor, setEditor] = useState(() => ({
@@ -106,14 +107,29 @@ const Page = ({ workerNode }) => {
 
   const [openShorthand, setOpenShorthand] = useState(false);
   const [isShorthandSaving, setIsShorthandSaving] = useState(false);
+  const [shorthandContents, setShorthandContents] = useState({});
+  const [shorthandMode, setShorthandMode] = useState();
 
   const [openModelEdit, setOpenModelEdit] = useState(false);
 
   const classes = useStyles();
 
-  const editEditHandler = (item) => {
-    setEditor((p) => ({ ...p, text: item.text, file: item.file }));
-    setOpenEditor(true);
+  const openConfigShorthand = async (item) => {
+    const response = await fetch(
+      `/api/clouseau/container/${workerNode}/ops/cat?path=${item.path}`
+    );
+
+    if (response.ok) {
+      const content = await response.text();
+
+      setShorthandContents({
+        editor_content: content,
+        content_id: item.path,
+      });
+
+      setShorthandMode('config');
+      setOpenShorthand(true);
+    }
   };
 
   const publishContainer = () => {
@@ -121,7 +137,7 @@ const Page = ({ workerNode }) => {
   };
 
   const FileTile = ({ item }) => {
-    const fileParts = new URL(`file://${item.file}`).pathname.split('/');
+    const fileParts = new URL(`file://${item}`).pathname.split('/');
     const fileName = fileParts.pop();
     const filePath = fileParts.join('/').replace('/home/clouseau/', '~/');
     return (
@@ -246,27 +262,37 @@ const Page = ({ workerNode }) => {
     );
   };
 
-  const displayEdits = () => {
-    // get rid of duplicate file edits, because we only care about the most recent for each file
-    const reducedEdits = container.edits.reduce((results, current) => {
-      if (Object.prototype.hasOwnProperty.call(results, current.file)
-        && results[current.file].idx > current.idx) {
-        return results;
-      }
+  const displayConfigs = () => {
+    if (configsLoading) {
+      return <Typography variant="body2">Loading Configs...</Typography>;
+    }
 
-      return { ...results, [current.file]: current };
-    }, {});
+    if (configsError) {
+      return (
+        <Typography variant="body2">
+          There was an error loading configuration files. Please refresh the page.
+        </Typography>
+      );
+    }
 
-    // then loop through our remaining unique edits and display them
-    return Object.keys(reducedEdits).map((file) => (
+    return configs.map((config) => (
       <Paper
-        key={reducedEdits[file].file}
+        key={config.id}
         className={classes.paper}
-        onClick={() => editEditHandler(reducedEdits[file])}
+        onClick={() => openConfigShorthand(config)}
       >
-        <FileTile item={reducedEdits[file]} />
+        <FileTile item={config.path} />
       </Paper>
     ));
+  };
+
+  const handleRunCommandClick = () => {
+    setShorthandContents({
+      editor_content: container?.run_command,
+      content_id: container?.run_command,
+    });
+    setShorthandMode('directive');
+    setOpenShorthand(true);
   };
 
   if (containerIsLoading) {
@@ -302,7 +328,7 @@ const Page = ({ workerNode }) => {
               <RunCommandBox
                 command={{ command: container?.run_command, cwd: container?.run_cwd }}
                 summaryPage
-                handleClick={() => setOpenShorthand(true)}
+                handleClick={handleRunCommandClick}
               />
             </div>
 
@@ -312,10 +338,10 @@ const Page = ({ workerNode }) => {
               variant="h6"
               gutterBottom
             >
-              File Edits
+              Config Files
             </Typography>
             <div className={classes.tilePanel}>
-              {displayEdits()}
+              {displayConfigs()}
             </div>
           </Grid>
           <Grid item xs={7}>
@@ -374,11 +400,8 @@ const Page = ({ workerNode }) => {
           modelInfo={{ id: container?.model_id }}
           isSaving={isShorthandSaving}
           setIsSaving={setIsShorthandSaving}
-          mode="directive"
-          shorthandContents={{
-            editor_content: container?.run_command,
-            content_id: container?.run_command,
-          }}
+          mode={shorthandMode}
+          shorthandContents={shorthandContents}
           setIsShorthandOpen={setOpenShorthand}
         />
       </FullScreenDialog>
