@@ -226,6 +226,9 @@ const Page = ({ workerNode }) => {
         <Typography variant="body2" className={classes.subsection}>
           Stochastic Model: {model.stochastic}
         </Typography>
+        <Typography variant="body2" className={classes.subsection}>
+          Model ID: {model.id}
+        </Typography>
 
         <Typography variant="subtitle2" className={classes.modelHeader}>Maintainer:</Typography>
         <Typography variant="body2" className={classes.subsection}>
@@ -264,15 +267,19 @@ const Page = ({ workerNode }) => {
 
   const displayConfigs = () => {
     if (configsLoading) {
-      return <Typography variant="body2">Loading Configs...</Typography>;
+      return <Typography variant="body2" align="center">Loading Configs...</Typography>;
     }
 
     if (configsError) {
       return (
-        <Typography variant="body2">
-          There was an error loading configuration files. Please refresh the page.
+        <Typography variant="body2" align="center">
+          There was an error loading configuration files
         </Typography>
       );
+    }
+
+    if (!configs.length) {
+      return <Typography variant="body2" align="center">No config files found</Typography>;
     }
 
     return configs.map((config) => (
