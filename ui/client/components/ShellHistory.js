@@ -77,6 +77,23 @@ export const ContainerWebSocket = ({
     return rsp.json();
   };
 
+  const storeAccessoryRequest = async (info) => {
+    const rsp = await fetch('/api/dojo/dojo/accessories', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json'
+      },
+      body: JSON.stringify(info)
+    });
+
+    if (!rsp.ok) {
+      throw new Error(`Failed to send accessory info ${rsp.status}`);
+    }
+
+    return rsp;
+  };
+
   const onBlocked = async (data) => {
     const { command, cwd } = JSON.parse(data);
     const s = command.trim();
@@ -119,6 +136,14 @@ export const ContainerWebSocket = ({
       setSpacetagFile(`${f}`);
       setSpacetagUrl(`/api/spacetag/byom?reqid=${reqid}`);
       setIsSpacetagOpen(true);
+    } else if (s.startsWith('accessory ')) {
+      const p = `${s.substring(10)}`;
+      const f = (p.startsWith('/')) ? p : `${cwd}/${p}`;
+
+      await storeAccessoryRequest({
+        model_id: containerInfo.model_id,
+        path: f
+      });
     }
   };
 

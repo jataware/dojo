@@ -81,7 +81,8 @@ const ConfigureRules = async (worker) => {
         'emacs',
         'nano',
         'edit',
-        'tag'
+        'tag',
+        'accessory'
       ]
     }),
   });
