@@ -35,3 +35,13 @@ export function useConfigs(modelId) {
     configsError: error,
   };
 }
+
+export function useOutputFiles(modelId) {
+  const { data, error } = useSWR(modelId ? `/api/dojo/dojo/outputfile/${modelId}` : null, fetcher);
+
+  return {
+    outputs: data,
+    outputsLoading: !error && !data,
+    outputsError: error,
+  };
+}

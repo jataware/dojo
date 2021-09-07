@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 
 import Button from '@material-ui/core/Button';
+import Card from '@material-ui/core/Card';
+
 import Container from '@material-ui/core/Container';
 import Fab from '@material-ui/core/Fab';
 import Grid from '@material-ui/core/Grid';
-import Paper from '@material-ui/core/Paper';
 import Typography from '@material-ui/core/Typography';
 
 import { darken, makeStyles } from '@material-ui/core/styles';
@@ -16,7 +17,9 @@ import RunCommandBox from './components/RunCommandBox';
 import ShorthandEditor from './components/ShorthandEditor';
 import SimpleEditor from './components/SimpleEditor';
 
-import { useConfigs, useContainer, useModel } from './components/SWRHooks';
+import {
+  useConfigs, useContainer, useModel, useOutputFiles
+} from './components/SWRHooks';
 
 import {
   ContainerInfoContextProvider,
@@ -66,13 +69,6 @@ const useStyles = makeStyles((theme) => ({
       backgroundColor: darken(theme.palette.grey[300], 0.1),
     },
   },
-  fileName: {
-    color: '#000',
-    fontSize: '14px'
-  },
-  filePath: {
-    fontSize: '10px'
-  },
   publishButton: {
     position: 'absolute',
     right: 0,
@@ -89,6 +85,9 @@ const useStyles = makeStyles((theme) => ({
     float: 'right',
     backgroundColor: theme.palette.grey[400],
   },
+  fileCard: {
+    padding: [[theme.spacing(1), theme.spacing(2)]]
+  },
 }));
 
 const Page = ({ workerNode }) => {
@@ -99,6 +98,7 @@ const Page = ({ workerNode }) => {
   } = useContainer(containerInfo?.id);
   const { model, modelIsLoading, modelIsError } = useModel(container?.model_id);
   const { configs, configsLoading, configsError } = useConfigs(container?.model_id);
+  const { outputs, outputsLoading, outputsError } = useOutputFiles(container?.model_id);
 
   const [openEditor, setOpenEditor] = useState(false);
   const [editor, setEditor] = useState(() => ({
@@ -109,6 +109,9 @@ const Page = ({ workerNode }) => {
   const [isShorthandSaving, setIsShorthandSaving] = useState(false);
   const [shorthandContents, setShorthandContents] = useState({});
   const [shorthandMode, setShorthandMode] = useState();
+
+  const [spacetagOpen, setSpacetagOpen] = useState(false);
+  const [spacetagFile, setSpacetagFile] = useState();
 
   const [openModelEdit, setOpenModelEdit] = useState(false);
 
@@ -142,8 +145,8 @@ const Page = ({ workerNode }) => {
     const filePath = fileParts.join('/').replace('/home/clouseau/', '~/');
     return (
       <>
-        <span className={classes.fileName}>{fileName}</span>
-        <p className={classes.filePath}>{filePath}</p>
+        <Typography variant="subtitle1">{fileName}</Typography>
+        <Typography variant="caption">{filePath}</Typography>
       </>
     );
   };
@@ -283,13 +286,49 @@ const Page = ({ workerNode }) => {
     }
 
     return configs.map((config) => (
-      <Paper
+      <Card
         key={config.id}
         className={classes.paper}
         onClick={() => openConfigShorthand(config)}
       >
-        <FileTile item={config.path} />
-      </Paper>
+        <div className={classes.fileCard}>
+          <FileTile item={config.path} />
+        </div>
+      </Card>
+    ));
+  };
+
+  const displayOutputFiles = () => {
+    if (outputsLoading) {
+      return <Typography variant="body2" align="center">Loading Output Files...</Typography>;
+    }
+
+    if (outputsError) {
+      return (
+        <Typography variant="body2" align="center">
+          There was an error loading output files
+        </Typography>
+      );
+    }
+
+    if (!outputs.length) {
+      return <Typography variant="body2" align="center">No output files found</Typography>;
+    }
+
+    return outputs.map((output) => (
+      <Card
+        key={output.id}
+        className={classes.paper}
+        onClick={() => {
+          setSpacetagFile(output);
+          setSpacetagOpen(true);
+        }}
+      >
+        <div className={classes.fileCard}>
+          <Typography variant="subtitle1">{output.name}</Typography>
+          <Typography variant="caption">{output.path}</Typography>
+        </div>
+      </Card>
     ));
   };
 
@@ -349,6 +388,18 @@ const Page = ({ workerNode }) => {
             </Typography>
             <div className={classes.tilePanel}>
               {displayConfigs()}
+            </div>
+
+            <Typography
+              align="center"
+              color="textSecondary"
+              variant="h6"
+              gutterBottom
+            >
+              Model Output Files
+            </Typography>
+            <div className={classes.tilePanel}>
+              {displayOutputFiles()}
             </div>
           </Grid>
           <Grid item xs={7}>
@@ -412,6 +463,22 @@ const Page = ({ workerNode }) => {
           setIsShorthandOpen={setOpenShorthand}
         />
       </FullScreenDialog>
+
+      <FullScreenDialog
+        open={spacetagOpen}
+        setOpen={setSpacetagOpen}
+        onSave={() => {}}
+        showSave={false}
+        title={`${spacetagFile?.name}`}
+      >
+        <iframe
+          id="spacetag"
+          title="spacetag"
+          style={{ height: 'calc(100vh - 70px)', width: '100%' }}
+          src={`/api/spacetag/overview/${spacetagFile?.id}?reedit=true`}
+        />
+      </FullScreenDialog>
+
       {model && openModelEdit
         && <ModelSummaryEditor model={model} open={openModelEdit} setOpen={setOpenModelEdit} />}
 
