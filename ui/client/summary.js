@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 
+import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 import Button from '@material-ui/core/Button';
 import Card from '@material-ui/core/Card';
 
@@ -9,7 +10,8 @@ import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 
 import { darken, makeStyles } from '@material-ui/core/styles';
-import { useHistory, useParams } from 'react-router-dom';
+
+import { Link, useHistory, useParams } from 'react-router-dom';
 
 import FullScreenDialog from './components/FullScreenDialog';
 import { ModelSummaryEditor } from './components/ModelSummaryEditor';
@@ -34,9 +36,18 @@ const useStyles = makeStyles((theme) => ({
   header: {
     marginBottom: theme.spacing(3),
   },
-  textareaAutosize: {
+  headerContainer: {
+    display: 'grid',
+    gridTemplateColumns: '1fr repeat(3, auto) 1fr',
+    gridColumnGap: theme.spacing(1),
+    paddingBottom: theme.spacing(3),
+    '& > :first-child': {
+      placeSelf: 'start',
+    },
+  },
+  detailsPanel: {
     backgroundColor: theme.palette.grey[300],
-    padding: theme.spacing(1),
+    padding: theme.spacing(2),
     borderRadius: '5px',
     borderWidth: 0,
     width: '100%',
@@ -46,10 +57,11 @@ const useStyles = makeStyles((theme) => ({
       boxShadow: '0 0 10px #0c0c0c',
     },
   },
-  tilePanel: {
+  tileContainer: {
     maxHeight: '400px',
     overflow: 'auto',
     fontSize: '10px',
+    paddingBottom: theme.spacing(1),
     '& > *': {
       marginRight: '2px',
     },
@@ -59,11 +71,14 @@ const useStyles = makeStyles((theme) => ({
     fontWeight: 'bold',
     padding: '0 5px',
   },
-  paper: {
+  runCommandContainer: {
+    paddingBottom: theme.spacing(1),
+  },
+  card: {
     backgroundColor: theme.palette.grey[300],
     color: theme.palette.text.secondary,
     marginBottom: theme.spacing(1),
-    padding: '4px',
+    padding: [[theme.spacing(1), theme.spacing(2), '10px']],
     whiteSpace: 'nowrap',
     '&:hover': {
       backgroundColor: darken(theme.palette.grey[300], 0.1),
@@ -288,12 +303,10 @@ const Page = ({ workerNode }) => {
     return configs.map((config) => (
       <Card
         key={config.id}
-        className={classes.paper}
+        className={classes.card}
         onClick={() => openConfigShorthand(config)}
       >
-        <div className={classes.fileCard}>
-          <FileTile item={config.path} />
-        </div>
+        <FileTile item={config.path} />
       </Card>
     ));
   };
@@ -318,13 +331,13 @@ const Page = ({ workerNode }) => {
     return outputs.map((output) => (
       <Card
         key={output.id}
-        className={classes.paper}
+        className={classes.card}
         onClick={() => {
           setSpacetagFile(output);
           setSpacetagOpen(true);
         }}
       >
-        <div className={classes.fileCard}>
+        <div>
           <Typography variant="subtitle1">{output.name}</Typography>
           <Typography variant="caption">{output.path}</Typography>
         </div>
@@ -352,17 +365,27 @@ const Page = ({ workerNode }) => {
   return (
     <Container component="main" maxWidth="md" className={classes.root}>
       <div>
-        <Typography
-          className={classes.header}
-          component="h3"
-          variant="h4"
-          align="center"
-        >
-          Model Summary
-        </Typography>
+        <div className={classes.headerContainer}>
+          <Button
+            component={Link}
+            to={`/term/${workerNode}/${model?.id}`}
+            size="small"
+            startIcon={<ArrowBackIcon />}
+          >
+            Back to Terminal
+          </Button>
+          <Typography
+            className={classes.header}
+            component="h3"
+            variant="h4"
+            align="center"
+          >
+            Model Summary
+          </Typography>
+        </div>
         <Grid container spacing={2}>
           <Grid item xs={5}>
-            <div style={{ paddingBottom: '8px' }}>
+            <div className={classes.runCommandContainer}>
               <Typography
                 align="center"
                 color="textSecondary"
@@ -371,13 +394,15 @@ const Page = ({ workerNode }) => {
               >
                 Run Command
               </Typography>
-              <RunCommandBox
-                command={{ command: container?.run_command, cwd: container?.run_cwd }}
-                summaryPage
-                handleClick={handleRunCommandClick}
-              />
-            </div>
+              { container?.run_command ? (
+                <RunCommandBox
+                  command={{ command: container?.run_command, cwd: container?.run_cwd }}
+                  summaryPage
+                  handleClick={handleRunCommandClick}
+                />
+              ) : <Typography variant="body2" align="center">No run command found</Typography>}
 
+            </div>
             <Typography
               align="center"
               color="textSecondary"
@@ -386,7 +411,7 @@ const Page = ({ workerNode }) => {
             >
               Config Files
             </Typography>
-            <div className={classes.tilePanel}>
+            <div className={classes.tileContainer}>
               {displayConfigs()}
             </div>
 
@@ -398,7 +423,7 @@ const Page = ({ workerNode }) => {
             >
               Model Output Files
             </Typography>
-            <div className={classes.tilePanel}>
+            <div className={classes.tileContainer}>
               {displayOutputFiles()}
             </div>
           </Grid>
@@ -411,7 +436,7 @@ const Page = ({ workerNode }) => {
             >
               Model Details
             </Typography>
-            <div className={classes.textareaAutosize}>
+            <div className={classes.detailsPanel}>
               <Button
                 onClick={() => setOpenModelEdit(true)}
                 className={classes.modelEditButton}
