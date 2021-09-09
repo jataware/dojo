@@ -89,9 +89,10 @@ export const ModelOverview = ({
             Back
           </Button>
           <Button
-            variant="contained"
             color="primary"
+            data-test="modelFormOverviewNextBtn"
             type="submit"
+            variant="contained"
           >
             Next
           </Button>

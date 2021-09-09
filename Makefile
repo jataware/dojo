@@ -76,6 +76,10 @@ compile:| npm_build ## Compile all builds
 npm_run_dev:  ## Dev - run react dev server locally
 	(cd ui && npm run dev)
 
+.PHONY: cypress_open
+cypress_open: ## Opens Cypress E2E testing app
+	(cd ui && npx cypress open)
+
 .PHONY: docker-compose_up
 docker-compose_up:|ip-addr  ## Dev - run local cluster
 	PRIVATE_IP=${ip_address} docker compose up --force-recreate

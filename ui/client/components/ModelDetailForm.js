@@ -83,6 +83,7 @@ export const ModelDetailFields = ({
         <div className={classes.datePickerContainer}>
           <Field
             component={KeyboardDatePicker}
+            data-test="modelFormStartDate"
             format="MM/dd/yyyy"
             label="Model Start Date"
             name="period.gte"
@@ -92,6 +93,7 @@ export const ModelDetailFields = ({
           <Field
             format="MM/dd/yyyy"
             component={KeyboardDatePicker}
+            data-test="modelFormEndDate"
             label="Model End Date"
             name="period.lte"
             placeholder="mm/dd/yyyy"
@@ -102,6 +104,7 @@ export const ModelDetailFields = ({
       <Field
         required
         name="stochastic"
+        data-test="modelFormStochastic"
         component={RadioGroup}
         value={formik.values.stochastic}
         label="Is this model stochastic?"
@@ -113,6 +116,7 @@ export const ModelDetailFields = ({
       />
       <Field
         name="category"
+        data-test="modelFormCategory"
         component={ChipInput}
         value={formik.values.category}
         label="Category (type a category and press space)"
@@ -138,13 +142,17 @@ export const ModelDetail = ({
         <form onSubmit={formik.handleSubmit}>
           <ModelDetailFields formik={formik} />
           <div className={classes.buttonContainer}>
-            <Button onClick={() => handleBack(formik.values)}>
+            <Button
+              data-test="modelFormDetailBackBtn"
+              onClick={() => handleBack(formik.values)}
+            >
               Back
             </Button>
             <Button
-              variant="contained"
               color="primary"
+              data-test="modelFormDetailNextBtn"
               type="submit"
+              variant="contained"
             >
               Next
             </Button>

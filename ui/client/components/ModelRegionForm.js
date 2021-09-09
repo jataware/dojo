@@ -252,6 +252,7 @@ function ModelRegionForm({
             : (
               <TextField
                 autoFocus
+                data-test="modelFormRegionSearch"
                 onChange={(e) => {
                   setInputValue(e.target.value);
                   setSearchQuery(e.target.value);
@@ -265,6 +266,7 @@ function ModelRegionForm({
             <Button
               className={classes.regionButton}
               color="secondary"
+              data-test="modelFormRegionSearchBtn"
               disableElevation
               onClick={(e) => {
                 e.preventDefault();
@@ -282,6 +284,7 @@ function ModelRegionForm({
             </Button>
             <Button
               disabled={!searchResults.length}
+              data-test="modelFormRegionClearBtn"
               onClick={() => clearAutocomplete()}
               size="large"
               variant="outlined"
@@ -328,6 +331,7 @@ function ModelRegionForm({
       <Box display="flex" justifyContent="center" marginY={2}>
         <Button
           onClick={() => setShowSearch(!showSearch)}
+          data-test="modelFormExpandRegionBtn"
           size="large"
           startIcon={
             showSearch ? <RemoveCircleOutlineIcon /> : <AddCircleOutlineIcon />
@@ -347,6 +351,7 @@ function ModelRegionForm({
       <Box display="flex" justifyContent="center" marginY={2}>
         <Button
           onClick={() => setShowMap(!showMap)}
+          data-test="modelFormExpandCoordsBtn"
           size="large"
           startIcon={
             showMap ? <RemoveCircleOutlineIcon /> : <AddCircleOutlineIcon />
@@ -366,9 +371,10 @@ function ModelRegionForm({
             Back
           </Button>
           <Button
-            variant="contained"
             color="primary"
+            data-test="modelFormSubmitBtn"
             onClick={() => onSubmit()}
+            variant="contained"
           >
             Submit Model
           </Button>

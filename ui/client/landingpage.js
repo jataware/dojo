@@ -88,7 +88,15 @@ const LandingPage = () => {
                 </Typography>
               </CardContent>
               <CardActions>
-                <Button size="small" variant="contained" color="primary" onClick={registerModel}>Go!</Button>
+                <Button
+                  color="primary"
+                  data-test="modelFormGoBtn"
+                  onClick={registerModel}
+                  size="small"
+                  variant="contained"
+                >
+                  Go!
+                </Button>
               </CardActions>
             </Card>
 

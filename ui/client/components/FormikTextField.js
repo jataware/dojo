@@ -22,6 +22,7 @@ function FormikTextField({
       {...props}
       InputProps={{ autoComplete: 'off' }}
       className={classes.root}
+      data-test={`modelForm-${name}`}
       fullWidth
       id={name}
       name={name}

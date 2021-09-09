@@ -136,6 +136,7 @@ function ModelRegionMap({ mapCoords, updateMapCoords, showMap }) {
                 <Button
                   className={classes.regionButton}
                   color="secondary"
+                  data-test="modelFormCoordsBtn"
                   disableElevation
                   type="submit"
                   variant="contained"
