@@ -45,3 +45,16 @@ export function useOutputFiles(modelId) {
     outputsError: error,
   };
 }
+
+export function useAccessories(modelId) {
+  const { data, error, mutate } = useSWR(
+    modelId ? `/api/dojo/dojo/accessories/${modelId}` : null, fetcher
+  );
+
+  return {
+    accessories: data,
+    mutateAccessories: mutate,
+    accessoriesLoading: !error && !data,
+    accessoriesError: error,
+  };
+}

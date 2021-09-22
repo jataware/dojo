@@ -2,22 +2,24 @@ import React, { useState } from 'react';
 
 import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 import Button from '@material-ui/core/Button';
-import Card from '@material-ui/core/Card';
-
 import Container from '@material-ui/core/Container';
+import EditIcon from '@material-ui/icons/Edit';
 import Fab from '@material-ui/core/Fab';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
+import useMediaQuery from '@material-ui/core/useMediaQuery';
 
-import { darken, makeStyles } from '@material-ui/core/styles';
+import { makeStyles, useTheme } from '@material-ui/core/styles';
 
 import { Link, useHistory, useParams } from 'react-router-dom';
 
+import FileCardList from './components/FileCardList';
 import FullScreenDialog from './components/FullScreenDialog';
 import { ModelSummaryEditor } from './components/ModelSummaryEditor';
 import RunCommandBox from './components/RunCommandBox';
 import ShorthandEditor from './components/ShorthandEditor';
 import SimpleEditor from './components/SimpleEditor';
+import SummaryAccessories from './components/SummaryAccessories';
 
 import {
   useConfigs, useContainer, useModel, useOutputFiles
@@ -57,15 +59,6 @@ const useStyles = makeStyles((theme) => ({
       boxShadow: '0 0 10px #0c0c0c',
     },
   },
-  tileContainer: {
-    maxHeight: '400px',
-    overflow: 'auto',
-    fontSize: '10px',
-    paddingBottom: theme.spacing(1),
-    '& > *': {
-      marginRight: '2px',
-    },
-  },
   sectionHeader: {
     color: theme.palette.text.secondary,
     fontWeight: 'bold',
@@ -73,16 +66,6 @@ const useStyles = makeStyles((theme) => ({
   },
   runCommandContainer: {
     paddingBottom: theme.spacing(1),
-  },
-  card: {
-    backgroundColor: theme.palette.grey[300],
-    color: theme.palette.text.secondary,
-    marginBottom: theme.spacing(1),
-    padding: [[theme.spacing(1), theme.spacing(2), '10px']],
-    whiteSpace: 'nowrap',
-    '&:hover': {
-      backgroundColor: darken(theme.palette.grey[300], 0.1),
-    },
   },
   publishButton: {
     position: 'absolute',
@@ -100,9 +83,6 @@ const useStyles = makeStyles((theme) => ({
     float: 'right',
     backgroundColor: theme.palette.grey[400],
   },
-  fileCard: {
-    padding: [[theme.spacing(1), theme.spacing(2)]]
-  },
 }));
 
 const Page = ({ workerNode }) => {
@@ -111,6 +91,7 @@ const Page = ({ workerNode }) => {
   const {
     container, containerIsLoading, containerIsError, mutateContainer
   } = useContainer(containerInfo?.id);
+
   const { model, modelIsLoading, modelIsError } = useModel(container?.model_id);
   const { configs, configsLoading, configsError } = useConfigs(container?.model_id);
   const { outputs, outputsLoading, outputsError } = useOutputFiles(container?.model_id);
@@ -131,6 +112,8 @@ const Page = ({ workerNode }) => {
   const [openModelEdit, setOpenModelEdit] = useState(false);
 
   const classes = useStyles();
+  const theme = useTheme();
+  const mediumBreakpoint = useMediaQuery(theme.breakpoints.down('md'));
 
   const openConfigShorthand = async (item) => {
     const response = await fetch(
@@ -159,10 +142,10 @@ const Page = ({ workerNode }) => {
     const fileName = fileParts.pop();
     const filePath = fileParts.join('/').replace('/home/clouseau/', '~/');
     return (
-      <>
+      <span>
         <Typography variant="subtitle1">{fileName}</Typography>
         <Typography variant="caption">{filePath}</Typography>
-      </>
+      </span>
     );
   };
 
@@ -283,68 +266,6 @@ const Page = ({ workerNode }) => {
     );
   };
 
-  const displayConfigs = () => {
-    if (configsLoading) {
-      return <Typography variant="body2" align="center">Loading Configs...</Typography>;
-    }
-
-    if (configsError) {
-      return (
-        <Typography variant="body2" align="center">
-          There was an error loading configuration files
-        </Typography>
-      );
-    }
-
-    if (!configs.length) {
-      return <Typography variant="body2" align="center">No config files found</Typography>;
-    }
-
-    return configs.map((config) => (
-      <Card
-        key={config.id}
-        className={classes.card}
-        onClick={() => openConfigShorthand(config)}
-      >
-        <FileTile item={config.path} />
-      </Card>
-    ));
-  };
-
-  const displayOutputFiles = () => {
-    if (outputsLoading) {
-      return <Typography variant="body2" align="center">Loading Output Files...</Typography>;
-    }
-
-    if (outputsError) {
-      return (
-        <Typography variant="body2" align="center">
-          There was an error loading output files
-        </Typography>
-      );
-    }
-
-    if (!outputs.length) {
-      return <Typography variant="body2" align="center">No output files found</Typography>;
-    }
-
-    return outputs.map((output) => (
-      <Card
-        key={output.id}
-        className={classes.card}
-        onClick={() => {
-          setSpacetagFile(output);
-          setSpacetagOpen(true);
-        }}
-      >
-        <div>
-          <Typography variant="subtitle1">{output.name}</Typography>
-          <Typography variant="caption">{output.path}</Typography>
-        </div>
-      </Card>
-    ));
-  };
-
   const handleRunCommandClick = () => {
     setShorthandContents({
       editor_content: container?.run_command,
@@ -363,7 +284,11 @@ const Page = ({ workerNode }) => {
   }
 
   return (
-    <Container component="main" maxWidth="md" className={classes.root}>
+    <Container
+      className={classes.root}
+      component="main"
+      maxWidth={mediumBreakpoint ? 'md' : 'xl'}
+    >
       <div>
         <div className={classes.headerContainer}>
           <Button
@@ -384,50 +309,62 @@ const Page = ({ workerNode }) => {
           </Typography>
         </div>
         <Grid container spacing={2}>
-          <Grid item xs={5}>
-            <div className={classes.runCommandContainer}>
-              <Typography
-                align="center"
-                color="textSecondary"
-                variant="h6"
-                gutterBottom
-              >
-                Run Command
-              </Typography>
-              { container?.run_command ? (
-                <RunCommandBox
-                  command={{ command: container?.run_command, cwd: container?.run_cwd }}
-                  summaryPage
-                  handleClick={handleRunCommandClick}
-                />
-              ) : <Typography variant="body2" align="center">No run command found</Typography>}
+          <Grid item container xs={5} lg={6} spacing={2}>
+            <Grid item xs={12} lg={6}>
+              <div className={classes.runCommandContainer}>
+                <Typography
+                  align="center"
+                  color="textSecondary"
+                  variant="h6"
+                  gutterBottom
+                >
+                  Run Command
+                </Typography>
+                { container?.run_command ? (
+                  <RunCommandBox
+                    command={{ command: container?.run_command, cwd: container?.run_cwd }}
+                    summaryPage
+                    handleClick={handleRunCommandClick}
+                  />
+                ) : <Typography variant="body2" align="center">No run command found</Typography>}
 
-            </div>
-            <Typography
-              align="center"
-              color="textSecondary"
-              variant="h6"
-              gutterBottom
-            >
-              Config Files
-            </Typography>
-            <div className={classes.tileContainer}>
-              {displayConfigs()}
-            </div>
-
-            <Typography
-              align="center"
-              color="textSecondary"
-              variant="h6"
-              gutterBottom
-            >
-              Model Output Files
-            </Typography>
-            <div className={classes.tileContainer}>
-              {displayOutputFiles()}
-            </div>
+              </div>
+            </Grid>
+            <Grid item xs={12} lg={6}>
+              <FileCardList
+                name="Configs"
+                files={configs}
+                loading={configsLoading}
+                error={configsError}
+                clickHandler={(config) => openConfigShorthand(config)}
+                icon={<EditIcon />}
+                cardContent={(config) => <FileTile item={config.path} />}
+              />
+            </Grid>
+            <Grid item xs={12} lg={6}>
+              <FileCardList
+                name="Outputs"
+                files={outputs}
+                loading={outputsLoading}
+                error={outputsError}
+                clickHandler={(output) => {
+                  setSpacetagFile(output);
+                  setSpacetagOpen(true);
+                }}
+                icon={<EditIcon />}
+                cardContent={(output) => (
+                  <>
+                    <Typography variant="subtitle1">{output.name}</Typography>
+                    <Typography variant="caption">{output.path}</Typography>
+                  </>
+                )}
+              />
+            </Grid>
+            <Grid item xs={12} lg={6}>
+              <SummaryAccessories modelId={container?.model_id} />
+            </Grid>
           </Grid>
-          <Grid item xs={7}>
+          <Grid item xs={7} lg={6}>
             <Typography
               align="center"
               color="textSecondary"
@@ -506,7 +443,6 @@ const Page = ({ workerNode }) => {
 
       {model && openModelEdit
         && <ModelSummaryEditor model={model} open={openModelEdit} setOpen={setOpenModelEdit} />}
-
     </Container>
   );
 };
