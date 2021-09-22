@@ -375,6 +375,7 @@ const Page = ({ workerNode }) => {
             </Typography>
             <div className={classes.detailsPanel}>
               <Button
+                data-test="summaryDetailsEditButton"
                 onClick={() => setOpenModelEdit(true)}
                 className={classes.modelEditButton}
               >

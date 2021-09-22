@@ -94,7 +94,12 @@ export const EndSessionDialog = ({
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => handleClose(true)} autoFocus color="primary">
+          <Button
+            autoFocus
+            color="primary"
+            data-test="terminalSubmitConfirmBtn"
+            onClick={() => handleClose(true)}
+          >
             Yes
           </Button>
           <Button onClick={() => handleClose(false)} color="secondary">
@@ -347,6 +352,7 @@ const CenteredGrid = ({ workerNode }) => {
       }}
       >
         <Fab
+          data-test="terminalEndSessionBtn"
           variant="extended"
           color="primary"
           style={{ margin: '10px' }}

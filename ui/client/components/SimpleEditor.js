@@ -103,6 +103,7 @@ const SimpleEditor = ({ editorContents, setEditorContents }) => {
         </div>
         <Divider orientation="vertical" flexItem className={classes.divider} />
         <TextField
+          data-test="terminalEditorTextArea"
           multiline
           placeholder=""
           value={editorContents?.text || ''}

@@ -268,6 +268,7 @@ const Intro = ({ location }) => {
               {baseImageList ? (
                 <Select
                   labelId="label"
+                  data-test="modelBaseImageSelect"
                   id="select"
                   defaultValue={imageInfo.dockerImage}
                   value={imageInfo.dockerImage}
@@ -291,6 +292,7 @@ const Intro = ({ location }) => {
                     <div style={{ backgroundColor: (n.status !== 'up' || n.clients > 0) ? '#f00000' : '#00f000', height: '10px' }} />
                     <CardActionArea
                       onClick={() => onImageInfoUpdate(n.i, 'worker')}
+                      data-test="modelWorkerCardBtn"
                       disabled={(n.status !== 'up' || n.clients > 0)}
                       style={{ backgroundColor: (n.i === imageInfo.worker) ? '#e8fee4' : 'unset' }}
                     >
@@ -330,7 +332,12 @@ const Intro = ({ location }) => {
 
           <Grid item xs={12} className={classes.gridItem}>
             <FormControl className={classes.formControl}>
-              <Button variant="contained" color="primary" onClick={launchTerm}>
+              <Button
+                color="primary"
+                data-test="modelContainerLaunchBtn"
+                onClick={launchTerm}
+                variant="contained"
+              >
                 Launch
               </Button>
             </FormControl>

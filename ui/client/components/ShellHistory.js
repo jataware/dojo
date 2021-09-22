@@ -281,6 +281,7 @@ export const ShellHistory = ({
           <TableCell align="right">
             <Button
               color={runCommandItem ? 'primary' : 'default'}
+              data-test="terminalMarkDirectiveBtn"
               disabled={runCommandDuplicate}
               disableElevation
               onClick={() => handleAnnotationClick(item)}

@@ -42,7 +42,13 @@ const FullScreenDialog = ({
     <Dialog fullScreen open={open} onClose={handleClose} TransitionComponent={Transition}>
       <AppBar position="sticky">
         <Toolbar>
-          <IconButton edge="start" color="inherit" onClick={handleClose} aria-label="close">
+          <IconButton
+            aria-label="close"
+            color="inherit"
+            data-test="fullScreenDialogCloseBtn"
+            edge="start"
+            onClick={handleClose}
+          >
             <CloseIcon />
           </IconButton>
           <Typography variant="h6" className={classes.title}>
@@ -51,6 +57,7 @@ const FullScreenDialog = ({
           <Button
             autoFocus
             color="inherit"
+            data-test="fullScreenDialogSaveBtn"
             onClick={handleSave}
             style={{ display: saveVisible ? 'unset' : 'none' }}
           >

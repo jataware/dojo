@@ -75,6 +75,7 @@ const ContainerList = ({ containers }) => {
               <Grid item key={c.container.Id} xs={3}>
                 <Card style={{ backgroundColor: '#e2e7ff' }}>
                   <CardActionArea
+                    data-test="existingContainerBtn"
                     onClick={() => { history.push(`/term/${c.node?.i}/${c.info?.model_id}`); }}
                   >
                     <CardContent>
