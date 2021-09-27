@@ -13,10 +13,10 @@ import { makeStyles, useTheme } from '@material-ui/core/styles';
 
 import { Link, useHistory, useParams } from 'react-router-dom';
 
+import DirectiveBox from './components/DirectiveBox';
 import FileCardList from './components/FileCardList';
 import FullScreenDialog from './components/FullScreenDialog';
 import { ModelSummaryEditor } from './components/ModelSummaryEditor';
-import RunCommandBox from './components/RunCommandBox';
 import ShorthandEditor from './components/ShorthandEditor';
 import SimpleEditor from './components/SimpleEditor';
 import SummaryAccessories from './components/SummaryAccessories';
@@ -50,7 +50,7 @@ const useStyles = makeStyles((theme) => ({
   detailsPanel: {
     backgroundColor: theme.palette.grey[300],
     padding: theme.spacing(2),
-    borderRadius: '5px',
+    borderRadius: '4px',
     borderWidth: 0,
     width: '100%',
     '&:focus': {
@@ -59,13 +59,12 @@ const useStyles = makeStyles((theme) => ({
       boxShadow: '0 0 10px #0c0c0c',
     },
   },
-  sectionHeader: {
-    color: theme.palette.text.secondary,
-    fontWeight: 'bold',
-    padding: '0 5px',
-  },
   runCommandContainer: {
     paddingBottom: theme.spacing(1),
+  },
+  headerText: {
+    // this matches up with the headers in FileCardList
+    paddingTop: '10px',
   },
   publishButton: {
     position: 'absolute',
@@ -82,6 +81,11 @@ const useStyles = makeStyles((theme) => ({
   modelEditButton: {
     float: 'right',
     backgroundColor: theme.palette.grey[400],
+  },
+  cardGridContainer: {
+    '& > *': {
+      height: '100%',
+    },
   },
 }));
 
@@ -308,7 +312,7 @@ const Page = ({ workerNode }) => {
             Model Summary
           </Typography>
         </div>
-        <Grid container spacing={2}>
+        <Grid container spacing={2} className={classes.cardGridContainer}>
           <Grid item container xs={5} lg={6} spacing={2}>
             <Grid item xs={12} lg={6}>
               <div className={classes.runCommandContainer}>
@@ -317,22 +321,27 @@ const Page = ({ workerNode }) => {
                   color="textSecondary"
                   variant="h6"
                   gutterBottom
+                  className={classes.headerText}
                 >
-                  Run Command
+                  Model Execution Directive
                 </Typography>
                 { container?.run_command ? (
-                  <RunCommandBox
+                  <DirectiveBox
                     command={{ command: container?.run_command, cwd: container?.run_cwd }}
                     summaryPage
                     handleClick={handleRunCommandClick}
                   />
-                ) : <Typography variant="body2" align="center">No run command found</Typography>}
+                ) : (
+                  <Typography variant="body2" align="center">
+                    No execution directive found
+                  </Typography>
+                )}
 
               </div>
             </Grid>
             <Grid item xs={12} lg={6}>
               <FileCardList
-                name="Configs"
+                name="Config"
                 files={configs}
                 loading={configsLoading}
                 error={configsError}
@@ -343,7 +352,7 @@ const Page = ({ workerNode }) => {
             </Grid>
             <Grid item xs={12} lg={6}>
               <FileCardList
-                name="Outputs"
+                name="Output"
                 files={outputs}
                 loading={outputsLoading}
                 error={outputsError}
@@ -370,6 +379,7 @@ const Page = ({ workerNode }) => {
               color="textSecondary"
               variant="h6"
               gutterBottom
+              className={classes.headerText}
             >
               Model Details
             </Typography>

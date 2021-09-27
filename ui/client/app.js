@@ -31,8 +31,8 @@ import {
   useModelInfoContext,
 } from './context';
 
+import DirectiveBox from './components/DirectiveBox';
 import FullScreenDialog from './components/FullScreenDialog';
-import RunCommandBox from './components/RunCommandBox';
 import ShorthandEditor from './components/ShorthandEditor';
 import SimpleEditor from './components/SimpleEditor';
 import Term from './components/Term';
@@ -76,7 +76,7 @@ export const EndSessionDialog = ({
           Are you ready to publish the container?
         </DialogTitle>
         <DialogContent>
-          Run Command
+          Execution Directive
           <DialogContentText
             id="alert-dialog-description"
             style={{
@@ -303,7 +303,7 @@ const CenteredGrid = ({ workerNode }) => {
             setSpacetagFile={setSpacetagFile}
           />
           <Divider />
-          <RunCommandBox command={runCommand} />
+          <DirectiveBox command={runCommand} />
 
           <FullScreenDialog
             open={isShorthandOpen}

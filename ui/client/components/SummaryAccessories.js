@@ -48,7 +48,7 @@ export default function SummaryAccessories({ modelId }) {
   return (
     <>
       <FileCardList
-        name="Accessories"
+        name="Accessory"
         files={accessories}
         loading={accessoriesLoading}
         error={accessoriesError}
