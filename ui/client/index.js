@@ -20,6 +20,7 @@ import PublishContainer from './publish_container';
 import Summary from './summary';
 import TermLoading from './term_loading';
 import TheKing from './theking';
+import ViewModels from './components/ViewModels';
 
 const theme = createMuiTheme({
   palette: {
@@ -46,10 +47,11 @@ export default function Main() {
       <Switch>
         <Route component={LandingPage} exact path="/" />
         <Route component={Model} exact path="/model" />
+        <Route component={ViewModels} exact path="/models" />
         <Route component={Intro} exact path="/intro" />
         <Route component={TermLoading} exact path="/loadingterm" />
         <Route component={App} exact path="/term/:worker/:modelid" />
-        <Route component={Summary} exact path="/summary/:worker" />
+        <Route component={Summary} exact path="/summary" />
         <Route component={PublishContainer} exact path="/publishcontainer/:worker" />
         <Route component={Admin} exact path="/admin" />
         <Route component={TheKing} exact path="/theking" />

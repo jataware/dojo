@@ -1,8 +1,15 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+
+import axios from 'axios';
 
 import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 import Button from '@material-ui/core/Button';
 import Container from '@material-ui/core/Container';
+import Dialog from '@material-ui/core/Dialog';
+import DialogActions from '@material-ui/core/DialogActions';
+import DialogContent from '@material-ui/core/DialogContent';
+import DialogContentText from '@material-ui/core/DialogContentText';
+import DialogTitle from '@material-ui/core/DialogTitle';
 import EditIcon from '@material-ui/icons/Edit';
 import Fab from '@material-ui/core/Fab';
 import Grid from '@material-ui/core/Grid';
@@ -11,11 +18,12 @@ import useMediaQuery from '@material-ui/core/useMediaQuery';
 
 import { makeStyles, useTheme } from '@material-ui/core/styles';
 
-import { Link, useHistory, useParams } from 'react-router-dom';
+import { Link, useHistory, useLocation } from 'react-router-dom';
 
 import DirectiveBox from './components/DirectiveBox';
 import FileCardList from './components/FileCardList';
 import FullScreenDialog from './components/FullScreenDialog';
+import LoadingOverlay from './components/LoadingOverlay';
 import { ModelSummaryEditor } from './components/ModelSummaryEditor';
 import ShorthandEditor from './components/ShorthandEditor';
 import SimpleEditor from './components/SimpleEditor';
@@ -89,16 +97,36 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const Page = ({ workerNode }) => {
-  const containerInfo = useContainerInfoContext();
-  const history = useHistory();
-  const {
-    container, containerIsLoading, containerIsError, mutateContainer
-  } = useContainer(containerInfo?.id);
+const Page = ({ modelIdQueryParam, workerNode, edit }) => {
+  // declare these up here so we can conditionally assign them below
+  // eslint-disable-next-line one-var-declaration-per-line, one-var
+  let containerInfo, container, containerIsLoading, containerIsError, mutateContainer;
+  const [dialogOpen, setDialogOpen] = useState(!!modelIdQueryParam && !edit);
+  const [disabledMode, setDisabledMode] = useState(!edit && !workerNode);
+  const [loadingMode, setLoadingMode] = useState(false);
 
-  const { model, modelIsLoading, modelIsError } = useModel(container?.model_id);
-  const { configs, configsLoading, configsError } = useConfigs(container?.model_id);
-  const { outputs, outputsLoading, outputsError } = useOutputFiles(container?.model_id);
+  // we're updating history & the url, rather than reloading the page when these props change
+  // for the version bump, so we need to make sure we keep state up to date with the props
+  useEffect(() => {
+    setDialogOpen(!!modelIdQueryParam && !edit);
+    setDisabledMode(!edit && !workerNode);
+  }, [modelIdQueryParam, edit]);
+
+  if (workerNode) {
+    containerInfo = useContainerInfoContext();
+    ({
+      container, containerIsLoading, containerIsError, mutateContainer
+    } = useContainer(containerInfo?.id));
+  }
+
+  // get the model id from the container if we have it, or from the query param
+  const modelId = workerNode && container ? container?.model_id : modelIdQueryParam;
+
+  const history = useHistory();
+
+  const { model, modelIsLoading, modelIsError } = useModel(modelId);
+  const { configs, configsLoading, configsError } = useConfigs(modelId);
+  const { outputs, outputsLoading, outputsError } = useOutputFiles(modelId);
 
   const [openEditor, setOpenEditor] = useState(false);
   const [editor, setEditor] = useState(() => ({
@@ -279,11 +307,27 @@ const Page = ({ workerNode }) => {
     setOpenShorthand(true);
   };
 
-  if (containerIsLoading) {
+  const versionBumpModel = async () => {
+    try {
+      const response = await axios.get(`/api/dojo/models/version/${modelId}`);
+      setLoadingMode(true);
+      // pause for one second here to allow elastic search to catch up
+      setTimeout(() => {
+        // history.replace here because we want the back button to take the user back to /models
+        // rather than navigating them back to the previous version
+        history.replace(`/summary?model=${response.data}&edit`);
+        setLoadingMode(false);
+      }, 1000);
+    } catch (error) {
+      console.log('there was an error version bumping the model', error);
+    }
+  };
+
+  if (containerIsLoading || modelIsLoading) {
     return <div>Loading...</div>;
   }
 
-  if (containerIsError) {
+  if (containerIsError || modelIsError) {
     return <div>There was an error, please refresh the page</div>;
   }
 
@@ -293,6 +337,7 @@ const Page = ({ workerNode }) => {
       component="main"
       maxWidth={mediumBreakpoint ? 'md' : 'xl'}
     >
+      {loadingMode && <LoadingOverlay text="Loading new model version..." />}
       <div>
         <div className={classes.headerContainer}>
           <Button
@@ -300,8 +345,9 @@ const Page = ({ workerNode }) => {
             to={`/term/${workerNode}/${model?.id}`}
             size="small"
             startIcon={<ArrowBackIcon />}
+            disabled={!workerNode}
           >
-            Back to Terminal
+            {workerNode ? 'Back to Terminal' : 'Launch Model in Terminal'}
           </Button>
           <Typography
             className={classes.header}
@@ -348,6 +394,7 @@ const Page = ({ workerNode }) => {
                 clickHandler={(config) => openConfigShorthand(config)}
                 icon={<EditIcon />}
                 cardContent={(config) => <FileTile item={config.path} />}
+                disableClick={disabledMode}
               />
             </Grid>
             <Grid item xs={12} lg={6}>
@@ -361,6 +408,7 @@ const Page = ({ workerNode }) => {
                   setSpacetagOpen(true);
                 }}
                 icon={<EditIcon />}
+                disableClick={disabledMode}
                 cardContent={(output) => (
                   <>
                     <Typography variant="subtitle1">{output.name}</Typography>
@@ -370,7 +418,7 @@ const Page = ({ workerNode }) => {
               />
             </Grid>
             <Grid item xs={12} lg={6}>
-              <SummaryAccessories modelId={container?.model_id} />
+              <SummaryAccessories modelId={modelId} disableClick={disabledMode} />
             </Grid>
           </Grid>
           <Grid item xs={7} lg={6}>
@@ -388,6 +436,7 @@ const Page = ({ workerNode }) => {
                 data-test="summaryDetailsEditButton"
                 onClick={() => setOpenModelEdit(true)}
                 className={classes.modelEditButton}
+                disabled={disabledMode}
               >
                 Edit
               </Button>
@@ -397,14 +446,29 @@ const Page = ({ workerNode }) => {
         </Grid>
 
         <div className={classes.publishButton}>
-          <Fab
-            variant="extended"
-            color="primary"
-            style={{ margin: '10px' }}
-            onClick={(e) => { e.preventDefault(); publishContainer(); }}
-          >
-            Publish
-          </Fab>
+          {/* In disabledMode, we show the button to turn off disabledMode & version bump */}
+          {disabledMode ? (
+            <Fab
+              variant="extended"
+              color="primary"
+              style={{ margin: '10px' }}
+              onClick={() => {
+                versionBumpModel();
+              }}
+            >
+              Create New Model Version
+            </Fab>
+          ) : (
+            <Fab
+              variant="extended"
+              color="primary"
+              style={{ margin: '10px' }}
+              onClick={(e) => { e.preventDefault(); publishContainer(); }}
+              disabled={!workerNode || disabledMode}
+            >
+              Publish
+            </Fab>
+          )}
         </div>
 
       </div>
@@ -452,21 +516,83 @@ const Page = ({ workerNode }) => {
         />
       </FullScreenDialog>
 
+      <Dialog
+        open={dialogOpen}
+        onClose={(event, reason) => {
+          if (reason === 'backdropClick' || reason === 'escapeKeyDown') {
+            return;
+          }
+
+          setDialogOpen(false);
+        }}
+      >
+        <DialogTitle>
+          Would you like to create a new model version?
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText component="div">
+            <Typography gutterBottom>
+              Any edits to the existing model&apos;s details, annotations, or output files require
+              creating a new version.
+            </Typography>
+            <Typography gutterBottom>
+              At the moment, editing existing models has limited functionality. Some buttons
+              are disabled (Publish, Launch Model in Terminal, Edit Config), and some content is
+              missing (Model Execution Directive). This feature is a work in progress and
+              will include the functionality mentioned above very soon.
+            </Typography>
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions>
+          <Button
+            onClick={() => {
+              setDialogOpen(false);
+              setDisabledMode(true);
+            }}
+          >
+            No, view without editing
+          </Button>
+          <Button
+            onClick={() => {
+              setDialogOpen(false);
+              setDisabledMode(true);
+              versionBumpModel();
+            }}
+          >
+            Create new version
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       {model && openModelEdit
         && <ModelSummaryEditor model={model} open={openModelEdit} setOpen={setOpenModelEdit} />}
     </Container>
   );
 };
 
+function useQuery() {
+  return new URLSearchParams(useLocation().search);
+}
+
 const Summary = () => {
-  const { worker } = useParams();
-  return (
-    <ContainerInfoContextProvider workerNode={worker}>
-      <HistoryContextProvider>
-        <Page workerNode={worker} />
-      </HistoryContextProvider>
-    </ContainerInfoContextProvider>
-  );
+  const query = useQuery();
+  const worker = query.get('worker');
+  const model = query.get('model');
+  const edit = query.has('edit');
+
+  if (worker) {
+    return (
+      <ContainerInfoContextProvider workerNode={worker}>
+        <HistoryContextProvider>
+          <Page workerNode={worker} />
+        </HistoryContextProvider>
+      </ContainerInfoContextProvider>
+    );
+  }
+
+  if (model) {
+    return <Page modelIdQueryParam={model} edit={edit} />;
+  }
 };
 
 export default Summary;

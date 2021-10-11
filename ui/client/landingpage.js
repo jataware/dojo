@@ -50,6 +50,10 @@ const LandingPage = () => {
     history.push('/model');
   };
 
+  const viewModels = () => {
+    history.push('/models');
+  };
+
   const registerData = () => {
     window.location.replace('https://data.dojo-test.com');
   };
@@ -76,7 +80,7 @@ const LandingPage = () => {
               I want to register...
             </Typography>
           </Grid>
-          <Grid item xs>
+          <Grid item xs={6}>
 
             <Card className={classes.maincard}>
               <CardContent>
@@ -101,7 +105,7 @@ const LandingPage = () => {
             </Card>
 
           </Grid>
-          <Grid item xs>
+          <Grid item xs={6}>
             <Card className={classes.maincard}>
               <CardContent>
                 <Typography variant="h5" component="h2">
@@ -112,12 +116,42 @@ const LandingPage = () => {
                 </Typography>
               </CardContent>
               <CardActions>
-                <Button size="small" variant="contained" color="primary" onClick={registerData}>Go!</Button>
+                <Button
+                  size="small"
+                  variant="contained"
+                  color="primary"
+                  onClick={registerData}
+                >
+                  Go!
+                </Button>
               </CardActions>
             </Card>
 
           </Grid>
 
+          <Grid item xs={6}>
+            <Card className={classes.maincard}>
+              <CardContent>
+                <Typography variant="h5" component="h2">
+                  View Existing Models
+                </Typography>
+                <Typography className={classes.pos} color="textSecondary">
+                  Revisit a previously registered model.
+                </Typography>
+              </CardContent>
+              <CardActions>
+                <Button
+                  size="small"
+                  variant="contained"
+                  color="primary"
+                  onClick={viewModels}
+                >
+                  Go!
+                </Button>
+              </CardActions>
+            </Card>
+
+          </Grid>
         </Grid>
       </div>
     </Container>

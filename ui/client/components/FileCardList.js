@@ -37,7 +37,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export default function FileCardList({
-  name, files, loading, error, clickHandler, icon, cardContent
+  name, files, loading, error, clickHandler, icon, cardContent, disableClick
 }) {
   const [expanded, setExpanded] = useState(false);
   const classes = useStyles();
@@ -81,6 +81,7 @@ export default function FileCardList({
               <IconButton
                 component="span"
                 onClick={() => clickHandler(file)}
+                disabled={disableClick}
               >
                 {icon}
               </IconButton>

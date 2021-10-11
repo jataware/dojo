@@ -13,7 +13,7 @@ import FileCardList from './FileCardList';
 
 import { useAccessories } from './SWRHooks';
 
-export default function SummaryAccessories({ modelId }) {
+export default function SummaryAccessories({ modelId, disableClick }) {
   const {
     accessories, accessoriesLoading, accessoriesError, mutateAccessories
   } = useAccessories(modelId);
@@ -57,6 +57,7 @@ export default function SummaryAccessories({ modelId }) {
           setDeleteAccessoryDialogOpen(true);
         }}
         icon={<DeleteIcon />}
+        disableClick={disableClick}
         cardContent={(accessory) => {
           const pathArray = accessory.path.split('/');
           const name = pathArray[pathArray.length - 1];

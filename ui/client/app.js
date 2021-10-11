@@ -247,7 +247,7 @@ const CenteredGrid = ({ workerNode }) => {
 
   const handleEndSession = () => {
     // go to summary screen
-    history.push(`/summary/${workerNode}`, containerInfo);
+    history.push(`/summary?worker=${workerNode}`, containerInfo);
   };
 
   useEffect(() => {
