@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from 'react';
 
+import Alert from '@material-ui/lab/Alert';
 import Button from '@material-ui/core/Button';
 import Card from '@material-ui/core/Card';
 import CardActionArea from '@material-ui/core/CardActionArea';
-import CardActions from '@material-ui/core/CardActions';
 import CardContent from '@material-ui/core/CardContent';
+import Container from '@material-ui/core/Container';
 import FormControl from '@material-ui/core/FormControl';
 import Grid from '@material-ui/core/Grid';
 import InputLabel from '@material-ui/core/InputLabel';
@@ -13,10 +14,9 @@ import MenuItem from '@material-ui/core/MenuItem';
 import Paper from '@material-ui/core/Paper';
 import Select from '@material-ui/core/Select';
 import Typography from '@material-ui/core/Typography';
-import WarningIcon from '@material-ui/icons/Warning';
 
 import { makeStyles } from '@material-ui/core/styles';
-import { useHistory } from 'react-router-dom';
+import { useHistory, useLocation } from 'react-router-dom';
 
 import BasicAlert from './components/BasicAlert';
 
@@ -26,6 +26,11 @@ const useStyles = makeStyles((theme) => ({
   },
   root: {
     flexGrow: 1,
+    padding: [[theme.spacing(10), theme.spacing(2), theme.spacing(2)]],
+  },
+  gridContainer: {
+    minHeight: '100vh',
+    paddingTop: theme.spacing(14),
   },
   paper: {
     padding: theme.spacing(2),
@@ -72,10 +77,16 @@ const getProvisioning = (imageType) => {
 
 const formatImageString = (s) => s.replace(/\s+/g, '').replace(/[^a-zA-Z0-9_.-]/, '_');
 
+function useQuery() {
+  return new URLSearchParams(useLocation().search);
+}
+
 const Intro = ({ location }) => {
   const modelInfo = location?.state;
   const classes = useStyles();
   const history = useHistory();
+  const query = useQuery();
+  const relaunch = query.has('relaunch');
   const [imageInfo, setImageInfo] = useState({
     modelInfo,
     imageName: formatImageString(modelInfo.name),
@@ -167,91 +178,23 @@ const Intro = ({ location }) => {
     fetch('/api/dojo/phantom/base_images').then(async (r) => setBaseImageList(await r.json()));
   }, []);
 
-  const destroyContainer = async (node, id) => {
-    await fetch(`/api/clouseau/docker/${node}/stop/${id}`, { method: 'DELETE' });
-    await refreshNodeInfo();
-  };
-
-  const handleDestroy = async (node) => {
-    await destroyContainer(node.node.i, node.container.Id);
-  };
-
-  // eslint-disable-next-line no-unused-vars
-  const ContainerCard = ({ node }) => {
-    console.debug(node);
-    return (
-      <Card
-        style={{
-          // position: 'absolute', top: 0,
-          margin: '10px', maxWidth: 280
-        }}
-      >
-        <CardActionArea>
-          <CardContent>
-            <Typography variant="body2" component="p">
-              <WarningIcon style={{ fontSize: '1.0rem', marginRight: '8px' }} />
-              <span style={{ fontWeight: 'bold' }}>
-                Worker-
-                {node.node.i}
-              </span>
-              has a container running would you like to connect or destroy it?
-            </Typography>
-            <div style={{ marginTop: '5px' }}>
-              Active Clients:
-              {' '}
-              <span style={{ fontWeight: 'bold' }}>
-                {node.node.clients}
-                {' '}
-              </span>
-            </div>
-            <div>
-              Image:
-              {' '}
-              {node.container.Id.substring(0, 8)}
-            </div>
-            <div>
-              Name:
-              {' '}
-              {node.container.Names[0]}
-            </div>
-            <div>
-              <span style={{ fontWeight: 'bold' }}>{node.container.Status}</span>
-            </div>
-          </CardContent>
-        </CardActionArea>
-        <CardActions>
-          <Button size="small" variant="contained" color="primary" disabled>
-            Reconnect
-          </Button>
-          <Button
-            size="small"
-            variant="contained"
-            color="primary"
-            onClick={(e) => {
-              e.preventDefault();
-              handleDestroy(node);
-            }}
-          >
-            Destroy
-          </Button>
-        </CardActions>
-      </Card>
-    );
-  };
-
   return (
-    <div className={classes.root}>
-      <div style={{ position: 'absolute', top: 0 }}>
-        {/* containers.map((v) => (<ContainerCard node={v} />)) */}
-      </div>
-
+    <Container
+      className={classes.root}
+      component="main"
+    >
+      {relaunch && (
+        <Alert severity="info">
+          To relaunch a model container, please select
+          your previously published base image from the list below
+        </Alert>
+      )}
       <Grid
         container
         spacing={3}
         direction="column"
         alignItems="center"
-        justify="center"
-        style={{ minHeight: '100vh' }}
+        className={classes.gridContainer}
       >
         <Typography variant="h5" id="tableTitle" component="div" style={{ marginBottom: '20px' }}>
           Setup a Container
@@ -346,7 +289,7 @@ const Intro = ({ location }) => {
       </Grid>
 
       <BasicAlert alert={alert} visible={alertVisible} setVisible={setAlertVisible} />
-    </div>
+    </Container>
   );
 };
 

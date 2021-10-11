@@ -341,8 +341,9 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
       <div>
         <div className={classes.headerContainer}>
           <Button
-            component={Link}
-            to={`/term/${workerNode}/${model?.id}`}
+            component={workerNode ? Link : Button}
+            to={workerNode ? `/term/${workerNode}/${model?.id}` : null}
+            onClick={workerNode ? null : () => history.push('/intro?relaunch', model)}
             size="small"
             startIcon={<ArrowBackIcon />}
             disabled={!workerNode}
