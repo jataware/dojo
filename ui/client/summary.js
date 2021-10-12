@@ -346,7 +346,6 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
             onClick={workerNode ? null : () => history.push('/intro?relaunch', model)}
             size="small"
             startIcon={<ArrowBackIcon />}
-            disabled={!workerNode}
           >
             {workerNode ? 'Back to Terminal' : 'Launch Model in Terminal'}
           </Button>
