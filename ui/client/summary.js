@@ -20,6 +20,7 @@ import { makeStyles, useTheme } from '@material-ui/core/styles';
 
 import { Link, useHistory, useLocation } from 'react-router-dom';
 
+import BasicAlert from './components/BasicAlert';
 import DirectiveBox from './components/DirectiveBox';
 import FileCardList from './components/FileCardList';
 import FullScreenDialog from './components/FullScreenDialog';
@@ -143,9 +144,32 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
 
   const [openModelEdit, setOpenModelEdit] = useState(false);
 
+  // the two alerts on the page
+  const [noDirectiveAlert, setNoDirectiveAlert] = useState(false);
+  const [navigateAwayWarning, setNavigateAwayWarning] = useState(false);
+
   const classes = useStyles();
   const theme = useTheme();
   const mediumBreakpoint = useMediaQuery(theme.breakpoints.down('md'));
+
+  const onUnload = (e) => {
+    // preventDefault here triggers the confirm dialog
+    e.preventDefault();
+    // show the alert with our warning text, as we can't modify the confirm dialog text
+    setNavigateAwayWarning(true);
+  };
+
+  // set up our confirm before navigating away warning
+  useEffect(() => {
+    // only do it if there is a container running
+    // as this doesn't apply to version bump/metadata edits
+    if (workerNode) {
+      window.addEventListener('beforeunload', onUnload);
+      return () => {
+        window.removeEventListener('beforeunload', onUnload);
+      };
+    }
+  }, [workerNode]);
 
   const openConfigShorthand = async (item) => {
     const response = await fetch(
@@ -165,7 +189,12 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
     }
   };
 
-  const publishContainer = () => {
+  const publishContainer = (e) => {
+    e.preventDefault();
+    if (!container?.run_command) {
+      setNoDirectiveAlert(true);
+      return;
+    }
     history.push(`/publishcontainer/${workerNode}`, containerInfo);
   };
 
@@ -463,7 +492,7 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
               variant="extended"
               color="primary"
               style={{ margin: '10px' }}
-              onClick={(e) => { e.preventDefault(); publishContainer(); }}
+              onClick={publishContainer}
               disabled={!workerNode || disabledMode}
             >
               Publish
@@ -563,6 +592,27 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <BasicAlert
+        alert={{
+          message: 'Please add a model execution directive before publishing the model',
+          severity: 'warning',
+        }}
+        visible={noDirectiveAlert}
+        setVisible={setNoDirectiveAlert}
+      />
+
+      <BasicAlert
+        alert={{
+          message: `
+            If you navigate away without publishing your model, any container changes will be lost
+          `,
+          severity: 'error',
+        }}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        visible={navigateAwayWarning}
+        setVisible={setNavigateAwayWarning}
+      />
 
       {model && openModelEdit
         && <ModelSummaryEditor model={model} open={openModelEdit} setOpen={setOpenModelEdit} />}
