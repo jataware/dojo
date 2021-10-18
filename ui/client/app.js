@@ -26,8 +26,6 @@ import {
   ModelInfoContextProvider,
   WebSocketContextProvider,
   useContainerInfoContext,
-  useHistoryContext,
-  useHistoryUpdateContext,
   useModelInfoContext,
 } from './context';
 
@@ -37,6 +35,8 @@ import ShorthandEditor from './components/ShorthandEditor';
 import SimpleEditor from './components/SimpleEditor';
 import Term from './components/Term';
 import { ContainerWebSocket, ShellHistory } from './components/ShellHistory';
+
+import { useDirective } from './components/SWRHooks';
 
 const useStyles = makeStyles((theme) => ({
   connected: {
@@ -52,7 +52,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export const EndSessionDialog = ({
-  open, setOpen, runCommand, accept, reject
+  open, setOpen, modelId, accept, reject
 }) => {
   const handleClose = async (yes) => {
     setOpen(false);
@@ -62,6 +62,8 @@ export const EndSessionDialog = ({
       reject();
     }
   };
+
+  const { directive } = useDirective(modelId);
 
   return (
     <div>
@@ -90,7 +92,7 @@ export const EndSessionDialog = ({
           >
             <NavigateNextIcon style={{ color: 'yellow' }} />
             {' '}
-            <span>{runCommand?.command}</span>
+            <span>{ directive ? directive.command_raw : 'No directive entered' }</span>
           </DialogContentText>
         </DialogContent>
         <DialogActions>
@@ -212,8 +214,6 @@ export const Footer = ({ wsConnected, socketIoConnected }) => {
 const CenteredGrid = ({ workerNode }) => {
   const theme = useTheme();
   const containerInfo = useContainerInfoContext();
-  const { runCommand } = useHistoryContext();
-  const { fetchRunCommand } = useHistoryUpdateContext();
 
   const [openEndSessionDialog, setEndSessionDialogOpen] = useState(false);
   const [openAbandonSessionDialog, setAbandonSessionDialogOpen] = useState(false);
@@ -249,12 +249,6 @@ const CenteredGrid = ({ workerNode }) => {
     // go to summary screen
     history.push(`/summary?worker=${workerNode}`, containerInfo);
   };
-
-  useEffect(() => {
-    if (containerInfo) {
-      fetchRunCommand(containerInfo.id);
-    }
-  }, [containerInfo]);
 
   const shorthandDialogOnSave = () => {
     // trigger ShorthandEditor to tell the shorthand app to save
@@ -303,7 +297,7 @@ const CenteredGrid = ({ workerNode }) => {
             setSpacetagFile={setSpacetagFile}
           />
           <Divider />
-          <DirectiveBox command={runCommand} />
+          <DirectiveBox modelId={modelInfo.id} />
 
           <FullScreenDialog
             open={isShorthandOpen}
@@ -379,7 +373,7 @@ const CenteredGrid = ({ workerNode }) => {
       <EndSessionDialog
         open={openEndSessionDialog}
         setOpen={setEndSessionDialogOpen}
-        runCommand={runCommand}
+        modelId={modelInfo.id}
         accept={handleEndSession}
         reject={() => {}}
       />

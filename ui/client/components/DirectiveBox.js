@@ -8,6 +8,8 @@ import Typography from '@material-ui/core/Typography';
 
 import { makeStyles, useTheme } from '@material-ui/core/styles';
 
+import { useDirective } from './SWRHooks';
+
 const useStyles = makeStyles((theme) => ({
   card: {
     alignItems: 'center',
@@ -22,9 +24,19 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const DirectiveBox = ({ command, summaryPage, handleClick }) => {
+const DirectiveBox = ({
+  disableClick, handleClick, modelId, summaryPage
+}) => {
   const classes = useStyles();
   const theme = useTheme();
+
+  if (!modelId) return null;
+
+  const { directive, directiveLoading } = useDirective(modelId);
+
+  if (directiveLoading) {
+    return <Typography variant="body2" align="center">Loading Execution Directive</Typography>;
+  }
 
   return (
     <Card
@@ -38,13 +50,14 @@ const DirectiveBox = ({ command, summaryPage, handleClick }) => {
         {!summaryPage && <Typography variant="subtitle1">Model Execution Directive:</Typography>}
         <NavigateNextIcon className={classes.nextIcon} />
         <Typography variant="subtitle1" component="span">
-          {command?.command}
+          {directive ? directive?.command_raw : ''}
         </Typography>
       </span>
-      { summaryPage && (
+      { (summaryPage && directive?.command_raw) && (
         <IconButton
           component="span"
           onClick={() => handleClick()}
+          disabled={disableClick}
         >
           <EditIcon />
         </IconButton>

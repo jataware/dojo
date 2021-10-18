@@ -31,7 +31,7 @@ import SimpleEditor from './components/SimpleEditor';
 import SummaryAccessories from './components/SummaryAccessories';
 
 import {
-  useConfigs, useContainer, useModel, useOutputFiles
+  useConfigs, useContainer, useDirective, useModel, useOutputFiles
 } from './components/SWRHooks';
 
 import {
@@ -128,6 +128,7 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
   const { model, modelIsLoading, modelIsError } = useModel(modelId);
   const { configs, configsLoading, configsError } = useConfigs(modelId);
   const { outputs, outputsLoading, outputsError } = useOutputFiles(modelId);
+  const { directive } = useDirective(modelId);
 
   const [openEditor, setOpenEditor] = useState(false);
   const [editor, setEditor] = useState(() => ({
@@ -329,8 +330,8 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
 
   const handleRunCommandClick = () => {
     setShorthandContents({
-      editor_content: container?.run_command,
-      content_id: container?.run_command,
+      editor_content: directive?.command_raw,
+      content_id: directive?.command_raw,
     });
     setShorthandMode('directive');
     setOpenShorthand(true);
@@ -400,18 +401,12 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
                 >
                   Model Execution Directive
                 </Typography>
-                { container?.run_command ? (
-                  <DirectiveBox
-                    command={{ command: container?.run_command, cwd: container?.run_cwd }}
-                    summaryPage
-                    handleClick={handleRunCommandClick}
-                  />
-                ) : (
-                  <Typography variant="body2" align="center">
-                    No execution directive found
-                  </Typography>
-                )}
-
+                <DirectiveBox
+                  modelId={modelId}
+                  summaryPage
+                  handleClick={handleRunCommandClick}
+                  disableClick={disabledMode}
+                />
               </div>
             </Grid>
             <Grid item xs={12} lg={6}>
