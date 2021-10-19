@@ -159,14 +159,6 @@ export const HistoryContextProvider = ({ children }) => {
     }
   };
 
-  const markRunCommand = async (containerId, item) => {
-    await fetch(`/api/clouseau/container/store/${containerId}/meta`, {
-      method: 'PUT',
-      body: JSON.stringify({ run_command: item.command, run_cwd: item.cwd })
-    });
-    setRunCommand(item);
-  };
-
   const removeHistoryItem = async (containerId, item) => {
     const resp = await fetch(`/api/dojo/clouseau/container/${containerId}/history/${item.idx}`,
       { method: 'DELETE' });
@@ -178,7 +170,7 @@ export const HistoryContextProvider = ({ children }) => {
   return (
     <HistoryContext.Provider value={{ historyContext, runCommand }}>
       <HistoryUpdateContext.Provider value={{
-        fetchHistory, removeHistoryItem, fetchRunCommand, markRunCommand
+        fetchHistory, removeHistoryItem, fetchRunCommand
       }}
       >
         { children }

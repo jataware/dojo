@@ -17,6 +17,8 @@ import Typography from '@material-ui/core/Typography';
 
 import { makeStyles } from '@material-ui/core/styles';
 
+import { useDirective } from './SWRHooks';
+
 import {
   useContainerInfoContext,
   useHistoryContext,
@@ -194,12 +196,13 @@ const useStyles = makeStyles(() => ({
 }));
 
 export const ShellHistory = ({
+  container,
   setDirective,
   setIsShorthandOpen,
   setShorthandMode,
   setShorthandContents,
 }) => {
-  const { historyContext, runCommand } = useHistoryContext();
+  const { historyContext } = useHistoryContext();
   const {
     fetchHistory,
     removeHistoryItem,
@@ -208,6 +211,8 @@ export const ShellHistory = ({
   const removeItem = (item) => removeHistoryItem(containerInfo.id, item);
   const classes = useStyles();
   const tableRef = React.createRef(null);
+
+  const { directive } = useDirective(container?.model_id);
 
   useEffect(() => {
     if (containerInfo?.id) {
@@ -221,43 +226,43 @@ export const ShellHistory = ({
     }
   }, [historyContext]);
 
-  const handleAnnotationClick = async (directive) => {
+  const handleAnnotationClick = async (item) => {
     // toggle <ShorthandEditor> to open in <App>, which loads the iframe
     setIsShorthandOpen(true);
     // set mode to directive before we load in content
     // or we get [Object][Object] showing in the iframe before content loads
     setShorthandMode('directive');
     setShorthandContents({
-      editor_content: directive.command,
-      content_id: directive.command,
+      editor_content: item.command,
+      content_id: item.command,
     });
     setDirective(directive);
   };
 
-  const isRunCommand = (command) => {
-    if (!runCommand) return false;
+  const isDirective = (command) => {
+    if (!directive) return false;
 
-    return command === runCommand.command;
+    return command === directive.command_raw;
   };
 
   const displayHistoryItems = () => {
     // keep track of whether we've already marked a run command
-    let foundRunCommand = false;
+    let foundDirective = false;
 
     return historyContext.map((item) => {
-      let runCommandItem = false;
-      let runCommandDuplicate = false;
+      let directiveItem = false;
+      let directiveDuplicate = false;
       // three options for the text, so control it here instead of a ternary
       let buttonText = 'Mark as directive';
 
-      if (!foundRunCommand && isRunCommand(item.command)) {
+      if (!foundDirective && isDirective(item.command)) {
         // only mark one item as the run command even if we have duplicates
-        runCommandItem = true;
-        foundRunCommand = true;
+        directiveItem = true;
+        foundDirective = true;
         buttonText = 'Edit Directive';
-      } else if (foundRunCommand && isRunCommand(item.command)) {
+      } else if (foundDirective && isDirective(item.command)) {
         // mark the duplicates as duplicates
-        runCommandDuplicate = true;
+        directiveDuplicate = true;
         buttonText = 'Directive (duplicate)';
       }
 
@@ -268,9 +273,8 @@ export const ShellHistory = ({
           key={item.idx}
           className={classes.tr}
           style={{
-            backgroundColor:
-              runCommandItem || runCommandDuplicate ? '#445d6e' : '',
-            opacity: runCommandDuplicate ? 0.5 : 1,
+            backgroundColor: directiveItem || directiveDuplicate ? '#445d6e' : '',
+            opacity: directiveDuplicate ? 0.5 : 1,
           }}
         >
           <TableCell align="left">
@@ -280,16 +284,16 @@ export const ShellHistory = ({
           </TableCell>
           <TableCell align="right">
             <Button
-              color={runCommandItem ? 'primary' : 'default'}
+              color={directiveItem ? 'primary' : 'default'}
               data-test="terminalMarkDirectiveBtn"
-              disabled={runCommandDuplicate}
+              disabled={directiveDuplicate}
               disableElevation
               onClick={() => handleAnnotationClick(item)}
               size="small"
               style={{
                 // use an off white color so the disabled duplicate text
                 // is legible on the directive background
-                color: runCommandDuplicate ? '#B2B2B2' : '',
+                color: directiveDuplicate ? '#B2B2B2' : '',
                 margin: '4px 8px',
                 width: '164px',
               }}

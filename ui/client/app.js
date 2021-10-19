@@ -278,6 +278,7 @@ const CenteredGrid = ({ workerNode }) => {
 
         <Grid item xs={4} style={{ padding: '0 5px 0 0', zIndex: 5 }}>
           <ShellHistory
+            container={containerInfo}
             setIsShorthandOpen={setIsShorthandOpen}
             setIsShorthandSaving={setIsShorthandSaving}
             setShorthandContents={setShorthandContents}
@@ -305,6 +306,7 @@ const CenteredGrid = ({ workerNode }) => {
             onSave={shorthandDialogOnSave}
           >
             <ShorthandEditor
+              containerId={containerInfo?.id}
               directive={directive}
               modelInfo={modelInfo}
               isSaving={isShorthandSaving}

@@ -70,7 +70,7 @@ export function useAccessories(modelId) {
 }
 
 export function useDirective(modelId) {
-  const { data, error } = useSWR(
+  const { data, error, mutate } = useSWR(
     modelId ? `/api/dojo/dojo/directive/${modelId}` : null, fetcher
   );
 
@@ -78,5 +78,6 @@ export function useDirective(modelId) {
     directive: data,
     directiveLoading: !error && !data,
     directiveError: error,
+    mutateDirective: mutate,
   };
 }
