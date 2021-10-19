@@ -405,7 +405,7 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
                   modelId={modelId}
                   summaryPage
                   handleClick={handleRunCommandClick}
-                  disableClick={disabledMode}
+                  disableClick={disabledMode || !workerNode}
                 />
               </div>
             </Grid>
@@ -418,7 +418,7 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
                 clickHandler={(config) => openConfigShorthand(config)}
                 icon={<EditIcon />}
                 cardContent={(config) => <FileTile item={config.path} />}
-                disableClick={disabledMode}
+                disableClick={disabledMode || !workerNode}
               />
             </Grid>
             <Grid item xs={12} lg={6}>
