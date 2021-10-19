@@ -205,8 +205,8 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
     const filePath = fileParts.join('/').replace('/home/clouseau/', '~/');
     return (
       <span>
-        <Typography variant="subtitle1">{fileName}</Typography>
-        <Typography variant="caption">{filePath}</Typography>
+        <Typography variant="subtitle1" noWrap>{fileName}</Typography>
+        <Typography variant="caption" noWrap component="div">{filePath}</Typography>
       </span>
     );
   };
@@ -435,8 +435,8 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
                 disableClick={disabledMode}
                 cardContent={(output) => (
                   <>
-                    <Typography variant="subtitle1">{output.name}</Typography>
-                    <Typography variant="caption">{output.path}</Typography>
+                    <Typography variant="subtitle1" noWrap>{output.name}</Typography>
+                    <Typography variant="caption" noWrap component="div">{output.path}</Typography>
                   </>
                 )}
               />

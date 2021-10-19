@@ -34,6 +34,10 @@ const useStyles = makeStyles((theme) => ({
       paddingTop: '10px',
     },
   },
+  contentContainer: {
+    // https://css-tricks.com/flexbox-truncated-text/
+    minWidth: 0,
+  },
 }));
 
 export default function FileCardList({
@@ -75,7 +79,7 @@ export default function FileCardList({
               key={file.id}
               className={classes.card}
             >
-              <div>
+              <div className={classes.contentContainer}>
                 {cardContent(file)}
               </div>
               <IconButton
