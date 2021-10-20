@@ -192,7 +192,8 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
 
   const publishContainer = (e) => {
     e.preventDefault();
-    if (!container?.run_command) {
+
+    if (!directive) {
       setNoDirectiveAlert(true);
       return;
     }

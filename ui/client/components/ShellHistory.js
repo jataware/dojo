@@ -236,7 +236,7 @@ export const ShellHistory = ({
       editor_content: item.command,
       content_id: item.command,
     });
-    setDirective(directive);
+    setDirective(item);
   };
 
   const isDirective = (command) => {
