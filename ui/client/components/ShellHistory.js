@@ -197,7 +197,6 @@ const useStyles = makeStyles(() => ({
 
 export const ShellHistory = ({
   container,
-  setDirective,
   setIsShorthandOpen,
   setShorthandMode,
   setShorthandContents,
@@ -235,8 +234,8 @@ export const ShellHistory = ({
     setShorthandContents({
       editor_content: item.command,
       content_id: item.command,
+      cwd: item.cwd,
     });
-    setDirective(item);
   };
 
   const isDirective = (command) => {

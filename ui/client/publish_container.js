@@ -11,13 +11,12 @@ import OpenInNewIcon from '@material-ui/icons/OpenInNew';
 import { makeStyles } from '@material-ui/core/styles';
 import { useParams } from 'react-router-dom';
 
+import { useDirective } from './components/SWRHooks';
+
 import {
   ContainerInfoContextProvider,
-  HistoryContextProvider,
   WebSocketContextProvider,
   useContainerInfoContext,
-  useHistoryContext,
-  useHistoryUpdateContext,
   useWebSocketUpdateContext,
 } from './context';
 
@@ -55,18 +54,18 @@ const Page = ({ workerNode }) => {
   const {
     getWebSocketId, register, unregister, closeSocket
   } = useWebSocketUpdateContext();
-  const { runCommand } = useHistoryContext();
-  const { fetchRunCommand } = useHistoryUpdateContext();
+
+  const { directive } = useDirective(containerInfo?.model_id);
 
   const publishContainer = async (wsid) => {
     const postBody = {
       name: containerInfo.name,
-      cwd: runCommand?.cwd,
+      cwd: directive?.cwd,
       entrypoint: [],
       listeners: [wsid],
     };
 
-    console.debug(runCommand);
+    console.debug(directive);
     console.debug('start publish');
     console.debug(postBody);
     await fetch(`/api/clouseau/docker/${workerNode}/commit/${containerInfo.id}`, {
@@ -133,11 +132,11 @@ const Page = ({ workerNode }) => {
   }, []);
 
   useEffect(() => {
-    if (runCommand?.command) {
+    if (directive?.command) {
       console.debug('Run');
       run();
     }
-  }, [runCommand]);
+  }, [directive]);
 
   useEffect(() => {
     if (containerInfo?.id) {
@@ -146,8 +145,6 @@ const Page = ({ workerNode }) => {
           resp.json().then((c) => setContainer(c));
         }
       });
-      console.debug('fetch runcommand');
-      fetchRunCommand(containerInfo.id);
     }
   }, [containerInfo]);
 
@@ -250,9 +247,7 @@ const PublishContainer = () => {
   return (
     <ContainerInfoContextProvider workerNode={worker}>
       <WebSocketContextProvider url={url} autoConnect>
-        <HistoryContextProvider>
-          <Page workerNode={worker} />
-        </HistoryContextProvider>
+        <Page workerNode={worker} />
       </WebSocketContextProvider>
     </ContainerInfoContextProvider>
   );

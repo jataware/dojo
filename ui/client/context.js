@@ -142,20 +142,11 @@ export const useHistoryContext = () => useContext(HistoryContext);
 export const useHistoryUpdateContext = () => useContext(HistoryUpdateContext);
 export const HistoryContextProvider = ({ children }) => {
   const [historyContext, setHistoryContext] = useState(() => []);
-  const [runCommand, setRunCommand] = useState(() => {});
 
   const fetchHistory = async (containerId) => {
     const resp = await fetch(`/api/dojo/clouseau/container/${containerId}/history`);
     if (resp.ok) {
       setHistoryContext(await resp.json());
-    }
-  };
-
-  const fetchRunCommand = async (containerId) => {
-    const resp = await fetch(`/api/dojo/clouseau/container/${containerId}/runcommand`);
-
-    if (resp.ok) {
-      setRunCommand(await resp.json());
     }
   };
 
@@ -168,9 +159,9 @@ export const HistoryContextProvider = ({ children }) => {
   };
 
   return (
-    <HistoryContext.Provider value={{ historyContext, runCommand }}>
+    <HistoryContext.Provider value={{ historyContext }}>
       <HistoryUpdateContext.Provider value={{
-        fetchHistory, removeHistoryItem, fetchRunCommand
+        fetchHistory, removeHistoryItem
       }}
       >
         { children }

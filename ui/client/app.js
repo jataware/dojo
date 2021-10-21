@@ -233,9 +233,6 @@ const CenteredGrid = ({ workerNode }) => {
   // modes: 'directive', 'config'
   const [shorthandMode, setShorthandMode] = useState({});
 
-  // the command to pass into ShorthandEditor when we're marking a directive
-  const [directive, setDirective] = useState({});
-
   const history = useHistory();
   const modelInfo = useModelInfoContext();
 
@@ -283,7 +280,6 @@ const CenteredGrid = ({ workerNode }) => {
             setIsShorthandSaving={setIsShorthandSaving}
             setShorthandContents={setShorthandContents}
             setShorthandMode={setShorthandMode}
-            setDirective={setDirective}
           />
           <ContainerWebSocket
             workerNode={workerNode}
@@ -307,7 +303,6 @@ const CenteredGrid = ({ workerNode }) => {
           >
             <ShorthandEditor
               containerId={containerInfo?.id}
-              directive={directive}
               modelInfo={modelInfo}
               isSaving={isShorthandSaving}
               setIsSaving={setIsShorthandSaving}

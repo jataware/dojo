@@ -25,12 +25,11 @@ const shorthandShouldLoad = (e) => {
     type: 'file_opened',
     editor_content: e.editor_content,
     content_id: e.content_id,
+    cwd: e.cwd,
   });
 };
 
 function ShorthandEditor({
-  containerId,
-  directive,
   isSaving,
   mode,
   modelInfo,
@@ -50,20 +49,6 @@ function ShorthandEditor({
 
   const editorUrl = `/api/shorthand/?model=${modelInfo.id}&mode=${mode}`;
 
-  // TODO: can we set this directly with /dojo/directive?
-  // Or does this clouseau setting do something on the backend that's necessary?
-  // claudine/server/cato/httpd.go - cwd is marked as required, isn't set through dojo endpoint
-  // could we get down to just one endpoint for setting directive for clarity?
-  const markDirective = async (item) => {
-    await fetch(`/api/clouseau/container/store/${containerId}/meta`, {
-      method: 'PUT',
-      body: JSON.stringify({ run_command: item.command, run_cwd: item.cwd })
-    });
-    // tell SWR to fetch the new directive from the server
-    // we need this timeout or the change hasn't taken place yet
-    setTimeout(() => mutateDirective(), 1000);
-  };
-
   const registerListeners = () => {
     window.onmessage = function shorthandOnMessage(e) {
       let postMessageBody;
@@ -81,8 +66,10 @@ function ShorthandEditor({
           break;
         case 'params_saved':
           if (mode === 'directive') {
-            // mark the command as the run command (the directive)
-            markDirective(directive);
+            // shorthand sets the directive, so we just want to tell SWR to update it
+            // but we need this timeout or the change may not have taken place yet
+            // because dojo can be slow sometimes
+            setTimeout(() => mutateDirective(), 1000);
           }
           // tell the parent that we are done saving
           setIsSaving(false);
@@ -103,7 +90,7 @@ function ShorthandEditor({
 
   useEffect(() => {
     registerListeners();
-  }, [shorthandContents, modelInfo, directive, mode]);
+  }, [shorthandContents, modelInfo, mode]);
 
   return (
     <div>
