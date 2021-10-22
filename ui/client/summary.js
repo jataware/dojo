@@ -103,7 +103,7 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
   // eslint-disable-next-line one-var-declaration-per-line, one-var
   let containerInfo, container, containerIsLoading, containerIsError, mutateContainer;
   const [dialogOpen, setDialogOpen] = useState(!!modelIdQueryParam && !edit);
-  const [disabledMode, setDisabledMode] = useState(!edit && !workerNode);
+  const [disabledMode, setDisabledMode] = useState(!edit);
   const [loadingMode, setLoadingMode] = useState(false);
 
   // we're updating history & the url, rather than reloading the page when these props change
@@ -333,6 +333,7 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
     setShorthandContents({
       editor_content: directive?.command_raw,
       content_id: directive?.command_raw,
+      cwd: directive?.cwd,
     });
     setShorthandMode('directive');
     setOpenShorthand(true);
@@ -406,7 +407,7 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
                   modelId={modelId}
                   summaryPage
                   handleClick={handleRunCommandClick}
-                  disableClick={disabledMode || !workerNode}
+                  disableClick={disabledMode}
                 />
               </div>
             </Grid>
@@ -419,7 +420,7 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
                 clickHandler={(config) => openConfigShorthand(config)}
                 icon={<EditIcon />}
                 cardContent={(config) => <FileTile item={config.path} />}
-                disableClick={disabledMode || !workerNode}
+                disableClick={disabledMode}
               />
             </Grid>
             <Grid item xs={12} lg={6}>
@@ -517,7 +518,7 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
             command: container?.run_command,
             cwd: container?.run_cwd
           }}
-          modelInfo={{ id: container?.model_id }}
+          modelInfo={{ id: modelId }}
           isSaving={isShorthandSaving}
           setIsSaving={setIsShorthandSaving}
           mode={shorthandMode}

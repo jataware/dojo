@@ -49,11 +49,22 @@ const DirectiveBox = ({
       <span>
         {!summaryPage && <Typography variant="subtitle1">Model Execution Directive:</Typography>}
         <NavigateNextIcon className={classes.nextIcon} />
-        <Typography variant="subtitle1" component="span">
-          {directive ? directive?.command_raw : ''}
-        </Typography>
+        {directive?.command.split(/{{ | }}/).map((obj, i) => (
+          (i % 2 === 0)
+            // Part of the directive that is not a parameter
+            ? <Typography variant="subtitle1" component="span">{obj}</Typography>
+            : (
+              // A parameterized variable, sets the color of the text to red
+              // TODO: UI can probably be improved
+              <Typography variant="subtitle1" component="span" color="error">
+                &#123;&#123;
+                {obj}
+                &#125;&#125;
+              </Typography>
+            )
+        ))}
       </span>
-      { (summaryPage && directive?.command_raw) && (
+      { (summaryPage && directive?.command) && (
         <IconButton
           component="span"
           onClick={() => handleClick()}
