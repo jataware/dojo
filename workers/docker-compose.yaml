@@ -1,0 +1,8 @@
+version: '2.2'
+services:
+  docker:
+    build: .
+    container_name: docker
+    expose:
+      - "8375"
+    privileged: true

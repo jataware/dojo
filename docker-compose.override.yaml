@@ -1,0 +1,69 @@
+# Simple base config
+
+services:
+#  airflow-init:
+      #environment:
+        #AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow@postgres.world-modelers/airflow
+        #AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres.world-modelers/airflow
+#    networks:
+#      - world-modelers
+#  airflow-scheduler:
+      #environment:
+        #AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow@postgres.world-modelers/airflow
+        #AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres.world-modelers/airflow
+#    networks:
+#      - world-modelers
+#  airflow-webserver:
+#    ports:
+#      - "8082:8080"
+#    networks:
+#      - world-modelers
+  app:
+    networks:
+      - world-modelers
+  shorthand-app:
+    environment:
+      DOJO_HOST: "http://api.world-modelers"
+    networks:
+      - world-modelers
+  api:
+    networks:
+      - world-modelers
+  cato:
+#    command: -debug -trace -pull-images=true
+    volumes:
+      - ${PWD}/clouseau/claudine/server/settings.yaml:/home/app/cato/settings.yaml:rw
+    networks:
+      - world-modelers
+  kibana:
+    networks:
+      - world-modelers
+  elasticsearch:
+    networks:
+      - world-modelers
+  redis:
+    networks:
+      - world-modelers
+#  airflow-redis:
+#    networks:
+#      - world-modelers
+#  airflow-postgres:
+#    networks:
+#      - world-modelers
+  socat:
+    networks:
+      - world-modelers
+  docker:
+    networks:
+      - world-modelers
+  phantom:
+    networks:
+      - world-modelers
+
+
+
+networks:
+  world-modelers:
+    driver: bridge
+    name: world-modelers
+
