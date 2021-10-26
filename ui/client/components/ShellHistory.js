@@ -102,7 +102,9 @@ export const ContainerWebSocket = ({
     if (s.startsWith('edit ')) {
       const p = `${s.substring(5)}`;
       const f = (p.startsWith('/')) ? p : `${cwd}/${p}`;
-      const rsp = await fetch(`/api/clouseau/container/${workerNode}/ops/cat?path=${f}`);
+      const rsp = await fetch(
+        `/api/clouseau/container/${workerNode}/ops/cat?path=${encodeURIComponent(f)}`
+      );
       if (rsp.ok) {
         setEditorContents({ text: await rsp.text(), file: f });
         openEditor();
@@ -113,7 +115,9 @@ export const ContainerWebSocket = ({
       const fullPath = (path.startsWith('/')) ? path : `${cwd}/${path}`;
 
       // load that file's contents
-      const rsp = await fetch(`/api/clouseau/container/${workerNode}/ops/cat?path=${fullPath}`);
+      const rsp = await fetch(
+        `/api/clouseau/container/${workerNode}/ops/cat?path=${encodeURIComponent(fullPath)}`
+      );
       if (rsp.ok) {
         const fileContent = await rsp.text();
         // pass them along to shorthand
@@ -132,7 +136,7 @@ export const ContainerWebSocket = ({
       const { id: reqid } = await storeFileRequest({
         model_id: containerInfo.model_id,
         file_path: f,
-        request_path: `/container/${workerNode}/ops/cat?path=${f}`
+        request_path: `/container/${workerNode}/ops/cat?path=${encodeURIComponent(f)}`
       });
 
       setSpacetagFile(`${f}`);

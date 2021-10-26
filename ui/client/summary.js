@@ -174,7 +174,7 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
 
   const openConfigShorthand = async (item) => {
     const response = await fetch(
-      `/api/clouseau/container/${workerNode}/ops/cat?path=${item.path}`
+      `/api/clouseau/container/${workerNode}/ops/cat?path=${encodeURIComponent(item.path)}`
     );
 
     if (response.ok) {
