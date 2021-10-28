@@ -1,14 +1,9 @@
 import React, { useState } from 'react';
 
-import Button from '@material-ui/core/Button';
 import DeleteIcon from '@material-ui/icons/Delete';
-import Dialog from '@material-ui/core/Dialog';
-import DialogActions from '@material-ui/core/DialogActions';
-import DialogContent from '@material-ui/core/DialogContent';
-import DialogContentText from '@material-ui/core/DialogContentText';
-import DialogTitle from '@material-ui/core/DialogTitle';
 import Typography from '@material-ui/core/Typography';
 
+import DeletionDialog from './DeletionDialog';
 import FileCardList from './FileCardList';
 
 import { useAccessories } from './SWRHooks';
@@ -27,13 +22,8 @@ export default function SummaryAccessories({ modelId, disableClick }) {
   };
 
   const handleDeleteAccessory = async () => {
-    const filteredAccessories = accessories.filter((currentAccessory) => (
-      currentAccessory.id !== accessoryToDelete.id
-    ));
-
-    const resp = await fetch('/api/dojo/dojo/accessories', {
-      method: 'PUT',
-      body: JSON.stringify(filteredAccessories),
+    const resp = await fetch(`/api/dojo/dojo/accessories/${accessoryToDelete.id}`, {
+      method: 'DELETE',
     });
 
     if (resp.ok) {
@@ -52,11 +42,11 @@ export default function SummaryAccessories({ modelId, disableClick }) {
         files={accessories}
         loading={accessoriesLoading}
         error={accessoriesError}
-        clickHandler={(accessory) => {
+        primaryClickHandler={(accessory) => {
           setAccessoryToDelete(accessory);
           setDeleteAccessoryDialogOpen(true);
         }}
-        icon={<DeleteIcon />}
+        primaryIcon={<DeleteIcon />}
         disableClick={disableClick}
         cardContent={(accessory) => {
           const pathArray = accessory.path.split('/');
@@ -70,21 +60,12 @@ export default function SummaryAccessories({ modelId, disableClick }) {
           );
         }}
       />
-      <Dialog
+      <DeletionDialog
         open={deleteAccessoryDialogOpen}
-        onClose={handleDialogClose}
-      >
-        <DialogTitle>Are you sure you want to delete this accessory file?</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            {accessoryToDelete?.path}
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button onClick={handleDialogClose}>No</Button>
-          <Button onClick={handleDeleteAccessory}>Yes</Button>
-        </DialogActions>
-      </Dialog>
+        itemDescr={accessoryToDelete?.path}
+        deletionHandler={handleDeleteAccessory}
+        handleDialogClose={handleDialogClose}
+      />
     </>
   );
 }

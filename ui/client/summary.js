@@ -5,6 +5,7 @@ import axios from 'axios';
 import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 import Button from '@material-ui/core/Button';
 import Container from '@material-ui/core/Container';
+import DeleteIcon from '@material-ui/icons/Delete';
 import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
@@ -21,6 +22,7 @@ import { makeStyles, useTheme } from '@material-ui/core/styles';
 import { Link, useHistory, useLocation } from 'react-router-dom';
 
 import BasicAlert from './components/BasicAlert';
+import DeletionDialog from './components/DeletionDialog';
 import DirectiveBox from './components/DirectiveBox';
 import FileCardList from './components/FileCardList';
 import FullScreenDialog from './components/FullScreenDialog';
@@ -126,13 +128,21 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
   const history = useHistory();
 
   const { model, modelIsLoading, modelIsError } = useModel(modelId);
-  const { configs, configsLoading, configsError } = useConfigs(modelId);
-  const { outputs, outputsLoading, outputsError } = useOutputFiles(modelId);
+  const {
+    configs, configsLoading, configsError, mutateConfigs
+  } = useConfigs(modelId);
+  const {
+    outputs, outputsLoading, outputsError, mutateOutputs
+  } = useOutputFiles(modelId);
   const { directive } = useDirective(modelId);
 
   const [openEditor, setOpenEditor] = useState(false);
   const [editor, setEditor] = useState(() => ({
     text: '', file: ''
+  }));
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletionSelection, setDeletionSelection] = useState(() => ({
+    type: null, id: null, description: 'Hello world',
   }));
 
   const [openShorthand, setOpenShorthand] = useState(false);
@@ -233,6 +243,34 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
     // potential TODO: return the container after the post request so we don't need to do this
     mutateContainer();
     return true; // should close FullScreenDialog
+  };
+
+  const handleDeleteDialogClose = () => {
+    setDeleteDialogOpen(false);
+    setDeletionSelection();
+  };
+
+  const handleDeleteItem = async () => {
+    console.log('deleting', deletionSelection);
+    const resp = await fetch(
+      `/api/dojo/dojo/${deletionSelection.type}/${deletionSelection.id}`,
+      {
+        method: 'DELETE',
+      }
+    );
+    console.log(resp);
+
+    if (resp.ok) {
+      handleDeleteDialogClose();
+      // Dojo needs 1 second to update the DB before we can GET the accessories again
+      if (deletionSelection.type === 'config') {
+        setTimeout(() => mutateConfigs(), 1000);
+      } else if (deletionSelection.type === 'fileoutputs') {
+        setTimeout(() => { mutateOutputs(); }, 1000);
+      }
+    } else {
+      console.log(`There was an error deleting "${deletionSelection.description}"`);
+    }
   };
 
   const displayModelDetails = () => {
@@ -417,8 +455,30 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
                 files={configs}
                 loading={configsLoading}
                 error={configsError}
-                clickHandler={(config) => openConfigShorthand(config)}
-                icon={<EditIcon />}
+                primaryClickHandler={(config) => openConfigShorthand(config)}
+                primaryIcon={<EditIcon />}
+                secondaryClickHandler={async (config) => {
+                  let configId = config.id;
+                  if (!configId) {
+                    // If we don't have an id for the config, generate a SHA-1 hash to use as the id
+                    const buffer = new TextEncoder('utf-8').encode(config.path);
+                    const hash = await crypto.subtle.digest('SHA-1', buffer);
+                    const hexCodes = [];
+                    const view = new DataView(hash);
+                    for (let i = 0; i < view.byteLength; i += 1) {
+                      const byte = view.getUint8(i).toString(16).padStart(2, '0');
+                      hexCodes.push(byte);
+                    }
+                    configId = hexCodes.join('');
+                  }
+                  setDeletionSelection({
+                    type: 'config',
+                    id: configId,
+                    description: config.path,
+                  });
+                  setDeleteDialogOpen(true);
+                }}
+                secondaryIcon={<DeleteIcon />}
                 cardContent={(config) => <FileTile item={config.path} />}
                 disableClick={disabledMode}
               />
@@ -429,11 +489,18 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
                 files={outputs}
                 loading={outputsLoading}
                 error={outputsError}
-                clickHandler={(output) => {
+                primaryClickHandler={(output) => {
                   setSpacetagFile(output);
                   setSpacetagOpen(true);
                 }}
-                icon={<EditIcon />}
+                primaryIcon={<EditIcon />}
+                secondaryClickHandler={(config) => {
+                  setDeletionSelection({
+                    type: 'outputfile', id: config.id, description: `${config.name}: ${config.path}`
+                  });
+                  setDeleteDialogOpen(true);
+                }}
+                secondaryIcon={<DeleteIcon />}
                 disableClick={disabledMode}
                 cardContent={(output) => (
                   <>
@@ -589,6 +656,13 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      <DeletionDialog
+        open={deleteDialogOpen}
+        itemDescr={deletionSelection?.description}
+        deletionHandler={handleDeleteItem}
+        handleDialogClose={handleDeleteDialogClose}
+      />
 
       <BasicAlert
         alert={{

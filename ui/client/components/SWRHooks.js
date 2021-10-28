@@ -37,22 +37,28 @@ export function useContainer(containerId) {
 }
 
 export function useConfigs(modelId) {
-  const { data, error } = useSWR(modelId ? `/api/dojo/dojo/config/${modelId}` : null, fetcher);
+  const { data, error, mutate } = useSWR(
+    modelId ? `/api/dojo/dojo/config/${modelId}` : null, fetcher
+  );
 
   return {
     configs: data,
     configsLoading: !error && !data,
     configsError: error,
+    mutateConfigs: mutate,
   };
 }
 
 export function useOutputFiles(modelId) {
-  const { data, error } = useSWR(modelId ? `/api/dojo/dojo/outputfile/${modelId}` : null, fetcher);
+  const { data, error, mutate } = useSWR(
+    modelId ? `/api/dojo/dojo/outputfile/${modelId}` : null, fetcher
+  );
 
   return {
     outputs: data,
     outputsLoading: !error && !data,
     outputsError: error,
+    mutateOutputs: mutate,
   };
 }
 
