@@ -21,7 +21,9 @@ TEMP_COMPOSE_FILES := $(foreach file,$(subst /,_,$(COMPOSE_FILES)),temp_$(file))
 init:
 	git submodule update --init --remote --rebase; \
 	git config --add fetch.recursesubmodules true; \
-	git submodule foreach 'git checkout $$(git config -f ../.gitmodules --get "submodule.$$name.branch")'
+	git submodule foreach 'git checkout $$(git config -f ../.gitmodules --get "submodule.$$name.branch")'; \
+	cp envfile.sample envfile; \
+	echo "Don't forget to update 'envfile' with all your secrets";
 
 .PHONY:rebuild-all
 rebuild-all:
@@ -38,7 +40,7 @@ clean:
 	echo "Done"
 
 
-docker-compose.yaml:$(COMPOSE_FILES) docker-compose.build-override.yaml
+docker-compose.yaml:$(COMPOSE_FILES) docker-compose.build-override.yaml envfile
 	for compose_file in $(COMPOSE_FILES); do \
 	  	tempfile="temp_$${compose_file//\//_}"; \
   		docker-compose -f $$compose_file config > $$tempfile; \
