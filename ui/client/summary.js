@@ -107,7 +107,7 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
   }, [modelIdQueryParam, edit]);
 
   const {
-    container, containerLoading, containerError, mutateContainer
+    container, mutateContainer
   } = useContainerWithWorker(workerNode);
 
   // get the model id from the container if we have it, or from the query param
@@ -382,11 +382,11 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
     }
   };
 
-  if (containerLoading || modelLoading) {
+  if (modelLoading) {
     return <div>Loading...</div>;
   }
 
-  if (containerError || modelError) {
+  if (modelError) {
     return <div>There was an error, please refresh the page</div>;
   }
 
