@@ -57,7 +57,7 @@ docker-compose.yaml:$(COMPOSE_FILES) docker-compose.build-override.yaml
 .PHONY:up
 up:docker-compose.yaml
 	docker-compose up -d; \
-	echo make build-dev-image
+	make build-dev-image
 
 
 .PHONY:down
