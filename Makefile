@@ -22,8 +22,9 @@ init:
 	git submodule update --init --remote --rebase; \
 	git config --add fetch.recursesubmodules true; \
 	git submodule foreach 'git checkout $$(git config -f ../.gitmodules --get "submodule.$$name.branch")'; \
+	touch clouseau/.dockerenv; \
 	cp envfile.sample envfile; \
-	echo "Don't forget to update 'envfile' with all your secrets";
+	echo -e "\n\nDon't forget to update 'envfile' with all your secrets!";
 
 .PHONY:rebuild-all
 rebuild-all:
