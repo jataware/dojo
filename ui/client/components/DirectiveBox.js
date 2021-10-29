@@ -52,11 +52,14 @@ const DirectiveBox = ({
         {directive?.command.split(/{{ | }}/).map((obj, i) => (
           (i % 2 === 0)
             // Part of the directive that is not a parameter
-            ? <Typography variant="subtitle1" component="span">{obj}</Typography>
+            // disable this rule here because we're combining the index with chunk of string
+            // eslint-disable-next-line react/no-array-index-key
+            ? <Typography variant="subtitle1" component="span" key={`${obj}+${i}`}>{obj}</Typography>
             : (
               // A parameterized variable, sets the color of the text to red
               // TODO: UI can probably be improved
-              <Typography variant="subtitle1" component="span" color="error">
+              // eslint-disable-next-line react/no-array-index-key
+              <Typography variant="subtitle1" component="span" color="error" key={`${obj}+${i}`}>
                 &#123;&#123;
                 {obj}
                 &#125;&#125;
