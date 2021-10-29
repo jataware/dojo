@@ -120,7 +120,8 @@ func containerID() (string, error) {
 		return "", err
 	}
 	contents := strings.TrimSpace(string(data))
-	containerID := strings.Replace(contents, "/docker/", "", 1)
+	containerParts := strings.Split(contents, "/docker/")
+	containerID := containerParts[len(containerParts)-1]
 	return containerID, nil
 }
 
