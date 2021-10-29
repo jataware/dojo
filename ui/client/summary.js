@@ -126,13 +126,14 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
 
   const history = useHistory();
 
-  const { model, modelIsLoading, modelIsError } = useModel(modelId);
+  const { model, modelLoading, modelError } = useModel(modelId);
   const {
     configs, configsLoading, configsError, mutateConfigs
   } = useConfigs(modelId);
   const {
     outputs, outputsLoading, outputsError, mutateOutputs
   } = useOutputFiles(modelId);
+
   const { directive } = useDirective(modelId);
 
   const [openEditor, setOpenEditor] = useState(false);
@@ -275,11 +276,11 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
   const displayModelDetails = () => {
     let parsedCoordinates = [];
 
-    if (modelIsLoading) {
+    if (modelLoading) {
       return <div>Loading...</div>;
     }
 
-    if (modelIsError) {
+    if (modelError) {
       return <div>There was an error, please refresh the page</div>;
     }
 
@@ -392,11 +393,11 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
     }
   };
 
-  if (containerIsLoading || modelIsLoading) {
+  if (containerIsLoading || modelLoading) {
     return <div>Loading...</div>;
   }
 
-  if (containerIsError || modelIsError) {
+  if (containerIsError || modelError) {
     return <div>There was an error, please refresh the page</div>;
   }
 

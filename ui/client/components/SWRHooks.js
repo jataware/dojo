@@ -18,8 +18,8 @@ export function useModel(modelId) {
 
   return {
     model: data,
-    modelIsLoading: !error && !data,
-    modelIsError: error,
+    modelLoading: !error && !data,
+    modelError: error,
     mutateModel: mutate,
   };
 }

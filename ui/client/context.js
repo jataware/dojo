@@ -173,18 +173,3 @@ export const ContainerInfoContextProvider = ({ workerNode, children }) => {
     </ContainerInfoContext.Provider>
   );
 };
-
-export const ModelInfoContext = createContext({});
-export const ModelInfoUpdateContext = createContext({});
-export const useModelInfoContext = () => useContext(ModelInfoContext);
-export const useModelInfoUpdateContext = () => useContext(ModelInfoUpdateContext);
-export const ModelInfoContextProvider = ({ model, children }) => {
-  const [modelInfo, updateModelInfo] = useState(() => model);
-  return (
-    <ModelInfoContext.Provider value={modelInfo}>
-      <ModelInfoUpdateContext.Provider value={{ updateModelInfo }}>
-        { children }
-      </ModelInfoUpdateContext.Provider>
-    </ModelInfoContext.Provider>
-  );
-};

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 
 import Button from '@material-ui/core/Button';
 import Container from '@material-ui/core/Container';
@@ -22,10 +22,8 @@ import { useHistory, useParams } from 'react-router-dom';
 
 import {
   ContainerInfoContextProvider,
-  ModelInfoContextProvider,
   WebSocketContextProvider,
   useContainerInfoContext,
-  useModelInfoContext,
 } from './context';
 
 import DirectiveBox from './components/DirectiveBox';
@@ -35,7 +33,7 @@ import SimpleEditor from './components/SimpleEditor';
 import Term from './components/Term';
 import { ContainerWebSocket, ShellHistory } from './components/ShellHistory';
 
-import { useDirective } from './components/SWRHooks';
+import { useDirective, useModel } from './components/SWRHooks';
 
 const useStyles = makeStyles((theme) => ({
   connected: {
@@ -210,7 +208,7 @@ export const Footer = ({ wsConnected, socketIoConnected }) => {
   );
 };
 
-const CenteredGrid = ({ workerNode }) => {
+const CenteredGrid = ({ workerNode, model }) => {
   const theme = useTheme();
   const containerInfo = useContainerInfoContext();
 
@@ -233,7 +231,6 @@ const CenteredGrid = ({ workerNode }) => {
   const [shorthandMode, setShorthandMode] = useState({});
 
   const history = useHistory();
-  const modelInfo = useModelInfoContext();
 
   const handleAbandonSession = async () => {
     // yolo
@@ -293,7 +290,7 @@ const CenteredGrid = ({ workerNode }) => {
             setSpacetagFile={setSpacetagFile}
           />
           <Divider />
-          <DirectiveBox modelId={modelInfo.id} />
+          <DirectiveBox modelId={model.id} />
 
           <FullScreenDialog
             open={isShorthandOpen}
@@ -302,7 +299,7 @@ const CenteredGrid = ({ workerNode }) => {
           >
             <ShorthandEditor
               containerId={containerInfo?.id}
-              modelInfo={modelInfo}
+              modelInfo={model}
               isSaving={isShorthandSaving}
               setIsSaving={setIsShorthandSaving}
               mode={shorthandMode}
@@ -369,7 +366,7 @@ const CenteredGrid = ({ workerNode }) => {
       <EndSessionDialog
         open={openEndSessionDialog}
         setOpen={setEndSessionDialogOpen}
-        modelId={modelInfo.id}
+        modelId={model.id}
         accept={handleEndSession}
         reject={() => {}}
       />
@@ -379,7 +376,8 @@ const CenteredGrid = ({ workerNode }) => {
 
 const App = () => {
   const { worker, modelid } = useParams();
-  const [model, setModel] = useState(() => null);
+
+  const { model, modelLoading, modelError } = useModel(modelid);
 
   let proto = 'ws:';
   if (window.location.protocol === 'https:') {
@@ -387,34 +385,20 @@ const App = () => {
   }
   const url = `${proto}//${window.location.host}/api/ws/${worker}`;
 
-  const [isLoading, setIsLoading] = useState(true);
-  const [hasError, setHasError] = useState(false);
+  if (modelLoading) {
+    return <div>Loading...</div>;
+  }
 
-  useEffect(() => {
-    fetch(`/api/dojo/models/${modelid}`).then((r) => r.json().then((m) => {
-      console.debug(m);
-      setModel(m);
-      setIsLoading(false);
-    })).catch(() => {
-      setHasError(true);
-      setIsLoading(false);
-    });
-  }, []);
+  if (modelError) {
+    return <div>Error loading model</div>;
+  }
 
   return (
-    <>
-      { isLoading ? <div> loading ... </div>
-        : hasError ? <div> error ... </div>
-          : (
-            <ModelInfoContextProvider model={model}>
-              <ContainerInfoContextProvider workerNode={worker}>
-                <WebSocketContextProvider url={url} autoConnect>
-                  <CenteredGrid workerNode={worker} />
-                </WebSocketContextProvider>
-              </ContainerInfoContextProvider>
-            </ModelInfoContextProvider>
-          )}
-    </>
+    <ContainerInfoContextProvider workerNode={worker}>
+      <WebSocketContextProvider url={url} autoConnect>
+        <CenteredGrid workerNode={worker} model={model} />
+      </WebSocketContextProvider>
+    </ContainerInfoContextProvider>
   );
 };
 
