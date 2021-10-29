@@ -14,7 +14,7 @@ WORKERS_DIR = workers
 COMPOSE_DIRS := $(CLOUSEAU_DIR) $(DOJO_API_DIR) $(DOJO_DMC_DIR) $(SHORTHAND_DIR) $(SPACETAG_DIR) $(WORKERS_DIR)
 COMPOSE_FILES := $(CLOUSEAU_DIR)/docker-compose.yaml $(DOJO_API_DIR)/docker-compose.yaml \
 				 $(DOJO_DMC_DIR)/docker-compose.yaml $(SHORTHAND_DIR)/docker-compose.yaml \
-				 $(SPACETAG_DIR)/docker-compose.yaml $(WORKERS_DIR)/docker-compose.yaml docker-compose.phantom.yaml
+				 $(SPACETAG_DIR)/docker-compose.dev.yaml $(WORKERS_DIR)/docker-compose.yaml
 TEMP_COMPOSE_FILES := $(foreach file,$(subst /,_,$(COMPOSE_FILES)),temp_$(file))
 
 
@@ -33,21 +33,20 @@ clean:
 	echo "Done"
 
 
-docker-compose.yaml:$(COMPOSE_FILES) docker-compose.override.yaml
-	. envfile; \
+docker-compose.yaml:$(COMPOSE_FILES) docker-compose.build-override.yaml
 	for compose_file in $(COMPOSE_FILES); do \
 	  	tempfile="temp_$${compose_file//\//_}"; \
   		docker-compose -f $$compose_file config > $$tempfile; \
   	done; \
-	sed -i 's|app:|shorthand-app:|' temp_shorthand_docker-compose.yaml; \
-	sed -i -e 's|published: 8080|published: 8090|' \
+	sed -i'.sedbkp' 's|app:|shorthand-app:|' temp_shorthand_docker-compose.yaml; \
+	sed -i'.sedbkp' -e 's|published: 8080|published: 8090|' \
 		   -e '/image:/! s/\<postgres\>\([:\/]\)/airflow-postgres\1/g' \
 		   -e '/image:/! s/redis:$$/airflow-redis:/g' \
 		   -e '/image:/! s/@redis:/@airflow-redis:/g' \
 		   -e 's|published: 6379|published: 6390|' temp_dojo_dmc_docker-compose.yaml; \
-  	docker-compose $(foreach f,$(TEMP_COMPOSE_FILES), -f $(f)) \
-	  	-f docker-compose.override.yaml config > docker-compose.yaml; \
-	rm $(TEMP_COMPOSE_FILES);
+	docker-compose --env-file envfile $(foreach f,$(TEMP_COMPOSE_FILES), -f $(f)) \
+	  	-f docker-compose.build-override.yaml config > docker-compose.yaml; \
+	rm $(TEMP_COMPOSE_FILES) *.sedbkp;
 
 
 .PHONY:up

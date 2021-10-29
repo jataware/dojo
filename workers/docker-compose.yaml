@@ -6,3 +6,7 @@ services:
     expose:
       - "8375"
     privileged: true
+    volumes:
+      - docker:/var/lib/docker
+volumes:
+  docker: {}
