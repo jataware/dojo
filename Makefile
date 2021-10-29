@@ -23,13 +23,20 @@ init:
 	git config --add fetch.recursesubmodules true; \
 	git submodule foreach 'git checkout $$(git config -f ../.gitmodules --get "submodule.$$name.branch")'; \
 	touch clouseau/.dockerenv; \
-	cp envfile.sample envfile; \
-	echo -e "\n\nDon't forget to update 'envfile' with all your secrets!";
+	make envfile
 
 .PHONY:rebuild-all
 rebuild-all:
 	docker-compose build --no-cache; \
 		cd $(MIXMASTA_DIR) && docker build . -t mixmasta:dev;
+
+envfile:
+	cp envfile.sample envfile; \
+	echo -e "\nDon't forget to update 'envfile' with all your secrets!";
+
+
+spacetag/settings.json:
+	cp spacetag/settings-example.json spacetag/settings.json
 
 
 .PHONY:clean
@@ -57,8 +64,12 @@ docker-compose.yaml:$(COMPOSE_FILES) docker-compose.build-override.yaml envfile
 	rm $(TEMP_COMPOSE_FILES) *.sedbkp;
 
 
+phantom/ui/node_modules:docker-compose.yaml
+	docker-compose run phantom npm install -y
+
+
 .PHONY:up
-up:docker-compose.yaml
+up:docker-compose.yaml phantom/ui/node_modules
 	docker-compose up -d; \
 	make build-dev-image
 

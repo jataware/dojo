@@ -4,7 +4,9 @@
 
 1. Clone repo
 2. Run `$ make init` to configure and pull the required submodules
-4. Setup is complete
+3. Add your secrets to the file `envfile`
+4. Update `spacetag/settings.json` with your secrets and the settings found in `envfile`
+5. Setup is complete
 
 ## Running
 
