@@ -1,18 +1,24 @@
 [submodule "clouseau"]
 	path = clouseau
 	url = git@github.com:jataware/clouseau.git
+	branch = dev
 [submodule "dojo"]
 	path = dojo
 	url = git@github.com:jataware/dojo.git
+	branch = dev
 [submodule "mixmasta"]
 	path = mixmasta
 	url = git@github.com:jataware/mixmasta.git
+	branch = dev
 [submodule "phantom"]
 	path = phantom
 	url = git@github.com:jataware/phantom.git
+	branch = dev
 [submodule "shorthand"]
 	path = shorthand
 	url = git@github.com:jataware/shorthand.git
+	branch = master
 [submodule "spacetag"]
 	path = spacetag
 	url = git@github.com:jataware/spacetag.git
+	branch = dev
