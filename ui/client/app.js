@@ -22,7 +22,6 @@ import { useHistory, useParams } from 'react-router-dom';
 
 import {
   ContainerInfoContextProvider,
-  HistoryContextProvider,
   ModelInfoContextProvider,
   WebSocketContextProvider,
   useContainerInfoContext,
@@ -410,9 +409,7 @@ const App = () => {
             <ModelInfoContextProvider model={model}>
               <ContainerInfoContextProvider workerNode={worker}>
                 <WebSocketContextProvider url={url} autoConnect>
-                  <HistoryContextProvider>
-                    <CenteredGrid workerNode={worker} />
-                  </HistoryContextProvider>
+                  <CenteredGrid workerNode={worker} />
                 </WebSocketContextProvider>
               </ContainerInfoContextProvider>
             </ModelInfoContextProvider>

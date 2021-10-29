@@ -1,6 +1,17 @@
 import useSWR from 'swr';
 
-const fetcher = (...args) => fetch(...args).then((res) => res.json());
+const fetcher = async (url) => {
+  const response = await fetch(url);
+
+  if (!response.ok) {
+    const error = new Error(`Error fetching data from ${url}`);
+    error.info = await response.json();
+    error.status = response.status;
+    throw error;
+  }
+
+  return response.json();
+};
 
 export function useModel(modelId) {
   const { data, error, mutate } = useSWR(modelId ? `/api/dojo/models/${modelId}` : null, fetcher);
@@ -85,5 +96,18 @@ export function useDirective(modelId) {
     directiveLoading: !error && !data,
     directiveError: error,
     mutateDirective: mutate,
+  };
+}
+
+export function useShellHistory(containerId) {
+  const { data, error, mutate } = useSWR(
+    containerId ? `/api/dojo/clouseau/container/${containerId}/history` : null, fetcher
+  );
+
+  return {
+    shellHistory: data,
+    shellHistoryLoading: !error && !data,
+    shellHistoryError: error,
+    mutateShellHistory: mutate,
   };
 }

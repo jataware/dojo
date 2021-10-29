@@ -38,7 +38,6 @@ import {
 
 import {
   ContainerInfoContextProvider,
-  HistoryContextProvider,
   useContainerInfoContext,
 } from './context';
 
@@ -704,9 +703,7 @@ const Summary = () => {
   if (worker) {
     return (
       <ContainerInfoContextProvider workerNode={worker}>
-        <HistoryContextProvider>
-          <Page workerNode={worker} />
-        </HistoryContextProvider>
+        <Page workerNode={worker} />
       </ContainerInfoContextProvider>
     );
   }

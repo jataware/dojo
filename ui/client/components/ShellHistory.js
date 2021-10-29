@@ -6,6 +6,7 @@ import DeleteIcon from '@material-ui/icons/Delete';
 
 import Button from '@material-ui/core/Button';
 import IconButton from '@material-ui/core/IconButton';
+import Paper from '@material-ui/core/Paper';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
@@ -17,12 +18,10 @@ import Typography from '@material-ui/core/Typography';
 
 import { makeStyles } from '@material-ui/core/styles';
 
-import { useDirective } from './SWRHooks';
+import { useDirective, useShellHistory } from './SWRHooks';
 
 import {
   useContainerInfoContext,
-  useHistoryContext,
-  useHistoryUpdateContext,
   useWebSocketUpdateContext,
 } from '../context';
 
@@ -33,34 +32,11 @@ export const ContainerWebSocket = ({
   setSpacetagUrl, setIsSpacetagOpen, setSpacetagFile
 }) => {
   const { register, unregister } = useWebSocketUpdateContext();
-  const { fetchHistory } = useHistoryUpdateContext();
   const containerInfo = useContainerInfoContext();
+  const { mutateShellHistory } = useShellHistory(containerInfo?.id);
 
-  const onMessage = (/* data */) => {
-    fetchHistory(containerInfo.id);
-    // const { command, cwd } = JSON.parse(data);
-
-    // addHistoryItem({ text: command, cwd });
-    // fetch(`/api/clouseau/container/store/${containerInfo.id}/history`, {
-    //   method: 'PUT',
-    //   body: JSON.stringify({ text: command, cwd })
-    // });
-
-    // TODO: container diffs have been disabled
-    //
-    // fetch(`/api/clouseau/container/diffs/${containerInfo.id}`).then(
-    //   (resp) => {
-    //     if (resp.ok) {
-    //       resp.json().then((diffs) => {
-    //         console.debug(`%c${cwd}  ${command}`, 'background: #fff; color: #000');
-    //         const add = diffs.add.map((o) => `+ ${o.Path}`);
-    //         const rm = diffs.rm.map((o) => `- ${o.Path}`);
-    //         const diff = [...add, ...rm].join('\n');
-    //         console.debug(diff);
-    //       });
-    //     }
-    //   }
-    // );
+  const onMessage = () => {
+    mutateShellHistory();
   };
 
   const storeFileRequest = async (info) => {
@@ -168,7 +144,13 @@ export const ContainerWebSocket = ({
   return (<> </>);
 };
 
-const useStyles = makeStyles(() => ({
+const useStyles = makeStyles((theme) => ({
+  root: {
+    backgroundColor: 'rgb(128, 128, 128, .25)',
+    color: '#fff',
+    margin: [[theme.spacing(2), 0]],
+    padding: theme.spacing(2),
+  },
   table: {
     borderCollapse: 'separate',
   },
@@ -205,29 +187,27 @@ export const ShellHistory = ({
   setShorthandMode,
   setShorthandContents,
 }) => {
-  const { historyContext } = useHistoryContext();
-  const {
-    fetchHistory,
-    removeHistoryItem,
-  } = useHistoryUpdateContext();
-  const containerInfo = useContainerInfoContext();
-  const removeItem = (item) => removeHistoryItem(containerInfo.id, item);
   const classes = useStyles();
   const tableRef = React.createRef(null);
 
+  const {
+    shellHistory, shellHistoryLoading, shellHistoryError, mutateShellHistory
+  } = useShellHistory(container?.id);
   const { directive } = useDirective(container?.model_id);
 
-  useEffect(() => {
-    if (containerInfo?.id) {
-      fetchHistory(containerInfo.id);
+  const removeItem = async (item) => {
+    const resp = await fetch(`/api/dojo/clouseau/container/${container?.id}/history/${item.idx}`,
+      { method: 'DELETE' });
+    if (resp.ok) {
+      mutateShellHistory();
     }
-  }, [containerInfo]);
+  };
 
   useEffect(() => {
     if (tableRef.current.lastChild != null) {
       tableRef.current.lastChild.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [historyContext]);
+  }, [shellHistory]);
 
   const handleAnnotationClick = async (item) => {
     // toggle <ShorthandEditor> to open in <App>, which loads the iframe
@@ -252,7 +232,15 @@ export const ShellHistory = ({
     // keep track of whether we've already marked a run command
     let foundDirective = false;
 
-    return historyContext.map((item) => {
+    if (shellHistoryLoading) {
+      return <tr><td><Typography>Loading history...</Typography></td></tr>;
+    }
+
+    if (shellHistoryError) {
+      return <tr><td><Typography component="tr">There was an error loading container history</Typography></td></tr>;
+    }
+
+    return shellHistory.map((item) => {
       let directiveItem = false;
       let directiveDuplicate = false;
       // three options for the text, so control it here instead of a ternary
@@ -322,10 +310,7 @@ export const ShellHistory = ({
   };
 
   return (
-    <div style={{
-      margin: '2px', padding: '2px 5px 0 5px', color: '#fff', backgroundColor: 'rgb(128, 128, 128, .25)', borderRadius: '5px'
-    }}
-    >
+    <Paper className={classes.root}>
       <TableContainer style={{ height: '400px', overflow: 'auto' }}>
         <Table
           aria-labelledby="tableTitle"
@@ -335,7 +320,7 @@ export const ShellHistory = ({
         >
           <TableHead>
             <TableRow className={classes.tableHead}>
-              <TableCell colSpan={2} style={{ border: 0, borderRadius: '5px' }}>
+              <TableCell colSpan={2} style={{ border: 0, borderRadius: '4px' }}>
                 <Typography
                   component="div"
                   style={{
@@ -343,7 +328,9 @@ export const ShellHistory = ({
                     lineHeight: '1.0',
                     padding: '5px 0 7px 10px',
                     color: '#fff',
+                    margin: '0 auto',
                   }}
+                  align="center"
                 >
                   Shell History
                 </Typography>
@@ -355,6 +342,6 @@ export const ShellHistory = ({
           </TableBody>
         </Table>
       </TableContainer>
-    </div>
+    </Paper>
   );
 };

@@ -136,41 +136,6 @@ export const WebSocketContextProvider = ({ url, children }) => {
   );
 };
 
-export const HistoryContext = createContext({});
-export const HistoryUpdateContext = createContext({});
-export const useHistoryContext = () => useContext(HistoryContext);
-export const useHistoryUpdateContext = () => useContext(HistoryUpdateContext);
-export const HistoryContextProvider = ({ children }) => {
-  const [historyContext, setHistoryContext] = useState(() => []);
-
-  const fetchHistory = async (containerId) => {
-    const resp = await fetch(`/api/dojo/clouseau/container/${containerId}/history`);
-    if (resp.ok) {
-      setHistoryContext(await resp.json());
-    }
-  };
-
-  const removeHistoryItem = async (containerId, item) => {
-    const resp = await fetch(`/api/dojo/clouseau/container/${containerId}/history/${item.idx}`,
-      { method: 'DELETE' });
-    if (resp.ok) {
-      await fetchHistory(containerId);
-    }
-  };
-
-  return (
-    <HistoryContext.Provider value={{ historyContext }}>
-      <HistoryUpdateContext.Provider value={{
-        fetchHistory, removeHistoryItem
-      }}
-      >
-        { children }
-      </HistoryUpdateContext.Provider>
-    </HistoryContext.Provider>
-
-  );
-};
-
 export const ContainerInfoContext = createContext({});
 export const ContainerInfoUpdateContext = createContext({});
 export const useContainerInfoContext = () => useContext(ContainerInfoContext);
