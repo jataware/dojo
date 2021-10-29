@@ -3,7 +3,6 @@ import React, {
   useContext,
   useEffect,
   useRef,
-  useState,
 } from 'react';
 
 import { sleep } from './utils';
@@ -133,43 +132,5 @@ export const WebSocketContextProvider = ({ url, children }) => {
         { children }
       </WebSocketUpdateContext.Provider>
     </WebSocketContext.Provider>
-  );
-};
-
-export const ContainerInfoContext = createContext({});
-export const ContainerInfoUpdateContext = createContext({});
-export const useContainerInfoContext = () => useContext(ContainerInfoContext);
-export const useContainerInfoUpdateContext = () => useContext(ContainerInfoUpdateContext);
-export const ContainerInfoContextProvider = ({ workerNode, children }) => {
-  const [containerInfo, updateContainerInfo] = useState(() => {});
-
-  const fetchContainerInfo = async () => {
-    try {
-      const respID = await fetch(`/api/clouseau/container/${workerNode}/ops/container`);
-      if (!respID.ok) {
-        throw new Error('failed fetching container id');
-      }
-      const { id } = await respID.json();
-      console.debug(`set containerID ${id}`);
-
-      const respCInfo = await fetch(`/api/dojo/clouseau/container/${id}`);
-      const cInfo = await respCInfo.json();
-      console.debug(`set container Info ${JSON.stringify(cInfo)}`);
-      updateContainerInfo((prevInfo) => ({ ...prevInfo, ...cInfo }));
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  useEffect(() => {
-    fetchContainerInfo();
-  }, []);
-
-  return (
-    <ContainerInfoContext.Provider value={containerInfo}>
-      <ContainerInfoUpdateContext.Provider value={{ fetchContainerInfo, updateContainerInfo }}>
-        { children }
-      </ContainerInfoUpdateContext.Provider>
-    </ContainerInfoContext.Provider>
   );
 };

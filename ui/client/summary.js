@@ -33,13 +33,8 @@ import SimpleEditor from './components/SimpleEditor';
 import SummaryAccessories from './components/SummaryAccessories';
 
 import {
-  useConfigs, useContainer, useDirective, useModel, useOutputFiles
+  useConfigs, useContainerWithWorker, useDirective, useModel, useOutputFiles
 } from './components/SWRHooks';
-
-import {
-  ContainerInfoContextProvider,
-  useContainerInfoContext,
-} from './context';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -100,9 +95,6 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const Page = ({ modelIdQueryParam, workerNode, edit }) => {
-  // declare these up here so we can conditionally assign them below
-  // eslint-disable-next-line one-var-declaration-per-line, one-var
-  let containerInfo, container, containerIsLoading, containerIsError, mutateContainer;
   const [dialogOpen, setDialogOpen] = useState(!!modelIdQueryParam && !edit);
   const [disabledMode, setDisabledMode] = useState(!edit);
   const [loadingMode, setLoadingMode] = useState(false);
@@ -114,12 +106,9 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
     setDisabledMode(!edit && !workerNode);
   }, [modelIdQueryParam, edit]);
 
-  if (workerNode) {
-    containerInfo = useContainerInfoContext();
-    ({
-      container, containerIsLoading, containerIsError, mutateContainer
-    } = useContainer(containerInfo?.id));
-  }
+  const {
+    container, containerLoading, containerError, mutateContainer
+  } = useContainerWithWorker(workerNode);
 
   // get the model id from the container if we have it, or from the query param
   const modelId = workerNode && container ? container?.model_id : modelIdQueryParam;
@@ -207,7 +196,7 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
       setNoDirectiveAlert(true);
       return;
     }
-    history.push(`/publishcontainer/${workerNode}`, containerInfo);
+    history.push(`/publishcontainer/${workerNode}`, container);
   };
 
   const FileTile = ({ item }) => {
@@ -234,7 +223,7 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
       body: editor.text
     });
 
-    await fetch(`/api/clouseau/container/store/${containerInfo.id}/edits`, {
+    await fetch(`/api/clouseau/container/store/${container.id}/edits`, {
       method: 'PUT',
       body: JSON.stringify(editor)
     });
@@ -393,11 +382,11 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
     }
   };
 
-  if (containerIsLoading || modelLoading) {
+  if (containerLoading || modelLoading) {
     return <div>Loading...</div>;
   }
 
-  if (containerIsError || modelError) {
+  if (containerError || modelError) {
     return <div>There was an error, please refresh the page</div>;
   }
 
@@ -702,11 +691,7 @@ const Summary = () => {
   const edit = query.has('edit');
 
   if (worker) {
-    return (
-      <ContainerInfoContextProvider workerNode={worker}>
-        <Page workerNode={worker} />
-      </ContainerInfoContextProvider>
-    );
+    return <Page workerNode={worker} />;
   }
 
   if (model) {

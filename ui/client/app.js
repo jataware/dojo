@@ -21,9 +21,7 @@ import { makeStyles, useTheme } from '@material-ui/core/styles';
 import { useHistory, useParams } from 'react-router-dom';
 
 import {
-  ContainerInfoContextProvider,
   WebSocketContextProvider,
-  useContainerInfoContext,
 } from './context';
 
 import DirectiveBox from './components/DirectiveBox';
@@ -33,7 +31,7 @@ import SimpleEditor from './components/SimpleEditor';
 import Term from './components/Term';
 import { ContainerWebSocket, ShellHistory } from './components/ShellHistory';
 
-import { useDirective, useModel } from './components/SWRHooks';
+import { useContainerWithWorker, useDirective, useModel } from './components/SWRHooks';
 
 const useStyles = makeStyles((theme) => ({
   connected: {
@@ -210,7 +208,7 @@ export const Footer = ({ wsConnected, socketIoConnected }) => {
 
 const CenteredGrid = ({ workerNode, model }) => {
   const theme = useTheme();
-  const containerInfo = useContainerInfoContext();
+  const { container } = useContainerWithWorker(workerNode);
 
   const [openEndSessionDialog, setEndSessionDialogOpen] = useState(false);
   const [openAbandonSessionDialog, setAbandonSessionDialogOpen] = useState(false);
@@ -234,13 +232,13 @@ const CenteredGrid = ({ workerNode, model }) => {
 
   const handleAbandonSession = async () => {
     // yolo
-    fetch(`/api/clouseau/docker/${workerNode}/stop/${containerInfo.id}`, { method: 'DELETE' });
+    fetch(`/api/clouseau/docker/${workerNode}/stop/${container.id}`, { method: 'DELETE' });
     history.push('/');
   };
 
   const handleEndSession = () => {
     // go to summary screen
-    history.push(`/summary?worker=${workerNode}`, containerInfo);
+    history.push(`/summary?worker=${workerNode}`, container);
   };
 
   const shorthandDialogOnSave = () => {
@@ -255,7 +253,7 @@ const CenteredGrid = ({ workerNode, model }) => {
       body: editorContents.text
     });
 
-    await fetch(`/api/clouseau/container/store/${containerInfo.id}/edits`, {
+    await fetch(`/api/clouseau/container/store/${container.id}/edits`, {
       method: 'PUT',
       body: JSON.stringify(editorContents)
     });
@@ -271,7 +269,7 @@ const CenteredGrid = ({ workerNode, model }) => {
 
         <Grid item xs={4} style={{ padding: '0 5px 0 0', zIndex: 5 }}>
           <ShellHistory
-            container={containerInfo}
+            container={container}
             setIsShorthandOpen={setIsShorthandOpen}
             setIsShorthandSaving={setIsShorthandSaving}
             setShorthandContents={setShorthandContents}
@@ -298,7 +296,7 @@ const CenteredGrid = ({ workerNode, model }) => {
             onSave={shorthandDialogOnSave}
           >
             <ShorthandEditor
-              containerId={containerInfo?.id}
+              containerId={container?.id}
               modelInfo={model}
               isSaving={isShorthandSaving}
               setIsSaving={setIsShorthandSaving}
@@ -394,11 +392,9 @@ const App = () => {
   }
 
   return (
-    <ContainerInfoContextProvider workerNode={worker}>
-      <WebSocketContextProvider url={url} autoConnect>
-        <CenteredGrid workerNode={worker} model={model} />
-      </WebSocketContextProvider>
-    </ContainerInfoContextProvider>
+    <WebSocketContextProvider url={url} autoConnect>
+      <CenteredGrid workerNode={worker} model={model} />
+    </WebSocketContextProvider>
   );
 };
 

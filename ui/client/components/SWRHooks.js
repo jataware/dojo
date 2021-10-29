@@ -42,9 +42,19 @@ export function useContainer(containerId) {
   return {
     container: data,
     mutateContainer: mutate,
-    containerIsLoading: !error && !data,
-    containerIsError: error,
+    containerLoading: !error && !data,
+    containerError: error,
   };
+}
+
+export function useContainerWithWorker(workerNode) {
+  // fetch the container ID first
+  const { data: containerId } = useSWR(
+    workerNode ? `/api/clouseau/container/${workerNode}/ops/container` : null, fetcher
+  );
+
+  // then fetch the container (SWR handles this nicely)
+  return useContainer(containerId?.id);
 }
 
 export function useConfigs(modelId) {

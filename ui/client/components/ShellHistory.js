@@ -18,10 +18,9 @@ import Typography from '@material-ui/core/Typography';
 
 import { makeStyles } from '@material-ui/core/styles';
 
-import { useDirective, useShellHistory } from './SWRHooks';
+import { useContainerWithWorker, useDirective, useShellHistory } from './SWRHooks';
 
 import {
-  useContainerInfoContext,
   useWebSocketUpdateContext,
 } from '../context';
 
@@ -32,8 +31,10 @@ export const ContainerWebSocket = ({
   setSpacetagUrl, setIsSpacetagOpen, setSpacetagFile
 }) => {
   const { register, unregister } = useWebSocketUpdateContext();
-  const containerInfo = useContainerInfoContext();
-  const { mutateShellHistory } = useShellHistory(containerInfo?.id);
+
+  const { container } = useContainerWithWorker(workerNode);
+
+  const { mutateShellHistory } = useShellHistory(container?.id);
 
   const onMessage = () => {
     mutateShellHistory();
@@ -110,7 +111,7 @@ export const ContainerWebSocket = ({
       const f = (p.startsWith('/')) ? p : `${cwd}/${p}`;
 
       const { id: reqid } = await storeFileRequest({
-        model_id: containerInfo.model_id,
+        model_id: container?.model_id,
         file_path: f,
         request_path: `/container/${workerNode}/ops/cat?path=${encodeURIComponent(f)}`
       });
@@ -123,14 +124,14 @@ export const ContainerWebSocket = ({
       const f = (p.startsWith('/')) ? p : `${cwd}/${p}`;
 
       await storeAccessoryRequest({
-        model_id: containerInfo.model_id,
+        model_id: container?.model_id,
         path: f
       });
     }
   };
 
   useEffect(() => {
-    if (containerInfo?.id) {
+    if (container?.id) {
       register('term/message', onMessage);
       register('term/blocked', onBlocked);
     }
@@ -139,7 +140,7 @@ export const ContainerWebSocket = ({
       unregister('term/message', onMessage);
       unregister('term/blocked', onBlocked);
     });
-  }, [containerInfo]);
+  }, [container]);
 
   return (<> </>);
 };

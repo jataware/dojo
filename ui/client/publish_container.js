@@ -11,12 +11,10 @@ import OpenInNewIcon from '@material-ui/icons/OpenInNew';
 import { makeStyles } from '@material-ui/core/styles';
 import { useParams } from 'react-router-dom';
 
-import { useDirective } from './components/SWRHooks';
+import { useContainerWithWorker, useDirective } from './components/SWRHooks';
 
 import {
-  ContainerInfoContextProvider,
   WebSocketContextProvider,
-  useContainerInfoContext,
   useWebSocketUpdateContext,
 } from './context';
 
@@ -39,11 +37,10 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const Page = ({ workerNode }) => {
-  const containerInfo = useContainerInfoContext();
+  const { container } = useContainerWithWorker(workerNode);
   const classes = useStyles();
   const [open] = useState(true);
   const [totalProgress, setTotalProgress] = useState(0);
-  const [container, setContainer] = useState(() => ({}));
   const [enableFinished, setEnableFinished] = useState(false);
   const [publishInfo, setPublishInfo] = useState(() => ({
     publish: { status: '', message: '' },
@@ -55,11 +52,11 @@ const Page = ({ workerNode }) => {
     getWebSocketId, register, unregister, closeSocket
   } = useWebSocketUpdateContext();
 
-  const { directive } = useDirective(containerInfo?.model_id);
+  const { directive } = useDirective(container?.model_id);
 
   const publishContainer = async (wsid) => {
     const postBody = {
-      name: containerInfo.name,
+      name: container.name,
       cwd: directive?.cwd,
       entrypoint: [],
       listeners: [wsid],
@@ -68,7 +65,7 @@ const Page = ({ workerNode }) => {
     console.debug(directive);
     console.debug('start publish');
     console.debug(postBody);
-    await fetch(`/api/clouseau/docker/${workerNode}/commit/${containerInfo.id}`, {
+    await fetch(`/api/clouseau/docker/${workerNode}/commit/${container.id}`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
@@ -78,7 +75,7 @@ const Page = ({ workerNode }) => {
   };
 
   const run = async () => {
-    console.debug(containerInfo);
+    console.debug(container);
     let wsid = getWebSocketId();
     console.debug(`wsid = ${wsid}`);
     while (wsid == null) {
@@ -139,23 +136,13 @@ const Page = ({ workerNode }) => {
   }, [directive]);
 
   useEffect(() => {
-    if (containerInfo?.id) {
-      fetch(`/api/dojo/clouseau/container/${containerInfo.id}`).then((resp) => {
-        if (resp.ok) {
-          resp.json().then((c) => setContainer(c));
-        }
-      });
-    }
-  }, [containerInfo]);
-
-  useEffect(() => {
     if (enableFinished) {
       console.debug('manually close socket');
       closeSocket();
 
       console.debug('patching model');
       // link image to model
-      fetch(`/api/dojo/models/${containerInfo.model_id}`,
+      fetch(`/api/dojo/models/${container.model_id}`,
         {
           method: 'PATCH',
           headers: {
@@ -165,7 +152,7 @@ const Page = ({ workerNode }) => {
         }).then(() => {
         console.debug('registering model');
         // register model
-        fetch(`/api/dojo/models/register/${containerInfo.model_id}`,
+        fetch(`/api/dojo/models/register/${container.model_id}`,
           {
             method: 'POST',
             headers: {
@@ -175,7 +162,7 @@ const Page = ({ workerNode }) => {
       });
 
       // cleanup
-      fetch(`/api/clouseau/docker/${workerNode}/stop/${containerInfo.id}`, { method: 'DELETE' });
+      fetch(`/api/clouseau/docker/${workerNode}/stop/${container.id}`, { method: 'DELETE' });
 
       console.debug('%cPublished Info', 'background: #fff; color: #000');
       console.debug(publishInfo);
@@ -185,7 +172,7 @@ const Page = ({ workerNode }) => {
   }, [enableFinished]);
 
   const completeNav = async () => {
-    const resp = await fetch(`/api/dojo/models/${containerInfo.model_id}`);
+    const resp = await fetch(`/api/dojo/models/${container.model_id}`);
     const model = await resp.json();
     const url = `https://causemos.uncharted.software/#/model/${model.family_name}/model-publishing-experiment?datacubeid=${model.id}`;
     window.location.replace(url);
@@ -245,11 +232,9 @@ const PublishContainer = () => {
   const url = `${proto}//${window.location.host}/api/ws/${worker}`;
 
   return (
-    <ContainerInfoContextProvider workerNode={worker}>
-      <WebSocketContextProvider url={url} autoConnect>
-        <Page workerNode={worker} />
-      </WebSocketContextProvider>
-    </ContainerInfoContextProvider>
+    <WebSocketContextProvider url={url} autoConnect>
+      <Page workerNode={worker} />
+    </WebSocketContextProvider>
   );
 };
 
