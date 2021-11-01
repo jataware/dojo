@@ -22,6 +22,8 @@ init:
 	git submodule update --init --remote --rebase; \
 	git config --add fetch.recursesubmodules true; \
 	git submodule foreach 'git checkout $$(git config -f ../.gitmodules --get "submodule.$$name.branch")'; \
+	mkdir -p -m 0777 $(DOJO_DMC_DIR)/logs $(DOJO_DMC_DIR)/configs $(DOJO_DMC_DIR)/plugins $(DOJO_DMC_DIR)/model_configs \
+		$(DOJO_DMC_DIR)/dojo; \
 	touch clouseau/.dockerenv; \
 	make envfile
 
