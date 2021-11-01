@@ -32,6 +32,10 @@ services:
       - world-modelers
   cato:
     command: -debug -pull-images=false
+    build:
+      context: ./clouseau
+      dockerfile: cato/Dockerfile
+    image: jataware/clouseau:cato-dev
     volumes:
       - ${PWD}/clouseau/claudine/server/settings.yaml:/home/app/cato/settings.yaml:rw
     env_file:
