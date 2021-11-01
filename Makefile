@@ -25,7 +25,8 @@ init:
 	mkdir -p -m 0777 $(DOJO_DMC_DIR)/logs $(DOJO_DMC_DIR)/configs $(DOJO_DMC_DIR)/plugins $(DOJO_DMC_DIR)/model_configs \
 		$(DOJO_DMC_DIR)/dojo; \
 	touch clouseau/.dockerenv; \
-	make envfile
+	make envfile; \
+	make spacetag/settings.json;
 
 .PHONY:rebuild-all
 rebuild-all:
