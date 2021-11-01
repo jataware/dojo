@@ -6,6 +6,8 @@
 2. Run `$ make init` to configure and pull the required submodules
 3. Add your secrets to the file `envfile`
 4. Update `spacetag/settings.json` with your secrets and the settings found in `envfile`
+5. Run `$ make up` to build and bring online all services
+6. Run `$ make create-es-indexes` to create the elasticsearch indexes
 5. Setup is complete
 
 ## Running
@@ -15,6 +17,8 @@ To start all services: `$ make up`
 To stop all services: `$ make down`
 
 To force rebuild all images: `$ make rebuild all`
+
+To view logs: `$ make logs` or `$ docker-compose logs {service-name}`
 
 
 ## Endpoints
