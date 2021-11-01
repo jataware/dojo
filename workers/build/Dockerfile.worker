@@ -1,0 +1,4 @@
+FROM jataware/dojo-publish:Ubuntu-latest
+
+COPY claudine/* /home/clouseau/.tools/
+RUN sudo chown -R clouseau:clouseau /home/clouseau
