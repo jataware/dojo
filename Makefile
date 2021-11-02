@@ -31,15 +31,19 @@ init:
 .PHONY:rebuild-all
 rebuild-all:
 	docker-compose build --no-cache; \
-		cd $(MIXMASTA_DIR) && docker build . -t mixmasta:dev;
+	cd $(MIXMASTA_DIR) && docker build . -t mixmasta:dev;
 
 envfile:
+ifeq ($(wildcard envfile),)
 	cp envfile.sample envfile; \
 	echo -e "\nDon't forget to update 'envfile' with all your secrets!";
+endif
 
 
 spacetag/settings.json:
+ifeq ($(wildcard spacetag/settings.json),)
 	cp spacetag/settings-example.json spacetag/settings.json
+endif
 
 
 .PHONY:clean
@@ -104,10 +108,10 @@ build-dev-image:
 
 .PHONY:create-es-indexes
 create-es-indexes:
-	curl -X PUT http://localhost:9200/accessories > /dev/null; \
-		curl -X PUT http://localhost:9200/configs > /dev/null; \
-		curl -X PUT http://localhost:9200/directives > /dev/null; \
-		curl -X PUT http://localhost:9200/indicators > /dev/null; \
-		curl -X PUT http://localhost:9200/models > /dev/null; \
-		curl -X PUT http://localhost:9200/outputfiles > /dev/null; \
-		curl -X PUT http://localhost:9200/runs > /dev/null;
+	curl -s -X PUT http://localhost:9200/accessories > /dev/null; \
+		curl -s -X PUT http://localhost:9200/configs > /dev/null; \
+		curl -s -X PUT http://localhost:9200/directives > /dev/null; \
+		curl -s -X PUT http://localhost:9200/indicators > /dev/null; \
+		curl -s -X PUT http://localhost:9200/models > /dev/null; \
+		curl -s -X PUT http://localhost:9200/outputfiles > /dev/null; \
+		curl -s -X PUT http://localhost:9200/runs > /dev/null;
