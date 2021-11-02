@@ -83,22 +83,24 @@ export default function FileCardList({
               <div className={classes.contentContainer}>
                 {cardContent(file)}
               </div>
-              <IconButton
-                component="span"
-                onClick={() => primaryClickHandler(file)}
-                disabled={disableClick}
-              >
-                {primaryIcon}
-              </IconButton>
-              { secondaryIcon && (
-              <IconButton
-                component="span"
-                onClick={() => secondaryClickHandler(file)}
-                disabled={disableClick}
-              >
-                {secondaryIcon}
-              </IconButton>
-              )}
+              <span>
+                <IconButton
+                  component="span"
+                  onClick={() => primaryClickHandler(file)}
+                  disabled={disableClick}
+                >
+                  {primaryIcon}
+                </IconButton>
+                { secondaryIcon && (
+                <IconButton
+                  component="span"
+                  onClick={() => secondaryClickHandler(file)}
+                  disabled={disableClick}
+                >
+                  {secondaryIcon}
+                </IconButton>
+                )}
+              </span>
             </Card>
           ))}
         </div>
