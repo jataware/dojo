@@ -30,9 +30,9 @@ const DirectiveBox = ({
   const classes = useStyles();
   const theme = useTheme();
 
-  if (!modelId) return null;
-
   const { directive, directiveLoading } = useDirective(modelId);
+
+  if (!modelId) return null;
 
   if (directiveLoading) {
     return <Typography variant="body2" align="center">Loading Execution Directive</Typography>;
