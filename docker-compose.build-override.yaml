@@ -1,4 +1,7 @@
 services:
+  airflow-webserver:
+    networks:
+      - world-modelers
   app:
     command:
       - python3
