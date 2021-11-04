@@ -1,5 +1,20 @@
 services:
+  airflow-init:
+    networks:
+      - world-modelers
+  airflow-redis:
+    networks:
+      - world-modelers
+  airflow-postgres:
+    networks:
+      - world-modelers
+  airflow-scheduler:
+    networks:
+      - world-modelers
   airflow-webserver:
+    networks:
+      - world-modelers
+  airflow-worker:
     networks:
       - world-modelers
   app:
