@@ -178,6 +178,72 @@ const Intro = ({ location }) => {
     fetch('/api/dojo/phantom/base_images').then(async (r) => setBaseImageList(await r.json()));
   }, []);
 
+  const displayWorkerCard = (worker) => {
+    let workerBusy;
+    if (process.env.NODE_ENV === 'development') {
+      // if we are on dev, we run all our containers (dojo, shorthand, etc) on the same worker
+      workerBusy = worker.clients > 0;
+    } else {
+      // but everywhere else, any containers on a worker means it is busy
+      workerBusy = worker.clients > 0 || worker.containers?.length;
+    }
+
+    let cardBackgroundColor = 'unset';
+    let headerColor = '#00f000';
+    let status = 'Available';
+    let disabled = null;
+
+    // some repetition here, but it's more readable than many ternaries
+    if (worker.status !== 'up') {
+      cardBackgroundColor = '#ff0000';
+      status = 'Down';
+      disabled = true;
+      headerColor = '#f00000';
+    }
+
+    if (workerBusy) {
+      cardBackgroundColor = '#ffcccc';
+      status = 'Busy';
+      disabled = true;
+      headerColor = '#f00000';
+    }
+
+    return (
+      <Grid item key={worker.i} xs={4}>
+        <Card style={{ backgroundColor: cardBackgroundColor }}>
+          <div style={{ backgroundColor: headerColor, height: '10px' }} />
+          <CardActionArea
+            onClick={() => onImageInfoUpdate(worker.i, 'worker')}
+            data-test="modelWorkerCardBtn"
+            disabled={disabled}
+            style={{ backgroundColor: (worker.i === imageInfo.worker) ? '#e8fee4' : 'unset' }}
+          >
+            <CardContent>
+              <span style={{ fontWeight: 'bold' }}>
+                Worker-
+                {worker.i}
+              </span>
+              <span>
+                {' - '}
+                {status}
+              </span>
+              <br />
+              <span style={{ fontSize: 'smaller' }}>
+                Connections:
+                {worker.clients}
+              </span>
+              <br />
+              <span style={{ fontSize: 'smaller' }}>
+                Containers:
+                {worker.containers?.length ?? 0}
+              </span>
+            </CardContent>
+          </CardActionArea>
+        </Card>
+      </Grid>
+    );
+  };
+
   return (
     <Container
       className={classes.root}
@@ -229,39 +295,8 @@ const Intro = ({ location }) => {
           <Grid item xs={12} className={classes.gridItem}>
             <div>Select a Worker</div>
             <Grid container spacing={1}>
-              { workersIsLoaded ? workerNodes.map((n) => (
-                <Grid item key={n.i} xs={4}>
-                  <Card style={{ backgroundColor: (n.status !== 'up') ? '#ff0000' : (n.clients > 0) ? '#ffcccc' : 'unset' }}>
-                    <div style={{ backgroundColor: (n.status !== 'up' || n.clients > 0) ? '#f00000' : '#00f000', height: '10px' }} />
-                    <CardActionArea
-                      onClick={() => onImageInfoUpdate(n.i, 'worker')}
-                      data-test="modelWorkerCardBtn"
-                      disabled={(n.status !== 'up' || n.clients > 0)}
-                      style={{ backgroundColor: (n.i === imageInfo.worker) ? '#e8fee4' : 'unset' }}
-                    >
-                      <CardContent>
-                        <span style={{ fontWeight: 'bold' }}>
-                          Worker-
-                          {n.i}
-                        </span>
-                        <span>
-                          {' - '}
-                          {(n.status !== 'up') ? 'Down' : (n.clients > 0) ? 'Busy' : 'Available'}
-                        </span>
-                        <br />
-                        <span style={{ fontSize: 'smaller' }}>
-                          Connections:
-                          {n.clients}
-                        </span>
-                        <br />
-                        <span style={{ fontSize: 'smaller' }}>
-                          Containers:
-                          {n.containers?.length ?? 0}
-                        </span>
-                      </CardContent>
-                    </CardActionArea>
-                  </Card>
-                </Grid>
+              { workersIsLoaded ? workerNodes.map((worker) => (
+                displayWorkerCard(worker)
               )) : (
                 <Grid item xs={6}>
                   Loading Workers...
