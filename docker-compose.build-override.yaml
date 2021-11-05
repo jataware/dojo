@@ -17,6 +17,9 @@ services:
   airflow-worker:
     networks:
       - world-modelers
+  flower:
+    networks:
+      - world-modelers
   app:
     command:
       - python3
