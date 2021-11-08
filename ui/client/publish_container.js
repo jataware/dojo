@@ -45,8 +45,10 @@ const Page = ({ workerNode }) => {
   const [publishInfo, setPublishInfo] = useState(() => ({
     publish: { status: '', message: '' },
     url: '',
-    tag: '',
+    digest: '',
+    image: '',
   }));
+  const repo = process.env.NODE_ENV === 'development' ? 'test' : 'publish';
 
   const {
     getWebSocketId, register, unregister, closeSocket
@@ -57,6 +59,7 @@ const Page = ({ workerNode }) => {
   const publishContainer = async (wsid) => {
     const postBody = {
       name: container.name,
+      repo,
       cwd: directive?.cwd,
       entrypoint: [],
       listeners: [wsid],
@@ -98,17 +101,24 @@ const Page = ({ workerNode }) => {
         status,
         aux: { Tag, Digest } = { Tag: null, Digest: null },
         progressDetail,
-        progress
+        progress,
+        finished,
       } = JSON.parse(item);
       if (error) {
         console.error(error);
         setPublishInfo((p) => ({ ...p, publish: { status: 'error', message: error } }));
         throw new Error(error);
       } else if (Tag) {
+        if (!Tag.endsWith('-latest')) {
+          setPublishInfo((p) => ({ ...p, digest: Digest }));
+        }
+      } else if (finished) {
+        // eslint-disable-next-line no-unused-vars
+        const [image, ..._] = finished;
         setPublishInfo((p) => ({
           ...p,
-          tag: Tag,
-          url: `https://hub.docker.com/layers/jataware/dojo-publish/${Tag}/images/${Digest.replaceAll(':', '-')}?context=repo`,
+          image,
+          url: `https://hub.docker.com/layers/${image.replaceAll(':', '/')}/images/${p.digest.replaceAll(':', '-')}?context=repo`,
           publish: { status: 'finished', message: '' }
         }));
         setEnableFinished(true);
@@ -148,7 +158,7 @@ const Page = ({ workerNode }) => {
           headers: {
             'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ image: `jataware/dojo-publish:${publishInfo?.tag}` })
+          body: JSON.stringify({ image: publishInfo?.image })
         }).then(() => {
         console.debug('registering model');
         // register model
@@ -204,8 +214,9 @@ const Page = ({ workerNode }) => {
                   <OpenInNewIcon style={{ fontSize: '14px' }} />
                   {' '}
                   <span>
-                    docker pull jataware/dojo-publish:
-                    {publishInfo?.tag}
+                    docker pull
+                    {' '}
+                    {publishInfo?.image}
                   </span>
                 </Link>
               </div>
