@@ -226,12 +226,14 @@ func diffGetContainer(store *ContainerDiffStore) gin.HandlerFunc {
 func commitContainer(settings *Settings, clouseauWorkerPool *ClouseauWorkerPool, pool *WebSocketPool) gin.HandlerFunc {
 	type RequestBody struct {
 		Name       string   `json:"name" binding:"required"`
+		Repo       string   `json:"repo" binding:"required"`
 		Cwd        string   `json:"cwd" binding:"required"`
 		Entrypoint []string `json:"entrypoint" binding:"required"`
 		Listeners  []string `json:"listeners" binding:"required"`
 	}
 
 	return func(c *gin.Context) {
+		defer LogDuration("Docker Commit", time.Now())
 		id := c.Param("id")
 		idx := c.Param("idx")
 		i, err := strconv.Atoi(idx)
@@ -246,7 +248,9 @@ func commitContainer(settings *Settings, clouseauWorkerPool *ClouseauWorkerPool,
 			c.String(http.StatusBadRequest, fmt.Sprintf("%+v", err))
 			return
 		}
-		if err := clouseauWorkerPool.Workers[i].Docker.Commit(settings.Docker.Auth, id, requestBody.Name, requestBody.Cwd, requestBody.Entrypoint, pool, requestBody.Listeners); err != nil {
+
+		log.Printf("Commit Request: %+v\n", requestBody)
+		if err := clouseauWorkerPool.Workers[i].Docker.Commit(settings.Docker.Auth, id, requestBody.Name, requestBody.Repo, requestBody.Cwd, requestBody.Entrypoint, pool, requestBody.Listeners); err != nil {
 			c.String(http.StatusInternalServerError, fmt.Sprintf("%+v", err))
 			return
 		}

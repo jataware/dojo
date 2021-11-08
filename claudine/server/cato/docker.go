@@ -3,10 +3,11 @@ package cato
 import (
 	"bytes"
 	"context"
-	//"time"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"log"
+	"time"
 	//"io/ioutil"
 	"io"
 
@@ -23,6 +24,10 @@ import (
 type Docker struct {
 	Client *client.Client
 	Host   string
+}
+
+type UploadComplete struct {
+	Finished []string `json:"finished"`
 }
 
 func NewDocker(host string) (*Docker, error) {
@@ -76,6 +81,7 @@ func (docker *Docker) Commit(
 	auth string,
 	containerID string,
 	name string,
+	repo string,
 	cwd string,
 	entrypoint []string,
 	pool *WebSocketPool,
@@ -98,15 +104,18 @@ func (docker *Docker) Commit(
 		return err
 	}
 
-	tag := fmt.Sprintf("jataware/dojo-publish:%s-latest", name)
-	if err := docker.Client.ImageTag(ctx, img.ID, tag); err != nil {
-		LogError("Image Tag", err)
+	version := time.Now().Format("20060102.1504")
+	tagVersion := fmt.Sprintf("jataware/dojo-%s:%s-%s", repo, name, version)
+	tagLatest := fmt.Sprintf("jataware/dojo-%s:%s-latest", repo, name)
+
+	if err := docker.Client.ImageTag(ctx, img.ID, tagVersion); err != nil {
+		LogError("Image Tag Versioned", err)
 		return err
 	}
 
-	resp, err := docker.Client.ImagePush(ctx, tag, types.ImagePushOptions{RegistryAuth: auth})
+	resp, err := docker.Client.ImagePush(ctx, tagVersion, types.ImagePushOptions{RegistryAuth: auth})
 	if err != nil {
-		LogError("Image Push", err)
+		LogError("Image Push Version", err)
 		return err
 	}
 
@@ -127,6 +136,50 @@ func (docker *Docker) Commit(
 		}
 
 		log.Printf("%s", string(line))
+	}
+
+	log.Printf("Tag %s Push Complete", tagVersion)
+
+	if err := docker.Client.ImageTag(ctx, img.ID, tagLatest); err != nil {
+		LogError("Image Tag latest", err)
+		return err
+	}
+
+	resp, err = docker.Client.ImagePush(ctx, tagLatest, types.ImagePushOptions{RegistryAuth: auth})
+	if err != nil {
+		LogError("Image Push Latest", err)
+		return err
+	}
+
+	reader = bufio.NewReader(resp)
+	for {
+		line, err := reader.ReadBytes('\n')
+		if err != nil {
+			if err != io.EOF {
+				LogError("Reading Response", err)
+				return err
+			}
+			break
+		}
+
+		pool.Direct <- DirectMessage{
+			Clients: listenClients,
+			Message: WebSocketMessage{Channel: "docker/publish", Payload: string(line)},
+		}
+
+		log.Printf("%s", string(line))
+	}
+
+	log.Printf("Tag %s Push Complete", tagLatest)
+
+	finished, err := json.Marshal(UploadComplete{Finished: []string{tagVersion, tagLatest}})
+	if err != nil {
+		LogError("Failed to Marshal Complete Response", err)
+	}
+
+	pool.Direct <- DirectMessage{
+		Clients: listenClients,
+		Message: WebSocketMessage{Channel: "docker/publish", Payload: string(finished)},
 	}
 
 	// body, err := ioutil.ReadAll(resp)

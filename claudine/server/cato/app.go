@@ -72,6 +72,6 @@ func Run() {
 		MaxHeaderBytes: 1 << 20,
 	}
 	s.SetKeepAlivesEnabled(false)
-	s.ListenAndServe()
+	log.Fatal(s.ListenAndServe())
 	//router.Run(*addr)
 }
