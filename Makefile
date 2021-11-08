@@ -25,8 +25,7 @@ init:
 	mkdir -p -m 0777 $(DOJO_DMC_DIR)/logs $(DOJO_DMC_DIR)/configs $(DOJO_DMC_DIR)/plugins $(DOJO_DMC_DIR)/model_configs \
 		$(DOJO_DMC_DIR)/dojo; \
 	touch clouseau/.dockerenv; \
-	make envfile; \
-	make spacetag/settings.json;
+	make envfile;
 
 .PHONY:rebuild-all
 rebuild-all:
@@ -37,12 +36,6 @@ envfile:
 ifeq ($(wildcard envfile),)
 	cp envfile.sample envfile; \
 	echo -e "\nDon't forget to update 'envfile' with all your secrets!";
-endif
-
-
-spacetag/settings.json:
-ifeq ($(wildcard spacetag/settings.json),)
-	cp spacetag/settings-example.json spacetag/settings.json
 endif
 
 

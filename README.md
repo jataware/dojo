@@ -5,10 +5,9 @@
 1. Clone repo
 2. Run `$ make init` to configure and pull the required submodules
 3. Add your secrets to the file `envfile`
-4. Update `spacetag/settings.json` with your secrets and the settings found in `envfile`
-5. Run `$ make up` to build and bring online all services
-6. Run `$ make create-es-indexes` to create the elasticsearch indexes
-5. Setup is complete
+4. Run `$ make up` to build and bring online all services
+5. Run `$ make create-es-indexes` to create the elasticsearch indexes
+6. Setup is complete
 
 ## Running
 
