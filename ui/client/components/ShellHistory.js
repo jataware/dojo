@@ -122,10 +122,13 @@ export const ContainerWebSocket = ({
     } else if (s.startsWith('accessory ')) {
       const p = `${s.substring(10)}`;
       const f = (p.startsWith('/')) ? p : `${cwd}/${p}`;
+      const f_ = (f.includes(' ')) ? f.split(' ')[0] : f;
+      const c = (f.includes(' ')) ? p.split(' ').slice(1,p.split(' ').length).join(' ').replaceAll('"','') : null;
 
       await storeAccessoryRequest({
         model_id: container?.model_id,
-        path: f
+        path: f_,
+        caption: c
       });
     }
   };

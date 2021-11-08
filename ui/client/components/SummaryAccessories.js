@@ -56,6 +56,7 @@ export default function SummaryAccessories({ modelId, disableClick }) {
             <>
               <Typography variant="subtitle1" noWrap>{name}</Typography>
               <Typography variant="caption" noWrap component="div">{accessory.path}</Typography>
+              <Typography variant="caption" noWrap component="div">{accessory.caption}</Typography>
             </>
           );
         }}
