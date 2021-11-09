@@ -49,48 +49,48 @@ function ShorthandEditor({
 
   const editorUrl = `/api/shorthand/?model=${modelInfo.id}&mode=${mode}`;
 
-  const registerListeners = () => {
-    window.onmessage = function shorthandOnMessage(e) {
-      let postMessageBody;
-
-      try {
-        postMessageBody = JSON.parse(e.data);
-      } catch {
-        return; // not a json event
-      }
-
-      switch (postMessageBody.type) {
-        case 'editor_loaded':
-          // editor has loaded, send in the contents
-          shorthandShouldLoad(shorthandContents);
-          break;
-        case 'params_saved':
-          if (mode === 'directive') {
-            // shorthand sets the directive, so we just want to tell SWR to update it
-            // but we need this timeout or the change may not have taken place yet
-            // because dojo can be slow sometimes
-            setTimeout(() => mutateDirective(), 1000);
-          }
-          // tell the parent that we are done saving
-          setIsSaving(false);
-          // close the full screen dialog
-          setIsShorthandOpen(false);
-          break;
-        case 'params_not_saved':
-          setIsShorthandOpen(true); // keep shorthand open
-          setIsSaving(false); // stop the saving spinner
-          break;
-        default:
-          // stop the spinner and throw an error
-          setIsSaving(false);
-          throw new Error(`There was an error: ${postMessageBody}`);
-      }
-    };
-  };
-
   useEffect(() => {
+    const registerListeners = () => {
+      window.onmessage = function shorthandOnMessage(e) {
+        let postMessageBody;
+
+        try {
+          postMessageBody = JSON.parse(e.data);
+        } catch {
+          return; // not a json event
+        }
+
+        switch (postMessageBody.type) {
+          case 'editor_loaded':
+            // editor has loaded, send in the contents
+            shorthandShouldLoad(shorthandContents);
+            break;
+          case 'params_saved':
+            if (mode === 'directive') {
+              // shorthand sets the directive, so we just want to tell SWR to update it
+              // but we need this timeout or the change may not have taken place yet
+              // because dojo can be slow sometimes
+              setTimeout(() => mutateDirective(), 1000);
+            }
+            // tell the parent that we are done saving
+            setIsSaving(false);
+            // close the full screen dialog
+            setIsShorthandOpen(false);
+            break;
+          case 'params_not_saved':
+            setIsShorthandOpen(true); // keep shorthand open
+            setIsSaving(false); // stop the saving spinner
+            break;
+          default:
+            // stop the spinner and throw an error
+            setIsSaving(false);
+            throw new Error(`There was an error: ${postMessageBody}`);
+        }
+      };
+    };
+
     registerListeners();
-  }, [shorthandContents, modelInfo, mode]);
+  }, [mutateDirective, setIsSaving, setIsShorthandOpen, mode, shorthandContents]);
 
   return (
     <div>

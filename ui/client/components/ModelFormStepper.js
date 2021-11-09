@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useCallback } from 'react';
 
 import Button from '@material-ui/core/Button';
 import Step from '@material-ui/core/Step';
@@ -76,6 +76,48 @@ const defaultModelState = {
   },
 };
 
+const createModel = async (model, history) => {
+  // create a new object without the attributes we use for display
+  const {
+    selectedRegions,
+    storedCoords,
+    // and remove the 'period' that uses JS Date objects
+    period,
+    ...parsedModelInfo
+  } = model;
+  // instead we want the epoch value for the start and end dates
+  parsedModelInfo.period = {
+    gte: model.period.gte?.valueOf(),
+    lte: model.period.lte?.valueOf(),
+  };
+  // then add in an ID
+  parsedModelInfo.id = uuidv4();
+
+  const settings = {
+    method: 'POST',
+    headers: {
+      Accept: 'application/json',
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(parsedModelInfo)
+  };
+
+  try {
+    console.log('submitted model:', parsedModelInfo);
+    const resp = await fetch('/api/dojo/models', settings);
+    if (resp.ok) {
+      const modelResp = await fetch(`/api/dojo/models/${parsedModelInfo.id}`);
+      if (modelResp.ok) {
+        // TODO update modelInfo context
+        history.push('/intro', parsedModelInfo);
+      }
+    }
+  } catch (e) {
+    console.log('error!...');
+    console.log(e);
+  }
+};
+
 export const HorizontalLinearStepper = () => {
   const history = useHistory();
   const classes = useStyles();
@@ -87,65 +129,23 @@ export const HorizontalLinearStepper = () => {
   );
   const steps = getSteps();
 
-  const createModel = async (model) => {
-    // create a new object without the attributes we use for display
-    const {
-      selectedRegions,
-      storedCoords,
-      // and remove the 'period' that uses JS Date objects
-      period,
-      ...parsedModelInfo
-    } = model;
-    // instead we want the epoch value for the start and end dates
-    parsedModelInfo.period = {
-      gte: model.period.gte?.valueOf(),
-      lte: model.period.lte?.valueOf(),
-    };
-    // then add in an ID
-    parsedModelInfo.id = uuidv4();
-
-    const settings = {
-      method: 'POST',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(parsedModelInfo)
-    };
-
-    try {
-      console.log('submitted model:', parsedModelInfo);
-      const resp = await fetch('/api/dojo/models', settings);
-      if (resp.ok) {
-        const modelResp = await fetch(`/api/dojo/models/${parsedModelInfo.id}`);
-        if (modelResp.ok) {
-          // TODO update modelInfo context
-          history.push('/intro', parsedModelInfo);
-        }
-      }
-    } catch (e) {
-      console.log('error!...');
-      console.log(e);
-    }
-  };
-
   const handleBack = (values) => {
     setModelInfo((prevValues) => ({ ...prevValues, ...values }));
     setActiveStep((prevActiveStep) => prevActiveStep - 1);
   };
 
-  const handleNext = (values) => {
+  const handleNext = useCallback((values) => {
     setModelInfo((prevValues) => {
       const updatedModel = { ...prevValues, ...values };
       if (activeStep === 2) {
         // call createModel here to avoid async issues with modelInfo state
-        createModel(updatedModel);
+        createModel(updatedModel, history);
       }
       return updatedModel;
     });
 
     setActiveStep((prevActiveStep) => prevActiveStep + 1);
-  };
+  }, [activeStep, history]);
 
   const handleReset = () => {
     setModelInfo(JSON.parse(JSON.stringify(defaultModelState)));

@@ -1,5 +1,6 @@
 import React, {
   createContext,
+  useCallback,
   useContext,
   useEffect,
   useRef,
@@ -38,19 +39,19 @@ export const WebSocketContextProvider = ({ url, children }) => {
     ws.current.send(JSON.stringify({ channel, payload }));
   };
 
-  const unregister = (channel, handler) => {
+  const unregister = useCallback((channel, handler) => {
     // eslint-disable-next-line eqeqeq
     Q.current[channel] = (Q.current[channel] ?? []).filter((h) => h != handler);
     if (!Q.current[channel].length) {
       delete Q.current[channel];
     }
-  };
+  }, []);
 
-  const register = (channel, handler) => {
+  const register = useCallback((channel, handler) => {
     unregister(channel, handler);
     Q.current[channel] = [...Q.current[channel] ?? [], handler];
     return () => unregister(channel, handler);
-  };
+  }, [unregister]);
 
   const awaitEmit = async (channel, payload, responseChannel) => {
     let handler = null;

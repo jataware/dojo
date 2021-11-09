@@ -104,7 +104,7 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
   useEffect(() => {
     setDialogOpen(!!modelIdQueryParam && !edit);
     setDisabledMode(!edit && !workerNode);
-  }, [modelIdQueryParam, edit]);
+  }, [modelIdQueryParam, edit, workerNode]);
 
   const {
     container, mutateContainer

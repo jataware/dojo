@@ -81,7 +81,7 @@ const ABox = ({ rect, text }) => {
     } else {
       setStyle({ ...style, display: 'none' });
     }
-  }, [text, rect]);
+  }, [text, rect, style]);
 
   return (
     <Box style={style}>
@@ -95,11 +95,13 @@ const Term = () => {
   const { register, unregister } = useWebSocketUpdateContext();
   const termRef = useRef(null);
   const term = useRef(null);
-  const fitAddon = new FitAddon();
+
   // const [aBoxState, setABoxState] = React.useState({text: "", rect: {}});
   // const termHelperAddon = new TermHelperAddon(setABoxState);
 
   useEffect(() => {
+    const fitAddon = new FitAddon();
+
     term.current = new Terminal({
       cursorBlink: true,
       theme: {
@@ -121,13 +123,13 @@ const Term = () => {
     // term.current.loadAddon(termHelperAddon);
     term.current.open(termRef.current);
     fitAddon.fit();
-  }, []);
+  }, [emit]);
 
   const initTerm = useCallback(async () => {
     console.debug({ cols: term.current.cols, rows: term.current.rows });
     await emit('terminal/resize', JSON.stringify({ cols: term.current.cols, rows: term.current.rows }));
     await emit('ssh/connect', 'connect');
-  }, []);
+  }, [emit]);
 
   useEffect(() => {
     const xtermHandler = (d) => {
@@ -147,7 +149,7 @@ const Term = () => {
       emit('ssh/disconnect', 'disconnect');
       unregister('xterm', xtermHandler);
     });
-  }, []);
+  }, [register, unregister, initTerm, emit]);
 
   return (
     <>

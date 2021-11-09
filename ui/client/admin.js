@@ -1,5 +1,5 @@
 import React, {
-  useEffect, useState
+  useCallback, useEffect, useState
 } from 'react';
 
 import Button from '@material-ui/core/Button';
@@ -20,7 +20,9 @@ const Admin = () => {
   const [isLoaded, setLoaded] = useState(false);
   const [workerNodes, setWorkerNodes] = useState([]);
 
-  const refreshNodeInfo = async () => {
+  // memoize this so we don't run into any issues with the setter values changing
+  // as we reference it in a useEffect below
+  const refreshNodeInfo = useCallback(async () => {
     const resp = await fetch('/api/clouseau/docker/nodes');
     const nodes = await resp.json();
     const nodeContainers = await Promise.all(nodes.map(async (n, i) => {
@@ -66,11 +68,11 @@ const Admin = () => {
     console.log(csInfo);
     setContainers(csInfo);
     setLoaded(true);
-  };
+  }, []);
 
   useEffect(() => {
     refreshNodeInfo();
-  }, []);
+  }, [refreshNodeInfo]);
 
   const style = {
     paper: {

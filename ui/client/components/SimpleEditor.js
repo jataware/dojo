@@ -77,7 +77,7 @@ const SimpleEditor = ({ editorContents, setEditorContents }) => {
     if (textRef.current) {
       setTextHeight(textRef.current.offsetHeight);
     }
-  });
+  }, [textRef]);
 
   // take the bigger of the textarea or window's height
   // then divide it by the line height and round it up

@@ -137,43 +137,44 @@ const Intro = ({ location }) => {
   const [workerNodes, setWorkerNodes] = React.useState([]);
   const [workersIsLoaded, setWorkersIsLoaded] = React.useState(false);
 
-  const refreshNodeInfo = async () => {
-    const resp = await fetch('/api/clouseau/docker/nodes');
-    const nodes = await resp.json();
-
-    const nodeContainers = await Promise.all(nodes.map(async (n, i) => {
-      try {
-        const r = await Promise.race([fetch(`/api/clouseau/docker/${n.i}/containers`),
-          fetchTimeout()]);
-
-        if (!r.ok) {
-          return { ...n, i, status: 'down' };
-        }
-
-        return {
-          ...n,
-          i,
-          status: 'up',
-          containers: await r.json()
-        };
-      } catch (e) {
-        return { ...n, i, status: 'timeout' };
-      }
-    }));
-
-    setWorkerNodes(nodeContainers);
-    console.debug(nodeContainers);
-
-    const cs = nodeContainers.reduce((acc, n) => {
-      n.containers?.forEach((c) => acc.push({ node: n, container: c }));
-      return acc;
-    }, []);
-
-    setContainers(cs);
-    setWorkersIsLoaded(true);
-  };
-
   useEffect(() => {
+    // define this inside here so useEffect knows it is stable
+    const refreshNodeInfo = async () => {
+      const resp = await fetch('/api/clouseau/docker/nodes');
+      const nodes = await resp.json();
+
+      const nodeContainers = await Promise.all(nodes.map(async (n, i) => {
+        try {
+          const r = await Promise.race([fetch(`/api/clouseau/docker/${n.i}/containers`),
+            fetchTimeout()]);
+
+          if (!r.ok) {
+            return { ...n, i, status: 'down' };
+          }
+
+          return {
+            ...n,
+            i,
+            status: 'up',
+            containers: await r.json()
+          };
+        } catch (e) {
+          return { ...n, i, status: 'timeout' };
+        }
+      }));
+
+      setWorkerNodes(nodeContainers);
+      console.debug(nodeContainers);
+
+      const cs = nodeContainers.reduce((acc, n) => {
+        n.containers?.forEach((c) => acc.push({ node: n, container: c }));
+        return acc;
+      }, []);
+
+      setContainers(cs);
+      setWorkersIsLoaded(true);
+    };
+
     refreshNodeInfo();
     fetch('/api/dojo/phantom/base_images').then(async (r) => setBaseImageList(await r.json()));
   }, []);

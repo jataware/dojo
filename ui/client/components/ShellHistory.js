@@ -24,6 +24,39 @@ import {
   useWebSocketUpdateContext,
 } from '../context';
 
+const storeFileRequest = async (info) => {
+  const rsp = await fetch('/api/dojo/clouseau/file', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(info)
+  });
+
+  if (!rsp.ok) {
+    throw new Error(`Failed to send file info ${rsp.status}`);
+  }
+
+  return rsp.json();
+};
+
+const storeAccessoryRequest = async (info) => {
+  const rsp = await fetch('/api/dojo/dojo/accessories', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Accept: 'application/json'
+    },
+    body: JSON.stringify(info)
+  });
+
+  if (!rsp.ok) {
+    throw new Error(`Failed to send accessory info ${rsp.status}`);
+  }
+
+  return rsp;
+};
+
 export const ContainerWebSocket = ({
   workerNode,
   setEditorContents, openEditor,
@@ -36,104 +69,71 @@ export const ContainerWebSocket = ({
 
   const { mutateShellHistory } = useShellHistory(container?.id);
 
-  const onMessage = () => {
-    mutateShellHistory();
-  };
-
-  const storeFileRequest = async (info) => {
-    const rsp = await fetch('/api/dojo/clouseau/file', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(info)
-    });
-
-    if (!rsp.ok) {
-      throw new Error(`Failed to send file info ${rsp.status}`);
-    }
-
-    return rsp.json();
-  };
-
-  const storeAccessoryRequest = async (info) => {
-    const rsp = await fetch('/api/dojo/dojo/accessories', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Accept: 'application/json'
-      },
-      body: JSON.stringify(info)
-    });
-
-    if (!rsp.ok) {
-      throw new Error(`Failed to send accessory info ${rsp.status}`);
-    }
-
-    return rsp;
-  };
-
-  const onBlocked = async (data) => {
-    const { command, cwd } = JSON.parse(data);
-    const s = command.trim();
-    if (s.startsWith('edit ')) {
-      const p = `${s.substring(5)}`;
-      const f = (p.startsWith('/')) ? p : `${cwd}/${p}`;
-      const rsp = await fetch(
-        `/api/clouseau/container/${workerNode}/ops/cat?path=${encodeURIComponent(f)}`
-      );
-      if (rsp.ok) {
-        setEditorContents({ text: await rsp.text(), file: f });
-        openEditor();
-      }
-    } else if (s.startsWith('config ')) {
-      // get file path user specified
-      const path = `${s.substring('config '.length)}`;
-      const fullPath = (path.startsWith('/')) ? path : `${cwd}/${path}`;
-
-      // load that file's contents
-      const rsp = await fetch(
-        `/api/clouseau/container/${workerNode}/ops/cat?path=${encodeURIComponent(fullPath)}`
-      );
-      if (rsp.ok) {
-        const fileContent = await rsp.text();
-        // pass them along to shorthand
-        setShorthandContents({
-          editor_content: fileContent,
-          content_id: fullPath,
-        });
-        // set the mode to config rather than directive
-        setShorthandMode('config');
-        setIsShorthandOpen(true); // open the <FullScreenDialog>
-      }
-    } else if (s.startsWith('tag ')) {
-      const p = `${s.substring(4)}`;
-      const f = (p.startsWith('/')) ? p : `${cwd}/${p}`;
-
-      const { id: reqid } = await storeFileRequest({
-        model_id: container?.model_id,
-        file_path: f,
-        request_path: `/container/${workerNode}/ops/cat?path=${encodeURIComponent(f)}`
-      });
-
-      setSpacetagFile(`${f}`);
-      setSpacetagUrl(`/api/spacetag/byom?reqid=${reqid}`);
-      setIsSpacetagOpen(true);
-    } else if (s.startsWith('accessory ')) {
-      const p = `${s.substring(10)}`;
-      const f = (p.startsWith('/')) ? p : `${cwd}/${p}`;
-      const f_ = (f.includes(' ')) ? f.split(' ')[0] : f;
-      const c = (f.includes(' ')) ? p.split(' ').slice(1,p.split(' ').length).join(' ').replaceAll('"','') : null;
-
-      await storeAccessoryRequest({
-        model_id: container?.model_id,
-        path: f_,
-        caption: c
-      });
-    }
-  };
-
   useEffect(() => {
+    const onMessage = () => {
+      mutateShellHistory();
+    };
+
+    const onBlocked = async (data) => {
+      const { command, cwd } = JSON.parse(data);
+      const s = command.trim();
+      if (s.startsWith('edit ')) {
+        const p = `${s.substring(5)}`;
+        const f = (p.startsWith('/')) ? p : `${cwd}/${p}`;
+        const rsp = await fetch(
+          `/api/clouseau/container/${workerNode}/ops/cat?path=${encodeURIComponent(f)}`
+        );
+        if (rsp.ok) {
+          setEditorContents({ text: await rsp.text(), file: f });
+          openEditor();
+        }
+      } else if (s.startsWith('config ')) {
+        // get file path user specified
+        const path = `${s.substring('config '.length)}`;
+        const fullPath = (path.startsWith('/')) ? path : `${cwd}/${path}`;
+
+        // load that file's contents
+        const rsp = await fetch(
+          `/api/clouseau/container/${workerNode}/ops/cat?path=${encodeURIComponent(fullPath)}`
+        );
+        if (rsp.ok) {
+          const fileContent = await rsp.text();
+          // pass them along to shorthand
+          setShorthandContents({
+            editor_content: fileContent,
+            content_id: fullPath,
+          });
+          // set the mode to config rather than directive
+          setShorthandMode('config');
+          setIsShorthandOpen(true); // open the <FullScreenDialog>
+        }
+      } else if (s.startsWith('tag ')) {
+        const p = `${s.substring(4)}`;
+        const f = (p.startsWith('/')) ? p : `${cwd}/${p}`;
+
+        const { id: reqid } = await storeFileRequest({
+          model_id: container?.model_id,
+          file_path: f,
+          request_path: `/container/${workerNode}/ops/cat?path=${encodeURIComponent(f)}`
+        });
+
+        setSpacetagFile(`${f}`);
+        setSpacetagUrl(`/api/spacetag/byom?reqid=${reqid}`);
+        setIsSpacetagOpen(true);
+      } else if (s.startsWith('accessory ')) {
+        const p = `${s.substring(10)}`;
+        const f = (p.startsWith('/')) ? p : `${cwd}/${p}`;
+        const f_ = (f.includes(' ')) ? f.split(' ')[0] : f;
+        const c = (f.includes(' ')) ? p.split(' ').slice(1,p.split(' ').length).join(' ').replaceAll('"','') : null;
+
+        await storeAccessoryRequest({
+          model_id: container?.model_id,
+          path: f_,
+          caption: c
+        });
+      }
+    };
+
     if (container?.id) {
       register('term/message', onMessage);
       register('term/blocked', onBlocked);
@@ -143,7 +143,21 @@ export const ContainerWebSocket = ({
       unregister('term/message', onMessage);
       unregister('term/blocked', onBlocked);
     });
-  }, [container]);
+  }, [
+    mutateShellHistory,
+    container,
+    openEditor,
+    register,
+    unregister,
+    setEditorContents,
+    setIsShorthandOpen,
+    setShorthandContents,
+    setShorthandMode,
+    setSpacetagFile,
+    setSpacetagUrl,
+    setIsSpacetagOpen,
+    workerNode
+  ]);
 
   return (<> </>);
 };
@@ -211,7 +225,7 @@ export const ShellHistory = ({
     if (tableRef.current.lastChild != null) {
       tableRef.current.lastChild.scrollIntoView({ behavior: 'smooth' });
     }
-  }, [shellHistory]);
+  }, [shellHistory, tableRef]);
 
   const handleAnnotationClick = async (item) => {
     // toggle <ShorthandEditor> to open in <App>, which loads the iframe

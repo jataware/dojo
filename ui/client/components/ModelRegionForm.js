@@ -68,6 +68,19 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
+const parseRegions = (selectedRegions, mapCoords) => {
+  const regions = {};
+  selectedRegions.forEach((region) => {
+    if (!regions[region.level]) {
+      regions[region.level] = [];
+    }
+    regions[region.level].push(region.value);
+  });
+  // add in the coordinates from the ModelRegionMap component
+  regions.coordinates = mapCoords;
+  return { geography: regions };
+};
+
 function ModelRegionForm({
   handleBack, handleNext, storedRegions, storedCoords, autoSave
 }) {
@@ -107,35 +120,17 @@ function ModelRegionForm({
     return result;
   };
 
-  const parseRegions = () => {
-    const regions = {};
-    selectedRegions.forEach((region) => {
-      if (!regions[region.level]) {
-        regions[region.level] = [];
-      }
-      regions[region.level].push(region.value);
-    });
-    // add in the coordinates from the ModelRegionMap component
-    regions.coordinates = mapCoords;
-    return { geography: regions };
-  };
-
-  const onSubmit = () => {
-    const regions = parseRegions();
-    handleNext(regions);
-  };
-
   useEffect(() => {
     // only do this if we're in the ModelSummaryEditor, where we have no submit button
     if (autoSave) {
-      // parse the regions and call handleNext
-      onSubmit();
+      // pass in the parsed regions to our handleNext prop function
+      handleNext(parseRegions(selectedRegions, mapCoords));
     }
     // anytime selectedRegions or mapCoords changes
-  }, [autoSave, selectedRegions, mapCoords]);
+  }, [selectedRegions, mapCoords, autoSave, handleNext]);
 
   const onBack = () => {
-    const regions = parseRegions();
+    const regions = parseRegions(selectedRegions, mapCoords);
     // store regions parsed as the DB wants them (ie organized into admin levels)
     // then store selected regions to line up with our local list of regions so we can repopulate
     // the 'selected regions' box without duplicates
@@ -373,7 +368,7 @@ function ModelRegionForm({
           <Button
             color="primary"
             data-test="modelFormSubmitBtn"
-            onClick={() => onSubmit()}
+            onClick={() => handleNext(parseRegions(selectedRegions, mapCoords))}
             variant="contained"
           >
             Submit Model

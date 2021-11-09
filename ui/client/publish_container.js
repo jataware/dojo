@@ -56,40 +56,6 @@ const Page = ({ workerNode }) => {
 
   const { directive } = useDirective(container?.model_id);
 
-  const publishContainer = async (wsid) => {
-    const postBody = {
-      name: container.name,
-      repo,
-      cwd: directive?.cwd,
-      entrypoint: [],
-      listeners: [wsid],
-    };
-
-    console.debug(directive);
-    console.debug('start publish');
-    console.debug(postBody);
-    await fetch(`/api/clouseau/docker/${workerNode}/commit/${container.id}`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(postBody)
-    });
-  };
-
-  const run = async () => {
-    console.debug(container);
-    let wsid = getWebSocketId();
-    console.debug(`wsid = ${wsid}`);
-    while (wsid == null) {
-      // eslint-disable-next-line no-await-in-loop
-      await sleep(50);
-      wsid = getWebSocketId();
-      console.debug(`sleep 50 wsid = ${wsid}`);
-    }
-    await publishContainer(wsid);
-  };
-
   useEffect(() => {
     console.debug('bind docker/publish');
 
@@ -136,14 +102,47 @@ const Page = ({ workerNode }) => {
       console.debug('unbind docker/publish');
       unregister('docker/publish', publishHandler);
     });
-  }, []);
+  }, [register, unregister]);
 
   useEffect(() => {
+    const publishContainer = async (wsid) => {
+      const postBody = {
+        name: container.name,
+        repo,
+        cwd: directive?.cwd,
+        entrypoint: [],
+        listeners: [wsid],
+      };
+
+      console.debug(directive);
+      console.debug('start publish');
+      console.debug(postBody);
+      await fetch(`/api/clouseau/docker/${workerNode}/commit/${container.id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(postBody)
+      });
+    };
+
+    const run = async () => {
+      let wsid = getWebSocketId();
+      console.debug(`wsid = ${wsid}`);
+      while (wsid == null) {
+        // eslint-disable-next-line no-await-in-loop
+        await sleep(50);
+        wsid = getWebSocketId();
+        console.debug(`sleep 50 wsid = ${wsid}`);
+      }
+      await publishContainer(wsid);
+    };
+
     if (directive?.command) {
       console.debug('Run');
       run();
     }
-  }, [directive]);
+  }, [directive, getWebSocketId, container, workerNode, repo]);
 
   useEffect(() => {
     if (enableFinished) {
@@ -179,7 +178,7 @@ const Page = ({ workerNode }) => {
       console.debug('%cPublished Container', 'background: #fff; color: #000');
       console.debug(container);
     }
-  }, [enableFinished]);
+  }, [enableFinished, container, publishInfo, workerNode, closeSocket]);
 
   const completeNav = async () => {
     const resp = await fetch(`/api/dojo/models/${container.model_id}`);

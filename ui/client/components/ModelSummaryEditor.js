@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import { FormikProvider, useFormik } from 'formik';
 
@@ -102,11 +102,11 @@ export const ModelSummaryEditor = ({
     onSubmit: (values) => handleSubmit(values),
   });
 
-  const updateModel = (values) => {
+  const updateModel = useCallback((values) => {
     // this is just used to keep track of the geography attribute
     // which we'll merge back into the formik form results in handleSubmit
     setParsedModel((prevValues) => ({ ...prevValues, ...values }));
-  };
+  }, []);
 
   return (
     <FullScreenDialog

@@ -117,6 +117,64 @@ const Provision = async (worker, containerId, cmd) => {
   }
 };
 
+async function* Steps(imageInfo) {
+  // update this when new yields are added to keep the percentage bar correct
+  const totalSteps = 8;
+  function* percentage() {
+    let index = 0;
+    while (true) {
+      yield (++index / totalSteps) * 100; // eslint-disable-line no-plusplus
+    }
+  }
+
+  const p = percentage();
+
+  const n = (m) => [p.next().value, m];
+  try {
+    yield n(`✨Setting Up Instance for ${imageInfo.imageName} on Worker-${imageInfo.worker}`);
+
+    // yield n(`${M.I}Checking Git Url: ${imageInfo.gitUrl}`);
+    // await CheckGitUrl(imageInfo.gitUrl);
+    // yield n(`${M.OK}Url is valid`);
+
+    // yield n(`${M.I}Launching Instance ${imageInfo.type} - ${imageInfo.size}`);
+    // await sleep(2000);
+    // yield n(`${M.OK}Instance created`);
+
+    yield n(`${M.I}Launching Container `);
+    const containerId = await LaunchContainer(imageInfo.worker,
+      imageInfo.imageName,
+      imageInfo.dockerImage,
+      imageInfo.modelInfo.id);
+    // start up delay
+    await sleep(5000);
+    yield n(`${M.OK}Container Created: ${containerId}`);
+
+    yield n(`${M.I}Testing container connectivity`);
+    await PingContainer(imageInfo.worker, containerId);
+    yield n(`${M.OK}Connection succeded`);
+
+    yield n(`${M.I}Configuring container`);
+    await ConfigureRules(imageInfo.worker, containerId);
+    yield n(`${M.OK}Configuration complete`);
+
+    // yield n(`${M.I}Cloning Repo ${imageInfo.gitUrl}`);
+    // await Provision(imageInfo.worker, containerId, ['git', 'clone', imageInfo.gitUrl]);
+    // yield n(`${M.OK}Repo Cloned.`);
+
+    // Hack add python for testing
+    await Provision(imageInfo.worker, containerId, ['sudo', 'apt-get', 'update']);
+    // await Provision(containerId,
+    //   ['sudo', 'apt-get', 'install', '-y', 'python3', 'python3-pip']);
+
+    yield n(`${M.OK}Done.`);
+  } catch (err) {
+    console.error(err);
+    yield [-1, `${M.E}${err.toString()}`];
+    throw (err);
+  }
+}
+
 const TermLoading = ({ location }) => {
   const classes = useStyles();
   const history = useHistory();
@@ -125,90 +183,32 @@ const TermLoading = ({ location }) => {
   const [progress, setProgress] = useState(0);
   const [items, setItems] = React.useState(() => []);
 
-  async function* Steps() {
-    // update this when new yields are added to keep the percentage bar correct
-    const totalSteps = 8;
-    function* percentage() {
-      let index = 0;
-      while (true) {
-        yield (++index / totalSteps) * 100; // eslint-disable-line no-plusplus
-      }
-    }
-
-    const p = percentage();
-
-    const n = (m) => [p.next().value, m];
-    try {
-      yield n(`✨Setting Up Instance for ${imageInfo.imageName} on Worker-${imageInfo.worker}`);
-
-      // yield n(`${M.I}Checking Git Url: ${imageInfo.gitUrl}`);
-      // await CheckGitUrl(imageInfo.gitUrl);
-      // yield n(`${M.OK}Url is valid`);
-
-      // yield n(`${M.I}Launching Instance ${imageInfo.type} - ${imageInfo.size}`);
-      // await sleep(2000);
-      // yield n(`${M.OK}Instance created`);
-
-      yield n(`${M.I}Launching Container `);
-      const containerId = await LaunchContainer(imageInfo.worker,
-        imageInfo.imageName,
-        imageInfo.dockerImage,
-        imageInfo.modelInfo.id);
-      // start up delay
-      await sleep(5000);
-      yield n(`${M.OK}Container Created: ${containerId}`);
-
-      yield n(`${M.I}Testing container connectivity`);
-      await PingContainer(imageInfo.worker, containerId);
-      yield n(`${M.OK}Connection succeded`);
-
-      yield n(`${M.I}Configuring container`);
-      await ConfigureRules(imageInfo.worker, containerId);
-      yield n(`${M.OK}Configuration complete`);
-
-      // yield n(`${M.I}Cloning Repo ${imageInfo.gitUrl}`);
-      // await Provision(imageInfo.worker, containerId, ['git', 'clone', imageInfo.gitUrl]);
-      // yield n(`${M.OK}Repo Cloned.`);
-
-      // Hack add python for testing
-      await Provision(imageInfo.worker, containerId, ['sudo', 'apt-get', 'update']);
-      // await Provision(containerId,
-      //   ['sudo', 'apt-get', 'install', '-y', 'python3', 'python3-pip']);
-
-      yield n(`${M.OK}Done.`);
-    } catch (err) {
-      console.error(err);
-      yield [-1, `${M.E}${err.toString()}`];
-      throw (err);
-    }
-  }
-
-  const run = async () => {
-    try {
-      // eslint-disable-next-line no-restricted-syntax
-      for await (const [p, step] of Steps()) {
-        if (p > 0) {
-          setProgress(p);
-        }
-        setItems((xs) => [...xs, step]);
-      }
-      console.info('%cSuccessful initialization, redirecting to Term', 'background-color: #0f0; color: #000');
-      setItems((xs) => [...xs, '📶Successful initialization, redirecting to Term']);
-      await sleep(2000);
-      history.push(`/term/${imageInfo.worker}/${imageInfo.modelInfo.id}`);
-    } catch (err) {
-      console.error('%cFailed initialization', 'background-color: #f00; color: #fff');
-      console.error('%cWe are stuck...', 'background-color: #f00; color: #fff');
-      console.error(err);
-      setItems((xs) => [...xs, '💥Initialization failed. Something went horribly wrong']);
-    } finally {
-      // setProgressVisible(false)
-    }
-  };
-
   useEffect(() => {
+    const run = async () => {
+      try {
+        // eslint-disable-next-line no-restricted-syntax
+        for await (const [p, step] of Steps(imageInfo)) {
+          if (p > 0) {
+            setProgress(p);
+          }
+          setItems((xs) => [...xs, step]);
+        }
+        console.info('%cSuccessful initialization, redirecting to Term', 'background-color: #0f0; color: #000');
+        setItems((xs) => [...xs, '📶Successful initialization, redirecting to Term']);
+        await sleep(2000);
+        history.push(`/term/${imageInfo.worker}/${imageInfo.modelInfo.id}`);
+      } catch (err) {
+        console.error('%cFailed initialization', 'background-color: #f00; color: #fff');
+        console.error('%cWe are stuck...', 'background-color: #f00; color: #fff');
+        console.error(err);
+        setItems((xs) => [...xs, '💥Initialization failed. Something went horribly wrong']);
+      } finally {
+        // setProgressVisible(false)
+      }
+    };
+
     run();
-  }, []);
+  }, [history, imageInfo]);
 
   const Messages = ({ messages }) => (
     <div>
