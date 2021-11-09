@@ -241,13 +241,22 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
 
   const handleDeleteItem = async () => {
     console.log('deleting', deletionSelection);
+    let url = `/api/dojo/dojo/${deletionSelection.type}/${deletionSelection.id}`;
+    // Add params to end of URL is params included in deletionSelection
+    if (deletionSelection?.params) {
+      const paramList = [];
+      Object.entries(deletionSelection.params).forEach(([key, val]) => {
+        paramList.push(`${encodeURIComponent(key)}=${encodeURIComponent(val)}`);
+      });
+      url = `${url}?${paramList.join('&')}`;
+    }
+
     const resp = await fetch(
-      `/api/dojo/dojo/${deletionSelection.type}/${deletionSelection.id}`,
+      url,
       {
         method: 'DELETE',
       }
     );
-    console.log(resp);
 
     if (resp.ok) {
       handleDeleteDialogClose();
@@ -447,23 +456,13 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
                 primaryClickHandler={(config) => openConfigShorthand(config)}
                 primaryIcon={<EditIcon />}
                 secondaryClickHandler={async (config) => {
-                  let configId = config.id;
-                  if (!configId) {
-                    // If we don't have an id for the config, generate a SHA-1 hash to use as the id
-                    const buffer = new TextEncoder('utf-8').encode(config.path);
-                    const hash = await crypto.subtle.digest('SHA-1', buffer);
-                    const hexCodes = [];
-                    const view = new DataView(hash);
-                    for (let i = 0; i < view.byteLength; i += 1) {
-                      const byte = view.getUint8(i).toString(16).padStart(2, '0');
-                      hexCodes.push(byte);
-                    }
-                    configId = hexCodes.join('');
-                  }
                   setDeletionSelection({
                     type: 'config',
-                    id: configId,
+                    id: config.model_id,
                     description: config.path,
+                    params: {
+                      path: config.path,
+                    },
                   });
                   setDeleteDialogOpen(true);
                 }}
