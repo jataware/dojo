@@ -92,6 +92,12 @@ const useStyles = makeStyles((theme) => ({
       height: '100%',
     },
   },
+  codeText: {
+    backgroundColor: theme.palette.grey[300],
+    borderRadius: '4px',
+    color: theme.palette.grey[900],
+    padding: [[theme.spacing(1), theme.spacing(2)]],
+  },
 }));
 
 const Page = ({ modelIdQueryParam, workerNode, edit }) => {
@@ -318,6 +324,9 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
           Model Description: {model.description}
         </Typography>
         <Typography variant="body2" className={classes.subsection}>
+          Model Image: {model.image}
+        </Typography>
+        <Typography variant="body2" className={classes.subsection}>
           Model Start Date: {new Date(model.period?.gte).toLocaleDateString()}
         </Typography>
         <Typography variant="body2" className={classes.subsection}>
@@ -413,6 +422,7 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
             to={workerNode ? `/term/${workerNode}/${model?.id}` : null}
             onClick={workerNode ? null : () => history.push('/intro?relaunch', model)}
             size="small"
+            disabled={disabledMode}
             startIcon={<ArrowBackIcon />}
           >
             {workerNode ? 'Back to Terminal' : 'Launch Model in Terminal'}
@@ -617,10 +627,18 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
               creating a new version.
             </Typography>
             <Typography gutterBottom>
-              At the moment, editing existing models has limited functionality. Some buttons
-              are disabled (Publish, Launch Model in Terminal, Edit Config), and some content is
-              missing (Model Execution Directive). This feature is a work in progress and
-              will include the functionality mentioned above very soon.
+              If you choose not to make a new version, you can run your model in Docker outside
+              Dojo in a terminal (where Docker is running) using the following:
+            </Typography>
+            <Typography gutterBottom className={classes.codeText}>
+              docker pull &#123;insert_image_name_here&#125;
+              <br />
+              docker run -it &#123;insert_image_name_here&#125; /bin/bash
+            </Typography>
+            <Typography gutterBottom>
+              This will drop you into a shell session where you may interact with your model
+              locally to ensure it was correctly configured. If you find any issues,
+              please create a new model version in Dojo.
             </Typography>
           </DialogContentText>
         </DialogContent>
