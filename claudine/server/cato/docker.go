@@ -175,6 +175,7 @@ func (docker *Docker) Commit(
 	finished, err := json.Marshal(UploadComplete{Finished: []string{tagVersion, tagLatest}})
 	if err != nil {
 		LogError("Failed to Marshal Complete Response", err)
+		return err
 	}
 
 	pool.Direct <- DirectMessage{
