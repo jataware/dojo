@@ -75,11 +75,7 @@ const ConfigureRules = async (worker) => {
     },
     body: JSON.stringify({
       block: [
-        'vim',
         'config',
-        'vi',
-        'emacs',
-        'nano',
         'edit',
         'tag',
         'accessory'
@@ -89,7 +85,29 @@ const ConfigureRules = async (worker) => {
   if (!resp.ok) {
     throw new Error('Container configuration failed');
   }
-  console.debug('Container rules');
+  console.debug('Container add rules');
+  console.debug(await resp.json());
+};
+
+const ConfigureRemoveEditorBlocks = async (worker) => {
+  const resp = await fetch(`/api/clouseau/container/${worker}/ops/rules`, {
+    method: 'DELETE',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({
+      block: [
+        'vim',
+        'vi',
+        'emacs',
+        'nano',
+      ]
+    }),
+  });
+  if (!resp.ok) {
+    throw new Error('Container configuration failed');
+  }
+  console.debug('Container remove rules');
   console.debug(await resp.json());
 };
 
@@ -156,6 +174,7 @@ async function* Steps(imageInfo) {
 
     yield n(`${M.I}Configuring container`);
     await ConfigureRules(imageInfo.worker, containerId);
+    await ConfigureRemoveEditorBlocks(imageInfo.worker, containerId);
     yield n(`${M.OK}Configuration complete`);
 
     // yield n(`${M.I}Cloning Repo ${imageInfo.gitUrl}`);
