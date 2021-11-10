@@ -1,37 +1,69 @@
 services:
   airflow-init:
     environment:
-      DOCKER_URL: "docker.world-modelers"
+      DOCKER_URL: "docker.world-modelers:8375"
+      DMC_LOCAL_DIR:
+      MIXMASTA_VERSION: "0.6.1"
     networks:
       - world-modelers
+    volumes:
+      - dmc-data-results:/results
+      - dmc-data-mappers:/mappers
+      - dmc-data-model_configs:/model_configs
   airflow-redis:
     environment:
-      DOCKER_URL: "docker.world-modelers"
+      DOCKER_URL: "docker.world-modelers:8375"
+      DMC_LOCAL_DIR:
+      MIXMASTA_VERSION: "0.6.1"
     networks:
       - world-modelers
   airflow-postgres:
     environment:
-      DOCKER_URL: "docker.world-modelers"
+      DOCKER_URL: "docker.world-modelers:8375"
+      DMC_LOCAL_DIR:
+      MIXMASTA_VERSION: "0.6.1"
     networks:
       - world-modelers
   airflow-scheduler:
     environment:
-      DOCKER_URL: "docker.world-modelers"
+      DOCKER_URL: "docker.world-modelers:8375"
+      DMC_LOCAL_DIR:
+      MIXMASTA_VERSION: "0.6.1"
     networks:
       - world-modelers
+    volumes:
+      - dmc-data-results:/results
+      - dmc-data-mappers:/mappers
+      - dmc-data-model_configs:/model_configs
   airflow-webserver:
     environment:
-      DOCKER_URL: "docker.world-modelers"
+      DOCKER_URL: "docker.world-modelers:8375"
+      DMC_LOCAL_DIR:
+      MIXMASTA_VERSION: "0.6.1"
     networks:
       - world-modelers
+    volumes:
+      - dmc-data-results:/results
+      - dmc-data-mappers:/mappers
+      - dmc-data-model_configs:/model_configs
   airflow-worker:
     environment:
-      DOCKER_URL: "docker.world-modelers"
+      AIRFLOW_CONN_AWS_DEFAULT: aws://${AWS_ACCESS_KEY_ID}:${AWS_SECRET_ACCESS_KEY_ENCODED}@
+      BUCKET: ${DMC_BUCKET}
+      DOCKER_URL: "docker.world-modelers:8375"
+      DMC_LOCAL_DIR:
+      MIXMASTA_VERSION: "0.6.1"
     networks:
       - world-modelers
+    volumes:
+      - dmc-data-results:/results
+      - dmc-data-mappers:/mappers
+      - dmc-data-model_configs:/model_configs
   flower:
     environment:
-      DOCKER_URL: "docker.world-modelers"
+      DOCKER_URL: "docker.world-modelers:8375"
+      DMC_LOCAL_DIR:
+      MIXMASTA_VERSION: "0.6.1"
     networks:
       - world-modelers
   app:
@@ -61,6 +93,7 @@ services:
       - envfile
     environment:
       - DOJO_URL
+      - DMC_LOCAL_DIR
       - DMC_URL
       - REDIS_HOST
       - DOCKERHUB_USER
@@ -77,6 +110,8 @@ services:
       - ${PWD}/clouseau/claudine/server/settings.yaml:/home/app/cato/settings.yaml:rw
     env_file:
       - envfile
+    environment:
+      - DOCKERHUB_AUTH
     networks:
       - world-modelers
   kibana:
@@ -94,16 +129,15 @@ services:
       - envfile
     networks:
       - world-modelers
-  socat:
-    env_file:
-      - envfile
-    networks:
-      - world-modelers
   docker:
     env_file:
       - envfile
     networks:
       - world-modelers
+    volumes:
+      - dmc-data-results:/data/results
+      - dmc-data-mappers:/data/mappers
+      - dmc-data-model_configs:/data/model_configs
   phantom:
     build:
       context: ./phantom/
@@ -129,6 +163,13 @@ services:
       - 0.0.0.0
     networks:
       - world-modelers
+  perm-fixer:
+    build:
+      context: ./perm-fixer/
+    volumes:
+      - dmc-data-results:/data/results
+      - dmc-data-mappers:/data/mappers
+      - dmc-data-model_configs:/data/model_configs
 
 
 networks:
@@ -136,3 +177,8 @@ networks:
     driver: bridge
     name: world-modelers
 
+
+volumes:
+  dmc-data-results:
+  dmc-data-mappers:
+  dmc-data-model_configs:

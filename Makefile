@@ -49,16 +49,21 @@ clean:
 
 
 docker-compose.yaml:$(COMPOSE_FILES) docker-compose.build-override.yaml envfile
+	export $$(cat envfile | xargs); \
+	export AWS_SECRET_ACCESS_KEY_ENCODED=$$(echo -n $${AWS_SECRET_ACCESS_KEY} | \
+		curl -Gso /dev/null -w %{url_effective} --data-urlencode @- "" | cut -c 3-); \
 	for compose_file in $(COMPOSE_FILES); do \
 	  	tempfile="temp_$${compose_file//\//_}"; \
   		docker-compose -f $$compose_file config > $$tempfile; \
   	done; \
 	sed -i'.sedbkp' 's|app:|shorthand-app:|' temp_shorthand_docker-compose.yaml; \
 	sed -i'.sedbkp' -e 's|published: 8080|published: 8090|' \
+		   -e '/^ *socat:/,/^\w/ {/^\w/b; d}' \
 		   -e '/image:/! s/postgres:/airflow-postgres:/g' \
 		   -e '/image:/! s/postgres\//airflow-postgres\//g' \
 		   -e '/image:/! s/redis:$$/airflow-redis:/g' \
 		   -e '/image:/! s/@redis:/@airflow-redis:/g' \
+		   -e '/docker.sock:/ d' \
 		   -e 's|published: 6379|published: 6390|' temp_dojo_dmc_docker-compose.yaml; \
 	docker-compose --env-file envfile $(foreach f,$(TEMP_COMPOSE_FILES), -f $(f)) \
 	  	-f docker-compose.build-override.yaml config > docker-compose.yaml; \
