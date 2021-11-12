@@ -479,6 +479,7 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
                 secondaryIcon={<DeleteIcon />}
                 cardContent={(config) => <FileTile item={config.path} />}
                 disableClick={disabledMode}
+                parameters={model?.parameters}
               />
             </Grid>
             <Grid item xs={12} lg={6}>
@@ -506,6 +507,7 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
                     <Typography variant="caption" noWrap component="div">{output.path}</Typography>
                   </>
                 )}
+                parameters={model?.outputs}
               />
             </Grid>
             <Grid item xs={12} lg={6}>

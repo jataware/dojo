@@ -3,7 +3,10 @@ import React, { useEffect, useState } from 'react';
 import AddCircleOutlineIcon from '@material-ui/icons/AddCircleOutline';
 import Card from '@material-ui/core/Card';
 import IconButton from '@material-ui/core/IconButton';
+import KeyboardArrowDown from '@material-ui/icons/KeyboardArrowDown';
+import KeyboardArrowRight from '@material-ui/icons/KeyboardArrowRight';
 import RemoveCircleOutlineIcon from '@material-ui/icons/RemoveCircleOutline';
+import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
 
 import { makeStyles } from '@material-ui/core/styles';
@@ -15,6 +18,8 @@ const useStyles = makeStyles((theme) => ({
     marginBottom: theme.spacing(1),
     padding: [[theme.spacing(1), theme.spacing(2), '10px']],
     whiteSpace: 'nowrap',
+  },
+  mainWrapper: {
     display: 'flex',
     justifyContent: 'space-between',
   },
@@ -40,9 +45,31 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
+// this is broken out into its own component so it can toggle its own open/closed state
+function FileParams({ params }) {
+  const classes = useStyles();
+  const [showParams, setShowParams] = useState(false);
+
+  return (
+    <div>
+      <IconButton onClick={() => setShowParams(!showParams)} size="small">
+        {showParams ? <KeyboardArrowDown /> : <KeyboardArrowRight />}
+      </IconButton>
+      <Typography variant="caption">{showParams ? 'Hide' : 'Show'} Parameters</Typography>
+      {showParams && params.map((param) => (
+        <div key={param.id} className={classes.contentContainer}>
+          <Tooltip title={param.description} arrow>
+            <Typography variant="caption" noWrap>{param.display_name}</Typography>
+          </Tooltip>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function FileCardList({
   name, files, loading, error, primaryClickHandler, primaryIcon, cardContent, disableClick,
-  secondaryClickHandler, secondaryIcon
+  secondaryClickHandler, secondaryIcon, parameters
 }) {
   const [expanded, setExpanded] = useState(false);
   const classes = useStyles();
@@ -52,6 +79,16 @@ export default function FileCardList({
       setExpanded(true);
     }
   }, [loading, error, files]);
+
+  const getMatchingConfig = (file) => (
+    // match up the config based on the file path
+    parameters.filter((param) => param.template.path === file.path)
+  );
+
+  const getMatchingOutput = (file) => (
+    // match up the output file based on the output file uuid
+    parameters.filter((param) => param.uuid === file.id)
+  );
 
   const displayCards = () => {
     if (loading) {
@@ -67,7 +104,11 @@ export default function FileCardList({
     }
 
     if (!files.length) {
-      return <Typography variant="body2" align="center">{`No ${name.toLowerCase()} files found`}</Typography>;
+      return (
+        <Typography variant="body2" align="center">
+          {`No ${name.toLowerCase()} files found`}
+        </Typography>
+      );
     }
 
     if (expanded) {
@@ -80,27 +121,36 @@ export default function FileCardList({
               key={file.id}
               className={classes.card}
             >
-              <div className={classes.contentContainer}>
-                {cardContent(file)}
+              <div className={classes.mainWrapper}>
+                <div className={classes.contentContainer}>
+                  {cardContent(file)}
+                </div>
+                <span>
+                  <IconButton
+                    component="span"
+                    onClick={() => primaryClickHandler(file)}
+                    disabled={disableClick}
+                  >
+                    {primaryIcon}
+                  </IconButton>
+                  { secondaryIcon && (
+                  <IconButton
+                    component="span"
+                    onClick={() => secondaryClickHandler(file)}
+                    disabled={disableClick}
+                  >
+                    {secondaryIcon}
+                  </IconButton>
+                  )}
+                </span>
               </div>
-              <span>
-                <IconButton
-                  component="span"
-                  onClick={() => primaryClickHandler(file)}
-                  disabled={disableClick}
-                >
-                  {primaryIcon}
-                </IconButton>
-                { secondaryIcon && (
-                <IconButton
-                  component="span"
-                  onClick={() => secondaryClickHandler(file)}
-                  disabled={disableClick}
-                >
-                  {secondaryIcon}
-                </IconButton>
-                )}
-              </span>
+
+              {parameters && (
+                <FileParams
+                  file={file}
+                  params={name === 'Config' ? getMatchingConfig(file) : getMatchingOutput(file)}
+                />
+              )}
             </Card>
           ))}
         </div>
