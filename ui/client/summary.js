@@ -401,11 +401,16 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
   };
 
   if (modelLoading) {
-    return <div>Loading...</div>;
+    return <LoadingOverlay text="Loading summary" />;
   }
 
   if (modelError) {
-    return <div>There was an error, please refresh the page</div>;
+    return (
+      <LoadingOverlay
+        text="There was an error loading the model summary"
+        error={modelError}
+      />
+    );
   }
 
   return (

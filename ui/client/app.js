@@ -26,6 +26,7 @@ import {
 
 import DirectiveBox from './components/DirectiveBox';
 import FullScreenDialog from './components/FullScreenDialog';
+import LoadingOverlay from './components/LoadingOverlay';
 import ShorthandEditor from './components/ShorthandEditor';
 import SimpleEditor from './components/SimpleEditor';
 import Term from './components/Term';
@@ -384,11 +385,16 @@ const App = () => {
   const url = `${proto}//${window.location.host}/api/ws/${worker}`;
 
   if (modelLoading) {
-    return <div>Loading...</div>;
+    return <LoadingOverlay text="Loading terminal" />;
   }
 
   if (modelError) {
-    return <div>Error loading model</div>;
+    return (
+      <LoadingOverlay
+        text="There was an error loading the terminal"
+        error={modelError}
+      />
+    );
   }
 
   return (

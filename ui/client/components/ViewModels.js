@@ -9,6 +9,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import { useHistory } from 'react-router-dom';
 
 import ExpandableDataGridCell from './ExpandableDataGridCell';
+import LoadingOverlay from './LoadingOverlay';
 
 import { useModels } from './SWRHooks';
 
@@ -31,13 +32,20 @@ function ViewModels() {
   const classes = useStyles();
 
   if (modelsLoading) {
-    return <Typography variant="h6">Loading Models</Typography>;
+    return <LoadingOverlay text="Loading models" />;
   }
+
   if (modelsError) {
-    return <Typography variant="h6">Error Loading Models...</Typography>;
+    return (
+      <LoadingOverlay
+        text="There was an error loading the list of all models"
+        error={modelsError}
+      />
+    );
   }
+
   if (!models?.results.length) {
-    return <Typography variant="h6">No Models Found</Typography>;
+    return <LoadingOverlay text="No Models Found" error />;
   }
 
   const viewModelClick = (modelId) => {

@@ -24,8 +24,19 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-function LoadingOverlay({ text }) {
+// pass in blank error prop to hide spinner
+function LoadingOverlay({ text, error }) {
   const classes = useStyles();
+
+  let errorTextHeader;
+  let errorTextBody;
+
+  if (error?.status) {
+    errorTextHeader = `${error?.status}: ${error}`;
+    errorTextBody = Object.keys(error?.info).reduce((string, current) => (
+      `${string} ${current}: ${error.info[current]}`
+    ), '');
+  }
 
   return (
     <div className={classes.loadingOverlay}>
@@ -38,7 +49,23 @@ function LoadingOverlay({ text }) {
           {text}
         </Typography>
       )}
-      <CircularProgress />
+      {errorTextHeader && (
+        <>
+          <Typography
+            variant="h6"
+            align="center"
+          >
+            {errorTextHeader}
+          </Typography>
+          <Typography
+            variant="h6"
+            align="center"
+          >
+            {errorTextBody}
+          </Typography>
+        </>
+      )}
+      {!error && <CircularProgress />}
     </div>
   );
 }
