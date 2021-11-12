@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
 import Alert from '@material-ui/lab/Alert';
+import Autocomplete from '@material-ui/lab/Autocomplete';
 import Button from '@material-ui/core/Button';
 import Card from '@material-ui/core/Card';
 import CardActionArea from '@material-ui/core/CardActionArea';
@@ -8,11 +9,9 @@ import CardContent from '@material-ui/core/CardContent';
 import Container from '@material-ui/core/Container';
 import FormControl from '@material-ui/core/FormControl';
 import Grid from '@material-ui/core/Grid';
-import InputLabel from '@material-ui/core/InputLabel';
 import LinearProgress from '@material-ui/core/LinearProgress';
-import MenuItem from '@material-ui/core/MenuItem';
 import Paper from '@material-ui/core/Paper';
-import Select from '@material-ui/core/Select';
+import TextField from '@material-ui/core/TextField';
 import Typography from '@material-ui/core/Typography';
 
 import { makeStyles } from '@material-ui/core/styles';
@@ -103,7 +102,6 @@ const Intro = ({ location }) => {
   });
 
   const onImageInfoUpdate = (val, type) => {
-    // const val = e.target?.value ?? '';
     setImageInfo((prev) => ({ ...prev, ...{ [type]: val } }));
   };
 
@@ -274,20 +272,18 @@ const Intro = ({ location }) => {
 
           <Grid item xs={12} className={classes.gridItem}>
             <FormControl className={classes.formControl} fullWidth>
-              <InputLabel id="label">Select a Base Image</InputLabel>
-              {baseImageList ? (
-                <Select
-                  labelId="label"
-                  data-test="modelBaseImageSelect"
-                  id="select"
-                  defaultValue={imageInfo.dockerImage}
-                  value={imageInfo.dockerImage}
-                  onChange={(e) => onImageInfoUpdate(e.target.value, 'dockerImage')}
-                >
-                  { baseImageList.map((img) => (
-                    <MenuItem key={img.image} value={img.image}>{img.display_name}</MenuItem>
-                  ))}
-                </Select>
+              {baseImageList.length ? (
+                <Autocomplete
+                  options={baseImageList}
+                  getOptionLabel={(option) => option.display_name}
+                  onChange={(e, value) => onImageInfoUpdate(value?.image, 'dockerImage')}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Select or search for a base image"
+                    />
+                  )}
+                />
               ) : <span> loading ... </span>}
             </FormControl>
 
