@@ -5,7 +5,7 @@ BUILD_TIME=$(date +%FT%T%Z)
 COMMIT=$(git rev-parse --short HEAD)
 GIT=${DT}.git.${COMMIT}
 PROJECT="cato"
-VERSION="2.2.4"
+VERSION="2.2.5"
 TAG="${PROJECT}_${VERSION}"
 
 GROUP=jataware
