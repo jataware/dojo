@@ -4,7 +4,7 @@
 
 ![Build](https://github.com/jataware/phantom/workflows/Build/badge.svg)
 
-v0.3.7
+v0.3.8
 
 ## Demo
 tbd
