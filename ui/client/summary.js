@@ -15,6 +15,7 @@ import EditIcon from '@material-ui/icons/Edit';
 import Fab from '@material-ui/core/Fab';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
+import WarningIcon from '@material-ui/icons/Warning';
 import useMediaQuery from '@material-ui/core/useMediaQuery';
 
 import { makeStyles, useTheme } from '@material-ui/core/styles';
@@ -150,9 +151,10 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
 
   const [openModelEdit, setOpenModelEdit] = useState(false);
 
-  // the two alerts on the page
+  // the three alerts on the page
   const [noDirectiveAlert, setNoDirectiveAlert] = useState(false);
   const [navigateAwayWarning, setNavigateAwayWarning] = useState(false);
+  const [editConfigWarning, setEditConfigWarning] = useState(false);
 
   const classes = useStyles();
   const theme = useTheme();
@@ -178,6 +180,10 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
   }, [workerNode]);
 
   const openConfigShorthand = async (item) => {
+    if (!workerNode) {
+      setEditConfigWarning(true);
+      return;
+    }
     const response = await fetch(
       `/api/clouseau/container/${workerNode}/ops/cat?path=${encodeURIComponent(item.path)}`
     );
@@ -676,6 +682,34 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
         deletionHandler={handleDeleteItem}
         handleDialogClose={handleDeleteDialogClose}
       />
+
+      <Dialog
+        open={editConfigWarning}
+        onClose={() => setEditConfigWarning(false)}
+      >
+        <DialogTitle id="alert-dialog-title">
+          <Typography align="center" variant="h6" gutterBottom>
+            <WarningIcon style={{ marginRight: '8px', paddingTop: '8px' }} />
+            Attention
+          </Typography>
+          <Typography variant="subtitle1">
+            Currently, editing config files can only be done inside a model.<br />
+            Please launch your model to edit config files.
+          </Typography>
+        </DialogTitle>
+        <DialogActions>
+          <Button
+            onClick={() => history.push('/intro?relaunch', model)}
+          >
+            Launch Model
+          </Button>
+          <Button
+            onClick={() => setEditConfigWarning(false)}
+          >
+            Cancel
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <BasicAlert
         alert={{
