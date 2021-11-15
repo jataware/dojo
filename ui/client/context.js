@@ -32,12 +32,12 @@ export const WebSocketContextProvider = ({ url, children }) => {
 
   const getWebSocketId = () => clientId.current;
 
-  const emit = async (channel, payload) => {
+  const emit = useCallback(async (channel, payload) => {
     while (ws.current.readyState === ws.current.CONNECTING) {
       await sleep(50); // eslint-disable-line no-await-in-loop
     }
     ws.current.send(JSON.stringify({ channel, payload }));
-  };
+  }, []);
 
   const unregister = useCallback((channel, handler) => {
     // eslint-disable-next-line eqeqeq
