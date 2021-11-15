@@ -644,9 +644,9 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
               Dojo in a terminal (where Docker is running) using the following:
             </Typography>
             <Typography gutterBottom className={classes.codeText}>
-              docker pull &#123;insert_image_name_here&#125;
+              docker pull {model?.image || '<image_name>'}
               <br />
-              docker run -it &#123;insert_image_name_here&#125; /bin/bash
+              docker run -it {model?.image || '<image_name>'} /bin/bash
             </Typography>
             <Typography gutterBottom>
               This will drop you into a shell session where you may interact with your model
