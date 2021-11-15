@@ -58,7 +58,6 @@ docker-compose.yaml:$(COMPOSE_FILES) docker-compose.build-override.yaml envfile
   	done; \
 	sed -E -i'.sedbkp' 's|app:|shorthand-app:|' temp_shorthand_docker-compose.yaml; \
 	sed -E -i'.sedbkp' -e 's|published: 8080|published: 8090|' \
-		   -e '/^ *socat:/,/^\w/ {/^\w/b; d}' \
 		   -e '/image:/! s/postgres:/airflow-postgres:/g' \
 		   -e '/image:/! s/postgres\//airflow-postgres\//g' \
 		   -e '/image:/! s/redis:$$/airflow-redis:/g' \
