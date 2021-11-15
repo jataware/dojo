@@ -62,7 +62,6 @@ docker-compose.yaml:$(COMPOSE_FILES) docker-compose.build-override.yaml envfile
 		   -e '/image:/! s/postgres\//airflow-postgres\//g' \
 		   -e '/image:/! s/redis:$$/airflow-redis:/g' \
 		   -e '/image:/! s/@redis:/@airflow-redis:/g' \
-		   -e '/docker.sock:/ d' \
 		   -e 's|published: 6379|published: 6390|' temp_dojo_dmc_docker-compose.yaml; \
 	docker-compose --env-file envfile $(foreach f,$(TEMP_COMPOSE_FILES), -f $(f)) \
 	  	-f docker-compose.build-override.yaml config > docker-compose.yaml; \
