@@ -4,7 +4,7 @@
 
 1. Clone repo
 2. Run `$ make init` to configure and pull the required submodules
-3. Add your secrets to the file `envfile`
+3. Add your secrets to the file `envfile`  
  -- NOTE: You should rarely, if ever, need to change any of the host names or ports. You should really only need to set the variables that are wrapped in `${...}`
 4. Run `$ make up` to build and bring online all services
 5. Run `$ make create-es-indexes` to create the elasticsearch indexes
