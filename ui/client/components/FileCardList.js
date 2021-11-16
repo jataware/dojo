@@ -46,7 +46,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 // this is broken out into its own component so it can toggle its own open/closed state
-function FileParams({ params }) {
+function FileParams({ params, name }) {
   const classes = useStyles();
   const [showParams, setShowParams] = useState(false);
 
@@ -55,7 +55,9 @@ function FileParams({ params }) {
       <IconButton onClick={() => setShowParams(!showParams)} size="small">
         {showParams ? <KeyboardArrowDown /> : <KeyboardArrowRight />}
       </IconButton>
-      <Typography variant="caption">{showParams ? 'Hide' : 'Show'} Parameters</Typography>
+      <Typography variant="caption">
+        {showParams ? 'Hide' : 'Show'} {name === 'Config' ? 'Parameters' : 'Output Variables'}
+      </Typography>
       {showParams && params.map((param) => (
         <div key={param.id} className={classes.contentContainer}>
           <Tooltip title={param.description} arrow>
@@ -148,6 +150,7 @@ export default function FileCardList({
               {parameters && (
                 <FileParams
                   file={file}
+                  name={name}
                   params={name === 'Config' ? getMatchingConfig(file) : getMatchingOutput(file)}
                 />
               )}
