@@ -3,7 +3,7 @@ services:
     environment:
       DOCKER_URL: "docker.world-modelers:8375"
       DMC_LOCAL_DIR:
-      MIXMASTA_VERSION: "0.6.1"
+      MIXMASTA_VERSION:
     networks:
       - world-modelers
     volumes:
@@ -14,21 +14,21 @@ services:
     environment:
       DOCKER_URL: "docker.world-modelers:8375"
       DMC_LOCAL_DIR:
-      MIXMASTA_VERSION: "0.6.1"
+      MIXMASTA_VERSION:
     networks:
       - world-modelers
   airflow-postgres:
     environment:
       DOCKER_URL: "docker.world-modelers:8375"
       DMC_LOCAL_DIR:
-      MIXMASTA_VERSION: "0.6.1"
+      MIXMASTA_VERSION:
     networks:
       - world-modelers
   airflow-scheduler:
     environment:
       DOCKER_URL: "docker.world-modelers:8375"
       DMC_LOCAL_DIR:
-      MIXMASTA_VERSION: "0.6.1"
+      MIXMASTA_VERSION:
     networks:
       - world-modelers
     volumes:
@@ -39,7 +39,7 @@ services:
     environment:
       DOCKER_URL: "docker.world-modelers:8375"
       DMC_LOCAL_DIR:
-      MIXMASTA_VERSION: "0.6.1"
+      MIXMASTA_VERSION:
     networks:
       - world-modelers
     volumes:
@@ -52,7 +52,7 @@ services:
       BUCKET: ${DMC_BUCKET}
       DOCKER_URL: "docker.world-modelers:8375"
       DMC_LOCAL_DIR:
-      MIXMASTA_VERSION: "0.6.1"
+      MIXMASTA_VERSION:
     networks:
       - world-modelers
     volumes:
@@ -63,7 +63,7 @@ services:
     environment:
       DOCKER_URL: "docker.world-modelers:8375"
       DMC_LOCAL_DIR:
-      MIXMASTA_VERSION: "0.6.1"
+      MIXMASTA_VERSION:
     networks:
       - world-modelers
   app:
@@ -95,6 +95,7 @@ services:
       - DOJO_URL
       - DMC_LOCAL_DIR
       - DMC_URL
+      - DMC_PASSWORD
       - REDIS_HOST
       - DOCKERHUB_USER
       - DOCKERHUB_PWD
