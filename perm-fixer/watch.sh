@@ -1,4 +1,5 @@
 #!/bin/bash
+chmod 0777 -R /data
 
 inotifywait -m -r /data -e create -e moved_to |
     while read dir action file; do
