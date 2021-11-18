@@ -163,7 +163,7 @@ async function* Steps(imageInfo) {
     const containerId = await LaunchContainer(imageInfo.worker,
       imageInfo.imageName,
       imageInfo.dockerImage,
-      imageInfo.modelInfo.id);
+      imageInfo.model.id);
     // start up delay
     await sleep(5000);
     yield n(`${M.OK}Container Created: ${containerId}`);
@@ -215,7 +215,7 @@ const TermLoading = ({ location }) => {
         console.info('%cSuccessful initialization, redirecting to Term', 'background-color: #0f0; color: #000');
         setItems((xs) => [...xs, '📶Successful initialization, redirecting to Term']);
         await sleep(2000);
-        history.push(`/term/${imageInfo.worker}/${imageInfo.modelInfo.id}`);
+        history.push(`/term/${imageInfo.worker}/${imageInfo.model.id}`);
       } catch (err) {
         console.error('%cFailed initialization', 'background-color: #f00; color: #fff');
         console.error('%cWe are stuck...', 'background-color: #f00; color: #fff');

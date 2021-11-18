@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import Alert from '@material-ui/lab/Alert';
 import Autocomplete from '@material-ui/lab/Autocomplete';
@@ -15,9 +15,12 @@ import TextField from '@material-ui/core/TextField';
 import Typography from '@material-ui/core/Typography';
 
 import { makeStyles } from '@material-ui/core/styles';
-import { useHistory, useLocation } from 'react-router-dom';
+import { useHistory, useLocation, useParams } from 'react-router-dom';
+
+import { useModel } from './components/SWRHooks';
 
 import BasicAlert from './components/BasicAlert';
+import LoadingOverlay from './components/LoadingOverlay';
 
 const useStyles = makeStyles((theme) => ({
   formControl: {
@@ -80,20 +83,17 @@ function useQuery() {
   return new URLSearchParams(useLocation().search);
 }
 
-const Intro = ({ location }) => {
-  const modelInfo = location?.state;
+const Intro = () => {
   const classes = useStyles();
   const history = useHistory();
   const query = useQuery();
   const relaunch = query.has('relaunch');
-  const [imageInfo, setImageInfo] = useState({
-    modelInfo,
-    imageName: formatImageString(modelInfo.name),
-    dockerImage: '',
-    size: 't2-nano',
-    gitUrl: modelInfo.maintainer?.website ?? '',
-    worker: '',
-  });
+  const { modelId } = useParams();
+
+  const { model, modelLoading, modelError } = useModel(modelId);
+
+  const [imageInfo, setImageInfo] = useState({});
+
   const [alertVisible, setAlertVisible] = useState(false);
 
   const [alert, setAlert] = useState({
@@ -101,9 +101,21 @@ const Intro = ({ location }) => {
     message: ''
   });
 
-  const onImageInfoUpdate = (val, type) => {
+  const onImageInfoUpdate = useCallback((val, type) => {
     setImageInfo((prev) => ({ ...prev, ...{ [type]: val } }));
-  };
+  }, []);
+
+  useEffect(() => {
+    if (model) {
+      setImageInfo({
+        model,
+        imageName: formatImageString(model.name),
+        dockerImage: '',
+        gitUrl: model?.maintainer?.website ?? '',
+        worker: '',
+      });
+    }
+  }, [model]);
 
   const launchTerm = async (e) => {
     e.preventDefault();
@@ -243,6 +255,19 @@ const Intro = ({ location }) => {
     );
   };
 
+  if (modelLoading) {
+    return <LoadingOverlay text="Loading..." />;
+  }
+
+  if (modelError) {
+    return (
+      <LoadingOverlay
+        text="There was an error loading the model"
+        error={modelError}
+      />
+    );
+  }
+
   return (
     <Container
       className={classes.root}
@@ -267,7 +292,7 @@ const Intro = ({ location }) => {
 
         <Paper className={classes.paper} elevation={3} style={{ minWidth: '600px' }}>
           <Typography variant="h5" id="tableTitle" component="div">
-            {modelInfo.name}
+            {model?.name}
           </Typography>
 
           <Grid item xs={12} className={classes.gridItem}>

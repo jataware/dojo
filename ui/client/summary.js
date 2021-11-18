@@ -431,7 +431,7 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
           <Button
             component={workerNode ? Link : Button}
             to={workerNode ? `/term/${workerNode}/${model?.id}` : null}
-            onClick={workerNode ? null : () => history.push('/intro?relaunch', model)}
+            onClick={workerNode ? null : () => history.push(`/intro/${model.id}?relaunch`)}
             size="small"
             disabled={disabledMode}
             startIcon={<ArrowBackIcon />}
@@ -699,7 +699,7 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
         </DialogTitle>
         <DialogActions>
           <Button
-            onClick={() => history.push('/intro?relaunch', model)}
+            onClick={() => history.push(`/intro/${model.id}?relaunch`)}
           >
             Launch Model
           </Button>
