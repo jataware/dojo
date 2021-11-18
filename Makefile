@@ -1,5 +1,6 @@
 SHELL = /bin/bash
 LANG = en_US.utf-8
+PYTHON = $(shell which python3 || which python)
 export LANG
 
 BASEDIR = $(shell pwd)
@@ -16,6 +17,13 @@ COMPOSE_FILES := $(CLOUSEAU_DIR)/docker-compose.yaml $(DOJO_API_DIR)/docker-comp
 				 $(DOJO_DMC_DIR)/docker-compose.yaml $(SHORTHAND_DIR)/docker-compose.yaml \
 				 $(SPACETAG_DIR)/docker-compose.dev.yaml $(WORKERS_DIR)/docker-compose.yaml
 TEMP_COMPOSE_FILES := $(foreach file,$(subst /,_,$(COMPOSE_FILES)),temp_$(file))
+
+.PHONY:update
+update:
+	git fetch; \
+	git submodule foreach git pull; \
+	git submodule foreach git status; \
+	$(PYTHON) $(BASEDIR)/bin/update_envfile.py envfile.sample envfile;
 
 .PHONY:init
 init:
