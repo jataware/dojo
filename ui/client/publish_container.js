@@ -183,7 +183,7 @@ const Page = ({ workerNode }) => {
   const completeNav = async () => {
     const resp = await fetch(`/api/dojo/models/${container.model_id}`);
     const model = await resp.json();
-    const url = `https://causemos.uncharted.software/#/model/${model.family_name}/model-publishing-experiment?datacubeid=${model.id}`;
+    const url = `https://causemos.uncharted.software/#/model/${model.family_name}/model-publishing-experiment?datacube_id=${model.id}`;
     window.location.replace(url);
   };
 
