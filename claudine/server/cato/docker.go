@@ -7,7 +7,6 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	"time"
 	//"io/ioutil"
 	"io"
 
@@ -20,6 +19,31 @@ import (
 	//"github.com/docker/docker/api/types/network"
 	//specs "github.com/opencontainers/image-spec/specs-go/v1"
 )
+
+type ErrorPayload struct {
+	Error string `json:"error"`
+}
+
+type StatusPayload struct {
+	Status string `json:"status"`
+}
+
+func safeMarshal(v interface{}) string {
+	bytes, err := json.Marshal(v)
+	if err != nil {
+		LogError("toJSON Marshal error", err)
+		return err.Error()
+	}
+	return string(bytes)
+}
+
+// Helper for verbosity sake
+func notify(p *WebSocketPool, listeners []string, payload string) {
+	p.Direct <- DirectMessage{
+		Clients: listeners,
+		Message: WebSocketMessage{Channel: "docker/publish", Payload: payload},
+	}
+}
 
 type Docker struct {
 	Client *client.Client
@@ -80,8 +104,7 @@ func (docker *Docker) Changes(containerID string) ([]container.ContainerChangeRe
 func (docker *Docker) Commit(
 	auth string,
 	containerID string,
-	name string,
-	repo string,
+	tags []string,
 	cwd string,
 	entrypoint []string,
 	pool *WebSocketPool,
@@ -98,99 +121,58 @@ func (docker *Docker) Commit(
 		},
 	}
 
+	notify(pool, listenClients, safeMarshal(StatusPayload{Status: "Committing Container"}))
 	img, err := docker.Client.ContainerCommit(ctx, containerID, options)
 	if err != nil {
 		LogError("Container Commit", err)
+		notify(pool, listenClients, safeMarshal(ErrorPayload{Error: err.Error()}))
 		return err
 	}
 
-	version := time.Now().Format("20060102.1504")
-	tagVersion := fmt.Sprintf("jataware/dojo-%s:%s-%s", repo, name, version)
-	tagLatest := fmt.Sprintf("jataware/dojo-%s:%s-latest", repo, name)
+	for _, tag := range tags {
 
-	if err := docker.Client.ImageTag(ctx, img.ID, tagVersion); err != nil {
-		LogError("Image Tag Versioned", err)
-		return err
-	}
+		log.Printf("Tagging %s", tag)
+		notify(pool, listenClients, safeMarshal(StatusPayload{Status: fmt.Sprintf("Tagging %s", tag)}))
+		if err := docker.Client.ImageTag(ctx, img.ID, tag); err != nil {
+			LogError("Image Tag", err)
+			notify(pool, listenClients, safeMarshal(ErrorPayload{Error: err.Error()}))
+			return err
+		}
 
-	resp, err := docker.Client.ImagePush(ctx, tagVersion, types.ImagePushOptions{RegistryAuth: auth})
-	if err != nil {
-		LogError("Image Push Version", err)
-		return err
-	}
-
-	reader := bufio.NewReader(resp)
-	for {
-		line, err := reader.ReadBytes('\n')
+		resp, err := docker.Client.ImagePush(ctx, tag, types.ImagePushOptions{RegistryAuth: auth})
+		notify(pool, listenClients, safeMarshal(StatusPayload{Status: fmt.Sprintf("Pushing Tag: %s", tag)}))
 		if err != nil {
-			if err != io.EOF {
-				LogError("Reading Response", err)
-				return err
+			LogError("Image Push", err)
+			notify(pool, listenClients, safeMarshal(ErrorPayload{Error: err.Error()}))
+			return err
+		}
+
+		reader := bufio.NewReader(resp)
+		for {
+			line, err := reader.ReadBytes('\n')
+			if err != nil {
+				if err != io.EOF {
+					LogError("Reading Response", err)
+					notify(pool, listenClients, safeMarshal(ErrorPayload{Error: err.Error()}))
+					return err
+				}
+				break
 			}
-			break
+
+			log.Printf("%s", string(line))
+			notify(pool, listenClients, string(line))
 		}
 
-		pool.Direct <- DirectMessage{
-			Clients: listenClients,
-			Message: WebSocketMessage{Channel: "docker/publish", Payload: string(line)},
-		}
+		notify(pool, listenClients, safeMarshal(StatusPayload{Status: fmt.Sprintf("Finished Pushing Tag: %s", tag)}))
 
-		log.Printf("%s", string(line))
 	}
 
-	log.Printf("Tag %s Push Complete", tagVersion)
-
-	if err := docker.Client.ImageTag(ctx, img.ID, tagLatest); err != nil {
-		LogError("Image Tag latest", err)
-		return err
-	}
-
-	resp, err = docker.Client.ImagePush(ctx, tagLatest, types.ImagePushOptions{RegistryAuth: auth})
-	if err != nil {
-		LogError("Image Push Latest", err)
-		return err
-	}
-
-	reader = bufio.NewReader(resp)
-	for {
-		line, err := reader.ReadBytes('\n')
-		if err != nil {
-			if err != io.EOF {
-				LogError("Reading Response", err)
-				return err
-			}
-			break
-		}
-
-		pool.Direct <- DirectMessage{
-			Clients: listenClients,
-			Message: WebSocketMessage{Channel: "docker/publish", Payload: string(line)},
-		}
-
-		log.Printf("%s", string(line))
-	}
-
-	log.Printf("Tag %s Push Complete", tagLatest)
-
-	finished, err := json.Marshal(UploadComplete{Finished: []string{tagVersion, tagLatest}})
 	if err != nil {
 		LogError("Failed to Marshal Complete Response", err)
+		notify(pool, listenClients, safeMarshal(ErrorPayload{Error: err.Error()}))
 		return err
 	}
-
-	pool.Direct <- DirectMessage{
-		Clients: listenClients,
-		Message: WebSocketMessage{Channel: "docker/publish", Payload: string(finished)},
-	}
-
-	// body, err := ioutil.ReadAll(resp)
-	// if err != nil {
-	//	log.Printf("[ERROR] %+v", err)
-	//	return err
-	// }
-
-	//log.Printf("PUSH %s", body)
-
+	notify(pool, listenClients, safeMarshal(UploadComplete{Finished: tags}))
 	return nil
 }
 

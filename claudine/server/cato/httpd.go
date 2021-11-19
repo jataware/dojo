@@ -225,8 +225,7 @@ func diffGetContainer(store *ContainerDiffStore) gin.HandlerFunc {
 
 func commitContainer(settings *Settings, clouseauWorkerPool *ClouseauWorkerPool, pool *WebSocketPool) gin.HandlerFunc {
 	type RequestBody struct {
-		Name       string   `json:"name" binding:"required"`
-		Repo       string   `json:"repo" binding:"required"`
+		Tags       []string `json:"tags" binding:"required"`
 		Cwd        string   `json:"cwd" binding:"required"`
 		Entrypoint []string `json:"entrypoint" binding:"required"`
 		Listeners  []string `json:"listeners" binding:"required"`
@@ -250,11 +249,15 @@ func commitContainer(settings *Settings, clouseauWorkerPool *ClouseauWorkerPool,
 		}
 
 		log.Printf("Commit Request: %+v\n", requestBody)
-		if err := clouseauWorkerPool.Workers[i].Docker.Commit(settings.Docker.Auth, id, requestBody.Name, requestBody.Repo, requestBody.Cwd, requestBody.Entrypoint, pool, requestBody.Listeners); err != nil {
-			c.String(http.StatusInternalServerError, fmt.Sprintf("%+v", err))
-			return
+
+		var imageTags []string
+		for _, t := range requestBody.Tags {
+			tag := fmt.Sprintf("%s/%s", settings.Docker.Org, t)
+			imageTags = append(imageTags, tag)
 		}
-		c.String(http.StatusOK, "ok")
+
+		go clouseauWorkerPool.Workers[i].Docker.Commit(settings.Docker.Auth, id, imageTags, requestBody.Cwd, requestBody.Entrypoint, pool, requestBody.Listeners)
+		c.String(http.StatusAccepted, fmt.Sprintf("Processing %s", imageTags))
 	}
 }
 

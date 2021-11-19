@@ -6,3 +6,7 @@ ssh:
 redis:
   host: localhost
   port: 6379
+
+
+docker:
+  org: jataware

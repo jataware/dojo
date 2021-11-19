@@ -13,6 +13,7 @@ import (
 type DockerSettings struct {
 	Hosts []string
 	Auth  string
+	Org   string `yaml:"org"`
 }
 
 func (d DockerSettings) String() string {
@@ -20,7 +21,7 @@ func (d DockerSettings) String() string {
 	if l >= len(d.Auth) {
 		l = len(d.Auth)
 	}
-	return fmt.Sprintf("{Hosts:%s Auth:%s...}", d.Hosts, d.Auth[0:l])
+	return fmt.Sprintf("{Org:%s Hosts:%s Auth:%s...}", d.Org, d.Hosts, d.Auth[0:l])
 }
 
 type SSHSettings struct {
@@ -81,6 +82,13 @@ func NewSettings(fp string) *Settings {
 
 	SetEnvOptional(&settings.Redis.Host, "REDIS_HOST")
 	SetEnvOptional(&settings.Redis.Port, "REDIS_PORT")
+	SetEnvOptional(&settings.Docker.Org, "DOCKERHUB_ORG")
+
+	if settings.Docker.Org == "" {
+		log.Printf("No settings for Docker.Org were found, using default = jataware")
+		settings.Docker.Org = "jataware"
+	}
+
 	settings.Docker.Auth = GetEnvFatal("DOCKERHUB_AUTH")
 	settings.Docker.Hosts = GetEnvAsSlice("CLOUSEAU_WORKERS", ",")
 
