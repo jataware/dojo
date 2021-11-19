@@ -36,6 +36,26 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
+const imageTags = (name) => {
+  const d = Intl.DateTimeFormat(
+    'en-US',
+    {
+      year: 'numeric',
+      month: 'numeric',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: 'numeric',
+      seconds: 'numeric',
+      hour12: false,
+      timeZone: 'utc'
+    }
+  ).formatToParts(new Date()).reduce((acc, { type, value }) => ({ [type]: value, ...acc }), {});
+
+  const sDate = `${d.year}${d.month}${d.day}.${d.hour}${d.minute}`;
+  const imagePrefix = process.env.NODE_ENV === 'development' ? 'dojo-test' : 'dojo-publish';
+  return [`${imagePrefix}:${name}-${sDate}`, `${imagePrefix}:${name}-latest`];
+};
+
 const Page = ({ workerNode }) => {
   const { container } = useContainerWithWorker(workerNode);
   const classes = useStyles();
@@ -48,7 +68,6 @@ const Page = ({ workerNode }) => {
     digest: '',
     image: '',
   }));
-  const repo = process.env.NODE_ENV === 'development' ? 'test' : 'publish';
 
   const {
     getWebSocketId, register, unregister, closeSocket
@@ -107,8 +126,7 @@ const Page = ({ workerNode }) => {
   useEffect(() => {
     const publishContainer = async (wsid) => {
       const postBody = {
-        name: container.name,
-        repo,
+        tags: imageTags(container.name),
         cwd: directive?.cwd,
         entrypoint: [],
         listeners: [wsid],
@@ -142,7 +160,7 @@ const Page = ({ workerNode }) => {
       console.debug('Run');
       run();
     }
-  }, [directive, getWebSocketId, container, workerNode, repo]);
+  }, [directive, getWebSocketId, container, workerNode]);
 
   useEffect(() => {
     if (enableFinished) {
