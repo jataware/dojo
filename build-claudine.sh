@@ -4,7 +4,7 @@ DT=$(date +"%Y%m%d")
 COMMIT=$(git rev-parse --short HEAD)
 GIT=${DT}.git.${COMMIT}
 PROJECT="claudine"
-VERSION="2.2.5"
+VERSION="2.2.6"
 TAG="${PROJECT}_${VERSION}"
 
 GROUP=jataware
