@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
 
-import Alert from '@material-ui/lab/Alert';
 import Autocomplete from '@material-ui/lab/Autocomplete';
 import Button from '@material-ui/core/Button';
 import Card from '@material-ui/core/Card';
@@ -147,6 +146,22 @@ const Intro = () => {
   const [workerNodes, setWorkerNodes] = React.useState([]);
   const [workersIsLoaded, setWorkersIsLoaded] = React.useState(false);
 
+  // if we come in with the relaunch parameter set, we want to continue where we left off
+  // so load the model's existing image as the dockerImage that we'll pass along to launch
+  // the terminal
+  useEffect(() => {
+    if (relaunch && model) {
+      setImageInfo((prev) => (
+        { ...prev, ...{ dockerImage: model?.image } }
+      ));
+    }
+  }, [relaunch, model]);
+
+  // find the image & display name that matches our model's image for the autocomplete
+  const getRelaunchBaseImage = () => (
+    baseImageList.find((image) => image.image === model?.image)
+  );
+
   useEffect(() => {
     // define this inside here so useEffect knows it is stable
     const refreshNodeInfo = async () => {
@@ -273,12 +288,6 @@ const Intro = () => {
       className={classes.root}
       component="main"
     >
-      {relaunch && (
-        <Alert severity="info">
-          To relaunch a model container, please select
-          your previously published base image from the list below
-        </Alert>
-      )}
       <Grid
         container
         spacing={3}
@@ -300,12 +309,17 @@ const Intro = () => {
               {baseImageList.length ? (
                 <Autocomplete
                   options={baseImageList}
+                  value={(relaunch && getRelaunchBaseImage()) || imageInfo?.model?.dockerImage}
+                  disabled={relaunch}
                   getOptionLabel={(option) => option.display_name}
                   onChange={(e, value) => onImageInfoUpdate(value?.image, 'dockerImage')}
                   renderInput={(params) => (
                     <TextField
                       {...params}
-                      label="Select or search for a base image"
+                      label={
+                        relaunch ? 'Your existing image has been preselected below'
+                          : 'Select or search for a base image'
+                      }
                     />
                   )}
                 />

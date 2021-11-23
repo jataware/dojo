@@ -1,21 +1,13 @@
 import React, { useEffect, useState } from 'react';
 
-import axios from 'axios';
-
 import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 import Button from '@material-ui/core/Button';
 import Container from '@material-ui/core/Container';
 import DeleteIcon from '@material-ui/icons/Delete';
-import Dialog from '@material-ui/core/Dialog';
-import DialogActions from '@material-ui/core/DialogActions';
-import DialogContent from '@material-ui/core/DialogContent';
-import DialogContentText from '@material-ui/core/DialogContentText';
-import DialogTitle from '@material-ui/core/DialogTitle';
 import EditIcon from '@material-ui/icons/Edit';
 import Fab from '@material-ui/core/Fab';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
-import WarningIcon from '@material-ui/icons/Warning';
 import useMediaQuery from '@material-ui/core/useMediaQuery';
 
 import { makeStyles, useTheme } from '@material-ui/core/styles';
@@ -32,6 +24,7 @@ import { ModelSummaryEditor } from './components/ModelSummaryEditor';
 import ShorthandEditor from './components/ShorthandEditor';
 import SimpleEditor from './components/SimpleEditor';
 import SummaryAccessories from './components/SummaryAccessories';
+import SummaryIntroDialog from './components/SummaryIntroDialog';
 
 import {
   useConfigs, useContainerWithWorker, useDirective, useModel, useOutputFiles
@@ -93,25 +86,19 @@ const useStyles = makeStyles((theme) => ({
       height: '100%',
     },
   },
-  codeText: {
-    backgroundColor: theme.palette.grey[300],
-    borderRadius: '4px',
-    color: theme.palette.grey[900],
-    padding: [[theme.spacing(1), theme.spacing(2)]],
-  },
 }));
 
-const Page = ({ modelIdQueryParam, workerNode, edit }) => {
-  const [dialogOpen, setDialogOpen] = useState(!!modelIdQueryParam && !edit);
-  const [disabledMode, setDisabledMode] = useState(!edit);
+const Page = ({ modelIdQueryParam, workerNode }) => {
+  const [dialogOpen, setDialogOpen] = useState(!!modelIdQueryParam);
+  const [disabledMode, setDisabledMode] = useState(!workerNode);
   const [loadingMode, setLoadingMode] = useState(false);
 
   // we're updating history & the url, rather than reloading the page when these props change
   // for the version bump, so we need to make sure we keep state up to date with the props
   useEffect(() => {
-    setDialogOpen(!!modelIdQueryParam && !edit);
-    setDisabledMode(!edit && !workerNode);
-  }, [modelIdQueryParam, edit, workerNode]);
+    setDialogOpen(!!modelIdQueryParam);
+    setDisabledMode(!workerNode);
+  }, [modelIdQueryParam, workerNode]);
 
   const {
     container, mutateContainer
@@ -151,10 +138,9 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
 
   const [openModelEdit, setOpenModelEdit] = useState(false);
 
-  // the three alerts on the page
+  // the two alerts on the page
   const [noDirectiveAlert, setNoDirectiveAlert] = useState(false);
   const [navigateAwayWarning, setNavigateAwayWarning] = useState(false);
-  const [editConfigWarning, setEditConfigWarning] = useState(false);
 
   const classes = useStyles();
   const theme = useTheme();
@@ -180,10 +166,6 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
   }, [workerNode]);
 
   const openConfigShorthand = async (item) => {
-    if (!workerNode) {
-      setEditConfigWarning(true);
-      return;
-    }
     const response = await fetch(
       `/api/clouseau/container/${workerNode}/ops/cat?path=${encodeURIComponent(item.path)}`
     );
@@ -390,22 +372,6 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
     setOpenShorthand(true);
   };
 
-  const versionBumpModel = async () => {
-    try {
-      const response = await axios.get(`/api/dojo/models/version/${modelId}`);
-      setLoadingMode(true);
-      // pause for one second here to allow elastic search to catch up
-      setTimeout(() => {
-        // history.replace here because we want the back button to take the user back to /models
-        // rather than navigating them back to the previous version
-        history.replace(`/summary?model=${response.data}&edit`);
-        setLoadingMode(false);
-      }, 1000);
-    } catch (error) {
-      console.log('there was an error version bumping the model', error);
-    }
-  };
-
   if (modelLoading) {
     return <LoadingOverlay text="Loading summary" />;
   }
@@ -428,16 +394,18 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
       {loadingMode && <LoadingOverlay text="Loading new model version..." />}
       <div>
         <div className={classes.headerContainer}>
-          <Button
-            component={workerNode ? Link : Button}
-            to={workerNode ? `/term/${workerNode}/${model?.id}` : null}
-            onClick={workerNode ? null : () => history.push(`/intro/${model.id}?relaunch`)}
-            size="small"
-            disabled={disabledMode}
-            startIcon={<ArrowBackIcon />}
-          >
-            {workerNode ? 'Back to Terminal' : 'Launch Model in Terminal'}
-          </Button>
+          {workerNode ? (
+            <Button
+              component={Link}
+              to={`/term/${workerNode}/${model?.id}`}
+              size="small"
+              startIcon={<ArrowBackIcon />}
+            >
+              Back to Terminal
+            </Button>
+          ) : <div />}
+          {/* empty div to maintain the centering of the title because effort */}
+
           <Typography
             className={classes.header}
             component="h3"
@@ -550,14 +518,14 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
         </Grid>
 
         <div className={classes.publishButton}>
-          {/* In disabledMode, we show the button to turn off disabledMode & version bump */}
+          {/* In disabledMode, we show the button to trigger the intro dialog again */}
           {disabledMode ? (
             <Fab
               variant="extended"
               color="primary"
               style={{ margin: '10px' }}
               onClick={() => {
-                versionBumpModel();
+                setDialogOpen(true);
               }}
             >
               Create New Model Version
@@ -576,6 +544,14 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
         </div>
 
       </div>
+
+      <SummaryIntroDialog
+        open={dialogOpen}
+        setOpen={setDialogOpen}
+        model={model}
+        summaryLoading={loadingMode}
+        setSummaryLoading={setLoadingMode}
+      />
 
       <FullScreenDialog
         open={openEditor}
@@ -620,96 +596,12 @@ const Page = ({ modelIdQueryParam, workerNode, edit }) => {
         />
       </FullScreenDialog>
 
-      <Dialog
-        open={dialogOpen}
-        onClose={(event, reason) => {
-          if (reason === 'backdropClick' || reason === 'escapeKeyDown') {
-            return;
-          }
-
-          setDialogOpen(false);
-        }}
-      >
-        <DialogTitle>
-          Would you like to create a new model version?
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText component="div">
-            <Typography gutterBottom>
-              Any edits to the existing model&apos;s details, annotations, or output files require
-              creating a new version.
-            </Typography>
-            <Typography gutterBottom>
-              If you choose not to make a new version, you can run your model in Docker outside
-              Dojo in a terminal (where Docker is running) using the following:
-            </Typography>
-            <Typography gutterBottom className={classes.codeText}>
-              docker pull {model?.image || '<image_name>'}
-              <br />
-              docker run -it {model?.image || '<image_name>'} /bin/bash
-            </Typography>
-            <Typography gutterBottom>
-              This will drop you into a shell session where you may interact with your model
-              locally to ensure it was correctly configured. If you find any issues,
-              please create a new model version in Dojo.
-            </Typography>
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            onClick={() => {
-              setDialogOpen(false);
-              setDisabledMode(true);
-            }}
-          >
-            No, view without editing
-          </Button>
-          <Button
-            onClick={() => {
-              setDialogOpen(false);
-              setDisabledMode(true);
-              versionBumpModel();
-            }}
-          >
-            Create new version
-          </Button>
-        </DialogActions>
-      </Dialog>
-
       <DeletionDialog
         open={deleteDialogOpen}
         itemDescr={deletionSelection?.description}
         deletionHandler={handleDeleteItem}
         handleDialogClose={handleDeleteDialogClose}
       />
-
-      <Dialog
-        open={editConfigWarning}
-        onClose={() => setEditConfigWarning(false)}
-      >
-        <DialogTitle id="alert-dialog-title">
-          <Typography align="center" variant="h6" gutterBottom>
-            <WarningIcon style={{ marginRight: '8px', paddingTop: '8px' }} />
-            Attention
-          </Typography>
-          <Typography variant="subtitle1">
-            Currently, editing config files can only be done inside a model.<br />
-            Please launch your model to edit config files.
-          </Typography>
-        </DialogTitle>
-        <DialogActions>
-          <Button
-            onClick={() => history.push(`/intro/${model.id}?relaunch`)}
-          >
-            Launch Model
-          </Button>
-          <Button
-            onClick={() => setEditConfigWarning(false)}
-          >
-            Cancel
-          </Button>
-        </DialogActions>
-      </Dialog>
 
       <BasicAlert
         alert={{
@@ -746,14 +638,13 @@ const Summary = () => {
   const query = useQuery();
   const worker = query.get('worker');
   const model = query.get('model');
-  const edit = query.has('edit');
 
   if (worker) {
     return <Page workerNode={worker} />;
   }
 
   if (model) {
-    return <Page modelIdQueryParam={model} edit={edit} />;
+    return <Page modelIdQueryParam={model} />;
   }
 };
 

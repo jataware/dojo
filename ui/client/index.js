@@ -25,9 +25,12 @@ import ViewModels from './components/ViewModels';
 const theme = createMuiTheme({
   palette: {
     // type: 'dark',
+    primary: {
+      main: '#1976d2',
+    },
     background: {
       default: '#fff'
-    }
+    },
   },
   body: {
     backgroundColor: '#fff'

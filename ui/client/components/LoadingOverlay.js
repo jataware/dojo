@@ -12,7 +12,7 @@ const useStyles = makeStyles((theme) => ({
     position: 'absolute',
     top: 0,
     width: '100%',
-    zIndex: '999',
+    zIndex: '9999',
     display: 'flex',
     flexDirection: 'column',
     paddingTop: theme.spacing(30),
