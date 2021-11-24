@@ -121,3 +121,16 @@ export function useShellHistory(containerId) {
     mutateShellHistory: mutate,
   };
 }
+
+export function useRunLogs(runId) {
+  const { data, error, mutate } = useSWR(
+    runId ? `/api/dojo/runs/${runId}/logs` : null, fetcher
+  );
+
+  return {
+    runLogs: data,
+    runLogsLoading: !error && !data,
+    runLogsError: error,
+    mutateRunLogs: mutate,
+  };
+}

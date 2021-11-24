@@ -17,6 +17,7 @@ import Intro from './intro';
 import LandingPage from './landingpage';
 import Model from './model';
 import PublishContainer from './publish_container';
+import RunLogs from './runlogs';
 import Summary from './summary';
 import TermLoading from './term_loading';
 import TheKing from './theking';
@@ -58,6 +59,7 @@ export default function Main() {
         <Route component={PublishContainer} exact path="/publishcontainer/:worker" />
         <Route component={Admin} exact path="/admin" />
         <Route component={TheKing} exact path="/theking" />
+        <Route component={RunLogs} exact path="/runlogs/:runid" />
         <Route path="/*" render={() => <h2>404 Not Found</h2>} />
       </Switch>
     </Router>
