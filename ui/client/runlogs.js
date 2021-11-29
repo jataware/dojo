@@ -94,7 +94,7 @@ const RunLogs = () => {
       {!runLogsLoading && !runLogsError && runLogs?.tasks.map((task) => (
         <LogStep
           key={task.task}
-          taskName={task.task}
+          taskName={task.name}
           content={task.logs}
           state={task.state}
         />
