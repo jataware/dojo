@@ -78,7 +78,7 @@ phantom/ui/node_modules:docker-compose.yaml
 .PHONY:up
 up:docker-compose.yaml phantom/ui/node_modules
 	docker-compose up -d; \
-	make build-dev-image
+	make pull-images
 
 
 .PHONY:down
