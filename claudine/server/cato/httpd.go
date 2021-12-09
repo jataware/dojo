@@ -226,8 +226,8 @@ func diffGetContainer(store *ContainerDiffStore) gin.HandlerFunc {
 func commitContainer(settings *Settings, clouseauWorkerPool *ClouseauWorkerPool, pool *WebSocketPool) gin.HandlerFunc {
 	type RequestBody struct {
 		Tags       []string `json:"tags" binding:"required"`
-		Cwd        string   `json:"cwd" binding:"required"`
-		Entrypoint []string `json:"entrypoint" binding:"required"`
+		Cwd        string   `json:"cwd"`
+		Entrypoint []string `json:"entrypoint"`
 		Listeners  []string `json:"listeners" binding:"required"`
 	}
 
