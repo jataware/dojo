@@ -1,5 +1,6 @@
 import React, {
   useEffect,
+  useState,
 } from 'react';
 
 import DeleteIcon from '@material-ui/icons/Delete';
@@ -18,6 +19,7 @@ import Typography from '@material-ui/core/Typography';
 
 import { makeStyles } from '@material-ui/core/styles';
 
+import BasicAlert from './BasicAlert';
 import { useContainerWithWorker, useDirective, useShellHistory } from './SWRHooks';
 
 import {
@@ -64,6 +66,7 @@ export const ContainerWebSocket = ({
   setSpacetagUrl, setIsSpacetagOpen, setSpacetagFile
 }) => {
   const { register, unregister } = useWebSocketUpdateContext();
+  const [accessoryAlert, setAccessoryAlert] = useState(false);
 
   const { container } = useContainerWithWorker(workerNode);
 
@@ -130,7 +133,7 @@ export const ContainerWebSocket = ({
           model_id: container?.model_id,
           path: f_,
           caption: c
-        });
+        }).then(() => setAccessoryAlert(true));
       }
     };
 
@@ -159,7 +162,18 @@ export const ContainerWebSocket = ({
     workerNode
   ]);
 
-  return (<> </>);
+  return (
+    <>
+      <BasicAlert
+        alert={{
+          message: 'Your accessory was successfully added',
+          severity: 'success',
+        }}
+        visible={accessoryAlert}
+        setVisible={setAccessoryAlert}
+      />
+    </>
+  );
 };
 
 const useStyles = makeStyles((theme) => ({
