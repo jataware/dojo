@@ -11,7 +11,6 @@ import Divider from '@material-ui/core/Divider';
 import Fab from '@material-ui/core/Fab';
 import Grid from '@material-ui/core/Grid';
 import LinearProgress from '@material-ui/core/LinearProgress';
-import NavigateNextIcon from '@material-ui/icons/NavigateNext';
 import SyncDisabledIcon from '@material-ui/icons/SyncDisabled';
 import SyncIcon from '@material-ui/icons/Sync';
 import WarningIcon from '@material-ui/icons/Warning';
@@ -32,7 +31,7 @@ import SimpleEditor from './components/SimpleEditor';
 import Term from './components/Term';
 import { ContainerWebSocket, ShellHistory } from './components/ShellHistory';
 
-import { useContainerWithWorker, useDirective, useModel } from './components/SWRHooks';
+import { useContainerWithWorker, useModel } from './components/SWRHooks';
 
 const useStyles = makeStyles((theme) => ({
   connected: {
@@ -45,69 +44,16 @@ const useStyles = makeStyles((theme) => ({
     zIndex: theme.zIndex.drawer + 1,
     color: '#fff',
   },
+  fabWrapper: {
+    position: 'fixed',
+    right: 0,
+    bottom: 0,
+    zIndex: 10,
+    '& > *': {
+      margin: [[0, theme.spacing(2), theme.spacing(2), 0]],
+    },
+  },
 }));
-
-export const EndSessionDialog = ({
-  open, setOpen, modelId, accept, reject
-}) => {
-  const handleClose = async (yes) => {
-    setOpen(false);
-    if (yes) {
-      accept();
-    } else {
-      reject();
-    }
-  };
-
-  const { directive } = useDirective(modelId);
-
-  return (
-    <div>
-      <Dialog
-        open={open}
-        onClose={handleClose}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-      >
-        <DialogTitle id="alert-dialog-title">
-          <WarningIcon style={{ fontSize: '1.0rem', marginRight: '8px' }} />
-          Are you ready to publish the container?
-        </DialogTitle>
-        <DialogContent>
-          Execution Directive
-          <DialogContentText
-            id="alert-dialog-description"
-            style={{
-              marginTop: '10px',
-              backgroundColor: '#445d6e',
-              color: '#fff',
-              display: 'flex',
-              alignItems: 'center',
-              flexWrap: 'wrap'
-            }}
-          >
-            <NavigateNextIcon style={{ color: 'yellow' }} />
-            {' '}
-            <span>{ directive ? directive.command_raw : 'No directive entered' }</span>
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            autoFocus
-            color="primary"
-            data-test="terminalSubmitConfirmBtn"
-            onClick={() => handleClose(true)}
-          >
-            Yes
-          </Button>
-          <Button onClick={() => handleClose(false)} color="secondary">
-            No
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </div>
-  );
-};
 
 export const AbandonSessionDialog = ({
   open, accept, reject
@@ -211,8 +157,10 @@ const CenteredGrid = ({ workerNode, model }) => {
   const theme = useTheme();
   const { container } = useContainerWithWorker(workerNode);
 
-  const [openEndSessionDialog, setEndSessionDialogOpen] = useState(false);
+  const classes = useStyles();
+
   const [openAbandonSessionDialog, setAbandonSessionDialogOpen] = useState(false);
+
   const [editorContents, setEditorContents] = useState({});
   const [openEditor, setOpenEditor] = useState(false);
   const [isSpacetagOpen, setIsSpacetagOpen] = useState(false);
@@ -235,11 +183,6 @@ const CenteredGrid = ({ workerNode, model }) => {
     // yolo
     fetch(`/api/clouseau/docker/${workerNode}/stop/${container.id}`, { method: 'DELETE' });
     history.push('/');
-  };
-
-  const handleEndSession = () => {
-    // go to summary screen
-    history.push(`/summary?worker=${workerNode}`, container);
   };
 
   const shorthandDialogOnSave = () => {
@@ -333,41 +276,28 @@ const CenteredGrid = ({ workerNode, model }) => {
         </Grid>
       </Grid>
 
-      <div style={{
-        position: 'absolute', right: 0, bottom: '2px', zIndex: 10
-      }}
-      >
+      <div className={classes.fabWrapper}>
+        <Fab
+          variant="extended"
+          color="secondary"
+          onClick={(e) => { e.preventDefault(); setAbandonSessionDialogOpen(true); }}
+        >
+          Discard Session
+        </Fab>
+
         <Fab
           data-test="terminalEndSessionBtn"
           variant="extended"
           color="primary"
-          style={{ margin: '10px' }}
-          onClick={(e) => { e.preventDefault(); setEndSessionDialogOpen(true); }}
+          onClick={() => history.push(`/summary?worker=${workerNode}&save=true`)}
         >
-          End Session
+          Save and Continue
         </Fab>
-
-        <Fab
-          variant="extended"
-          color="secondary"
-          style={{ margin: '10px' }}
-          onClick={(e) => { e.preventDefault(); setAbandonSessionDialogOpen(true); }}
-        >
-          Abandon Session
-        </Fab>
-
       </div>
       <AbandonSessionDialog
         open={openAbandonSessionDialog}
         accept={handleAbandonSession}
         reject={() => { setAbandonSessionDialogOpen(false); }}
-      />
-      <EndSessionDialog
-        open={openEndSessionDialog}
-        setOpen={setEndSessionDialogOpen}
-        modelId={model.id}
-        accept={handleEndSession}
-        reject={() => {}}
       />
     </div>
   );

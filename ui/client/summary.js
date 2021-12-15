@@ -1,12 +1,16 @@
 import React, { useEffect, useState } from 'react';
 
+import axios from 'axios';
+
 import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 import Button from '@material-ui/core/Button';
+import CheckIcon from '@material-ui/icons/Check';
 import Container from '@material-ui/core/Container';
 import DeleteIcon from '@material-ui/icons/Delete';
 import EditIcon from '@material-ui/icons/Edit';
 import Fab from '@material-ui/core/Fab';
 import Grid from '@material-ui/core/Grid';
+import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
 import useMediaQuery from '@material-ui/core/useMediaQuery';
 
@@ -17,10 +21,12 @@ import { Link, useHistory, useLocation } from 'react-router-dom';
 import BasicAlert from './components/BasicAlert';
 import DeletionDialog from './components/DeletionDialog';
 import DirectiveBox from './components/DirectiveBox';
+import EndSessionDialog from './components/EndSessionDialog';
 import FileCardList from './components/FileCardList';
 import FullScreenDialog from './components/FullScreenDialog';
 import LoadingOverlay from './components/LoadingOverlay';
 import { ModelSummaryEditor } from './components/ModelSummaryEditor';
+import PublishContainer from './publish_container';
 import ShorthandEditor from './components/ShorthandEditor';
 import SimpleEditor from './components/SimpleEditor';
 import SummaryAccessories from './components/SummaryAccessories';
@@ -66,7 +72,7 @@ const useStyles = makeStyles((theme) => ({
     paddingTop: '10px',
   },
   publishButton: {
-    position: 'absolute',
+    position: 'fixed',
     right: 0,
     bottom: '2px',
     zIndex: 10
@@ -81,24 +87,50 @@ const useStyles = makeStyles((theme) => ({
     float: 'right',
     backgroundColor: theme.palette.grey[400],
   },
+  causemosButton: {
+    fontWeight: 'bold',
+    backgroundColor: theme.palette.grey[400],
+  },
   cardGridContainer: {
     '& > *': {
       height: '100%',
     },
   },
+  tooltip: {
+    marginBottom: theme.spacing(1),
+  },
+  publishedBox: {
+    alignItems: 'center',
+    backgroundColor: theme.palette.success.light,
+    borderRadius: theme.shape.borderRadius,
+    color: theme.palette.success.contrastText,
+    display: 'flex',
+    padding: theme.spacing(1),
+  },
 }));
 
-const Page = ({ modelIdQueryParam, workerNode }) => {
-  const [dialogOpen, setDialogOpen] = useState(!!modelIdQueryParam);
+const Page = ({
+  modelIdQueryParam, workerNode, published, save
+}) => {
+  const [introDialogOpen, setIntroDialogOpen] = useState(!!modelIdQueryParam);
+  // disable the page whenever there's no worker present
   const [disabledMode, setDisabledMode] = useState(!workerNode);
   const [loadingMode, setLoadingMode] = useState(false);
+  // when we're uploading the container to dockerhub - when there's a worker and the save flag
+  // is present
+  const [uploading, setUploading] = useState(!!workerNode && save);
 
-  // we're updating history & the url, rather than reloading the page when these props change
-  // for the version bump, so we need to make sure we keep state up to date with the props
+  const history = useHistory();
+
+  // these can sometimes change without the page reloading, so keep an eye on them with this
   useEffect(() => {
-    setDialogOpen(!!modelIdQueryParam);
+    // show the intro dialog if we are finding the model through the model id
+    // and thus don't have a worker loaded
+    // but don't show it if we have the published flag, which we get after publishing
+    setIntroDialogOpen(!!modelIdQueryParam && !published);
+    // and disable the page if we don't have a workernode (ie a container running)
     setDisabledMode(!workerNode);
-  }, [modelIdQueryParam, workerNode]);
+  }, [modelIdQueryParam, workerNode, published]);
 
   const {
     container, mutateContainer
@@ -107,9 +139,9 @@ const Page = ({ modelIdQueryParam, workerNode }) => {
   // get the model id from the container if we have it, or from the query param
   const modelId = workerNode && container ? container?.model_id : modelIdQueryParam;
 
-  const history = useHistory();
-
-  const { model, modelLoading, modelError } = useModel(modelId);
+  const {
+    model, modelLoading, modelError, mutateModel
+  } = useModel(modelId);
   const {
     configs, configsLoading, configsError, mutateConfigs
   } = useConfigs(modelId);
@@ -141,6 +173,8 @@ const Page = ({ modelIdQueryParam, workerNode }) => {
   // the two alerts on the page
   const [noDirectiveAlert, setNoDirectiveAlert] = useState(false);
   const [navigateAwayWarning, setNavigateAwayWarning] = useState(false);
+
+  const [endSessionDialog, setEndSessionDialog] = useState(false);
 
   const classes = useStyles();
   const theme = useTheme();
@@ -183,14 +217,15 @@ const Page = ({ modelIdQueryParam, workerNode }) => {
     }
   };
 
-  const publishContainer = (e) => {
+  const handlePublishClick = (e) => {
     e.preventDefault();
 
     if (!directive) {
       setNoDirectiveAlert(true);
       return;
     }
-    history.push(`/publishcontainer/${workerNode}`, container);
+
+    setEndSessionDialog(true);
   };
 
   const FileTile = ({ item }) => {
@@ -292,6 +327,8 @@ const Page = ({ modelIdQueryParam, workerNode }) => {
       });
     }
 
+    const causemosUrl = `https://causemos.uncharted.software/#/model/${model.family_name}/model-publishing-experiment?datacube_id=${model.id}`;
+
     // no need to spread the following out onto a million lines
     /* eslint-disable react/jsx-one-expression-per-line */
     return (
@@ -327,6 +364,20 @@ const Page = ({ modelIdQueryParam, workerNode }) => {
           Model ID: {model.id}
         </Typography>
 
+        {/* only show this button if we're looking at a published model and
+            we don't have a container running
+        */}
+        {(model?.is_published && !workerNode) && (
+          <Button
+            className={classes.causemosButton}
+            variant="contained"
+            href={causemosUrl}
+            disableElevation
+          >
+            View Model on Causemos
+          </Button>
+        )}
+
         <Typography variant="subtitle2" className={classes.modelHeader}>Maintainer:</Typography>
         <Typography variant="body2" className={classes.subsection}>
           Name: {model.maintainer?.name}
@@ -356,7 +407,7 @@ const Page = ({ modelIdQueryParam, workerNode }) => {
         </Typography>
         <Typography variant="subtitle2" className={classes.modelHeader}>Categories:</Typography>
         <Typography variant="body2" className={classes.subsection}>
-          {model.category.join(', ')}
+          {model.category?.join(', ')}
         </Typography>
       </div>
     );
@@ -385,13 +436,36 @@ const Page = ({ modelIdQueryParam, workerNode }) => {
     );
   }
 
+  // this gets passed down to the EndSessionDialog and is called when the user closes the dialog
+  // after a successful publish
+  const afterPublish = (closeDialog) => {
+    // shut down the container
+    axios.delete(`/api/clouseau/docker/${workerNode}/stop/${container.id}`)
+      .then((resp) => {
+        console.log('Successfully shut down the container', resp);
+      })
+      .catch((err) => {
+        console.debug('There was an error shutting down the container: ', err);
+      });
+
+    // then change the URL to be model-based (instead of worker based) again
+    // and give us the published flag so the intro dialog doesn't show
+    history.replace(`/summary?model=${model.id}&published=true`);
+    // make sure editing is disabled
+    setDisabledMode(true);
+    // mutate the model to ensure we get the new is_published attribute
+    mutateModel(model.id);
+    // and call the passed in closeDialog function to close the EndSessionDialog
+    closeDialog();
+  };
+
   return (
     <Container
       className={classes.root}
       component="main"
       maxWidth={mediumBreakpoint ? 'md' : 'xl'}
     >
-      {loadingMode && <LoadingOverlay text="Loading new model version..." />}
+      {loadingMode && <LoadingOverlay text="Loading..." />}
       <div>
         <div className={classes.headerContainer}>
           {workerNode ? (
@@ -414,6 +488,13 @@ const Page = ({ modelIdQueryParam, workerNode }) => {
           >
             Model Summary
           </Typography>
+          {(model?.is_published && !workerNode) && (
+            <div>
+              <Typography className={classes.publishedBox}>
+                <CheckIcon style={{ margin: '0 4px 4px 0' }} /> Published
+              </Typography>
+            </div>
+          )}
         </div>
         <Grid container spacing={2} className={classes.cardGridContainer}>
           <Grid item container xs={5} lg={6} spacing={2}>
@@ -525,29 +606,40 @@ const Page = ({ modelIdQueryParam, workerNode }) => {
               color="primary"
               style={{ margin: '10px' }}
               onClick={() => {
-                setDialogOpen(true);
+                setIntroDialogOpen(true);
               }}
             >
               Create New Model Version
             </Fab>
           ) : (
-            <Fab
-              variant="extended"
-              color="primary"
-              style={{ margin: '10px' }}
-              onClick={publishContainer}
-              disabled={!workerNode || disabledMode}
+            <Tooltip
+              title={
+                uploading ? 'Please wait until the upload is complete before publishing' : ''
+              }
+              classes={{
+                popper: classes.tooltip,
+              }}
             >
-              Publish
-            </Fab>
+              <span>
+                <Fab
+                  variant="extended"
+                  color="primary"
+                  style={{ margin: '10px' }}
+                  onClick={handlePublishClick}
+                  disabled={!workerNode || uploading}
+                >
+                  Publish
+                </Fab>
+              </span>
+            </Tooltip>
           )}
         </div>
 
       </div>
 
       <SummaryIntroDialog
-        open={dialogOpen}
-        setOpen={setDialogOpen}
+        open={introDialogOpen}
+        setOpen={setIntroDialogOpen}
         model={model}
         summaryLoading={loadingMode}
         setSummaryLoading={setLoadingMode}
@@ -603,6 +695,13 @@ const Page = ({ modelIdQueryParam, workerNode }) => {
         handleDialogClose={handleDeleteDialogClose}
       />
 
+      <EndSessionDialog
+        open={endSessionDialog}
+        setOpen={setEndSessionDialog}
+        model={model}
+        afterPublish={afterPublish}
+      />
+
       <BasicAlert
         alert={{
           message: 'Please add a model execution directive before publishing the model',
@@ -626,6 +725,9 @@ const Page = ({ modelIdQueryParam, workerNode }) => {
 
       {model && openModelEdit
         && <ModelSummaryEditor model={model} open={openModelEdit} setOpen={setOpenModelEdit} />}
+
+      {uploading
+        && <PublishContainer worker={workerNode} setUploading={setUploading} />}
     </Container>
   );
 };
@@ -638,13 +740,15 @@ const Summary = () => {
   const query = useQuery();
   const worker = query.get('worker');
   const model = query.get('model');
+  const published = query.get('published');
+  const save = query.get('save');
 
   if (worker) {
-    return <Page workerNode={worker} />;
+    return <Page workerNode={worker} save={save} />;
   }
 
   if (model) {
-    return <Page modelIdQueryParam={model} />;
+    return <Page modelIdQueryParam={model} published={published} />;
   }
 };
 
