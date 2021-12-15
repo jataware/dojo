@@ -1,6 +1,7 @@
 import React from 'react';
 
 import Button from '@material-ui/core/Button';
+import CheckBoxIcon from '@material-ui/icons/CheckBox';
 import Container from '@material-ui/core/Container';
 import { DataGrid } from '@material-ui/data-grid';
 import Typography from '@material-ui/core/Typography';
@@ -19,10 +20,20 @@ const useStyles = makeStyles((theme) => ({
   },
   gridContainer: {
     height: '400px',
-    width: '100%',
+    width: '1600px',
+    margin: '0 auto',
   },
   header: {
     marginBottom: theme.spacing(3),
+  },
+  published: {
+    display: 'flex',
+    alignItems: 'center',
+  },
+  publishedCheck: {
+    color: theme.palette.success.light,
+    marginBottom: '4px',
+    marginLeft: '4px',
   },
 }));
 
@@ -92,9 +103,26 @@ function ViewModels() {
       field: 'description',
       headerName: 'Description',
       renderCell: expandableCell,
-      width: 300,
+      width: 280,
     },
     { field: 'id', headerName: 'ID', width: 300 },
+    {
+      field: 'commit_message',
+      headerName: 'Commit Message',
+      renderCell: expandableCell,
+      width: 280,
+    },
+    {
+      field: 'is_published',
+      headerName: 'Status',
+      width: 120,
+      renderCell: ({ value }) => (
+        <div className={classes.published}>
+          {value === true ? 'Published' : 'Unpublished'}
+          {value === true && <CheckBoxIcon className={classes.publishedCheck} />}
+        </div>
+      ),
+    },
     {
       field: 'link',
       headerName: ' ',
@@ -114,6 +142,7 @@ function ViewModels() {
     <Container
       className={classes.root}
       component="main"
+      maxWidth="xl"
     >
       <Typography
         className={classes.header}
