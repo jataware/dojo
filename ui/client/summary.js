@@ -183,6 +183,7 @@ const Page = ({
   const onUnload = (e) => {
     // preventDefault here triggers the confirm dialog
     e.preventDefault();
+
     // show the alert with our warning text, as we can't modify the confirm dialog text
     setNavigateAwayWarning(true);
   };
@@ -440,13 +441,15 @@ const Page = ({
   // after a successful publish
   const afterPublish = (closeDialog) => {
     // shut down the container
-    axios.delete(`/api/clouseau/docker/${workerNode}/stop/${container.id}`)
-      .then((resp) => {
-        console.log('Successfully shut down the container', resp);
-      })
-      .catch((err) => {
-        console.debug('There was an error shutting down the container: ', err);
-      });
+    if (workerNode && container) {
+      axios.delete(`/api/clouseau/docker/${workerNode}/stop/${container.id}`)
+        .then((resp) => {
+          console.log('Successfully shut down the container', resp);
+        })
+        .catch((err) => {
+          console.debug('There was an error shutting down the container: ', err);
+        });
+    }
 
     // then change the URL to be model-based (instead of worker based) again
     // and give us the published flag so the intro dialog doesn't show
@@ -609,12 +612,13 @@ const Page = ({
                 setIntroDialogOpen(true);
               }}
             >
-              Create New Model Version
+              {model.is_published ? 'Create New Model Version' : 'Edit Model'}
             </Fab>
-          ) : (
+          ): <></>}
+          {!model.is_published ? (
             <Tooltip
               title={
-                uploading ? 'Please wait until the upload is complete before publishing' : ''
+                uploading ? 'Please wait until the upload is complete before publishing' : 'Edit model and save an image to publish'
               }
               classes={{
                 popper: classes.tooltip,
@@ -626,13 +630,13 @@ const Page = ({
                   color="primary"
                   style={{ margin: '10px' }}
                   onClick={handlePublishClick}
-                  disabled={!workerNode || uploading}
+                  disabled={!model.image || uploading}
                 >
                   Publish
                 </Fab>
               </span>
             </Tooltip>
-          )}
+          ): <></>}
         </div>
 
       </div>
@@ -714,7 +718,8 @@ const Page = ({
       <BasicAlert
         alert={{
           message: `
-            If you navigate away without publishing your model, any container changes will be lost
+            If you navigate away without publishing your model, your model will not be available
+            for execution.
           `,
           severity: 'error',
         }}

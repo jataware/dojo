@@ -55,8 +55,9 @@ const useStyles = makeStyles((theme) => ({
 const SummaryIntroDialog = ({
   open, setOpen, model, summaryLoading, setSummaryLoading
 }) => {
-  // steps: 'version', 'container', 'confirm'
-  const [step, setStep] = useState('version');
+  // steps: 'version', 'continue', 'container', 'confirm'
+  const defaultStep = model.is_published ? 'version' : 'continue';
+  const [step, setStep] = useState(defaultStep);
 
   const history = useHistory();
 
@@ -73,13 +74,14 @@ const SummaryIntroDialog = ({
     // switch back to the first screen of the dialog whenever we close it
     // set a timeout equal to the time it takes the dialog to animate away
     // so we don't see a flash back to the version dialog before it closes
-    setTimeout(() => setStep('version'), theme.transitions.duration.standard);
+    setTimeout(() => setStep(defaultStep), theme.transitions.duration.standard);
   };
 
   const versionBumpModel = async (relaunch) => {
     // set the endpoint for version bumping
     let versionBumpUrl = `/api/dojo/models/version/${model.id}`;
     let introUrl;
+    let editModelId;
 
     // and add on the exclude_files flag if we aren't relaunching an image
     if (!relaunch) versionBumpUrl += '?exclude_files=true';
@@ -88,15 +90,21 @@ const SummaryIntroDialog = ({
       // set the loading spinner state on the summary page
       setSummaryLoading(true);
 
-      const response = await axios.get(versionBumpUrl);
+      if (model.is_published) {
+        const response = await axios.get(versionBumpUrl);
+        editModelId = response.data;
+      } else {
+        editModelId = model.id;
+      }
 
       // set our endpoint for /intro
-      introUrl = `/intro/${response.data}`;
+      introUrl = `/intro/${editModelId}`;
+
       // and add the relaunch query param if we are relaunching an image
       if (relaunch) introUrl += '?relaunch';
 
       // update the URL without reloading the page, so we don't start the dialog flow over again
-      window.history.pushState(null, null, `/summary?model=${response.data}`);
+      window.history.pushState(null, null, `/summary?model=${editModelId}`);
 
       // take us to the /intro page
       history.push(introUrl);
@@ -153,6 +161,57 @@ const SummaryIntroDialog = ({
                   endIcon={<ArrowForwardIcon />}
                 >
                   Create new version
+                </Button>
+              </DialogActions>
+            </DialogContent>
+          </div>
+        );
+      case 'continue':
+        return (
+          <div className={classes.pageLoadDialog}>
+            <DialogTitle align="center">
+              Would you like to edit your model?
+            </DialogTitle>
+            <DialogContent>
+              <DialogContentText component="div">
+                <Typography gutterBottom>
+                  You will be able launch the terminal and make changes where you left off
+                  or start from scratch.
+                </Typography>
+                <Typography gutterBottom>
+                  As the model has not yet been published, any changes will be reflected in
+                  this model and not in a new version. If you want to create a new version
+                  of your model, be sure to publish this version first.
+                </Typography>
+                <Typography gutterBottom className={classes.codeText}>
+                  docker pull {model?.image || '<image_name>'}
+                  <br />
+                  docker run -it --rm {model?.image || '<image_name>'} /bin/bash
+                </Typography>
+                <Typography>
+                  This will drop you into a shell session where you may interact with your model
+                  locally to ensure it was correctly configured.
+                </Typography>
+              </DialogContentText>
+              <DialogActions className={classes.versionButtonWrapper}>
+                <Button
+                  color="secondary"
+                  variant="contained"
+                  disableElevation
+                  onClick={handleClose}
+                >
+                  No, view without editing
+                </Button>
+                <Button
+                  color="primary"
+                  variant="contained"
+                  disableElevation
+                  onClick={() => {
+                    setStep('container');
+                  }}
+                  endIcon={<ArrowForwardIcon />}
+                >
+                  Edit model
                 </Button>
               </DialogActions>
             </DialogContent>
