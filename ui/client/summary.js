@@ -440,6 +440,8 @@ const Page = ({
   // this gets passed down to the EndSessionDialog and is called when the user closes the dialog
   // after a successful publish
   const afterPublish = (closeDialog) => {
+    // mutate our SWR model as we rely on model.image to enable our publish button
+    mutateModel();
     // shut down the container
     if (workerNode && container) {
       axios.delete(`/api/clouseau/docker/${workerNode}/stop/${container.id}`)
