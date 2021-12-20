@@ -5,7 +5,7 @@
 # gnumake curl git
 # docker docker-compose
 
-VERSION := 0.3.12
+VERSION := 0.4.0
 
 DEV ?= $(strip $(if $(findstring y,$(prod)),,dev))
 
