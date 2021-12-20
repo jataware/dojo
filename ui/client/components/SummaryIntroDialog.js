@@ -175,7 +175,7 @@ const SummaryIntroDialog = ({
             <DialogContent>
               <DialogContentText component="div">
                 <Typography gutterBottom>
-                  You will be able launch the terminal and make changes where you left off
+                  You will be able to launch the terminal and make changes where you left off
                   or start from scratch.
                 </Typography>
                 <Typography gutterBottom>
