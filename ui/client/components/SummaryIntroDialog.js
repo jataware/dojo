@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import axios from 'axios';
 
@@ -16,6 +16,7 @@ import Grid from '@material-ui/core/Grid';
 import PlayArrowIcon from '@material-ui/icons/PlayArrow';
 import SettingsBackupRestoreIcon from '@material-ui/icons/SettingsBackupRestore';
 import Slide from '@material-ui/core/Slide';
+import TextField from '@material-ui/core/TextField';
 import Typography from '@material-ui/core/Typography';
 
 import { makeStyles, useTheme } from '@material-ui/core/styles';
@@ -50,6 +51,13 @@ const useStyles = makeStyles((theme) => ({
     // https://github.com/mui-org/material-ui/issues/13701
     overflow: 'hidden',
   },
+  confirmContent: {
+    overflowY: 'hidden',
+  },
+  confirmInput: {
+    width: '100%',
+    marginTop: theme.spacing(1),
+  },
 }));
 
 const SummaryIntroDialog = ({
@@ -58,6 +66,9 @@ const SummaryIntroDialog = ({
   // steps: 'version', 'continue', 'container', 'confirm'
   const defaultStep = model.is_published ? 'version' : 'continue';
   const [step, setStep] = useState(defaultStep);
+  const [confirmName, setConfirmName] = useState('');
+  const [confirmNameError, setConfirmNameError] = useState(false);
+  const [disableConfirm, setDisableConfirm] = useState(true);
 
   const history = useHistory();
 
@@ -112,6 +123,38 @@ const SummaryIntroDialog = ({
       console.log('there was an error version bumping the model', error);
     }
   };
+
+  const handleConfirmName = (event) => {
+    setConfirmName(event.target.value);
+  };
+
+  useEffect(() => {
+    // pseudo debounce to only do this when the user pauses half a second
+    const timer = setTimeout(() => {
+      if (confirmName.toLowerCase() === model.name.toLowerCase()) {
+        // if the value matches, then let them confirm (and disable any errors)
+        setConfirmNameError(false);
+        setDisableConfirm(false);
+      } else if (
+        model.name.toLowerCase().substring(0, confirmName.length) === confirmName.toLowerCase()
+      ) {
+        // if they're typing part of the beginning of the name, disable errors but don't confirm
+        setConfirmNameError(false);
+        setDisableConfirm(true);
+      } else if (confirmName.length) {
+        // otherwise, if there is a value and the above aren't true, show an error
+        setConfirmNameError(true);
+        setDisableConfirm(true);
+      } else {
+        // or we have no text so we shouldn't show an error
+        setConfirmNameError(false);
+        setDisableConfirm(true);
+      }
+    }, 500);
+
+    // clear timer if this gets called again before the timeout is up
+    return () => clearTimeout(timer);
+  }, [confirmName, model]);
 
   const displayStep = () => {
     switch (step) {
@@ -310,13 +353,27 @@ const SummaryIntroDialog = ({
             <DialogTitle align="center">
               Are you sure you want to start over from a base image?
             </DialogTitle>
-            <DialogContent>
+            <DialogContent classes={{ root: classes.confirmContent }}>
               <DialogContentText component="div">
                 <Typography>
                   Starting over from a base image will remove your existing output, accessory,
                   and configuration files. Please confirm that this is what you would like to do.
                 </Typography>
               </DialogContentText>
+              <Typography variant="subtitle1" gutterBottom className={classes.codeText}>
+                Model Name: {model.name}
+              </Typography>
+
+              <TextField
+                autoFocus
+                value={confirmName}
+                onChange={handleConfirmName}
+                label="Please re-enter your model name to confirm that you want to start over"
+                className={classes.confirmInput}
+                variant="outlined"
+                error={confirmNameError}
+                helperText={confirmNameError ? 'Please enter your exact model name (case insensitive)' : ' '}
+              />
               <DialogActions>
                 <Button
                   color="secondary"
@@ -330,6 +387,7 @@ const SummaryIntroDialog = ({
                   color="primary"
                   variant="contained"
                   disableElevation
+                  disabled={disableConfirm}
                   onClick={() => versionBumpModel()}
                 >
                   Confirm
