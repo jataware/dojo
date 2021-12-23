@@ -24,16 +24,6 @@ export function useModel(modelId) {
   };
 }
 
-export function useModels() {
-  const { data, error } = useSWR('/api/dojo/models/latest', fetcher);
-
-  return {
-    models: data,
-    modelsLoading: !error && !data,
-    modelsError: error,
-  };
-}
-
 export function useContainer(containerId) {
   const { data, error, mutate } = useSWR(
     containerId ? `/api/dojo/clouseau/container/${containerId}` : null, fetcher

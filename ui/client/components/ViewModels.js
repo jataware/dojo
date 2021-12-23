@@ -1,4 +1,6 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
+
+import axios from 'axios';
 
 import Button from '@material-ui/core/Button';
 import CheckBoxIcon from '@material-ui/icons/CheckBox';
@@ -11,8 +13,7 @@ import { useHistory } from 'react-router-dom';
 
 import ExpandableDataGridCell from './ExpandableDataGridCell';
 import LoadingOverlay from './LoadingOverlay';
-
-import { useModels } from './SWRHooks';
+import SearchModels from './SearchModels';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -35,12 +36,60 @@ const useStyles = makeStyles((theme) => ({
     marginBottom: '4px',
     marginLeft: '4px',
   },
+  searchWrapper: {
+    marginBottom: theme.spacing(2),
+    display: 'flex',
+    alignItems: 'center',
+  },
+  searchInput: {
+    width: '400px',
+    marginRight: theme.spacing(2),
+  },
 }));
+
+const getModels = async (setModels, setModelsError, setModelsLoading, scrollId) => {
+  if (!scrollId) {
+    // only do this for the first call to getModels, when we don't have a scrollId
+    // so we don't show the full page spinner for every subsequent set of models
+    setModelsLoading(true);
+  }
+
+  const url = scrollId
+    ? `/api/dojo/models/latest?scroll_id=${scrollId}` : '/api/dojo/models/latest';
+  axios.get(url)
+    .then((response) => {
+      console.log('request for /latest response:', response);
+      setModels((prev) => {
+        setModelsLoading(false);
+        return prev.concat(response.data?.results);
+      });
+
+      // when there's no scroll id, we've hit the end of the results
+      if (response.data?.scroll_id) {
+        // if we get a scroll id back, there are more results
+        // so call getModels again to fetch the next set
+        getModels(setModels, setModelsError, setModelsLoading, response.data?.scroll_id);
+      }
+    })
+    .catch((error) => {
+      console.log('error:', error);
+      setModelsError(true);
+    });
+};
 
 function ViewModels() {
   const history = useHistory();
-  const { models, modelsLoading, modelsError } = useModels();
   const classes = useStyles();
+  const [models, setModels] = useState([]);
+  const [modelsError, setModelsError] = useState(false);
+  const [modelsLoading, setModelsLoading] = useState(false);
+
+  const [searchedModels, setSearchedModels] = useState(null);
+
+  useEffect(() => {
+    // only do this once when the page loads
+    getModels(setModels, setModelsError, setModelsLoading);
+  }, []);
 
   if (modelsLoading) {
     return <LoadingOverlay text="Loading models" />;
@@ -50,12 +99,12 @@ function ViewModels() {
     return (
       <LoadingOverlay
         text="There was an error loading the list of all models"
-        error={modelsError}
+        error
       />
     );
   }
 
-  if (!models?.results.length) {
+  if (!models?.length) {
     return <LoadingOverlay text="No Models Found" error />;
   }
 
@@ -110,7 +159,7 @@ function ViewModels() {
       field: 'commit_message',
       headerName: 'Commit Message',
       renderCell: expandableCell,
-      width: 280,
+      width: 270,
     },
     {
       field: 'is_published',
@@ -126,6 +175,8 @@ function ViewModels() {
     {
       field: 'link',
       headerName: ' ',
+      sortable: false,
+      disableColumnMenu: true,
       renderCell: (params) => (
         <Button
           onClick={() => viewModelClick(params.row.id)}
@@ -153,10 +204,11 @@ function ViewModels() {
         All Models
       </Typography>
       <div className={classes.gridContainer}>
+        <SearchModels setSearchedModels={setSearchedModels} models={models} />
         <DataGrid
           autoHeight
           columns={columns}
-          rows={models?.results}
+          rows={searchedModels !== null ? searchedModels : models}
         />
       </div>
     </Container>
