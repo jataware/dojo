@@ -88,7 +88,7 @@ export function useAccessories(modelId) {
 
 export function useDirective(modelId) {
   const { data, error, mutate } = useSWR(
-    modelId ? `/api/dojo/dojo/directive/${modelId}` : null, fetcher
+    modelId ? `/api/dojo/dojo/directive/${modelId}` : null, fetcher, { shouldRetryOnError: false }
   );
 
   return {
