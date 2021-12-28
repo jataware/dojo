@@ -16,7 +16,6 @@ import App from './app';
 import Intro from './intro';
 import LandingPage from './landingpage';
 import Model from './model';
-import PublishContainer from './publish_container';
 import RunLogs from './runlogs';
 import Summary from './summary';
 import TermLoading from './term_loading';
@@ -60,7 +59,6 @@ export default function Main() {
         <Route component={TermLoading} exact path="/loadingterm" />
         <Route component={App} exact path="/term/:worker/:modelid" />
         <Route component={Summary} exact path="/summary" />
-        <Route component={PublishContainer} exact path="/publishcontainer/:worker" />
         <Route component={Admin} exact path="/admin" />
         <Route component={TheKing} exact path="/theking" />
         <Route component={RunLogs} exact path="/runlogs/:runid" />
