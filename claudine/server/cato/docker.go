@@ -20,6 +20,8 @@ import (
 	//specs "github.com/opencontainers/image-spec/specs-go/v1"
 )
 
+const CgroupnsModeHost = "host"
+
 type ErrorPayload struct {
 	Error string `json:"error"`
 }
@@ -274,7 +276,9 @@ func (docker *Docker) Launch(image string, name string, entryPoint []string) (st
 		}
 	}
 	hostConfig := &container.HostConfig{
-		AutoRemove: true,
+		AutoRemove:   true,
+		Privileged:   true,
+		CgroupnsMode: CgroupnsModeHost,
 		PortBindings: nat.PortMap{
 			"22/tcp": []nat.PortBinding{
 				{
