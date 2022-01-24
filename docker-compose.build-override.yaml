@@ -118,6 +118,8 @@ services:
       - DOCKERHUB_AUTH
     networks:
       - world-modelers
+    depends_on:
+      - redis
   kibana:
     env_file:
       - envfile
