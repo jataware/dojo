@@ -12,7 +12,7 @@ GROUP=jataware
 NAME=clouseau
 IMAGE="${GROUP}/${NAME}"
 
-docker build -f cato/Dockerfile \
+docker build --no-cache -f cato/Dockerfile \
        --build-arg CLOUSEAU_VERSION="${VERSION}" \
        --build-arg CLOUSEAU_BUILD="${DT}" \
        --build-arg CLOUSEAU_COMMIT="${COMMIT}" \

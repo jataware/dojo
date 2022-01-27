@@ -2,11 +2,13 @@ package cato
 
 import (
 	"flag"
+	"fmt"
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 	"log"
 	"net/http"
 	"os"
+	"strings"
 	"time"
 )
 
@@ -39,14 +41,44 @@ func setup() *gin.Engine {
 	pool := NewPool()
 	go pool.Start()
 
-	clouseauWorkerPool, err := NewClouseauWorkerPool(settings)
+	redisStore := NewRedisStore(settings.Redis.Host, settings.Redis.Port)
+	clouseauWorkerPool, err := NewClouseauWorkerPool(redisStore)
 	if err != nil {
 		log.Fatal(err)
 	}
-	redisStore := NewRedisStore(settings.Redis.Host, settings.Redis.Port)
+
+	shutdownTimerStore := NewShutdownTimerStore(&settings.AutoShutdownSettings, clouseauWorkerPool, pool)
+
+	//Bootstrap Workers
+	for _, host := range settings.BootstrapWorkers {
+		log.Printf("Bootstrapping worker host: %s", host)
+		if err := clouseauWorkerPool.AddWorker(host); err != nil {
+			LogError(fmt.Sprintf("Error bootstrapping host: %s", host), err)
+		}
+	}
+
+	//check workers
+	if workers, err := clouseauWorkerPool.Workers(); err != nil {
+		LogError("Error getting workers", err)
+	} else {
+		if len(workers) == 0 {
+			LogWarnMsg("no workers configured")
+		} else {
+			workerHosts := make([]string, 0)
+			for i := range workers {
+				workerHosts = append(workerHosts, workers[i].Host)
+				go func(w *ClouseauWorker) {
+					info := w.Info(false)
+					log.Printf("Docker Worker - %s, Status: %s\n", w.Host, info.Status)
+				}(&workers[i])
+			}
+			log.Printf("Configured Worker Hosts: [%s]", strings.Join(workerHosts, ","))
+		}
+	}
+
 	// disabled
 	// containerDiffStore := NewContainerDiffStore(docker)
-	engine := SetupRoutes(pool, settings, clouseauWorkerPool, redisStore)
+	engine := SetupRoutes(pool, settings, clouseauWorkerPool, shutdownTimerStore, redisStore)
 	return engine
 }
 

@@ -12,7 +12,7 @@ v2.2.7
 https://user-images.githubusercontent.com/969727/115638877-3bd3a700-a2e1-11eb-8f08-d3c9fa5907f0.mp4
 
 ```
-go  v1.16.3
+go  v1.17
 ```
 
 

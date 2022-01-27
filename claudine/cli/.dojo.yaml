@@ -1,0 +1,25 @@
+
+commands:
+  - name: tag
+    usage: tag <file>
+    short: tag a file
+    long: |
+      tag a file
+
+  - name: edit
+    usage: edit <file>
+    short: edit a text file
+    long: |
+      edit a file with the online editor
+
+  - name: config
+    usage: config <file>
+    short: mark up a config file
+    long: |
+      mark up a config file
+
+  - name: accessory
+    usage: accessory <file>
+    short: mark a file as an accessory
+    long: |
+      mark a file as an accessory

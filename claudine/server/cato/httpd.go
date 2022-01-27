@@ -3,15 +3,67 @@ package cato
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
+	"github.com/rs/xid"
 	"log"
+	"net"
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"sync"
 	"time"
-
 	//"github.com/docker/docker/api/types"
-	"strconv"
+	//"strconv"
 )
+
+const (
+	CONTEXT_WORKER_LOCK   = "worker-lock"
+	CONTEXT_DOCKER_WORKER = "docker-worker"
+	CONTEXT_CONTAINER_ID  = "container-id"
+)
+
+type ctx struct {
+	context *gin.Context
+}
+
+func httpContext(c *gin.Context) *ctx {
+	return &ctx{context: c}
+}
+
+func (c *ctx) getLock() (WorkerLock, bool) {
+	lock, exists := c.context.Get(CONTEXT_WORKER_LOCK)
+	if !exists {
+		LogErrorMsg("Lock not found in context")
+		c.context.String(http.StatusInternalServerError, "Lock not found in context")
+		c.context.Abort()
+		return WorkerLock{}, false
+	}
+
+	return lock.(WorkerLock), true
+}
+
+func (c *ctx) getWorker() (ClouseauWorker, bool) {
+	worker, exists := c.context.Get(CONTEXT_DOCKER_WORKER)
+	if !exists {
+		LogErrorMsg("Worker not found in context")
+		c.context.String(http.StatusInternalServerError, "Worker not found in context")
+		c.context.Abort()
+		return ClouseauWorker{}, false
+	}
+
+	return worker.(ClouseauWorker), true
+}
+
+func (c *ctx) getContainerId() (string, bool) {
+	containerId, exists := c.context.Get(CONTEXT_CONTAINER_ID)
+	if !exists {
+		LogErrorMsg("ContainerId not found in context")
+		c.context.String(http.StatusInternalServerError, "ContainerId not found in context")
+		c.context.Abort()
+		return "", false
+	}
+
+	return containerId.(string), true
+}
 
 func root() gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -21,12 +73,15 @@ func root() gin.HandlerFunc {
 
 func workerNodes(clouseauWorkerPool *ClouseauWorkerPool, pool *WebSocketPool) gin.HandlerFunc {
 	type ResponseObj struct {
-		Idx     int    `json:"i"`
-		Host    string `json:"host"`
-		Clients int    `json:"clients"`
+		Host    string      `json:"host"`
+		Clients int         `json:"clients"`
+		Status  string      `json:"status"`
+		Info    interface{} `json:"info"`
 	}
 
 	return func(c *gin.Context) {
+		_, verbose := c.GetQuery("v")
+
 		resp := make([]ResponseObj, 0)
 		clientMap := map[string]int{}
 		for client, _ := range pool.Clients {
@@ -37,29 +92,166 @@ func workerNodes(clouseauWorkerPool *ClouseauWorkerPool, pool *WebSocketPool) gi
 			}
 		}
 
-		for i, worker := range clouseauWorkerPool.Workers {
-			if c, ok := clientMap[worker.Host]; ok {
-				resp = append(resp, ResponseObj{Idx: i, Host: worker.Host, Clients: c})
-			} else {
-				resp = append(resp, ResponseObj{Idx: i, Host: worker.Host, Clients: 0})
-			}
-		}
-
-		c.JSON(http.StatusOK, resp)
-	}
-}
-
-func listContainers(clouseauWorkerPool *ClouseauWorkerPool) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		idx := c.Param("idx")
-		i, err := strconv.Atoi(idx)
-
+		workers, err := clouseauWorkerPool.Workers()
 		if err != nil {
 			c.String(http.StatusInternalServerError, fmt.Sprintf("%+v", err))
 			return
 		}
 
-		containers, err := clouseauWorkerPool.Workers[i].Docker.ListContainers()
+		wg := sync.WaitGroup{}
+		for i := range workers {
+			wg.Add(1)
+			go func(w *ClouseauWorker) {
+				defer wg.Done()
+				r := ResponseObj{Host: w.Host}
+				if c, ok := clientMap[w.Host]; ok {
+					r.Clients = c
+				} else {
+					r.Clients = 0
+				}
+
+				info := w.Info(verbose)
+				r.Status = info.Status
+				r.Info = info.Info
+				resp = append(resp, r)
+			}(&workers[i])
+		}
+
+		wg.Wait()
+
+		c.JSON(http.StatusOK, resp)
+	}
+}
+
+func addWorkerNodes(clouseauWorkerPool *ClouseauWorkerPool) gin.HandlerFunc {
+	type RequestBody struct {
+		Host string `json:"host" binding:"required"`
+	}
+
+	return func(c *gin.Context) {
+
+		var requestBody RequestBody
+		if err := c.BindJSON(&requestBody); err != nil {
+			c.String(http.StatusBadRequest, fmt.Sprintf("%+v", err))
+			return
+		}
+
+		if err := clouseauWorkerPool.AddWorker(requestBody.Host); err != nil {
+			c.String(http.StatusInternalServerError, fmt.Sprintf("%+v", err))
+			return
+		}
+
+		c.Status(http.StatusCreated)
+	}
+}
+
+func deleteWorkerNode(clouseauWorkerPool *ClouseauWorkerPool) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		host := c.Param("host")
+		if err := clouseauWorkerPool.RemoveWorker(host); err != nil {
+			c.String(http.StatusInternalServerError, fmt.Sprintf("%+v", err))
+			return
+		}
+
+		c.Status(http.StatusCreated)
+	}
+}
+
+func getWorkerInfo(clouseauWorkerPool *ClouseauWorkerPool) gin.HandlerFunc {
+
+	return func(c *gin.Context) {
+		_, verbose := c.GetQuery("v")
+		host := c.Param("host")
+
+		worker, err := clouseauWorkerPool.GetWorker(host)
+		if err != nil {
+			LogError("Error getting workers", err)
+			c.String(http.StatusInternalServerError, fmt.Sprintf("%+v", err))
+			return
+		}
+
+		info := worker.Info(verbose)
+		c.JSON(http.StatusOK, gin.H{"host": host, "info": info})
+	}
+}
+
+func getWorkerLocks(clouseauWorkerPool *ClouseauWorkerPool) gin.HandlerFunc {
+
+	return func(c *gin.Context) {
+		locks, err := clouseauWorkerPool.Locks()
+		if err != nil {
+			LogError("Error getting locks", err)
+			c.String(http.StatusInternalServerError, fmt.Sprintf("%+v", err))
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{"locks": locks})
+	}
+}
+
+func getWorkerLock() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		lock, found := httpContext(c).getLock()
+		if !found {
+			return
+		}
+		c.JSON(http.StatusOK, lock)
+	}
+}
+
+func acquireWorkerLock(clouseauWorkerPool *ClouseauWorkerPool) gin.HandlerFunc {
+
+	return func(c *gin.Context) {
+		modelId := c.Param("modelId")
+
+		lock, found, err := clouseauWorkerPool.FindLock(modelId)
+		if err != nil {
+			LogError("Error acquiring lock", err)
+			c.String(http.StatusInternalServerError, fmt.Sprintf("%+v", err))
+			c.Abort()
+			return
+		}
+
+		if found {
+			c.Header("X-Lock-Host", lock.Host)
+			c.Header("X-Lock-Key", lock.LockKey)
+			c.String(http.StatusConflict, fmt.Sprintf("Lock already exists for %s", modelId))
+			return
+		}
+
+		lock, err = clouseauWorkerPool.Acquire(modelId)
+		if err != nil {
+			LogError("Error acquiring lock", err)
+			c.String(http.StatusInternalServerError, fmt.Sprintf("%+v", err))
+			return
+		}
+		c.Header("X-Lock-Host", lock.Host)
+		c.Header("X-Lock-Key", lock.LockKey)
+		c.Status(http.StatusCreated)
+	}
+}
+
+func releaseWorkerLock(clouseauWorkerPool *ClouseauWorkerPool) gin.HandlerFunc {
+
+	return func(c *gin.Context) {
+		modelId := c.Param("modelId")
+		if err := clouseauWorkerPool.Release(modelId); err != nil {
+			LogError("Error releasing lock", err)
+			c.String(http.StatusInternalServerError, fmt.Sprintf("%+v", err))
+			return
+		}
+
+		c.Status(http.StatusCreated)
+	}
+}
+
+func listContainers() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		worker, found := httpContext(c).getWorker()
+		if !found {
+			return
+		}
+		containers, err := worker.Docker.ListContainers()
 
 		if err != nil {
 			c.AbortWithError(http.StatusBadRequest, err)
@@ -71,16 +263,18 @@ func listContainers(clouseauWorkerPool *ClouseauWorkerPool) gin.HandlerFunc {
 
 func inspectContainer(clouseauWorkerPool *ClouseauWorkerPool) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		id := c.Param("id")
-		idx := c.Param("idx")
-		i, err := strconv.Atoi(idx)
 
-		if err != nil {
-			c.String(http.StatusInternalServerError, fmt.Sprintf("%+v", err))
+		worker, exists := httpContext(c).getWorker()
+		if !exists {
 			return
 		}
 
-		container, err := clouseauWorkerPool.Workers[i].Docker.InspectContainer(id)
+		containerId, foundId := httpContext(c).getContainerId()
+		if !foundId {
+			return
+		}
+
+		container, err := worker.Docker.InspectContainer(containerId)
 
 		if err != nil {
 			c.String(http.StatusInternalServerError, fmt.Sprintf("%+v", err))
@@ -90,12 +284,39 @@ func inspectContainer(clouseauWorkerPool *ClouseauWorkerPool) gin.HandlerFunc {
 	}
 }
 
-func launchContainer(settings *Settings, clouseauWorkerPool *ClouseauWorkerPool, redis *RedisStore) gin.HandlerFunc {
+func provisionState(redis *RedisStore) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		modelId := c.Param("modelId")
+		state, err := GetProvisionState(redis, modelId)
 
+		if err != nil {
+			c.String(http.StatusInternalServerError, fmt.Sprintf("%+v", err))
+			return
+		}
+
+		c.JSON(http.StatusOK, state)
+	}
+}
+
+func provisionLastLog(redis *RedisStore) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		modelId := c.Param("modelId")
+		logInfo, err := GetLastProvisionLog(redis, modelId)
+		if err != nil {
+			c.String(http.StatusInternalServerError, fmt.Sprintf("%+v", err))
+			return
+		}
+
+		c.JSON(http.StatusOK, logInfo)
+	}
+}
+
+func provisionForModel(settings *Settings, clouseauWorkerPool *ClouseauWorkerPool, pool *WebSocketPool, redis *RedisStore) gin.HandlerFunc {
 	type RequestBody struct {
-		Name        string `json:"name" binding:"required"`
-		DockerImage string `json:"image" binding:"required"`
-		ModelId     string `json:"modelId" binding:"required"`
+		Name        string   `json:"name" binding:"required"`
+		BaseImage   string   `json:"image" binding:"required"`
+		Listeners   []string `json:"listeners" binding:"required"`
+		TemplateUrl string   `json:"templateUrl,omitempty"`
 	}
 
 	return func(c *gin.Context) {
@@ -104,37 +325,122 @@ func launchContainer(settings *Settings, clouseauWorkerPool *ClouseauWorkerPool,
 			c.String(http.StatusBadRequest, fmt.Sprintf("%+v", err))
 			return
 		}
+		modelId := c.Param("modelId")
 
-		idx := c.Param("idx")
-		i, err := strconv.Atoi(idx)
-
+		lock, found, err := clouseauWorkerPool.FindLock(modelId)
 		if err != nil {
-			c.String(http.StatusInternalServerError, fmt.Sprintf("%+v", err))
+			LogError("Error searching for lock", err)
+			c.String(http.StatusInternalServerError, "Error finding worker")
+			c.Abort()
 			return
 		}
 
-		id, err := clouseauWorkerPool.Workers[i].Docker.Launch(requestBody.DockerImage, requestBody.Name, []string{"entrypoint.sh"})
+		if found {
+			LogError("Error lock already exists for lock", err)
+			c.String(http.StatusConflict, fmt.Sprintf("A worker is provisioning or running this model already %s", modelId))
+			c.Abort()
+			return
+		} else {
+			lock, err = clouseauWorkerPool.Acquire(modelId)
+			if err != nil {
+				LogError("Error acquiring lock", err)
+				c.String(http.StatusInternalServerError, "Error acquiring worker")
+				c.Abort()
+				return
+			}
+		}
+
+		var tmplUrl string
+		if requestBody.TemplateUrl == "" {
+			ctx := c.Request.Context()
+			addr := ctx.Value(http.LocalAddrContextKey).(net.Addr)
+			//TODO: determine default package file
+			tmplUrl = fmt.Sprintf("http://%s/static/pkg.tgz", addr)
+
+		} else {
+			tmplUrl = requestBody.TemplateUrl
+		}
+
+		worker, err := clouseauWorkerPool.GetWorker(lock.Host)
 		if err != nil {
-			c.String(http.StatusInternalServerError, fmt.Sprintf("%+v", err))
+			LogError("Failed to find worker for locked host", err)
+			c.String(http.StatusInternalServerError, "Error connecting to worker")
+			if err := clouseauWorkerPool.Release(modelId); err != nil {
+				LogError("Error releasing for lock for unsuccessful worker ", err)
+			}
+			c.Abort()
 			return
 		}
 
-		store := NewContainerStore(redis, id)
-		store.InitalizeContainerStore()
+		provisionId := xid.New().String()
+		store := NewProvisionStore(redis, provisionId, modelId)
 
-		if err := store.AddMeta(map[string]string{
-			"name":        requestBody.Name,
-			"model_id":    requestBody.ModelId,
-			"image":       requestBody.DockerImage,
-			"launched":    time.Now().Format(time.RFC3339),
-			"docker_host": clouseauWorkerPool.Workers[i].Docker.Host,
-			"docker_node": idx,
-		}); err != nil {
-			c.String(http.StatusInternalServerError, fmt.Sprintf("%+v", err))
+		if err := store.InitalizeProvisionStore(worker.Host); err != nil {
+			LogError("Error setting up provision store", err)
+			_ = store.Failed(err.Error())
+			c.String(http.StatusInternalServerError, "Error setting up provision store")
+			c.Abort()
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{"id": id})
+		go func(w *ClouseauWorker, lock *WorkerLock, store *ProvisionStore, redis *RedisStore, modelId string) {
+			var provisionSuccessful bool
+
+			defer func() {
+				if !provisionSuccessful {
+					log.Printf("Provision Unsuccessful releasing worker - modelId %s\n", modelId)
+					if err := clouseauWorkerPool.Release(modelId); err != nil {
+						LogError("Error releasing for lock for unsuccessful provision", err)
+					}
+				}
+			}()
+
+			respid, err := worker.Provision(pool,
+				store,
+				ProvisionRequest{
+					Name:        requestBody.Name,
+					BaseImage:   requestBody.BaseImage,
+					TemplateUrl: tmplUrl,
+					Listeners:   requestBody.Listeners,
+				})
+
+			if err != nil {
+				LogError("Error provisioning container", err)
+				return
+			}
+
+			log.Printf("Image ID %s\n", respid.ID)
+
+			_ = store.Processing(fmt.Sprintf("Launching Image ID %s\n", respid.ID))
+			id, err := worker.Docker.Launch(respid.ID, requestBody.Name, []string{"entrypoint.sh"})
+			if err != nil {
+				LogError("Error launching container", err)
+				_ = store.Failed(err.Error())
+				return
+			}
+
+			log.Printf("Container Id %s\n", id)
+			_ = store.Ready(fmt.Sprintf("Container Id %s\n", id))
+			lock.AssignContainer(redis, id)
+
+			//TODO: revisit is this even necessary anymore?
+			_, err = NewContainerStore(redis, id, map[string]string{
+				"name":        requestBody.Name,
+				"model_id":    modelId,
+				"image":       requestBody.BaseImage,
+				"launched":    time.Now().Format(time.RFC3339),
+				"docker_host": worker.Host,
+			})
+
+			if err != nil {
+				LogError("Error storing container meta data", err)
+				return
+			}
+
+			provisionSuccessful = true
+		}(&worker, &lock, store, redis, modelId)
+
+		c.String(http.StatusAccepted, fmt.Sprintf("Processing %s", requestBody.Name))
 	}
 }
 
@@ -146,80 +452,92 @@ func execContainer(clouseauWorkerPool *ClouseauWorkerPool) gin.HandlerFunc {
 
 	return func(c *gin.Context) {
 		defer LogDuration("Docker Exec", time.Now())
-		id := c.Param("id")
+
 		var requestBody RequestBody
 		if err := c.BindJSON(&requestBody); err != nil {
 			c.String(http.StatusBadRequest, fmt.Sprintf("%+v", err))
 			return
 		}
-
-		idx := c.Param("idx")
-		i, err := strconv.Atoi(idx)
-
-		if err != nil {
-			c.String(http.StatusInternalServerError, fmt.Sprintf("%+v", err))
+		worker, exists := httpContext(c).getWorker()
+		if !exists {
 			return
 		}
 
-		err = clouseauWorkerPool.Workers[i].Docker.Exec(id, requestBody.Cmd)
+		containerId, foundId := httpContext(c).getContainerId()
+		if !foundId {
+			return
+		}
+
+		err := worker.Docker.Exec(containerId, requestBody.Cmd)
 		if err != nil {
 			LogError("docker exec", err)
 			c.String(http.StatusInternalServerError, fmt.Sprintf("%+v", err))
 			return
 		}
-		c.String(http.StatusOK, "ok")
+		c.Status(http.StatusCreated)
+	}
+}
+
+func teardownContainer(clouseauWorkerPool *ClouseauWorkerPool, shutdownTimerStore *ShutdownTimerStore) gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+		lock, found := httpContext(c).getLock()
+		if !found {
+			return
+		}
+
+		worker, exists := httpContext(c).getWorker()
+		if !exists {
+			return
+		}
+
+		containerId, foundId := httpContext(c).getContainerId()
+		if !foundId {
+			return
+		}
+
+		timerExists := shutdownTimerStore.DestroyTimer(&lock)
+		if timerExists {
+			log.Printf("Removed shutdown timer")
+		}
+
+		log.Printf("Stopping container %s for model %s\n", containerId, lock.ModelId)
+		err := worker.Docker.Stop(containerId)
+		if err != nil {
+			LogError("Error stopping container ", err)
+			c.String(http.StatusInternalServerError, fmt.Sprintf("%+v", err))
+			return
+		}
+
+		if err := clouseauWorkerPool.Release(lock.ModelId); err != nil {
+			LogError("Error releasing for lock for unsuccessful worker ", err)
+			c.String(http.StatusInternalServerError, fmt.Sprintf("%+v", err))
+			return
+		}
+
+		c.Status(http.StatusCreated)
 	}
 }
 
 func stopContainer(clouseauWorkerPool *ClouseauWorkerPool) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		id := c.Param("id")
-		idx := c.Param("idx")
-		i, err := strconv.Atoi(idx)
 
+		worker, exists := httpContext(c).getWorker()
+		if !exists {
+			return
+		}
+
+		containerId, found := httpContext(c).getContainerId()
+		if !found {
+			return
+		}
+
+		err := worker.Docker.Stop(containerId)
 		if err != nil {
 			c.String(http.StatusInternalServerError, fmt.Sprintf("%+v", err))
 			return
 		}
-
-		err = clouseauWorkerPool.Workers[i].Docker.Stop(id)
-		if err != nil {
-			c.String(http.StatusInternalServerError, fmt.Sprintf("%+v", err))
-			return
-		}
-		c.String(http.StatusOK, "ok")
-	}
-}
-
-func changesContainer(clouseauWorkerPool *ClouseauWorkerPool) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		id := c.Param("id")
-		idx := c.Param("idx")
-		i, err := strconv.Atoi(idx)
-
-		if err != nil {
-			c.String(http.StatusInternalServerError, fmt.Sprintf("%+v", err))
-			return
-		}
-
-		changes, err := clouseauWorkerPool.Workers[i].Docker.Changes(id)
-		if err != nil {
-			c.String(http.StatusInternalServerError, fmt.Sprintf("%+v", err))
-			return
-		}
-		c.JSON(http.StatusOK, changes)
-	}
-}
-
-func diffGetContainer(store *ContainerDiffStore) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		id := c.Param("id")
-		diffs, err := store.Diff(id)
-		if err != nil {
-			c.String(http.StatusInternalServerError, fmt.Sprintf("%+v", err))
-			return
-		}
-		c.JSON(http.StatusOK, diffs)
+		c.Status(http.StatusCreated)
 	}
 }
 
@@ -232,13 +550,14 @@ func commitContainer(settings *Settings, clouseauWorkerPool *ClouseauWorkerPool,
 	}
 
 	return func(c *gin.Context) {
-		defer LogDuration("Docker Commit", time.Now())
-		id := c.Param("id")
-		idx := c.Param("idx")
-		i, err := strconv.Atoi(idx)
 
-		if err != nil {
-			c.String(http.StatusInternalServerError, fmt.Sprintf("%+v", err))
+		worker, exists := httpContext(c).getWorker()
+		if !exists {
+			return
+		}
+
+		containerId, found := httpContext(c).getContainerId()
+		if !found {
 			return
 		}
 
@@ -256,7 +575,7 @@ func commitContainer(settings *Settings, clouseauWorkerPool *ClouseauWorkerPool,
 			imageTags = append(imageTags, tag)
 		}
 
-		go clouseauWorkerPool.Workers[i].Docker.Commit(settings.Docker.Auth, id, imageTags, requestBody.Cwd, requestBody.Entrypoint, pool, requestBody.Listeners)
+		go worker.Docker.Commit(settings.Docker.Auth, containerId, imageTags, requestBody.Cwd, requestBody.Entrypoint, pool, requestBody.Listeners)
 		c.String(http.StatusAccepted, fmt.Sprintf("Processing %s", imageTags))
 	}
 }
@@ -281,17 +600,87 @@ func checkStatus() gin.HandlerFunc {
 	}
 }
 
-func proxy(settings *Settings, clouseauWorkerPool *ClouseauWorkerPool) gin.HandlerFunc {
+func autoShutdownStart(shutdownTimerStore *ShutdownTimerStore) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		idx := c.Param("idx")
-		i, err := strconv.Atoi(idx)
 
-		if err != nil {
-			c.String(http.StatusInternalServerError, fmt.Sprintf("%+v", err))
+		lock, found := httpContext(c).getLock()
+		if !found {
 			return
 		}
 
-		server := fmt.Sprintf("http://%s:6010", clouseauWorkerPool.Workers[i].Docker.Host)
+		worker, exists := httpContext(c).getWorker()
+		if !exists {
+			return
+		}
+		shutdownTimerStore.CreateResetTimer(&lock, &worker)
+		c.Status(http.StatusCreated)
+	}
+}
+
+func autoShutdownStatus(shutdownTimerStore *ShutdownTimerStore) gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+		lock, found := httpContext(c).getLock()
+		if !found {
+			return
+		}
+
+		t, found := shutdownTimerStore.TimeRemaining(&lock)
+		if !found {
+			c.String(http.StatusNotFound, fmt.Sprintf("No timer found %s", lock.ModelId))
+			c.Abort()
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"seconds": t.Seconds()})
+	}
+}
+
+func autoShutdownExtend(shutdownTimerStore *ShutdownTimerStore) gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+		lock, found := httpContext(c).getLock()
+		if !found {
+			return
+		}
+
+		t, found := shutdownTimerStore.ExtendTimer(&lock)
+		if !found {
+			c.String(http.StatusNotFound, fmt.Sprintf("No timer found %s", lock.ModelId))
+			c.Abort()
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{"seconds": t.Seconds()})
+	}
+}
+
+func autoShutdownRemove(shutdownTimerStore *ShutdownTimerStore) gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+		lock, found := httpContext(c).getLock()
+		if !found {
+			return
+		}
+
+		exists := shutdownTimerStore.DestroyTimer(&lock)
+		if !exists {
+			c.String(http.StatusNotFound, fmt.Sprintf("No timer found %s", lock.ModelId))
+			c.Abort()
+			return
+		}
+
+		c.Status(http.StatusNoContent)
+	}
+}
+
+func proxy(clouseauWorkerPool *ClouseauWorkerPool) gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+		lock, found := httpContext(c).getLock()
+		if !found {
+			return
+		}
+
+		server := fmt.Sprintf("http://%s:6010", lock.Host)
 		remote, err := url.Parse(server)
 		if err != nil {
 			log.Fatal(err)
@@ -309,95 +698,6 @@ func proxy(settings *Settings, clouseauWorkerPool *ClouseauWorkerPool) gin.Handl
 
 		log.Printf("Proxying %s => %s\n", c.Param("proxyPath"), server)
 		proxy.ServeHTTP(c.Writer, c.Request)
-	}
-}
-
-func appendHistory(redis *RedisStore) gin.HandlerFunc {
-
-	type RequestBody struct {
-		Text string `json:"text" binding:"required"`
-		Cwd  string `json:"cwd" binding:"required"`
-	}
-
-	return func(c *gin.Context) {
-		id := c.Param("id")
-		var json RequestBody
-		if err := c.BindJSON(&json); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
-
-		if err := NewContainerStore(redis, id).AddHistory(map[string]string{
-			"text": json.Text,
-			"cwd":  json.Cwd,
-		}); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-
-		c.String(http.StatusOK, "ok")
-	}
-}
-
-func appendProvisions(redis *RedisStore) gin.HandlerFunc {
-
-	type RequestBody struct {
-		Provisions [][]string `json:"provisions" binding:"required"`
-	}
-	return func(c *gin.Context) {
-		id := c.Param("id")
-		var json RequestBody
-		if err := c.BindJSON(&json); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
-
-		if err := NewContainerStore(redis, id).AddProvisions(json.Provisions); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-		c.String(http.StatusOK, "ok")
-	}
-}
-
-func appendEdits(redis *RedisStore) gin.HandlerFunc {
-	type RequestBody struct {
-		File string `json:"file" binding:"required"`
-		Text string `json:"text" binding:"required"`
-	}
-
-	return func(c *gin.Context) {
-		id := c.Param("id")
-		var requestBody RequestBody
-		if err := c.BindJSON(&requestBody); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
-
-		edit := map[string]string{"file": requestBody.File, "text": requestBody.Text}
-
-		if err := NewContainerStore(redis, id).AddEdits(edit); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-
-		c.String(http.StatusOK, "ok")
-	}
-}
-func addMeta(redis *RedisStore) gin.HandlerFunc {
-	return func(c *gin.Context) {
-		id := c.Param("id")
-		var requestBody map[string]string
-		if err := c.BindJSON(&requestBody); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
-			return
-		}
-		if err := NewContainerStore(redis, id).AddMeta(requestBody); err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
-
-		c.String(http.StatusOK, "ok")
 	}
 }
 
@@ -426,22 +726,120 @@ func showPool(pool *WebSocketPool) gin.HandlerFunc {
 	}
 }
 
+func WithLockMiddleware(clouseauWorkerPool *ClouseauWorkerPool) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		modelId := c.Param("modelId")
+
+		lock, found, err := clouseauWorkerPool.FindLock(modelId)
+		if err != nil {
+			LogError("Error acquiring lock", err)
+			c.String(http.StatusInternalServerError, fmt.Sprintf("%+v", err))
+			c.Abort()
+			return
+		}
+
+		if !found {
+			c.String(http.StatusNotFound, fmt.Sprintf("No worker assigned to model %s", modelId))
+			c.Abort()
+			return
+		}
+
+		c.Set(CONTEXT_WORKER_LOCK, lock)
+
+		c.Next()
+	}
+}
+
+func WithDockerWorkerMiddleware(clouseauWorkerPool *ClouseauWorkerPool) gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+		lockVal, exists := c.Get(CONTEXT_WORKER_LOCK)
+		if !exists {
+			LogErrorMsg("Middleware: Lock does not exist for context")
+			c.String(http.StatusInternalServerError, "Lock does not exist for context")
+			c.Abort()
+			return
+		}
+		lock := lockVal.(WorkerLock)
+
+		worker, err := clouseauWorkerPool.GetWorker(lock.Host)
+		if err != nil {
+			LogError("Failed to find worker for locked host", err)
+			c.String(http.StatusInternalServerError, fmt.Sprintf("%+v", err))
+			c.Abort()
+			return
+		}
+
+		c.Set(CONTEXT_DOCKER_WORKER, worker)
+
+		c.Next()
+	}
+}
+
+func WithContainerIdMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+		lockVal, exists := c.Get(CONTEXT_WORKER_LOCK)
+		if !exists {
+			LogErrorMsg("Middleware: Lock does not exist for context")
+			c.String(http.StatusInternalServerError, "Lock does not exist for context")
+			c.Abort()
+			return
+		}
+		lock := lockVal.(WorkerLock)
+
+		if lock.ContainerId == "" || lock.ContainerId == "unset" {
+			LogErrorMsg("Middleware: Could not determine container for worker")
+			c.String(http.StatusInternalServerError, "Could not determine container for worker")
+			c.Abort()
+			return
+		}
+
+		c.Set(CONTEXT_CONTAINER_ID, lock.ContainerId)
+
+		c.Next()
+	}
+}
+
+//WebSocket Handler
+func ServeWebSocket(settings *Settings, pool *WebSocketPool, clouseauWorkerPool *ClouseauWorkerPool, redisStore *RedisStore) gin.HandlerFunc {
+	return func(c *gin.Context) {
+
+		lock, found := httpContext(c).getLock()
+		if !found {
+			return
+		}
+
+		log.Printf("WebSocket Upgrade\n")
+		conn, err := WebSocketUpgrade(c.Writer, c.Request)
+		if err != nil {
+			fmt.Fprintf(c.Writer, "%+v\n", err)
+			return
+		}
+
+		id := c.DefaultQuery("id", xid.New().String())
+		client := NewWebSocketClient(conn, pool, lock.Host, settings, redisStore, id, lock.ModelId)
+
+		pool.Register <- client
+		pool.DirectMessage([]string{client.ID}, "id", client.ID)
+		go client.KeepAlive()
+		go client.Read()
+	}
+}
+
 func SetupRoutes(
 	pool *WebSocketPool,
 	settings *Settings,
 	clouseauWorkerPool *ClouseauWorkerPool,
+	shutdownTimerStore *ShutdownTimerStore,
 	redisStore *RedisStore) *gin.Engine {
 
 	router := gin.Default()
 	router.GET("/", root())
 
-	if *DEBUG_ENABLED {
-		router.StaticFile("/term", "index.html")
-	}
+	router.StaticFS("/static", http.Dir(settings.Http.Static))
 
 	router.POST("/cors/test", checkStatus())
-
-	router.GET("/ws/:idx", ServeWebSocket(settings, pool, clouseauWorkerPool, redisStore))
 
 	redisGroup := router.Group("/redis")
 	{
@@ -454,42 +852,50 @@ func SetupRoutes(
 		adminGroup.GET("/pool", showPool(pool))
 	}
 
-	containerStore := router.Group("/container/store/:id")
-	{
-		containerStore.PUT("/edits", appendEdits(redisStore))
-		containerStore.PUT("/history", appendHistory(redisStore))
-		containerStore.PUT("/meta", addMeta(redisStore))
-		containerStore.PUT("/provisions", appendProvisions(redisStore))
-	}
-
-	// disabled to support multiple docker hosts
-	// containerDiffs := router.Group("/container/diffs")
-	// {
-	//	//containerDiffs.PUT("/:id", diffSetContainer(containerDiffStore))
-	//	containerDiffs.GET("/:id", diffGetContainer(containerDiffStore))
-	// }
-
-	container := router.Group("/container/:idx/ops")
-	{
-		//proxy to containers api
-		container.Any("/*proxyPath", proxy(settings, clouseauWorkerPool))
-	}
-
 	dockerGroup := router.Group("/docker")
 	{
 		dockerGroup.GET("/nodes", workerNodes(clouseauWorkerPool, pool))
+		dockerGroup.PUT("/nodes", addWorkerNodes(clouseauWorkerPool))
+		dockerGroup.DELETE("/node/:host", deleteWorkerNode(clouseauWorkerPool))
+		dockerGroup.GET("/nodes/:host", getWorkerInfo(clouseauWorkerPool))
+
+		dockerGroup.GET("/locks", getWorkerLocks(clouseauWorkerPool))
+		dockerGroup.GET("/locks/:modelId", WithLockMiddleware(clouseauWorkerPool), getWorkerLock())
+		dockerGroup.GET("/lock/:modelId", acquireWorkerLock(clouseauWorkerPool))
+		dockerGroup.DELETE("/lock/:modelId", releaseWorkerLock(clouseauWorkerPool))
 	}
 
-	dockerNodeGroup := router.Group("/docker/:idx")
-	{
-		dockerNodeGroup.POST("/launch", launchContainer(settings, clouseauWorkerPool, redisStore))
-		dockerNodeGroup.GET("/containers", listContainers(clouseauWorkerPool))
-		dockerNodeGroup.POST("/commit/:id", commitContainer(settings, clouseauWorkerPool, pool))
-		dockerNodeGroup.GET("/changes/:id", changesContainer(clouseauWorkerPool))
-		dockerNodeGroup.POST("/exec/:id", execContainer(clouseauWorkerPool))
-		dockerNodeGroup.GET("/inspect/:id", inspectContainer(clouseauWorkerPool))
+	router.GET("/ws/:modelId", WithLockMiddleware(clouseauWorkerPool), ServeWebSocket(settings, pool, clouseauWorkerPool, redisStore))
 
-		dockerNodeGroup.DELETE("/stop/:id", stopContainer(clouseauWorkerPool))
+	container := router.Group("/container/:modelId/ops")
+	{
+		//proxy to containers api
+		container.Use(WithLockMiddleware(clouseauWorkerPool))
+		container.Any("/*proxyPath", proxy(clouseauWorkerPool))
+	}
+
+	router.GET("/provision/state/:modelId", provisionState(redisStore))
+	router.GET("/provision/last/log/:modelId", provisionLastLog(redisStore))
+	router.POST("/docker/provision/:modelId", provisionForModel(settings, clouseauWorkerPool, pool, redisStore))
+
+	dockerNodeGroup := router.Group("/docker/:modelId")
+	{
+		dockerNodeGroup.Use(WithLockMiddleware(clouseauWorkerPool))
+		dockerNodeGroup.Use(WithDockerWorkerMiddleware(clouseauWorkerPool))
+
+		dockerNodeGroup.GET("/containers", listContainers())
+		dockerNodeGroup.POST("/commit", WithContainerIdMiddleware(), commitContainer(settings, clouseauWorkerPool, pool))
+		dockerNodeGroup.POST("/exec", WithContainerIdMiddleware(), execContainer(clouseauWorkerPool))
+		dockerNodeGroup.GET("/inspect", WithContainerIdMiddleware(), inspectContainer(clouseauWorkerPool))
+
+		dockerNodeGroup.DELETE("/stop", WithContainerIdMiddleware(), stopContainer(clouseauWorkerPool))
+		dockerNodeGroup.DELETE("/release", WithContainerIdMiddleware(), teardownContainer(clouseauWorkerPool, shutdownTimerStore))
+
+		dockerNodeGroup.PUT("/shutdown/start", autoShutdownStart(shutdownTimerStore))
+		dockerNodeGroup.GET("/shutdown/status", autoShutdownStatus(shutdownTimerStore))
+		dockerNodeGroup.GET("/shutdown/extend", autoShutdownExtend(shutdownTimerStore))
+		dockerNodeGroup.DELETE("/shutdown", autoShutdownRemove(shutdownTimerStore))
+
 	}
 
 	return router

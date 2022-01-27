@@ -39,11 +39,7 @@ ip:| ip-addr
 	@echo ${ip_address}
 
 .PHONY: docker_build
-docker_build: docker_build-claudine docker_build-cato  ## Build all docker containers
-
-.PHONY: docker_build-claudine
-docker_build-claudine:| go_build ## Build Claudine container
-	./build-claudine.sh
+docker_build: docker_build-cato  ## Build all docker containers
 
 .PHONY: docker_build-cato
 docker_build-cato: ## Build Cato container
@@ -74,8 +70,13 @@ go_fmt-server:
 	(cd claudine/server/cato && go fmt claudine/server/cato)
 	(cd claudine/server && go fmt claudine/server)
 
+.PHONY: go_fmt-cli
+go_fmt-cli:
+	(cd claudine/cli && go fmt ./... )
+
+
 .PHONY: go_fmt
-go_fmt:| go_fmt-embedded go_fmt-preexec go_fmt-server   ## format go files
+go_fmt:| go_fmt-embedded go_fmt-preexec go_fmt-server go_fmt-cli  ## format go files
 
 .PHONY: go_build-embedded
 go_build-embedded:  ## Compile claudine/embedded
@@ -94,7 +95,7 @@ go_build-preexec: ## Compile claudine/preexec
 		 go mod tidy && \
 		 go build -gcflags="-m=2 -l" \
 							-ldflags "-X main.Version=${VERSION} -X main.Build=$(shell date +%FT%T%Z) -X main.Commit=$(shell git rev-parse --short HEAD)" \
-							-o ../build/c main.go)
+							-o ../build/dojo-preexec main.go)
 
 .PHONY: go_build-server
 go_build-server: ## Compile claudine/server
@@ -107,7 +108,56 @@ go_build-server: ## Compile claudine/server
 							-ldflags "-X main.Version=${VERSION} -X main.Build=$(shell date +%FT%T%Z) -X main.Commit=$(shell git rev-parse --short HEAD)" \
 							-o ../build/cato main.go)
 
-GO_BUILDS := go_build-embedded go_build-server go_build-preexec
+.PHONY: go_build-cli
+go_build-cli:  ## Compile claudine/cli
+	(cd claudine/cli && \
+		 go mod tidy && \
+		 go build -gcflags="-m=2 -l" \
+							-ldflags "-X main.Version=${VERSION} -X main.Build=$(shell date +%FT%T%Z) -X main.Commit=$(shell git rev-parse --short HEAD)" \
+							-o ../build/dojo main.go)
+dist:
+	mkdir -p dist/pkg
+
+dist-clean:
+			 -rm -r dist/*
+
+.PHONY: go_build-linux-preexec
+go_build-linux-preexec:
+	(cd claudine/preexec && \
+		 go mod tidy && \
+		 GOOS=linux go build -gcflags="-m=2 -l" \
+							-ldflags "-X main.Version=${VERSION} -X main.Build=$(shell date +%FT%T%Z) -X main.Commit=$(shell git rev-parse --short HEAD)" \
+							-o ../../dist/pkg/dojo-preexec main.go)
+
+
+.PHONY: go_build-linux-embedded
+go_build-linux-embedded:
+	(cd claudine/embedded/app && \
+		 go mod tidy && \
+		 GOOS=linux go build claudine/embedded/app)
+	(cd claudine/embedded && \
+		 go mod tidy && \
+		 GOOS=linux go build \
+							-ldflags "-X main.Version=${VERSION} -X main.Build=$(shell date +%FT%T%Z) -X main.Commit=$(shell git rev-parse --short HEAD)" \
+							-o ../../dist/pkg/claudine claudine/embedded)
+
+.PHONY: go_build-linux-cli
+go_build-linux-cli:
+	(cd claudine/cli && \
+		 go mod tidy && \
+		 GOOS=linux go build \
+							-ldflags "-X main.Version=${VERSION} -X main.Build=$(shell date +%FT%T%Z) -X main.Commit=$(shell git rev-parse --short HEAD)" \
+							-o ../../dist/pkg/dojo main.go)
+
+GO_PKG_BUILDS := go_build-linux-cli go_build-linux-embedded go_build-linux-preexec
+
+.PHONY: docker-package
+docker-package: dist-clean dist  $(GO_PKG_BUILDS) ## Build template package
+	(cp -r claudine/pkg/. dist/pkg/ && \
+	 cd dist && \
+	 tar czvf pkg.tgz -C pkg .)
+
+GO_BUILDS := go_build-embedded go_build-server go_build-preexec go_build-cli
 
 .PHONY: go_build
 go_build:| $(GO_BUILDS) ## Build go binaries
@@ -121,7 +171,7 @@ compile:| go_build  ## Compile all builds
 .PHONY: cato_run_dev
 cato_run_dev: ## Dev - run cato dev server locally
 	(cd claudine/server && \
-			go run \
+			HTTP_STATIC=../../dist go run \
 				 -ldflags "-X main.Version=${VERSION} -X main.Build=$(shell date +%FT%T%Z) -X main.Commit=$(shell git rev-parse --short HEAD)" \
 				 main.go -settings settings.yaml -debug -trace -env -pull-images=false)
 
