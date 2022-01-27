@@ -6,6 +6,7 @@ import Box from '@material-ui/core/Box';
 
 import { FitAddon } from 'xterm-addon-fit';
 import { Terminal } from 'xterm';
+import { WebLinksAddon } from 'xterm-addon-web-links';
 
 import { useWebSocketContext, useWebSocketUpdateContext } from '../context';
 
@@ -114,12 +115,15 @@ const Term = () => {
 
     console.info('loading terminal');
 
+    term.current.write('✨ http://dojo-modeling.com ✨\r\nFor help, run \x1b[1;34mdojo\x1b[0m\r\n\r\n');
+
     term.current.onData(async (data) => {
       console.debug(`-> ${data}`);
       await emit('xterm', data);
     });
 
     term.current.loadAddon(fitAddon);
+    term.current.loadAddon(new WebLinksAddon());
     // term.current.loadAddon(termHelperAddon);
     term.current.open(termRef.current);
     fitAddon.fit();

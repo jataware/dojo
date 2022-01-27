@@ -109,7 +109,7 @@ const createModel = async (model, history) => {
       const modelResp = await fetch(`/api/dojo/models/${parsedModelInfo.id}`);
       if (modelResp.ok) {
         // TODO update modelInfo context
-        history.push(`/intro/${parsedModelInfo.id}`);
+        history.push(`/provision/${parsedModelInfo.id}`);
       }
     }
   } catch (e) {

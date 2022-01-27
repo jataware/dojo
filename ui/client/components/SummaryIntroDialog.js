@@ -91,7 +91,7 @@ const SummaryIntroDialog = ({
   const versionBumpModel = async (relaunch) => {
     // set the endpoint for version bumping
     let versionBumpUrl = `/api/dojo/models/version/${model.id}`;
-    let introUrl;
+    let provisionUrl;
     let editModelId;
 
     // and add on the exclude_files flag if we aren't relaunching an image
@@ -108,17 +108,17 @@ const SummaryIntroDialog = ({
         editModelId = model.id;
       }
 
-      // set our endpoint for /intro
-      introUrl = `/intro/${editModelId}`;
+      // set our endpoint for /provision
+      provisionUrl = `/provision/${editModelId}`;
 
       // and add the relaunch query param if we are relaunching an image
-      if (relaunch) introUrl += '?relaunch';
+      if (relaunch) provisionUrl += '?relaunch';
 
       // update the URL without reloading the page, so we don't start the dialog flow over again
-      window.history.pushState(null, null, `/summary?model=${editModelId}`);
+      window.history.pushState(null, null, `/summary/${editModelId}`);
 
-      // take us to the /intro page
-      history.push(introUrl);
+      // take us to the /provision page
+      history.push(provisionUrl);
     } catch (error) {
       console.log('there was an error version bumping the model', error);
     }
@@ -303,7 +303,11 @@ const SummaryIntroDialog = ({
                       disableElevation
                       className={classes.bigButton}
                       onClick={() => {
-                        setStep('confirm');
+                        if (model?.image) {
+                          setStep('confirm');
+                        } else {
+                          versionBumpModel();
+                        }
                       }}
                     >
                       <Grid container direction="row" justifyContent="center" alignItems="center">

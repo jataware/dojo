@@ -1,225 +1,185 @@
 import React, {
-  useCallback, useEffect, useState
+  useEffect, useState
 } from 'react';
+
+import axios from 'axios';
 
 import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
 import Paper from '@material-ui/core/Paper';
 
+import { lighten, makeStyles, useTheme } from '@material-ui/core/styles';
+
 import { useHistory } from 'react-router-dom';
 
+import BasicAlert from './components/BasicAlert';
+import LoadingOverlay from './components/LoadingOverlay';
+import { useLocks, useNodes } from './components/SWRHooks';
+
+const useStyles = makeStyles((theme) => ({
+  buttonWrapper: {
+    paddingTop: theme.spacing(1),
+  },
+  paper: {
+    textAlign: 'left',
+    margin: theme.spacing(2),
+    padding: theme.spacing(2),
+  },
+  textWrapper: {
+    borderRadius: theme.shape.borderRadius,
+    padding: theme.spacing(2),
+  },
+}));
+
 const Admin = () => {
-  const fetchTimeout = () => new Promise((resolve, reject) => {
-    setTimeout(() => {
-      reject(new Error('fetch timed out'));
-    }, 5000);
-  });
-
+  const classes = useStyles();
+  const theme = useTheme();
   const history = useHistory();
-  const [containers, setContainers] = useState([]);
-  const [isLoaded, setLoaded] = useState(false);
-  const [workerNodes, setWorkerNodes] = useState([]);
+  const [nodeInfo, setNodeInfo] = useState([]);
+  const [shutDownFailed, setShutDownFailed] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
 
-  // memoize this so we don't run into any issues with the setter values changing
-  // as we reference it in a useEffect below
-  const refreshNodeInfo = useCallback(async () => {
-    const resp = await fetch('/api/clouseau/docker/nodes');
-    const nodes = await resp.json();
-    const nodeContainers = await Promise.all(nodes.map(async (n, i) => {
-      try {
-        const r = await Promise.race([fetch(`/api/clouseau/docker/${n.i}/containers`),
-          fetchTimeout()]);
-
-        if (!r.ok) {
-          return { ...n, i, status: 'down' };
-        }
-
-        return {
-          ...n,
-          i,
-          status: 'up',
-          containers: await r.json()
-        };
-      } catch (e) {
-        return { ...n, i, status: 'timeout' };
-      }
-    }));
-
-    setWorkerNodes(nodeContainers);
-
-    const cs = nodeContainers.reduce((acc, n) => {
-      n.containers?.forEach((c) => acc.push({ node: n, container: c }));
-      return acc;
-    }, []);
-
-    const csInfo = await Promise.all(
-      cs.map(async (c) => {
-        let info = { ok: false };
-        if (c.container.Id) {
-          const r = await fetch(`/api/dojo/clouseau/container/${c.container.Id}`);
-          if (r.ok) {
-            info = { ok: r.ok, ...(await r.json()) };
-          }
-        }
-        return { info, ...c };
-      })
-    );
-
-    console.log(csInfo);
-    setContainers(csInfo);
-    setLoaded(true);
-  }, []);
+  const {
+    locks, locksLoading, locksError, mutateLocks
+  } = useLocks();
+  const {
+    nodes, nodesLoading, nodesError, mutateNodes
+  } = useNodes();
 
   useEffect(() => {
-    refreshNodeInfo();
-  }, [refreshNodeInfo]);
+    const refreshNodeInfo = async () => {
+      // go through all the locks and fetch their states
+      const lockStates = await Promise.all(locks.map(async (lock) => {
+        const response = await fetch(`/api/clouseau/provision/state/${lock.modelId}`);
+        if (response.ok) {
+          return { ...lock, status: (await response.json()) };
+        }
+        return lock;
+      }));
 
-  const style = {
-    paper: {
-      textAlign: 'center',
-      margin: '20px',
-      padding: '20px'
+      // go through nodes and match up locks with nodes
+      const nodeInformation = nodes.map((node) => {
+        const lock = lockStates.find((l) => l.host === node.host);
+        return { ...node, lock };
+      });
+
+      setNodeInfo(nodeInformation);
+      console.debug('Locks:', locks);
+      console.debug('NodeInformation:', nodeInformation);
+    };
+
+    // only do this once we've loaded at least our empty arrays
+    if (locks !== undefined && nodes !== undefined) {
+      refreshNodeInfo(locks, setNodeInfo);
     }
+  }, [locks, nodes]);
+
+  const destroyLock = (modelId) => {
+    axios.delete(`/api/clouseau/docker/${modelId}/release`).then(() => {
+      mutateLocks();
+      mutateNodes();
+    }).catch((error) => {
+      setAlertMessage(`There was an error shutting down the container: ${error}`);
+      setShutDownFailed(true);
+    });
   };
 
-  const destroyContainer = async (node, id) => {
-    await fetch(`/api/clouseau/docker/${node}/stop/${id}`, { method: 'DELETE' });
-    await refreshNodeInfo();
-  };
+  if (locksLoading || nodesLoading) {
+    return (
+      <LoadingOverlay
+        text="Loading the admin page"
+      />
+    );
+  }
+
+  if (locksError || nodesError) {
+    return (
+      <LoadingOverlay
+        text="There was an error loading the admin page"
+        error={locksError || nodesError}
+      />
+    );
+  }
 
   return (
     <>
-      { isLoaded
-        ? (
-          <Grid container spacing={2}>
-            <Grid item xs={12}>
-              <Grid container spacing={1} justify="center">
-                {workerNodes.map((n) => (
-                  <Grid item xs={3}>
-                    <Paper style={style.paper}>
-                      <div style={{
-                        backgroundColor: (n.status === 'up') ? '#90ee90' : '#ffaaab'
-                      }}
-                      >
-                        <div>
-                          Worker -
-                          {' '}
-                          {n.i}
-                        </div>
-                        <div>
-                          {n.host}
-                        </div>
-                        <div>
-                          Status:
-                          {' '}
-                          {n.status}
-                        </div>
-                        <div>
-                          Connections:
-                          {' '}
-                          {n.clients}
-                        </div>
-                        <div>
-                          Containers:
-                          {' '}
-                          {n.containers?.length ?? 0}
-                        </div>
-                      </div>
-                    </Paper>
-                  </Grid>
-                ))}
+      <Grid container spacing={2}>
+        <Grid item xs={12}>
+          <Grid container spacing={1} justify="center">
+            {nodeInfo.map((node) => (
+              <Grid item key={node.info.ID} xs={3}>
+                <Paper
+                  className={classes.paper}
+                  style={{
+                    backgroundColor: (node.status === 'up')
+                      ? lighten(theme.palette.success.light, 0.4)
+                      : lighten(theme.palette.warning.light, 0.4)
+                  }}
+                >
+                  <div>
+                    Worker - {node.host}
+                  </div>
+                  <div>
+                    Status: {node.status}
+                  </div>
+                  <div>
+                    Connections: {node.clients}
+                  </div>
+                  <div>
+                    Containers: {node.info?.Containers}
+                  </div>
+                  <div>
+                    Running Containers: {node.info?.ContainersRunning}
+                  </div>
+                  <div>
+                    In use by {node.lock?.modelId}
+                  </div>
+                  <div>
+                    Provision State: {node.lock?.status?.state}
+                  </div>
+                  <div>
+                    {node.lock?.status?.state === 'failed' ? (
+                      <details>
+                        <summary>reason</summary>
+                        <p>{node.lock?.status?.message}</p>
+                      </details>
+                    ) : ''}
+                  </div>
+                  <div className={classes.buttonWrapper}>
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      disabled={node.lock?.status?.state !== 'ready'}
+                      disableElevation
+                      fullWidth
+                      onClick={() => { history.push(`/term/${node.lock?.modelId}`); }}
+                    >
+                      Reconnect
+                    </Button>
+                  </div>
+                  <div className={classes.buttonWrapper}>
+                    <Button
+                      variant="contained"
+                      color="secondary"
+                      disabled={node.lock?.status?.state !== 'ready'}
+                      disableElevation
+                      fullWidth
+                      onClick={() => destroyLock(node.lock?.modelId)}
+                    >
+                      Shut Down
+                    </Button>
+                  </div>
+                </Paper>
               </Grid>
-            </Grid>
-            <Grid item xs={12}>
-              <Grid container justify="center">
-                <Grid item xs={6}>
-                  <Paper style={style.paper}>
-                    {containers.map((v) => (
-                      <div style={{ textAlign: 'left', paddingTop: '10px' }} key={v.container.Id}>
-                        <div>
-                          <span style={{ fontWeight: 'bold' }}>
-                            Worker-
-                            {v.node.i}
-                          </span>
-                        </div>
-                        <div>
-                          Active Clients:
-                          {' '}
-                          <span style={{ fontWeight: 'bold' }}>
-                            {v.node.clients}
-                            {' '}
-                          </span>
-                        </div>
-                        <div>
-                          Container:
-                          {' '}
-                          {v.container.Id}
-                        </div>
-                        <div>
-                          Reconnect -
-                          {' '}
-                          {(v.info?.ok) ? 'Available' : 'Unavailable'}
-                        </div>
-                        <div>
-                          Model -
-                          {' '}
-                          {v.info?.model_id}
-                        </div>
-                        <div>
-                          Name:
-                          {' '}
-                          {v.container.Names[0]}
-                        </div>
-                        <div>
-                          Image:
-                          {' '}
-                          {v.container.Image}
-                        </div>
-                        <div style={{ paddingBottom: '10px' }}>
-                          Status:
-                          {' '}
-                          {v.container.Status}
-                        </div>
-                        <div>
-                          <Button
-                            variant="contained"
-                            color="primary"
-                            disabled={v.info?.ok !== true}
-                            style={{ marginRight: '20px' }}
-                            onClick={
-                              () => { history.push(`/term/${v.node?.i}/${v.info?.model_id}`); }
-                            }
-                          >
-                            Reconnect
-                          </Button>
-
-                          <Button
-                            variant="contained"
-                            color="primary"
-                            onClick={() => { destroyContainer(v.node.i, v.container.Id); }}
-                          >
-                            Destroy Container
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                  </Paper>
-                </Grid>
-              </Grid>
-            </Grid>
+            ))}
           </Grid>
-        )
-        : (
-          <div style={{
-            backgroundImage: 'url(/assets/loading_02.gif)',
-            backgroundRepeat: 'no-repeat',
-            backgroundAttachment: 'fixed',
-            backgroundPosition: 'center',
-            height: '100vh',
-            width: '100%'
-          }}
-          />
-        )}
+        </Grid>
+      </Grid>
+      <BasicAlert
+        alert={{ message: alertMessage, severity: 'error' }}
+        visible={shutDownFailed}
+        setVisible={setShutDownFailed}
+      />
     </>
   );
 };

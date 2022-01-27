@@ -1,4 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
+
+import axios from 'axios';
 
 import Button from '@material-ui/core/Button';
 import Container from '@material-ui/core/Container';
@@ -23,15 +25,16 @@ import {
   WebSocketContextProvider,
 } from './context';
 
+import ContainerWebSocket from './components/ContainerWebSocket';
 import DirectiveBox from './components/DirectiveBox';
 import FullScreenDialog from './components/FullScreenDialog';
 import LoadingOverlay from './components/LoadingOverlay';
+import ShellHistory from './components/ShellHistory';
 import ShorthandEditor from './components/ShorthandEditor';
 import SimpleEditor from './components/SimpleEditor';
 import Term from './components/Term';
-import { ContainerWebSocket, ShellHistory } from './components/ShellHistory';
 
-import { useContainerWithWorker, useModel } from './components/SWRHooks';
+import { useLock, useModel } from './components/SWRHooks';
 
 const useStyles = makeStyles((theme) => ({
   connected: {
@@ -153,9 +156,8 @@ export const Footer = ({ wsConnected, socketIoConnected }) => {
   );
 };
 
-const CenteredGrid = ({ workerNode, model }) => {
+const CenteredGrid = ({ model }) => {
   const theme = useTheme();
-  const { container } = useContainerWithWorker(workerNode);
 
   const classes = useStyles();
 
@@ -179,10 +181,15 @@ const CenteredGrid = ({ workerNode, model }) => {
 
   const history = useHistory();
 
-  const handleAbandonSession = async () => {
-    // yolo
-    fetch(`/api/clouseau/docker/${workerNode}/stop/${container.id}`, { method: 'DELETE' });
-    history.push('/');
+  const handleAbandonSession = () => {
+    // TODO maybe add a processing spinner while teardown is occuring
+    axios.delete(`/api/clouseau/docker/${model.id}/release`).then(() => {
+      history.push('/');
+    }).catch((error) => {
+      // TODO: probably just still take the user to a different page
+      console.log('There was an error shutting down the container: ', error);
+      setAbandonSessionDialogOpen(false);
+    });
   };
 
   const shorthandDialogOnSave = () => {
@@ -192,17 +199,21 @@ const CenteredGrid = ({ workerNode, model }) => {
   };
 
   const saveEditor = async () => {
-    await fetch(`/api/clouseau/container/${workerNode}/ops/save?path=${editorContents.file}`, {
+    await fetch(`/api/clouseau/container/${model.id}/ops/save?path=${editorContents.file}`, {
       method: 'POST',
       body: editorContents.text
     });
 
-    await fetch(`/api/clouseau/container/store/${container.id}/edits`, {
-      method: 'PUT',
-      body: JSON.stringify(editorContents)
-    });
     return true; // should close FullScreenDialog
   };
+
+  useEffect(() => {
+    // Clear any shutdown timers for this model if we're coming back from the summary page
+    // returns a 404 if there are none to cancel (if we aren't coming from summary)
+    axios.delete(`/api/clouseau/docker/${model.id}/shutdown`)
+      .then(() => console.debug('Cancelling container auto-shutdown timer'))
+      .catch(() => console.debug('No auto-shutdown timers found to cancel'));
+  }, [model.id]);
 
   return (
     <div className={theme.root} style={{ backgroundColor: '#272d33' }}>
@@ -213,14 +224,14 @@ const CenteredGrid = ({ workerNode, model }) => {
 
         <Grid item xs={4} style={{ padding: '0 5px 0 0', zIndex: 5 }}>
           <ShellHistory
-            container={container}
+            modelId={model.id}
             setIsShorthandOpen={setIsShorthandOpen}
             setIsShorthandSaving={setIsShorthandSaving}
             setShorthandContents={setShorthandContents}
             setShorthandMode={setShorthandMode}
           />
           <ContainerWebSocket
-            workerNode={workerNode}
+            modelId={model.id}
             setEditorContents={setEditorContents}
             openEditor={() => setOpenEditor(true)}
             setIsShorthandOpen={setIsShorthandOpen}
@@ -240,7 +251,6 @@ const CenteredGrid = ({ workerNode, model }) => {
             onSave={shorthandDialogOnSave}
           >
             <ShorthandEditor
-              containerId={container?.id}
               modelInfo={model}
               isSaving={isShorthandSaving}
               setIsSaving={setIsShorthandSaving}
@@ -289,7 +299,7 @@ const CenteredGrid = ({ workerNode, model }) => {
           data-test="terminalEndSessionBtn"
           variant="extended"
           color="primary"
-          onClick={() => history.push(`/summary?worker=${workerNode}&save=true`)}
+          onClick={() => history.push(`/summary/${model.id}?terminal=true`, { upload: true })}
         >
           Save and Continue
         </Fab>
@@ -304,31 +314,38 @@ const CenteredGrid = ({ workerNode, model }) => {
 };
 
 const App = () => {
-  const { worker, modelid } = useParams();
+  const { modelid } = useParams();
+  const worker = 0;
 
+  // we only care if lock is loading or doesn't exist
+  const { lockLoading, lockError } = useLock(modelid);
   const { model, modelLoading, modelError } = useModel(modelid);
 
   let proto = 'ws:';
   if (window.location.protocol === 'https:') {
     proto = 'wss:';
   }
-  const url = `${proto}//${window.location.host}/api/ws/${worker}`;
+  const url = `${proto}//${window.location.host}/api/ws/${modelid}`;
 
-  if (modelLoading) {
+  if (modelLoading || lockLoading) {
     return <LoadingOverlay text="Loading terminal" />;
   }
 
-  if (modelError) {
+  if (modelError || lockError) {
     return (
       <LoadingOverlay
         text="There was an error loading the terminal"
-        error={modelError}
+        error={modelError || lockError}
+        link={{
+          text: 'Go to the model summary page',
+          href: `/summary/${modelid}`
+        }}
       />
     );
   }
 
   return (
-    <WebSocketContextProvider url={url} autoConnect>
+    <WebSocketContextProvider url={url}>
       <CenteredGrid workerNode={worker} model={model} />
     </WebSocketContextProvider>
   );

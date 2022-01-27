@@ -1,0 +1,599 @@
+import React, { useEffect, useState } from 'react';
+
+import axios from 'axios';
+
+import ArrowBackIcon from '@material-ui/icons/ArrowBack';
+import Button from '@material-ui/core/Button';
+import CheckIcon from '@material-ui/icons/Check';
+import Container from '@material-ui/core/Container';
+import DeleteIcon from '@material-ui/icons/Delete';
+import EditIcon from '@material-ui/icons/Edit';
+import Fab from '@material-ui/core/Fab';
+import Grid from '@material-ui/core/Grid';
+import Tooltip from '@material-ui/core/Tooltip';
+import Typography from '@material-ui/core/Typography';
+import useMediaQuery from '@material-ui/core/useMediaQuery';
+
+import { makeStyles, useTheme } from '@material-ui/core/styles';
+
+import { Link, useHistory } from 'react-router-dom';
+
+import BasicAlert from './BasicAlert';
+import DeletionDialog from './DeletionDialog';
+import DirectiveBox from './DirectiveBox';
+import EndSessionDialog from './EndSessionDialog';
+import FileCardList from './FileCardList';
+import FullScreenDialog from './FullScreenDialog';
+import LoadingOverlay from './LoadingOverlay';
+import { ModelSummaryEditor } from './ModelSummaryEditor';
+import PublishContainer from '../publish_container';
+import ShorthandEditor from './ShorthandEditor';
+import SimpleEditor from './SimpleEditor';
+import SummaryAccessories from './SummaryAccessories';
+import SummaryIntroDialog from './SummaryIntroDialog';
+import SummaryModelDetails from './SummaryModelDetails';
+import SummaryWebSocketHandler from './SummaryWebSocketHandler';
+
+import {
+  useConfigs, useDirective, useOutputFiles
+} from './SWRHooks';
+
+const useStyles = makeStyles((theme) => ({
+  root: {
+    padding: [[theme.spacing(10), theme.spacing(2), theme.spacing(2)]],
+  },
+  header: {
+    marginBottom: theme.spacing(3),
+  },
+  headerContainer: {
+    display: 'grid',
+    gridTemplateColumns: '1fr repeat(3, auto) 1fr',
+    gridColumnGap: theme.spacing(1),
+    paddingBottom: theme.spacing(3),
+    '& > :first-child': {
+      placeSelf: 'start',
+    },
+  },
+  detailsPanel: {
+    backgroundColor: theme.palette.grey[300],
+    padding: theme.spacing(2),
+    borderRadius: '4px',
+    borderWidth: 0,
+    width: '100%',
+    '&:focus': {
+      outlineColor: '#fff',
+      outlineWidth: 0,
+      boxShadow: '0 0 10px #0c0c0c',
+    },
+  },
+  runCommandContainer: {
+    paddingBottom: theme.spacing(1),
+  },
+  headerText: {
+    // this matches up with the headers in FileCardList
+    paddingTop: '10px',
+  },
+  publishButton: {
+    position: 'fixed',
+    right: 0,
+    bottom: '2px',
+    zIndex: 10
+  },
+  modelEditButton: {
+    float: 'right',
+    backgroundColor: theme.palette.grey[400],
+  },
+  causemosButton: {
+    fontWeight: 'bold',
+    backgroundColor: theme.palette.grey[400],
+  },
+  cardGridContainer: {
+    '& > *': {
+      height: '100%',
+    },
+  },
+  tooltip: {
+    marginBottom: theme.spacing(1),
+  },
+  publishedBox: {
+    alignItems: 'center',
+    backgroundColor: theme.palette.success.light,
+    borderRadius: theme.shape.borderRadius,
+    color: theme.palette.success.contrastText,
+    display: 'flex',
+    padding: theme.spacing(1),
+  },
+}));
+
+const SummaryContents = ({
+  model, mutateModel, intro, locked, relaunch
+}) => {
+  const [introDialogOpen, setIntroDialogOpen] = useState(intro);
+  // start the page disabled, as we need to wait for our lock API call to resolve before setting
+  const [disabledMode, setDisabledMode] = useState(true);
+
+  const [loadingMode, setLoadingMode] = useState(false);
+  // when we're uploading the container to dockerhub
+  const [uploading, setUploading] = useState(false);
+
+  const history = useHistory();
+  useEffect(() => {
+    // if our call to the lock API confirmed the existence of a lock turn off disabledMode
+    if (locked) {
+      setDisabledMode(false);
+    }
+
+    // and if we passed along the upload state from the terminal, start the upload
+    if (locked && history.location?.state?.upload) {
+      setUploading(true);
+    }
+  }, [locked, history.location?.state]);
+
+  const {
+    configs, configsLoading, configsError, mutateConfigs
+  } = useConfigs(model.id);
+  const {
+    outputs, outputsLoading, outputsError, mutateOutputs
+  } = useOutputFiles(model.id);
+
+  const { directive } = useDirective(model.id);
+
+  const [openEditor, setOpenEditor] = useState(false);
+  const [editor, setEditor] = useState(() => ({
+    text: '', file: ''
+  }));
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
+  const [deletionSelection, setDeletionSelection] = useState(() => ({
+    type: null, id: null, description: 'Hello world',
+  }));
+
+  const [openShorthand, setOpenShorthand] = useState(false);
+  const [isShorthandSaving, setIsShorthandSaving] = useState(false);
+  const [shorthandContents, setShorthandContents] = useState({});
+  const [shorthandMode, setShorthandMode] = useState();
+
+  const [spacetagOpen, setSpacetagOpen] = useState(false);
+  const [spacetagFile, setSpacetagFile] = useState();
+
+  const [openModelEdit, setOpenModelEdit] = useState(false);
+
+  // the two alerts on the page
+  const [noDirectiveAlert, setNoDirectiveAlert] = useState(false);
+  const [navigateAwayWarning, setNavigateAwayWarning] = useState(false);
+
+  const [endSessionDialog, setEndSessionDialog] = useState(false);
+
+  const classes = useStyles();
+  const theme = useTheme();
+  const mediumBreakpoint = useMediaQuery(theme.breakpoints.down('md'));
+
+  const onUnload = (e) => {
+    // preventDefault here triggers the confirm dialog
+    e.preventDefault();
+
+    // show the alert with our warning text, as we can't modify the confirm dialog text
+    setNavigateAwayWarning(true);
+  };
+
+  // set up our confirm before navigating away warning
+  useEffect(() => {
+    // don't do this if we're in disabled mode, as then no edits will have been made
+    if (!disabledMode) {
+      window.addEventListener('beforeunload', onUnload);
+      return () => {
+        window.removeEventListener('beforeunload', onUnload);
+      };
+    }
+  }, [model.id, disabledMode]);
+
+  const openConfigShorthand = async (item) => {
+    const response = await fetch(
+      `/api/clouseau/container/${model.id}/ops/cat?path=${encodeURIComponent(item.path)}`
+    );
+
+    if (response.ok) {
+      const content = await response.text();
+
+      setShorthandContents({
+        editor_content: content,
+        content_id: item.path,
+      });
+
+      setShorthandMode('config');
+      setOpenShorthand(true);
+    }
+  };
+
+  const handlePublishClick = (e) => {
+    e.preventDefault();
+
+    if (!directive) {
+      setNoDirectiveAlert(true);
+      return;
+    }
+    setEndSessionDialog(true);
+  };
+
+  const FileTile = ({ item }) => {
+    const fileParts = new URL(`file://${item}`).pathname.split('/');
+    const fileName = fileParts.pop();
+    const filePath = fileParts.join('/').replace('/home/clouseau/', '~/');
+    return (
+      <span>
+        <Typography variant="subtitle1" noWrap>{fileName}</Typography>
+        <Typography variant="caption" noWrap component="div">{filePath}</Typography>
+      </span>
+    );
+  };
+
+  const shorthandDialogOnSave = () => {
+    // trigger ShorthandEditor to tell the shorthand app to save
+    setIsShorthandSaving(true);
+    return false; // don't close FullScreenDialog
+  };
+
+  const saveEditor = async () => {
+    await fetch(`/api/clouseau/container/${model.id}/ops/save?path=${editor.file}`, {
+      method: 'POST',
+      body: editor.text
+    });
+
+    return true; // should close FullScreenDialog
+  };
+
+  const handleDeleteDialogClose = () => {
+    setDeleteDialogOpen(false);
+    setDeletionSelection();
+  };
+
+  const handleDeleteItem = async () => {
+    console.log('deleting', deletionSelection);
+    let url = `/api/dojo/dojo/${deletionSelection.type}/${deletionSelection.id}`;
+    // Add params to end of URL is params included in deletionSelection
+    if (deletionSelection?.params) {
+      const paramList = [];
+      Object.entries(deletionSelection.params).forEach(([key, val]) => {
+        paramList.push(`${encodeURIComponent(key)}=${encodeURIComponent(val)}`);
+      });
+      url = `${url}?${paramList.join('&')}`;
+    }
+
+    const resp = await fetch(
+      url,
+      {
+        method: 'DELETE',
+      }
+    );
+
+    if (resp.ok) {
+      handleDeleteDialogClose();
+      // Dojo needs 1 second to update the DB before we can GET the accessories again
+      if (deletionSelection.type === 'config') {
+        setTimeout(() => mutateConfigs(), 1000);
+      } else if (deletionSelection.type === 'fileoutputs') {
+        setTimeout(() => { mutateOutputs(); }, 1000);
+      }
+    } else {
+      console.log(`There was an error deleting "${deletionSelection.description}"`);
+    }
+  };
+
+  const handleRunCommandClick = () => {
+    setShorthandContents({
+      editor_content: directive?.command_raw,
+      content_id: directive?.command_raw,
+      cwd: directive?.cwd,
+    });
+    setShorthandMode('directive');
+    setOpenShorthand(true);
+  };
+
+  // this gets passed down to the EndSessionDialog and is called when the user closes the dialog
+  // after a successful publish
+  const afterPublish = (closeDialog) => {
+    // release the container lock
+    if (locked) {
+      axios.delete(`/api/clouseau/docker/${model.id}/release`)
+        .then(() => {
+          console.log('Successfully released the lock');
+          // get rid of any query params in the url
+          history.replace(`/summary/${model.id}`);
+        }).catch(() => {
+          console.error('There was an error releasing the lock');
+        });
+    }
+
+    // make sure editing is disabled
+    setDisabledMode(true);
+    // mutate the model to ensure we get the new is_published attribute
+    mutateModel(model.id);
+    // and call the passed in closeDialog function to close the EndSessionDialog
+    closeDialog();
+  };
+
+  return (
+    <Container
+      className={classes.root}
+      component="main"
+      maxWidth={mediumBreakpoint ? 'md' : 'xl'}
+    >
+      {loadingMode && <LoadingOverlay text="Loading..." />}
+      <div>
+        <div className={classes.headerContainer}>
+          {(!disabledMode || relaunch) ? (
+            <Button
+              component={Link}
+              // in relaunch mode, link to the /provision page
+              // in normal container locked mode, link back to terminal
+              to={relaunch ? `/provision/${model?.id}?relaunch=true` : `/term/${model?.id}`}
+              size="small"
+              startIcon={<ArrowBackIcon />}
+            >
+              Back to Terminal
+            </Button>
+          ) : <div />}
+          {/* empty div to maintain the centering of the title because effort */}
+
+          <Typography
+            className={classes.header}
+            component="h3"
+            variant="h4"
+            align="center"
+          >
+            Model Summary
+          </Typography>
+          {(model?.is_published && !model.id) && (
+            <div>
+              <Typography className={classes.publishedBox}>
+                <CheckIcon style={{ margin: '0 4px 4px 0' }} /> Published
+              </Typography>
+            </div>
+          )}
+        </div>
+        <Grid container spacing={2} className={classes.cardGridContainer}>
+          <Grid item container xs={5} lg={6} spacing={2}>
+            <Grid item xs={12} lg={6}>
+              <div className={classes.runCommandContainer}>
+                <Typography
+                  align="center"
+                  color="textSecondary"
+                  variant="h6"
+                  gutterBottom
+                  className={classes.headerText}
+                >
+                  Model Execution Directive
+                </Typography>
+                <DirectiveBox
+                  modelId={model.id}
+                  summaryPage
+                  handleClick={handleRunCommandClick}
+                  disableClick={disabledMode}
+                />
+              </div>
+            </Grid>
+            <Grid item xs={12} lg={6}>
+              <FileCardList
+                name="Config"
+                files={configs}
+                loading={configsLoading}
+                error={configsError}
+                primaryClickHandler={(config) => openConfigShorthand(config)}
+                primaryIcon={<EditIcon />}
+                secondaryClickHandler={async (config) => {
+                  setDeletionSelection({
+                    type: 'config',
+                    id: config.model_id,
+                    description: config.path,
+                    params: {
+                      path: config.path,
+                    },
+                  });
+                  setDeleteDialogOpen(true);
+                }}
+                secondaryIcon={<DeleteIcon />}
+                cardContent={(config) => <FileTile item={config.path} />}
+                disableClick={disabledMode}
+                parameters={model?.parameters}
+              />
+            </Grid>
+            <Grid item xs={12} lg={6}>
+              <FileCardList
+                name="Output"
+                files={outputs}
+                loading={outputsLoading}
+                error={outputsError}
+                primaryClickHandler={(output) => {
+                  setSpacetagFile(output);
+                  setSpacetagOpen(true);
+                }}
+                primaryIcon={<EditIcon />}
+                secondaryClickHandler={(config) => {
+                  setDeletionSelection({
+                    type: 'outputfile', id: config.id, description: `${config.name}: ${config.path}`
+                  });
+                  setDeleteDialogOpen(true);
+                }}
+                secondaryIcon={<DeleteIcon />}
+                disableClick={disabledMode}
+                cardContent={(output) => (
+                  <>
+                    <Typography variant="subtitle1" noWrap>{output.name}</Typography>
+                    <Typography variant="caption" noWrap component="div">{output.path}</Typography>
+                  </>
+                )}
+                parameters={model?.outputs}
+              />
+            </Grid>
+            <Grid item xs={12} lg={6}>
+              <SummaryAccessories modelId={model.id} disableClick={disabledMode} />
+            </Grid>
+          </Grid>
+          <Grid item xs={7} lg={6}>
+            <Typography
+              align="center"
+              color="textSecondary"
+              variant="h6"
+              gutterBottom
+              className={classes.headerText}
+            >
+              Model Details
+            </Typography>
+            <div className={classes.detailsPanel}>
+              <Button
+                data-test="summaryDetailsEditButton"
+                onClick={() => setOpenModelEdit(true)}
+                className={classes.modelEditButton}
+                disabled={disabledMode}
+              >
+                Edit
+              </Button>
+              <SummaryModelDetails model={model} />
+            </div>
+          </Grid>
+        </Grid>
+
+        <div className={classes.publishButton}>
+          {/* In disabledMode, we show the button to trigger the intro dialog again */}
+          {disabledMode ? (
+            <Fab
+              variant="extended"
+              color="primary"
+              style={{ margin: '10px' }}
+              onClick={() => {
+                setIntroDialogOpen(true);
+              }}
+            >
+              {model.is_published ? 'Create New Model Version' : 'Edit Model'}
+            </Fab>
+          ) : <></>}
+          {!model.is_published ? (
+            <Tooltip
+              title={
+                uploading ? 'Please wait until the upload is complete before publishing'
+                  : 'Edit model and save an image to publish'
+              }
+              classes={{
+                popper: classes.tooltip,
+              }}
+            >
+              <span>
+                <Fab
+                  variant="extended"
+                  color="primary"
+                  style={{ margin: '10px' }}
+                  onClick={handlePublishClick}
+                  disabled={!model.image || uploading}
+                >
+                  Publish
+                </Fab>
+              </span>
+            </Tooltip>
+          ) : <></>}
+        </div>
+
+      </div>
+
+      <SummaryIntroDialog
+        open={introDialogOpen}
+        setOpen={setIntroDialogOpen}
+        model={model}
+        summaryLoading={loadingMode}
+        setSummaryLoading={setLoadingMode}
+      />
+
+      <FullScreenDialog
+        open={openEditor}
+        setOpen={setOpenEditor}
+        onSave={saveEditor}
+        title={`Editing ${editor?.file}`}
+      >
+        <SimpleEditor editorContents={editor} setEditorContents={setEditor} />
+      </FullScreenDialog>
+
+      <FullScreenDialog
+        open={openShorthand}
+        setOpen={setOpenShorthand}
+        onSave={shorthandDialogOnSave}
+      >
+        <ShorthandEditor
+          modelInfo={{ id: model.id }}
+          isSaving={isShorthandSaving}
+          setIsSaving={setIsShorthandSaving}
+          mode={shorthandMode}
+          shorthandContents={shorthandContents}
+          setIsShorthandOpen={setOpenShorthand}
+        />
+      </FullScreenDialog>
+
+      <FullScreenDialog
+        open={spacetagOpen}
+        setOpen={setSpacetagOpen}
+        onSave={() => {}}
+        showSave={false}
+        title={`${spacetagFile?.name}`}
+      >
+        <iframe
+          id="spacetag"
+          title="spacetag"
+          style={{ height: 'calc(100vh - 70px)', width: '100%' }}
+          src={`/api/spacetag/overview/${spacetagFile?.id}?reedit=true`}
+        />
+      </FullScreenDialog>
+
+      <DeletionDialog
+        open={deleteDialogOpen}
+        itemDescr={deletionSelection?.description}
+        deletionHandler={handleDeleteItem}
+        handleDialogClose={handleDeleteDialogClose}
+      />
+
+      <EndSessionDialog
+        open={endSessionDialog}
+        setOpen={setEndSessionDialog}
+        model={model}
+        afterPublish={afterPublish}
+      />
+
+      <BasicAlert
+        alert={{
+          message: 'Please add a model execution directive before publishing the model',
+          severity: 'warning',
+        }}
+        visible={noDirectiveAlert}
+        setVisible={setNoDirectiveAlert}
+      />
+
+      <BasicAlert
+        alert={{
+          message: `
+            If you navigate away without publishing your model, your model will not be available
+            for execution.
+          `,
+          severity: 'error',
+        }}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        visible={navigateAwayWarning}
+        setVisible={setNavigateAwayWarning}
+      />
+
+      {model && openModelEdit
+        && <ModelSummaryEditor model={model} open={openModelEdit} setOpen={setOpenModelEdit} />}
+
+      {(locked && uploading)
+        && (
+          <PublishContainer
+            modelId={model.id}
+            setUploading={setUploading}
+            mutateModel={mutateModel}
+          />
+        )}
+
+      <SummaryWebSocketHandler
+        modelId={model.id}
+        relaunch={relaunch}
+      />
+    </Container>
+  );
+};
+
+export default SummaryContents;

@@ -1,6 +1,7 @@
 import React from 'react';
 
 import CircularProgress from '@material-ui/core/CircularProgress';
+import Link from '@material-ui/core/Link';
 import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 
@@ -25,7 +26,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 // pass in blank error prop to hide spinner
-function LoadingOverlay({ text, error }) {
+function LoadingOverlay({ text, error, link }) {
   const classes = useStyles();
 
   let errorTextHeader;
@@ -66,6 +67,7 @@ function LoadingOverlay({ text, error }) {
         </>
       )}
       {!error && <CircularProgress />}
+      {link && <Link variant="h6" href={link.href}>{link.text}</Link>}
     </div>
   );
 }

@@ -24,29 +24,6 @@ export function useModel(modelId) {
   };
 }
 
-export function useContainer(containerId) {
-  const { data, error, mutate } = useSWR(
-    containerId ? `/api/dojo/clouseau/container/${containerId}` : null, fetcher
-  );
-
-  return {
-    container: data,
-    mutateContainer: mutate,
-    containerLoading: !error && !data,
-    containerError: error,
-  };
-}
-
-export function useContainerWithWorker(workerNode) {
-  // fetch the container ID first
-  const { data: containerId } = useSWR(
-    workerNode ? `/api/clouseau/container/${workerNode}/ops/container` : null, fetcher
-  );
-
-  // then fetch the container (SWR handles this nicely)
-  return useContainer(containerId?.id);
-}
-
 export function useConfigs(modelId) {
   const { data, error, mutate } = useSWR(
     modelId ? `/api/dojo/dojo/config/${modelId}` : null, fetcher
@@ -99,9 +76,9 @@ export function useDirective(modelId) {
   };
 }
 
-export function useShellHistory(containerId) {
+export function useShellHistory(modelId) {
   const { data, error, mutate } = useSWR(
-    containerId ? `/api/dojo/clouseau/container/${containerId}/history` : null, fetcher
+    modelId ? `/api/dojo/clouseau/container/history/${modelId}` : null, fetcher
   );
 
   return {
@@ -122,5 +99,71 @@ export function useRunLogs(runId) {
     runLogsLoading: !error && !data,
     runLogsError: error,
     mutateRunLogs: mutate,
+  };
+}
+
+export function useLocks() {
+  const { data, error, mutate } = useSWR('/api/clouseau/docker/locks', fetcher);
+
+  // we only use the locks property inside the object here
+  return {
+    locks: data?.locks,
+    locksLoading: !error && !data,
+    locksError: error,
+    mutateLocks: mutate,
+  };
+}
+
+export function useLock(modelId) {
+  const lockFetcher = async (url) => {
+    const response = await fetch(url);
+    const parsedResponse = await response.json();
+
+    if (!response.ok) {
+      const error = new Error(`Error fetching data from ${url}`);
+      error.info = parsedResponse;
+      error.status = response.status;
+      throw error;
+    }
+
+    if (parsedResponse.containerId === 'unset' || !parsedResponse.containerId.length) {
+      const error = new Error(`No container lock found for model ${modelId}`);
+      throw error;
+    }
+
+    return parsedResponse;
+  };
+
+  // use this custom fetcher because we also want to throw an error when containerId is 'unset'
+  const { data, error } = useSWR(
+    `/api/clouseau/docker/locks/${modelId}`, lockFetcher
+  );
+
+  return {
+    lock: data,
+    lockLoading: !error && !data,
+    lockError: error,
+  };
+}
+
+export function useNodes() {
+  const { data, error, mutate } = useSWR('/api/clouseau/docker/nodes?v', fetcher);
+
+  return {
+    nodes: data,
+    nodesLoading: !error && !data,
+    nodesError: error,
+    mutateNodes: mutate,
+  };
+}
+
+export function useLastProvisionLogs(modelId) {
+  const { data, error, mutate } = useSWR(`/api/clouseau/provision/last/log/${modelId}`, fetcher);
+
+  return {
+    provisionLogs: data,
+    provisionLogsLoading: !error && !data,
+    provisionLogsError: error,
+    mutateProvisionLogs: mutate,
   };
 }

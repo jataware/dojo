@@ -109,7 +109,7 @@ function ViewModels() {
   }
 
   const viewModelClick = (modelId) => {
-    history.push(`/summary?model=${modelId}`);
+    history.push(`/summary/${modelId}?intro=true`);
   };
 
   const expandableCell = ({ value, colDef }) => (
