@@ -77,6 +77,8 @@ services:
     networks:
       - world-modelers
   processor:
+    env_file:
+      - envfile
     networks:
       - world-modelers
   shorthand-app:
