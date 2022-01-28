@@ -40,6 +40,9 @@ const useStyles = makeStyles((theme) => ({
   detailsWrapper: {
     marginBottom: theme.spacing(2),
   },
+  warning: {
+    color: theme.palette.error.main,
+  }
 }));
 
 const CurrentState = ({
@@ -158,6 +161,9 @@ const Provisioning = () => {
     <Backdrop open className={classes.backdrop}>
       <Paper className={classes.paper}>
         <div className={classes.progressWrapper}>
+          <Typography gutterBottom variant="body2" align="center" className={classes.warning}>
+            Note: Depending on the size of your base image, provisioning may take several minutes.
+          </Typography>
           <LinearProgress
             color="primary"
             variant={provisionState?.state === 'ready' ? 'determinate' : 'indeterminate'}
