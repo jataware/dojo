@@ -37,7 +37,7 @@ export const overviewValidationSchema = yup.object({
 });
 
 export const ModelOverviewFields = ({
-  formik
+  formik, lockFamilyName
 }) => (
   <>
     <FormikTextField
@@ -54,6 +54,7 @@ export const ModelOverviewFields = ({
     <FormikTextField
       name="family_name"
       label="Model Family"
+      disabled={lockFamilyName}
       formik={formik}
     />
     <FormikTextField
@@ -69,7 +70,7 @@ export const ModelOverviewFields = ({
 );
 
 export const ModelOverview = ({
-  modelInfo, handleNext
+  modelInfo, handleNext, lockFamilyName
 }) => {
   const classes = useStyles();
   const formik = useFormik({
@@ -84,7 +85,7 @@ export const ModelOverview = ({
     <FormikProvider value={formik}>
       <form onSubmit={formik.handleSubmit}>
         <div className={classes.buttonContainer}>
-          <ModelOverviewFields formik={formik} />
+          <ModelOverviewFields formik={formik} lockFamilyName={lockFamilyName} />
           <Button disabled>
             Back
           </Button>
