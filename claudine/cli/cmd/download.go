@@ -22,5 +22,5 @@ var downloadCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(downloadCmd)
+	//rootCmd.AddCommand(downloadCmd)
 }
