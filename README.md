@@ -4,7 +4,7 @@
 
 ![Build](https://github.com/jataware/clouseau/workflows/Build/badge.svg)
 
-v2.3.0
+v2.4.0
 
 
 ## Demo
