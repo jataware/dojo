@@ -145,7 +145,6 @@ func (c *WebSocketClient) Read() {
 	c.clientReplyChan = make(chan WebSocketMessage)
 	defer c.Stop()
 
-	c.Conn.SetReadLimit(512)
 	c.Conn.SetReadDeadline(time.Now().Add(PONG_WAIT))
 	c.Conn.SetPongHandler(func(string) error {
 		c.Conn.SetReadDeadline(time.Now().Add(PONG_WAIT))
@@ -164,6 +163,8 @@ func (c *WebSocketClient) Read() {
 				if err != nil {
 					if ws.IsUnexpectedCloseError(err, ws.CloseGoingAway, ws.CloseAbnormalClosure) {
 						LogError("Reply Error", err)
+					} else {
+						log.Printf("Conn Closed Reason: %+v\n", err)
 					}
 					return
 				}
@@ -180,9 +181,11 @@ func (c *WebSocketClient) Read() {
 
 		if err != nil {
 			if ws.IsUnexpectedCloseError(err, ws.CloseGoingAway, ws.CloseAbnormalClosure) {
+				LogError("Unexpected Close Conn ReadMessage Error", err)
+			} else {
 				LogError("Conn ReadMessage Error", err)
+				LogTrace("Client Reader Closed")
 			}
-			LogTrace("Client Reader Closed")
 			break
 		}
 
@@ -225,6 +228,7 @@ func (c *WebSocketClient) KeepAlive() {
 				if ws.IsUnexpectedCloseError(err, ws.CloseGoingAway, ws.CloseAbnormalClosure) {
 					LogError("Unexpected Error Keep Alive:", err)
 				} else {
+					log.Printf("Keep Alive Client Closed Reason: %+v\n", err)
 					log.Printf("Keep Alive Client gone - Id: %s\n", c.ID)
 				}
 				return

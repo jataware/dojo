@@ -86,7 +86,6 @@ func (c *WebSocketProxyClient) Connect() error {
 }
 
 func (c *WebSocketProxyClient) Read() {
-	c.Conn.SetReadLimit(512)
 	c.Conn.SetReadDeadline(time.Now().Add(PONG_WAIT))
 	c.Conn.SetPongHandler(func(string) error {
 		c.Conn.SetReadDeadline(time.Now().Add(PONG_WAIT))
@@ -105,6 +104,8 @@ func (c *WebSocketProxyClient) Read() {
 				if err != nil {
 					if ws.IsUnexpectedCloseError(err, ws.CloseGoingAway, ws.CloseAbnormalClosure) {
 						LogError("Proxy Conn ReadMessage Error", err)
+					} else {
+						log.Printf("Proxy Conn Closed Reason: %+v\n", err)
 					}
 					return
 				}
@@ -152,6 +153,8 @@ func (c *WebSocketProxyClient) Read() {
 			if err != nil {
 				if ws.IsUnexpectedCloseError(err, ws.CloseGoingAway, ws.CloseAbnormalClosure) {
 					LogError("Reply Error", err)
+				} else {
+					log.Printf("Normal Closing - Proxy Client Closed Reason: %+v\n", err)
 				}
 				return
 			}
@@ -180,6 +183,7 @@ func (c *WebSocketProxyClient) KeepAlive() {
 				if ws.IsUnexpectedCloseError(err, ws.CloseGoingAway, ws.CloseAbnormalClosure) {
 					LogError("Unexpected Error Keep Alive:", err)
 				} else {
+					log.Printf("Keep Alive Proxy Client Closed Reason: %+v\n", err)
 					log.Printf("Keep Alive Proxy Client gone - Id: %s\n", c.ID)
 				}
 				return
