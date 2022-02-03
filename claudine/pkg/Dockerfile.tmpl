@@ -26,7 +26,7 @@ RUN mkdir -p /var/run/sshd && \
     sed -ri 's/UsePAM yes/#UsePAM yes/g' /etc/ssh/sshd_config && \
     echo "clouseau ALL=NOPASSWD:ALL" >> /etc/sudoers.d/50-clouseau
 
-RUN useradd --user-group --create-home clouseau | true && \
+RUN useradd --user-group --create-home clouseau || true && \
     usermod -s /bin/bash clouseau && \
     echo "clouseau:clouseau" | chpasswd clouseau && \
     echo 'Defaults    env_keep += "DEBIAN_FRONTEND"' > /etc/sudoers.d/env_keep
