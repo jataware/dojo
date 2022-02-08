@@ -118,15 +118,20 @@ const createModel = async (model, history) => {
   }
 };
 
-export const HorizontalLinearStepper = () => {
+export const HorizontalLinearStepper = ({ modelFamily }) => {
   const history = useHistory();
   const classes = useStyles();
+  let lockFamilyName = false;
   const [activeStep, setActiveStep] = React.useState(0);
   // deep clone the defaultModelState object so we don't just reference it
   // and thus break the 'reset' button at the end of the flow
   const [modelInfo, setModelInfo] = React.useState(
     JSON.parse(JSON.stringify(defaultModelState))
   );
+  if (modelFamily) {
+    modelInfo.family_name = modelFamily;
+    lockFamilyName = true;
+  }
   const steps = getSteps();
 
   const handleBack = (values) => {
@@ -159,6 +164,7 @@ export const HorizontalLinearStepper = () => {
           <ModelOverview
             handleNext={handleNext}
             modelInfo={modelInfo}
+            lockFamilyName={lockFamilyName}
           />
         );
       case 1:

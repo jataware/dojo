@@ -1,15 +1,17 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import axios from 'axios';
 
-import Autocomplete from '@material-ui/lab/Autocomplete';
+import Box from '@material-ui/core/Box';
 import Button from '@material-ui/core/Button';
 import Container from '@material-ui/core/Container';
 import FormControl from '@material-ui/core/FormControl';
 import Grid from '@material-ui/core/Grid';
+import Link from '@material-ui/core/Link';
 import Paper from '@material-ui/core/Paper';
 import TextField from '@material-ui/core/TextField';
 import Typography from '@material-ui/core/Typography';
+import Autocomplete, { createFilterOptions } from '@material-ui/lab/Autocomplete';
 
 import { makeStyles } from '@material-ui/core/styles';
 import { useHistory, useLocation, useParams } from 'react-router-dom';
@@ -34,6 +36,7 @@ const useStyles = makeStyles((theme) => ({
   paper: {
     padding: theme.spacing(2),
     color: theme.palette.text.secondary,
+    width: '600px',
   },
   gridItem: {
     paddingBottom: '12px'
@@ -51,7 +54,12 @@ const useStyles = makeStyles((theme) => ({
     // very specific here to match the height of the autocomplete and not cause a jump
     height: '43px',
   },
+  explainerText: {
+    margin: [[0, theme.spacing(1), theme.spacing(2)]]
+  }
 }));
+
+const filter = createFilterOptions();
 
 const formatImageString = (s) => s.replace(/\s+/g, '').replace(/[^a-zA-Z0-9_.-]/, '_');
 
@@ -68,18 +76,18 @@ const Provision = () => {
 
   const { model, modelLoading, modelError } = useModel(modelId);
 
+  // the image info we'll eventually send to be provisioned
   const [imageInfo, setImageInfo] = useState({});
 
   const [alertVisible, setAlertVisible] = useState(false);
+  // the value we display in the autocomplete - track this separately from the image
+  // info to allow us to display custom image names that users type in
+  const [autocompleteValue, setAutocompleteValue] = useState('');
 
   const [alert, setAlert] = useState({
     severity: 'error',
     message: ''
   });
-
-  const onImageInfoUpdate = useCallback((val, type) => {
-    setImageInfo((prev) => ({ ...prev, ...{ [type]: val } }));
-  }, []);
 
   useEffect(() => {
     if (model) {
@@ -96,7 +104,7 @@ const Provision = () => {
     e.preventDefault();
 
     // validate
-    if (imageInfo.dockerImage === '') {
+    if (!imageInfo.dockerImage) {
       setAlert({ severity: 'warning', message: 'Please select an Image' });
       setAlertVisible(true);
       return;
@@ -128,25 +136,73 @@ const Provision = () => {
   // eslint-disable-next-line no-unused-vars
   const [containers, setContainers] = React.useState([]);
 
-  // if we come in with the relaunch parameter set, we want to continue where we left off
-  // so load the model's existing image as the dockerImage that we'll pass along to launch
-  // the terminal
+  // This handles the model relaunch setup
   useEffect(() => {
     if (relaunch && model) {
+      // if we come in with the relaunch parameter set, we want to continue where we left off
+      // so load the model's existing image as the dockerImage that we'll pass along to launch
+      // the terminal
       setImageInfo((prev) => (
         { ...prev, ...{ dockerImage: model?.image } }
       ));
+
+      // and set it as the autocomplete's display value
+      setAutocompleteValue(model?.image);
     }
   }, [relaunch, model]);
 
-  // find the image & display name that matches our model's image for the autocomplete
-  const getRelaunchBaseImage = () => (
-    baseImageList.find((image) => image.image === model?.image)
-  );
+  const getOptionLabel = (option) => {
+    // MUI complains about several "" options for some reason without this
+    if (typeof option === 'string') {
+      return option;
+    }
+
+    return option.display_name;
+  };
+
+  const handleOnChange = (event, newValue) => {
+    if (newValue && newValue.inputValue) {
+      // show this warning if they're setting a custom image
+      setAlert({
+        severity: 'info',
+        message: 'Please ensure that your image exists on Docker Hub and is Debian based.'
+      });
+      setAlertVisible(true);
+      // use the inputValue here as the displayName has the 'Add my own...' message tacked on
+      setAutocompleteValue(newValue?.inputValue);
+    } else {
+      // whereas here the display name is what we want (unless it is blank, then an empty string)
+      setAutocompleteValue(newValue?.display_name || '');
+    }
+
+    // and update our dockerImage attribute on the image that we will eventually provision
+    setImageInfo((prev) => ({ ...prev, ...{ dockerImage: newValue?.image } }));
+  };
+
+  const handleFilter = (options, params) => {
+    const filtered = filter(options, params);
+
+    const { inputValue } = params;
+    // if anything in the options matches our input value
+    const isExisting = options.some((option) => inputValue === option.display_name);
+    // if we have an input value and it isn't in our list, then show it as an option to be added
+    if (inputValue !== '' && !isExisting) {
+      filtered.push({
+        inputValue,
+        display_name: `Add Debian image from Docker Hub: "${inputValue}"`,
+        image: inputValue,
+      });
+    }
+
+    return filtered;
+  };
 
   useEffect(() => {
-    axios('/api/dojo/phantom/base_images').then((response) => setBaseImageList(response.data));
-  }, []);
+    // skip this fetch if we are relaunching, then we won't show a list at all
+    if (!relaunch) {
+      axios('/api/dojo/phantom/base_images').then((response) => setBaseImageList(response.data));
+    }
+  }, [relaunch]);
 
   if (modelLoading) {
     return <LoadingOverlay text="Loading..." />;
@@ -177,20 +233,41 @@ const Provision = () => {
           Set Up a Container
         </Typography>
 
-        <Paper className={classes.paper} elevation={3} style={{ minWidth: '600px' }}>
-          <Typography variant="h5" id="tableTitle" component="div">
+        <Paper className={classes.paper} elevation={3}>
+          <Typography variant="h5" id="tableTitle" component="div" gutterBottom>
             {model?.name}
           </Typography>
+          <div className={classes.explainerText}>
+            <Typography variant="body2">
+              Please either select an existing container image from Dojo’s library or choose
+              your own Debian based image from Docker Hub by entering its tag.
+            </Typography>
+            <Typography variant="body2">
+              For example, you can enter&nbsp;
+              <Box component="span" fontWeight="fontWeightMedium">python:3.9.10-slim-buster</Box>
+              &nbsp;to use it from Docker Hub.
+            </Typography>
+            <Typography variant="body2" gutterBottom>
+              See <Link href="https://www.dojo-modeling.com/docker.html">Dojo’s docs</Link>
+              &nbsp;for more information on using prebuilt containers.
+            </Typography>
+          </div>
 
           <Grid item xs={12} className={classes.gridItem}>
             <FormControl className={classes.formControl} fullWidth>
-              {baseImageList.length ? (
+              {/* don't show the loading spinner if we have the relaunch param as in that case
+                we aren't fetching base images */}
+              {baseImageList.length || relaunch ? (
                 <Autocomplete
                   options={baseImageList}
-                  value={(relaunch && getRelaunchBaseImage()) || imageInfo?.model?.dockerImage}
-                  disabled={relaunch}
-                  getOptionLabel={(option) => option.display_name}
-                  onChange={(e, value) => onImageInfoUpdate(value?.image, 'dockerImage')}
+                  value={autocompleteValue}
+                  /* if we failed to get a value for relaunch, don't disable */
+                  disabled={(relaunch && !!autocompleteValue)}
+                  getOptionLabel={getOptionLabel}
+                  onChange={handleOnChange}
+                  filterOptions={handleFilter}
+                  freeSolo
+                  selectOnFocus
                   renderInput={(params) => (
                     <TextField
                       {...params}
@@ -225,7 +302,12 @@ const Provision = () => {
         </Paper>
       </Grid>
 
-      <BasicAlert alert={alert} visible={alertVisible} setVisible={setAlertVisible} />
+      <BasicAlert
+        alert={alert}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        visible={alertVisible}
+        setVisible={setAlertVisible}
+      />
     </Container>
   );
 };

@@ -4,6 +4,7 @@ import Container from '@material-ui/core/Container';
 import Typography from '@material-ui/core/Typography';
 
 import { makeStyles } from '@material-ui/core/styles';
+import { useLocation } from 'react-router-dom';
 
 import { HorizontalLinearStepper } from './components/ModelFormStepper';
 
@@ -21,6 +22,10 @@ const useStyles = makeStyles((theme) => ({
 
 export default function Model() {
   const classes = useStyles();
+
+  const query = new URLSearchParams(useLocation().search);
+  const modelFamily = query.get('family');
+
   return (
     <>
       <Container component="main" maxWidth="md">
@@ -31,7 +36,7 @@ export default function Model() {
           </Typography>
 
           <Container className={classes.stepper}>
-            <HorizontalLinearStepper />
+            <HorizontalLinearStepper modelFamily={modelFamily} />
           </Container>
         </div>
       </Container>
