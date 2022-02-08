@@ -4,12 +4,14 @@ import axios from 'axios';
 
 import Backdrop from '@material-ui/core/Backdrop';
 import LinearProgress from '@material-ui/core/LinearProgress';
+import Link from '@material-ui/core/Link';
 import Paper from '@material-ui/core/Paper';
 import Typography from '@material-ui/core/Typography';
 
 import { makeStyles } from '@material-ui/core/styles';
 import { useHistory, useParams } from 'react-router-dom';
 
+import BasicAlert from './components/BasicAlert';
 import LoadingOverlay from './components/LoadingOverlay';
 import {
   useLastProvisionLogs,
@@ -25,7 +27,7 @@ const useStyles = makeStyles((theme) => ({
   },
   paper: {
     minHeight: '360px',
-    minWidth: '825px',
+    width: '825px',
     padding: theme.spacing(3),
   },
   progress: {
@@ -99,6 +101,7 @@ const Provisioning = () => {
   const [ready, setReady] = useState(false);
 
   const [provisionState, setProvisionState] = useState();
+  const [alertVisible, setAlertVisible] = useState(false);
 
   const { lockExists, lockLoading, lockError } = useLockStatusCheck(modelId);
 
@@ -121,6 +124,8 @@ const Provisioning = () => {
   useEffect(() => {
     if (provisionState?.state === 'ready') {
       setReady(true);
+    } else if (provisionState?.state === 'failed') {
+      setAlertVisible(true);
     }
   }, [provisionState?.state]);
 
@@ -166,8 +171,14 @@ const Provisioning = () => {
           </Typography>
           <LinearProgress
             color="primary"
-            variant={provisionState?.state === 'ready' ? 'determinate' : 'indeterminate'}
-            value={provisionState?.state === 'ready' ? 100 : 0}
+            variant={
+              provisionState?.state === 'ready' || provisionState?.state === 'failed'
+                ? 'determinate' : 'indeterminate'
+            }
+            value={
+              provisionState?.state === 'ready' || provisionState?.state === 'failed'
+                ? 100 : 0
+            }
             classes={{ root: classes.progress }}
           />
         </div>
@@ -178,6 +189,21 @@ const Provisioning = () => {
           provisionLogsLoading={provisionLogsLoading}
         />
       </Paper>
+      <BasicAlert
+        alert={{
+          severity: 'error',
+          message: (
+            <Typography variant="body2">
+              There was an issue launching your container. Please contact Jataware at&nbsp;
+              <Link href="mailto:dojo@jataware.com" color="inherit">dojo@jataware.com</Link> for assistance.
+            </Typography>
+          ),
+        }}
+        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
+        visible={alertVisible}
+        setVisible={setAlertVisible}
+        autoHideDuration={20000}
+      />
     </Backdrop>
   );
 };
