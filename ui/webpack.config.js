@@ -15,7 +15,7 @@ module.exports = {
     entry: ['babel-polyfill', path.resolve(__dirname, './client/index.js')],
     output: {
         path: path.resolve(__dirname, './dist'),
-        filename: 'bundle.js',
+        filename: '[contenthash].bundle.js',
         publicPath: '/'
     },
     module: {
@@ -93,7 +93,7 @@ module.exports = {
             favicon: 'client/favicon.ico',
         }),
         new MiniCssExtractPlugin({
-            filename: "[name].css",}),
+            filename: "[contenthash].css",}),
       new webpack.HotModuleReplacementPlugin(),
       new CopyWebpackPlugin({
         patterns: [
