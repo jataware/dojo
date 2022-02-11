@@ -1,6 +1,8 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import * as yup from 'yup';
+
+import Autocomplete from '@material-ui/lab/Autocomplete';
 import Button from '@material-ui/core/Button';
 
 import DateFnsUtils from '@date-io/date-fns';
@@ -8,9 +10,10 @@ import {
   MuiPickersUtilsProvider,
 } from '@material-ui/pickers';
 
-import { ChipInput } from 'material-ui-formik-components/ChipInput';
 import { KeyboardDatePicker } from 'material-ui-formik-components/KeyboardDatePicker';
 import { RadioGroup } from 'material-ui-formik-components/RadioGroup';
+import TextField from '@material-ui/core/TextField';
+import axios from 'axios';
 import { makeStyles } from '@material-ui/core/styles';
 import { Field, FormikProvider, useFormik } from 'formik';
 
@@ -60,6 +63,14 @@ export const ModelDetailFields = ({
   formik
 }) => {
   const classes = useStyles();
+
+  const [domainList, setDomainList] = React.useState([]);
+
+  useEffect(() => {
+    if (domainList.length === 0) {
+      axios('/api/dojo/dojo/domains').then((response) => { setDomainList(response.data); });
+    }
+  }, [domainList]);
 
   return (
     <>
@@ -114,13 +125,40 @@ export const ModelDetailFields = ({
         ]}
         groupProps={{ row: true }}
       />
-      <Field
-        name="category"
-        data-test="modelFormCategory"
-        component={ChipInput}
-        value={formik.values.category}
-        label="Category (type a category and press space)"
-      />
+      {
+        domainList.length > 0
+          ? (
+            <Autocomplete
+              multiple
+              filterSelectedOptions
+              name="domains"
+              value={formik.values.domains}
+              options={domainList}
+              onChange={(evt, value) => { if (value) { formik.setFieldValue('domains', value); } }}
+              onBeforeInput={(evt) => {
+                if (evt.nativeEvent?.type === 'keypress' && evt.nativeEvent.keyCode === 13) {
+                  evt.preventDefault();
+                  evt.stopPropagation();
+                }
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  variant="outlined"
+                  label="Model Domain(s)"
+                />
+              )}
+            />
+          )
+          : (
+            <TextField
+              disabled
+              variant="outlined"
+              value="Fetching domains"
+              fullWidth
+            />
+          )
+      }
     </>
   );
 };

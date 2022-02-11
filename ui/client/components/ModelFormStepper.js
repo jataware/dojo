@@ -53,6 +53,7 @@ const defaultModelState = {
   description: '',
   type: 'model',
   category: [],
+  domains: [],
   geography: {},
   // this is just to store the selected regions from the final step
   // so we don't lose the them if the user goes back a step

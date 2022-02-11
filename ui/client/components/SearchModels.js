@@ -27,6 +27,7 @@ const fuseKeys = [
   'category',
   'commit_message',
   'description',
+  'domains',
   'family_name',
   'geography.country',
   'geography.admin1',
