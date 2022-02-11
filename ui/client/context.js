@@ -150,7 +150,7 @@ export const WebSocketContextProvider = ({ url, children }) => {
 
   // if we haven't hit readyState === OPEN, don't render the wrapped component
   if (!websocketLoaded) {
-    return <LoadingOverlay text="Connecting via WebSocket..." />;
+    return <LoadingOverlay text="Loading..." />;
   }
 
   return (
