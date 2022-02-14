@@ -92,18 +92,18 @@ const Admin = () => {
 
       // order the nodes based on host name
       nodeInformation.sort((node1, node2) => {
-        let name1 = node1.host.toLowerCase(),
-        name2 = node2.host.toLowerCase();
+        const name1 = node1.host.toLowerCase();
+        const name2 = node2.host.toLowerCase();
 
-          if (name1 < name2) {
-              return -1;
-          }
-          if (name1 > name2) {
-              return 1;
-          }
-          return 0;
+        if (name1 < name2) {
+          return -1;
+        }
+        if (name1 > name2) {
+          return 1;
+        }
+        return 0;
       });
-           
+
       setNodeInfo(nodeInformation);
       console.debug('Locks:', locks);
       console.debug('NodeInformation:', nodeInformation);
