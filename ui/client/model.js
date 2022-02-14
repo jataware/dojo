@@ -27,7 +27,7 @@ export default function Model() {
   const modelFamily = query.get('family');
 
   useEffect(() => {
-    document.title = 'Register Model - Dojo';
+    document.title = 'Model Registration - Dojo';
   }, []);
 
   return (
@@ -36,7 +36,7 @@ export default function Model() {
         <div className={classes.paper}>
 
           <Typography component="h3" variant="h4">
-            Register Model
+            Model Registration
           </Typography>
 
           <Container className={classes.stepper}>

@@ -26,7 +26,7 @@ export const overviewValidationSchema = yup.object({
     .required('Model family is required'),
   description: yup
     .string('Enter a model description')
-    .min(8, 'Description should be at least 250 characters')
+    .min(30, 'Description should be at least 30 characters')
     .required('Description is required'),
   maintainer: yup.object().shape({
     website: yup

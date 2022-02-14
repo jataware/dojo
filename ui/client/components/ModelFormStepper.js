@@ -34,19 +34,6 @@ function getSteps() {
   return ['Model Overview', 'Model Details', 'Model Geography'];
 }
 
-function getStepContent(step) {
-  switch (step) {
-    case 0:
-      return 'Provide model overview';
-    case 1:
-      return 'Provide model specifics';
-    case 2:
-      return 'Provide model geographic coverage';
-    default:
-      return 'Unknown step';
-  }
-}
-
 const defaultModelState = {
   name: '',
   family_name: '',
@@ -62,7 +49,6 @@ const defaultModelState = {
   outputs: [],
   parameters: [],
   image: '',
-  stochastic: 'true',
   maintainer: {
     email: '',
     name: '',
@@ -124,6 +110,7 @@ export const HorizontalLinearStepper = ({ modelFamily }) => {
   const classes = useStyles();
   const [lockFamilyName, setLockFamilyName] = useState(false);
   const [activeStep, setActiveStep] = React.useState(0);
+  const [completedSteps, setCompletedSteps] = React.useState({});
   // deep clone the defaultModelState object so we don't just reference it
   // and thus break the 'reset' button at the end of the flow
   const [modelInfo, setModelInfo] = React.useState(
@@ -154,6 +141,7 @@ export const HorizontalLinearStepper = ({ modelFamily }) => {
       return updatedModel;
     });
 
+    setCompletedSteps((prevCompleted) => ({ ...prevCompleted, [activeStep]: true }));
     setActiveStep((prevActiveStep) => prevActiveStep + 1);
   }, [activeStep, history]);
 
@@ -199,14 +187,15 @@ export const HorizontalLinearStepper = ({ modelFamily }) => {
   return (
     <div className={classes.root}>
       <Stepper activeStep={activeStep}>
-        {steps.map((label) => {
-          const stepProps = {};
-          return (
-            <Step key={label} completed={stepProps.completed}>
-              <StepLabel>{label}</StepLabel>
-            </Step>
-          );
-        })}
+        {steps.map((label, index) => (
+          <Step key={label} completed={completedSteps[index]}>
+            <StepLabel>
+              <Typography variant="h5">
+                {label}
+              </Typography>
+            </StepLabel>
+          </Step>
+        ))}
       </Stepper>
       <div>
         {activeStep === steps.length ? (
@@ -218,21 +207,7 @@ export const HorizontalLinearStepper = ({ modelFamily }) => {
               Reset
             </Button>
           </div>
-        ) : (
-          <div>
-            <div className={classes.form}>
-              <Typography
-                align="center"
-                className={classes.instructions}
-                variant="h5"
-              >
-                {getStepContent(activeStep)}
-              </Typography>
-              {displayFormStep()}
-            </div>
-            <div />
-          </div>
-        )}
+        ) : displayFormStep()}
       </div>
     </div>
   );
