@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 
 import axios from 'axios';
 
-import Box from '@material-ui/core/Box';
 import Button from '@material-ui/core/Button';
 import Container from '@material-ui/core/Container';
 import FormControl from '@material-ui/core/FormControl';
@@ -27,7 +26,7 @@ const useStyles = makeStyles((theme) => ({
   },
   root: {
     flexGrow: 1,
-    padding: [[theme.spacing(10), theme.spacing(2), theme.spacing(2)]],
+    padding: [[theme.spacing(10), theme.spacing(2), theme.spacing(20)]],
   },
   gridContainer: {
     minHeight: '100vh',
@@ -88,6 +87,10 @@ const Provision = () => {
     severity: 'error',
     message: ''
   });
+
+  useEffect(() => {
+    document.title = 'Provision - Dojo';
+  }, []);
 
   useEffect(() => {
     if (model) {
@@ -197,6 +200,13 @@ const Provision = () => {
     return filtered;
   };
 
+  function openCommands() {
+    window.open('https://www.dojo-modeling.com/cheatsheet.html#dojo-terminal-commands');
+  }
+  function openDocs() {
+    window.open('https://www.dojo-modeling.com/docker.html');
+  }
+
   useEffect(() => {
     // skip this fetch if we are relaunching, then we won't show a list at all
     if (!relaunch) {
@@ -230,27 +240,66 @@ const Provision = () => {
         className={classes.gridContainer}
       >
         <Typography variant="h5" id="tableTitle" component="div" style={{ marginBottom: '20px' }}>
-          Set Up a Container
+          Select starting image for running your model
         </Typography>
 
         <Paper className={classes.paper} elevation={3}>
-          <Typography variant="h5" id="tableTitle" component="div" gutterBottom>
-            {model?.name}
-          </Typography>
+          {/* <Typography variant="h5" id="tableTitle" component="div" gutterBottom>
+           <b> Model: </b> {model?.name}
+          </Typography> */}
           <div className={classes.explainerText}>
-            <Typography variant="body2">
-              Please either select an existing container image from Dojo’s library or choose
-              your own Debian based image from Docker Hub by entering its tag.
-            </Typography>
-            <Typography variant="body2">
+            <ul>
+              <li>
+                <Typography variant="body2">
+                  In the next step, you will launch a virtual environment in which you will
+                  set up and run your model with default values.
+                </Typography>
+              </li>
+              <br />
+              <li>
+                <Typography variant="body2">
+                  You can select an existing container image from Dojo’s library or choose
+                  your own Debian based image from Docker Hub by entering its tag.
+                </Typography>
+              </li>
+              <br />
+              <li>
+                <Typography variant="body2">
+                  In the dropdown below select a base image for the virtual environment that can
+                  successfully run your model. You will be able to install any required packages
+                  or load any data files once you lauch the environment.
+                </Typography>
+              </li>
+              <br />
+              <li>
+                <Typography variant="body2">
+                  Once the terminal finishes provisioning, run your model with default values.
+                  After the run completes, be sure to mark the command you used to run your
+                  model in the history to the right.
+                </Typography>
+              </li>
+              <br />
+              <li>
+                <Typography variant="body2">
+                  Once the model has been run, you&apos;ll use the
+                  { /* eslint-disable-next-line jsx-a11y/anchor-is-valid */}
+                  <Link onClick={openCommands}>Built-in &quot;dojo&quot; command </Link> to set your
+                  model parameters and annotate your model outputs.
+                </Typography>
+              </li>
+              <br />
+              {/* <Typography variant="body2">
               For example, you can enter&nbsp;
               <Box component="span" fontWeight="fontWeightMedium">python:3.9.10-slim-buster</Box>
               &nbsp;to use it from Docker Hub.
-            </Typography>
-            <Typography variant="body2" gutterBottom>
-              See <Link href="https://www.dojo-modeling.com/docker.html">Dojo’s docs</Link>
+            </Typography> */}
+
+              <Typography variant="body2" gutterBottom>
+                { /* eslint-disable-next-line jsx-a11y/anchor-is-valid */}
+                See <Link onclick={openDocs}>Dojo’s docs</Link>
               &nbsp;for more information on using prebuilt containers.
-            </Typography>
+              </Typography>
+            </ul>
           </div>
 
           <Grid item xs={12} className={classes.gridItem}>

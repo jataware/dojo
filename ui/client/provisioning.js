@@ -117,6 +117,10 @@ const Provisioning = () => {
   }, [modelId]);
 
   useEffect(() => {
+    document.title = 'Provisioning - Dojo';
+  }, []);
+
+  useEffect(() => {
     // fetch provision state when the page first loads
     fetchProvisionState();
   }, [fetchProvisionState]);

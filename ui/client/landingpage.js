@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import Button from '@material-ui/core/Button';
 import Card from '@material-ui/core/Card';
@@ -45,6 +45,10 @@ const useStyles = makeStyles((theme) => ({
 const LandingPage = () => {
   const classes = useStyles();
   const history = useHistory();
+
+  useEffect(() => {
+    document.title = 'Home - Dojo';
+  }, []);
 
   const registerModel = () => {
     history.push('/model');

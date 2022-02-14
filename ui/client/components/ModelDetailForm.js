@@ -11,7 +11,6 @@ import {
 } from '@material-ui/pickers';
 
 import { KeyboardDatePicker } from 'material-ui-formik-components/KeyboardDatePicker';
-import { RadioGroup } from 'material-ui-formik-components/RadioGroup';
 import TextField from '@material-ui/core/TextField';
 import axios from 'axios';
 import { makeStyles } from '@material-ui/core/styles';
@@ -50,9 +49,6 @@ export const detailValidationSchema = yup.object({
     organization: yup
       .string("Enter the name of the maintainer's organization"),
   }),
-  stochastic: yup
-    .string('Is the model stocashtic?')
-    .required('Is your model stochastic?'),
   period: yup.object().shape({
     gte: yup.date().nullable(),
     lte: yup.date().nullable(),
@@ -112,19 +108,6 @@ export const ModelDetailFields = ({
           />
         </div>
       </MuiPickersUtilsProvider>
-      <Field
-        required
-        name="stochastic"
-        data-test="modelFormStochastic"
-        component={RadioGroup}
-        value={formik.values.stochastic}
-        label="Is this model stochastic?"
-        options={[
-          { value: 'true', label: 'Yes' },
-          { value: 'false', label: 'No' }
-        ]}
-        groupProps={{ row: true }}
-      />
       {
         domainList.length > 0
           ? (

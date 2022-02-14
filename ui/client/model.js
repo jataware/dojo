@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import Container from '@material-ui/core/Container';
 import Typography from '@material-ui/core/Typography';
@@ -26,13 +26,17 @@ export default function Model() {
   const query = new URLSearchParams(useLocation().search);
   const modelFamily = query.get('family');
 
+  useEffect(() => {
+    document.title = 'Model Registration - Dojo';
+  }, []);
+
   return (
     <>
       <Container component="main" maxWidth="md">
         <div className={classes.paper}>
 
           <Typography component="h3" variant="h4">
-            Register Model
+            Model Registration
           </Typography>
 
           <Container className={classes.stepper}>
