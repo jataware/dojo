@@ -17,6 +17,17 @@ import LoadingOverlay from './components/LoadingOverlay';
 import { useLocks, useNodes } from './components/SWRHooks';
 
 const useStyles = makeStyles((theme) => ({
+  buttonLink: {
+    backgroundColor: 'transparent',
+    border: '2px solid black',
+    color: 'black',
+    padding: theme.spacing(1, 1, 1),
+    margin: theme.spacing(1, 1, 1),
+    cursor: 'pointer',
+    '&:hover': {
+      background: '#f8f8ff',
+    }
+  },
   buttonWrapper: {
     paddingTop: theme.spacing(1),
   },
@@ -62,11 +73,37 @@ const Admin = () => {
       }));
 
       // go through nodes and match up locks with nodes
-      const nodeInformation = nodes.map((node) => {
+      const nodeInformation = await Promise.all(nodes.map(async (node) => {
         const lock = lockStates.find((l) => l.host === node.host);
-        return { ...node, lock };
-      });
 
+        // if lock then we can get model name
+        if (lock) {
+          // get model's name
+          const getModelName = async () => {
+            const resp = await axios.get(`/api/dojo/models/${lock?.modelId}`);
+            return resp;
+          };
+          const responseModel = await getModelName();
+          lock.name = responseModel?.data?.name;
+        }
+
+        return { ...node, lock };
+      }));
+
+      // order the nodes based on host name
+      nodeInformation.sort((node1, node2) => {
+        let name1 = node1.host.toLowerCase(),
+        name2 = node2.host.toLowerCase();
+
+          if (name1 < name2) {
+              return -1;
+          }
+          if (name1 > name2) {
+              return 1;
+          }
+          return 0;
+      });
+           
       setNodeInfo(nodeInformation);
       console.debug('Locks:', locks);
       console.debug('NodeInformation:', nodeInformation);
@@ -121,25 +158,35 @@ const Admin = () => {
                   }}
                 >
                   <div>
-                    Worker - {node.host}
+                    <b>Worker - </b> {node.host}
                   </div>
                   <div>
-                    Status: {node.status}
+                    <b>Status:</b> {node.status}
                   </div>
                   <div>
-                    Connections: {node.clients}
+                    <b>Connections: </b>{node.clients}
                   </div>
                   <div>
-                    Containers: {node.info?.Containers}
+                    <b>Running Containers: </b> {node.info?.ContainersRunning}
                   </div>
                   <div>
-                    Running Containers: {node.info?.ContainersRunning}
+                    <b>In use by: </b>{node.lock?.name}
                   </div>
                   <div>
-                    In use by {node.lock?.modelId}
+                    <b>Model ID: </b>{node.lock?.modelId}
                   </div>
                   <div>
-                    Provision State: {node.lock?.status?.state}
+                    <b> Provision State: </b> {node.lock?.status?.state}
+                  </div>
+                  <div>
+                    <Button
+                      className={classes.buttonLink}
+                      variant="contained"
+                      color="primary"
+                      onClick={() => { history.push(`/summary/${node.lock?.modelId}`); }}
+                    >
+                      Link to Model Summary
+                    </Button>
                   </div>
                   <div>
                     {node.lock?.status?.state === 'failed' ? (
