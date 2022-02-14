@@ -79,6 +79,8 @@ export const ModelOverview = ({
     onSubmit: (values) => {
       handleNext(values);
     },
+    // we need this to allow the family name to come through after the modelInfo prop updates
+    enableReinitialize: true,
   });
 
   return (

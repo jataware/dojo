@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import Button from '@material-ui/core/Button';
 import Step from '@material-ui/core/Step';
@@ -122,17 +122,21 @@ const createModel = async (model, history) => {
 export const HorizontalLinearStepper = ({ modelFamily }) => {
   const history = useHistory();
   const classes = useStyles();
-  let lockFamilyName = false;
+  const [lockFamilyName, setLockFamilyName] = useState(false);
   const [activeStep, setActiveStep] = React.useState(0);
   // deep clone the defaultModelState object so we don't just reference it
   // and thus break the 'reset' button at the end of the flow
   const [modelInfo, setModelInfo] = React.useState(
     JSON.parse(JSON.stringify(defaultModelState))
   );
-  if (modelFamily) {
-    modelInfo.family_name = modelFamily;
-    lockFamilyName = true;
-  }
+
+  useEffect(() => {
+    if (modelFamily) {
+      setModelInfo((prevModelInfo) => ({ ...prevModelInfo, family_name: modelFamily }));
+      setLockFamilyName(true);
+    }
+  }, [modelFamily]);
+
   const steps = getSteps();
 
   const handleBack = (values) => {
