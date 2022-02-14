@@ -47,6 +47,10 @@ const Admin = () => {
   } = useNodes();
 
   useEffect(() => {
+    document.title = 'Admin - Dojo';
+  }, []);
+
+  useEffect(() => {
     const refreshNodeInfo = async () => {
       // go through all the locks and fetch their states
       const lockStates = await Promise.all(locks.map(async (lock) => {

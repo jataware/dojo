@@ -40,6 +40,10 @@ const Summary = () => {
   const { lock } = useLock(modelId);
 
   useEffect(() => {
+    document.title = 'Model Summary - Dojo';
+  }, []);
+
+  useEffect(() => {
     // if we have a container locked (a terminal session running)
     if (lock) {
       // start auto shutdown timer when we hit the page

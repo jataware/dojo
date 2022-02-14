@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 
 import Container from '@material-ui/core/Container';
 import Typography from '@material-ui/core/Typography';
@@ -25,6 +25,10 @@ export default function Model() {
 
   const query = new URLSearchParams(useLocation().search);
   const modelFamily = query.get('family');
+
+  useEffect(() => {
+    document.title = 'Register Model - Dojo';
+  }, []);
 
   return (
     <>

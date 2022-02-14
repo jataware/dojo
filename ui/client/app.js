@@ -327,6 +327,10 @@ const App = () => {
   }
   const url = `${proto}//${window.location.host}/api/ws/${modelid}`;
 
+  useEffect(() => {
+    document.title = 'Terminal - Dojo';
+  }, []);
+
   if (modelLoading || lockLoading) {
     return <LoadingOverlay text="Loading terminal" />;
   }

@@ -90,6 +90,10 @@ const Provision = () => {
   });
 
   useEffect(() => {
+    document.title = 'Provision - Dojo';
+  }, []);
+
+  useEffect(() => {
     if (model) {
       setImageInfo({
         model,

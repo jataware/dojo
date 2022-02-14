@@ -87,8 +87,8 @@ function ViewModels() {
   const [searchedModels, setSearchedModels] = useState(null);
 
   useEffect(() => {
-    // only do this once when the page loads
     getModels(setModels, setModelsError, setModelsLoading);
+    document.title = 'View Models - Dojo';
   }, []);
 
   if (modelsLoading) {
