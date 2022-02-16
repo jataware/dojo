@@ -9,6 +9,7 @@ import (
 	"net/http"
 	"net/http/httputil"
 	"net/url"
+	"path/filepath"
 	"sync"
 	"time"
 	//"github.com/docker/docker/api/types"
@@ -801,6 +802,30 @@ func WithContainerIdMiddleware() gin.HandlerFunc {
 	}
 }
 
+func UpdateBuildPackage(mu sync.Mutex, settings *Settings) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		f, err := c.FormFile("pkg")
+		if err != nil {
+			LogError("Error determining file", err)
+			c.String(http.StatusBadRequest, fmt.Sprintf("%+v", err))
+			c.Abort()
+			return
+		}
+
+		mu.Lock()
+		err = c.SaveUploadedFile(f, filepath.Join(settings.Http.Static, "pkg.tgz"))
+		mu.Unlock()
+		if err != nil {
+			LogError("Error saving upload file", err)
+			c.String(http.StatusInternalServerError, fmt.Sprintf("%+v", err))
+			c.Abort()
+			return
+		}
+
+		c.Status(http.StatusCreated)
+	}
+}
+
 //WebSocket Handler
 func ServeWebSocket(settings *Settings, pool *WebSocketPool, clouseauWorkerPool *ClouseauWorkerPool, redisStore *RedisStore) gin.HandlerFunc {
 	return func(c *gin.Context) {
@@ -846,10 +871,13 @@ func SetupRoutes(
 		redisGroup.GET("/ping", redisPing(redisStore))
 	}
 
+	var packageUploadLock sync.Mutex
+
 	adminGroup := router.Group("/admin")
 	{
 		adminGroup.GET("/build", showBuild())
 		adminGroup.GET("/pool", showPool(pool))
+		adminGroup.POST("/docker/build/context", UpdateBuildPackage(packageUploadLock, settings))
 	}
 
 	dockerGroup := router.Group("/docker")
