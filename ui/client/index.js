@@ -12,13 +12,13 @@ import {
 import { ThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 
 import Admin from './admin';
-import App from './app';
 import LandingPage from './landingpage';
 import Model from './model';
 import Provision from './provision';
 import Provisioning from './provisioning';
 import RunLogs from './runlogs';
 import Summary from './summary';
+import Terminal from './terminal';
 import TheKing from './theking';
 import ViewModels from './components/ViewModels';
 
@@ -57,7 +57,7 @@ export default function Main() {
         <Route component={ViewModels} exact path="/models" />
         <Route component={Provision} exact path="/provision/:modelId" />
         <Route component={Provisioning} exact path="/provisioning/:modelId" />
-        <Route component={App} exact path="/term/:modelid" />
+        <Route component={Terminal} exact path="/term/:modelid" />
         <Route component={Summary} exact path="/summary/:modelId" />
         <Route component={Admin} exact path="/admin" />
         <Route component={TheKing} exact path="/theking" />

@@ -62,8 +62,12 @@ export const AbandonSessionDialog = ({
   open, accept, reject
 }) => {
   const [isClosing, setClosing] = useState(false);
-  const handleClose = async (yes) => {
-    if (yes) {
+  const handleClose = (event, reason, shouldClose) => {
+    // if we're in the process of closing, don't close the dialog
+    if (isClosing) return;
+
+    // only abandon the session if the YES button is clicked, never for any other reason
+    if (shouldClose) {
       setClosing(true);
       accept();
     } else {
@@ -93,17 +97,29 @@ export const AbandonSessionDialog = ({
               flexWrap: 'wrap'
             }}
           >
-            This will kill your terminal session and is not recoverable
+            This will kill your terminal session and is not recoverable.
+            Any unsaved changes will be lost.
           </DialogContentText>
-          <div style={{ height: '20px', display: (isClosing) ? 'unset' : 'none' }}>
-            <LinearProgress color="primary" />
-          </div>
+          {isClosing && (
+            <div style={{ height: '20px' }}>
+              <LinearProgress color="primary" />
+            </div>
+          )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => handleClose(true)} autoFocus color="primary" disabled={isClosing}>
+          <Button
+            onClick={() => handleClose(null, 'buttonClick', true)}
+            color="primary"
+            disabled={isClosing}
+          >
             Yes
           </Button>
-          <Button onClick={() => handleClose(false)} color="secondary" disabled={isClosing}>
+          <Button
+            onClick={() => handleClose(null, 'buttonClick', false)}
+            autoFocus
+            color="secondary"
+            disabled={isClosing}
+          >
             No
           </Button>
         </DialogActions>
@@ -184,7 +200,7 @@ const CenteredGrid = ({ model }) => {
   const handleAbandonSession = () => {
     // TODO maybe add a processing spinner while teardown is occuring
     axios.delete(`/api/clouseau/docker/${model.id}/release`).then(() => {
-      history.push('/');
+      history.push(`/summary/${model.id}`);
     }).catch((error) => {
       // TODO: probably just still take the user to a different page
       console.log('There was an error shutting down the container: ', error);
@@ -292,7 +308,7 @@ const CenteredGrid = ({ model }) => {
           color="secondary"
           onClick={(e) => { e.preventDefault(); setAbandonSessionDialogOpen(true); }}
         >
-          Discard Session
+          Abandon Session
         </Fab>
 
         <Fab
@@ -313,7 +329,7 @@ const CenteredGrid = ({ model }) => {
   );
 };
 
-const App = () => {
+const Terminal = () => {
   const { modelid } = useParams();
   const worker = 0;
 
@@ -355,4 +371,4 @@ const App = () => {
   );
 };
 
-export default App;
+export default Terminal;
