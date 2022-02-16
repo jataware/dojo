@@ -24,6 +24,18 @@ export function useModel(modelId) {
   };
 }
 
+export function useIndicator(indicatorId) {
+  const { data, error } = useSWR(
+    indicatorId ? `/api/dojo/indicators/${indicatorId}` : null, fetcher
+  );
+
+  return {
+    indicator: data,
+    indicatorLoading: !error && !data,
+    indicatorError: error
+  };
+}
+
 export function useConfigs(modelId) {
   const { data, error, mutate } = useSWR(
     modelId ? `/api/dojo/dojo/config/${modelId}` : null, fetcher

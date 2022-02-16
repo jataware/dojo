@@ -57,15 +57,17 @@ const LandingPage = () => {
   const viewModels = () => {
     history.push('/models');
   };
-
-  const registerData = () => {
-    window.location.replace('https://data.dojo-test.com');
+  const viewIndicators = () => {
+    history.push('/indicators');
   };
+
+  const dataUrl = process.env.ANNOTATE_UI_URL ? process.env.ANNOTATE_UI_URL : 'http://localhost:8001';
 
   return (
     <Container component="main" maxWidth="md">
       <CssBaseline />
       <div className={classes.paper}>
+        <img src="./assets/Dojo_Logo_profile.png" alt="Dojo Icon" width="80" height="100" />
 
         <Typography component="h3" variant="h4">
           Welcome to Dojo
@@ -79,20 +81,16 @@ const LandingPage = () => {
           className={classes.model_data}
           spacing={5}
         >
-          <Grid item xs={12}>
-            <Typography component="h4" variant="h5">
-              I want to register...
-            </Typography>
-          </Grid>
+
           <Grid item xs={6}>
 
             <Card className={classes.maincard}>
               <CardContent>
                 <Typography variant="h5" component="h2">
-                  A Model
+                  Register A Model
                 </Typography>
                 <Typography className={classes.pos} color="textSecondary">
-                  You would like to register an executable model.
+                  Register an executable model.
                 </Typography>
               </CardContent>
               <CardActions>
@@ -113,10 +111,10 @@ const LandingPage = () => {
             <Card className={classes.maincard}>
               <CardContent>
                 <Typography variant="h5" component="h2">
-                  Data
+                  Register a Dataset
                 </Typography>
                 <Typography className={classes.pos} color="textSecondary">
-                  You would like to register a dataset.
+                  Register a Dataset Indicator.
                 </Typography>
               </CardContent>
               <CardActions>
@@ -124,7 +122,7 @@ const LandingPage = () => {
                   size="small"
                   variant="contained"
                   color="primary"
-                  onClick={registerData}
+                  href={dataUrl}
                 >
                   Go!
                 </Button>
@@ -149,6 +147,29 @@ const LandingPage = () => {
                   variant="contained"
                   color="primary"
                   onClick={viewModels}
+                >
+                  Go!
+                </Button>
+              </CardActions>
+            </Card>
+
+          </Grid>
+          <Grid item xs={6}>
+            <Card className={classes.maincard}>
+              <CardContent>
+                <Typography variant="h5" component="h2">
+                  View Existing Dataset Indicators
+                </Typography>
+                <Typography className={classes.pos} color="textSecondary">
+                  Revisit a previously registered indicator.
+                </Typography>
+              </CardContent>
+              <CardActions>
+                <Button
+                  size="small"
+                  variant="contained"
+                  color="primary"
+                  onClick={viewIndicators}
                 >
                   Go!
                 </Button>

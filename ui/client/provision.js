@@ -283,8 +283,9 @@ const Provision = () => {
                 <Typography variant="body2">
                   Once the model has been run, you&apos;ll use the
                   { /* eslint-disable-next-line jsx-a11y/anchor-is-valid */}
-                  <Link onClick={openCommands}>Built-in &quot;dojo&quot; command </Link> to set your
-                  model parameters and annotate your model outputs.
+                  <Link onClick={openCommands}>
+                    Built-in &quot;dojo&quot; command
+                  </Link> to set your model parameters and annotate your model outputs.
                 </Typography>
               </li>
               <br />

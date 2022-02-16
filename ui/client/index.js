@@ -18,8 +18,9 @@ import Provision from './provision';
 import Provisioning from './provisioning';
 import RunLogs from './runlogs';
 import Summary from './summary';
+import SummaryIndicators from './summary_indicators';
 import Terminal from './terminal';
-import TheKing from './theking';
+import ViewIndicators from './components/ViewIndicators';
 import ViewModels from './components/ViewModels';
 
 const theme = createMuiTheme({
@@ -55,12 +56,13 @@ export default function Main() {
         <Route component={LandingPage} exact path="/" />
         <Route component={Model} exact path="/model" />
         <Route component={ViewModels} exact path="/models" />
+        <Route component={ViewIndicators} exact path="/indicators" />
         <Route component={Provision} exact path="/provision/:modelId" />
         <Route component={Provisioning} exact path="/provisioning/:modelId" />
         <Route component={Terminal} exact path="/term/:modelid" />
         <Route component={Summary} exact path="/summary/:modelId" />
+        <Route component={SummaryIndicators} exact path="/indicator_summary" />
         <Route component={Admin} exact path="/admin" />
-        <Route component={TheKing} exact path="/theking" />
         <Route component={RunLogs} exact path="/runlogs/:runid" />
         <Route path="/*" render={() => <h2>404 Not Found</h2>} />
       </Switch>
