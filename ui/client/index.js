@@ -9,8 +9,13 @@ import {
   BrowserRouter as Router,
   Switch,
 } from 'react-router-dom';
+
 import { ThemeProvider, createMuiTheme } from '@material-ui/core/styles';
 
+import NavBar from './components/NavBar';
+import ThemeContextProvider from './components/ThemeContextProvider';
+
+// pages
 import Admin from './admin';
 import LandingPage from './landingpage';
 import Model from './model';
@@ -73,7 +78,10 @@ export default function Main() {
 ReactDOM.render(
   <ThemeProvider theme={theme}>
     <CssBaseline />
-    <Main />
+    <ThemeContextProvider>
+      <NavBar />
+      <Main />
+    </ThemeContextProvider>
   </ThemeProvider>,
   document.getElementById('app')
 );

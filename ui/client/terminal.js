@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useContext } from 'react';
 
 import axios from 'axios';
 
@@ -33,6 +33,7 @@ import ShellHistory from './components/ShellHistory';
 import ShorthandEditor from './components/ShorthandEditor';
 import SimpleEditor from './components/SimpleEditor';
 import Term from './components/Term';
+import { ThemeContext } from './components/ThemeContextProvider';
 
 import { useLock, useModel } from './components/SWRHooks';
 
@@ -336,6 +337,16 @@ const Terminal = () => {
   // we only care if lock is loading or doesn't exist
   const { lockLoading, lockError } = useLock(modelid);
   const { model, modelLoading, modelError } = useModel(modelid);
+
+  const { setShowNavBar } = useContext(ThemeContext);
+
+  // do this before we show the loading overlay so we don't see a flicker of the navbar
+  useEffect(() => {
+    // hide the navbar when the component mounts
+    setShowNavBar(false);
+    // when the component unmounts, toggle the navbar back
+    return () => setShowNavBar(true);
+  }, [setShowNavBar]);
 
   let proto = 'ws:';
   if (window.location.protocol === 'https:') {

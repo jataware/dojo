@@ -1,4 +1,6 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, {
+  useCallback, useContext, useEffect, useState
+} from 'react';
 
 import axios from 'axios';
 
@@ -13,6 +15,7 @@ import { useHistory, useParams } from 'react-router-dom';
 
 import BasicAlert from './components/BasicAlert';
 import LoadingOverlay from './components/LoadingOverlay';
+import { ThemeContext } from './components/ThemeContextProvider';
 import {
   useLastProvisionLogs,
 } from './components/SWRHooks';
@@ -94,6 +97,16 @@ const useLockStatusCheck = (modelId) => {
 };
 
 const Provisioning = () => {
+  const { setShowNavBar } = useContext(ThemeContext);
+  useEffect(() => {
+    // hide the navbar when the component mounts
+    setShowNavBar(false);
+    // when the component unmounts, toggle the navbar back
+    // if setShowNavBar changes for some reason this may get called early, but then
+    // it will be toggled right back to false
+    return () => setShowNavBar(true);
+  }, [setShowNavBar]);
+
   const { modelId } = useParams();
   const history = useHistory();
   const classes = useStyles();
@@ -152,7 +165,7 @@ const Provisioning = () => {
 
   if (lockLoading) {
     return (
-      <LoadingOverlay text={`Provisioning workers for model ${modelId}`} />
+      <LoadingOverlay text={`Provisioning workers for model ${modelId}`} navHidden />
     );
   }
 
@@ -162,6 +175,7 @@ const Provisioning = () => {
         text="There was an error setting up your container. Please try again."
         link={{ text: 'Return to the set up page', href: `/provision/${modelId}` }}
         error
+        navHidden
       />
     );
   }
