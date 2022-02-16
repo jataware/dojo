@@ -27,7 +27,6 @@ func (c *WebSocketClient) Read() {
 		c.Conn.Close()
 	}()
 
-	c.Conn.SetReadLimit(512)
 	c.Conn.SetReadDeadline(time.Now().Add(pongWait))
 	c.Conn.SetPongHandler(func(string) error {
 		c.Conn.SetReadDeadline(time.Now().Add(pongWait))
@@ -42,6 +41,8 @@ func (c *WebSocketClient) Read() {
 		if err != nil {
 			if ws.IsUnexpectedCloseError(err, ws.CloseGoingAway, ws.CloseAbnormalClosure) {
 				log.Printf("error: %+v\n", err)
+			} else {
+				log.Printf("Closed Reason: %+v\n", err)
 			}
 			return
 		}
@@ -70,6 +71,7 @@ func (c *WebSocketClient) KeepAlive() {
 				if ws.IsUnexpectedCloseError(err, ws.CloseGoingAway, ws.CloseAbnormalClosure) {
 					log.Printf("Unexpected Error Keep Alive: %+v\n", err)
 				} else {
+					log.Printf("Keep Alive Closed Reason: %+v\n", err)
 					log.Printf("Keep Alive Client gone - Id: %s\n", c.ID)
 				}
 				return

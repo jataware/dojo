@@ -1,6 +1,4 @@
 
-shopt -s extdebug
-
 preexec() {
   if [ -f /usr/bin/dojo-preexec ]; then
     export HIST_LAST_CMD="${PWD} ${1}"

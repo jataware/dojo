@@ -4,7 +4,7 @@
 # gnumake curl git
 # docker docker-compose
 
-VERSION := 2.2.7
+VERSION := 2.4.2
 
 DEV ?= $(strip $(if $(findstring y,$(prod)),,dev))
 
@@ -50,7 +50,7 @@ docker_login-dockerhub:| check-DOCKERHUB_USER check-DOCKERHUB_PASS  ## Login to 
 	@printf "${DOCKERHUB_PASS}\n" | docker login -u "${DOCKERHUB_USER}" --password-stdin
 
 .PHONY: docker_push-dockerhub
-docker_push-dockerhub: docker_push-claudine docker_push-cato | docker_login-dockerhub  ## Push all containers to docker registry
+docker_push-dockerhub: docker_push-cato | docker_login-dockerhub  ## Push all containers to docker registry
 
 docker_push-%:| docker_login-dockerhub
 	@echo "push $* ${VERSION}"
