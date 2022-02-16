@@ -7,13 +7,11 @@ import { makeStyles } from '@material-ui/core/styles';
 
 const useStyles = makeStyles((theme) => ({
   loadingOverlay: {
-    backgroundColor: 'rgb(224,224,224,0.8)',
     left: 0,
     height: '100%',
     position: 'absolute',
     top: 0,
     width: '100%',
-    zIndex: '9999',
     display: 'flex',
     flexDirection: 'column',
     paddingTop: theme.spacing(30),
@@ -26,7 +24,9 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 // pass in blank error prop to hide spinner
-function LoadingOverlay({ text, error, link }) {
+function LoadingOverlay({
+  text, error, link
+}) {
   const classes = useStyles();
 
   let errorTextHeader;

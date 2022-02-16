@@ -100,5 +100,8 @@ module.exports = {
           { from: "client/assets", to: "assets" }
         ],
       }),
+      new webpack.DefinePlugin({
+        'process.env': JSON.stringify(process.env),
+      }),
     ],
 };

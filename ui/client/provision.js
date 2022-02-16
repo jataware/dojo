@@ -200,13 +200,6 @@ const Provision = () => {
     return filtered;
   };
 
-  function openCommands() {
-    window.open('https://www.dojo-modeling.com/cheatsheet.html#dojo-terminal-commands');
-  }
-  function openDocs() {
-    window.open('https://www.dojo-modeling.com/docker.html');
-  }
-
   useEffect(() => {
     // skip this fetch if we are relaunching, then we won't show a list at all
     if (!relaunch) {
@@ -244,9 +237,11 @@ const Provision = () => {
         </Typography>
 
         <Paper className={classes.paper} elevation={3}>
+
           {/* <Typography variant="h5" id="tableTitle" component="div" gutterBottom>
            <b> Model: </b> {model?.name}
           </Typography> */}
+
           <div className={classes.explainerText}>
             <ul>
               <li>
@@ -265,9 +260,11 @@ const Provision = () => {
               <br />
               <li>
                 <Typography variant="body2">
-                  In the dropdown below select a base image for the virtual environment that can
-                  successfully run your model. You will be able to install any required packages
-                  or load any data files once you lauch the environment.
+                  In the dropdown below select a base image for the
+                  virtual environment that can successfully run
+                  your model. You will be able to install any required
+                  packages or load any data files once you
+                  launch the environment.
                 </Typography>
               </li>
               <br />
@@ -281,10 +278,17 @@ const Provision = () => {
               <br />
               <li>
                 <Typography variant="body2">
-                  Once the model has been run, you&apos;ll use the
-                  { /* eslint-disable-next-line jsx-a11y/anchor-is-valid */}
-                  <Link onClick={openCommands}>Built-in &quot;dojo&quot; command </Link> to set your
-                  model parameters and annotate your model outputs.
+
+                  Once the model has been run, you&apos;ll use the&nbsp;
+                  <Link
+                    href="https://www.dojo-modeling.com/cheatsheet.html#dojo-terminal-commands"
+                    target="_blank"
+                    rel="noopener"
+                  >
+                    Built-in &quot;dojo&quot; command
+                  </Link>
+                  &nbsp;to set your model parameters and annotate your model outputs.
+
                 </Typography>
               </li>
               <br />
@@ -295,9 +299,15 @@ const Provision = () => {
             </Typography> */}
 
               <Typography variant="body2" gutterBottom>
-                { /* eslint-disable-next-line jsx-a11y/anchor-is-valid */}
-                See <Link onclick={openDocs}>Dojo’s docs</Link>
-              &nbsp;for more information on using prebuilt containers.
+                See&nbsp;
+                <Link
+                  href="https://www.dojo-modeling.com/docker.html"
+                  target="_blank"
+                  rel="noopener"
+                >
+                  Dojo’s docs
+                </Link>
+                &nbsp;for more information on using prebuilt containers.
               </Typography>
             </ul>
           </div>
@@ -328,7 +338,12 @@ const Provision = () => {
                   )}
                 />
               ) : (
-                <Typography variant="subtitle1" align="center" gutterBottom className={classes.loading}>
+                <Typography
+                  variant="subtitle1"
+                  align="center"
+                  gutterBottom
+                  className={classes.loading}
+                >
                   loading ...
                 </Typography>
               )}
