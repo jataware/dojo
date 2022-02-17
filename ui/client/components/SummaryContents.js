@@ -470,7 +470,7 @@ const SummaryContents = ({
             <Tooltip
               title={
                 uploading ? 'Please wait until the upload is complete before publishing'
-                  : 'Edit model and save an image to publish'
+                  : 'Make model available for running'
               }
               classes={{
                 popper: classes.tooltip,

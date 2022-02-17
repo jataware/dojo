@@ -278,7 +278,6 @@ const Provision = () => {
               <br />
               <li>
                 <Typography variant="body2">
-
                   Once the model has been run, you&apos;ll use the&nbsp;
                   <Link
                     href="https://www.dojo-modeling.com/cheatsheet.html#dojo-terminal-commands"
@@ -288,7 +287,6 @@ const Provision = () => {
                     Built-in &quot;dojo&quot; command
                   </Link>
                   &nbsp;to set your model parameters and annotate your model outputs.
-
                 </Typography>
               </li>
               <br />
