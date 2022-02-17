@@ -75,7 +75,7 @@ docker-compose.yaml:$(COMPOSE_FILES) docker-compose.build-override.yaml envfile
 
 
 phantom/ui/node_modules:docker-compose.yaml
-	docker-compose run phantom npm install -y
+	docker-compose run phantom npm ci -y
 
 
 .PHONY:up
