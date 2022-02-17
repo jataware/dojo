@@ -40,7 +40,7 @@ const NavBar = () => {
         <Tooltip title="Dojo home" arrow>
           <IconButton href="/" size="small">
             <img
-              src="../assets/Dojo_Logo_black.svg"
+              src="/assets/Dojo_Logo_black.svg"
               alt="Dojo Logo"
               className={classes.dojoIcon}
             />
