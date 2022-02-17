@@ -61,7 +61,8 @@ const LandingPage = () => {
     history.push('/indicators');
   };
 
-  const dataUrl = process.env.ANNOTATE_UI_URL ? process.env.ANNOTATE_UI_URL : 'http://localhost:8001';
+  // const dataUrl = process.env.ANNOTATE_UI_URL ? process.env.ANNOTATE_UI_URL : 'https://data.wm.dojo-modeling.com/';
+  const dataUrl = 'https://data.wm.dojo-modeling.com/';
 
   return (
     <Container component="main" maxWidth="md">
