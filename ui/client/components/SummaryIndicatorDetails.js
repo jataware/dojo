@@ -1,5 +1,6 @@
 import React from 'react';
 
+import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 
@@ -9,6 +10,12 @@ import CollapseText from './CollapseText';
 import IndicatorCountryMap from './CountryMap';
 
 const useStyles = makeStyles((theme) => ({
+  buttonStyle: {
+    border: '2px solid black',
+    backgroundColor: 'white',
+    color: 'black',
+    cursor: 'pointer',
+  },
 
   detailsPanel: {
     padding: theme.spacing(3, 2, 3, 2),
@@ -66,7 +73,16 @@ function SummaryIndicatorDetails({ indicator }) {
           <Typography variant="body2" className={classes.subsection}>
             <b> ID: </b> {indicator.id}
           </Typography>
-
+          <br />
+          <Typography variant="body2" className={classes.subsection}>
+            <Button
+              className={classes.buttonStyle}
+              href={`https://causemos.uncharted.software/#/dataset/${indicator.id}/datasetOverview`}
+              target="_blank"
+              rel="noopener"
+            > View In Causemos
+            </Button>
+          </Typography>
         </div>
       </Grid>
       <Grid className={classes.detailsPanel} item xs={3}>
