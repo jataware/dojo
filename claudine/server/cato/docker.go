@@ -324,7 +324,13 @@ func (docker *Docker) Build(pool *WebSocketPool, listenClients []string, body io
 
 	resp, err := docker.Client.ImageBuild(context.Background(),
 		body,
-		types.ImageBuildOptions{Tags: []string{tag}, SuppressOutput: false})
+		types.ImageBuildOptions{
+			Tags:           []string{tag},
+			SuppressOutput: false,
+			PullParent:     true,
+			ForceRemove:    true,
+			Remove:         true,
+		})
 
 	if err != nil {
 		log.Printf("Error %+v", err)
