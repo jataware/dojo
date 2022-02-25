@@ -2,20 +2,12 @@ import React, { useContext, useEffect, useState } from 'react';
 
 import axios from 'axios';
 
-import Button from '@material-ui/core/Button';
 import Container from '@material-ui/core/Container';
-import Dialog from '@material-ui/core/Dialog';
-import DialogActions from '@material-ui/core/DialogActions';
-import DialogContent from '@material-ui/core/DialogContent';
-import DialogContentText from '@material-ui/core/DialogContentText';
-import DialogTitle from '@material-ui/core/DialogTitle';
 import Divider from '@material-ui/core/Divider';
 import Fab from '@material-ui/core/Fab';
 import Grid from '@material-ui/core/Grid';
-import LinearProgress from '@material-ui/core/LinearProgress';
 import SyncDisabledIcon from '@material-ui/icons/SyncDisabled';
 import SyncIcon from '@material-ui/icons/Sync';
-import WarningIcon from '@material-ui/icons/Warning';
 
 import { makeStyles, useTheme } from '@material-ui/core/styles';
 
@@ -25,6 +17,7 @@ import {
   WebSocketContextProvider,
 } from './context';
 
+import ConfirmCloseDialog from './components/ConfirmCloseDialog';
 import ContainerWebSocket from './components/ContainerWebSocket';
 import DirectiveBox from './components/DirectiveBox';
 import FullScreenDialog from './components/FullScreenDialog';
@@ -34,7 +27,6 @@ import ShorthandEditor from './components/ShorthandEditor';
 import SimpleEditor from './components/SimpleEditor';
 import Term from './components/Term';
 import { ThemeContext } from './components/ThemeContextProvider';
-
 import { useLock, useModel } from './components/SWRHooks';
 
 const useStyles = makeStyles((theme) => ({
@@ -58,76 +50,6 @@ const useStyles = makeStyles((theme) => ({
     },
   },
 }));
-
-export const AbandonSessionDialog = ({
-  open, accept, reject
-}) => {
-  const [isClosing, setClosing] = useState(false);
-  const handleClose = (event, reason, shouldClose) => {
-    // if we're in the process of closing, don't close the dialog
-    if (isClosing) return;
-
-    // only abandon the session if the YES button is clicked, never for any other reason
-    if (shouldClose) {
-      setClosing(true);
-      accept();
-    } else {
-      reject();
-    }
-  };
-
-  return (
-    <div>
-      <Dialog
-        open={open}
-        onClose={handleClose}
-        aria-labelledby="alert-dialog-title"
-        aria-describedby="alert-dialog-description"
-      >
-        <DialogTitle id="alert-dialog-title">
-          <WarningIcon style={{ fontSize: '1.0rem', marginRight: '8px' }} />
-          Are you sure you want to abandon this session?
-        </DialogTitle>
-        <DialogContent>
-          <DialogContentText
-            id="alert-dialog-description"
-            style={{
-              marginTop: '10px',
-              display: 'flex',
-              alignItems: 'center',
-              flexWrap: 'wrap'
-            }}
-          >
-            This will kill your terminal session and is not recoverable.
-            Any unsaved changes will be lost.
-          </DialogContentText>
-          {isClosing && (
-            <div style={{ height: '20px' }}>
-              <LinearProgress color="primary" />
-            </div>
-          )}
-        </DialogContent>
-        <DialogActions>
-          <Button
-            onClick={() => handleClose(null, 'buttonClick', true)}
-            color="primary"
-            disabled={isClosing}
-          >
-            Yes
-          </Button>
-          <Button
-            onClick={() => handleClose(null, 'buttonClick', false)}
-            autoFocus
-            color="secondary"
-            disabled={isClosing}
-          >
-            No
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </div>
-  );
-};
 
 export const Footer = ({ wsConnected, socketIoConnected }) => {
   const classes = useStyles();
@@ -321,10 +243,13 @@ const CenteredGrid = ({ model }) => {
           Save and Continue
         </Fab>
       </div>
-      <AbandonSessionDialog
+      <ConfirmCloseDialog
         open={openAbandonSessionDialog}
         accept={handleAbandonSession}
         reject={() => { setAbandonSessionDialogOpen(false); }}
+        title="Are you sure you want to abandon this session?"
+        body="This will kill your terminal session and is not recoverable.
+        Any unsaved changes will be lost."
       />
     </div>
   );

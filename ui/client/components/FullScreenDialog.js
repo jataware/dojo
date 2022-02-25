@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 
 import AppBar from '@material-ui/core/AppBar';
 import Box from '@material-ui/core/Box';
@@ -11,6 +11,8 @@ import Toolbar from '@material-ui/core/Toolbar';
 import Typography from '@material-ui/core/Typography';
 
 import { makeStyles } from '@material-ui/core/styles';
+
+import ConfirmCloseDialog from './ConfirmCloseDialog';
 
 const useStyles = makeStyles((theme) => ({
   title: {
@@ -26,49 +28,71 @@ const FullScreenDialog = ({
   open, setOpen, onSave, children, title, showSave
 }) => {
   const saveVisible = showSave !== false;
+  const [openConfirmCloseDialog, setOpenConfirmCloseDialog] = useState(false);
   const classes = useStyles();
   const handleClose = () => {
+    setOpenConfirmCloseDialog(true);
+  };
+  const handleAbandonSession = () => {
+    // TODO maybe add a processing spinner while teardown is occuring
+    setOpenConfirmCloseDialog(false);
     setOpen(false);
   };
 
   const handleSave = () => {
     // let the onSave() handler decide whether we close this FullScreenDialog window
     const shouldClose = onSave();
-
     setOpen(!shouldClose);
   };
 
   return (
-    <Dialog fullScreen open={open} onClose={handleClose} TransitionComponent={Transition}>
-      <AppBar position="sticky">
-        <Toolbar>
-          <IconButton
-            aria-label="close"
-            color="inherit"
-            data-test="fullScreenDialogCloseBtn"
-            edge="start"
-            onClick={handleClose}
-          >
-            <CloseIcon />
-          </IconButton>
-          <Typography variant="h6" className={classes.title}>
-            {title || ''}
-          </Typography>
-          <Button
-            autoFocus
-            color="inherit"
-            data-test="fullScreenDialogSaveBtn"
-            onClick={handleSave}
-            style={{ display: saveVisible ? 'unset' : 'none' }}
-          >
-            save
-          </Button>
-        </Toolbar>
-      </AppBar>
-      <Box>
-        {children}
-      </Box>
-    </Dialog>
+    <div>
+      <Dialog
+        disableEscapeKeyDown
+        fullScreen
+        open={open}
+        onClose={handleClose}
+        TransitionComponent={Transition}
+      >
+        <AppBar position="sticky">
+          <Toolbar>
+            <IconButton
+              aria-label="close"
+              color="inherit"
+              data-test="fullScreenDialogCloseBtn"
+              edge="start"
+              onClick={handleClose}
+            >
+              <CloseIcon />
+            </IconButton>
+            <Typography variant="h6" className={classes.title}>
+              {title || ''}
+            </Typography>
+            <Button
+              autoFocus
+              color="inherit"
+              data-test="fullScreenDialogSaveBtn"
+              onClick={handleSave}
+              style={{ display: saveVisible ? 'unset' : 'none' }}
+            >
+              save
+            </Button>
+          </Toolbar>
+        </AppBar>
+        <Box>
+          {children}
+        </Box>
+      </Dialog>
+      { openConfirmCloseDialog && (
+      <ConfirmCloseDialog
+        open={openConfirmCloseDialog}
+        accept={handleAbandonSession}
+        reject={() => { setOpenConfirmCloseDialog(false); }}
+        title="Are you sure you want to leave without saving?"
+        body="Any unsaved changes will be lost."
+      />
+      )}
+    </div>
   );
 };
 
