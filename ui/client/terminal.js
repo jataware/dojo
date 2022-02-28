@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, {useContext, useEffect, useState} from 'react';
 
 import axios from 'axios';
 
@@ -145,6 +145,21 @@ const CenteredGrid = ({ model }) => {
 
     return true; // should close FullScreenDialog
   };
+
+  useEffect(() => {
+    // Listen to message from child window for spacetag
+    const handleEvent = (e) => {
+      const key = e.message ? 'message' : 'data';
+      const data = e[key];
+      if (data === 'closeSpacetag') {
+        setIsSpacetagOpen(false);
+      }
+    };
+    window.addEventListener('message', handleEvent);
+    return () => {
+      window.removeEventListener('message', handleEvent);
+    };
+  }, []);
 
   useEffect(() => {
     // Clear any shutdown timers for this model if we're coming back from the summary page
