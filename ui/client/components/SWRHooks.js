@@ -168,14 +168,3 @@ export function useNodes() {
     mutateNodes: mutate,
   };
 }
-
-export function useLastProvisionLogs(modelId) {
-  const { data, error, mutate } = useSWR(`/api/clouseau/provision/last/log/${modelId}`, fetcher);
-
-  return {
-    provisionLogs: data,
-    provisionLogsLoading: !error && !data,
-    provisionLogsError: error,
-    mutateProvisionLogs: mutate,
-  };
-}

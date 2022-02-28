@@ -1,10 +1,11 @@
 import React, {
-  useCallback, useContext, useEffect, useState
+  useCallback, useContext, useEffect, useRef, useState
 } from 'react';
 
 import axios from 'axios';
 
 import Backdrop from '@material-ui/core/Backdrop';
+import Button from '@material-ui/core/Button';
 import LinearProgress from '@material-ui/core/LinearProgress';
 import Link from '@material-ui/core/Link';
 import Paper from '@material-ui/core/Paper';
@@ -13,12 +14,8 @@ import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 import { useHistory, useParams } from 'react-router-dom';
 
-import BasicAlert from './components/BasicAlert';
 import LoadingOverlay from './components/LoadingOverlay';
 import { ThemeContext } from './components/ThemeContextProvider';
-import {
-  useLastProvisionLogs,
-} from './components/SWRHooks';
 
 const useStyles = makeStyles((theme) => ({
   backdrop: {
@@ -26,48 +23,34 @@ const useStyles = makeStyles((theme) => ({
   },
   progressWrapper: {
     height: theme.spacing(3),
-    margin: [[theme.spacing(3), 0]],
+    margin: [[theme.spacing(3), 0, theme.spacing(4)]],
   },
   paper: {
-    minHeight: '360px',
-    width: '825px',
+    minHeight: '315px',
+    width: '725px',
     padding: theme.spacing(3),
   },
   progress: {
     height: '12px',
     borderRadius: theme.shape.borderRadius,
   },
-  buttonWrapper: {
-    marginTop: theme.spacing(2),
-    display: 'flex',
-    justifyContent: 'center',
-  },
-  detailsWrapper: {
-    marginBottom: theme.spacing(2),
-  },
   warning: {
     color: theme.palette.error.main,
-  }
+  },
+  failNavButtons: {
+    display: 'flex',
+    justifyContent: 'space-between',
+  },
+  failText: {
+    marginBottom: theme.spacing(3),
+  },
 }));
 
-const CurrentState = ({
-  provisionStatus, provisionLogs, provisionLogsLoading
-}) => {
-  const classes = useStyles();
-
-  return (
-    <div className={classes.detailsWrapper}>
-      <Typography gutterBottom align="center" variant="h6">
-        Current State: {provisionStatus}
-      </Typography>
-      <div>
-        {!provisionLogsLoading && provisionLogs?.logs.map((item) => (
-          <Typography key={item}>{item}</Typography>
-        ))}
-      </div>
-    </div>
-  );
-};
+const loadingText = [
+  'Pulling docker image',
+  'Rehydrating model',
+  'Finalizing model configuration',
+];
 
 // Do this here rather than through SWR because we aren't getting any data back
 // so we don't need to cache anything to revalidate in the future
@@ -75,8 +58,12 @@ const useLockStatusCheck = (modelId) => {
   const [lockExists, setLockExists] = useState(false);
   const [lockLoading, setLockLoading] = useState(true);
   const [lockError, setLockError] = useState(false);
+  const checked = useRef(false);
 
   useEffect(() => {
+    // don't run this again if we've already checked for a lock
+    if (checked.current === true) return;
+
     axios.get(`/api/clouseau/docker/locks/${modelId}`)
       .then((response) => {
         // here we're just checking if the lock exists for this model id, not whether it has
@@ -86,10 +73,12 @@ const useLockStatusCheck = (modelId) => {
           setLockExists(true);
           setLockLoading(false);
         }
+        checked.current = true;
       }).catch((error) => {
         setLockError(true);
         setLockLoading(false);
         console.error('There was an error fetching the lock: ', error);
+        checked.current = true;
       });
   }, [modelId]);
 
@@ -111,21 +100,16 @@ const Provisioning = () => {
   const history = useHistory();
   const classes = useStyles();
 
-  const [ready, setReady] = useState(false);
+  const [provisionState, setProvisionState] = useState('');
 
-  const [provisionState, setProvisionState] = useState();
-  const [alertVisible, setAlertVisible] = useState(false);
+  const [displayedLoadingText, setDisplayedLoadingText] = useState(['Pulling docker image']);
 
   const { lockExists, lockLoading, lockError } = useLockStatusCheck(modelId);
-
-  const {
-    provisionLogs, provisionLogsLoading, mutateProvisionLogs
-  } = useLastProvisionLogs(modelId);
 
   const fetchProvisionState = useCallback(() => {
     axios.get(`/api/clouseau/provision/state/${modelId}`)
       .then((response) => {
-        setProvisionState(response.data);
+        setProvisionState(response.data?.state);
       });
   }, [modelId]);
 
@@ -139,29 +123,69 @@ const Provisioning = () => {
   }, [fetchProvisionState]);
 
   useEffect(() => {
-    if (provisionState?.state === 'ready') {
-      setReady(true);
-    } else if (provisionState?.state === 'failed') {
-      setAlertVisible(true);
-    }
-  }, [provisionState?.state]);
-
-  useEffect(() => {
-    // we want to force these to update very frequently, as they tell us when
-    // the provision logs have changed and when our provisioned model is ready
+    // this should update very frequently as it tells us when the provisioned model is ready
     const mutateInterval = setInterval(() => {
-      mutateProvisionLogs();
       fetchProvisionState();
     }, 1000);
 
     return () => clearInterval(mutateInterval);
-  }, [mutateProvisionLogs, fetchProvisionState]);
+  }, [fetchProvisionState]);
 
   useEffect(() => {
-    if (ready) {
+    if (provisionState === 'ready') {
       history.push(`/term/${modelId}`);
     }
-  }, [ready, history, modelId]);
+  }, [provisionState, history, modelId]);
+
+  useEffect(() => {
+    let addStep;
+    // if we're processing, add another one of our steps to the displayed array every interval
+    if (provisionState === 'processing') {
+      addStep = setInterval(() => {
+        setDisplayedLoadingText((prevText) => ([...prevText, loadingText[prevText.length]]));
+      }, 4000);
+    }
+
+    return () => clearInterval(addStep);
+  }, [provisionState]);
+
+  const displayBodyText = () => {
+    if (provisionState === 'failed') {
+      return (
+        <>
+          <div className={classes.failText}>
+            <Typography variant="subtitle1" align="center" gutterBottom>
+              There was an issue launching your container.
+            </Typography>
+            <Typography variant="subtitle1" align="center" gutterBottom>
+              Please contact Jataware at&nbsp;
+              <Link href="mailto:dojo@jataware.com" color="inherit">dojo@jataware.com</Link> for assistance.
+            </Typography>
+          </div>
+          <div className={classes.failNavButtons}>
+            <Button onClick={() => history.goBack()} variant="contained" disableElevation>
+              Return to the Provision Page
+            </Button>
+            <Button href={`/summary/${modelId}`} variant="contained" disableElevation>
+              Go to the Model Summary Page
+            </Button>
+          </div>
+        </>
+      );
+    }
+    if (provisionState === 'processing') {
+      return (
+        <>
+          {displayedLoadingText.map((text, i) => (
+            // eslint-disable-next-line react/no-array-index-key
+            <Typography align="center" gutterBottom variant="subtitle1" key={i}>
+              {text}
+            </Typography>
+          ))}
+        </>
+      );
+    }
+  };
 
   if (lockLoading) {
     return (
@@ -190,38 +214,23 @@ const Provisioning = () => {
           <LinearProgress
             color="primary"
             variant={
-              provisionState?.state === 'ready' || provisionState?.state === 'failed'
+              provisionState === 'ready' || provisionState === 'failed'
                 ? 'determinate' : 'indeterminate'
             }
             value={
-              provisionState?.state === 'ready' || provisionState?.state === 'failed'
+              provisionState === 'ready' || provisionState === 'failed'
                 ? 100 : 0
             }
             classes={{ root: classes.progress }}
           />
         </div>
-        <CurrentState
-          modelId={modelId}
-          provisionStatus={provisionState?.state}
-          provisionLogs={provisionLogs}
-          provisionLogsLoading={provisionLogsLoading}
-        />
+        <Typography gutterBottom align="center" variant="h4">
+          Model Container Status: {provisionState}
+        </Typography>
+
+        {displayBodyText()}
+
       </Paper>
-      <BasicAlert
-        alert={{
-          severity: 'error',
-          message: (
-            <Typography variant="body2">
-              There was an issue launching your container. Please contact Jataware at&nbsp;
-              <Link href="mailto:dojo@jataware.com" color="inherit">dojo@jataware.com</Link> for assistance.
-            </Typography>
-          ),
-        }}
-        anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-        visible={alertVisible}
-        setVisible={setAlertVisible}
-        autoHideDuration={20000}
-      />
     </Backdrop>
   );
 };
