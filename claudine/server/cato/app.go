@@ -14,7 +14,7 @@ import (
 
 var (
 	addr               = flag.String("addr", ":3000", "http service address")
-	HTTP_READ_TIMEOUT  = flag.Int("http_read_timeout", 15, "http read timeout")
+	HTTP_READ_TIMEOUT  = flag.Int("http_read_timeout", 120, "http read timeout")
 	HTTP_WRITE_TIMEOUT = flag.Int("http_write_timeout", 60, "http write timeout")
 	LOAD_ENV           = flag.Bool("env", false, "load .env file")
 	SETTINGS_FILE      = flag.String("settings", "settings.yaml", "settings file")
