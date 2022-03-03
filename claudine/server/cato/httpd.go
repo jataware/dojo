@@ -86,8 +86,8 @@ func workerNodes(clouseauWorkerPool *ClouseauWorkerPool, pool *WebSocketPool) gi
 		resp := make([]ResponseObj, 0)
 		clientMap := map[string]int{}
 		for client, _ := range pool.Clients {
-			if c, ok := clientMap[client.DockerServer]; ok {
-				clientMap[client.DockerServer] = c + 1
+			if n, ok := clientMap[client.DockerServer]; ok {
+				clientMap[client.DockerServer] = n + 1
 			} else {
 				clientMap[client.DockerServer] = 1
 			}
@@ -98,15 +98,15 @@ func workerNodes(clouseauWorkerPool *ClouseauWorkerPool, pool *WebSocketPool) gi
 			c.String(http.StatusInternalServerError, fmt.Sprintf("%+v", err))
 			return
 		}
-
+		var respLock sync.Mutex
 		wg := sync.WaitGroup{}
 		for i := range workers {
 			wg.Add(1)
-			go func(w *ClouseauWorker) {
+			go func(wg *sync.WaitGroup, w *ClouseauWorker, resp *[]ResponseObj, mu *sync.Mutex) {
 				defer wg.Done()
 				r := ResponseObj{Host: w.Host}
-				if c, ok := clientMap[w.Host]; ok {
-					r.Clients = c
+				if n, ok := clientMap[w.Host]; ok {
+					r.Clients = n
 				} else {
 					r.Clients = 0
 				}
@@ -114,8 +114,10 @@ func workerNodes(clouseauWorkerPool *ClouseauWorkerPool, pool *WebSocketPool) gi
 				info := w.Info(verbose)
 				r.Status = info.Status
 				r.Info = info.Info
-				resp = append(resp, r)
-			}(&workers[i])
+				mu.Lock()
+				*resp = append(*resp, r)
+				mu.Unlock()
+			}(&wg, &workers[i], &resp, &respLock)
 		}
 
 		wg.Wait()
