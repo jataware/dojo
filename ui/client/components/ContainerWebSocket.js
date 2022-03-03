@@ -3,6 +3,8 @@ import React, {
   useState,
 } from 'react';
 
+import { saveAs } from 'file-saver';
+
 import BasicAlert from './BasicAlert';
 import { useLock, useShellHistory } from './SWRHooks';
 
@@ -63,6 +65,7 @@ const ContainerWebSocket = ({
 
     const onOldCommand = async (data) => {
       const { command, cwd } = JSON.parse(data);
+
       const s = command.trim();
       if (s.startsWith('edit ')) {
         const p = `${s.substring(5)}`;
@@ -169,6 +172,21 @@ const ContainerWebSocket = ({
           path: meta.file,
           caption: meta.caption
         }).then(() => setAccessoryAlert(true));
+      } else if (id === 'download') {
+        // Download file from container.
+
+        const fileName = meta.file.split('/').pop();
+        const url = `/api/clouseau/container/${modelId}/ops/cat?path=${meta.file}`;
+        fetch(url, {
+          method: 'GET',
+        })
+          .then((response) => response.blob())
+          .then((blob) => {
+            saveAs(blob, fileName);
+          })
+          .catch((error) => {
+            console.log(error);
+          });
       }
     };
 
