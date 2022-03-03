@@ -27,6 +27,7 @@ var annotateCmd = &cobra.Command{
 		}
 
 		full_pattern, err := filepath.Abs(filepath.Join(cwd, pattern))
+
 		if err != nil {
 			log.Fatalf("Error %+v", err)
 		}

@@ -13,6 +13,7 @@ const (
 	COMMAND_DOWNLOAD
 	COMMAND_EDIT
 	COMMAND_TAG
+	COMMAND_UPLOAD
 )
 
 func (cmd CliCommandType) String() string {
@@ -27,6 +28,8 @@ func (cmd CliCommandType) String() string {
 		return "edit"
 	case COMMAND_TAG:
 		return "tag"
+	case COMMAND_UPLOAD:
+		return "upload"
 	}
 	return "undefined"
 }

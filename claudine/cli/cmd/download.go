@@ -16,11 +16,11 @@ var downloadCmd = &cobra.Command{
 		if err != nil {
 			log.Fatal(err)
 		}
-		log.Printf("Uploading %s\n", file)
+		log.Printf("Downloading %s\n", file)
 		common.SendCommand(common.COMMAND_DOWNLOAD, args, map[string]interface{}{"file": file})
 	},
 }
 
 func init() {
-	//rootCmd.AddCommand(downloadCmd)
+	rootCmd.AddCommand(downloadCmd)
 }
