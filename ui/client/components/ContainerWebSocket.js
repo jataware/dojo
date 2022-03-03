@@ -49,7 +49,7 @@ const ContainerWebSocket = ({
   modelId,
   setEditorContents, openEditor,
   setIsShorthandOpen, setShorthandContents, setShorthandMode,
-  setSpacetagUrl, setIsSpacetagOpen, setSpacetagFile
+  setSpacetagUrl, setIsSpacetagOpen, setSpacetagFile, setUploadFilesOpen, setUploadPath
 }) => {
   const { register, unregister } = useWebSocketUpdateContext();
   const [accessoryAlert, setAccessoryAlert] = useState(false);
@@ -172,6 +172,10 @@ const ContainerWebSocket = ({
           path: meta.file,
           caption: meta.caption
         }).then(() => setAccessoryAlert(true));
+      } else if (id === 'upload') {
+        // set cwd and modal open to upload files
+        setUploadPath(meta.cwd);
+        setUploadFilesOpen(true);
       } else if (id === 'download') {
         // Download file from container.
 
@@ -214,6 +218,8 @@ const ContainerWebSocket = ({
     setSpacetagFile,
     setSpacetagUrl,
     setIsSpacetagOpen,
+    setUploadFilesOpen,
+    setUploadPath,
     modelId
   ]);
 

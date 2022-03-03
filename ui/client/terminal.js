@@ -29,6 +29,8 @@ import Term from './components/Term';
 import { ThemeContext } from './components/ThemeContextProvider';
 import { useLock, useModel } from './components/SWRHooks';
 
+import UploadFileDialog from './components/UploadFileDialog';
+
 const useStyles = makeStyles((theme) => ({
   connected: {
     color: 'green'
@@ -101,13 +103,13 @@ const CenteredGrid = ({ model }) => {
   const classes = useStyles();
 
   const [openAbandonSessionDialog, setAbandonSessionDialogOpen] = useState(false);
-
   const [editorContents, setEditorContents] = useState({});
   const [openEditor, setOpenEditor] = useState(false);
   const [isSpacetagOpen, setIsSpacetagOpen] = useState(false);
   const [spacetagUrl, setSpacetagUrl] = useState('');
   const [spacetagFile, setSpacetagFile] = useState('');
-
+  const [openFileUploadDialog, setUploadFilesOpen] = useState(false);
+  const [uploadPath, setUploadPath] = useState('');
   // the following control the state of the ShorthandEditor
   // opens the FullScreenDialog that holds the shorthand iframe
   const [isShorthandOpen, setIsShorthandOpen] = useState(false);
@@ -195,6 +197,8 @@ const CenteredGrid = ({ model }) => {
             setIsSpacetagOpen={setIsSpacetagOpen}
             setSpacetagUrl={setSpacetagUrl}
             setSpacetagFile={setSpacetagFile}
+            setUploadFilesOpen={setUploadFilesOpen}
+            setUploadPath={setUploadPath}
           />
           <Divider />
           <DirectiveBox modelId={model.id} />
@@ -257,6 +261,7 @@ const CenteredGrid = ({ model }) => {
         >
           Save and Continue
         </Fab>
+
       </div>
       <ConfirmCloseDialog
         open={openAbandonSessionDialog}
@@ -266,6 +271,15 @@ const CenteredGrid = ({ model }) => {
         body="This will kill your terminal session and is not recoverable.
         Any unsaved changes will be lost."
       />
+      { openFileUploadDialog
+        && (
+        <UploadFileDialog
+          open={openFileUploadDialog}
+          closeDialog={() => { setUploadFilesOpen(false); }}
+          modelID={model.id}
+          uploadPath={uploadPath}
+        />
+        )}
     </div>
   );
 };
