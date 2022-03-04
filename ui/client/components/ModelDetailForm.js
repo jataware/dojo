@@ -115,7 +115,7 @@ export const ModelDetailFields = ({
               multiple
               filterSelectedOptions
               name="domains"
-              value={formik.values.domains}
+              value={formik.values.domains || []}
               options={domainList}
               onChange={(evt, value) => { if (value) { formik.setFieldValue('domains', value); } }}
               onBeforeInput={(evt) => {
