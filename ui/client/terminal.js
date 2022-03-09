@@ -17,7 +17,7 @@ import {
   WebSocketContextProvider,
 } from './context';
 
-import ConfirmCloseDialog from './components/ConfirmCloseDialog';
+import ConfirmDialog from './components/ConfirmDialog';
 import ContainerWebSocket from './components/ContainerWebSocket';
 import DirectiveBox from './components/DirectiveBox';
 import FullScreenDialog from './components/FullScreenDialog';
@@ -263,7 +263,7 @@ const CenteredGrid = ({ model }) => {
         </Fab>
 
       </div>
-      <ConfirmCloseDialog
+      <ConfirmDialog
         open={openAbandonSessionDialog}
         accept={handleAbandonSession}
         reject={() => { setAbandonSessionDialogOpen(false); }}

@@ -9,7 +9,7 @@ import DialogTitle from '@material-ui/core/DialogTitle';
 import LinearProgress from '@material-ui/core/LinearProgress';
 import WarningIcon from '@material-ui/icons/Warning';
 
-const ConfirmCloseDialog = ({
+const ConfirmDialog = ({
   open, accept, reject, title, body
 }) => {
   const [isClosing, setClosing] = useState(false);
@@ -18,7 +18,7 @@ const ConfirmCloseDialog = ({
 
     if (isClosing) return;
 
-    // only abandon the session if the YES button is clicked, never for any other reason
+    // only confirm if the YES button is clicked, never for any other reason
     if (shouldClose) {
       setClosing(true);
       accept();
@@ -52,9 +52,9 @@ const ConfirmCloseDialog = ({
             {body}
           </DialogContentText>
           {isClosing && (
-          <div style={{ height: '20px' }}>
-            <LinearProgress color="primary" />
-          </div>
+            <div style={{ height: '20px' }}>
+              <LinearProgress color="primary" />
+            </div>
           )}
         </DialogContent>
         <DialogActions>
@@ -79,4 +79,4 @@ const ConfirmCloseDialog = ({
   );
 };
 
-export default ConfirmCloseDialog;
+export default ConfirmDialog;

@@ -23,6 +23,8 @@ const useStyles = makeStyles((theme) => ({
     marginTop: theme.spacing(2),
   },
   buttonContainer: {
+    display: 'flex',
+    justifyContent: 'space-between',
     marginTop: theme.spacing(2),
     '& :first-child': {
       marginRight: theme.spacing(1),
@@ -30,6 +32,7 @@ const useStyles = makeStyles((theme) => ({
   },
   datePickerContainer: {
     display: 'flex',
+    marginBottom: theme.spacing(2),
     '& > *': {
       marginRight: theme.spacing(10),
       maxWidth: '220px',
@@ -156,6 +159,15 @@ export const ModelDetail = ({
     onSubmit: (values) => handleNext(values),
   });
 
+  useEffect(() => {
+    // saving the form state every 1 second is probably sufficient
+    const debounced = setTimeout(() => {
+      localStorage.setItem('modelStep', 1);
+      localStorage.setItem('modelInfo', JSON.stringify(formik.values));
+    }, 1000);
+    return () => clearTimeout(debounced);
+  }, [formik]);
+
   return (
     <FormikProvider value={formik}>
       <div>
@@ -174,6 +186,7 @@ export const ModelDetail = ({
               data-test="modelFormDetailNextBtn"
               type="submit"
               variant="contained"
+              disableElevation
             >
               Next
             </Button>

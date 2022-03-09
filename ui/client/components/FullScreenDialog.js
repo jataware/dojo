@@ -12,7 +12,7 @@ import Typography from '@material-ui/core/Typography';
 
 import { makeStyles } from '@material-ui/core/styles';
 
-import ConfirmCloseDialog from './ConfirmCloseDialog';
+import ConfirmDialog from './ConfirmDialog';
 
 const useStyles = makeStyles((theme) => ({
   title: {
@@ -84,7 +84,7 @@ const FullScreenDialog = ({
         </Box>
       </Dialog>
       { openConfirmCloseDialog && (
-      <ConfirmCloseDialog
+      <ConfirmDialog
         open={openConfirmCloseDialog}
         accept={handleAbandonSession}
         reject={() => { setOpenConfirmCloseDialog(false); }}
