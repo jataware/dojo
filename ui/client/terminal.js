@@ -9,7 +9,7 @@ import Grid from '@material-ui/core/Grid';
 import SyncDisabledIcon from '@material-ui/icons/SyncDisabled';
 import SyncIcon from '@material-ui/icons/Sync';
 
-import { makeStyles, useTheme } from '@material-ui/core/styles';
+import { makeStyles } from '@material-ui/core/styles';
 
 import { useHistory, useParams } from 'react-router-dom';
 
@@ -32,6 +32,9 @@ import { useLock, useModel } from './components/SWRHooks';
 import UploadFileDialog from './components/UploadFileDialog';
 
 const useStyles = makeStyles((theme) => ({
+  pageRoot: {
+    backgroundColor: '#272d33',
+  },
   connected: {
     color: 'green'
   },
@@ -98,8 +101,6 @@ export const Footer = ({ wsConnected, socketIoConnected }) => {
 };
 
 const CenteredGrid = ({ model }) => {
-  const theme = useTheme();
-
   const classes = useStyles();
 
   const [openAbandonSessionDialog, setAbandonSessionDialogOpen] = useState(false);
@@ -172,9 +173,9 @@ const CenteredGrid = ({ model }) => {
   }, [model.id]);
 
   return (
-    <div className={theme.root} style={{ backgroundColor: '#272d33' }}>
+    <div className={classes.pageRoot}>
       <Grid container spacing={1} style={{ width: 'auto', margin: 0 }}>
-        <Grid item xs={8} style={{ padding: '0 2px', backgroundColor: '#272d33' }}>
+        <Grid item xs={8} style={{ padding: '0 8px' }}>
           <Term />
         </Grid>
 
