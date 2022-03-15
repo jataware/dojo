@@ -166,11 +166,11 @@ func (p *ClouseauWorkerPool) AddWorker(host string) error {
 func (p *ClouseauWorkerPool) RemoveWorker(host string) error {
 
 	p.mu.Lock()
-	return p.Store.DeleteWorker(host)
+	err := p.Store.DeleteWorker(host)
 	p.mu.Unlock()
 	log.Printf("Host removed from worker pool %s", host)
 
-	return nil
+	return err
 }
 
 func (w *ClouseauWorker) Provision(pool *WebSocketPool, store *ProvisionStore, r ProvisionRequest) (types.IDResponse, error) {
