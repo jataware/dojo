@@ -177,14 +177,14 @@ const SummaryContents = ({
 
   // set up our confirm before navigating away warning
   useEffect(() => {
-    // don't do this if we're in disabled mode, as then no edits will have been made
-    if (!disabledMode) {
+    // only show this if we haven't yet published and are editing OR are currently uploading
+    if ((!disabledMode && !model.is_published) || uploading) {
       window.addEventListener('beforeunload', onUnload);
       return () => {
         window.removeEventListener('beforeunload', onUnload);
       };
     }
-  }, [model.id, disabledMode]);
+  }, [model.is_published, disabledMode, uploading]);
 
   const openConfigShorthand = async (item) => {
     const response = await fetch(
@@ -288,14 +288,13 @@ const SummaryContents = ({
     setOpenShorthand(true);
   };
 
-  // this gets passed down to the EndSessionDialog and is called when the user closes the dialog
-  // after a successful publish
-  const afterPublish = (closeDialog) => {
+  // this gets passed down to the EndSessionDialog after a successful publish
+  const afterPublish = () => {
     // release the container lock
     if (locked) {
       axios.delete(`/api/clouseau/docker/${model.id}/release`)
         .then(() => {
-          console.log('Successfully released the lock');
+          console.info('Successfully released the lock');
           // get rid of any query params in the url
           history.replace(`/summary/${model.id}`);
         }).catch(() => {
@@ -307,8 +306,6 @@ const SummaryContents = ({
     setDisabledMode(true);
     // mutate the model to ensure we get the new is_published attribute
     mutateModel(model.id);
-    // and call the passed in closeDialog function to close the EndSessionDialog
-    closeDialog();
   };
 
   return (

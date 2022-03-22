@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 
 import axios from 'axios';
 
-import { useLocation, useParams } from 'react-router-dom';
+import { useLocation, useHistory, useParams } from 'react-router-dom';
 
 import LoadingOverlay from './components/LoadingOverlay';
 import SummaryContents from './components/SummaryContents';
@@ -18,6 +18,7 @@ function useQuery() {
 
 const Summary = () => {
   const { modelId } = useParams();
+  const history = useHistory();
   const query = useQuery();
   // we have a terminal session running
   const terminal = query.get('terminal');
@@ -52,7 +53,11 @@ const Summary = () => {
           console.log('Container auto-shutdown sequence initiated');
         });
     }
-  }, [modelId, lock]);
+    // if we arrive with the terminal param but no lock, get rid of the terminal param
+    if (terminal === 'true' && !lock) {
+      history.replace(`/summary/${modelId}`);
+    }
+  }, [modelId, terminal, history, lock]);
 
   // if the model is loading or returns an error, don't show the page yet
   if (modelLoading) {
