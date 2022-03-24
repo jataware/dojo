@@ -67,13 +67,13 @@ const DirectiveBox = ({
             )
         ))}
       </span>
-      { (summaryPage && directive?.command) && (
+      {directive?.command && (
         <IconButton
           component="span"
-          onClick={() => handleClick()}
+          onClick={() => handleClick(directive)}
           disabled={disableClick}
         >
-          <EditIcon />
+          <EditIcon style={{ color: summaryPage ? theme.palette.text.secondary : '#fff' }} />
         </IconButton>
       )}
     </Card>

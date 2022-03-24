@@ -2,12 +2,8 @@ import React, { useContext, useEffect, useState } from 'react';
 
 import axios from 'axios';
 
-import Container from '@material-ui/core/Container';
-import Divider from '@material-ui/core/Divider';
 import Fab from '@material-ui/core/Fab';
 import Grid from '@material-ui/core/Grid';
-import SyncDisabledIcon from '@material-ui/icons/SyncDisabled';
-import SyncIcon from '@material-ui/icons/Sync';
 
 import { makeStyles } from '@material-ui/core/styles';
 
@@ -22,14 +18,16 @@ import ContainerWebSocket from './components/ContainerWebSocket';
 import DirectiveBox from './components/DirectiveBox';
 import FullScreenDialog from './components/FullScreenDialog';
 import LoadingOverlay from './components/LoadingOverlay';
+import ModelFileTabs from './components/ModelFileTabs';
 import ShellHistory from './components/ShellHistory';
 import ShorthandEditor from './components/ShorthandEditor';
 import SimpleEditor from './components/SimpleEditor';
 import Term from './components/Term';
 import { ThemeContext } from './components/ThemeContextProvider';
-import { useLock, useModel } from './components/SWRHooks';
-
 import UploadFileDialog from './components/UploadFileDialog';
+import {
+  useLock, useModel, useOutputFiles
+} from './components/SWRHooks';
 
 const useStyles = makeStyles((theme) => ({
   pageRoot: {
@@ -54,54 +52,22 @@ const useStyles = makeStyles((theme) => ({
       margin: [[0, theme.spacing(2), theme.spacing(2), 0]],
     },
   },
+  rightColumnWrapper: {
+    display: 'flex',
+    flexDirection: 'column',
+    height: '100vh',
+    paddingBottom: theme.spacing(3),
+  },
+  directiveContainer: {
+    minHeight: '76px',
+    margin: [[0, theme.spacing(3), theme.spacing(1), theme.spacing(1)]],
+  },
 }));
-
-export const Footer = ({ wsConnected, socketIoConnected }) => {
-  const classes = useStyles();
-  const style = {
-    footer: {
-      width: '100%',
-      bottom: 0,
-      position: 'absolute'
-    },
-    icon: {
-      fontSize: '1.0rem',
-      verticalAlign: 'middle',
-    },
-    paper: {
-      padding: '4px',
-      backgroundColor: '#000',
-      color: '#fff'
-    }
-  };
-
-  return (
-    <Container style={style.footer}>
-      <Grid container spacing={1}>
-        <Grid item xs={12}>
-          <Grid container justify="flex-start" spacing={2}>
-            <Grid item>
-              <span>Terminal: </span>
-              {socketIoConnected
-                ? <SyncIcon className={classes.connected} style={style.icon} />
-                : <SyncDisabledIcon className={classes.disconnected} style={style.icon} /> }
-            </Grid>
-            <Grid item>
-              <span>Socket: </span>
-              {wsConnected
-                ? <SyncIcon className={classes.connected} style={style.icon} />
-                : <SyncDisabledIcon className={classes.disconnected} style={style.icon} /> }
-
-            </Grid>
-          </Grid>
-        </Grid>
-      </Grid>
-    </Container>
-  );
-};
 
 const CenteredGrid = ({ model }) => {
   const classes = useStyles();
+
+  const { mutateOutputs } = useOutputFiles(model.id);
 
   const [openAbandonSessionDialog, setAbandonSessionDialogOpen] = useState(false);
   const [editorContents, setEditorContents] = useState({});
@@ -124,11 +90,9 @@ const CenteredGrid = ({ model }) => {
   const history = useHistory();
 
   const handleAbandonSession = () => {
-    // TODO maybe add a processing spinner while teardown is occuring
     axios.delete(`/api/clouseau/docker/${model.id}/release`).then(() => {
       history.push(`/summary/${model.id}`);
     }).catch((error) => {
-      // TODO: probably just still take the user to a different page
       console.log('There was an error shutting down the container: ', error);
       setAbandonSessionDialogOpen(false);
     });
@@ -149,6 +113,16 @@ const CenteredGrid = ({ model }) => {
     return true; // should close FullScreenDialog
   };
 
+  const handleDirectiveClick = (directive) => {
+    setShorthandContents({
+      editor_content: directive?.command_raw,
+      content_id: directive?.command_raw,
+      cwd: directive?.cwd,
+    });
+    setShorthandMode('directive');
+    setIsShorthandOpen(true);
+  };
+
   useEffect(() => {
     // Listen to message from child window for spacetag
     const handleEvent = (e) => {
@@ -156,13 +130,15 @@ const CenteredGrid = ({ model }) => {
       const data = e[key];
       if (data === 'closeSpacetag') {
         setIsSpacetagOpen(false);
+        // check for new spacetag files, but wait 1s for elasticsearch to catch up
+        setTimeout(() => mutateOutputs(), 1000);
       }
     };
     window.addEventListener('message', handleEvent);
     return () => {
       window.removeEventListener('message', handleEvent);
     };
-  }, []);
+  }, [mutateOutputs]);
 
   useEffect(() => {
     // Clear any shutdown timers for this model if we're coming back from the summary page
@@ -175,73 +151,46 @@ const CenteredGrid = ({ model }) => {
   return (
     <div className={classes.pageRoot}>
       <Grid container spacing={1} style={{ width: 'auto', margin: 0 }}>
-        <Grid item xs={8} style={{ padding: '0 8px' }}>
+        <Grid item xs={7} xl={8} style={{ padding: '0 8px' }}>
           <Term />
         </Grid>
 
-        <Grid item xs={4} style={{ padding: '0 5px 0 0', zIndex: 5 }}>
-          <ShellHistory
-            modelId={model.id}
-            setIsShorthandOpen={setIsShorthandOpen}
-            setIsShorthandSaving={setIsShorthandSaving}
-            setShorthandContents={setShorthandContents}
-            setShorthandMode={setShorthandMode}
-          />
-          <ContainerWebSocket
-            modelId={model.id}
-            setEditorContents={setEditorContents}
-            openEditor={() => setOpenEditor(true)}
-            setIsShorthandOpen={setIsShorthandOpen}
-            setIsShorthandSaving={setIsShorthandSaving}
-            setShorthandContents={setShorthandContents}
-            setShorthandMode={setShorthandMode}
-            setIsSpacetagOpen={setIsSpacetagOpen}
-            setSpacetagUrl={setSpacetagUrl}
-            setSpacetagFile={setSpacetagFile}
-            setUploadFilesOpen={setUploadFilesOpen}
-            setUploadPath={setUploadPath}
-          />
-          <Divider />
-          <DirectiveBox modelId={model.id} />
-
-          <FullScreenDialog
-            open={isShorthandOpen}
-            setOpen={setIsShorthandOpen}
-            onSave={shorthandDialogOnSave}
-          >
-            <ShorthandEditor
-              modelInfo={model}
-              isSaving={isShorthandSaving}
-              setIsSaving={setIsShorthandSaving}
-              mode={shorthandMode}
-              shorthandContents={shorthandContents}
+        <Grid item xs={5} xl={4} style={{ padding: '0 5px 0 0', zIndex: 5 }}>
+          <div className={classes.rightColumnWrapper}>
+            <ShellHistory
+              modelId={model.id}
               setIsShorthandOpen={setIsShorthandOpen}
+              setIsShorthandSaving={setIsShorthandSaving}
+              setShorthandContents={setShorthandContents}
+              setShorthandMode={setShorthandMode}
             />
-          </FullScreenDialog>
-
-          <FullScreenDialog
-            open={openEditor}
-            setOpen={setOpenEditor}
-            onSave={saveEditor}
-            title={`Editing ${editorContents?.file}`}
-          >
-            <SimpleEditor editorContents={editorContents} setEditorContents={setEditorContents} />
-          </FullScreenDialog>
-
-          <FullScreenDialog
-            open={isSpacetagOpen}
-            setOpen={setIsSpacetagOpen}
-            onSave={() => {}}
-            showSave={false}
-            title={`${spacetagFile}`}
-          >
-            <iframe
-              id="spacetag"
-              title="spacetag"
-              style={{ height: 'calc(100vh - 70px)', width: '100%' }}
-              src={spacetagUrl}
+            <ContainerWebSocket
+              modelId={model.id}
+              setEditorContents={setEditorContents}
+              openEditor={() => setOpenEditor(true)}
+              setIsShorthandOpen={setIsShorthandOpen}
+              setIsShorthandSaving={setIsShorthandSaving}
+              setShorthandContents={setShorthandContents}
+              setShorthandMode={setShorthandMode}
+              setIsSpacetagOpen={setIsSpacetagOpen}
+              setSpacetagUrl={setSpacetagUrl}
+              setSpacetagFile={setSpacetagFile}
+              setUploadFilesOpen={setUploadFilesOpen}
+              setUploadPath={setUploadPath}
             />
-          </FullScreenDialog>
+            <div className={classes.directiveContainer}>
+              <DirectiveBox modelId={model.id} handleClick={handleDirectiveClick} />
+            </div>
+
+            <ModelFileTabs
+              model={model}
+              setShorthandMode={setShorthandMode}
+              setShorthandContents={setShorthandContents}
+              setOpenShorthand={setIsShorthandOpen}
+              setSpacetagOpen={setIsSpacetagOpen}
+              setSpacetagFile={setSpacetagFile}
+            />
+          </div>
         </Grid>
       </Grid>
 
@@ -264,6 +213,49 @@ const CenteredGrid = ({ model }) => {
         </Fab>
 
       </div>
+
+      <FullScreenDialog
+        open={isShorthandOpen}
+        setOpen={setIsShorthandOpen}
+        onSave={shorthandDialogOnSave}
+      >
+        <ShorthandEditor
+          modelInfo={model}
+          isSaving={isShorthandSaving}
+          setIsSaving={setIsShorthandSaving}
+          mode={shorthandMode}
+          shorthandContents={shorthandContents}
+          setIsShorthandOpen={setIsShorthandOpen}
+        />
+      </FullScreenDialog>
+
+      <FullScreenDialog
+        open={openEditor}
+        setOpen={setOpenEditor}
+        onSave={saveEditor}
+        title={`Editing ${editorContents?.file}`}
+      >
+        <SimpleEditor editorContents={editorContents} setEditorContents={setEditorContents} />
+      </FullScreenDialog>
+
+      <FullScreenDialog
+        open={isSpacetagOpen}
+        setOpen={setIsSpacetagOpen}
+        onSave={() => {}}
+        showSave={false}
+        title={`${spacetagFile?.name || spacetagFile}`}
+      >
+        <iframe
+          id="spacetag"
+          title="spacetag"
+          style={{ height: 'calc(100vh - 70px)', width: '100%' }}
+          src={
+            spacetagFile?.id
+              ? `/api/spacetag/overview/${spacetagFile?.id}?reedit=true`
+              : spacetagUrl
+          }
+        />
+      </FullScreenDialog>
       <ConfirmDialog
         open={openAbandonSessionDialog}
         accept={handleAbandonSession}

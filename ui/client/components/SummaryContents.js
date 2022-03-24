@@ -6,8 +6,6 @@ import ArrowBackIcon from '@material-ui/icons/ArrowBack';
 import Button from '@material-ui/core/Button';
 import CheckIcon from '@material-ui/icons/Check';
 import Container from '@material-ui/core/Container';
-import DeleteIcon from '@material-ui/icons/Delete';
-import EditIcon from '@material-ui/icons/Edit';
 import Fab from '@material-ui/core/Fab';
 import Grid from '@material-ui/core/Grid';
 import Tooltip from '@material-ui/core/Tooltip';
@@ -19,10 +17,9 @@ import { makeStyles, useTheme } from '@material-ui/core/styles';
 import { Link, useHistory } from 'react-router-dom';
 
 import BasicAlert from './BasicAlert';
-import DeletionDialog from './DeletionDialog';
 import DirectiveBox from './DirectiveBox';
 import EndSessionDialog from './EndSessionDialog';
-import FileCardList from './FileCardList';
+import FileList from './FileList';
 import FullScreenDialog from './FullScreenDialog';
 import LoadingOverlay from './LoadingOverlay';
 import { ModelSummaryEditor } from './ModelSummaryEditor';
@@ -34,9 +31,7 @@ import SummaryIntroDialog from './SummaryIntroDialog';
 import SummaryModelDetails from './SummaryModelDetails';
 import SummaryWebSocketHandler from './SummaryWebSocketHandler';
 
-import {
-  useConfigs, useDirective, useOutputFiles
-} from './SWRHooks';
+import { useDirective } from './SWRHooks';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -129,22 +124,11 @@ const SummaryContents = ({
     }
   }, [locked, history.location?.state]);
 
-  const {
-    configs, configsLoading, configsError, mutateConfigs
-  } = useConfigs(model.id);
-  const {
-    outputs, outputsLoading, outputsError, mutateOutputs
-  } = useOutputFiles(model.id);
-
   const { directive } = useDirective(model.id);
 
   const [openEditor, setOpenEditor] = useState(false);
   const [editor, setEditor] = useState(() => ({
     text: '', file: ''
-  }));
-  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [deletionSelection, setDeletionSelection] = useState(() => ({
-    type: null, id: null, description: 'Hello world',
   }));
 
   const [openShorthand, setOpenShorthand] = useState(false);
@@ -186,24 +170,6 @@ const SummaryContents = ({
     }
   }, [model.is_published, disabledMode, uploading]);
 
-  const openConfigShorthand = async (item) => {
-    const response = await fetch(
-      `/api/clouseau/container/${model.id}/ops/cat?path=${encodeURIComponent(item.path)}`
-    );
-
-    if (response.ok) {
-      const content = await response.text();
-
-      setShorthandContents({
-        editor_content: content,
-        content_id: item.path,
-      });
-
-      setShorthandMode('config');
-      setOpenShorthand(true);
-    }
-  };
-
   const handlePublishClick = (e) => {
     e.preventDefault();
 
@@ -212,18 +178,6 @@ const SummaryContents = ({
       return;
     }
     setEndSessionDialog(true);
-  };
-
-  const FileTile = ({ item }) => {
-    const fileParts = new URL(`file://${item}`).pathname.split('/');
-    const fileName = fileParts.pop();
-    const filePath = fileParts.join('/').replace('/home/clouseau/', '~/');
-    return (
-      <span>
-        <Typography variant="subtitle1" noWrap>{fileName}</Typography>
-        <Typography variant="caption" noWrap component="div">{filePath}</Typography>
-      </span>
-    );
   };
 
   const shorthandDialogOnSave = () => {
@@ -239,43 +193,6 @@ const SummaryContents = ({
     });
 
     return true; // should close FullScreenDialog
-  };
-
-  const handleDeleteDialogClose = () => {
-    setDeleteDialogOpen(false);
-    setDeletionSelection();
-  };
-
-  const handleDeleteItem = async () => {
-    console.log('deleting', deletionSelection);
-    let url = `/api/dojo/dojo/${deletionSelection.type}/${deletionSelection.id}`;
-    // Add params to end of URL is params included in deletionSelection
-    if (deletionSelection?.params) {
-      const paramList = [];
-      Object.entries(deletionSelection.params).forEach(([key, val]) => {
-        paramList.push(`${encodeURIComponent(key)}=${encodeURIComponent(val)}`);
-      });
-      url = `${url}?${paramList.join('&')}`;
-    }
-
-    const resp = await fetch(
-      url,
-      {
-        method: 'DELETE',
-      }
-    );
-
-    if (resp.ok) {
-      handleDeleteDialogClose();
-      // Dojo needs 1 second to update the DB before we can GET the accessories again
-      if (deletionSelection.type === 'config') {
-        setTimeout(() => mutateConfigs(), 1000);
-      } else if (deletionSelection.type === 'fileoutputs') {
-        setTimeout(() => { mutateOutputs(); }, 1000);
-      }
-    } else {
-      console.log(`There was an error deleting "${deletionSelection.description}"`);
-    }
   };
 
   const handleRunCommandClick = () => {
@@ -369,56 +286,22 @@ const SummaryContents = ({
               </div>
             </Grid>
             <Grid item xs={12} lg={6}>
-              <FileCardList
-                name="Config"
-                files={configs}
-                loading={configsLoading}
-                error={configsError}
-                primaryClickHandler={(config) => openConfigShorthand(config)}
-                primaryIcon={<EditIcon />}
-                secondaryClickHandler={async (config) => {
-                  setDeletionSelection({
-                    type: 'config',
-                    id: config.model_id,
-                    description: config.path,
-                    params: {
-                      path: config.path,
-                    },
-                  });
-                  setDeleteDialogOpen(true);
-                }}
-                secondaryIcon={<DeleteIcon />}
-                cardContent={(config) => <FileTile item={config.path} />}
-                disableClick={disabledMode}
-                parameters={model?.parameters}
+              <FileList
+                fileType="config"
+                model={model}
+                disabledMode={disabledMode}
+                setShorthandMode={setShorthandMode}
+                setShorthandContents={setShorthandContents}
+                setOpenShorthand={setOpenShorthand}
               />
             </Grid>
             <Grid item xs={12} lg={6}>
-              <FileCardList
-                name="Output"
-                files={outputs}
-                loading={outputsLoading}
-                error={outputsError}
-                primaryClickHandler={(output) => {
-                  setSpacetagFile(output);
-                  setSpacetagOpen(true);
-                }}
-                primaryIcon={<EditIcon />}
-                secondaryClickHandler={(config) => {
-                  setDeletionSelection({
-                    type: 'outputfile', id: config.id, description: `${config.name}: ${config.path}`
-                  });
-                  setDeleteDialogOpen(true);
-                }}
-                secondaryIcon={<DeleteIcon />}
-                disableClick={disabledMode}
-                cardContent={(output) => (
-                  <>
-                    <Typography variant="subtitle1" noWrap>{output.name}</Typography>
-                    <Typography variant="caption" noWrap component="div">{output.path}</Typography>
-                  </>
-                )}
-                parameters={model?.outputs}
+              <FileList
+                fileType="outputfile"
+                model={model}
+                disabledMode={disabledMode}
+                setSpacetagFile={setSpacetagFile}
+                setSpacetagOpen={setSpacetagOpen}
               />
             </Grid>
             <Grid item xs={12} lg={6}>
@@ -536,13 +419,6 @@ const SummaryContents = ({
           src={`/api/spacetag/overview/${spacetagFile?.id}?reedit=true`}
         />
       </FullScreenDialog>
-
-      <DeletionDialog
-        open={deleteDialogOpen}
-        itemDescr={deletionSelection?.description}
-        deletionHandler={handleDeleteItem}
-        handleDialogClose={handleDeleteDialogClose}
-      />
 
       <EndSessionDialog
         open={endSessionDialog}

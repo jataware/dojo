@@ -64,7 +64,15 @@ const Term = () => {
 
   return (
     <>
-      <div className="terminal-container" ref={termRef} />
+      <div
+        className="terminal-container"
+        ref={termRef}
+        style={{
+          minHeight: 'calc(100vh - 24px)',
+          margin: '12px auto',
+          maxWidth: 'auto',
+        }}
+      />
     </>
   );
 };

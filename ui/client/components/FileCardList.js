@@ -16,8 +16,8 @@ const useStyles = makeStyles((theme) => ({
     backgroundColor: theme.palette.grey[300],
     color: theme.palette.text.secondary,
     marginBottom: theme.spacing(1),
-    padding: [[theme.spacing(1), theme.spacing(2), '10px']],
     whiteSpace: 'nowrap',
+    padding: [[theme.spacing(1), theme.spacing(2), theme.spacing(1)]],
   },
   mainWrapper: {
     display: 'flex',
@@ -42,6 +42,10 @@ const useStyles = makeStyles((theme) => ({
   contentContainer: {
     // https://css-tricks.com/flexbox-truncated-text/
     minWidth: 0,
+  },
+  contentMessage: {
+    color: 'inherit',
+    marginTop: theme.spacing(2),
   },
 }));
 
@@ -71,9 +75,9 @@ function FileParams({ params, name }) {
 
 export default function FileCardList({
   name, files, loading, error, primaryClickHandler, primaryIcon, cardContent, disableClick,
-  secondaryClickHandler, secondaryIcon, parameters
+  secondaryClickHandler, secondaryIcon, parameters, hideExpandHeader
 }) {
-  const [expanded, setExpanded] = useState(false);
+  const [expanded, setExpanded] = useState(false || hideExpandHeader);
   const classes = useStyles();
 
   useEffect(() => {
@@ -94,12 +98,16 @@ export default function FileCardList({
 
   const displayCards = () => {
     if (loading) {
-      return <Typography variant="body2" align="center">{`Loading ${name} Files...`}</Typography>;
+      return (
+        <Typography variant="subtitle1" align="center" className={classes.contentMessage}>
+          {`Loading ${name} Files...`}
+        </Typography>
+      );
     }
 
     if (error) {
       return (
-        <Typography variant="body2" align="center">
+        <Typography variant="subtitle1" align="center" className={classes.contentMessage}>
           {`There was an error loading ${name.toLowerCase()} files`}
         </Typography>
       );
@@ -107,7 +115,7 @@ export default function FileCardList({
 
     if (!files.length) {
       return (
-        <Typography variant="body2" align="center">
+        <Typography variant="subtitle1" align="center" className={classes.contentMessage}>
           {`No ${name.toLowerCase()} files found`}
         </Typography>
       );
@@ -119,10 +127,7 @@ export default function FileCardList({
           className={classes.tileContainer}
         >
           {files.map((file) => (
-            <Card
-              key={file.id}
-              className={classes.card}
-            >
+            <Card key={file.id || file.s3_url} className={classes.card}>
               <div className={classes.mainWrapper}>
                 <div className={classes.contentContainer}>
                   {cardContent(file)}
@@ -164,17 +169,21 @@ export default function FileCardList({
   return (
     <>
       <span className={classes.headerContainer}>
-        <Typography
-          align="center"
-          color="textSecondary"
-          variant="h6"
-          gutterBottom
-        >
-          {`${name} Files`}
-        </Typography>
-        <IconButton onClick={() => setExpanded((prevExpanded) => !prevExpanded)}>
-          { expanded ? <RemoveCircleOutlineIcon /> : <AddCircleOutlineIcon />}
-        </IconButton>
+        {!hideExpandHeader && (
+          <>
+            <Typography
+              align="center"
+              color="textSecondary"
+              variant="h6"
+              gutterBottom
+            >
+              {`${name} Files`}
+            </Typography>
+            <IconButton onClick={() => setExpanded((prevExpanded) => !prevExpanded)}>
+              { expanded ? <RemoveCircleOutlineIcon /> : <AddCircleOutlineIcon />}
+            </IconButton>
+          </>
+        )}
       </span>
       {displayCards()}
     </>

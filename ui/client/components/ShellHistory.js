@@ -1,29 +1,29 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import DeleteIcon from '@material-ui/icons/Delete';
+import ExpandLessIcon from '@material-ui/icons/ExpandLess';
+import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 
 import Button from '@material-ui/core/Button';
+import ButtonBase from '@material-ui/core/ButtonBase';
+import Collapse from '@material-ui/core/Collapse';
 import IconButton from '@material-ui/core/IconButton';
-import Paper from '@material-ui/core/Paper';
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
 import TableContainer from '@material-ui/core/TableContainer';
-import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
 
-import { makeStyles } from '@material-ui/core/styles';
+import { makeStyles, } from '@material-ui/core/styles';
 
 import { useDirective, useShellHistory } from './SWRHooks';
 
 const useStyles = makeStyles((theme) => ({
   root: {
-    backgroundColor: 'rgb(128, 128, 128, .25)',
-    color: '#fff',
+    backgroundColor: 'inherit',
     margin: [[theme.spacing(2), 0]],
-    padding: theme.spacing(2),
   },
   table: {
     borderCollapse: 'separate',
@@ -48,10 +48,27 @@ const useStyles = makeStyles((theme) => ({
       borderColor: 'rgba(255, 255, 255, .1)',
     },
   },
+  tableContainer: {
+    overflow: 'auto',
+    padding: [[0, theme.spacing(1), theme.spacing(1)]],
+    [theme.breakpoints.down('xl')]: {
+      height: '260px',
+    },
+    [theme.breakpoints.up('xl')]: {
+      height: '400px',
+    },
+  },
   iconButton: {
     padding: '1px',
     margin: 0,
     color: 'white'
+  },
+  titleWrapper: {
+    color: 'white',
+    display: 'flex',
+    justifyContent: 'center',
+    width: '100%',
+    gap: theme.spacing(2),
   },
 }));
 
@@ -62,7 +79,9 @@ const ShellHistory = ({
   setShorthandContents,
 }) => {
   const classes = useStyles();
+
   const tableRef = React.createRef(null);
+  const [expanded, setExpanded] = useState(true);
 
   const {
     shellHistory, shellHistoryLoading, shellHistoryError, mutateShellHistory
@@ -94,6 +113,10 @@ const ShellHistory = ({
       content_id: item.command,
       cwd: item.cwd,
     });
+  };
+
+  const handleExpandClick = () => {
+    setExpanded((prev) => !prev);
   };
 
   const isDirective = (command) => {
@@ -184,39 +207,26 @@ const ShellHistory = ({
   };
 
   return (
-    <Paper className={classes.root}>
-      <TableContainer style={{ height: '400px', overflow: 'auto' }}>
-        <Table
-          aria-labelledby="tableTitle"
-          aria-label="enhanced table"
-          className={classes.table}
-          stickyHeader
-        >
-          <TableHead>
-            <TableRow className={classes.tableHead}>
-              <TableCell colSpan={2} style={{ border: 0, borderRadius: '4px' }}>
-                <Typography
-                  component="div"
-                  style={{
-                    fontSize: '1.2rem',
-                    lineHeight: '1.0',
-                    padding: '5px 0 7px 10px',
-                    color: '#fff',
-                    margin: '0 auto',
-                  }}
-                  align="center"
-                >
-                  Shell History
-                </Typography>
-              </TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody ref={tableRef} className={classes.tableBody}>
-            {displayHistoryItems()}
-          </TableBody>
-        </Table>
-      </TableContainer>
-    </Paper>
+    <div className={classes.root}>
+      <ButtonBase className={classes.titleWrapper} onClick={handleExpandClick}>
+        <Typography variant="h6" align="center">Shell History</Typography>
+        {expanded ? <ExpandMoreIcon fontSize="large" color="inherit" />
+          : <ExpandLessIcon fontSize="large" color="inherit" />}
+      </ButtonBase>
+      <Collapse in={expanded}>
+        <TableContainer className={classes.tableContainer}>
+          <Table
+            aria-labelledby="tableTitle"
+            aria-label="enhanced table"
+            className={classes.table}
+          >
+            <TableBody ref={tableRef} className={classes.tableBody}>
+              {displayHistoryItems()}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Collapse>
+    </div>
   );
 };
 

@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 
 import { LinearProgress } from '@material-ui/core';
 
-import { useDirective } from './SWRHooks';
+import { useConfigs, useDirective, } from './SWRHooks';
 
 const shorthandRef = React.createRef();
 
@@ -46,6 +46,7 @@ function ShorthandEditor({
   }, [isSaving]);
 
   const { mutateDirective } = useDirective(modelInfo.id);
+  const { mutateConfigs } = useConfigs(modelInfo.id);
 
   const editorUrl = `/api/shorthand/?model=${modelInfo.id}&mode=${mode}`;
 
@@ -69,8 +70,10 @@ function ShorthandEditor({
             if (mode === 'directive') {
               // shorthand sets the directive, so we just want to tell SWR to update it
               // but we need this timeout or the change may not have taken place yet
-              // because dojo can be slow sometimes
+              // because ES does not guarantee immediate updates
               setTimeout(() => mutateDirective(), 1000);
+            } else if (mode === 'config') {
+              setTimeout(() => mutateConfigs(), 1000);
             }
             // tell the parent that we are done saving
             setIsSaving(false);
@@ -90,7 +93,14 @@ function ShorthandEditor({
     };
 
     registerListeners();
-  }, [mutateDirective, setIsSaving, setIsShorthandOpen, mode, shorthandContents]);
+  }, [
+    mutateDirective,
+    setIsSaving,
+    setIsShorthandOpen,
+    mode,
+    shorthandContents,
+    mutateConfigs,
+  ]);
 
   return (
     <div>

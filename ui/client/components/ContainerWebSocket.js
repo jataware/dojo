@@ -6,7 +6,9 @@ import React, {
 import { saveAs } from 'file-saver';
 
 import BasicAlert from './BasicAlert';
-import { useLock, useShellHistory } from './SWRHooks';
+import {
+  useAccessories, useLock, useShellHistory
+} from './SWRHooks';
 
 import {
   useWebSocketUpdateContext,
@@ -54,6 +56,7 @@ const ContainerWebSocket = ({
   const { register, unregister } = useWebSocketUpdateContext();
   const [accessoryAlert, setAccessoryAlert] = useState(false);
 
+  const { mutateAccessories } = useAccessories(modelId);
   const { lock } = useLock(modelId);
 
   const { mutateShellHistory } = useShellHistory(modelId);
@@ -120,7 +123,11 @@ const ContainerWebSocket = ({
           model_id: modelId,
           path: f_,
           caption: c
-        }).then(() => setAccessoryAlert(true));
+        }).then(() => {
+          setAccessoryAlert(true);
+          // give this 1s for elasticsearch to catch up
+          setTimeout(() => mutateAccessories(), 1000);
+        });
       }
     };
 
@@ -171,7 +178,11 @@ const ContainerWebSocket = ({
           model_id: modelId,
           path: meta.file,
           caption: meta.caption
-        }).then(() => setAccessoryAlert(true));
+        }).then(() => {
+          setAccessoryAlert(true);
+          // give this 1s for elasticsearch to catch up
+          setTimeout(() => mutateAccessories(), 1000);
+        });
       } else if (id === 'upload') {
         // set cwd and modal open to upload files
         setUploadPath(meta.cwd);
@@ -220,7 +231,8 @@ const ContainerWebSocket = ({
     setIsSpacetagOpen,
     setUploadFilesOpen,
     setUploadPath,
-    modelId
+    modelId,
+    mutateAccessories,
   ]);
 
   return (
