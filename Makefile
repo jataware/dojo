@@ -64,7 +64,7 @@ npm_lint:   ## Format js files
 
 .PHONY: npm_build
 npm_build:  ## Build npm package
-	(cd ui && rm -fr dist/; npm run build)
+	(cd ui && rm -fr dist/; NODE_OPTIONS=--openssl-legacy-provider npm run build)
 
 .PHONY: fmt
 fmt:| npm_lint ## Format all
