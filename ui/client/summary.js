@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 
 import axios from 'axios';
 
-import { useLocation, useHistory, useParams } from 'react-router-dom';
+import { useHistory, useLocation, useParams } from 'react-router-dom';
 
 import LoadingOverlay from './components/LoadingOverlay';
 import SummaryContents from './components/SummaryContents';

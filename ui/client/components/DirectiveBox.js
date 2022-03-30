@@ -12,10 +12,12 @@ import { useDirective } from './SWRHooks';
 
 const useStyles = makeStyles((theme) => ({
   card: {
-    alignItems: 'center',
+    alignItems: 'flex-start',
     display: 'flex',
     justifyContent: 'space-between',
     padding: [[theme.spacing(1), theme.spacing(2), '10px']],
+    maxHeight: '104px',
+    overflowY: 'auto',
   },
   nextIcon: {
     color: 'yellow',

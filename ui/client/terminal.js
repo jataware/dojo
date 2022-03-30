@@ -59,8 +59,7 @@ const useStyles = makeStyles((theme) => ({
     paddingBottom: theme.spacing(3),
   },
   directiveContainer: {
-    minHeight: '76px',
-    margin: [[0, theme.spacing(3), theme.spacing(1), theme.spacing(1)]],
+    margin: [[0, 0, theme.spacing(1), theme.spacing(1)]],
   },
 }));
 
