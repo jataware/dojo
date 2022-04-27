@@ -9,11 +9,11 @@ import { makeStyles, useTheme } from '@material-ui/core/styles';
 
 import { useLocation } from 'react-router-dom';
 
+import DatasetSummaryDetails from './components/DatasetSummaryDetails';
+import DatasetSummaryOutputsTable from './components/DatasetSummaryOutputsTable';
 import LoadingOverlay from './components/LoadingOverlay';
-import SummaryIndicatorDetails from './components/SummaryIndicatorDetails';
-import SummaryIndicatorOutputsTable from './components/SummaryIndicatorOutputsTable';
 import {
-  useIndicator
+  useDataset
 } from './components/SWRHooks';
 
 const useStyles = makeStyles((theme) => ({
@@ -60,26 +60,26 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const Page = ({
-  indicatorIdQueryParam
+  datasetIdQueryParam
 }) => {
-  const indicatorId = indicatorIdQueryParam;
+  const datasetId = datasetIdQueryParam;
   const {
-    indicator, indicatorLoading, indicatorError
-  } = useIndicator(indicatorId);
+    dataset, datasetLoading, datasetError
+  } = useDataset(datasetId);
 
   const classes = useStyles();
   const theme = useTheme();
   const mediumBreakpoint = useMediaQuery(theme.breakpoints.down('md'));
 
-  if (indicatorLoading) {
+  if (datasetLoading) {
     return <LoadingOverlay text="Loading summary" />;
   }
 
-  if (indicatorError) {
+  if (datasetError) {
     return (
       <LoadingOverlay
-        text="There was an error loading the indicator summary"
-        error={indicatorError}
+        text="There was an error loading the dataset summary"
+        error={datasetError}
       />
     );
   }
@@ -98,7 +98,7 @@ const Page = ({
           variant="h4"
           align="center"
         >
-          Indicator Summary
+          Dataset Summary
         </Typography>
         <Grid container className={classes.containers}>
           <Grid item xs={12}>
@@ -113,7 +113,7 @@ const Page = ({
             </Typography>
             <div className={classes.detailsPanel}>
 
-              <SummaryIndicatorDetails indicator={indicator} />
+              <DatasetSummaryDetails dataset={dataset} />
             </div>
           </Grid>
         </Grid>
@@ -129,7 +129,7 @@ const Page = ({
               Features
             </Typography>
 
-            <SummaryIndicatorOutputsTable indicator={indicator} />
+            <DatasetSummaryOutputsTable dataset={dataset} />
           </Grid>
         </Grid>
 
@@ -143,13 +143,13 @@ function useQuery() {
   return new URLSearchParams(useLocation().search);
 }
 
-const SummaryIndicators = () => {
+const DatasetSummary = () => {
   const query = useQuery();
-  const indicator = query.get('indicator');
+  const dataset = query.get('dataset');
 
-  if (indicator) {
-    return <Page indicatorIdQueryParam={indicator} />;
+  if (dataset) {
+    return <Page datasetIdQueryParam={dataset} />;
   }
 };
 
-export default SummaryIndicators;
+export default DatasetSummary;

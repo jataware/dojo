@@ -21,8 +21,8 @@ const useStyles = makeStyles(() => ({
 
 }));
 
-function IndicatorCountryMap({ indicator }) {
-  const indicatorCountriesSet = new Set(indicator?.geography?.country);
+function CountryMap({ dataset }) {
+  const countriesSet = new Set(dataset?.geography?.country);
   const mapStyle = {
     fillColor: 'white',
     weight: 1,
@@ -33,7 +33,7 @@ function IndicatorCountryMap({ indicator }) {
   const onEachCountry = (country, layer) => {
     const name = country.properties.ADMIN;
     layer.bindPopup(`${name}`);
-    if (indicatorCountriesSet.has(name)) {
+    if (countriesSet.has(name)) {
       layer.options.fillColor = 'green';   // eslint-disable-line
     }
   };
@@ -57,7 +57,7 @@ function IndicatorCountryMap({ indicator }) {
             style={{ height: 380, margin: '0 auto' }}
           >
             <LayersControl.Overlay name="CountryList">
-              <GeographyListModal geography={indicator?.geography} />
+              <GeographyListModal geography={dataset?.geography} />
             </LayersControl.Overlay>
 
             <GeoJSON onEachFeature={onEachCountry} style={mapStyle} data={countries} />
@@ -68,4 +68,4 @@ function IndicatorCountryMap({ indicator }) {
   );
 }
 
-export default IndicatorCountryMap;
+export default CountryMap;

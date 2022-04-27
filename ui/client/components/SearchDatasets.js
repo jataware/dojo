@@ -32,7 +32,7 @@ const fuseKeys = [
   'name',
 ];
 
-const SearchIndicators = ({ setSearchedIndicators, indicators }) => {
+const SearchDatasets = ({ setSearchedDatasets, datasets }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [alertVisible, setAlertVisible] = useState(false);
   const [alert, setAlert] = useState({
@@ -54,15 +54,15 @@ const SearchIndicators = ({ setSearchedIndicators, indicators }) => {
         ignoreLocation: true,
       };
 
-      const fuse = new Fuse(indicators, options);
+      const fuse = new Fuse(datasets, options);
 
       const results = fuse.search(searchTerm);
 
-      // we don't need all the fuse stuff, so just parse out the models
-      const parsedResults = results.map((indicator) => indicator.item);
+      // we don't need all the fuse stuff, so just parse out the datasets
+      const parsedResults = results.map((dataset) => dataset.item);
 
-      // and pass them back to ViewModels
-      setSearchedIndicators(parsedResults);
+      // and pass them back to ViewDatasets
+      setSearchedDatasets(parsedResults);
       // unless we get nothing back, then show the alert
       if (parsedResults.length === 0) {
         setAlert({
@@ -85,13 +85,13 @@ const SearchIndicators = ({ setSearchedIndicators, indicators }) => {
 
     // cancel the timeout if we get back here before it has executed
     return () => clearTimeout(debounceSearch);
-  }, [searchTerm, indicators, setSearchedIndicators]);
+  }, [searchTerm, datasets, setSearchedDatasets]);
 
   const clearSearch = () => {
     setSearchTerm('');
-    // if ViewModels gets null it will show the entire list, otherwise it'll show no rows
+    // if ViewDatasets gets null it will show the entire list, otherwise it'll show no rows
     // this way we can tell it whether to show searched models or the default returned ones
-    setSearchedIndicators(null);
+    setSearchedDatasets(null);
   };
 
   const handleSearchChange = (event) => {
@@ -107,7 +107,7 @@ const SearchIndicators = ({ setSearchedIndicators, indicators }) => {
     <div className={classes.searchWrapper}>
       <TextField
         className={classes.searchInput}
-        label="Filter Indicators"
+        label="Filter Datasets"
         variant="outlined"
         value={searchTerm}
         onChange={handleSearchChange}
@@ -128,4 +128,4 @@ const SearchIndicators = ({ setSearchedIndicators, indicators }) => {
   );
 };
 
-export default SearchIndicators;
+export default SearchDatasets;

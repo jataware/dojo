@@ -7,7 +7,7 @@ import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 
 import CollapseText from './CollapseText';
-import IndicatorCountryMap from './CountryMap';
+import CountryMap from './CountryMap';
 
 const useStyles = makeStyles((theme) => ({
   buttonStyle: {
@@ -36,7 +36,7 @@ const useStyles = makeStyles((theme) => ({
 
 }));
 
-function SummaryIndicatorDetails({ indicator }) {
+function DatasetSummaryDetails({ dataset }) {
   const classes = useStyles();
 
   // no need to spread the following out onto a million lines
@@ -50,34 +50,34 @@ function SummaryIndicatorDetails({ indicator }) {
             Overview
           </Typography>
           <Typography variant="body2" className={classes.subsection}>
-            <b> Name:</b> {indicator.name}
+            <b> Name:</b> {dataset.name}
           </Typography>
           <Typography variant="body2" className={classes.subsection}>
             <div style={{ maxWidth: '300px' }}>
               <b>  Website: </b>
-              <CollapseText childrenText={indicator.maintainer?.website} collapsedSize={20} />
+              <CollapseText childrenText={dataset.maintainer?.website} collapsedSize={20} />
             </div>
           </Typography>
           <Typography variant="body2" className={classes.subsection}>
-            <b>  Family: </b> {indicator.family_name}
+            <b>  Family: </b> {dataset.family_name}
           </Typography>
 
           <Typography variant="body2" className={classes.subsection}>
             <b> Description: </b>
-            <CollapseText childrenText={indicator.description} collapsedSize={40} />
+            <CollapseText childrenText={dataset.description} collapsedSize={40} />
           </Typography>
           <Typography variant="body2" className={classes.subsection}>
-            <b> Created Date: </b> {new Date(indicator.created_at).toLocaleDateString()}
+            <b> Created Date: </b> {new Date(dataset.created_at).toLocaleDateString()}
           </Typography>
 
           <Typography variant="body2" className={classes.subsection}>
-            <b> ID: </b> {indicator.id}
+            <b> ID: </b> {dataset.id}
           </Typography>
           <br />
           <Typography variant="body2" className={classes.subsection}>
             <Button
               className={classes.buttonStyle}
-              href={`https://causemos.uncharted.software/#/dataset/${indicator.id}/datasetOverview`}
+              href={`https://causemos.uncharted.software/#/dataset/${dataset.id}/datasetOverview`}
               target="_blank"
               rel="noopener"
             > View In Causemos
@@ -90,19 +90,19 @@ function SummaryIndicatorDetails({ indicator }) {
           Maintainer
         </Typography>
         <Typography variant="body2" className={classes.subsection}>
-          <b>  Name: </b> {indicator.maintainer?.name}
+          <b>  Name: </b> {dataset.maintainer?.name}
         </Typography>
         <Typography variant="body2" className={classes.subsection}>
-          <b>  Email: </b>  {indicator.maintainer?.email}
+          <b>  Email: </b>  {dataset.maintainer?.email}
         </Typography>
         <Typography variant="body2" className={classes.subsection}>
-          <b>  Organization: </b> {indicator.maintainer?.organization}
+          <b>  Organization: </b> {dataset.maintainer?.organization}
         </Typography>
         <Typography variant="subtitle2" className={classes.modelHeader}>
           <b>  Categories </b>
         </Typography>
         <Typography variant="body2" className={classes.subsection}>
-          {indicator.category?.join(', ')}
+          {dataset.category?.join(', ')}
         </Typography>
 
       </Grid>
@@ -111,7 +111,7 @@ function SummaryIndicatorDetails({ indicator }) {
         <Typography variant="subtitle2" className={classes.modelHeader}>
           Geography
         </Typography>
-        <IndicatorCountryMap indicator={indicator} />
+        <CountryMap dataset={dataset} />
       </Grid>
 
     </Grid>
@@ -119,4 +119,4 @@ function SummaryIndicatorDetails({ indicator }) {
   );
 }
 
-export default SummaryIndicatorDetails;
+export default DatasetSummaryDetails;

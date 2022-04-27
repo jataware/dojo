@@ -8,11 +8,9 @@ import { DataGrid } from '@material-ui/data-grid';
 import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 
-import { useHistory } from 'react-router-dom';
-
 import ExpandableDataGridCell from './ExpandableDataGridCell';
 import LoadingOverlay from './LoadingOverlay';
-import SearchIndicators from './SearchIndicators';
+import SearchDatasets from './SearchDatasets';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -52,55 +50,50 @@ const useStyles = makeStyles((theme) => ({
   }
 }));
 
-const getIndicators = (setIndicators, setIndicatorsError, setIndicatorsLoading) => {
+const getDatasets = (setDatasets, setDatasetsError, setDatasetsLoading) => {
   // only do this for the first call to getModels, when we don't have a scrollId
   // so we don't show the full page spinner for every subsequent set of models
-  setIndicatorsLoading(true);
+  setDatasetsLoading(true);
 
   const url = '/api/dojo/indicators/latest';
   axios.get(url)
     .then((response) => {
-      setIndicatorsLoading(false);
+      setDatasetsLoading(false);
       console.log(response.data);
-      setIndicators(response.data);
+      setDatasets(response.data);
     })
     .catch((error) => {
       console.log('error:', error);
-      setIndicatorsError(true);
+      setDatasetsError(true);
     });
 };
 
-function ViewIndicators() {
-  const history = useHistory();
+function ViewDatasets() {
   const classes = useStyles();
-  const [indicators, setIndicators] = useState([]);
-  const [indicatorError, setIndicatorsError] = useState(false);
-  const [indicatorsLoading, setIndicatorsLoading] = useState(false);
-  const [searchedIndicators, setSearchedIndicators] = useState(null);
+  const [datasets, setDatasets] = useState([]);
+  const [datasetsError, setDatasetsError] = useState(false);
+  const [datasetsLoading, setDatasetsLoading] = useState(false);
+  const [searchedDatasets, setSearchedDatasets] = useState(null);
 
   useEffect(() => {
     // only do this once when the page loads
-    getIndicators(setIndicators, setIndicatorsError, setIndicatorsLoading);
+    getDatasets(setDatasets, setDatasetsError, setDatasetsLoading);
   }, []);
-  if (indicatorsLoading) {
-    return <LoadingOverlay text="Loading Indicators" />;
+  if (datasetsLoading) {
+    return <LoadingOverlay text="Loading Datasets" />;
   }
-  if (indicatorError) {
+  if (datasetsError) {
     return (
       <LoadingOverlay
-        text="There was an error loading the list of all indicators"
+        text="There was an error loading the list of all datasets"
         error
       />
     );
   }
 
-  if (!indicators?.length) {
-    return <LoadingOverlay text="No Indicators Found" error />;
+  if (!datasets?.length) {
+    return <LoadingOverlay text="No Datasets Found" error />;
   }
-
-  const viewIndicatorsClick = (indicatorId) => {
-    history.push(`/indicator_summary?indicator=${indicatorId}`);
-  };
 
   const expandableCell = ({ value, colDef }) => (
     <ExpandableDataGridCell
@@ -160,12 +153,12 @@ function ViewIndicators() {
       headerName: ' ',
       sortable: false,
       disableColumnMenu: true,
-      renderCell: (params) => (
+      renderCell: ({ row }) => (
         <Button
-          onClick={() => viewIndicatorsClick(params.row.id)}
+          href={`/dataset_summary?dataset=${row.id}`}
           variant="outlined"
         >
-          View Indicator
+          View Dataset
         </Button>
       ),
       minWidth: 210,
@@ -185,18 +178,18 @@ function ViewIndicators() {
         variant="h4"
         align="center"
       >
-        All Indicators
+        All Datasets
       </Typography>
       <div className={classes.gridContainer}>
-        <SearchIndicators setSearchedIndicators={setSearchedIndicators} indicators={indicators} />
+        <SearchDatasets setSearchedDatasets={setSearchedDatasets} datasets={datasets} />
         <DataGrid
           autoHeight
           columns={columns}
-          rows={searchedIndicators !== null ? searchedIndicators : indicators}
+          rows={searchedDatasets !== null ? searchedDatasets : datasets}
         />
       </div>
     </Container>
   );
 }
 
-export default ViewIndicators;
+export default ViewDatasets;

@@ -24,15 +24,16 @@ export function useModel(modelId) {
   };
 }
 
-export function useIndicator(indicatorId) {
+// Datasets were previously called indicators, and this has not yet been updated in dojo
+export function useDataset(datasetId) {
   const { data, error } = useSWR(
-    indicatorId ? `/api/dojo/indicators/${indicatorId}` : null, fetcher
+    datasetId ? `/api/dojo/indicators/${datasetId}` : null, fetcher
   );
 
   return {
-    indicator: data,
-    indicatorLoading: !error && !data,
-    indicatorError: error
+    dataset: data,
+    datasetLoading: !error && !data,
+    datasetError: error
   };
 }
 

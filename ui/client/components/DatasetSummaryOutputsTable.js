@@ -71,8 +71,8 @@ const useStyles = makeStyles((theme) => ({
 
 }));
 
-function SummaryIndicatorOutputsTable({ indicator }) {
-  const columns = [...indicator?.outputs, ...indicator?.qualifier_outputs
+function DatasetSummaryOutputsTable({ dataset }) {
+  const columns = [...dataset?.outputs, ...dataset?.qualifier_outputs
     .filter((qual) => !['admin1', 'admin2', 'admin3', 'country', 'lat', 'lng'].includes(qual.name))];
 
   const classes = useStyles();
@@ -152,4 +152,4 @@ function SummaryIndicatorOutputsTable({ indicator }) {
   );
 }
 
-export default SummaryIndicatorOutputsTable;
+export default DatasetSummaryOutputsTable;

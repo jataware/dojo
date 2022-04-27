@@ -57,9 +57,6 @@ const LandingPage = () => {
   const viewModels = () => {
     history.push('/models');
   };
-  const viewIndicators = () => {
-    history.push('/indicators');
-  };
 
   // const dataUrl = process.env.ANNOTATE_UI_URL ? process.env.ANNOTATE_UI_URL : 'https://data.wm.dojo-modeling.com/';
   const dataUrl = 'https://data.wm.dojo-modeling.com/';
@@ -115,7 +112,7 @@ const LandingPage = () => {
                   Register a Dataset
                 </Typography>
                 <Typography className={classes.pos} color="textSecondary">
-                  Register a Dataset Indicator.
+                  Register a Dataset.
                 </Typography>
               </CardContent>
               <CardActions>
@@ -159,10 +156,10 @@ const LandingPage = () => {
             <Card className={classes.maincard}>
               <CardContent>
                 <Typography variant="h5" component="h2">
-                  View Existing Dataset Indicators
+                  View Existing Datasets
                 </Typography>
                 <Typography className={classes.pos} color="textSecondary">
-                  Revisit a previously registered indicator.
+                  Revisit a previously registered dataset.
                 </Typography>
               </CardContent>
               <CardActions>
@@ -170,7 +167,7 @@ const LandingPage = () => {
                   size="small"
                   variant="contained"
                   color="primary"
-                  onClick={viewIndicators}
+                  href="/datasets"
                 >
                   Go!
                 </Button>
