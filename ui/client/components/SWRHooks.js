@@ -26,14 +26,15 @@ export function useModel(modelId) {
 
 // Datasets were previously called indicators, and this has not yet been updated in dojo
 export function useDataset(datasetId) {
-  const { data, error } = useSWR(
+  const { data, error, mutate } = useSWR(
     datasetId ? `/api/dojo/indicators/${datasetId}` : null, fetcher
   );
 
   return {
     dataset: data,
     datasetLoading: !error && !data,
-    datasetError: error
+    datasetError: error,
+    mutateDataset: mutate,
   };
 }
 

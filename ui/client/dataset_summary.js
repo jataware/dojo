@@ -1,7 +1,9 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 
+import CloseIcon from '@material-ui/icons/Close';
 import Container from '@material-ui/core/Container';
 import Grid from '@material-ui/core/Grid';
+import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
 import useMediaQuery from '@material-ui/core/useMediaQuery';
 
@@ -9,6 +11,7 @@ import { makeStyles, useTheme } from '@material-ui/core/styles';
 
 import { useLocation } from 'react-router-dom';
 
+import BasicAlert from './components/BasicAlert';
 import DatasetSummaryDetails from './components/DatasetSummaryDetails';
 import DatasetSummaryOutputsTable from './components/DatasetSummaryOutputsTable';
 import LoadingOverlay from './components/LoadingOverlay';
@@ -20,23 +23,11 @@ const useStyles = makeStyles((theme) => ({
   containers: {
     padding: [[theme.spacing(1), theme.spacing(8), theme.spacing(1)]],
   },
-  tablePanel: {
-    paddingBottom: '400px !important',
-  },
   root: {
     padding: [[theme.spacing(10), theme.spacing(2), theme.spacing(2)]],
   },
   header: {
     marginBottom: theme.spacing(3),
-  },
-  headerContainer: {
-    display: 'grid',
-    gridTemplateColumns: '1fr repeat(3, auto) 1fr',
-    gridColumnGap: theme.spacing(1),
-    paddingBottom: theme.spacing(3),
-    '& > :first-child': {
-      placeSelf: 'start',
-    },
   },
   detailsPanel: {
     backgroundColor: theme.palette.grey[300],
@@ -49,20 +40,33 @@ const useStyles = makeStyles((theme) => ({
       boxShadow: '0 0 10px #0c0c0c',
     },
   },
-  runCommandContainer: {
-    paddingBottom: theme.spacing(1),
-  },
   headerText: {
-    // this matches up with the headers in FileCardList
     paddingTop: '10px',
   },
-
+  deprecatedTitle: {
+    backgroundColor: theme.palette.warning.main,
+    borderRadius: theme.shape.borderRadius,
+    color: theme.palette.getContrastText(theme.palette.warning.main),
+    padding: [[0, theme.spacing(1)]],
+    position: 'absolute',
+    right: 0,
+    top: 12,
+    transform: 'translateX(+105%)',
+  },
+  pageTitleWrapper: {
+    margin: '0 auto',
+    position: 'relative',
+    width: 'max-content',
+  },
 }));
+function useQuery() {
+  return new URLSearchParams(useLocation().search);
+}
 
-const Page = ({
-  datasetIdQueryParam
-}) => {
-  const datasetId = datasetIdQueryParam;
+const DatasetSummary = () => {
+  const query = useQuery();
+  const datasetId = query.get('dataset');
+  const [deprecatedAlert, setDeprecatedAlert] = useState(false);
   const {
     dataset, datasetLoading, datasetError
   } = useDataset(datasetId);
@@ -70,6 +74,26 @@ const Page = ({
   const classes = useStyles();
   const theme = useTheme();
   const mediumBreakpoint = useMediaQuery(theme.breakpoints.down('md'));
+
+  useEffect(() => {
+    document.title = 'Dataset Summary - Dojo';
+  }, []);
+
+  useEffect(() => {
+    if (dataset?.deprecated) {
+      setDeprecatedAlert(true);
+    }
+  }, [dataset]);
+
+  if (!datasetId) {
+    return (
+      <LoadingOverlay
+        text="There was an error loading the dataset summary"
+        error
+        link={{ href: '/datasets', text: 'Return to the list of all datasets' }}
+      />
+    );
+  }
 
   if (datasetLoading) {
     return <LoadingOverlay text="Loading summary" />;
@@ -80,6 +104,7 @@ const Page = ({
       <LoadingOverlay
         text="There was an error loading the dataset summary"
         error={datasetError}
+        link={{ href: '/datasets', text: 'Return to the list of all datasets' }}
       />
     );
   }
@@ -92,14 +117,24 @@ const Page = ({
         component="main"
         maxWidth={mediumBreakpoint ? 'md' : 'xl'}
       >
-        <Typography
-          className={classes.header}
-          component="h3"
-          variant="h4"
-          align="center"
-        >
-          Dataset Summary
-        </Typography>
+        <div className={classes.pageTitleWrapper}>
+          <Typography
+            className={classes.header}
+            variant="h4"
+            align="center"
+          >
+            Dataset Summary
+          </Typography>
+          {dataset?.deprecated && (
+            <Typography
+              variant="subtitle2"
+              component="div"
+              className={classes.deprecatedTitle}
+            >
+              DEPRECATED
+            </Typography>
+          )}
+        </div>
         <Grid container className={classes.containers}>
           <Grid item xs={12}>
             <Typography
@@ -112,13 +147,12 @@ const Page = ({
               Details
             </Typography>
             <div className={classes.detailsPanel}>
-
               <DatasetSummaryDetails dataset={dataset} />
             </div>
           </Grid>
         </Grid>
         <Grid container className={classes.containers}>
-          <Grid className={classes.tablePanel} item xs={12}>
+          <Grid item xs={12}>
             <Typography
               align="center"
               color="textSecondary"
@@ -133,23 +167,29 @@ const Page = ({
           </Grid>
         </Grid>
 
+        <BasicAlert
+          alert={{
+            message: 'This dataset has been deprecated.',
+            severity: 'warning',
+          }}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+          autoHideDuration={null}
+          action={(
+            <IconButton
+              color="inherit"
+              onClick={() => setDeprecatedAlert(false)}
+              size="small"
+            >
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          )}
+          disableClickaway
+          setVisible={setDeprecatedAlert}
+          visible={deprecatedAlert}
+        />
       </Container>
-
     </div>
   );
-};
-
-function useQuery() {
-  return new URLSearchParams(useLocation().search);
-}
-
-const DatasetSummary = () => {
-  const query = useQuery();
-  const dataset = query.get('dataset');
-
-  if (dataset) {
-    return <Page datasetIdQueryParam={dataset} />;
-  }
 };
 
 export default DatasetSummary;

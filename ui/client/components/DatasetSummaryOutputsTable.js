@@ -27,10 +27,6 @@ const StyledTableCell = withStyles((theme) => ({
   head: {
     backgroundColor: theme.palette.common.white,
     color: theme.palette.common.black,
-    borderColor: 'black',
-    borderWidth: '1px',
-    borderTopWidth: '1px',
-    borderStyle: 'solid',
     padding: [[theme.spacing(1), theme.spacing(2)]],
     minWidth: '100px',
     fontWeight: 'bold',
@@ -51,24 +47,10 @@ const StyledTableRow = withStyles((theme) => ({
 }))(TableRow);
 
 const useStyles = makeStyles((theme) => ({
-
-  paper: {
-    position: 'absolute',
-    width: 400,
-    backgroundColor: theme.palette.background.paper,
-    border: '2px solid #000',
-    boxShadow: theme.shadows[5],
-    padding: theme.spacing(0, 0, 0, 500),
-
-  },
-  tableHead: {
-    border: 1,
-  },
   indexRow: {
-    maxWidth: '75px !important',
+    maxWidth: '75px',
     backgroundColor: theme.palette.action.hover,
   },
-
 }));
 
 function DatasetSummaryOutputsTable({ dataset }) {
@@ -79,7 +61,7 @@ function DatasetSummaryOutputsTable({ dataset }) {
 
   return (
     <div>
-      <TableContainer component={Paper}>
+      <TableContainer component={Paper} elevation={0} variant="outlined">
         <Table className={classes.table} aria-label="customized table">
           <TableHead className={classes.tableHead}>
 

@@ -54,7 +54,7 @@ function CountryMap({ dataset }) {
             center={[51.505, -0.09]}
             zoom={1}
             scrollWheelZoom={false}
-            style={{ height: 380, margin: '0 auto' }}
+            style={{ height: 380, margin: '0 auto', borderRadius: '4px', padding: '8px' }}
           >
             <LayersControl.Overlay name="CountryList">
               <GeographyListModal geography={dataset?.geography} />
