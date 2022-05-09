@@ -74,7 +74,7 @@ docker-compose.yaml:$(COMPOSE_FILES) docker-compose.build-override.yaml envfile
 	rm $(TEMP_COMPOSE_FILES) *.sedbkp;
 
 
-phantom/ui/node_modules:docker-compose.yaml
+phantom/ui/node_modules:docker-compose.yaml phantom/ui/package-lock.json phantom/ui/package.json
 	docker-compose run phantom npm ci -y
 
 
