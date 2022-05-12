@@ -17,6 +17,7 @@ import ConfirmDialog from './components/ConfirmDialog';
 import ContainerWebSocket from './components/ContainerWebSocket';
 import DirectiveBox from './components/DirectiveBox';
 import FullScreenDialog from './components/FullScreenDialog';
+import HelperTip from './components/HelperTip';
 import LoadingOverlay from './components/LoadingOverlay';
 import ModelFileTabs from './components/ModelFileTabs';
 import ShellHistory from './components/ShellHistory';
@@ -199,7 +200,12 @@ const CenteredGrid = ({ model }) => {
           color="secondary"
           onClick={(e) => { e.preventDefault(); setAbandonSessionDialogOpen(true); }}
         >
-          Abandon Session
+          <HelperTip
+            title="Discard all of your work since launching the terminal.
+              This will take you to your model's summary page."
+          >
+            Abandon Session
+          </HelperTip>
         </Fab>
 
         <Fab
@@ -208,7 +214,12 @@ const CenteredGrid = ({ model }) => {
           color="primary"
           onClick={() => history.push(`/summary/${model.id}?terminal=true`, { upload: true })}
         >
-          Save and Continue
+          <HelperTip
+            title="Save your work and continue on to the Summary page, where your model will
+              be uploaded to Docker Hub before you can PUBLISH to Causemos."
+          >
+            Save and Continue
+          </HelperTip>
         </Fab>
 
       </div>

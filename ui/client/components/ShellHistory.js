@@ -18,6 +18,8 @@ import Typography from '@material-ui/core/Typography';
 
 import { makeStyles, } from '@material-ui/core/styles';
 
+import HelperTip from './HelperTip';
+
 import { useDirective, useShellHistory } from './SWRHooks';
 
 const useStyles = makeStyles((theme) => ({
@@ -209,7 +211,16 @@ const ShellHistory = ({
   return (
     <div className={classes.root}>
       <ButtonBase className={classes.titleWrapper} onClick={handleExpandClick}>
-        <Typography variant="h6" align="center">Shell History</Typography>
+        <Typography variant="h6" align="center">
+          <HelperTip
+            title="A history of all terminal commands entered in this session.
+              You can permanently remove commands by clicking the trash can icon,
+              or choose to mark a command as the model execution directive by clicking
+              Mark Directive."
+          >
+            Shell History
+          </HelperTip>
+        </Typography>
         {expanded ? <ExpandMoreIcon fontSize="large" color="inherit" />
           : <ExpandLessIcon fontSize="large" color="inherit" />}
       </ButtonBase>

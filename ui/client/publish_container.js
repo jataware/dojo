@@ -16,6 +16,8 @@ import { useHistory } from 'react-router-dom';
 
 import { makeStyles } from '@material-ui/core/styles';
 
+import HelperTip from './components/HelperTip';
+
 import { useDirective, useModel } from './components/SWRHooks';
 
 import {
@@ -294,10 +296,18 @@ const PublishContainer = ({ modelId, setUploading, mutateModel }) => {
             >
               {enableFinished ? <CloseIcon /> : <RemoveIcon />}
             </IconButton>
-            <Typography variant="subtitle1" gutterBottom data-test="summaryUploadDialog">
-              {enableFinished
-                ? 'Upload Complete.' : 'Uploading Model to Docker Hub'}
-            </Typography>
+            <HelperTip
+              title="Your model will be saved to Docker Hub before you can publish it.
+                Please do not close your browser while the upload is in progress. If
+                you want your model to be available for execution on Causemos, make sure
+                to click PUBLISH once the upload is complete."
+              dark
+            >
+              <Typography variant="subtitle1" component="span" gutterBottom data-test="summaryUploadDialog">
+                {enableFinished
+                  ? 'Upload Complete.' : 'Uploading Model to Docker Hub'}
+              </Typography>
+            </HelperTip>
             <LinearProgress
               color="primary"
               variant={enableFinished ? 'determinate' : 'indeterminate'}

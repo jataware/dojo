@@ -8,6 +8,8 @@ import Typography from '@material-ui/core/Typography';
 
 import { makeStyles, useTheme } from '@material-ui/core/styles';
 
+import HelperTip from './HelperTip';
+
 import { useDirective } from './SWRHooks';
 
 const useStyles = makeStyles((theme) => ({
@@ -49,7 +51,16 @@ const DirectiveBox = ({
       }}
     >
       <span>
-        {!summaryPage && <Typography variant="subtitle1">Model Execution Directive:</Typography>}
+        {!summaryPage && (
+          <Typography variant="subtitle1">
+            <HelperTip
+              title="The command that will run your model. You can edit it with the pencil icon
+                to the right, or choose a new directive in the Shell History section above."
+            >
+              Model Execution Directive:
+            </HelperTip>
+          </Typography>
+        )}
         <NavigateNextIcon className={classes.nextIcon} />
         {directive?.command.split(/{{ | }}/).map((obj, i) => (
           (i % 2 === 0)

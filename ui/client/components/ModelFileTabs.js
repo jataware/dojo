@@ -8,6 +8,7 @@ import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 
 import FileList from './FileList';
+import HelperTip from './HelperTip';
 import SummaryAccessories from './SummaryAccessories';
 import { useAccessories, useConfigs, useOutputFiles } from './SWRHooks';
 
@@ -79,19 +80,41 @@ const ModelFileTabs = ({
         classes={{ indicator: classes.indicator }}
       >
         <Tab
-          label={`Configs  (${configs?.length || 0})`}
-          data-test="fileTabConfigs"
+          label={(
+            <HelperTip
+              title="The annotated configuration files with parameters that you would like
+                to expose to end users. You can add a configuration file by entering
+                'dojo config <filename>' into the terminal"
+            >
+              {`Configs  (${configs?.length || 0})`}
+            </HelperTip>
+          )}
           {...a11yProps(0)}
+          data-test="fileTabConfigs"
         />
         <Tab
-          label={`Outputs  (${outputs?.length || 0})`}
-          data-test="fileTabOutputs"
+          label={(
+            <HelperTip
+              title="The annotated output files. You can add an output file by entering
+                'dojo annotate <filename>' into the terminal"
+            >
+              {`Outputs  (${outputs?.length || 0})`}
+            </HelperTip>
+           )}
           {...a11yProps(1)}
+          data-test="fileTabOutputs"
         />
         <Tab
-          label={`Accessories  (${accessories?.length || 0})`}
-          data-test="fileTabAccessories"
+          label={(
+            <HelperTip
+              title="Tagged output accessory files, such as images or videos. You can add
+                an accessory file by entering 'dojo tag <filename>' into the terminal"
+            >
+              {`Accessories  (${accessories?.length || 0})`}
+            </HelperTip>
+          )}
           {...a11yProps(2)}
+          data-test="fileTabAccessories"
         />
       </Tabs>
       <div style={{ overflowY: 'scroll' }}>
