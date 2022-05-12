@@ -75,7 +75,8 @@ const DirectiveBox = ({
           onClick={() => handleClick(directive)}
           disabled={disableClick}
         >
-          <EditIcon style={{ color: summaryPage ? theme.palette.text.secondary : '#fff' }} />
+          {/* inherit pencil color on the summary page to toggle between enabled/disabled */}
+          <EditIcon style={{ color: summaryPage ? 'inherit' : '#fff' }} />
         </IconButton>
       )}
     </Card>

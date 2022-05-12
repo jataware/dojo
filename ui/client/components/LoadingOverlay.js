@@ -10,11 +10,12 @@ const useStyles = makeStyles((theme) => ({
     left: 0,
     height: '100%',
     position: 'absolute',
-    top: 0,
+    // leave space for the navbar so it is still clickable
+    top: '48px',
     width: '100%',
     display: 'flex',
     flexDirection: 'column',
-    paddingTop: theme.spacing(30),
+    paddingTop: theme.spacing(24),
     alignItems: 'center',
   },
   text: {

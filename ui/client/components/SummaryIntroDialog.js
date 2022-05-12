@@ -371,37 +371,40 @@ const SummaryIntroDialog = ({
                 Model Name: {model.name}
               </Typography>
 
-              <TextField
-                autoFocus
-                value={confirmName}
-                onChange={handleConfirmName}
-                label="Please re-enter your model name to confirm that you want to start over"
-                className={classes.confirmInput}
-                variant="outlined"
-                error={confirmNameError}
-                helperText={confirmNameError ? 'Please enter your exact model name (case insensitive)' : ' '}
-                data-test="introDialogConfirmNameField"
-              />
-              <DialogActions>
-                <Button
-                  color="secondary"
-                  variant="contained"
-                  disableElevation
-                  onClick={() => setStep('container')}
-                >
-                  Cancel
-                </Button>
-                <Button
-                  color="primary"
-                  variant="contained"
-                  disableElevation
-                  disabled={disableConfirm}
-                  onClick={() => versionBumpModel()}
-                  data-test="introDialogConfirmNameBtn"
-                >
-                  Confirm
-                </Button>
-              </DialogActions>
+              <form>
+                <TextField
+                  autoFocus
+                  value={confirmName}
+                  onChange={handleConfirmName}
+                  label="Please re-enter your model name to confirm that you want to start over"
+                  className={classes.confirmInput}
+                  variant="outlined"
+                  error={confirmNameError}
+                  helperText={confirmNameError ? 'Please enter your exact model name (case insensitive)' : ' '}
+                  data-test="introDialogConfirmNameField"
+                />
+                <DialogActions>
+                  <Button
+                    color="secondary"
+                    variant="contained"
+                    disableElevation
+                    onClick={() => setStep('container')}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    color="primary"
+                    variant="contained"
+                    type="submit"
+                    disableElevation
+                    disabled={disableConfirm}
+                    onClick={() => versionBumpModel()}
+                    data-test="introDialogConfirmNameBtn"
+                  >
+                    Confirm
+                  </Button>
+                </DialogActions>
+              </form>
             </DialogContent>
           </>
         );
