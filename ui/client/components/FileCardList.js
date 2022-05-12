@@ -127,7 +127,11 @@ export default function FileCardList({
           className={classes.tileContainer}
         >
           {files.map((file) => (
-            <Card key={file.id || file.s3_url} className={classes.card}>
+            <Card
+              key={file.id || file.s3_url}
+              className={classes.card}
+              data-test="fileCard"
+            >
               <div className={classes.mainWrapper}>
                 <div className={classes.contentContainer}>
                   {cardContent(file)}

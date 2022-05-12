@@ -251,6 +251,7 @@ export const HorizontalLinearStepper = ({ modelFamily }) => {
         className={classes.resetButton}
         size="small"
         classes={{ outlinedSizeSmall: classes.buttonOverride }}
+        data-test="stepperResetButton"
       >
         Reset
       </Button>

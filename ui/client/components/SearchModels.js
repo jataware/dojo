@@ -119,6 +119,7 @@ const SearchModels = ({ setSearchedModels, models }) => {
         variant="outlined"
         value={searchTerm}
         onChange={handleSearchChange}
+        data-test="viewModelsSearchField"
         InputProps={{
           endAdornment: (
             <InputAdornment position="end">

@@ -4,13 +4,13 @@ import React, {
 
 import axios from 'axios';
 
+import { Link } from 'react-router-dom';
+
 import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
 import Paper from '@material-ui/core/Paper';
 
 import { lighten, makeStyles, useTheme } from '@material-ui/core/styles';
-
-import { useHistory } from 'react-router-dom';
 
 import BasicAlert from './components/BasicAlert';
 import LoadingOverlay from './components/LoadingOverlay';
@@ -18,15 +18,7 @@ import { useLocks, useNodes } from './components/SWRHooks';
 
 const useStyles = makeStyles((theme) => ({
   buttonLink: {
-    backgroundColor: 'transparent',
-    border: '2px solid black',
-    color: 'black',
-    padding: theme.spacing(1, 1, 1),
-    margin: theme.spacing(1, 1, 1),
-    cursor: 'pointer',
-    '&:hover': {
-      background: '#f8f8ff',
-    }
+    margin: [[theme.spacing(1), 0]],
   },
   buttonWrapper: {
     paddingTop: theme.spacing(1),
@@ -45,7 +37,6 @@ const useStyles = makeStyles((theme) => ({
 const Admin = () => {
   const classes = useStyles();
   const theme = useTheme();
-  const history = useHistory();
   const [nodeInfo, setNodeInfo] = useState([]);
   const [shutDownFailed, setShutDownFailed] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
@@ -150,6 +141,7 @@ const Admin = () => {
             {nodeInfo.map((node) => (
               <Grid item key={node.info.ID} xs={3}>
                 <Paper
+                  elevation={0}
                   className={classes.paper}
                   style={{
                     backgroundColor: (node.status === 'up')
@@ -180,10 +172,13 @@ const Admin = () => {
                   </div>
                   <div>
                     <Button
+                      component={Link}
                       className={classes.buttonLink}
-                      variant="contained"
-                      color="primary"
-                      onClick={() => { history.push(`/summary/${node.lock?.modelId}`); }}
+                      variant="outlined"
+                      to={`/summary/${node.lock?.modelId}`}
+                      data-test="adminSummaryLink"
+                      disabled={!node.lock?.modelId}
+                      disableElevation
                     >
                       Link to Model Summary
                     </Button>
@@ -198,12 +193,14 @@ const Admin = () => {
                   </div>
                   <div className={classes.buttonWrapper}>
                     <Button
+                      component={Link}
                       variant="contained"
                       color="primary"
                       disabled={node.lock?.status?.state !== 'ready'}
                       disableElevation
                       fullWidth
-                      onClick={() => { history.push(`/term/${node.lock?.modelId}`); }}
+                      to={`/term/${node.lock?.modelId}`}
+                      data-test="adminReconnectLink"
                     >
                       Reconnect
                     </Button>
@@ -216,6 +213,7 @@ const Admin = () => {
                       disableElevation
                       fullWidth
                       onClick={() => destroyLock(node.lock?.modelId)}
+                      data-test="adminShutDownBtn"
                     >
                       Shut Down
                     </Button>

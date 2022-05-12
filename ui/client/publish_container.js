@@ -294,7 +294,7 @@ const PublishContainer = ({ modelId, setUploading, mutateModel }) => {
             >
               {enableFinished ? <CloseIcon /> : <RemoveIcon />}
             </IconButton>
-            <Typography variant="subtitle1" gutterBottom>
+            <Typography variant="subtitle1" gutterBottom data-test="summaryUploadDialog">
               {enableFinished
                 ? 'Upload Complete.' : 'Uploading Model to Docker Hub'}
             </Typography>

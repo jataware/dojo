@@ -242,6 +242,7 @@ const SummaryContents = ({
               to={relaunch ? `/provision/${model?.id}?relaunch=true` : `/term/${model?.id}`}
               size="small"
               startIcon={<ArrowBackIcon />}
+              data-test="backToTerminalBtn"
             >
               Back to Terminal
             </Button>
@@ -363,6 +364,7 @@ const SummaryContents = ({
                   style={{ margin: '10px' }}
                   onClick={handlePublishClick}
                   disabled={!model.image || uploading}
+                  data-test="summaryPublishButton"
                 >
                   Publish
                 </Fab>

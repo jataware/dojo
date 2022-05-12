@@ -202,6 +202,7 @@ const SummaryIntroDialog = ({
                     setStep('container');
                   }}
                   endIcon={<ArrowForwardIcon />}
+                  data-test="introDialogFirstStepBtn"
                 >
                   Create new version
                 </Button>
@@ -253,6 +254,7 @@ const SummaryIntroDialog = ({
                     setStep('container');
                   }}
                   endIcon={<ArrowForwardIcon />}
+                  data-test="introDialogFirstStepBtn"
                 >
                   Edit model
                 </Button>
@@ -302,6 +304,7 @@ const SummaryIntroDialog = ({
                       variant="contained"
                       disableElevation
                       className={classes.bigButton}
+                      data-test="introDialogStartOverBtn"
                       onClick={() => {
                         if (model?.image) {
                           setStep('confirm');
@@ -377,6 +380,7 @@ const SummaryIntroDialog = ({
                 variant="outlined"
                 error={confirmNameError}
                 helperText={confirmNameError ? 'Please enter your exact model name (case insensitive)' : ' '}
+                data-test="introDialogConfirmNameField"
               />
               <DialogActions>
                 <Button
@@ -393,6 +397,7 @@ const SummaryIntroDialog = ({
                   disableElevation
                   disabled={disableConfirm}
                   onClick={() => versionBumpModel()}
+                  data-test="introDialogConfirmNameBtn"
                 >
                   Confirm
                 </Button>

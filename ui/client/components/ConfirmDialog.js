@@ -62,6 +62,7 @@ const ConfirmDialog = ({
             onClick={() => handleClose(null, 'buttonClick', true)}
             color="primary"
             disabled={isClosing}
+            data-test="confirmDialogYes"
           >
             Yes
           </Button>
@@ -70,6 +71,7 @@ const ConfirmDialog = ({
             autoFocus
             color="secondary"
             disabled={isClosing}
+            data-test="confirmDialogNo"
           >
             No
           </Button>

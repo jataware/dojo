@@ -1,5 +1,7 @@
 import React, { useEffect } from 'react';
 
+import { Link } from 'react-router-dom';
+
 import Button from '@material-ui/core/Button';
 import Card from '@material-ui/core/Card';
 import CardActions from '@material-ui/core/CardActions';
@@ -10,8 +12,6 @@ import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 
 import { makeStyles } from '@material-ui/core/styles';
-
-import { useHistory } from 'react-router-dom';
 
 const useStyles = makeStyles((theme) => ({
   paper: {
@@ -44,19 +44,10 @@ const useStyles = makeStyles((theme) => ({
 
 const LandingPage = () => {
   const classes = useStyles();
-  const history = useHistory();
 
   useEffect(() => {
     document.title = 'Home - Dojo';
   }, []);
-
-  const registerModel = () => {
-    history.push('/model');
-  };
-
-  const viewModels = () => {
-    history.push('/models');
-  };
 
   // const dataUrl = process.env.ANNOTATE_UI_URL ? process.env.ANNOTATE_UI_URL : 'https://data.wm.dojo-modeling.com/';
   const dataUrl = 'https://data.wm.dojo-modeling.com/';
@@ -93,9 +84,10 @@ const LandingPage = () => {
               </CardContent>
               <CardActions>
                 <Button
+                  component={Link}
                   color="primary"
-                  data-test="modelFormGoBtn"
-                  onClick={registerModel}
+                  data-test="landingPageModelForm"
+                  to="/model"
                   size="small"
                   variant="contained"
                 >
@@ -141,10 +133,12 @@ const LandingPage = () => {
               </CardContent>
               <CardActions>
                 <Button
+                  component={Link}
                   size="small"
                   variant="contained"
                   color="primary"
-                  onClick={viewModels}
+                  to="/models"
+                  data-test="landingPageViewModels"
                 >
                   Go!
                 </Button>
@@ -164,10 +158,11 @@ const LandingPage = () => {
               </CardContent>
               <CardActions>
                 <Button
+                  component={Link}
                   size="small"
                   variant="contained"
                   color="primary"
-                  href="/datasets"
+                  to="/datasets"
                 >
                   Go!
                 </Button>

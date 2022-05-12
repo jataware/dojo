@@ -203,7 +203,7 @@ const CenteredGrid = ({ model }) => {
         </Fab>
 
         <Fab
-          data-test="terminalEndSessionBtn"
+          data-test="terminalSaveButton"
           variant="extended"
           color="primary"
           onClick={() => history.push(`/summary/${model.id}?terminal=true`, { upload: true })}

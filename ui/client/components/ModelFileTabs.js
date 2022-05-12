@@ -78,9 +78,21 @@ const ModelFileTabs = ({
         indicatorColor="primary"
         classes={{ indicator: classes.indicator }}
       >
-        <Tab label={`Configs  (${configs?.length || 0})`} {...a11yProps(0)} />
-        <Tab label={`Outputs  (${outputs?.length || 0})`} {...a11yProps(1)} />
-        <Tab label={`Accessories  (${accessories?.length || 0})`} {...a11yProps(2)} />
+        <Tab
+          label={`Configs  (${configs?.length || 0})`}
+          data-test="fileTabConfigs"
+          {...a11yProps(0)}
+        />
+        <Tab
+          label={`Outputs  (${outputs?.length || 0})`}
+          data-test="fileTabOutputs"
+          {...a11yProps(1)}
+        />
+        <Tab
+          label={`Accessories  (${accessories?.length || 0})`}
+          data-test="fileTabAccessories"
+          {...a11yProps(2)}
+        />
       </Tabs>
       <div style={{ overflowY: 'scroll' }}>
         <TabPanel value={tabValue} index={0}>

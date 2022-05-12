@@ -181,6 +181,7 @@ function ViewModels() {
         <Button
           onClick={() => viewModelClick(params.row.id)}
           variant="outlined"
+          data-test="modelSummaryLink"
         >
           View Model
         </Button>

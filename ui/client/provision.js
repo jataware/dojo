@@ -316,6 +316,7 @@ const Provision = () => {
                 we aren't fetching base images */}
               {baseImageList.length || relaunch ? (
                 <Autocomplete
+                  data-test="selectImage"
                   options={baseImageList}
                   value={autocompleteValue}
                   /* if we failed to get a value for relaunch, don't disable */

@@ -132,6 +132,7 @@ export const ModelDetailFields = ({
                   {...params}
                   variant="outlined"
                   label="Model Domain(s)"
+                  data-test="modelFormDomain"
                 />
               )}
             />
