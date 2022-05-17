@@ -14,8 +14,15 @@ import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 
 const useStyles = makeStyles((theme) => ({
+  container: {
+    flex: 1,
+    display: 'flex',
+    alignItems: 'center',
+    [theme.breakpoints.up('xl')]: {
+      paddingBottom: '10%'
+    }
+  },
   paper: {
-    marginTop: theme.spacing(25),
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
@@ -53,7 +60,11 @@ const LandingPage = () => {
   const dataUrl = 'https://data.wm.dojo-modeling.com/';
 
   return (
-    <Container component="main" maxWidth="md">
+    <Container
+      component="main"
+      maxWidth="md"
+      className={classes.container}
+    >
       <CssBaseline />
       <div className={classes.paper}>
         <img src="./assets/Dojo_Logo_profile.png" alt="Dojo Icon" width="80" height="100" />
@@ -68,11 +79,10 @@ const LandingPage = () => {
           justify="center"
           alignItems="center"
           className={classes.model_data}
-          spacing={5}
+          spacing={4}
         >
 
-          <Grid item xs={6}>
-
+          <Grid item xs={12} sm={6}>
             <Card className={classes.maincard}>
               <CardContent>
                 <Typography variant="h5" component="h2">
@@ -95,9 +105,9 @@ const LandingPage = () => {
                 </Button>
               </CardActions>
             </Card>
-
           </Grid>
-          <Grid item xs={6}>
+
+          <Grid item xs={12} sm={6}>
             <Card className={classes.maincard}>
               <CardContent>
                 <Typography variant="h5" component="h2">
@@ -118,10 +128,9 @@ const LandingPage = () => {
                 </Button>
               </CardActions>
             </Card>
-
           </Grid>
 
-          <Grid item xs={6}>
+          <Grid item xs={12} sm={6}>
             <Card className={classes.maincard}>
               <CardContent>
                 <Typography variant="h5" component="h2">
@@ -144,9 +153,9 @@ const LandingPage = () => {
                 </Button>
               </CardActions>
             </Card>
-
           </Grid>
-          <Grid item xs={6}>
+
+          <Grid item xs={12} sm={6}>
             <Card className={classes.maincard}>
               <CardContent>
                 <Typography variant="h5" component="h2">
@@ -168,8 +177,32 @@ const LandingPage = () => {
                 </Button>
               </CardActions>
             </Card>
-
           </Grid>
+
+          <Grid item xs={12} sm={6}>
+            <Card className={classes.maincard}>
+              <CardContent>
+                <Typography variant="h5" component="h2">
+                  View Model Runs
+                </Typography>
+                <Typography className={classes.pos} color="textSecondary">
+                  Examine previously run model history.
+                </Typography>
+              </CardContent>
+              <CardActions>
+                <Button
+                  size="small"
+                  variant="contained"
+                  color="primary"
+                  component={Link}
+                  to="/runs"
+                >
+                  Go
+                </Button>
+              </CardActions>
+            </Card>
+          </Grid>
+
         </Grid>
       </div>
     </Container>

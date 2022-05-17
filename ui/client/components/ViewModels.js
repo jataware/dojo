@@ -13,7 +13,7 @@ import { useHistory } from 'react-router-dom';
 
 import ExpandableDataGridCell from './ExpandableDataGridCell';
 import LoadingOverlay from './LoadingOverlay';
-import SearchModels from './SearchModels';
+import Search from './SearchItems';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -76,6 +76,23 @@ const getModels = async (setModels, setModelsError, setModelsLoading, scrollId) 
       setModelsError(true);
     });
 };
+
+const filterKeys = [
+  'category',
+  'commit_message',
+  'description',
+  'domains',
+  'family_name',
+  'geography.country',
+  'geography.admin1',
+  'geography.admin2',
+  'geography.admin3',
+  'id',
+  'maintainer.name',
+  'maintainer.email',
+  'maintainer.organization',
+  'name',
+];
 
 function ViewModels() {
   const history = useHistory();
@@ -205,7 +222,12 @@ function ViewModels() {
         All Models
       </Typography>
       <div className={classes.gridContainer}>
-        <SearchModels setSearchedModels={setSearchedModels} models={models} />
+        <Search
+          name="Model"
+          searchKeys={filterKeys}
+          setSearch={setSearchedModels}
+          items={models}
+        />
         <DataGrid
           autoHeight
           columns={columns}

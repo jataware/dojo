@@ -116,6 +116,21 @@ export function useRunLogs(runId) {
   };
 }
 
+export function useRun(runId) {
+  const {
+    data, error, mutate
+  } = useSWR(
+    runId ? `/api/dojo/runs/${runId}` : null, fetcher
+  );
+
+  return {
+    run: data,
+    runLoading: !data && !error,
+    runError: error,
+    mutateRun: mutate
+  };
+}
+
 export function useLocks() {
   const { data, error, mutate } = useSWR('/api/clouseau/docker/locks', fetcher);
 

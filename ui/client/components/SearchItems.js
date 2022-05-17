@@ -22,25 +22,9 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-// the list of model attributes we want to search on
-const fuseKeys = [
-  'category',
-  'commit_message',
-  'description',
-  'domains',
-  'family_name',
-  'geography.country',
-  'geography.admin1',
-  'geography.admin2',
-  'geography.admin3',
-  'id',
-  'maintainer.name',
-  'maintainer.email',
-  'maintainer.organization',
-  'name',
-];
-
-const SearchModels = ({ setSearchedModels, models }) => {
+const Search = ({
+  setSearch, items, searchKeys, name
+}) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [alertVisible, setAlertVisible] = useState(false);
   const [alert, setAlert] = useState({
@@ -55,22 +39,22 @@ const SearchModels = ({ setSearchedModels, models }) => {
     const handleSearch = () => {
       // define our fuse options
       const options = {
-        keys: fuseKeys,
+        keys: searchKeys,
         // basically just exact string matching
         threshold: 0.1,
         // search anywhere in the strings
         ignoreLocation: true,
       };
 
-      const fuse = new Fuse(models, options);
+      const fuse = new Fuse(items, options);
 
       const results = fuse.search(searchTerm);
 
-      // we don't need all the fuse stuff, so just parse out the models
+      // we don't need all the fuse stuff, so just parse out the items
       const parsedResults = results.map((model) => model.item);
 
-      // and pass them back to ViewModels
-      setSearchedModels(parsedResults);
+      // and pass them back to caller
+      setSearch(parsedResults);
       // unless we get nothing back, then show the alert
       if (parsedResults.length === 0) {
         setAlert({
@@ -93,13 +77,12 @@ const SearchModels = ({ setSearchedModels, models }) => {
 
     // cancel the timeout if we get back here before it has executed
     return () => clearTimeout(debounceSearch);
-  }, [searchTerm, models, setSearchedModels]);
+  }, [searchTerm, items, setSearch, searchKeys]);
 
   const clearSearch = () => {
     setSearchTerm('');
-    // if ViewModels gets null it will show the entire list, otherwise it'll show no rows
-    // this way we can tell it whether to show searched models or the default returned ones
-    setSearchedModels(null);
+    // Displays entire item list when set to null
+    setSearch(null);
   };
 
   const handleSearchChange = (event) => {
@@ -115,10 +98,11 @@ const SearchModels = ({ setSearchedModels, models }) => {
     <div className={classes.searchWrapper}>
       <TextField
         className={classes.searchInput}
-        label="Filter Models"
+        label={`Filter ${name}s`}
         variant="outlined"
         value={searchTerm}
         onChange={handleSearchChange}
+        role="searchbox"
         data-test="viewModelsSearchField"
         InputProps={{
           endAdornment: (
@@ -137,4 +121,4 @@ const SearchModels = ({ setSearchedModels, models }) => {
   );
 };
 
-export default SearchModels;
+export default Search;

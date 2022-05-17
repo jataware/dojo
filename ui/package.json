@@ -6,7 +6,8 @@
     "lint": "eslint --fix --ext .js,.jsx client",
     "build-dev": "webpack --progress --config webpack.config.js --mode development",
     "build": "webpack --progress --config webpack.config.js --mode production",
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "jest --watchAll",
+    "cypress:open": "cypress open",
     "dev-client": "webpack serve --config ./webpack.config.js --mode development --content-base client --hot",
     "prod-client": "webpack serve --config ./webpack.config.js --mode production --content-base client --hot",
     "dev": "concurrently npm:dev-*",
@@ -15,12 +16,17 @@
   },
   "author": "Scott Haleen",
   "license": "ISC",
+  "engines": {
+    "node": ">=12.22.12"
+  },
   "devDependencies": {
     "@babel/core": "^7.13.8",
     "@babel/eslint-parser": "^7.15",
     "@babel/node": "^7.13.0",
     "@babel/preset-env": "^7.13.9",
     "@babel/preset-react": "^7.12.13",
+    "@testing-library/cypress": "^8.0.2",
+    "babel-jest": "^28.0.3",
     "babel-loader": "^8.2.2",
     "clean-webpack-plugin": "^3.0.0",
     "concurrently": "^6.0.0",
@@ -41,6 +47,8 @@
     "file-loader": "^6.2.0",
     "html-loader": "^2.1.1",
     "html-webpack-plugin": "^5.2.0",
+    "jest": "^28.0.3",
+    "jest-cli": "^28.0.3",
     "nodemon": "^2.0.7",
     "nodemon-webpack-plugin": "^4.4.4",
     "react-hot-loader": "^4.13.0",
@@ -61,6 +69,7 @@
     "axios": "^0.22.0",
     "babel-polyfill": "^6.26.0",
     "date-fns": "^2.23.0",
+    "date-fns-tz": "^1.3.4",
     "file-saver": "^2.0.5",
     "formik": "^2.2.6",
     "fuse.js": "^6.4.6",
@@ -82,5 +91,10 @@
     "xterm-addon-fit": "^0.5.0",
     "xterm-addon-web-links": "^0.5.0",
     "yup": "^0.32.9"
+  },
+  "jest": {
+    "setupFilesAfterEnv": [
+      "<rootDir>setupTests.js"
+    ]
   }
 }

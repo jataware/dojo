@@ -10,7 +10,7 @@ import {
   Switch,
 } from 'react-router-dom';
 
-import { ThemeProvider, createMuiTheme } from '@material-ui/core/styles';
+import { ThemeProvider, createTheme } from '@material-ui/core/styles';
 
 import NavBar from './components/NavBar';
 import ThemeContextProvider from './components/ThemeContextProvider';
@@ -23,12 +23,14 @@ import Model from './model';
 import Provision from './provision';
 import Provisioning from './provisioning';
 import RunLogs from './runlogs';
+import RunSummary from './components/RunSummary';
 import Summary from './summary';
 import Terminal from './terminal';
 import ViewDatasets from './components/ViewDatasets';
 import ViewModels from './components/ViewModels';
+import ViewRuns from './components/ViewRuns';
 
-const theme = createMuiTheme({
+const theme = createTheme({
   palette: {
     // type: 'dark',
     primary: {
@@ -74,6 +76,8 @@ export default function Main() {
         <Route component={Summary} exact path="/summary/:modelId" />
         <Route component={DatasetSummary} exact path="/dataset_summary" />
         <Route component={Admin} exact path="/admin" />
+        <Route component={ViewRuns} exact path="/runs" />
+        <Route component={RunSummary} exact path="/runs/:runid" />
         <Route component={RunLogs} exact path="/runlogs/:runid" />
         <Route path="/*" render={() => <h2>404 Not Found</h2>} />
       </Switch>
