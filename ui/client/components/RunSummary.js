@@ -197,10 +197,11 @@ const RunSummary = ({ classes }) => {
   }
 
   const {
-    parameters, pre_gen_output_paths: outputPaths,
+    parameters, pre_gen_output_paths: preGenOutputPaths,
     data_paths: dataPaths, created_at: createdAt
   } = run;
 
+  const outputPaths = preGenOutputPaths || [];
   const creationDatetime = formatDatetime(new Date(createdAt));
   const executed = get(run, 'attributes.executed_at');
   const finishedDatetime = executed ? formatDatetime(parseDatetimeString(executed)) : '-';
