@@ -91,7 +91,20 @@ services:
     networks:
       - world-modelers
   api:
-    command: ["uvicorn", "server:api", "--host", "0.0.0.0", "--port", "80", "--reload", "--reload-dir", "src", "--log-config", "logging.yaml"]
+    command:
+      [
+        "uvicorn",
+        "server:api",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "80",
+        "--reload",
+        "--reload-dir",
+        "src",
+        "--log-config",
+        "logging.yaml"
+      ]
     volumes:
       - ./dojo/api:/api
     env_file:
@@ -178,13 +191,18 @@ services:
       - dmc-data-results:/data/results
       - dmc-data-mappers:/data/mappers
       - dmc-data-model_configs:/data/model_configs
-
+  rqworker:
+    env_file:
+      - envfile
+    networks:
+      - world-modelers
+    depends_on:
+      - redis
 
 networks:
   world-modelers:
     driver: bridge
     name: world-modelers
-
 
 volumes:
   dmc-data-results:
