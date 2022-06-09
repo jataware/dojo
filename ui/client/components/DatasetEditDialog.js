@@ -36,7 +36,7 @@ const DatasetEditDialog = ({
   const classes = useStyles();
 
   const redirectToDatasetUrl = (action) => {
-    window.location.href = `${dataUrl}/?indicator=${dataset?.id}&action=${action}`;
+    window.location.href = `${dataUrl}?indicator=${dataset?.id}&action=${action}`;
   };
 
   const handleClose = () => {
