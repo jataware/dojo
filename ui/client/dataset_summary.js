@@ -1,7 +1,10 @@
 import React, { useEffect, useState } from 'react';
 
+import axios from 'axios';
+
 import CloseIcon from '@material-ui/icons/Close';
 import Container from '@material-ui/core/Container';
+import Fab from '@material-ui/core/Fab';
 import Grid from '@material-ui/core/Grid';
 import IconButton from '@material-ui/core/IconButton';
 import Typography from '@material-ui/core/Typography';
@@ -12,6 +15,8 @@ import { makeStyles, useTheme } from '@material-ui/core/styles';
 import { useLocation } from 'react-router-dom';
 
 import BasicAlert from './components/BasicAlert';
+import ConfirmDialog from './components/ConfirmDialog';
+import DatasetEditDialog from './components/DatasetEditDialog';
 import DatasetSummaryDetails from './components/DatasetSummaryDetails';
 import DatasetSummaryOutputsTable from './components/DatasetSummaryOutputsTable';
 import LoadingOverlay from './components/LoadingOverlay';
@@ -20,6 +25,16 @@ import {
 } from './components/SWRHooks';
 
 const useStyles = makeStyles((theme) => ({
+  fabsWrapper: {
+    bottom: 0,
+    padding: theme.spacing(2),
+    position: 'fixed',
+    right: 0,
+    zIndex: 10,
+    '& > :first-child': {
+      marginRight: theme.spacing(2),
+    },
+  },
   containers: {
     padding: [[theme.spacing(1), theme.spacing(8), theme.spacing(1)]],
   },
@@ -67,8 +82,13 @@ const DatasetSummary = () => {
   const query = useQuery();
   const datasetId = query.get('dataset');
   const [deprecatedAlert, setDeprecatedAlert] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
+  const [confirmDeprecateOpen, setConfirmDeprecateOpen] = useState(false);
+  const [alertOpen, setAlertOpen] = useState(false);
+  const [alertMessage, setAlertMessage] = useState({ message: '', severity: '' });
+
   const {
-    dataset, datasetLoading, datasetError
+    dataset, datasetLoading, datasetError, mutateDataset
   } = useDataset(datasetId);
 
   const classes = useStyles();
@@ -84,6 +104,33 @@ const DatasetSummary = () => {
       setDeprecatedAlert(true);
     }
   }, [dataset]);
+
+  const handleDeprecateClick = () => {
+    setConfirmDeprecateOpen(true);
+  };
+
+  const acceptDeprecate = () => {
+    axios.put(`/api/dojo/indicators/${dataset.id}/deprecate`)
+      .then((resp) => {
+        console.info('Successfully deprecated the dataset:', resp);
+        setAlertMessage({
+          message: 'Your dataset was successfully deprecated.', severity: 'success'
+        });
+        setAlertOpen(true);
+        setConfirmDeprecateOpen(false);
+        // update dataset.deprecated to true, and tell the dataset to not re-fetch from the server
+        // as it might not have updated yet (ES is slow)
+        mutateDataset({ ...dataset, deprecated: true }, false);
+      })
+      .catch((err) => {
+        console.error('There was an error deprecating the dataset:', err);
+        setAlertMessage({
+          message: 'There was an issue deprecating your dataset.', severity: 'error'
+        });
+        setAlertOpen(true);
+        setConfirmDeprecateOpen(false);
+      });
+  };
 
   if (!datasetId) {
     return (
@@ -166,6 +213,48 @@ const DatasetSummary = () => {
             <DatasetSummaryOutputsTable dataset={dataset} />
           </Grid>
         </Grid>
+
+        <div className={classes.fabsWrapper}>
+          <Fab
+            color="secondary"
+            onClick={handleDeprecateClick}
+            disabled={dataset.deprecated}
+            variant="extended"
+          >
+            {dataset.deprecated ? 'Deprecated' : 'Deprecate Dataset'}
+          </Fab>
+          <Fab
+            color="primary"
+            onClick={() => {
+              setEditDialogOpen(true);
+            }}
+            disabled={dataset.deprecated}
+            variant="extended"
+          >
+            Edit Dataset
+          </Fab>
+        </div>
+
+        <DatasetEditDialog
+          open={editDialogOpen}
+          onClose={() => setEditDialogOpen(false)}
+          dataset={dataset}
+        />
+
+        <ConfirmDialog
+          open={confirmDeprecateOpen}
+          accept={acceptDeprecate}
+          reject={() => setConfirmDeprecateOpen(false)}
+          title="Are you sure you want to deprecate this dataset?"
+          body="You will need to create a new version if you wish to continue using this dataset."
+        />
+
+        <BasicAlert
+          alert={alertMessage}
+          visible={alertOpen}
+          setVisible={setAlertOpen}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+        />
 
         <BasicAlert
           alert={{
