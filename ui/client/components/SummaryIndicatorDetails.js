@@ -7,11 +7,26 @@ import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 
 import CollapseText from './CollapseText';
-import CountryMap from './CountryMap';
+import IndicatorCountryMap from './CountryMap';
 
 const useStyles = makeStyles((theme) => ({
+  editButton: {
+    float: 'right',
+    border: '2px solid black',
+    backgroundColor: '#808080',
+    color: 'white',
+    cursor: 'pointer',
+  },
+  buttonStyle: {
+    border: '2px solid black',
+    backgroundColor: 'white',
+    color: 'black',
+    cursor: 'pointer',
+
+  },
+
   detailsPanel: {
-    padding: theme.spacing(2),
+    padding: theme.spacing(3, 2, 3, 2),
   },
   subsection: {
     marginLeft: theme.spacing(1),
@@ -24,97 +39,93 @@ const useStyles = makeStyles((theme) => ({
   },
   tablePanel: {
     align: 'center',
-    padding: theme.spacing(2),
-  },
-  buttonWrapper: {
-    marginLeft: theme.spacing(1),
-    marginBottom: theme.spacing(2),
-  },
+    padding: theme.spacing(1, 1, 1, 1),
+  }
+
 }));
 
-function DatasetSummaryDetails({ dataset }) {
+function SummaryIndicatorDetails({ indicator }) {
   const classes = useStyles();
 
   // no need to spread the following out onto a million lines
   /* eslint-disable react/jsx-one-expression-per-line */
   return (
     <Grid container>
+
       <Grid item xs={4}>
         <div className={classes.detailsPanel}>
 
-          <Typography variant="subtitle1" className={classes.modelHeader}>
+          <Typography variant="subtitle2" className={classes.modelHeader}>
             Overview
           </Typography>
           <Typography variant="body2" className={classes.subsection}>
-            <b> Name:</b> {dataset.name}
+            <b> Name:</b> {indicator.name}
           </Typography>
-          <Typography component="div" variant="body2" className={classes.subsection}>
+          <Typography variant="body2" className={classes.subsection}>
             <div style={{ maxWidth: '300px' }}>
               <b>  Website: </b>
-              <CollapseText childrenText={dataset.maintainer?.website} collapsedSize={20} />
+              <CollapseText childrenText={indicator.maintainer?.website} collapsedSize={20} />
             </div>
           </Typography>
           <Typography variant="body2" className={classes.subsection}>
-            <b>  Family: </b> {dataset.family_name}
+            <b>  Family: </b> {indicator.family_name}
           </Typography>
 
-          <Typography component="div" variant="body2" className={classes.subsection}>
+          <Typography variant="body2" className={classes.subsection}>
             <b> Description: </b>
-            <CollapseText childrenText={dataset.description} collapsedSize={40} />
+            <CollapseText childrenText={indicator.description} collapsedSize={40} />
           </Typography>
           <Typography variant="body2" className={classes.subsection}>
-            <b> Created Date: </b> {new Date(dataset.created_at).toLocaleDateString()}
+            <b> Created Date: </b> {new Date(indicator.created_at).toLocaleDateString()}
           </Typography>
 
           <Typography variant="body2" className={classes.subsection}>
-            <b> ID: </b> {dataset.id}
+            <b> ID: </b> {indicator.id}
           </Typography>
           <br />
-          <Typography variant="body2" className={classes.buttonWrapper}>
+          <Typography variant="body2" className={classes.subsection}>
             <Button
-              variant="outlined"
-              color="primary"
-              disableElevation
-              href={`https://causemos.uncharted.software/#/dataset/${dataset.id}/datasetOverview`}
+              className={classes.buttonStyle}
+              href={`https://causemos.uncharted.software/#/dataset/${indicator.id}/datasetOverview`}
               target="_blank"
               rel="noopener"
-            >
-              View In Causemos
+            > View In Causemos
             </Button>
           </Typography>
         </div>
       </Grid>
       <Grid className={classes.detailsPanel} item xs={3}>
-        <Typography variant="subtitle1" className={classes.modelHeader}>
+        <Typography variant="subtitle2" className={classes.modelHeader}>
           Maintainer
         </Typography>
         <Typography variant="body2" className={classes.subsection}>
-          <b>  Name: </b> {dataset.maintainer?.name}
+          <b>  Name: </b> {indicator.maintainer?.name}
         </Typography>
         <Typography variant="body2" className={classes.subsection}>
-          <b>  Email: </b>  {dataset.maintainer?.email}
+          <b>  Email: </b>  {indicator.maintainer?.email}
         </Typography>
         <Typography variant="body2" className={classes.subsection}>
-          <b>  Organization: </b> {dataset.maintainer?.organization}
+          <b>  Organization: </b> {indicator.maintainer?.organization}
         </Typography>
-        <Typography variant="subtitle1" className={classes.modelHeader}>
+        <Typography variant="subtitle2" className={classes.modelHeader}>
           <b>  Categories </b>
         </Typography>
         <Typography variant="body2" className={classes.subsection}>
-          {dataset.category?.join(', ')}
+          {indicator.category?.join(', ')}
         </Typography>
 
       </Grid>
 
       <Grid className={classes.tablePanel} item xs={5}>
-        <Typography variant="subtitle1" className={classes.modelHeader}>
+        <Typography variant="subtitle2" className={classes.modelHeader}>
           Geography
         </Typography>
-        <CountryMap dataset={dataset} />
+        <IndicatorCountryMap indicator={indicator} />
       </Grid>
+
     </Grid>
 
   );
 }
 
-export default DatasetSummaryDetails;
+export default SummaryIndicatorDetails;

@@ -16,7 +16,6 @@ const useStyles = makeStyles(() => ({
 }));
 
 function AliasDialog({ column }) {
-  console.log(column);
   const classes = useStyles();
   const [open, setOpen] = useState(false);
 
