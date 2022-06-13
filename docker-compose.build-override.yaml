@@ -66,21 +66,6 @@ services:
       MIXMASTA_VERSION:
     networks:
       - world-modelers
-  app:
-    command:
-      - python3
-      - manage.py
-      - runserver
-      - 0.0.0.0:8000
-    env_file:
-      - envfile
-    networks:
-      - world-modelers
-  processor:
-    env_file:
-      - envfile
-    networks:
-      - world-modelers
   shorthand-app:
     env_file:
       - envfile

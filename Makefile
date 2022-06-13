@@ -11,13 +11,11 @@ MIXMASTA_DIR = mixmasta
 PHANTOM_DIR = phantom
 RQ_DIR = dojo/workers/rq-worker
 SHORTHAND_DIR = shorthand
-SPACETAG_DIR = spacetag
 WORKERS_DIR = workers
-COMPOSE_DIRS := $(CLOUSEAU_DIR) $(DOJO_API_DIR) $(DOJO_DMC_DIR) $(RQ_DIR) $(SHORTHAND_DIR) $(SPACETAG_DIR) $(WORKERS_DIR)
+COMPOSE_DIRS := $(CLOUSEAU_DIR) $(DOJO_API_DIR) $(DOJO_DMC_DIR) $(RQ_DIR) $(SHORTHAND_DIR) $(WORKERS_DIR)
 COMPOSE_FILES := $(CLOUSEAU_DIR)/docker-compose.yaml $(DOJO_API_DIR)/docker-compose.yaml \
 				 $(DOJO_DMC_DIR)/docker-compose.yaml $(SHORTHAND_DIR)/docker-compose.yaml \
-				 $(SPACETAG_DIR)/docker-compose.dev.yaml $(WORKERS_DIR)/docker-compose.yaml \
-				 $(RQ_DIR)/docker-compose.yaml
+				 $(WORKERS_DIR)/docker-compose.yaml $(RQ_DIR)/docker-compose.yaml
 TEMP_COMPOSE_FILES := $(foreach file,$(subst /,_,$(COMPOSE_FILES)),temp_$(file))
 
 .PHONY:update
