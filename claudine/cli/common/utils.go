@@ -1,7 +1,10 @@
 package common
 
 import (
+	"crypto/md5"
+	"encoding/hex"
 	"fmt"
+	"io"
 	"os"
 	"path/filepath"
 	"strings"
@@ -82,4 +85,23 @@ func MatchOneFile(pattern string) (string, error) {
 	}
 
 	return files[0], nil
+}
+
+func Md5(filepath string) (string, int64, error) {
+
+	file, err := os.Open(filepath)
+
+	if err != nil {
+		return "", -1, err
+	}
+	defer file.Close()
+
+	hash := md5.New()
+	l, err := io.Copy(hash, file)
+
+	if err != nil {
+		return "", -1, err
+	}
+
+	return hex.EncodeToString(hash.Sum(nil)), l, nil
 }

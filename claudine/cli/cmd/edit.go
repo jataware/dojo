@@ -3,6 +3,7 @@ package cmd
 import (
 	"dojo/common"
 	"errors"
+	"fmt"
 	"github.com/spf13/cobra"
 	"log"
 	"os"
@@ -33,8 +34,14 @@ var editCmd = &cobra.Command{
 				log.Fatal(err)
 			}
 		}
+
+		hash, bytes, err := common.Md5(file)
+		if err != nil {
+			log.Fatalf("Md5 Error %+v", err)
+		}
+
 		log.Printf("Launching editor %s\n", file)
-		common.SendCommand(common.COMMAND_EDIT, args, map[string]interface{}{"file": file})
+		common.SendCommand(common.COMMAND_EDIT, args, map[string]interface{}{"file": file, "md5": hash, "bytes": fmt.Sprintf("%d", bytes)})
 	},
 }
 

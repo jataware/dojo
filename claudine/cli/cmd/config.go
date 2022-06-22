@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"dojo/common"
+	"fmt"
 	"github.com/spf13/cobra"
 	"log"
 )
@@ -16,8 +17,14 @@ var configCmd = &cobra.Command{
 		if err != nil {
 			log.Fatal(err)
 		}
+
+		hash, bytes, err := common.Md5(file)
+		if err != nil {
+			log.Fatalf("Md5 Error %+v", err)
+		}
+
 		log.Printf("Opening config for %s\n", file)
-		common.SendCommand(common.COMMAND_CONFIG, args, map[string]interface{}{"file": file})
+		common.SendCommand(common.COMMAND_CONFIG, args, map[string]interface{}{"file": file, "md5": hash, "bytes": fmt.Sprintf("%d", bytes)})
 	},
 }
 

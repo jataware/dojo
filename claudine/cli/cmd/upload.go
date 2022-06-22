@@ -17,7 +17,7 @@ var uploadCmd = &cobra.Command{
 		if err != nil {
 			log.Fatalf("Error %+v", err)
 		}
-		common.SendCommand(common.COMMAND_UPLOAD, []string{}, map[string]interface{}{"cwd": cwd, "error":err})
+		common.SendCommand(common.COMMAND_UPLOAD, []string{}, map[string]interface{}{"cwd": cwd, "error": err})
 	},
 }
 
