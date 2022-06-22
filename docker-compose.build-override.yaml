@@ -92,6 +92,7 @@ services:
       ]
     volumes:
       - ./dojo/api:/api
+      - dataset-storage:/datasets
     env_file:
       - envfile
     environment:
@@ -183,6 +184,8 @@ services:
       - world-modelers
     depends_on:
       - redis
+    volumes:
+      - dataset-storage:/datasets
 
 networks:
   world-modelers:
@@ -193,3 +196,4 @@ volumes:
   dmc-data-results:
   dmc-data-mappers:
   dmc-data-model_configs:
+  dataset-storage:
