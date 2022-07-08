@@ -54,7 +54,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 function DatasetSummaryOutputsTable({ dataset }) {
-  const columns = [...dataset?.outputs, ...dataset?.qualifier_outputs
+  const columns = [...dataset?.outputs, ...(dataset?.qualifier_outputs || [])
     .filter((qual) => !['admin1', 'admin2', 'admin3', 'country', 'lat', 'lng'].includes(qual.name))];
 
   const classes = useStyles();
