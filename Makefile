@@ -55,8 +55,10 @@ clean:
 	docker-compose run app rm -r ./data/*/ && \
 	echo "Done"
 
+clouseau/.dockerenv:
+	touch clouseau/.dockerenv
 
-docker-compose.yaml:$(COMPOSE_FILES) docker-compose.build-override.yaml envfile
+docker-compose.yaml:$(COMPOSE_FILES) docker-compose.build-override.yaml clouseau/.dockerenv envfile
 	export $$(cat envfile | xargs); \
 	export AWS_SECRET_ACCESS_KEY_ENCODED=$$(echo -n $${AWS_SECRET_ACCESS_KEY} | \
 		curl -Gso /dev/null -w %{url_effective} --data-urlencode @- "" | cut -c 3-); \
