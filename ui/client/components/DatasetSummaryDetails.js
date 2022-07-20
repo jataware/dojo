@@ -8,6 +8,7 @@ import { makeStyles } from '@material-ui/core/styles';
 
 import CollapseText from './CollapseText';
 import CountryMap from './CountryMap';
+import DatasetDownload from './DatasetDownload';
 
 const useStyles = makeStyles((theme) => ({
   detailsPanel: {
@@ -74,7 +75,6 @@ function DatasetSummaryDetails({ dataset }) {
             <Button
               variant="outlined"
               color="primary"
-              disableElevation
               href={`https://causemos.uncharted.software/#/dataset/${dataset.id}/datasetOverview`}
               target="_blank"
               rel="noopener"
@@ -82,6 +82,9 @@ function DatasetSummaryDetails({ dataset }) {
               View In Causemos
             </Button>
           </Typography>
+
+          <DatasetDownload dataset={dataset} className={classes.buttonWrapper} />
+
         </div>
       </Grid>
       <Grid className={classes.detailsPanel} item xs={3}>

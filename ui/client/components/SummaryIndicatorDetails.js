@@ -7,6 +7,7 @@ import Typography from '@material-ui/core/Typography';
 import { makeStyles } from '@material-ui/core/styles';
 
 import CollapseText from './CollapseText';
+import DatasetDownload from './DatasetDownload';
 import IndicatorCountryMap from './CountryMap';
 
 const useStyles = makeStyles((theme) => ({
@@ -92,6 +93,11 @@ function SummaryIndicatorDetails({ indicator }) {
             > View In Causemos
             </Button>
           </Typography>
+
+          <Typography variant="body2" className={classes.subsection}>
+            <DatasetDownload paths={indicator.data_paths} />
+          </Typography>
+
         </div>
       </Grid>
       <Grid className={classes.detailsPanel} item xs={3}>
