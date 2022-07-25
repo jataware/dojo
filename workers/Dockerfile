@@ -1,5 +1,7 @@
-FROM ubuntu:21.04
+FROM ubuntu:focal
 
+ENV TZ=Etc/UTC
+RUN ln -snf /usr/share/zoneinfo/$TZ /etc/localtime && echo $TZ > /etc/timezone
 RUN apt-get update
 RUN apt-get install -y \
     apt-transport-https \
