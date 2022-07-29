@@ -61,80 +61,44 @@ dag = DAG(
 #########################
 
 def rehydrate(ti, **kwargs):
-    # get default dict
-    defaultDict = {}
     dojo_url = kwargs['dag_run'].conf.get('dojo_url')
     model_id = kwargs['dag_run'].conf.get('model_id')
     run_id = kwargs['dag_run'].conf.get('run_id')
-    saveFolder =  f"/model_configs/{run_id}/"
-    output_dir =kwargs['dag_run'].conf.get('model_output_directory')
+    save_folder =  f"/model_configs/{run_id}/"
 
-    # get the model
-    req = requests.get(f"{dojo_url}/models/{model_id}")
-    respData = json.loads(req.content)
-    params = respData["parameters"]
-    print(f'params: {params}')
+    for config_file in kwargs['dag_run'].conf.get('config_files'):
 
-    print(f'kwargs: {kwargs}')
+        # NOTE: Identical function to Dojo API
+        def apply_params(string, args, parameters):
+            # Assuming no overlap
+            for p in sorted(parameters, key = lambda x: x['start'], reverse=True):
+                name = p["annotation"]["name"]
+                value = args[name] if name in args else p["annotation"]["default_value"]
+                string = string[:p["start"]] + value + string[p["end"]:]
+            return string
 
-    #build "type" dict:
-    type_dict = {}
-    for param in params:
-        
-        type_dict[param["name"]] = param["type"]
+        data_to_save = apply_params(
+            config_file.get("file_content"), # Original Config Text
+            kwargs['dag_run'].conf.get('params'), # User Parameters
+            config_file.get('parameters') # Available Parameters
+        )
 
-    print(f'type_dict: {type_dict}')  
-        
-    try:
+        # Hydrate the config
+        if os.path.exists(save_folder):
+            print('here')
+            pass
 
-        for configFile in kwargs['dag_run'].conf.get('s3_config_files'):
+        else:
+            os.mkdir(save_folder, mode=0o777)
 
-            fileName = configFile.get('fileName')
-            model_config_s3 = configFile.get('s3_url')
-            mountPath = configFile.get('path')
+        os.chmod(save_folder, mode=0o777)
 
-            respTemplate = requests.get(model_config_s3)
-            dehydrated_config = respTemplate.content.decode('utf-8')
-            for p in params:
-                defaultDict[p['name']] = p['default']
-
-            # parameters the user sent in
-            hydrateData = kwargs['dag_run'].conf.get('params')
-
-            # need to loop over defaultDict and update with hydrateData values
-            for key in hydrateData:
-                if key in defaultDict.keys():
-                    defaultDict[key] = hydrateData[key]
-
-            finalDict = {}
-            for key in defaultDict:
-                 print(f'DEFAULT: key: {key} value: {defaultDict[key]}   type: {type(defaultDict[key])}')
-            for key in hydrateData:
-                 print(f'hydrateData: key: {key} value: {hydrateData[key]}   type: {type(hydrateData[key])}')
-            
-            # Hydrate the config
-            if os.path.exists(saveFolder):
-                print('here')
-                pass
-
-            else:
-                os.mkdir(saveFolder, mode=0o777)
-
-            os.chmod(saveFolder, mode=0o777)
-
-            # Template(dehydrated_config).stream(finalDict).dump(savePath)
-            dataToSave = Template(dehydrated_config).render(defaultDict)
-
-            print(f'dataToSave: {dataToSave}')
-            # savePath needs to be hard coded for ubuntu path with run id and model name or something.
-            saveFileName=saveFolder+fileName
-            with open(saveFileName, "w+") as fh:
-                fh.write(dataToSave)
-            os.chmod(saveFileName, mode=0o777)
-
-    except Exception as e:
-        print(e)
-    print('done')
+        print(f'data_to_save: {data_to_save}')
+        # save path needs to be hard coded for ubuntu path with run id and model name or something.
+        save_file_name=save_folder+config_file.get('file_name')
+        with open(save_file_name, "w+") as fh:
+            fh.write(data_to_save)
+        os.chmod(save_file_name, mode=0o777)
 
 
 def accessoryNodeTask(**kwargs):
