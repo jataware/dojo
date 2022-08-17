@@ -31,6 +31,7 @@ import SummaryAccessories from './SummaryAccessories';
 import SummaryIntroDialog from './SummaryIntroDialog';
 import SummaryModelDetails from './SummaryModelDetails';
 import SummaryWebSocketHandler from './SummaryWebSocketHandler';
+import ViewRuns from './ViewRuns';
 
 import { useDirective } from './SWRHooks';
 
@@ -82,6 +83,10 @@ const useStyles = makeStyles((theme) => ({
     '& > *': {
       height: '100%',
     },
+  },
+  runGridContainer: {
+    paddingRight: '20%',
+    paddingBottom: '3%',
   },
   tooltip: {
     marginBottom: theme.spacing(1),
@@ -325,6 +330,9 @@ const SummaryContents = ({
               <SummaryModelDetails model={model} />
             </div>
           </Grid>
+        </Grid>
+        <Grid className={classes.runGridContainer}>
+          <ViewRuns rowsPerPage={5} modelId={model.id} />
         </Grid>
 
         <div className={classes.publishButton}>
