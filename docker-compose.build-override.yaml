@@ -105,6 +105,9 @@ services:
       - DOCKERHUB_PWD
     networks:
       - world-modelers
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
   cato:
     command: -debug -pull-images=false
     build:
@@ -131,6 +134,15 @@ services:
       - envfile
     networks:
       - world-modelers
+    healthcheck:
+      interval: 10s
+      retries: 5
+      test:
+      - CMD
+      - curl
+      - --fail
+      - http://localhost:9200/_cluster/health
+      timeout: 10s
   redis:
     env_file:
       - envfile

@@ -115,14 +115,3 @@ pull-images:
 .PHONY:build-dev-image
 build-dev-image:
 	docker-compose exec docker /bin/bash -c "cd /build && ./build-dev-image"
-
-
-.PHONY:create-es-indexes
-create-es-indexes:
-	curl -s -X PUT http://localhost:9200/accessories > /dev/null; \
-		curl -s -X PUT http://localhost:9200/configs > /dev/null; \
-		curl -s -X PUT http://localhost:9200/directives > /dev/null; \
-		curl -s -X PUT http://localhost:9200/indicators > /dev/null; \
-		curl -s -X PUT http://localhost:9200/models > /dev/null; \
-		curl -s -X PUT http://localhost:9200/outputfiles > /dev/null; \
-		curl -s -X PUT http://localhost:9200/runs > /dev/null;
