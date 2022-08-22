@@ -9,6 +9,7 @@ import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 import { DataGrid } from '@material-ui/data-grid';
 
+import ExpandableDataGridCell from './ExpandableDataGridCell';
 import LoadingOverlay from './LoadingOverlay';
 import Search from './SearchItems';
 import { formatDatetime, parseDatetimeString } from '../utils';
@@ -40,6 +41,25 @@ const columns = [
     headerName: 'Model ID',
     minWidth: 180,
     flex: 3,
+  },
+  {
+    field: 'parameters',
+    headerName: 'Parameters',
+    minWidth: 180,
+    flex: 1,
+    renderCell: ({ value, colDef }) => {
+      const lines = value.map(
+        ({ name, value: userVal }) => `${name}: ${userVal}\n`
+      );
+      const paramsTextBody = lines.reduce((prev, curr) => prev + curr);
+      return (
+        <ExpandableDataGridCell
+          value={paramsTextBody}
+          width={colDef.computedWidth * 2}
+          whiteSpace="break-spaces"
+        />
+      );
+    }
   },
   {
     field: 'model_name',
@@ -171,7 +191,7 @@ const ViewRuns = ({
 
   const columnsToUse = modelId
     ? columns.filter((entry) => !['model_id', 'model_name'].includes(entry.field))
-    : columns;
+    : columns.filter((entry) => !['parameters'].includes(entry.field));
 
   const runResults = (
     <div className={classes.gridContainer}>
