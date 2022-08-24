@@ -21,10 +21,10 @@ import DirectiveBox from './DirectiveBox';
 import EndSessionDialog from './EndSessionDialog';
 import FileList from './FileList';
 import FullScreenDialog from './FullScreenDialog';
+import FullScreenTemplater from './templater/FullScreenTemplater';
 import LoadingOverlay from './LoadingOverlay';
 import { ModelSummaryEditor } from './ModelSummaryEditor';
 import PublishContainer from '../publish_container';
-import ShorthandEditor from './ShorthandEditor';
 import SimpleEditor from './SimpleEditor';
 import SummaryAccessories from './SummaryAccessories';
 import SummaryIntroDialog from './SummaryIntroDialog';
@@ -131,10 +131,9 @@ const SummaryContents = ({
     text: '', file: ''
   }));
 
-  const [openShorthand, setOpenShorthand] = useState(false);
-  const [isShorthandSaving, setIsShorthandSaving] = useState(false);
-  const [shorthandContents, setShorthandContents] = useState({});
-  const [shorthandMode, setShorthandMode] = useState();
+  const [templaterOpen, setTemplaterOpen] = useState(false);
+  const [templaterContents, setTemplaterContents] = useState({});
+  const [templaterMode, setTemplaterMode] = useState({});
 
   const [spacetagOpen, setSpacetagOpen] = useState(false);
   const [spacetagFile, setSpacetagFile] = useState();
@@ -180,12 +179,6 @@ const SummaryContents = ({
     setEndSessionDialog(true);
   };
 
-  const shorthandDialogOnSave = () => {
-    // trigger ShorthandEditor to tell the shorthand app to save
-    setIsShorthandSaving(true);
-    return false; // don't close FullScreenDialog
-  };
-
   const saveEditor = async () => {
     await fetch(`/api/clouseau/container/${model.id}/ops/save?path=${editor.file}`, {
       method: 'POST',
@@ -196,13 +189,14 @@ const SummaryContents = ({
   };
 
   const handleRunCommandClick = () => {
-    setShorthandContents({
-      editor_content: directive?.command_raw,
-      content_id: directive?.command_raw,
+    setTemplaterContents({
+      editor_content: directive?.command,
+      content_id: directive?.command,
       cwd: directive?.cwd,
+      parameters: directive?.parameters,
     });
-    setShorthandMode('directive');
-    setOpenShorthand(true);
+    setTemplaterMode('directive');
+    setTemplaterOpen(true);
   };
 
   // this gets passed down to the EndSessionDialog after a successful publish
@@ -291,9 +285,9 @@ const SummaryContents = ({
                 fileType="config"
                 model={model}
                 disabledMode={disabledMode}
-                setShorthandMode={setShorthandMode}
-                setShorthandContents={setShorthandContents}
-                setOpenShorthand={setOpenShorthand}
+                setTemplaterMode={setTemplaterMode}
+                setTemplaterContents={setTemplaterContents}
+                setTemplaterOpen={setTemplaterOpen}
               />
             </Grid>
             <Grid item xs={12} lg={6}>
@@ -392,20 +386,15 @@ const SummaryContents = ({
         <SimpleEditor editorContents={editor} setEditorContents={setEditor} />
       </FullScreenDialog>
 
-      <FullScreenDialog
-        open={openShorthand}
-        setOpen={setOpenShorthand}
-        onSave={shorthandDialogOnSave}
-      >
-        <ShorthandEditor
-          modelInfo={{ id: model.id }}
-          isSaving={isShorthandSaving}
-          setIsSaving={setIsShorthandSaving}
-          mode={shorthandMode}
-          shorthandContents={shorthandContents}
-          setIsShorthandOpen={setOpenShorthand}
+      {templaterOpen && (
+        <FullScreenTemplater
+          modelId={model.id}
+          content={templaterContents}
+          open={templaterOpen}
+          mode={templaterMode}
+          setOpen={setTemplaterOpen}
         />
-      </FullScreenDialog>
+      )}
 
       <FullScreenDialog
         open={spacetagOpen}

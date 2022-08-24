@@ -119,7 +119,7 @@ const EndSessionDialog = ({
         >
           <NavigateNextIcon className={classes.nextIcon} />
           {' '}
-          <span>{ directive ? directive.command_raw : 'No directive entered' }</span>
+          <span>{ directive ? directive.command : 'No directive entered' }</span>
         </DialogContentText>
         <TextField
           className={classes.textArea}

@@ -25,12 +25,17 @@ const useStyles = makeStyles((theme) => ({
 const Transition = React.forwardRef((props, ref) => <Slide direction="up" ref={ref} {...props} />);
 
 const FullScreenDialog = ({
-  open, setOpen, onSave, children, title, showSave
+  open, setOpen, onSave, children, title, showSave, noConfirm, ...props
 }) => {
   const saveVisible = showSave !== false;
   const [openConfirmCloseDialog, setOpenConfirmCloseDialog] = useState(false);
   const classes = useStyles();
   const handleClose = () => {
+    if (noConfirm) {
+      setOpen(false);
+      return;
+    }
+
     setOpenConfirmCloseDialog(true);
   };
   const handleAbandonSession = () => {
@@ -53,6 +58,7 @@ const FullScreenDialog = ({
         open={open}
         onClose={handleClose}
         TransitionComponent={Transition}
+        {...props}
       >
         <AppBar position="sticky">
           <Toolbar>

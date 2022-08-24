@@ -7,7 +7,7 @@ import { saveAs } from 'file-saver';
 
 import BasicAlert from './BasicAlert';
 import {
-  useAccessories, useLock, useShellHistory
+  useAccessories, useConfigs, useLock, useShellHistory
 } from './SWRHooks';
 
 import {
@@ -50,7 +50,7 @@ const storeAccessoryRequest = async (info) => {
 const ContainerWebSocket = ({
   modelId,
   setEditorContents, openEditor,
-  setIsShorthandOpen, setShorthandContents, setShorthandMode,
+  setTemplaterOpen, setTemplaterContents, setTemplaterMode,
   setSpacetagUrl, setIsSpacetagOpen, setSpacetagFile, setUploadFilesOpen, setUploadPath
 }) => {
   const { register, unregister } = useWebSocketUpdateContext();
@@ -58,6 +58,7 @@ const ContainerWebSocket = ({
 
   const { mutateAccessories } = useAccessories(modelId);
   const { lock } = useLock(modelId);
+  const { configs } = useConfigs(modelId);
 
   const { mutateShellHistory } = useShellHistory(modelId);
 
@@ -91,14 +92,13 @@ const ContainerWebSocket = ({
         );
         if (rsp.ok) {
           const fileContent = await rsp.text();
-          // pass them along to shorthand
-          setShorthandContents({
+          setTemplaterContents({
             editor_content: fileContent,
             content_id: fullPath,
           });
           // set the mode to config rather than directive
-          setShorthandMode('config');
-          setIsShorthandOpen(true); // open the <FullScreenDialog>
+          setTemplaterMode('config');
+          setTemplaterOpen(true); // open the <FullScreenDialog>
         }
       } else if (s.startsWith('tag ')) {
         const p = `${s.substring(4)}`;
@@ -145,21 +145,25 @@ const ContainerWebSocket = ({
           openEditor();
         }
       } else if (id === 'config') {
-        // shorthand
         // load the file's contents
         const rsp = await fetch(
           `/api/clouseau/container/${modelId}/ops/cat?path=${encodeURIComponent(meta.file)}`
         );
+
+        // fetch an existing config if one exists, so we don't write a new blank config on top
+        const existingConfig = configs?.find((config) => config.path === meta.file);
+
         if (rsp.ok) {
           const fileContent = await rsp.text();
-          // pass them along to shorthand
-          setShorthandContents({
+          setTemplaterContents({
             editor_content: fileContent,
-            content_id: meta.file,
+            content_id: existingConfig ? existingConfig.path : meta.file,
+            parameters: existingConfig?.parameters,
+            md5_hash: meta.md5,
           });
           // set the mode to config rather than directive
-          setShorthandMode('config');
-          setIsShorthandOpen(true); // open the <FullScreenDialog>
+          setTemplaterMode('config');
+          setTemplaterOpen(true); // open the <FullScreenDialog>
         }
       } else if (id === 'annotate') {
         // spacetag
@@ -223,9 +227,9 @@ const ContainerWebSocket = ({
     register,
     unregister,
     setEditorContents,
-    setIsShorthandOpen,
-    setShorthandContents,
-    setShorthandMode,
+    setTemplaterOpen,
+    setTemplaterContents,
+    setTemplaterMode,
     setSpacetagFile,
     setSpacetagUrl,
     setIsSpacetagOpen,
@@ -233,6 +237,7 @@ const ContainerWebSocket = ({
     setUploadPath,
     modelId,
     mutateAccessories,
+    configs,
   ]);
 
   return (

@@ -17,11 +17,11 @@ import ConfirmDialog from './components/ConfirmDialog';
 import ContainerWebSocket from './components/ContainerWebSocket';
 import DirectiveBox from './components/DirectiveBox';
 import FullScreenDialog from './components/FullScreenDialog';
+import FullScreenTemplater from './components/templater/FullScreenTemplater';
 import HelperTip from './components/HelperTip';
 import LoadingOverlay from './components/LoadingOverlay';
 import ModelFileTabs from './components/ModelFileTabs';
 import ShellHistory from './components/ShellHistory';
-import ShorthandEditor from './components/ShorthandEditor';
 import SimpleEditor from './components/SimpleEditor';
 import Term from './components/Term';
 import { ThemeContext } from './components/ThemeContextProvider';
@@ -77,15 +77,12 @@ const CenteredGrid = ({ model }) => {
   const [spacetagFile, setSpacetagFile] = useState('');
   const [openFileUploadDialog, setUploadFilesOpen] = useState(false);
   const [uploadPath, setUploadPath] = useState('');
-  // the following control the state of the ShorthandEditor
-  // opens the FullScreenDialog that holds the shorthand iframe
-  const [isShorthandOpen, setIsShorthandOpen] = useState(false);
-  // triggers shorthand to save on click
-  const [isShorthandSaving, setIsShorthandSaving] = useState(false);
-  // loads contents into the shorthand iframe
-  const [shorthandContents, setShorthandContents] = useState({});
+
+  // opens the FullScreenTemplater where configs and directives are annotated
+  const [templaterOpen, setTemplaterOpen] = useState(false);
+  const [templaterContents, setTemplaterContents] = useState({});
   // modes: 'directive', 'config'
-  const [shorthandMode, setShorthandMode] = useState({});
+  const [templaterMode, setTemplaterMode] = useState({});
 
   const history = useHistory();
 
@@ -98,12 +95,6 @@ const CenteredGrid = ({ model }) => {
     });
   };
 
-  const shorthandDialogOnSave = () => {
-    // trigger ShorthandEditor to tell the shorthand app to save
-    setIsShorthandSaving(true);
-    return false; // don't close FullScreenDialog
-  };
-
   const saveEditor = async () => {
     await fetch(`/api/clouseau/container/${model.id}/ops/save?path=${editorContents.file}`, {
       method: 'POST',
@@ -114,13 +105,14 @@ const CenteredGrid = ({ model }) => {
   };
 
   const handleDirectiveClick = (directive) => {
-    setShorthandContents({
-      editor_content: directive?.command_raw,
-      content_id: directive?.command_raw,
+    setTemplaterContents({
+      editor_content: directive?.command,
+      content_id: directive?.command,
       cwd: directive?.cwd,
+      parameters: directive.parameters,
     });
-    setShorthandMode('directive');
-    setIsShorthandOpen(true);
+    setTemplaterMode('directive');
+    setTemplaterOpen(true);
   };
 
   useEffect(() => {
@@ -159,19 +151,17 @@ const CenteredGrid = ({ model }) => {
           <div className={classes.rightColumnWrapper}>
             <ShellHistory
               modelId={model.id}
-              setIsShorthandOpen={setIsShorthandOpen}
-              setIsShorthandSaving={setIsShorthandSaving}
-              setShorthandContents={setShorthandContents}
-              setShorthandMode={setShorthandMode}
+              setTemplaterOpen={setTemplaterOpen}
+              setTemplaterContents={setTemplaterContents}
+              setTemplaterMode={setTemplaterMode}
             />
             <ContainerWebSocket
               modelId={model.id}
               setEditorContents={setEditorContents}
               openEditor={() => setOpenEditor(true)}
-              setIsShorthandOpen={setIsShorthandOpen}
-              setIsShorthandSaving={setIsShorthandSaving}
-              setShorthandContents={setShorthandContents}
-              setShorthandMode={setShorthandMode}
+              setTemplaterOpen={setTemplaterOpen}
+              setTemplaterContents={setTemplaterContents}
+              setTemplaterMode={setTemplaterMode}
               setIsSpacetagOpen={setIsSpacetagOpen}
               setSpacetagUrl={setSpacetagUrl}
               setSpacetagFile={setSpacetagFile}
@@ -184,9 +174,9 @@ const CenteredGrid = ({ model }) => {
 
             <ModelFileTabs
               model={model}
-              setShorthandMode={setShorthandMode}
-              setShorthandContents={setShorthandContents}
-              setOpenShorthand={setIsShorthandOpen}
+              setTemplaterMode={setTemplaterMode}
+              setTemplaterContents={setTemplaterContents}
+              setTemplaterOpen={setTemplaterOpen}
               setSpacetagOpen={setIsSpacetagOpen}
               setSpacetagFile={setSpacetagFile}
             />
@@ -224,20 +214,15 @@ const CenteredGrid = ({ model }) => {
 
       </div>
 
-      <FullScreenDialog
-        open={isShorthandOpen}
-        setOpen={setIsShorthandOpen}
-        onSave={shorthandDialogOnSave}
-      >
-        <ShorthandEditor
-          modelInfo={model}
-          isSaving={isShorthandSaving}
-          setIsSaving={setIsShorthandSaving}
-          mode={shorthandMode}
-          shorthandContents={shorthandContents}
-          setIsShorthandOpen={setIsShorthandOpen}
+      {templaterOpen && (
+        <FullScreenTemplater
+          modelId={model.id}
+          content={templaterContents}
+          open={templaterOpen}
+          mode={templaterMode}
+          setOpen={setTemplaterOpen}
         />
-      </FullScreenDialog>
+      )}
 
       <FullScreenDialog
         open={openEditor}

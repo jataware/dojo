@@ -76,9 +76,9 @@ const useStyles = makeStyles((theme) => ({
 
 const ShellHistory = ({
   modelId,
-  setIsShorthandOpen,
-  setShorthandMode,
-  setShorthandContents,
+  setTemplaterOpen,
+  setTemplaterMode,
+  setTemplaterContents,
 }) => {
   const classes = useStyles();
 
@@ -105,12 +105,10 @@ const ShellHistory = ({
   }, [shellHistory, tableRef]);
 
   const handleAnnotationClick = async (item) => {
-    // toggle <ShorthandEditor> to open in <App>, which loads the iframe
-    setIsShorthandOpen(true);
-    // set mode to directive before we load in content
-    // or we get [Object][Object] showing in the iframe before content loads
-    setShorthandMode('directive');
-    setShorthandContents({
+    // open the FullScreenTemplater
+    setTemplaterOpen(true);
+    setTemplaterMode('directive');
+    setTemplaterContents({
       editor_content: item.command,
       content_id: item.command,
       cwd: item.cwd,
@@ -124,7 +122,7 @@ const ShellHistory = ({
   const isDirective = (command) => {
     if (!directive) return false;
 
-    return command === directive.command_raw;
+    return command === directive.command;
   };
 
   const displayHistoryItems = () => {

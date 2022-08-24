@@ -26,10 +26,27 @@ export default withStyles(({ spacing }) => ({
   confirmTitle = 'Are you sure you want to discard your work?',
   onClose,
   open,
+  variant = 'persistent',
+  noConfirm = false,
+  ...props
 }) => {
   const [confirmClose, setConfirmClose] = useState(false);
 
-  const handleClose = () => {
+  const handleClose = (event) => {
+    if (noConfirm) {
+      // if we don't want a confirm dialog, don't prevent clicking outside to close
+      // and just call our onClose function right away
+      onClose(true);
+      return;
+    }
+
+    // disable clicking outside the drawer to close for variant=temporary
+    // instead relying on the close or X buttons (or noConfirm prop, as above)
+    if (event.target.className === 'MuiBackdrop-root') {
+      // MuiBackdrop-root only appears in the background for variant = temporary
+      return;
+    }
+
     setConfirmClose(true);
   };
 
@@ -41,11 +58,12 @@ export default withStyles(({ spacing }) => ({
   return (
     <>
       <Drawer
-        variant="persistent"
+        variant={variant}
         classes={{ paper: classes.root }}
         anchor={anchorPosition}
         open={open}
         onClose={handleClose}
+        {...props}
       >
         <>
           <div className={classes.drawerControls}>

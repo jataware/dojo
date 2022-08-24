@@ -22,8 +22,8 @@ const FileTile = ({ item }) => {
 };
 
 const FileList = ({
-  fileType, model, disabledMode, setShorthandMode, setShorthandContents,
-  setOpenShorthand, setSpacetagFile, setSpacetagOpen, hideExpandHeader,
+  fileType, model, disabledMode, setTemplaterMode, setTemplaterContents,
+  setTemplaterOpen, setSpacetagFile, setSpacetagOpen, hideExpandHeader,
 }) => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletionSelection, setDeletionSelection] = useState(() => ({
@@ -63,32 +63,43 @@ const FileList = ({
 
     if (resp.ok) {
       handleDeleteDialogClose();
-      // Dojo needs 1 second to update the DB before we can GET the accessories again
+
       if (deletionSelection.type === 'config') {
-        setTimeout(() => mutateConfigs(), 1000);
+        // mutate locally, filtering out the config that we just deleted
+        mutateConfigs((prev) => prev.filter((config) => (
+          config?.path !== deletionSelection?.params?.path
+        )), false);
+
+        // and then wait until elasticsearch has caught up before requesting new data from dojo
+        setTimeout(() => mutateConfigs(), 5000);
       } else if (deletionSelection.type === 'outputfile') {
-        setTimeout(() => { mutateOutputs(); }, 1000);
+        // mutate locally and then fetch from dojo once ES has caught up
+        mutateOutputs((prev) => prev.filter((output) => (
+          output?.id !== deletionSelection?.id
+        )), false);
+        setTimeout(() => mutateOutputs(), 5000);
       }
     } else {
       console.log(`There was an error deleting "${deletionSelection.description}"`);
     }
   };
 
-  const openConfigShorthand = async (item) => {
+  const openConfigParameterAnnotation = async (item) => {
     const response = await fetch(
       `/api/clouseau/container/${model.id}/ops/cat?path=${encodeURIComponent(item.path)}`
     );
 
     if (response.ok) {
       const content = await response.text();
-
-      setShorthandContents({
+      setTemplaterContents({
         editor_content: content,
         content_id: item.path,
+        parameters: item.parameters,
+        md5_hash: item.md5_hash,
       });
 
-      setShorthandMode('config');
-      setOpenShorthand(true);
+      setTemplaterMode('config');
+      setTemplaterOpen(true);
     }
   };
 
@@ -98,7 +109,7 @@ const FileList = ({
       files={configs}
       loading={configsLoading}
       error={configsError}
-      primaryClickHandler={(config) => openConfigShorthand(config)}
+      primaryClickHandler={(config) => openConfigParameterAnnotation(config)}
       primaryIcon={<EditIcon />}
       secondaryClickHandler={async (config) => {
         setDeletionSelection({
@@ -115,7 +126,6 @@ const FileList = ({
       secondaryIcon={<DeleteIcon />}
       cardContent={(config) => <FileTile item={config.path} />}
       disableClick={disabledMode}
-      parameters={model?.parameters}
     />
   );
 
@@ -145,7 +155,7 @@ const FileList = ({
           <Typography variant="caption" noWrap component="div">{output.path}</Typography>
         </>
       )}
-      parameters={model?.outputs}
+      outputs={model?.outputs}
     />
   );
 
