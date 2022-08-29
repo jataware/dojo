@@ -185,3 +185,13 @@ export function useNodes() {
     mutateNodes: mutate,
   };
 }
+
+export function useParams(modelId) {
+  const { data, error } = useSWR(`/api/dojo/dojo/parameters/${modelId}`, fetcher);
+
+  return {
+    params: data,
+    paramsLoading: !error && !data,
+    paramsError: error,
+  };
+}

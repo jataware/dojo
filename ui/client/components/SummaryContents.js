@@ -17,6 +17,7 @@ import { makeStyles, useTheme } from '@material-ui/core/styles';
 import { Link, useHistory } from 'react-router-dom';
 
 import BasicAlert from './BasicAlert';
+import CreateRunButton from './runner/CreateRunButton';
 import DirectiveBox from './DirectiveBox';
 import EndSessionDialog from './EndSessionDialog';
 import FileList from './FileList';
@@ -37,17 +38,12 @@ const useStyles = makeStyles((theme) => ({
   root: {
     padding: [[theme.spacing(10), theme.spacing(2), theme.spacing(2)]],
   },
-  header: {
-    marginBottom: theme.spacing(3),
-  },
   headerContainer: {
-    display: 'grid',
-    gridTemplateColumns: '1fr repeat(3, auto) 1fr',
-    gridColumnGap: theme.spacing(1),
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingBottom: theme.spacing(3),
-    '& > :first-child': {
-      placeSelf: 'start',
-    },
+    paddingRight: theme.spacing(2),
   },
   detailsPanel: {
     backgroundColor: theme.palette.grey[300],
@@ -244,7 +240,6 @@ const SummaryContents = ({
           {/* empty div to maintain the centering of the title because effort */}
 
           <Typography
-            className={classes.header}
             component="h3"
             variant="h4"
             align="center"
@@ -257,6 +252,11 @@ const SummaryContents = ({
                 <CheckIcon style={{ margin: '0 4px 4px 0' }} /> Published
               </Typography>
             </div>
+          )}
+          {model.is_published ? (
+            <CreateRunButton model={model} />
+          ) : (
+            <div />
           )}
         </div>
         <Grid container spacing={2} className={classes.cardGridContainer}>
