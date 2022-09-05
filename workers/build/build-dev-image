@@ -1,3 +1,0 @@
-#!/bin/bash
-
-docker build --pull -f Dockerfile.worker -t jataware/dojo-publish:Ubuntu-latest .

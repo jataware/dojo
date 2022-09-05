@@ -81,15 +81,6 @@ services:
       - envfile
     networks:
       - world-modelers
-  shorthand-app:
-    env_file:
-      - envfile
-    environment:
-      - DOJO_HOST
-      - S3_ACCESS_KEY_ID
-      - S3_SECRET_ACCESS_KEY
-    networks:
-      - world-modelers
   api:
     command: ["uvicorn", "server:api", "--host", "0.0.0.0", "--port", "80", "--reload", "--reload-dir", "src", "--log-config", "logging.yaml"]
     volumes:
@@ -171,13 +162,6 @@ services:
       - 0.0.0.0
     networks:
       - world-modelers
-  perm-fixer:
-    build:
-      context: ./perm-fixer/
-    volumes:
-      - dmc-data-results:/data/results
-      - dmc-data-mappers:/data/mappers
-      - dmc-data-model_configs:/data/model_configs
 
 
 networks:
