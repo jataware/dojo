@@ -22,11 +22,6 @@
 	branch = dev
 	update = rebase
 	ignore = all
-[submodule "shorthand"]
-	path = shorthand
-	url = git@github.com:jataware/shorthand.git
-	branch = master
-	update = rebase
 	ignore = all
 [submodule "spacetag"]
 	path = spacetag
