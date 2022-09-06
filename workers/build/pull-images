@@ -1,3 +1,0 @@
-#!/bin/bash
-
-docker pull jataware/dojo-publish:Ubuntu-latest
