@@ -84,8 +84,7 @@ up:docker-compose.yaml phantom/ui/node_modules
 
 .PHONY:up-rebuild
 up-rebuild:docker-compose.yaml phantom/ui/node_modules
-	docker-compose up --build -d; \
-        make pull-images
+	docker-compose up --build -d
 
 
 
