@@ -2,11 +2,16 @@ import React, { useEffect, useState } from 'react';
 
 import axios from 'axios';
 
+import AutorenewIcon from '@material-ui/icons/Autorenew';
 import Button from '@material-ui/core/Button';
-import CheckBoxIcon from '@material-ui/icons/CheckBox';
+import CheckOutlinedIcon from '@material-ui/icons/CheckOutlined';
+import CloudDoneOutlinedIcon from '@material-ui/icons/CloudDoneOutlined';
 import Container from '@material-ui/core/Container';
 import { DataGrid } from '@material-ui/data-grid';
+import ErrorOutlineOutlinedIcon from '@material-ui/icons/ErrorOutlineOutlined';
+import HelpIcon from '@material-ui/icons/Help';
 import Typography from '@material-ui/core/Typography';
+
 import { makeStyles } from '@material-ui/core/styles';
 
 import { useHistory } from 'react-router-dom';
@@ -21,7 +26,7 @@ const useStyles = makeStyles((theme) => ({
   },
   gridContainer: {
     height: '400px',
-    width: '1600px',
+    width: '1800px',
     margin: '0 auto',
   },
   header: {
@@ -31,8 +36,17 @@ const useStyles = makeStyles((theme) => ({
     display: 'flex',
     alignItems: 'center',
   },
-  publishedCheck: {
+  check: {
     color: theme.palette.success.light,
+    marginBottom: '4px',
+    marginLeft: '4px',
+  },
+  error: {
+    color: theme.palette.error.light,
+    marginBottom: '4px',
+    marginLeft: '4px',
+  },
+  unknownStatus: {
     marginBottom: '4px',
     marginLeft: '4px',
   },
@@ -47,34 +61,68 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const getModels = async (setModels, setModelsError, setModelsLoading, scrollId) => {
+const addStatusesToModels = (models, statuses) => models.map(
+  (model) => ({ ...model, last_run_status: statuses[model.id] })
+);
+
+const fetchStatuses = async (modelIDs) => {
+  const url = '/api/dojo/models/status';
+  const request = axios.post(url, modelIDs);
+  request.then((response) => console.log('request for /status response:', response));
+  const statuses = request.then((response) => response.data);
+  return statuses;
+};
+
+const fetchModels = async (
+  includeStatuses, setModels, setModelsLoading, setModelsError, scrollId
+) => {
   if (!scrollId) {
-    // only do this for the first call to getModels, when we don't have a scrollId
+    // only do this for the first call to fetchModels, when we don't have a scrollId
     // so we don't show the full page spinner for every subsequent set of models
     setModelsLoading(true);
   }
 
   const url = scrollId
     ? `/api/dojo/models/latest?scroll_id=${scrollId}` : '/api/dojo/models/latest';
-  axios.get(url)
-    .then((response) => {
+  const modelsRequest = axios.get(url).then(
+    (response) => {
       console.log('request for /latest response:', response);
-      setModels((prev) => {
-        setModelsLoading(false);
-        return prev.concat(response.data?.results);
-      });
+      const modelsData = response.data;
+      return modelsData;
+    }
+  );
 
-      // when there's no scroll id, we've hit the end of the results
-      if (response.data?.scroll_id) {
-        // if we get a scroll id back, there are more results
-        // so call getModels again to fetch the next set
-        getModels(setModels, setModelsError, setModelsLoading, response.data?.scroll_id);
+  let preparedModels = null;
+  if (includeStatuses) {
+    const statusesRequest = modelsRequest.then((modelsData) => fetchStatuses(
+      modelsData.results.map((model) => model.id)
+    ));
+    preparedModels = Promise.all([modelsRequest, statusesRequest]).then(
+      ([modelsData, statuses]) => {
+        const modelsWithStatuses = addStatusesToModels(modelsData.results, statuses);
+        setModels((prev) => prev.concat(modelsWithStatuses));
+        return modelsData.scroll_id;
       }
-    })
-    .catch((error) => {
-      console.log('error:', error);
-      setModelsError(true);
+    );
+  } else {
+    preparedModels = modelsRequest.then((modelsData) => {
+      setModels((prev) => prev.concat(modelsData.results));
+      return modelsData.scroll_id;
     });
+  }
+  preparedModels.then((newScrollId) => {
+    setModelsLoading(false);
+    // when there's no scroll id, we've hit the end of the results
+    if (newScrollId) {
+    // if we get a scroll id back, there are more results
+    // so call fetchModels again to fetch the next set
+      fetchModels(includeStatuses, setModels, setModelsLoading, setModelsError, newScrollId);
+    }
+  });
+  preparedModels.catch((error) => {
+    console.log('error:', error);
+    setModelsError(true);
+  });
 };
 
 const filterKeys = [
@@ -94,7 +142,9 @@ const filterKeys = [
   'name',
 ];
 
-function ViewModels() {
+const ViewModels = ({
+  includeStatuses = true
+}) => {
   const history = useHistory();
   const classes = useStyles();
   const [models, setModels] = useState([]);
@@ -104,9 +154,9 @@ function ViewModels() {
   const [searchedModels, setSearchedModels] = useState(null);
 
   useEffect(() => {
-    getModels(setModels, setModelsError, setModelsLoading);
+    fetchModels(includeStatuses, setModels, setModelsLoading, setModelsError);
     document.title = 'View Models - Dojo';
-  }, []);
+  }, [includeStatuses]);
 
   if (modelsLoading) {
     return <LoadingOverlay text="Loading models" />;
@@ -135,6 +185,20 @@ function ViewModels() {
       width={colDef.computedWidth}
     />
   );
+
+  const lastRunStatus = !includeStatuses ? {} : {
+    field: 'last_run_status',
+    headerName: 'Status',
+    width: 120,
+    renderCell: ({ value }) => (
+      <div className={classes.published}>
+        {value === 'success' ? <CheckOutlinedIcon className={classes.check} />
+          : value === 'failed' ? <ErrorOutlineOutlinedIcon className={classes.error} />
+            : value === 'running' ? <AutorenewIcon className={classes.unknownStatus} />
+              : <HelpIcon className={classes.unknownStatus} /> }
+      </div>
+    ),
+  };
 
   const columns = [
     {
@@ -178,14 +242,14 @@ function ViewModels() {
       renderCell: expandableCell,
       width: 270,
     },
+    lastRunStatus,
     {
       field: 'is_published',
-      headerName: 'Status',
-      width: 120,
+      headerName: 'Published',
+      width: 140,
       renderCell: ({ value }) => (
         <div className={classes.published}>
-          {value === true ? 'Published' : 'Unpublished'}
-          {value === true && <CheckBoxIcon className={classes.publishedCheck} />}
+          {value === true && <CloudDoneOutlinedIcon className={classes.check} />}
         </div>
       ),
     },
@@ -236,6 +300,6 @@ function ViewModels() {
       </div>
     </Container>
   );
-}
+};
 
 export default ViewModels;
