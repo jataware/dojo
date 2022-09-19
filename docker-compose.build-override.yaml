@@ -1,47 +1,47 @@
 services:
   airflow-init:
     environment:
-      DOCKER_URL: "docker.world-modelers:8375"
+      DOCKER_URL: "docker.dojo-stack:8375"
       DMC_LOCAL_DIR:
       MIXMASTA_VERSION:
     networks:
-      - world-modelers
+      - dojo-stack
     volumes:
       - dmc-data-results:/results
       - dmc-data-mappers:/mappers
       - dmc-data-model_configs:/model_configs
   airflow-redis:
     environment:
-      DOCKER_URL: "docker.world-modelers:8375"
+      DOCKER_URL: "docker.dojo-stack:8375"
       DMC_LOCAL_DIR:
       MIXMASTA_VERSION:
     networks:
-      - world-modelers
+      - dojo-stack
   airflow-postgres:
     environment:
-      DOCKER_URL: "docker.world-modelers:8375"
+      DOCKER_URL: "docker.dojo-stack:8375"
       DMC_LOCAL_DIR:
       MIXMASTA_VERSION:
     networks:
-      - world-modelers
+      - dojo-stack
   airflow-scheduler:
     environment:
-      DOCKER_URL: "docker.world-modelers:8375"
+      DOCKER_URL: "docker.dojo-stack:8375"
       DMC_LOCAL_DIR:
       MIXMASTA_VERSION:
     networks:
-      - world-modelers
+      - dojo-stack
     volumes:
       - dmc-data-results:/results
       - dmc-data-mappers:/mappers
       - dmc-data-model_configs:/model_configs
   airflow-webserver:
     environment:
-      DOCKER_URL: "docker.world-modelers:8375"
+      DOCKER_URL: "docker.dojo-stack:8375"
       DMC_LOCAL_DIR:
       MIXMASTA_VERSION:
     networks:
-      - world-modelers
+      - dojo-stack
     volumes:
       - dmc-data-results:/results
       - dmc-data-mappers:/mappers
@@ -50,37 +50,22 @@ services:
     environment:
       AIRFLOW_CONN_AWS_DEFAULT: aws://${AWS_ACCESS_KEY_ID}:${AWS_SECRET_ACCESS_KEY_ENCODED}@
       BUCKET: ${DMC_BUCKET}
-      DOCKER_URL: "docker.world-modelers:8375"
+      DOCKER_URL: "docker.dojo-stack:8375"
       DMC_LOCAL_DIR:
       MIXMASTA_VERSION:
     networks:
-      - world-modelers
+      - dojo-stack
     volumes:
       - dmc-data-results:/results
       - dmc-data-mappers:/mappers
       - dmc-data-model_configs:/model_configs
   flower:
     environment:
-      DOCKER_URL: "docker.world-modelers:8375"
+      DOCKER_URL: "docker.dojo-stack:8375"
       DMC_LOCAL_DIR:
       MIXMASTA_VERSION:
     networks:
-      - world-modelers
-  app:
-    command:
-      - python3
-      - manage.py
-      - runserver
-      - 0.0.0.0:8000
-    env_file:
-      - envfile
-    networks:
-      - world-modelers
-  processor:
-    env_file:
-      - envfile
-    networks:
-      - world-modelers
+      - dojo-stack
   api:
     command: ["uvicorn", "server:api", "--host", "0.0.0.0", "--port", "80", "--reload", "--reload-dir", "src", "--log-config", "logging.yaml"]
     volumes:
@@ -96,7 +81,7 @@ services:
       - DOCKERHUB_USER
       - DOCKERHUB_PWD
     networks:
-      - world-modelers
+      - dojo-stack
   cato:
     command: -debug -pull-images=false
     build:
@@ -110,29 +95,29 @@ services:
     environment:
       - DOCKERHUB_AUTH
     networks:
-      - world-modelers
+      - dojo-stack
     depends_on:
       - redis
   kibana:
     env_file:
       - envfile
     networks:
-      - world-modelers
+      - dojo-stack
   elasticsearch:
     env_file:
       - envfile
     networks:
-      - world-modelers
+      - dojo-stack
   redis:
     env_file:
       - envfile
     networks:
-      - world-modelers
+      - dojo-stack
   docker:
     env_file:
       - envfile
     networks:
-      - world-modelers
+      - dojo-stack
     volumes:
       - dmc-data-results:/data/results
       - dmc-data-mappers:/data/mappers
@@ -161,13 +146,13 @@ services:
       - --host
       - 0.0.0.0
     networks:
-      - world-modelers
+      - dojo-stack
 
 
 networks:
-  world-modelers:
+  dojo-stack:
     driver: bridge
-    name: world-modelers
+    name: dojo-stack
 
 
 volumes:
