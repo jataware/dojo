@@ -9,12 +9,12 @@ DOJO_API_DIR = dojo/api
 DOJO_DMC_DIR = dojo/dmc
 MIXMASTA_DIR = mixmasta
 PHANTOM_DIR = phantom
-SPACETAG_DIR = spacetag
+RQ_DIR = dojo/workers/rq-worker
 WORKERS_DIR = workers
-COMPOSE_DIRS := $(CLOUSEAU_DIR) $(DOJO_API_DIR) $(DOJO_DMC_DIR) $(SPACETAG_DIR) $(WORKERS_DIR)
+COMPOSE_DIRS := $(CLOUSEAU_DIR) $(DOJO_API_DIR) $(DOJO_DMC_DIR) $(WORKERS_DIR)
 COMPOSE_FILES := $(CLOUSEAU_DIR)/docker-compose.yaml $(DOJO_API_DIR)/docker-compose.yaml \
-				 $(DOJO_DMC_DIR)/docker-compose.yaml \
-				 $(SPACETAG_DIR)/docker-compose.dev.yaml $(WORKERS_DIR)/docker-compose.yaml
+				 $(DOJO_DMC_DIR)/docker-compose.yaml $(WORKERS_DIR)/docker-compose.yaml \
+				 $(RQ_DIR)/docker-compose.yaml
 TEMP_COMPOSE_FILES := $(foreach file,$(subst /,_,$(COMPOSE_FILES)),temp_$(file))
 
 .PHONY:update
@@ -82,6 +82,11 @@ phantom/ui/node_modules:docker-compose.yaml phantom/ui/package-lock.json phantom
 up:docker-compose.yaml phantom/ui/node_modules
 	docker-compose up -d
 
+.PHONY:up-rebuild
+up-rebuild:docker-compose.yaml phantom/ui/node_modules
+	docker-compose up --build -d
+
+
 
 .PHONY:down
 down:docker-compose.yaml
@@ -96,14 +101,3 @@ restart:docker-compose.yaml
 .PHONY:logs
 logs:
 	docker-compose logs -f --tail=30
-
-
-.PHONY:create-es-indexes
-create-es-indexes:
-	curl -s -X PUT http://localhost:9200/accessories > /dev/null; \
-		curl -s -X PUT http://localhost:9200/configs > /dev/null; \
-		curl -s -X PUT http://localhost:9200/directives > /dev/null; \
-		curl -s -X PUT http://localhost:9200/indicators > /dev/null; \
-		curl -s -X PUT http://localhost:9200/models > /dev/null; \
-		curl -s -X PUT http://localhost:9200/outputfiles > /dev/null; \
-		curl -s -X PUT http://localhost:9200/runs > /dev/null;
