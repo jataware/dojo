@@ -126,6 +126,7 @@ const getRuns = async (setRuns, setRunsError, setRunsLoading, scrollId) => {
     });
 };
 
+// TODO filter by tags, when these are not shown?
 const filterKeys = ['id', 'model_name', 'tags'];
 
 const rowsPerPageOptions = [25, 50, 100];
@@ -136,7 +137,7 @@ const ViewRuns = ({ classes }) => {
   const [areRunsLoading, setAreRunsLoading] = useState(false);
 
   const [search, setSearch] = useState(null);
-  const [pageSize, setPageSize] = React.useState(rowsPerPageOptions[0]);
+  const [pageSize, setPageSize] = useState(rowsPerPageOptions[0]);
 
   useEffect(() => {
     getRuns(setRuns, setFetchErrors, setAreRunsLoading);
@@ -183,7 +184,7 @@ const ViewRuns = ({ classes }) => {
           autoHeight
           columns={columns}
           pageSize={pageSize}
-          onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
+          onPageSizeChange={setPageSize}
           rowsPerPageOptions={rowsPerPageOptions}
           rows={search || runs}
         />

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 
 import Button from '@material-ui/core/Button';
 import Dialog from '@material-ui/core/Dialog';
@@ -84,27 +85,6 @@ const DatasetEditDialog = ({
                   <Divider component="li" variant="middle" />
                   <ListItem>
                     <ListItemText
-                      primary="Change both the dataset and metadata."
-                      secondary="
-                        Use this if you need to upload a new file and its data overlaps
-                        with the registered file or the format of the file is different.
-                      "
-                      primaryTypographyProps={{ color: 'textPrimary', gutterBottom: true }}
-                    />
-                    <Button
-                      onClick={() => setDialogContent('confirmReplace')}
-                      color="primary"
-                      variant="contained"
-                      disableElevation
-                      startIcon={<SwapHorizontalCircleIcon />}
-                      className={classes.actionButton}
-                    >
-                      Replace
-                    </Button>
-                  </ListItem>
-                  <Divider component="li" variant="middle" />
-                  <ListItem>
-                    <ListItemText
                       primary="
                         Update the metadata and annotations without changing the actual data.
                       "
@@ -117,7 +97,8 @@ const DatasetEditDialog = ({
                     <Button
                       color="primary"
                       variant="contained"
-                      onClick={() => redirectToDatasetUrl('update_meta')}
+                      component={Link}
+                      to={`/datasets/update/register/${dataset?.id}`}
                       disableElevation
                       startIcon={<UpdateIcon />}
                       className={classes.actionButton}
@@ -160,7 +141,8 @@ const DatasetEditDialog = ({
             </DialogContent>
             <DialogActions>
               <Button
-                onClick={() => redirectToDatasetUrl('append')}
+                component={Link}
+                to={`/datasets/append/register/${dataset?.id}`}
                 disableElevation
                 variant="contained"
                 color="primary"

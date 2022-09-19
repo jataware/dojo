@@ -1,5 +1,9 @@
 {
   "baseUrl": "http://localhost:8080",
   "chromeWebSecurity": false,
-  "defaultCommandTimeout": 10000
+  "defaultCommandTimeout": 10000,
+  "component": {
+    "viewportHeight": 1200,
+    "viewportWidth": 1000
+  }
 }

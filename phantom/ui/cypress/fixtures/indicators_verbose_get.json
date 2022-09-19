@@ -1,0 +1,507 @@
+{
+    "indicators": {
+        "id": "test-guid",
+        "name": "A better name",
+        "family_name": null,
+      "description": "A description, yo!",
+        "created_at": 1660758682527,
+        "category": null,
+        "domains": [
+            "Earth and Space Sciences"
+        ],
+        "maintainer": {
+            "name": "Joel",
+            "email": "joel@jataware.com",
+            "organization": "",
+            "website": ""
+        },
+        "data_paths": [],
+        "outputs": [
+            {
+                "unit": "m",
+                "is_primary": true,
+                "name": "latitude",
+                "description": "meters",
+                "alias": {},
+                "unit_description": "",
+                "display_name": "",
+                "type": "float",
+                "data_resolution": {},
+                "ontologies": {
+                    "concepts": [],
+                    "processes": [],
+                    "properties": []
+                }
+            }
+        ],
+        "qualifier_outputs": [
+            {
+                "unit": null,
+                "related_features": [
+                    "latitude"
+                ],
+                "name": "date",
+                "description": "a date",
+                "unit_description": null,
+                "qualifier_role": "breakdown",
+                "display_name": "",
+                "type": "datetime",
+                "ontologies": {
+                    "concepts": [],
+                    "processes": [],
+                    "properties": []
+                }
+            },
+            {
+                "unit": null,
+                "related_features": [
+                    "latitude"
+                ],
+                "name": "country",
+                "description": "location",
+                "unit_description": null,
+                "qualifier_role": "breakdown",
+                "display_name": "country",
+                "type": "country",
+                "ontologies": {
+                    "concepts": [
+                        {
+                            "name": "wm/concept/entity/locations/location",
+                            "score": 0.8926583528518677
+                        },
+                        {
+                            "name": "wm/concept/entity/locations/neighboring_country",
+                            "score": 0.7885959148406982
+                        },
+                        {
+                            "name": "wm/concept/entity/locations/",
+                            "score": 0.6775272488594055
+                        },
+                        {
+                            "name": "wm/concept/entity/locations/city",
+                            "score": 0.6740161180496216
+                        },
+                        {
+                            "name": "wm/concept/entity/urban_households",
+                            "score": 0.6184338331222534
+                        },
+                        {
+                            "name": "wm/concept/entity/geo-political_entity",
+                            "score": 0.6179750561714172
+                        },
+                        {
+                            "name": "wm/concept/entity/people/person_or_group",
+                            "score": 0.6092645525932312
+                        },
+                        {
+                            "name": "wm/concept/entity/field_reports",
+                            "score": 0.6060553789138794
+                        }
+                    ],
+                    "processes": [
+                        {
+                            "name": "wm/process/transportation/commercial_transportation",
+                            "score": 0.6137966513633728
+                        },
+                        {
+                            "name": "wm/process/access",
+                            "score": 0.6137579083442688
+                        }
+                    ],
+                    "properties": [
+                        {
+                            "name": "wm/property/geographic_resolution/local",
+                            "score": 0.6975083947181702
+                        },
+                        {
+                            "name": "wm/property/right_to_use",
+                            "score": 0.640984296798706
+                        },
+                        {
+                            "name": "wm/property/geographic_resolution/national",
+                            "score": 0.6343912482261658
+                        }
+                    ]
+                }
+            },
+            {
+                "unit": null,
+                "related_features": [
+                    "latitude"
+                ],
+                "name": "admin1",
+                "description": "location",
+                "unit_description": null,
+                "qualifier_role": "breakdown",
+                "display_name": "admin1",
+                "type": "admin1",
+                "ontologies": {
+                    "concepts": [
+                        {
+                            "name": "wm/concept/entity/locations/location",
+                            "score": 0.7730099558830261
+                        },
+                        {
+                            "name": "wm/concept/entity/locations/",
+                            "score": 0.7504169940948486
+                        }
+                    ],
+                    "processes": [],
+                    "properties": []
+                }
+            },
+            {
+                "unit": null,
+                "related_features": [
+                    "latitude"
+                ],
+                "name": "admin2",
+                "description": "location",
+                "unit_description": null,
+                "qualifier_role": "breakdown",
+                "display_name": "admin2",
+                "type": "admin2",
+                "ontologies": {
+                    "concepts": [],
+                    "processes": [],
+                    "properties": []
+                }
+            },
+            {
+                "unit": null,
+                "related_features": [
+                    "latitude"
+                ],
+                "name": "admin3",
+                "description": "location",
+                "unit_description": null,
+                "qualifier_role": "breakdown",
+                "display_name": "admin3",
+                "type": "admin3",
+                "ontologies": {
+                    "concepts": [
+                        {
+                            "name": "wm/concept/entity/locations/location",
+                            "score": 0.7730099558830261
+                        },
+                        {
+                            "name": "wm/concept/entity/locations/",
+                            "score": 0.7504169940948486
+                        }
+                    ],
+                    "processes": [],
+                    "properties": []
+                }
+            },
+            {
+                "unit": null,
+                "related_features": [
+                    "latitude"
+                ],
+                "name": "lat",
+                "description": "location",
+                "unit_description": null,
+                "qualifier_role": "breakdown",
+                "display_name": "lat",
+                "type": "lat",
+                "ontologies": {
+                    "concepts": [
+                        {
+                            "name": "wm/concept/entity/locations/location",
+                            "score": 0.6245931386947632
+                        }
+                    ],
+                    "processes": [],
+                    "properties": []
+                }
+            },
+            {
+                "unit": null,
+                "related_features": [
+                    "latitude"
+                ],
+                "name": "lng",
+                "description": "location",
+                "unit_description": null,
+                "qualifier_role": "breakdown",
+                "display_name": "lng",
+                "type": "lng",
+                "ontologies": {
+                    "concepts": [],
+                    "processes": [],
+                    "properties": []
+                }
+            }
+        ],
+        "tags": [],
+        "geography": {
+            "country": [],
+            "admin1": [],
+            "admin2": [],
+            "admin3": []
+        },
+        "period": {
+            "gte": 1627948800000,
+            "lte": 6739200000
+        },
+        "deprecated": false,
+        "data_sensitivity": "",
+        "data_quality": "",
+        "published": true,
+        "temporal_resolution": "annual"
+    },
+    "annotations": {
+        "metadata": {
+            "files": {
+                "raw_data.csv": {
+                    "filetype": "csv",
+                    "filename": "output_0.9_1.2.csv",
+                    "rawFileName": "raw_data.csv"
+                }
+            },
+            "histograms": {
+                "date": {
+                    "bins": null,
+                    "values": null
+                },
+                "latitude": {
+                    "bins": [
+                        -85.861143,
+                        -68.61901095,
+                        -51.3768789,
+                        -34.13474685,
+                        -16.8926148,
+                        0.34951725,
+                        17.5916493,
+                        34.83378135,
+                        52.0759134,
+                        69.31804545,
+                        86.5601775
+                    ],
+                    "values": [
+                        11,
+                        10,
+                        8,
+                        10,
+                        6,
+                        8,
+                        16,
+                        8,
+                        13,
+                        10
+                    ]
+                },
+                "color_hue": {
+                    "bins": null,
+                    "values": null
+                },
+                "value": {
+                    "bins": [
+                        0.0320514939,
+                        0.2366586814,
+                        0.4412658689,
+                        0.6458730563,
+                        0.8504802438,
+                        1.0550874313,
+                        1.2596946188,
+                        1.4643018062,
+                        1.6689089937,
+                        1.8735161812,
+                        2.0781233687
+                    ],
+                    "values": [
+                        9,
+                        11,
+                        13,
+                        16,
+                        5,
+                        9,
+                        11,
+                        8,
+                        4,
+                        14
+                    ]
+                },
+                "longitude": {
+                    "bins": [
+                        -173.284368,
+                        -138.9767995,
+                        -104.669231,
+                        -70.3616625,
+                        -36.054094,
+                        -1.7465255,
+                        32.561043,
+                        66.8686115,
+                        101.17618,
+                        135.4837485,
+                        169.791317
+                    ],
+                    "values": [
+                        9,
+                        9,
+                        9,
+                        11,
+                        10,
+                        9,
+                        15,
+                        7,
+                        9,
+                        12
+                    ]
+                }
+            },
+            "geotime_classify": {
+                "date": {
+                    "fuzzyColumn": {
+                        "matchedKey": "Date",
+                        "fuzzyCategory": "Date",
+                        "ratio": 100
+                    },
+                    "DayFirst": false,
+                    "format": "%Y-%m-%d",
+                    "match_type": [
+                        "fuzzy",
+                        "LSTM"
+                    ],
+                    "type_inference": "str",
+                    "category": "time",
+                    "subcategory": "date",
+                    "Parser": "Util"
+                },
+                "latitude": {
+                    "fuzzyColumn": {
+                        "matchedKey": "Latitude",
+                        "fuzzyCategory": "Latitude",
+                        "ratio": 100
+                    },
+                    "DayFirst": null,
+                    "format": null,
+                    "match_type": [
+                        "fuzzy"
+                    ],
+                    "type_inference": "float",
+                    "category": "geo",
+                    "subcategory": "latitude",
+                    "Parser": null
+                },
+                "color_hue": {
+                    "fuzzyColumn": null,
+                    "DayFirst": null,
+                    "format": null,
+                    "match_type": [],
+                    "type_inference": "str",
+                    "category": null,
+                    "subcategory": null,
+                    "Parser": null
+                },
+                "value": {
+                    "fuzzyColumn": null,
+                    "DayFirst": null,
+                    "format": null,
+                    "match_type": [
+                        "LSTM"
+                    ],
+                    "type_inference": "float",
+                    "category": "geo",
+                    "subcategory": "latitude",
+                    "Parser": null
+                },
+                "longitude": {
+                    "fuzzyColumn": {
+                        "matchedKey": "Longitude",
+                        "fuzzyCategory": "Longitude",
+                        "ratio": 100
+                    },
+                    "DayFirst": null,
+                    "format": null,
+                    "match_type": [
+                        "fuzzy"
+                    ],
+                    "type_inference": "float",
+                    "category": "geo",
+                    "subcategory": "longitude",
+                    "Parser": null
+                }
+            },
+            "column_statistics": {
+                "date": {
+                    "top": "2008-03-10",
+                    "unique": 100,
+                    "count": 100,
+                    "freq": 1
+                },
+                "latitude": {
+                    "std": 51.8397886365,
+                    "25%": -44.85272075,
+                    "min": -85.861143,
+                    "max": 86.5601775,
+                    "mean": 3.7316248,
+                    "75%": 48.76907625,
+                    "count": 100.0,
+                    "50%": 10.029859
+                },
+                "color_hue": {
+                    "top": "#f46466",
+                    "unique": 100,
+                    "count": 100,
+                    "freq": 1
+                },
+                "value": {
+                    "std": 0.6025811102,
+                    "25%": 0.5336494562,
+                    "min": 0.0320514939,
+                    "max": 2.0781233687,
+                    "mean": 1.0176866124,
+                    "75%": 1.4891781982,
+                    "count": 100.0,
+                    "50%": 0.8669236209
+                },
+                "longitude": {
+                    "std": 100.5406939649,
+                    "25%": -88.55768725,
+                    "min": -173.284368,
+                    "max": 169.791317,
+                    "mean": 3.95538606,
+                    "75%": 78.57124475,
+                    "count": 100.0,
+                    "50%": 15.1112805
+                }
+            }
+        },
+        "annotations": {
+            "geo": [],
+            "date": [
+                {
+                    "date_type": "date",
+                    "time_format": "%Y-%m-%d",
+                    "aliases": {},
+                    "qualifies": [],
+                    "name": "date",
+                    "description": "dwd",
+                    "display_name": "",
+                    "type": "date"
+                }
+            ],
+            "feature": [
+                {
+                    "feature_type": "float",
+                    "aliases": {},
+                    "qualifies": [],
+                    "units_description": "",
+                    "qualifierrole": "breakdown",
+                    "name": "latitude",
+                    "description": "dwd",
+                    "units": "dwd",
+                    "display_name": "",
+                    "type": "feature"
+                }
+            ],
+            "meta": {
+                "date": "09-09-99",
+                "ftype": "csv",
+                "sheet": "sheet1",
+                "band": "hey"
+            }
+        }
+    }
+}

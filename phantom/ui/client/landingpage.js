@@ -10,7 +10,6 @@ import Container from '@material-ui/core/Container';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
-
 import { makeStyles } from '@material-ui/core/styles';
 
 const useStyles = makeStyles((theme) => ({
@@ -57,7 +56,7 @@ const LandingPage = () => {
   }, []);
 
   // const dataUrl = process.env.ANNOTATE_UI_URL ? process.env.ANNOTATE_UI_URL : 'https://data.wm.dojo-modeling.com/';
-  const dataUrl = 'https://data.wm.dojo-modeling.com/';
+  // const dataUrl = 'https://data.wm.dojo-modeling.com/';
 
   return (
     <Container
@@ -119,10 +118,11 @@ const LandingPage = () => {
               </CardContent>
               <CardActions>
                 <Button
+                  component={Link}
                   size="small"
                   variant="contained"
                   color="primary"
-                  href={dataUrl}
+                  to="/datasets/register"
                 >
                   Go!
                 </Button>

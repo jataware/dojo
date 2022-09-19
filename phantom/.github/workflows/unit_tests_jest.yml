@@ -1,0 +1,35 @@
+name: Unit Tests - Jest
+
+on:
+  pull_request:
+    types: [ opened, synchronize ]
+
+jobs:
+  unit-tests:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Node Version Pin
+        uses: actions/setup-node@v3
+        with:
+          node-version: '15'
+          cache: 'npm'
+          cache-dependency-path: ui/package-lock.json
+
+      - name: Cache npm dependencies
+        uses: actions/cache@v3
+        id: npm-cache
+        with:
+          path: ./ui/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('./ui/package-lock.json') }}
+
+      - name: Install npm dependencies
+        working-directory: ./ui
+        run: npm install
+
+      - name: Runs unit tests with jest
+        working-directory: ./ui
+        run: npm run test:ci

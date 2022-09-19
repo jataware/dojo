@@ -39,7 +39,7 @@ function GeographyListModal({ geography }) {
   const handleClose = () => {
     setOpen(false);
   };
-  if (!geography.country.length) {
+  if (!geography?.country.length) {
     return (
       <Typography
         component="div"
@@ -81,7 +81,7 @@ function GeographyListModal({ geography }) {
             >
               <CollapseText childrenText={geography?.country.join(', ')} collapsedSize={65} />
             </Typography>
-            {geography?.admin1.length > 0
+            {geography?.admin1?.length > 0
                     && (
                     <div>
                       <Typography
@@ -98,7 +98,7 @@ function GeographyListModal({ geography }) {
                       </Typography>
                     </div>
                     )}
-            {geography?.admin2.length > 0
+            {geography?.admin2?.length > 0
                     && (
                     <div>
                       <Typography
@@ -115,7 +115,7 @@ function GeographyListModal({ geography }) {
                       </Typography>
                     </div>
                     )}
-            {geography?.admin3.length > 0
+            {geography?.admin3?.length > 0
                 && (
                 <div>
                   <Typography

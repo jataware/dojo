@@ -17,6 +17,15 @@
  */
 // eslint-disable-next-line no-unused-vars
 module.exports = (on, config) => {
-  // `on` is used to hook into various events Cypress emits
-  // `config` is the resolved Cypress config
-}
+
+  if (config.testingType === 'component') {
+    const { startDevServer } = require('@cypress/webpack-dev-server');
+    const webpackConfig = require('../webpack.cypress.js');
+
+    on('dev-server:start', (options) =>
+      startDevServer({ options, webpackConfig })
+    );
+  }
+
+  return config;
+};

@@ -55,7 +55,7 @@ function TabPanel(props) {
 
 const ModelFileTabs = ({
   model, setTemplaterMode, setTemplaterContents, setTemplaterOpen,
-  setSpacetagOpen, setSpacetagFile,
+  setModelOutputOpen, setModelOutputFile,
 }) => {
   const [tabValue, setTabValue] = useState(0);
 
@@ -132,8 +132,8 @@ const ModelFileTabs = ({
           <FileList
             fileType="outputfile"
             model={model}
-            setSpacetagOpen={setSpacetagOpen}
-            setSpacetagFile={setSpacetagFile}
+            setModelOutputOpen={setModelOutputOpen}
+            setModelOutputFile={setModelOutputFile}
             hideExpandHeader
           />
         </TabPanel>

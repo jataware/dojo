@@ -19,6 +19,10 @@ const useStyles = makeStyles((theme) => ({
     marginLeft: theme.spacing(2),
     flex: 1,
   },
+  container: {
+    display: 'flex',
+    flex: 1,
+  },
 }));
 
 /* eslint-disable-next-line react/jsx-props-no-spreading */
@@ -85,7 +89,7 @@ const FullScreenDialog = ({
             </Button>
           </Toolbar>
         </AppBar>
-        <Box>
+        <Box className={classes.container}>
           {children}
         </Box>
       </Dialog>

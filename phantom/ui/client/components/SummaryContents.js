@@ -131,8 +131,8 @@ const SummaryContents = ({
   const [templaterContents, setTemplaterContents] = useState({});
   const [templaterMode, setTemplaterMode] = useState({});
 
-  const [spacetagOpen, setSpacetagOpen] = useState(false);
-  const [spacetagFile, setSpacetagFile] = useState();
+  const [modelOutputOpen, setModelOutputOpen] = useState(false);
+  const [modelOutputFile, setModelOutputFile] = useState();
 
   const [openModelEdit, setOpenModelEdit] = useState(false);
 
@@ -295,8 +295,8 @@ const SummaryContents = ({
                 fileType="outputfile"
                 model={model}
                 disabledMode={disabledMode}
-                setSpacetagFile={setSpacetagFile}
-                setSpacetagOpen={setSpacetagOpen}
+                setModelOutputFile={setModelOutputFile}
+                setModelOutputOpen={setModelOutputOpen}
               />
             </Grid>
             <Grid item xs={12} lg={6}>
@@ -397,17 +397,17 @@ const SummaryContents = ({
       )}
 
       <FullScreenDialog
-        open={spacetagOpen}
-        setOpen={setSpacetagOpen}
+        open={modelOutputOpen}
+        setOpen={setModelOutputOpen}
         onSave={() => {}}
         showSave={false}
-        title={`${spacetagFile?.name}`}
+        title={`${modelOutputFile?.name}`}
       >
         <iframe
-          id="spacetag"
-          title="spacetag"
+          id="modelOutput"
+          title="modelOutput"
           style={{ height: 'calc(100vh - 70px)', width: '100%' }}
-          src={`/api/spacetag/overview/${spacetagFile?.id}?reedit=true`}
+          src={`/api/modelOutput/overview/${modelOutputFile?.id}?reedit=true`}
         />
       </FullScreenDialog>
 
