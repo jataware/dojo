@@ -10,7 +10,7 @@ import {
   Switch,
 } from 'react-router-dom';
 
-import { ThemeProvider, createTheme } from '@material-ui/core/styles';
+import { ThemeProvider } from '@material-ui/core/styles';
 
 import NavBar from './components/NavBar';
 import ThemeContextProvider from './components/ThemeContextProvider';
@@ -26,41 +26,14 @@ import RunLogs from './runlogs';
 import RunSummary from './components/RunSummary';
 import Summary from './summary';
 import Terminal from './terminal';
+import theme from './theme';
 import ViewDatasets from './components/ViewDatasets';
 import ViewModels from './components/ViewModels';
 import ViewRuns from './components/ViewRuns';
-
-const theme = createTheme({
-  palette: {
-    // type: 'dark',
-    primary: {
-      main: '#1976d2',
-    },
-    success: {
-      main: '#2e7d32',
-      light: '#4caf50',
-    },
-    warning: {
-      contrastText: '#fff',
-      dark: '#e65100',
-      light: '#ff9800',
-      main: '#ed6c02',
-    },
-    background: {
-      default: '#fff'
-    },
-  },
-  body: {
-    backgroundColor: '#fff'
-  },
-  overrides: {
-    MuiTableCell: {
-      root: {
-        padding: 0
-      }
-    }
-  }
-});
+// import DatasetRegistration from './datasets/Register';
+import DatasetRegistrationStepper from './datasets/RegistrationStepper';
+import DatasetPreview from './datasets/Preview';
+import DatasetAnnotate from './datasets/Annotate';
 
 export default function Main() {
   return (
@@ -70,6 +43,9 @@ export default function Main() {
         <Route component={Model} exact path="/model" />
         <Route component={ViewModels} exact path="/models" />
         <Route component={ViewDatasets} exact path="/datasets" />
+        <Route component={DatasetAnnotate} exact path="/datasets/annotate" />
+        <Route component={DatasetPreview} exact path="/datasets/preview" />
+        <Route component={DatasetRegistrationStepper} path="/datasets/:flowslug/:step?/:datasetId?" />
         <Route component={Provision} exact path="/provision/:modelId" />
         <Route component={Provisioning} exact path="/provisioning/:modelId" />
         <Route component={Terminal} exact path="/term/:modelid" />

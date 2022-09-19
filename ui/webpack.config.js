@@ -51,6 +51,9 @@ module.exports = {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Headers': 'Origin, X-Requested-With, Content-Type, Accept'
     },
+    watchOptions: {
+      ignored: /node_modules/,
+    },
     proxy: {
       '/api/clouseau': {
         target: 'http://localhost:3000',

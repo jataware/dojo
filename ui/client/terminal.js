@@ -29,6 +29,7 @@ import UploadFileDialog from './components/UploadFileDialog';
 import {
   useLock, useModel, useOutputFiles
 } from './components/SWRHooks';
+import RegistrationStepper from './datasets/RegistrationStepper';
 
 const useStyles = makeStyles((theme) => ({
   pageRoot: {
@@ -72,9 +73,9 @@ const CenteredGrid = ({ model }) => {
   const [openAbandonSessionDialog, setAbandonSessionDialogOpen] = useState(false);
   const [editorContents, setEditorContents] = useState({});
   const [openEditor, setOpenEditor] = useState(false);
-  const [isSpacetagOpen, setIsSpacetagOpen] = useState(false);
-  const [spacetagUrl, setSpacetagUrl] = useState('');
-  const [spacetagFile, setSpacetagFile] = useState('');
+  const [isModelOutputOpen, setIsModelOutputOpen] = useState(false);
+  const [annotationInfo, setAnnotationInfo] = useState({});
+  const [modelOutputFile, setModelOutputFile] = useState('');
   const [openFileUploadDialog, setUploadFilesOpen] = useState(false);
   const [uploadPath, setUploadPath] = useState('');
 
@@ -116,13 +117,13 @@ const CenteredGrid = ({ model }) => {
   };
 
   useEffect(() => {
-    // Listen to message from child window for spacetag
+    // Listen to message from child window for modelOutput
     const handleEvent = (e) => {
       const key = e.message ? 'message' : 'data';
       const data = e[key];
-      if (data === 'closeSpacetag') {
-        setIsSpacetagOpen(false);
-        // check for new spacetag files, but wait 1s for elasticsearch to catch up
+      if (data === 'closeModelOutput') {
+        setIsModelOutputOpen(false);
+        // check for new modelOutput files, but wait 1s for elasticsearch to catch up
         setTimeout(() => mutateOutputs(), 1000);
       }
     };
@@ -162,9 +163,9 @@ const CenteredGrid = ({ model }) => {
               setTemplaterOpen={setTemplaterOpen}
               setTemplaterContents={setTemplaterContents}
               setTemplaterMode={setTemplaterMode}
-              setIsSpacetagOpen={setIsSpacetagOpen}
-              setSpacetagUrl={setSpacetagUrl}
-              setSpacetagFile={setSpacetagFile}
+              setIsModelOutputOpen={setIsModelOutputOpen}
+              setAnnotationInfo={setAnnotationInfo}
+              setModelOutputFile={setModelOutputFile}
               setUploadFilesOpen={setUploadFilesOpen}
               setUploadPath={setUploadPath}
             />
@@ -177,8 +178,8 @@ const CenteredGrid = ({ model }) => {
               setTemplaterMode={setTemplaterMode}
               setTemplaterContents={setTemplaterContents}
               setTemplaterOpen={setTemplaterOpen}
-              setSpacetagOpen={setIsSpacetagOpen}
-              setSpacetagFile={setSpacetagFile}
+              setModelOutputOpen={setIsModelOutputOpen}
+              setModelOutputFile={setModelOutputFile}
             />
           </div>
         </Grid>
@@ -234,21 +235,28 @@ const CenteredGrid = ({ model }) => {
       </FullScreenDialog>
 
       <FullScreenDialog
-        open={isSpacetagOpen}
-        setOpen={setIsSpacetagOpen}
+        open={isModelOutputOpen && (annotationInfo.hasOwnProperty('pattern'))}
+        setOpen={() => {setIsModelOutputOpen(false)}}
         onSave={() => {}}
         showSave={false}
-        title={`${spacetagFile?.name || spacetagFile}`}
+        title={`${modelOutputFile?.name || modelOutputFile}`}
       >
-        <iframe
-          id="spacetag"
-          title="spacetag"
-          style={{ height: 'calc(100vh - 70px)', width: '100%' }}
-          src={
-            spacetagFile?.id
-              ? `/api/spacetag/overview/${spacetagFile?.id}?reedit=true`
-              : spacetagUrl
-          }
+        <RegistrationStepper
+          onSave={() => {setOpen(false)}}
+          match={{
+            params: {
+              flowslug: "model",
+              step: null,
+              datasetId: null,
+            }
+          }}
+          updateLocation={false}
+          modelId={model.id}
+          onSubmit={() => {
+            setIsModelOutputOpen(false);
+            mutateOutputs();
+          }}
+          {...annotationInfo}
         />
       </FullScreenDialog>
       <ConfirmDialog

@@ -51,7 +51,7 @@ const ContainerWebSocket = ({
   modelId,
   setEditorContents, openEditor,
   setTemplaterOpen, setTemplaterContents, setTemplaterMode,
-  setSpacetagUrl, setIsSpacetagOpen, setSpacetagFile, setUploadFilesOpen, setUploadPath
+  setAnnotationInfo, setIsModelOutputOpen, setModelOutputFile, setUploadFilesOpen, setUploadPath
 }) => {
   const { register, unregister } = useWebSocketUpdateContext();
   const [accessoryAlert, setAccessoryAlert] = useState(false);
@@ -104,15 +104,16 @@ const ContainerWebSocket = ({
         const p = `${s.substring(4)}`;
         const f = (p.startsWith('/')) ? p : `${cwd}/${p}`;
 
+
         const { id: reqid } = await storeFileRequest({
           model_id: modelId,
           file_path: f,
           request_path: `/container/${modelId}/ops/cat?path=${encodeURIComponent(f)}`
         });
 
-        setSpacetagFile(`${f}`);
-        setSpacetagUrl(`/api/spacetag/byom?reqid=${reqid}`);
-        setIsSpacetagOpen(true);
+        setModelOutputFile(`${f}`);
+        setAnnotationInfo(`/api/modelOutput/byom?reqid=${reqid}`);
+        setIsModelOutputOpen(true);
       } else if (s.startsWith('accessory ')) {
         const p = `${s.substring(10)}`;
         const f = (p.startsWith('/')) ? p : `${cwd}/${p}`;
@@ -166,16 +167,21 @@ const ContainerWebSocket = ({
           setTemplaterOpen(true); // open the <FullScreenDialog>
         }
       } else if (id === 'annotate') {
-        // spacetag
+        // modelOutput
         const { id: reqid } = await storeFileRequest({
           model_id: modelId,
           file_path: meta.files[0],
           request_path: `/container/${modelId}/ops/cat?path=${encodeURIComponent(meta.files[0])}`
         });
 
-        setSpacetagFile(`${meta.files[0]}`);
-        setSpacetagUrl(`/api/spacetag/byom?reqid=${reqid}`);
-        setIsSpacetagOpen(true);
+        setModelOutputFile(`${meta.files[0]}`);
+        setAnnotationInfo({
+          model_id: modelId,
+          file_path: meta.files[0],
+          pattern: meta.pattern,
+          request_path: `/container/${modelId}/ops/cat?path=${encodeURIComponent(meta.files[0])}`
+        });
+        setIsModelOutputOpen(true);
       } else if (id === 'tag') {
         // accessory annotation
         await storeAccessoryRequest({
@@ -230,9 +236,9 @@ const ContainerWebSocket = ({
     setTemplaterOpen,
     setTemplaterContents,
     setTemplaterMode,
-    setSpacetagFile,
-    setSpacetagUrl,
-    setIsSpacetagOpen,
+    setModelOutputFile,
+    setAnnotationInfo,
+    setIsModelOutputOpen,
     setUploadFilesOpen,
     setUploadPath,
     modelId,

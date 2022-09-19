@@ -1,6 +1,6 @@
-{
+module.exports = {
   "parser": "@babel/eslint-parser",
-  "extends": ["airbnb", "plugin:react-hooks/recommended"],
+  "extends": ["airbnb", "plugin:react-hooks/recommended", "plugin:storybook/recommended"],
   "env": {
     "browser": true,
     "node": true
@@ -16,13 +16,17 @@
     "consistent-return": "off",
     "import/prefer-default-export": "off",
     "no-nested-ternary": "off",
+    "no-restricted-syntax": "off",
+    "no-plusplus": "off",
+    "camelcase": "off",
+    "jsx-a11y/alt-text": "warn",
+    "react/jsx-props-no-multi-spaces": "off",
+
     "sort-imports": ["error", {
       "ignoreCase": false,
-      "ignoreDeclarationSort": false,
-      "ignoreMemberSort": false,
-      "memberSyntaxSortOrder": ["none", "all", "single", "multiple" ],
+      "ignoreDeclarationSort": true,
+      "ignoreMemberSort": true,
       "allowSeparatedGroups": true
     }]
   }
-
-}
+};

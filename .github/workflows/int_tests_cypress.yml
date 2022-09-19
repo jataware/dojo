@@ -1,0 +1,40 @@
+name: Cypress Integration Tests
+
+on:
+  pull_request:
+    types: [ opened, synchronize ]
+
+jobs:
+  cypress-run:
+    runs-on: ubuntu-20.04
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v3
+
+      - name: Setup Node Version Pin
+        uses: actions/setup-node@v3
+        with:
+          node-version: '15'
+          cache: 'npm'
+          cache-dependency-path: ui/package-lock.json
+
+      - name: Cache npm dependencies
+        uses: actions/cache@v3
+        id: npm-cache
+        with:
+          path: ./ui/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('./ui/package-lock.json') }}
+
+      - name: Install npm dependencies
+        working-directory: ./ui
+        run: npm install
+
+      - name: Cypress run
+        uses: cypress-io/github-action@v4
+        with:
+          working-directory: ./ui
+          config: video=false,videoUploadOnPasses=false,keystrokeDelay=1,retries=2,ignoreTestFiles=model_spec.js
+          start: npm run dev
+          wait-on: 'http://127.0.0.1:8080'
+          wait-on-timeout: 160

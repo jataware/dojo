@@ -25,7 +25,7 @@ describe('ModelRuns List', function () {
       cy.get('@alerts').eq(2).should('have.text', 'Running');
       cy.get('@alerts').eq(3).should('have.text', 'Queued');
 
-    })
+    });
 
     it('Allows filtering table', function () {
 
@@ -42,8 +42,8 @@ describe('ModelRuns List', function () {
 
     });
 
-  })
-})
+  });
+});
 
 const modelRuns = require("../fixtures/modelruns.json");
 
@@ -62,7 +62,7 @@ describe(`Summary Page for Model Runs`, function () {
 
       it('Verify sample attributes', function () {
         cy.findAllByRole('region', {name: /Attributes/i})
-          .as('AttributesRegion')
+          .as('AttributesRegion');
 
         cy.get('@AttributesRegion')
           .contains(run.id);
@@ -80,7 +80,7 @@ describe(`Summary Page for Model Runs`, function () {
           cy.findAllByRole('button')
             .contains('REFRESH');
         } else {
-          cy.findByRole('button') // Find the only button
+          cy.findByRole('button') // Find the one button
             .invoke('text')
             .should('match', /View Logs/i);
         }
@@ -104,14 +104,14 @@ describe(`Summary Page for Model Runs`, function () {
       it('Verifies Data and Output Paths', function () {
 
         cy.findAllByRole('region', {name: /Data Paths/i})
-          .as('DataPathsRegion')
+          .as('DataPathsRegion');
 
         cy.findAllByRole('region', {name: /Output Paths/i})
-          .as('OutputPathsRegion')
+          .as('OutputPathsRegion');
 
         if (run.id === 'foo-test-mocked-rerun') { // A run was forced to miss these properties
           cy.get('@DataPathsRegion')
-            .contains('No Data Paths')
+            .contains('No Data Paths');
 
           cy.get('@OutputPathsRegion')
             .contains('No Output Paths');

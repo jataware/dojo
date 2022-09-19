@@ -23,7 +23,7 @@ const FileTile = ({ item }) => {
 
 const FileList = ({
   fileType, model, disabledMode, setTemplaterMode, setTemplaterContents,
-  setTemplaterOpen, setSpacetagFile, setSpacetagOpen, hideExpandHeader,
+  setTemplaterOpen, setModelOutputFile, setModelOutputOpen, hideExpandHeader,
 }) => {
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [deletionSelection, setDeletionSelection] = useState(() => ({
@@ -135,11 +135,11 @@ const FileList = ({
       files={outputs}
       loading={outputsLoading}
       error={outputsError}
-      primaryClickHandler={(output) => {
-        setSpacetagFile(output);
-        setSpacetagOpen(true);
-      }}
-      primaryIcon={<EditIcon />}
+//       primaryClickHandler={(output) => {
+//         setModelOutputFile(output);
+//         setModelOutputOpen(true);
+//       }}
+//       primaryIcon={<EditIcon />}
       secondaryClickHandler={(config) => {
         setDeletionSelection({
           type: 'outputfile', id: config.id, description: `${config.name}: ${config.path}`
