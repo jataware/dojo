@@ -178,7 +178,7 @@ services:
     env_file:
       - envfile
     networks:
-      - world-modelers
+      - dojo-stack
     depends_on:
       - redis
     volumes:
