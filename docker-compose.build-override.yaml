@@ -67,9 +67,23 @@ services:
     networks:
       - dojo-stack
   api:
-    command: ["uvicorn", "server:api", "--host", "0.0.0.0", "--port", "80", "--reload", "--reload-dir", "src", "--log-config", "logging.yaml"]
+    command:
+      [
+        "uvicorn",
+        "server:api",
+        "--host",
+        "0.0.0.0",
+        "--port",
+        "80",
+        "--reload",
+        "--reload-dir",
+        "src",
+        "--log-config",
+        "logging.yaml"
+      ]
     volumes:
       - ./dojo/api:/api
+      - dataset-storage:/datasets
     env_file:
       - envfile
     environment:
@@ -82,6 +96,9 @@ services:
       - DOCKERHUB_PWD
     networks:
       - dojo-stack
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
   cato:
     command: -debug -pull-images=false
     build:
@@ -108,6 +125,15 @@ services:
       - envfile
     networks:
       - dojo-stack
+    healthcheck:
+      interval: 10s
+      retries: 5
+      test:
+      - CMD
+      - curl
+      - --fail
+      - http://localhost:9200/_cluster/health
+      timeout: 10s
   redis:
     env_file:
       - envfile
@@ -148,14 +174,23 @@ services:
     networks:
       - dojo-stack
 
+  rqworker:
+    env_file:
+      - envfile
+    networks:
+      - world-modelers
+    depends_on:
+      - redis
+    volumes:
+      - dataset-storage:/datasets
 
 networks:
   dojo-stack:
     driver: bridge
     name: dojo-stack
 
-
 volumes:
   dmc-data-results:
   dmc-data-mappers:
   dmc-data-model_configs:
+  dataset-storage:
