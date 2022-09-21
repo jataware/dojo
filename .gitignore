@@ -1,6 +1,9 @@
 # Generated files
 /docker-compose.yaml
 
+# Logs
+**/logs/*
+
 # Data directories
 data/*
 final/*

@@ -5,11 +5,11 @@ export LANG
 
 BASEDIR = $(shell pwd)
 CLOUSEAU_DIR = clouseau
-DOJO_API_DIR = dojo/api
-DOJO_DMC_DIR = dojo/dmc
+DOJO_API_DIR = api
+DOJO_DMC_DIR = dmc
 MIXMASTA_DIR = mixmasta
 PHANTOM_DIR = phantom
-RQ_DIR = dojo/workers/rq-worker
+RQ_DIR = tasks
 WORKERS_DIR = workers
 COMPOSE_DIRS := $(CLOUSEAU_DIR) $(DOJO_API_DIR) $(DOJO_DMC_DIR) $(WORKERS_DIR)
 COMPOSE_FILES := $(CLOUSEAU_DIR)/docker-compose.yaml $(DOJO_API_DIR)/docker-compose.yaml \
@@ -68,7 +68,7 @@ docker-compose.yaml:$(COMPOSE_FILES) docker-compose.build-override.yaml clouseau
 	  	tempfile="temp_$${compose_file//\//_}"; \
   		docker-compose -f $$compose_file config > $$tempfile; \
   	done; \
-	sed -E -i'.sedbkp' -f .dmc.sed temp_dojo_dmc_docker-compose.yaml; \
+	sed -E -i'.sedbkp' -f .dmc.sed temp_dmc_docker-compose.yaml; \
 	docker-compose --env-file envfile $(foreach f,$(TEMP_COMPOSE_FILES), -f $(f)) \
 	  	-f docker-compose.build-override.yaml config > docker-compose.yaml; \
 	rm $(TEMP_COMPOSE_FILES) *.sedbkp;

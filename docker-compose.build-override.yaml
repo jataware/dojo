@@ -82,7 +82,7 @@ services:
         "logging.yaml"
       ]
     volumes:
-      - ./dojo/api:/api
+      - ./api:/api
       - dataset-storage:/datasets
     env_file:
       - envfile
