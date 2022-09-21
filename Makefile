@@ -4,6 +4,7 @@ PYTHON = $(shell which python3 || which python)
 export LANG
 
 BASEDIR = $(shell pwd)
+AUTH_DIR = auth
 CLOUSEAU_DIR = clouseau
 DOJO_API_DIR = api
 DOJO_DMC_DIR = dmc
@@ -11,10 +12,10 @@ MIXMASTA_DIR = mixmasta
 PHANTOM_DIR = phantom
 RQ_DIR = tasks
 WORKERS_DIR = workers
-COMPOSE_DIRS := $(CLOUSEAU_DIR) $(DOJO_API_DIR) $(DOJO_DMC_DIR) $(WORKERS_DIR)
+COMPOSE_DIRS := $(CLOUSEAU_DIR) $(DOJO_API_DIR) $(DOJO_DMC_DIR) $(WORKERS_DIR) $(AUTH_DIR)
 COMPOSE_FILES := $(CLOUSEAU_DIR)/docker-compose.yaml $(DOJO_API_DIR)/docker-compose.yaml \
 				 $(DOJO_DMC_DIR)/docker-compose.yaml $(WORKERS_DIR)/docker-compose.yaml \
-				 $(RQ_DIR)/docker-compose.yaml
+				 $(RQ_DIR)/docker-compose.yaml $(AUTH_DIR)/docker-compose.yml
 TEMP_COMPOSE_FILES := $(foreach file,$(subst /,_,$(COMPOSE_FILES)),temp_$(file))
 
 .PHONY:update

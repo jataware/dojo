@@ -1,0 +1,60 @@
+version: '2'
+services:
+  postgres:
+    image: postgres:14.4-alpine
+    expose:
+      - "5432"
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: keycloak
+  keycloak:
+    image: docker-hub.uncharted.com/auth/keycloak:latest
+    container_name: keycloak
+    command: ["start", "--log-level=info"]
+    links:
+      - postgres
+    environment:
+      - PROXY_ADDRESS_FORWARDING="true"
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=openidctest
+    expose:
+      - "8443"
+      - "8080"
+      - "9990"
+    ports:
+      - "8444:8443"
+  #redis:
+  #  image: redis:4.0.2@sha256:cd277716dbff2c0211c8366687d275d2b53112fecbf9d6c86e9853edb0900956
+  #  expose:
+  #    - "6379"
+  openidc:
+    image: docker-hub.uncharted.software/auth/httpd-openidc
+    environment:
+      - AUTH_SERVER_NAME=auth.private.dev
+      - SERVER_NAME=causemos.private.dev
+      - MAIN_URL=https://causemos.private.dev:8443/
+      - OIDC_OPENID_CONFIGURATION=https://keycloak:8443/realms/Uncharted/.well-known/openid-configuration
+      - OIDC_VALIDATE_CERTIFICATE=off
+      - OIDC_REDIRECT_URI=https://causemos.private.dev:8443/redirect_uri
+      - OIDC_DEFAULT_URL=https://causemos.private.dev:8443/causemos/
+      - OIDC_CRYPTO_PASSPHRASE=0123456789
+      - OIDC_CLIENT=causemos
+      - OIDC_CLIENT_SECRET=jtbQhs6SlfynqJaygVpwav2kLzAme2b4
+      #- OIDC_CLIENT_SECRET=CLOB3vngK1NmXBdIWr7TYG5lNjt4mhSx
+    links:
+    # Commented out to disallow direct communication with keycloak; depends on hosting scenario
+      - keycloak
+    #  - redis
+    expose:
+      - "80"
+      - "8443"
+    ports:
+      - "80:80"
+      - "8443:8443"
+    #command:
+    #  - -DLOGLEVEL=info
+    volumes:
+      #- ./html-ajax:/usr/local/apache2/htdocs
+      - ../../causemos/client/dist:/usr/local/apache2/htdocs

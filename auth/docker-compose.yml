@@ -1,0 +1,49 @@
+version: '2'
+services:
+  postgres:
+    image: postgres:14.4-alpine
+    expose:
+      - "5432"
+    environment:
+      POSTGRES_USER: keycloak
+      POSTGRES_PASSWORD: keycloak
+  keycloak:
+    image: docker-hub.uncharted.com/auth/keycloak:latest
+    command: ["start-dev", "--hostname=localhost", "--hostname-port=8079"]
+    links:
+      - postgres
+    environment:
+      - PROXY_ADDRESS_FORWARDING="true"
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=openidctest
+    expose:
+      - "8443"
+      - "8080"
+      - "9990"
+    ports:
+      - "8079:8080"
+  apache:
+    image: docker-hub.uncharted.software/auth/httpd-openidc
+    environment:
+      - AUTH_SERVER_NAME=localhost
+      - SERVER_NAME=localhost
+      - MAIN_URL=http://localhost:8078/
+      - OIDC_OPENID_CONFIGURATION=http://keycloak:8080/realms/Uncharted/.well-known/openid-configuration
+      - OIDC_VALIDATE_CERTIFICATE=off
+      - OIDC_REDIRECT_URI=http://localhost:8078/causemos/redirect_uri
+      - OIDC_DEFAULT_URL=http://localhost:8078/causemos/
+      - OIDC_CRYPTO_PASSPHRASE=0123456789
+      - OIDC_CLIENT=causemos
+      - OIDC_CLIENT_SECRET=jtbQhs6SlfynqJaygVpwav2kLzAme2b4
+      - CLIENT_SERVICE_ENDPOINT=/causemos/
+      - CLIENT_SERVICE_URL=http://host.docker.internal:8080/
+      - API_SERVICE_ENDPOINT=/api/
+      - API_SERVICE_URL=http://host.docker.internal:3000/api/
+    links:
+      - keycloak
+    expose:
+      - "80"
+    ports:
+      - "8078:80"
+    volumes:
+      - ./html-ajax:/usr/local/apache2/htdocs
