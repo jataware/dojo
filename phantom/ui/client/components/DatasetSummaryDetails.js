@@ -8,7 +8,7 @@ import { makeStyles } from '@material-ui/core/styles';
 
 import CollapseText from './CollapseText';
 import CountryMap from './CountryMap';
-import DatasetDownload from './DatasetDownload';
+import CSVDownload from './CSVDownload';
 
 const useStyles = makeStyles((theme) => ({
   detailsPanel: {
@@ -83,7 +83,7 @@ function DatasetSummaryDetails({ dataset }) {
             </Button>
           </Typography>
 
-          <DatasetDownload dataset={dataset} className={classes.buttonWrapper} />
+          <CSVDownload resource={dataset} className={classes.buttonWrapper} />
 
         </div>
       </Grid>
