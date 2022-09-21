@@ -1,10 +1,13 @@
 import logging
 
+
 import uvicorn
 from elasticsearch import Elasticsearch
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, HTTPException
+from typing import Union
 
 from src import (
+    auth,
     clouseau,
     data,
     dojo,
@@ -15,10 +18,12 @@ from src import (
     runs,
 )
 from src.settings import settings
+from src.auth import check_auth
 
 logger = logging.getLogger(__name__)
 
 api = FastAPI(docs_url="/")
+api.include_router(auth.router, tags=["Authentication"])
 api.include_router(healthcheck.router, tags=["Health Check"])
 api.include_router(models.router, tags=["Models"])
 api.include_router(dojo.router, tags=["Dojo"])
@@ -28,6 +33,22 @@ api.include_router(clouseau.router, prefix="/clouseau", tags=["Clouseau"])
 api.include_router(phantom.router, prefix="/phantom", tags=["Phantom"])
 api.include_router(data.router, tags=["Data"])
 
+if settings.REQUIRE_AUTH:
+    @api.middleware("http")
+    async def check_keycloak_auth(request: Request, call_next):
+        headers = dict(request['headers'])
+        bearer = headers.get('bearer', None)
+
+        if not request['path'].startswith(('/auth', '/healthcheck')):
+            # Check_auth raises a 401 if it is invalid
+            try:
+                check_auth(bearer)
+            except HTTPException as err:
+                return err
+        
+        # If we make it to here, we don't need to auth or have a valid token
+        response = await call_next(request)
+        return response
 
 def setup_elasticsearch_indexes():
     # Config should match keyword args on https://elasticsearch-py.readthedocs.io/en/v8.3.2/api.html#elasticsearch.client.IndicesClient.create

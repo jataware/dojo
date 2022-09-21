@@ -27,6 +27,8 @@ class Settings(BaseSettings):
 
     CONFIG_STORAGE_BASE: str = "file:///dojo/configs/"
 
+    REQUIRE_AUTH: bool = True
+
     UVICORN_RELOAD: bool = False
 
     UAZ_URL: str = ""
