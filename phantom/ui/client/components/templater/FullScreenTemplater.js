@@ -5,8 +5,6 @@ import axios from 'axios';
 import isEqual from 'lodash/isEqual';
 
 import Button from '@material-ui/core/Button';
-import Card from '@material-ui/core/Card';
-import CardContent from '@material-ui/core/CardContent';
 import Container from '@material-ui/core/Container';
 import Typography from '@material-ui/core/Typography';
 
@@ -19,8 +17,14 @@ import TextAnnotater from './TextAnnotater';
 import { useConfigs, useDirective } from '../SWRHooks';
 
 const FullScreenTemplater = withStyles((theme) => ({
-  cardRoot: {
-    marginTop: theme.spacing(14),
+  allContentWrapper: {
+    margin: [[theme.spacing(2), 0]],
+    // full screen height minus the dialog top bar and the card margin
+    height: 'calc(100vh - 80px)',
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  dialogInterior: {
     backgroundColor: theme.palette.grey[50],
   },
   contentBox: {
@@ -28,31 +32,40 @@ const FullScreenTemplater = withStyles((theme) => ({
     border: '1px solid black',
     borderRadius: theme.shape.borderRadius,
     padding: [[theme.spacing(3), theme.spacing(2)]],
+    overflow: 'auto',
+    flexShrink: '2',
   },
   contentText: {
     fontFamily: 'monospace',
+    height: 'fit-content',
   },
   headerText: {
     color: theme.palette.grey[500],
   },
   shareScreen: {
     marginRight: '30%',
+
     transition: `margin-right ${theme.transitions.duration.enteringScreen}ms ${theme.transitions.easing.easeInOut}`,
   },
   fullScreen: {
     marginRight: 0,
     transition: `margin-right ${theme.transitions.duration.leavingScreen}ms ${theme.transitions.easing.easeInOut}`,
-  },
-  allTemplatesButton: {
-    backgroundColor: theme.palette.grey[50],
-  },
-  allTemplatesButtonWrapper: {
-    display: 'flex',
-    justifyContent: 'flex-end',
-    padding: theme.spacing(2),
+    height: '100vh',
   },
   contentWarningAlert: {
     maxWidth: '620px',
+  },
+  upperWrapper: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: theme.spacing(1),
+  },
+  textWrapper: {
+    flexGrow: '2',
+  },
+  allParamsButton: {
+    minWidth: '200px',
   },
 }))(({
   classes,
@@ -167,50 +180,51 @@ const FullScreenTemplater = withStyles((theme) => ({
         hideBackdrop
         className={templatesDrawerOpen ? classes.shareScreen : classes.fullScreen}
         PaperProps={{ elevation: 0 }}
+        denseToolbar
       >
-        <Container>
-          <Card elevation={0} variant="outlined" className={classes.cardRoot}>
-            <CardContent>
-              <Typography variant="subtitle2" className={classes.headerText}>
-                Instructions
-              </Typography>
-              <Typography variant="body2" gutterBottom>
-                Use your mouse to highlight the characters, word, or words you would like
-                to replace with a parameter. A form will open in a separate panel for you to
-                add details about your parameter after you&apos;ve highlighted your selection.
-              </Typography>
-              <Typography variant="body2" gutterBottom>
-                After filling out the form and saving your parameter annotation, you can continue
-                to add more parameters by highlighting more text. New selections cannot
-                overlap with existing parameters.
-              </Typography>
-
-              <Typography variant="subtitle2" className={classes.headerText} gutterBottom>
-                Your Text
-              </Typography>
-              <div className={classes.contentBox}>
-                <Typography component="div" className={classes.contentText}>
-                  <TextAnnotater
-                    content={content}
-                    setHighlights={setHighlights}
-                    highlights={highlights}
-                    hoveredHighlight={hoveredHighlight}
-                    modelId={modelId}
-                    mode={mode}
-                  />
+        <Container maxWidth="xl">
+          <div className={classes.allContentWrapper}>
+            <div className={classes.upperWrapper}>
+              <div classes={classes.textWrapper}>
+                <Typography variant="h6" className={classes.headerText}>
+                  Instructions
+                </Typography>
+                <Typography variant="body1" gutterBottom>
+                  Use your mouse to highlight the characters, word, or words you would like
+                  to replace with a parameter. A form will open in a separate panel for you to
+                  add details about your parameter after you&apos;ve highlighted your selection.
+                </Typography>
+                <Typography variant="body1" gutterBottom>
+                  After filling out the form and saving your parameter annotation, you can
+                  continue to add more parameters by highlighting more text. New selections
+                  cannot overlap with existing parameters.
                 </Typography>
               </div>
-            </CardContent>
-          </Card>
-          <div className={classes.allTemplatesButtonWrapper}>
-            <Button
-              onClick={() => setTemplatesDrawerOpen((prevDrawer) => !prevDrawer)}
-              variant="outlined"
-              disabled={!highlights.length}
-              className={classes.allTemplatesButton}
-            >
-              {`${templatesDrawerOpen ? 'Hide' : 'View'} All Parameters`}
-            </Button>
+              <Button
+                onClick={() => setTemplatesDrawerOpen((prevDrawer) => !prevDrawer)}
+                variant="outlined"
+                disabled={!highlights.length}
+                className={classes.allParamsButton}
+              >
+                {`${templatesDrawerOpen ? 'Hide' : 'View'} All Parameters`}
+              </Button>
+            </div>
+
+            <Typography variant="h6" className={classes.headerText} gutterBottom>
+              Your Text
+            </Typography>
+            <div className={classes.contentBox}>
+              <Typography component="div" className={classes.contentText}>
+                <TextAnnotater
+                  content={content}
+                  setHighlights={setHighlights}
+                  highlights={highlights}
+                  hoveredHighlight={hoveredHighlight}
+                  modelId={modelId}
+                  mode={mode}
+                />
+              </Typography>
+            </div>
           </div>
         </Container>
       </FullScreenDialog>
