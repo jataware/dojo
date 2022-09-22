@@ -71,17 +71,6 @@ function DatasetSummaryDetails({ dataset }) {
             <b> ID: </b> {dataset.id}
           </Typography>
           <br />
-          <Typography variant="body2" className={classes.buttonWrapper}>
-            <Button
-              variant="outlined"
-              color="primary"
-              href={`https://causemos.uncharted.software/#/dataset/${dataset.id}/datasetOverview`}
-              target="_blank"
-              rel="noopener"
-            >
-              View In Causemos
-            </Button>
-          </Typography>
 
           <DatasetDownload dataset={dataset} className={classes.buttonWrapper} />
 
