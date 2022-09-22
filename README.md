@@ -23,10 +23,27 @@ To view logs: `$ make logs` or `$ docker-compose logs {service-name}`
 
 ## Endpoints
 
-* Phantom: http://localhost:8081/
-* Dojo-api: http://localhost:8000/
+* UI: http://localhost:8081/
+* API: http://localhost:8000/
 * Elasticsearch: http://localhost:9200/
 * Redis: http://localhost:6379/
+
+# Deploying
+
+To run the stack, the following services must be run:
+
+* Elasticsearch
+* Redis
+* Dojo API (dojo/api/Dockerfile)
+* Dojo workers (dojo/workers/rq-worker/Dockerfile)
+* Static file hosting (UI)
+
+To generate the static files for the UI:
+```bash
+cd phantom
+NODE_OPTIONS=--openssl-legacy-provider make compile
+```
+The compiled files required for hosting will be located in the `phantom-askem/ui/dist` folder.
 
 
 ## Loading images to the internal Docker server
