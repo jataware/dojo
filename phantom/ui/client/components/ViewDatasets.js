@@ -119,9 +119,11 @@ function ViewDatasets() {
     );
   }
 
+  /*
   if (!datasets?.length) {
     return <LoadingOverlay text="No Datasets Found" error />;
   }
+  */
 
   const toggleDeprecatedDatasets = () => {
     if (displayDeprecated) {
