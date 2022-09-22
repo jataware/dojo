@@ -29,7 +29,7 @@ const useStyles = makeStyles((theme) => ({
 const Transition = React.forwardRef((props, ref) => <Slide direction="up" ref={ref} {...props} />);
 
 const FullScreenDialog = ({
-  open, setOpen, onSave, children, title, showSave, noConfirm, ...props
+  open, setOpen, onSave, children, title, showSave, noConfirm, denseToolbar, ...props
 }) => {
   const saveVisible = showSave !== false;
   const [openConfirmCloseDialog, setOpenConfirmCloseDialog] = useState(false);
@@ -65,7 +65,7 @@ const FullScreenDialog = ({
         {...props}
       >
         <AppBar position="sticky">
-          <Toolbar>
+          <Toolbar variant={denseToolbar ? 'dense' : 'regular'}>
             <IconButton
               aria-label="close"
               color="inherit"

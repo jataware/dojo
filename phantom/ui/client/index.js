@@ -38,6 +38,7 @@ import DatasetAnnotate from './datasets/Annotate';
 export default function Main() {
   return (
     <Router>
+      <NavBar />
       <Switch>
         <Route component={LandingPage} exact path="/non-askem" />
         <Route component={Model} exact path="/model" />
@@ -65,7 +66,6 @@ ReactDOM.render(
   <ThemeProvider theme={theme}>
     <CssBaseline />
     <ThemeContextProvider>
-      <NavBar />
       <Main />
     </ThemeContextProvider>
   </ThemeProvider>,
