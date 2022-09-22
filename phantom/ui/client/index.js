@@ -66,7 +66,7 @@ ReactDOM.render(
     <CssBaseline />
     <ThemeContextProvider>
       <NavBar />
-      <ViewDatasets />
+      <Main />
     </ThemeContextProvider>
   </ThemeProvider>,
   document.getElementById('app')

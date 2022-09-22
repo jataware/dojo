@@ -6,12 +6,7 @@ class Settings(BaseSettings):
     BIND_PORT: int = 8000
     ELASTICSEARCH_URL: str
     ELASTICSEARCH_PORT: int = 9200
-    DMC_URL: str
-    DMC_PORT: int = 8080
-    DMC_USER: str
-    DMC_PASSWORD: str
-    DMC_LOCAL_DIR: str
-
+    
     DATASET_STORAGE_BASE_URL: str
     CSV_FILE_NAME: str = "raw_data.csv"
     DOJO_URL: str
