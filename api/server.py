@@ -5,26 +5,18 @@ from elasticsearch import Elasticsearch
 from fastapi import FastAPI
 
 from src import (
-    clouseau,
     data,
     dojo,
-    healthcheck,
     indicators,
-    models,
     phantom,
-    runs,
 )
 from src.settings import settings
 
 logger = logging.getLogger(__name__)
 
 api = FastAPI(docs_url="/")
-api.include_router(healthcheck.router, tags=["Health Check"])
-api.include_router(models.router, tags=["Models"])
 api.include_router(dojo.router, tags=["Dojo"])
-api.include_router(runs.router, tags=["Runs"])
 api.include_router(indicators.router, tags=["Indicators"])
-api.include_router(clouseau.router, prefix="/clouseau", tags=["Clouseau"])
 api.include_router(phantom.router, prefix="/phantom", tags=["Phantom"])
 api.include_router(data.router, tags=["Data"])
 

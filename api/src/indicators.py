@@ -32,9 +32,6 @@ from validation import IndicatorSchema, DojoSchema, MetadataSchema
 from src.settings import settings
 
 from src.dojo import search_and_scroll
-from src.ontologies import get_ontologies
-from src.causemos import notify_causemos
-from src.causemos import deprecate_dataset
 from src.utils import put_rawfile, get_rawfile, list_files
 from validation.IndicatorSchema import (
     IndicatorMetadataSchema,
@@ -194,15 +191,10 @@ def get_indicators(indicator_id: str) -> IndicatorSchema.IndicatorMetadataSchema
 @router.put("/indicators/{indicator_id}/publish")
 def publish_indicator(indicator_id: str):
     try:
-        # Update indicator model with ontologies from UAZ
         indicator = es.get(index="indicators", id=indicator_id)["_source"]
         indicator["published"] = True
-        data = get_ontologies(indicator, type="indicator")
-        logger.info(f"Sent indicator to UAZ")
-        es.index(index="indicators", body=data, id=indicator_id)
+        es.index(index="indicators", body=indicator, id=indicator_id)
 
-        # Notify Causemos that an indicator was created
-        notify_causemos(data, type="indicator")
     except Exception as e:
         logger.exception(e)
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
@@ -281,8 +273,6 @@ def deprecate_indicator(indicator_id: str):
         indicator["deprecated"] = True
         es.index(index="indicators", id=indicator_id, body=indicator)
 
-        # Tell Causemos to deprecate the dataset on their end
-        deprecate_dataset(indicator_id)
     except Exception as e:
         logger.exception(e)
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)

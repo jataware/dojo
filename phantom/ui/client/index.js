@@ -39,10 +39,10 @@ export default function Main() {
   return (
     <Router>
       <Switch>
-        <Route component={LandingPage} exact path="/" />
+        <Route component={LandingPage} exact path="/non-askem" />
         <Route component={Model} exact path="/model" />
         <Route component={ViewModels} exact path="/models" />
-        <Route component={ViewDatasets} exact path="/datasets" />
+        <Route component={ViewDatasets} exact path="/" />
         <Route component={DatasetAnnotate} exact path="/datasets/annotate" />
         <Route component={DatasetPreview} exact path="/datasets/preview" />
         <Route component={DatasetRegistrationStepper} path="/datasets/:flowslug/:step?/:datasetId?" />
