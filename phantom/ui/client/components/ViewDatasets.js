@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
+import { Link } from 'react-router-dom';
+
 import axios from 'axios';
 
 import Button from '@material-ui/core/Button';
@@ -228,6 +230,16 @@ function ViewDatasets() {
             setSearchedDatasets={setSearchedDatasets}
             datasets={displayedDatasets}
           />
+          <Button
+            component={Link}
+            size="large"
+            variant="outlined"
+            color="primary"
+            disableElevation
+            to="/datasets/register"
+          >
+            Register a New Dataset
+          </Button>
           <Button
             color="primary"
             disableElevation
