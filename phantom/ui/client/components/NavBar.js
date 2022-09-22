@@ -1,5 +1,7 @@
 import React, { useContext } from 'react';
 
+import { Link } from 'react-router-dom';
+
 import AppBar from '@material-ui/core/AppBar';
 import Button from '@material-ui/core/Button';
 import IconButton from '@material-ui/core/IconButton';
@@ -15,11 +17,12 @@ const useStyles = makeStyles((theme) => ({
   },
   toolbar: {
     padding: [[0, theme.spacing(5)]],
-    gap: theme.spacing(5),
+    gap: theme.spacing(3),
   },
   dojoIcon: {
     height: '40px',
     width: '40px',
+    marginRight: theme.spacing(1),
   },
   spacer: {
     flexGrow: 1,
@@ -38,7 +41,11 @@ const NavBar = () => {
     <AppBar position="static" classes={{ root: classes.appBarRoot }}>
       <Toolbar variant="dense" disableGutters className={classes.toolbar}>
         <Tooltip title="Dojo home" arrow>
-          <IconButton href="/" size="small">
+          <IconButton
+            component={Link}
+            to="/"
+            size="small"
+          >
             <img
               src="/assets/Dojo_Logo_black.svg"
               alt="Dojo Logo"
@@ -46,9 +53,27 @@ const NavBar = () => {
             />
           </IconButton>
         </Tooltip>
+        <Button
+          component={Link}
+          to="/models"
+        >
+          Models
+        </Button>
+        <Button
+          component={Link}
+          to="/datasets"
+        >
+          Datasets
+        </Button>
+        <Button
+          component={Link}
+          to="/runs"
+        >
+          Model Runs
+        </Button>
         <span className={classes.spacer} />
-        <Button href="https://www.dojo-modeling.com">Dojo Docs</Button>
-        <Button href="https://github.com/dojo-modeling/dojo">Dojo on GitHub</Button>
+        <Button href="https://www.dojo-modeling.com" target="_blank">Documentation</Button>
+        <Button href="https://github.com/dojo-modeling/dojo" target="_blank">GitHub</Button>
       </Toolbar>
     </AppBar>
   );

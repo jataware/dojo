@@ -1,211 +1,337 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
-import { Link } from 'react-router-dom';
+import axios from 'axios';
+
+import { Link as RouterLink } from 'react-router-dom';
 
 import Button from '@material-ui/core/Button';
-import Card from '@material-ui/core/Card';
-import CardActions from '@material-ui/core/CardActions';
-import CardContent from '@material-ui/core/CardContent';
 import Container from '@material-ui/core/Container';
 import CssBaseline from '@material-ui/core/CssBaseline';
-import Grid from '@material-ui/core/Grid';
+import Link from '@material-ui/core/Link';
 import Typography from '@material-ui/core/Typography';
+
+import ArrowForwardIcon from '@material-ui/icons/ArrowForward';
+import AssessmentIcon from '@material-ui/icons/Assessment';
+import ComputerIcon from '@material-ui/icons/Computer';
+import GitHubIcon from '@material-ui/icons/GitHub';
+import LoopIcon from '@material-ui/icons/Loop';
+import MenuBookIcon from '@material-ui/icons/MenuBook';
+
+import useSWRImmutable from 'swr/immutable';
+
 import { makeStyles } from '@material-ui/core/styles';
 
 const useStyles = makeStyles((theme) => ({
-  container: {
-    flex: 1,
+  topContentWrapper: {
     display: 'flex',
-    alignItems: 'center',
-    [theme.breakpoints.up('xl')]: {
-      paddingBottom: '10%'
-    }
+    justifyContent: 'center',
+    backgroundColor: '#06B8EF',
+    backgroundImage: 'linear-gradient(to right, #06B8EF, #A11BDA)',
+    color: 'white',
+    [theme.breakpoints.up('lg')]: {
+      padding: theme.spacing(4),
+    },
+    [theme.breakpoints.down('lg')]: {
+      padding: [[theme.spacing(3), theme.spacing(4), theme.spacing(1)]],
+    },
   },
-  paper: {
+  topHeaderTitle: {
+    fontSize: '5rem',
+    fontWeight: '450',
+    maxWidth: '900px',
+    [theme.breakpoints.up('lg')]: {
+      marginBottom: theme.spacing(6),
+    },
+    [theme.breakpoints.down('lg')]: {
+      marginBottom: theme.spacing(3),
+    },
+  },
+  topHeaderSubtitle: {
+    maxWidth: '70%',
+    [theme.breakpoints.up('lg')]: {
+      marginBottom: theme.spacing(6),
+    },
+    [theme.breakpoints.down('lg')]: {
+      marginBottom: theme.spacing(3),
+    },
+  },
+  bottomContentWrapper: {
+    backgroundColor: theme.palette.grey[100],
+    padding: theme.spacing(4),
+    height: '100%',
+    [theme.breakpoints.down('lg')]: {
+      padding: [[theme.spacing(3), theme.spacing(4), theme.spacing(4)]],
+    },
+  },
+  bottomContentContainer: {
     display: 'flex',
     flexDirection: 'column',
+    justifyContent: 'space-between',
+    height: '100%',
+  },
+  linksWrapper: {
+    display: 'flex',
+    gap: theme.spacing(4),
+    alignItems: 'flex-start',
+    marginBottom: theme.spacing(3),
+
+  },
+  links: {
+    display: 'flex',
+    gap: theme.spacing(4),
+    flexWrap: 'wrap',
+  },
+  link: {
+    display: 'block',
+    color: 'black',
+    textDecoration: 'underline',
+  },
+  linkCta: {
+    display: 'flex',
     alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: theme.spacing(1),
+    maxWidth: '220px',
+    minWidth: '220px',
   },
-  avatar: {
-    margin: theme.spacing(25, 0, 0),
-    backgroundColor: theme.palette.primary.main,
+  resizedLabel: {
+    ...theme.typography.h6,
   },
-  form: {
-    width: '100%', // Fix IE 11 issue.
-    marginTop: theme.spacing(3),
+  learnMoreLoggedIn: {
+    marginTop: theme.spacing(10),
   },
-  submit: {
-    margin: theme.spacing(3, 0, 2),
+  learnMoreLoggedOut: {
+    marginTop: theme.spacing(6),
   },
-  model_data: {
-    margin: theme.spacing(3, 0, 2),
+  button: {
+    color: 'black',
+    backgroundColor: 'white',
+    minWidth: '230px',
   },
-  pos: {
-    marginTop: 5,
-  },
-  maincard: {
-    background: '#7789ff36'
+  bigIcon: {
+    fontSize: '3rem',
   },
 }));
 
+const fetcher = (url) => axios.get(url).then((res) => res.data);
+
+const useModels = () => {
+  // use immutable version of SWR to only load data when the page initially loads
+  // since we're just getting the 'hits' for the total count
+  const { data, error } = useSWRImmutable('/api/dojo/models/latest', fetcher);
+
+  return {
+    models: data,
+    modelsLoading: !data && !error,
+    modelsError: error,
+  };
+};
+
+const useRuns = () => {
+  const { data, error } = useSWRImmutable('/api/dojo/runs', fetcher);
+
+  return {
+    runs: data,
+    runsLoading: !data && !error,
+    runsError: error,
+  };
+};
+
 const LandingPage = () => {
   const classes = useStyles();
+  const [loggedIn] = useState(true);
+
+  const { models, modelsLoading, modelsError } = useModels();
+  const { runs, runsLoading, runsError } = useRuns();
 
   useEffect(() => {
     document.title = 'Home - Dojo';
   }, []);
 
-  // const dataUrl = process.env.ANNOTATE_UI_URL ? process.env.ANNOTATE_UI_URL : 'https://data.wm.dojo-modeling.com/';
-  // const dataUrl = 'https://data.wm.dojo-modeling.com/';
-
   return (
-    <Container
-      component="main"
-      maxWidth="md"
-      className={classes.container}
-    >
+    <>
       <CssBaseline />
-      <div className={classes.paper}>
-        <img src="./assets/Dojo_Logo_profile.png" alt="Dojo Icon" width="80" height="100" />
+      <div className={classes.topContentWrapper}>
+        <Container maxWidth="lg">
 
-        <Typography component="h3" variant="h4">
-          Welcome to Dojo
-        </Typography>
+          {/* Always line break before 'and datasets' because it scans better */}
+          <Typography variant="h1" className={classes.topHeaderTitle}>
+            Dojo helps researchers share their models <br />and datasets
+          </Typography>
+          <Typography variant="h6" className={classes.topHeaderSubtitle}>
+            Create containerized, shareable models for reproduceable research with easy-to-consume
+            outputs. Register and transform datasets for use in downstream modeling workflows.
+          </Typography>
+          <div className={classes.linksWrapper}>
+            <Typography variant="h4" align="center" className={classes.linkCta}>
+              Get started <ArrowForwardIcon fontSize="large" />
+            </Typography>
+            <div className={classes.links}>
+              {loggedIn ? (
+                <>
+                  <Button
+                    component={RouterLink}
+                    color="inherit"
+                    data-test="landingPageModelForm"
+                    to="/model"
+                    variant="contained"
+                    disableElevation
+                    size="large"
+                    endIcon={<ComputerIcon />}
+                    className={classes.button}
+                  >
+                    Register a Model
+                  </Button>
 
-        <Grid
-          container
-          direction="row"
-          justify="center"
-          alignItems="center"
-          className={classes.model_data}
-          spacing={4}
-        >
-
-          <Grid item xs={12} sm={6}>
-            <Card className={classes.maincard}>
-              <CardContent>
-                <Typography variant="h5" component="h2">
-                  Register A Model
-                </Typography>
-                <Typography className={classes.pos} color="textSecondary">
-                  Register an executable model.
-                </Typography>
-              </CardContent>
-              <CardActions>
-                <Button
-                  component={Link}
-                  color="primary"
-                  data-test="landingPageModelForm"
-                  to="/model"
-                  size="small"
-                  variant="contained"
-                >
-                  Go!
-                </Button>
-              </CardActions>
-            </Card>
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <Card className={classes.maincard}>
-              <CardContent>
-                <Typography variant="h5" component="h2">
-                  Register a Dataset
-                </Typography>
-                <Typography className={classes.pos} color="textSecondary">
-                  Register a Dataset.
-                </Typography>
-              </CardContent>
-              <CardActions>
-                <Button
-                  component={Link}
-                  size="small"
-                  variant="contained"
-                  color="primary"
-                  to="/datasets/register"
-                >
-                  Go!
-                </Button>
-              </CardActions>
-            </Card>
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <Card className={classes.maincard}>
-              <CardContent>
-                <Typography variant="h5" component="h2">
-                  View Existing Models
-                </Typography>
-                <Typography className={classes.pos} color="textSecondary">
-                  Revisit a previously registered model.
-                </Typography>
-              </CardContent>
-              <CardActions>
-                <Button
-                  component={Link}
-                  size="small"
-                  variant="contained"
-                  color="primary"
-                  to="/models"
-                  data-test="landingPageViewModels"
-                >
-                  Go!
-                </Button>
-              </CardActions>
-            </Card>
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <Card className={classes.maincard}>
-              <CardContent>
-                <Typography variant="h5" component="h2">
-                  View Existing Datasets
-                </Typography>
-                <Typography className={classes.pos} color="textSecondary">
-                  Revisit a previously registered dataset.
-                </Typography>
-              </CardContent>
-              <CardActions>
-                <Button
-                  component={Link}
-                  size="small"
-                  variant="contained"
-                  color="primary"
-                  to="/datasets"
-                >
-                  Go!
-                </Button>
-              </CardActions>
-            </Card>
-          </Grid>
-
-          <Grid item xs={12} sm={6}>
-            <Card className={classes.maincard}>
-              <CardContent>
-                <Typography variant="h5" component="h2">
-                  View Model Runs
-                </Typography>
-                <Typography className={classes.pos} color="textSecondary">
-                  Examine previously run model history.
-                </Typography>
-              </CardContent>
-              <CardActions>
-                <Button
-                  size="small"
-                  variant="contained"
-                  color="primary"
-                  component={Link}
-                  to="/runs"
-                >
-                  Go
-                </Button>
-              </CardActions>
-            </Card>
-          </Grid>
-
-        </Grid>
+                  <Button
+                    component={RouterLink}
+                    variant="contained"
+                    color="inherit"
+                    to="/datasets/register"
+                    disableElevation
+                    size="large"
+                    endIcon={<AssessmentIcon />}
+                    className={classes.button}
+                  >
+                    Register a Dataset
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Button
+                    variant="contained"
+                    color="inherit"
+                    // eslint-disable-next-line no-alert
+                    onClick={() => alert('This feature has not been implemented yet.')}
+                    disableElevation
+                    size="large"
+                    className={classes.button}
+                  >
+                    Create an account
+                  </Button>
+                  <Button
+                    variant="contained"
+                    color="inherit"
+                    // eslint-disable-next-line no-alert
+                    onClick={() => alert('This feature has not been implemented yet.')}
+                    disableElevation
+                    size="large"
+                    className={classes.button}
+                  >
+                    Log In
+                  </Button>
+                </>
+              )}
+            </div>
+          </div>
+        </Container>
       </div>
-    </Container>
+      <div className={classes.bottomContentWrapper}>
+        <Container maxWidth="lg" className={classes.bottomContentContainer}>
+          {loggedIn ? (
+            <div className={classes.linksWrapper}>
+              {/* specific top margin to center this on the existing model text */}
+              <Typography
+                variant="h4"
+                align="center"
+                className={classes.linkCta}
+                style={{ marginTop: '50px' }}
+              >
+                Or continue <ArrowForwardIcon fontSize="large" />
+              </Typography>
+              <div className={classes.links}>
+                <div>
+                  <ComputerIcon className={classes.bigIcon} />
+                  <Typography
+                    component={RouterLink}
+                    to="/models"
+                    variant="h5"
+                    className={classes.link}
+                  >
+                    View existing models
+                  </Typography>
+                  <Typography variant="subtitle1">
+                    Browse {
+                      modelsLoading || modelsError ? 'all' : <b>{models?.hits}</b>
+                    } registered models
+                  </Typography>
+                </div>
+                <div>
+                  <AssessmentIcon className={classes.bigIcon} />
+                  <Typography
+                    component={RouterLink}
+                    to="/datasets"
+                    variant="h5"
+                    className={classes.link}
+                  >
+                    View existing datasets
+                  </Typography>
+                  <Typography variant="subtitle1">
+                    Browse all registered datasets
+                  </Typography>
+                </div>
+                <div>
+                  <LoopIcon className={classes.bigIcon} />
+                  <Typography
+                    component={RouterLink}
+                    to="/runs"
+                    variant="h5"
+                    className={classes.link}
+                  >
+                    View existing model runs
+                  </Typography>
+                  <Typography variant="subtitle1">
+                    Browse {
+                      runsLoading || runsError ? 'all' : <b>{runs?.hits}</b>
+                    } existing model runs
+                  </Typography>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div>
+              <img
+                src="./assets/terminal-screenshot.png"
+                alt="Terminal Emulator Page"
+                height="450"
+                style={{ borderRadius: '16px' }}
+              />
+            </div>
+          )}
+          <div className={loggedIn ? classes.learnMoreLoggedIn : classes.learnMoreLoggedOut}>
+            <Typography variant="h6" component="div" gutterBottom>
+              Learn more about Dojo
+            </Typography>
+            <div className={classes.links}>
+              <div>
+                <MenuBookIcon fontSize="large" />
+                <Typography
+                  component={Link}
+                  href="https://www.dojo-modeling.com"
+                  target="_blank"
+                  variant="h6"
+                  className={classes.link}
+                >
+                  Check out the docs
+                </Typography>
+              </div>
+              <div>
+                <GitHubIcon fontSize="large" />
+                <Typography
+                  component={Link}
+                  href="https://github.com/dojo-modeling"
+                  target="_blank"
+                  variant="h6"
+                  className={classes.link}
+                >
+                  Check out Dojo on GitHub
+                </Typography>
+              </div>
+            </div>
+          </div>
+        </Container>
+      </div>
+    </>
   );
 };
 
