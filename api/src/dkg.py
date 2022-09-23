@@ -36,7 +36,7 @@ def search_ontologies(term: str):
         logger.exception(e)
         return {}
 
-@router.get("/dkg/get/{ontology_id}")
+@router.get("/dkg/term/{ontology_id}")
 def get_ontologies(ontology_id: str):
     """
     Wraps fetch functionality from the DKG.
