@@ -64,10 +64,3 @@ def get_ontologies(ontology_id: str):
         logger.exception(e)
         return {}
 
-   
-
-def attach_ontology(ontology_id: str, dataset_id: str):
-    """
-    Save ontology information to a feature 
-    """
-    pass
