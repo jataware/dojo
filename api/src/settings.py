@@ -24,6 +24,8 @@ class Settings(BaseSettings):
 
     UVICORN_RELOAD: bool = False
 
+    DKG_URL : str
+
     UAZ_URL: str = ""
     UAZ_THRESHOLD: str = ""
     UAZ_HITS: str = ""

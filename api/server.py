@@ -6,6 +6,7 @@ from fastapi import FastAPI
 
 from src import (
     data,
+    dkg,
     dojo,
     indicators,
     phantom,
@@ -17,6 +18,7 @@ logger = logging.getLogger(__name__)
 api = FastAPI(docs_url="/")
 api.include_router(dojo.router, tags=["Dojo"])
 api.include_router(indicators.router, tags=["Indicators"])
+api.include_router(dkg.router, tags=["DKG"])
 api.include_router(phantom.router, prefix="/phantom", tags=["Phantom"])
 api.include_router(data.router, tags=["Data"])
 
