@@ -5,11 +5,12 @@ import './style.css';
 import CssBaseline from '@material-ui/core/CssBaseline';
 import KeyCloak from 'keycloak-js';
 import ReactDOM from 'react-dom';
-
+import { ReactKeycloakProvider, useKeycloak } from "@react-keycloak/web";
 import {
   Route,
   BrowserRouter as Router,
   Switch,
+  Redirect,
 } from 'react-router-dom';
 
 import { ThemeProvider } from '@material-ui/core/styles';
@@ -37,11 +38,18 @@ import DatasetRegistrationStepper from './datasets/RegistrationStepper';
 import DatasetPreview from './datasets/Preview';
 import DatasetAnnotate from './datasets/Annotate';
 
-let keycloak;
+
+const auth_base = 'http://localhost:8079';
+const keycloak = new KeyCloak({
+  url: auth_base,
+  realm: 'Uncharted',
+  clientId: 'causemos',
+});
+
 
 export default function Main() {
   return (
-    <AuthWrapper>
+    <ReactKeycloakProvider authClient={keycloak}>
       <Router>
         <NavBar />
         <Switch>
@@ -64,82 +72,22 @@ export default function Main() {
           <Route path="/*" render={() => <h2>404 Not Found</h2>} />
         </Switch>
       </Router>
-    </AuthWrapper>
+    </ReactKeycloakProvider>
   );
 }
 
-const authContext = createContext();
-
-function AuthWrapper({ children }) {
-  
-  const auth_base = 'http://localhost:8079';
-  keycloak = new KeyCloak({
-    url: auth_base,
-    realm: 'Uncharted',
-    clientId: 'causemos',
-  });
-  keycloak.init({
-    onLoad: 'check-sso',
-    enableLogging: true,
-  }).then((authenticated) => {
-    console.log(authenticated);
-    if (authenticated) {
-      keycloak.loadUserInfo().then((userInfo) => {
-        console.log(userInfo);
-        // setUser(userInfo);
-      });
-    }
-    else {
-      // setUser(false);
-    }
-  });
-  console.log(keycloak);
-
-  return (
-    <authContext.Provider value={{}}>
-      {children}
-    </authContext.Provider>
-  )
-}
-
-function useAuth() {
-  console.log("useAuth");
-  console.log(authContext);
-  return useContext(authContext);
-}
-
-
 function ProtectedRoute({ children, ...props }) {
-  const [user, setUser] = useState(null);
-
-  let auth = useAuth();
-  console.log(auth);
-  console.log(props);
-  console.log("auth");
-  // if (auth.user === null) {
-  //   return <h1>Loading</h1>
-  // }
-  // else {
-  //   console.log(auth);
-  //   return <h1>LOADED!!!!!</h1>
-  // }
-  // if (!weycloak.authenticated) {
-  //   keycloak.login();
-  //   console.log("Not logged in!"); //   console.log(keycloak);
-
-  //   // window.location = "/";
-  //   // return <h1>Not logged in. Redirecting home.</h1>;
-  // }
-  // else {
-  //   console.log("Logged in!");
-  //   return <Route {...props} render={
-  //     ({ location }) => {
-  //       return children;
-  //     }
-  //   }
-  //   />
-  // }
-  return {user: user}
+  const { keycloak } = useKeycloak();
+  console.log(keycloak);
+  const isLoggedIn = keycloak.authenticated;
+  if (isLoggedIn) {
+    return <Route {...props} render={ () => children }/>
+  }
+  else {
+    keycloak.login();
+    return <h1>Redirecting to login</h1>
+    // return <Redirect to="/"/>
+  }
 }
 
 ReactDOM.render(
