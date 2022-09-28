@@ -232,14 +232,15 @@ def publish_indicator(indicator_id: str):
 
         # TODO: Move these to plugins
         # prepare and save to postgres
-        logger.info("Preparing data for sql")
-        validated_features, validated_qualifiers = prepare_indicator_for_database(indicator)
-        logger.info("Finished preparing data for sql")
-        logger.info('Saving features')
-        save_to_sql(validated_features, 'feature')
-        logger.info('Saving qualifiers')
-        save_to_sql(validated_qualifiers, 'qualifier')
-        logger.info('Finished posting to sql')
+        if settings.WRITE_DATASET_TO_DB:
+            logger.info("Preparing data for sql")
+            validated_features, validated_qualifiers = prepare_indicator_for_database(indicator)
+            logger.info("Finished preparing data for sql")
+            logger.info('Saving features')
+            save_to_sql(validated_features, 'feature')
+            logger.info('Saving qualifiers')
+            save_to_sql(validated_qualifiers, 'qualifier')
+            logger.info('Finished posting to sql')
     except Exception as e:
         logger.exception(e)
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)

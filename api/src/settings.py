@@ -45,6 +45,8 @@ class Settings(BaseSettings):
     POSTGRES_PASSWORD: str = ""
     POSTGRES_DB: str = ""
     POSTGRES_USER: str = ""
+    DATASET_DB_URL: str = ""
+    WRITE_DATASET_TO_DB: bool = False
 
     class Config:
         case_sensitive = True

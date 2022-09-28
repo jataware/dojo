@@ -1,5 +1,5 @@
 from sqlmodel import create_engine
+from src.settings import settings
 
-SQLALCHEMY_DATABASE_URL = "postgresql://api_postgres:api_postgres@api-postgres/api_postgres"
 
-engine = create_engine(SQLALCHEMY_DATABASE_URL,  echo=True)
+engine = create_engine(settings.DATASET_DB_URL,  echo=True)
