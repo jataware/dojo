@@ -42,6 +42,10 @@ class Settings(BaseSettings):
         "logger": "src.plugins.logging.LoggingPlugin",
     }
 
+    POSTGRES_PASSWORD: str = ""
+    POSTGRES_DB: str = ""
+    POSTGRES_USER: str = ""
+
     class Config:
         case_sensitive = True
         env_file = ".env"

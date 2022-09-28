@@ -9,7 +9,7 @@ import uuid
 from datetime import datetime
 from typing import Any, Dict, Generator, List, Optional
 from urllib.parse import urlparse
-
+from .sql import prepare_indicator_for_database, save_to_sql, create_db_and_tables, select_data
 import json
 import pandas as pd
 
@@ -203,6 +203,43 @@ def get_indicators(indicator_id: str) -> IndicatorSchema.IndicatorMetadataSchema
         logger.exception(e)
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     return indicator
+
+@router.put("/indicators/{indicator_id}/publish2")
+def publish_test(indicator_id:str):
+    try:
+        # Update indicator model with ontologies from UAZ
+        indicator = es.get(index="indicators", id=indicator_id)["_source"]
+        indicator["published"] = True
+
+        # data = get_ontologies(indicator, type="indicator")
+        # logger.info(f"Sent indicator to UAZ")
+        # es.index(index="indicators", body=data, id=indicator_id)
+
+        # Notify Causemos that an indicator was created
+        # notify_causemos(data, type="indicator")
+        logger.info('here')
+        validated_features, validated_qualifiers=prepare_indicator_for_database(indicator)
+        logger.info('saving features')
+        save_to_sql(validated_features,'feature')
+        logger.info('saving qualifiers')
+        save_to_sql(validated_qualifiers, 'qualifier')
+        logger.info('after')
+    except Exception as e:
+        logger.exception(e)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    return Response(
+        status_code=status.HTTP_200_OK,
+        headers={"location": f"/api/indicators/{indicator_id}/publish"},
+        content=f"Published indicator with id {indicator_id}",
+    )
+
+@router.get('/postgres')
+def create_db():
+    create_db_and_tables()
+
+@router.get('/postgres_values')
+def view_db():
+    select_data()
 
 
 @router.put("/indicators/{indicator_id}/publish")
