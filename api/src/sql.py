@@ -125,6 +125,7 @@ def feature_to_type(row, mapping):
 def set_column_types(df,type, columns=[]):
 
     for col in columns:
+        # df[col].apply(lambda v: type(v) if type(v) != 'nan' else None)
         df[col] = df[col].astype(type)
     return df
 

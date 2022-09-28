@@ -211,13 +211,6 @@ def publish_test(indicator_id:str):
         indicator = es.get(index="indicators", id=indicator_id)["_source"]
         indicator["published"] = True
 
-        # data = get_ontologies(indicator, type="indicator")
-        # logger.info(f"Sent indicator to UAZ")
-        # es.index(index="indicators", body=data, id=indicator_id)
-
-        # Notify Causemos that an indicator was created
-        # notify_causemos(data, type="indicator")
-        logger.info('here')
         validated_features, validated_qualifiers=prepare_indicator_for_database(indicator)
         logger.info('saving features')
         save_to_sql(validated_features,'feature')
@@ -258,6 +251,17 @@ def publish_indicator(indicator_id: str):
         notify_causemos(data, type="indicator")
         plugin_action("register", data=indicator, type="indicator")
         plugin_action("post_register", data=indicator, type="indicator")
+
+        # TODO: Move these to plugins
+        # prepare and save to postgres
+        logger.info("Preparing data for sql")
+        validated_features, validated_qualifiers = prepare_indicator_for_database(indicator)
+        logger.info("Finished preparing data for sql")
+        logger.info('Saving features')
+        save_to_sql(validated_features, 'feature')
+        logger.info('Saving qualifiers')
+        save_to_sql(validated_qualifiers, 'qualifier')
+        logger.info('Finished posting to sql')
     except Exception as e:
         logger.exception(e)
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
