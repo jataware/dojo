@@ -204,28 +204,6 @@ def get_indicators(indicator_id: str) -> IndicatorSchema.IndicatorMetadataSchema
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     return indicator
 
-@router.put("/indicators/{indicator_id}/publish2")
-def publish_test(indicator_id:str):
-    try:
-        # Update indicator model with ontologies from UAZ
-        indicator = es.get(index="indicators", id=indicator_id)["_source"]
-        indicator["published"] = True
-
-        validated_features, validated_qualifiers=prepare_indicator_for_database(indicator)
-        logger.info('saving features')
-        save_to_sql(validated_features,'feature')
-        logger.info('saving qualifiers')
-        save_to_sql(validated_qualifiers, 'qualifier')
-        logger.info('after')
-    except Exception as e:
-        logger.exception(e)
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-    return Response(
-        status_code=status.HTTP_200_OK,
-        headers={"location": f"/api/indicators/{indicator_id}/publish"},
-        content=f"Published indicator with id {indicator_id}",
-    )
-
 @router.get('/postgres')
 def create_db():
     create_db_and_tables()
