@@ -29,6 +29,7 @@ default_columns = [
         "value",
     ]
 
+
 # create SQLModel classes
 class Feature(SQLModel, table=True):
     feature_id: str = Field(default=None, primary_key=True)
@@ -55,6 +56,7 @@ class Qualifier(SQLModel, table=True):
     qualifier_value: Optional[str]  = Field(title="qualifier_value")
 
     feature_id: str = Field(default=None, foreign_key="feature.feature_id")
+
 
 # validation wrapper
 def validate_data_schema(data_schema: ModelMetaclass):
@@ -91,10 +93,10 @@ def validate_data_schema(data_schema: ModelMetaclass):
 def return_validated_feature(df) -> pd.DataFrame:
     return df
 
+
 @validate_data_schema(data_schema=Qualifier)
 def return_validated_qualifier(df) -> pd.DataFrame:
     return df
-
 
 
 def return_mapping_value_types(indicator):
@@ -201,16 +203,15 @@ def prepare_indicator_for_database(indicator):
 
         # create primary key - feature_id for each row.
         df["dataset_id"] = indicator_id
+        df = df.reset_index(drop=True)
+
         df["row_id"] = df.index
         df["feature_id"] = df.apply(
             lambda x: hashlib.sha224(
                 str(indicator_id).encode("utf-8") + str(x["row_id"]).encode("utf-8")
             ).hexdigest(),
-            axis=1,
+            axis=1
         )
-
-        # make a copy
-        df_copy=df.copy()
 
         #create feature df
         feature_df = create_feature_dataframe(df, feature_mapping)
@@ -221,7 +222,7 @@ def prepare_indicator_for_database(indicator):
 
         # create qualifier df
         qualifier_df = create_qualifier_dataframe(
-            df_copy, feature_mapping, qualifier_mapping
+            df, feature_mapping, qualifier_mapping
         )
 
         # validate qualifier df
