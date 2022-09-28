@@ -50,7 +50,6 @@ class Feature(SQLModel, table=True):
 
 class Qualifier(SQLModel, table=True):
     qualifier_id: Optional[int] = Field(default=None, primary_key=True)
-    dataset_id: constr(strict=True) = Field(title="Dataset id")
     qualifier_name: constr(strict=True) = Field(title="qualifier_name")
     qualifier_type: constr(strict=True) = Field(title="qualifier_type")
     qualifier_value: Optional[str]  = Field(title="qualifier_value")
@@ -134,9 +133,10 @@ def set_column_types(df,type, columns=[]):
 
 def create_qualifier_dataframe(df, feature_mapping, qualifier_mapping):
     qualifier_df = df.drop(
-        default_columns,
+        default_columns+['dataset_id'],
         axis=1,
     )
+
     for col in feature_mapping.keys():
         try:
             qualifier_df.drop(col)
@@ -146,7 +146,7 @@ def create_qualifier_dataframe(df, feature_mapping, qualifier_mapping):
     # wide to long
     qualifier_df_long = pd.melt(
         qualifier_df,
-        id_vars=["dataset_id", "feature_id"],
+        id_vars=["feature_id"],
         value_vars=list(qualifier_mapping.keys()),
         var_name="feature",
         value_name="qualifier_value",
@@ -163,7 +163,7 @@ def create_qualifier_dataframe(df, feature_mapping, qualifier_mapping):
     qualifier_df_long=set_column_types(
         df=qualifier_df_long,
         type=str,
-        columns=["qualifier_value", "dataset_id","qualifier_name", "feature_id"])
+        columns=["qualifier_value","qualifier_name", "feature_id"])
 
     return qualifier_df_long
 
