@@ -221,16 +221,17 @@ def prepare_indicator_for_database(indicator):
         # validate feature df
         validated_features = return_validated_feature(feature_df)
 
+        validated_qualifiers=None
+        if len(qualifier_mapping)>0:
+            # create qualifier df
+            qualifier_df = create_qualifier_dataframe(
+                df, feature_mapping, qualifier_mapping
+            )
 
-        # create qualifier df
-        qualifier_df = create_qualifier_dataframe(
-            df, feature_mapping, qualifier_mapping
-        )
+            # validate qualifier df
+            validated_qualifiers=return_validated_qualifier(qualifier_df)
 
-        # validate qualifier df
-        validated_qualifiers=return_validated_qualifier(qualifier_df)
-
-        # create feature dataframe
+            # create feature dataframe
 
 
         return validated_features, validated_qualifiers
@@ -241,12 +242,13 @@ def prepare_indicator_for_database(indicator):
 
 def save_to_sql(validated_df, table):
     try:
-        validated_df.to_sql(
-            table,
-            engine,
-            if_exists='append',
-            index=False
-        )
+        if validated_df is not None:
+            validated_df.to_sql(
+                table,
+                engine,
+                if_exists='append',
+                index=False
+            )
 
         # if you want to save row by row.
         # save_to_sql_row_by_row(validated_df,table)
@@ -288,7 +290,6 @@ def save_to_sql_row_by_row(validated_df, table):
 
 def feature_dataset(dataset_id):
     try:
-        logger.info(f'ssds {dataset_id}')
         with Session(engine) as session:
             Features_ = session.exec(select(Feature).where(Feature.dataset_id == str(dataset_id))).all()
             logger.info(Features_)
