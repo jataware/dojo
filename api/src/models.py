@@ -15,7 +15,8 @@ from validation import ModelSchema, DojoSchema
 
 from src.settings import settings
 from src.dojo import search_and_scroll, copy_configs, copy_outputfiles, copy_directive, copy_accessory_files
-from src.utils import run_model_with_defaults, plugin_action
+from src.plugins import plugin_action
+from src.utils import run_model_with_defaults
 
 router = APIRouter()
 
@@ -73,9 +74,9 @@ def create_model(payload: ModelSchema.ModelMetadataSchema):
         )
 
 
-    plugin_action("before_create", data=model, type="model")
+    plugin_action("before_create", data=body, type="model")
     es.index(index="models", body=json.loads(body), id=model_id)
-    plugin_action("post_create", data=model, type="model")
+    plugin_action("post_create", data=body, type="model")
 
     return Response(
         status_code=status.HTTP_201_CREATED,

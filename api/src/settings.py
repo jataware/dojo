@@ -1,4 +1,7 @@
-from pydantic import BaseSettings
+from pydantic import BaseSettings, PyObject
+from typing import Dict
+from src.plugins import PluginHandler
+from fastapi.logger import logger
 
 
 class Settings(BaseSettings):
@@ -33,7 +36,7 @@ class Settings(BaseSettings):
     UAZ_THRESHOLD: str = ""
     UAZ_HITS: str = ""
 
-    PLUGINS: Dict[str, PyObject] = {
+    PLUGINS: Dict[str, str] = {
         # "my_plugin": "plugin_module.MyPlugin",  # Where plugin_module.MyPlugin is an importable dotted path and MyPlugin
                                                   # is a subclass of utils.PluginInterface
         "logger": "src.plugins.logging.LoggingPlugin",
@@ -48,6 +51,4 @@ class Settings(BaseSettings):
 settings = Settings()
 
 # Instantiate plugins defined via the settings
-settings.PLUGINS = {
-    key: cls() for key, cls in settings.PLUGINS.items()
-}
+settings.PLUGINS = PluginHandler(settings.PLUGINS)

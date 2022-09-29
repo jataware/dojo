@@ -35,7 +35,8 @@ from src.dojo import search_and_scroll
 from src.ontologies import get_ontologies
 from src.causemos import notify_causemos
 from src.causemos import deprecate_dataset
-from src.utils import put_rawfile, get_rawfile, list_files, plugin_action
+from src.utils import put_rawfile, get_rawfile, list_files
+from src.plugins import plugin_action
 from validation.IndicatorSchema import (
     IndicatorMetadataSchema,
     QualifierOutput,
@@ -64,21 +65,17 @@ def create_indicator(payload: IndicatorSchema.IndicatorMetadataSchema):
     body = payload.json()
     payload.published = False
 
-    plugin_action("before_create", data=indicator, type="indicator")
+    plugin_action("before_create", data=body, type="indicator")
     es.index(index="indicators", body=body, id=indicator_id)
-    plugin_action("post_create", data=indicator, type="indicator")
+    plugin_action("post_create", data=body, type="indicator")
 
 
     empty_annotations_payload = MetadataSchema.MetaModel(metadata={}).json()
     # (?): SHOULD WE HAVE PLUGINS AROUND THE ANNOTATION CREATION?
-    plugin_action("before_create", data=indicator, type="annotation")
+    plugin_action("before_create", data=body, type="annotation")
     es.index(index="annotations", body=empty_annotations_payload, id=indicator_id)
-    plugin_action("post_create", data=indicator, type="annotation")
+    plugin_action("post_create", data=body, type="annotation")
 
-    # Indicators are registered immediately upon being created or updated
-    plugin_action("before_register", data=indicator, type="indicator")
-    plugin_action("register", data=indicator, type="indicator")
-    plugin_action("post_register", data=indicator, type="indicator")
  
 
     return Response(
@@ -97,15 +94,10 @@ def update_indicator(payload: IndicatorSchema.IndicatorMetadataSchema):
     payload.created_at = current_milli_time()
     body = payload.json()
 
-    plugin_action("before_update", data=indicator, type="indicator")
+    plugin_action("before_update", data=body, type="indicator")
     es.index(index="indicators", body=body, id=indicator_id)
-    plugin_action("post_update", data=indicator, type="indicator")
+    plugin_action("post_update", data=body, type="indicator")
 
-    # Indicators are registered immediately upon being created or updated
-    plugin_action("before_register", data=indicator, type="indicator")
-    plugin_action("register", data=indicator, type="indicator")
-    plugin_action("post_register", data=indicator, type="indicator")
- 
     return Response(
         status_code=status.HTTP_200_OK,
         headers={"location": f"/api/indicators/{indicator_id}"},
@@ -224,7 +216,11 @@ def publish_indicator(indicator_id: str):
         es.index(index="indicators", body=data, id=indicator_id)
 
         # Notify Causemos that an indicator was created
+        plugin_action("before_register", data=indicator, type="indicator")
+        # TODO: Move notify_causemose only to causemos plugin
         notify_causemos(data, type="indicator")
+        plugin_action("register", data=indicator, type="indicator")
+        plugin_action("post_register", data=indicator, type="indicator")
     except Exception as e:
         logger.exception(e)
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
