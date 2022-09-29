@@ -9,7 +9,7 @@ import uuid
 from datetime import datetime
 from typing import Any, Dict, Generator, List, Optional
 from urllib.parse import urlparse
-from .sql import prepare_indicator_for_database, save_to_sql, create_db_and_tables, select_data
+from .sql import save_indicator_to_sql, create_db_and_tables, feature_dataset, Feature, Qualifier, feature_datasets
 import json
 import pandas as pd
 
@@ -204,14 +204,18 @@ def get_indicators(indicator_id: str) -> IndicatorSchema.IndicatorMetadataSchema
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     return indicator
 
-@router.get('/postgres')
+@router.get('/create_postgres_tables')
 def create_db():
     create_db_and_tables()
 
-@router.get('/postgres_values')
-def view_db():
-    select_data()
+@router.get('/features',response_model=List[Feature])
+def view_features():
+    return feature_datasets()
 
+@router.get('/features/{dataset_id}')
+def features_dataset(dataset_id):
+    logger.info('starsst')
+    return feature_dataset(dataset_id)
 
 @router.put("/indicators/{indicator_id}/publish")
 def publish_indicator(indicator_id: str):
@@ -233,14 +237,8 @@ def publish_indicator(indicator_id: str):
         # TODO: Move these to plugins
         # prepare and save to postgres
         if settings.WRITE_DATASET_TO_DB:
-            logger.info("Preparing data for sql")
-            validated_features, validated_qualifiers = prepare_indicator_for_database(indicator)
-            logger.info("Finished preparing data for sql")
-            logger.info('Saving features')
-            save_to_sql(validated_features, 'feature')
-            logger.info('Saving qualifiers')
-            save_to_sql(validated_qualifiers, 'qualifier')
-            logger.info('Finished posting to sql')
+            logger.info("Preparing and saving data to sql")
+            save_indicator_to_sql(indicator)
     except Exception as e:
         logger.exception(e)
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)

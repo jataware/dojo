@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 import hashlib
 import random
-import string
+import json
 from .db import engine
 from sqlmodel import Field, SQLModel, create_engine, Relationship, Session, select
 from sqlalchemy import BigInteger, Column
@@ -41,8 +41,8 @@ class Feature(SQLModel, table=True):
     admin1: Optional[str] = Field(title="admin1")
     admin2: Optional[str] = Field(title="admin2")
     admin3: Optional[str] = Field(title="admin3")
-    lat: confloat(strict=True) = Field(title="lat")
-    lng: confloat(strict=True) = Field(title="lng")
+    lat: Optional[confloat(strict=True)] = Field(title="lat")
+    lng: Optional[confloat(strict=True)] = Field(title="lng")
     feature: constr(strict=True) = Field(title="feature")
     value_type: constr(strict=True) = Field(title="value_type")
     value: Optional[str] = Field(title="value")
@@ -199,7 +199,7 @@ def prepare_indicator_for_database(indicator):
         feature_mapping, qualifier_mapping = return_mapping_value_types(indicator)
     except Exception as e:
         logger.exception(e)
-        raise Exception("Indiciator not found in es")
+        raise Exception("Indicator not found in es")
     try:
         # read in data
         df = pd.concat(pd.read_parquet(file) for file in indicator["data_paths"])
@@ -207,7 +207,6 @@ def prepare_indicator_for_database(indicator):
         # create primary key - feature_id for each row.
         df["dataset_id"] = indicator_id
         df = df.reset_index(drop=True)
-
         df["row_id"] = df.index
         df["feature_id"] = df.apply(
             lambda x: hashlib.sha224(
@@ -241,7 +240,6 @@ def prepare_indicator_for_database(indicator):
 
 
 def save_to_sql(validated_df, table):
-    logger.info(validated_df)
     try:
         validated_df.to_sql(
             table,
@@ -250,18 +248,60 @@ def save_to_sql(validated_df, table):
             index=False
         )
 
+        # if you want to save row by row.
+        # save_to_sql_row_by_row(validated_df,table)
     except Exception as e:
         logger.exception(e)
 
 
+def save_to_sql_row_by_row(validated_df, table):
+    with Session(engine) as session:
+        for i, row in validated_df.iterrows():
+            if table=="feature":
+
+                feature_row = Feature(feature_id=row.get('feature_id'),
+                                      dataset_id=row.get('dataset_id'),
+                                      timestamp=row.get('timestamp', None),
+                                      country=row.get('country', None),
+                                      admin1=row.get('admin1', None),
+                                      admin2=row.get('admin2', None),
+                                      admin3=row.get('admin3', None),
+                                      lat=row.get('lat'),
+                                      lng=row.get('lng'),
+                                      feature=row.get('feature'),
+                                      value_type=row.get('value_type'),
+                                      value=row.get('value',None)
+                                      )
+                session.add(feature_row)
+                session.commit()
+
+            elif table == 'qualifier':
+                qualifier_row = Qualifier(
+                    feature_id=row.get("feature_id"),
+                    qualifier_name=row.get('qualifier_name'),
+                    qualifier_type=row.get('qualifier_type'),
+                    qualifier_value=row.get('qualifier_value',None)
+                )
+                session.add(qualifier_row)
+                session.commit()
+
+
+def feature_dataset(dataset_id):
+    try:
+        logger.info(f'ssds {dataset_id}')
+        with Session(engine) as session:
+            Features_ = session.exec(select(Feature).where(Feature.dataset_id == str(dataset_id))).all()
+            logger.info(Features_)
+            return Features_
+
+    except Exception as e:
+        logger.exception(e)
 # see if data was populated
-def select_data():
+def feature_datasets():
     try:
         with Session(engine) as session:
-            statement = select(Feature)
-            results = session.exec(statement)
-            for row in results:
-                logger.info(f'row {row}row')
+            Features_ = session.exec(select(Feature)).all()
+            return Features_
     except Exception as e:
         logger.exception(e)
 
@@ -272,3 +312,12 @@ def create_db_and_tables():
     # Create the engine
     SQLModel.metadata.create_all(engine)
 
+def save_indicator_to_sql(indicator):
+    logger.info("Started preparing data for sql")
+    validated_features, validated_qualifiers = prepare_indicator_for_database(indicator)
+    logger.info("Finished preparing data for sql")
+    logger.info('Saving features')
+    save_to_sql(validated_features, 'feature')
+    logger.info('Saving qualifiers')
+    save_to_sql(validated_qualifiers, 'qualifier')
+    logger.info('Finished posting to sql')
