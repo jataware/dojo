@@ -33,6 +33,12 @@ class Settings(BaseSettings):
     UAZ_THRESHOLD: str = ""
     UAZ_HITS: str = ""
 
+    PLUGINS: Dict[str, PyObject] = {
+        # "my_plugin": "plugin_module.MyPlugin",  # Where plugin_module.MyPlugin is an importable dotted path and MyPlugin
+                                                  # is a subclass of utils.PluginInterface
+        "logger": "src.plugins.logging.LoggingPlugin",
+    }
+
     class Config:
         case_sensitive = True
         env_file = ".env"
@@ -40,3 +46,8 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
+
+# Instantiate plugins defined via the settings
+settings.PLUGINS = {
+    key: cls() for key, cls in settings.PLUGINS.items()
+}

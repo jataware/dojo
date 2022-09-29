@@ -15,8 +15,7 @@ from validation import ModelSchema, DojoSchema
 
 from src.settings import settings
 from src.dojo import search_and_scroll, copy_configs, copy_outputfiles, copy_directive, copy_accessory_files
-from src.causemos import notify_causemos, submit_run
-from src.utils import run_model_with_defaults
+from src.utils import run_model_with_defaults, plugin_action
 
 router = APIRouter()
 
@@ -73,7 +72,10 @@ def create_model(payload: ModelSchema.ModelMetadataSchema):
             id=payload.family_name
         )
 
+
+    plugin_action("before_create", data=model, type="model")
     es.index(index="models", body=json.loads(body), id=model_id)
+    plugin_action("post_create", data=model, type="model")
 
     return Response(
         status_code=status.HTTP_201_CREATED,
@@ -119,7 +121,9 @@ def get_latest_models(size=100, scroll_id=None) -> DojoSchema.ModelSearchResult:
 def update_model(model_id: str, payload: ModelSchema.ModelMetadataSchema):
     payload.created_at = current_milli_time()
     model = payload.json()
+    plugin_action("before_update", data=model, type="model")
     es.index(index="models", body=model, id=model_id)
+    plugin_action("post_update", data=model, type="model")
     return Response(
         status_code=status.HTTP_201_CREATED,
         headers={"location": f"/api/models/{model_id}"},
@@ -131,7 +135,9 @@ def update_model(model_id: str, payload: ModelSchema.ModelMetadataSchema):
 def modify_model(model_id: str, payload: ModelSchema.ModelMetadataPatchSchema):
     body = json.loads(payload.json(exclude_unset=True))
     logging.info(body)
+    plugin_action("before_update", data=body, type="model")
     es.update(index="models", body={"doc": body}, id=model_id)
+    plugin_action("post_update", data=body, type="model")
     return Response(
         status_code=status.HTTP_200_OK,
         headers={"location": f"/api/models/{model_id}"},
@@ -178,8 +184,9 @@ def register_model(model_id: str):
     previous_versions = model_versions(model_id)['prev_versions']
     model["deprecatesIDs"] = previous_versions
 
-    notify_causemos(model, type="model")
-    submit_run(model)
+    plugin_action("before_register", data=model, type="model")
+    plugin_action("register", data=model, type="model")
+    plugin_action("post_register", data=model, type="model")
 
     return Response(
         status_code=status.HTTP_201_CREATED,
@@ -316,9 +323,13 @@ def publish_model(model_id: str, publish_data: ModelSchema.PublishSchema):
             content="Model has already been published and cannot be republished.",
         )
 
+
+    plugin_action("before_publish", data=model, type="model")
     body = json.loads(publish_data.json(exclude_unset=False))
     body["is_published"] = True
     es.update(index="models", body={"doc": body}, id=model_id)
+    plugin_action("publish", data=model, type="model")
+    plugin_action("post_publish", data=model, type="model")
 
     return Response(
         status_code=status.HTTP_200_OK,
