@@ -268,6 +268,7 @@ def select_data():
 
 # create the database
 def create_db_and_tables():
+    logger.info(settings.DATASET_DB_URL)
     # Create the engine
     SQLModel.metadata.create_all(engine)
 
