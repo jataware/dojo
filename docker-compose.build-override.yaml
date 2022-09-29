@@ -99,6 +99,17 @@ services:
     depends_on:
       elasticsearch:
         condition: service_healthy
+  api-postgres:
+    image: postgres
+    restart: always
+    environment:
+      POSTGRES_DB: api_postgres
+      POSTGRES_PASSWORD: api_postgres
+      POSTGRES_USER: api_postgres
+    ports:
+      - 5432:5432
+    networks:
+      dojo-stack: { }
   cato:
     command: -debug -pull-images=false
     build:
