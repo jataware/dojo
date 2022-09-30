@@ -1,5 +1,5 @@
 # imports
-from typing import  List, Optional
+from typing import List, Optional
 import pandas as pd
 import numpy as np
 import hashlib
@@ -20,14 +20,14 @@ es = Elasticsearch([settings.ELASTICSEARCH_URL], port=settings.ELASTICSEARCH_POR
 default_columns = [
     "timestamp",
     "country",
-        "admin1",
-        "admin2",
-        "admin3",
-        "lat",
-        "lng",
-        "feature",
-        "value",
-    ]
+    "admin1",
+    "admin2",
+    "admin3",
+    "lat",
+    "lng",
+    "feature",
+    "value",
+]
 
 
 # create SQLModel classes
@@ -52,7 +52,7 @@ class Qualifier(SQLModel, table=True):
     qualifier_id: Optional[int] = Field(default=None, primary_key=True)
     qualifier_name: constr(strict=True) = Field(title="qualifier_name")
     qualifier_type: constr(strict=True) = Field(title="qualifier_type")
-    qualifier_value: Optional[str]  = Field(title="qualifier_value")
+    qualifier_value: Optional[str] = Field(title="qualifier_value")
 
     feature_id: str = Field(default=None, foreign_key="feature.feature_id")
 
@@ -121,10 +121,10 @@ def feature_to_type(row, mapping):
     return mapping[row.get("feature")]
 
 
-def set_column_types(df,type, columns=[]):
+def set_column_types(df, type, columns=[]):
 
     for col in columns:
-        if type==int:
+        if type == int:
             df[col] = df[col].astype(type)
         else:
             df[col][df[col].notnull()] = df[col][df[col].notnull()].astype(type)
@@ -133,7 +133,7 @@ def set_column_types(df,type, columns=[]):
 
 def create_qualifier_dataframe(df, feature_mapping, qualifier_mapping):
     qualifier_df = df.drop(
-        default_columns+['dataset_id'],
+        default_columns + ["dataset_id"],
         axis=1,
     )
 
@@ -157,45 +157,39 @@ def create_qualifier_dataframe(df, feature_mapping, qualifier_mapping):
         lambda x: feature_to_type(x, qualifier_mapping), axis=1
     )
     # change column name
-    qualifier_df_long=qualifier_df_long.rename(columns={"feature": "qualifier_name"})
+    qualifier_df_long = qualifier_df_long.rename(columns={"feature": "qualifier_name"})
 
     # set columns to str type
-    qualifier_df_long=set_column_types(
+    qualifier_df_long = set_column_types(
         df=qualifier_df_long,
         type=str,
-        columns=["qualifier_value","qualifier_name", "feature_id"])
+        columns=["qualifier_value", "qualifier_name", "feature_id"],
+    )
 
     return qualifier_df_long
 
 
-def create_feature_dataframe(df,feature_mapping):
+def create_feature_dataframe(df, feature_mapping):
     # remove qualifiers
-    only_feature_columns=default_columns+['dataset_id','feature_id']
-
+    only_feature_columns = default_columns + ["dataset_id", "feature_id"]
 
     df = df[only_feature_columns]
     #  set value_type for each feature.
-    df["value_type"] = df.apply(
-        lambda x: feature_to_type(x, feature_mapping), axis=1
+    df["value_type"] = df.apply(lambda x: feature_to_type(x, feature_mapping), axis=1)
+    df["timestamp"].replace(to_replace=[np.nan], value=-9999, inplace=True)
+
+    df = set_column_types(
+        df=df, type=str, columns=["value", "value_type", "feature_id", "feature"]
     )
-    df['timestamp'].replace(to_replace=[np.nan], value=-9999, inplace=True)
 
-    df = set_column_types(
-        df=df,
-        type=str,
-        columns=["value", "value_type", "feature_id", "feature"])
-
-    df = set_column_types(
-        df=df,
-        type="Int64",
-        columns=["timestamp"])
+    df = set_column_types(df=df, type="Int64", columns=["timestamp"])
 
     return df
 
 
 def prepare_indicator_for_database(indicator):
     try:
-        indicator_id=indicator.get('id')
+        indicator_id = indicator.get("id")
         feature_mapping, qualifier_mapping = return_mapping_value_types(indicator)
     except Exception as e:
         logger.exception(e)
@@ -212,27 +206,26 @@ def prepare_indicator_for_database(indicator):
             lambda x: hashlib.sha224(
                 str(indicator_id).encode("utf-8") + str(x["row_id"]).encode("utf-8")
             ).hexdigest(),
-            axis=1
+            axis=1,
         )
 
-        #create feature df
+        # create feature df
         feature_df = create_feature_dataframe(df, feature_mapping)
 
         # validate feature df
         validated_features = return_validated_feature(feature_df)
 
-        validated_qualifiers=None
-        if len(qualifier_mapping)>0:
+        validated_qualifiers = None
+        if len(qualifier_mapping) > 0:
             # create qualifier df
             qualifier_df = create_qualifier_dataframe(
                 df, feature_mapping, qualifier_mapping
             )
 
             # validate qualifier df
-            validated_qualifiers=return_validated_qualifier(qualifier_df)
+            validated_qualifiers = return_validated_qualifier(qualifier_df)
 
             # create feature dataframe
-
 
         return validated_features, validated_qualifiers
 
@@ -243,12 +236,7 @@ def prepare_indicator_for_database(indicator):
 def save_to_sql(validated_df, table):
     try:
         if validated_df is not None:
-            validated_df.to_sql(
-                table,
-                engine,
-                if_exists='append',
-                index=False
-            )
+            validated_df.to_sql(table, engine, if_exists="append", index=False)
 
         # if you want to save row by row.
         # save_to_sql_row_by_row(validated_df,table)
@@ -259,30 +247,31 @@ def save_to_sql(validated_df, table):
 def save_to_sql_row_by_row(validated_df, table):
     with Session(engine) as session:
         for i, row in validated_df.iterrows():
-            if table=="feature":
+            if table == "feature":
 
-                feature_row = Feature(feature_id=row.get('feature_id'),
-                                      dataset_id=row.get('dataset_id'),
-                                      timestamp=row.get('timestamp', None),
-                                      country=row.get('country', None),
-                                      admin1=row.get('admin1', None),
-                                      admin2=row.get('admin2', None),
-                                      admin3=row.get('admin3', None),
-                                      lat=row.get('lat'),
-                                      lng=row.get('lng'),
-                                      feature=row.get('feature'),
-                                      value_type=row.get('value_type'),
-                                      value=row.get('value',None)
-                                      )
+                feature_row = Feature(
+                    feature_id=row.get("feature_id"),
+                    dataset_id=row.get("dataset_id"),
+                    timestamp=row.get("timestamp", None),
+                    country=row.get("country", None),
+                    admin1=row.get("admin1", None),
+                    admin2=row.get("admin2", None),
+                    admin3=row.get("admin3", None),
+                    lat=row.get("lat"),
+                    lng=row.get("lng"),
+                    feature=row.get("feature"),
+                    value_type=row.get("value_type"),
+                    value=row.get("value", None),
+                )
                 session.add(feature_row)
                 session.commit()
 
-            elif table == 'qualifier':
+            elif table == "qualifier":
                 qualifier_row = Qualifier(
                     feature_id=row.get("feature_id"),
-                    qualifier_name=row.get('qualifier_name'),
-                    qualifier_type=row.get('qualifier_type'),
-                    qualifier_value=row.get('qualifier_value',None)
+                    qualifier_name=row.get("qualifier_name"),
+                    qualifier_type=row.get("qualifier_type"),
+                    qualifier_value=row.get("qualifier_value", None),
                 )
                 session.add(qualifier_row)
                 session.commit()
@@ -291,12 +280,15 @@ def save_to_sql_row_by_row(validated_df, table):
 def feature_dataset(dataset_id):
     try:
         with Session(engine) as session:
-            Features_ = session.exec(select(Feature).where(Feature.dataset_id == str(dataset_id))).all()
+            Features_ = session.exec(
+                select(Feature).where(Feature.dataset_id == str(dataset_id))
+            ).all()
             logger.info(Features_)
             return Features_
 
     except Exception as e:
         logger.exception(e)
+
 
 # see if data was populated
 def feature_datasets():
@@ -314,12 +306,13 @@ def create_db_and_tables():
     # Create the engine
     SQLModel.metadata.create_all(engine)
 
+
 def save_indicator_to_sql(indicator):
     logger.info("Started preparing data for sql")
     validated_features, validated_qualifiers = prepare_indicator_for_database(indicator)
     logger.info("Finished preparing data for sql")
-    logger.info('Saving features')
-    save_to_sql(validated_features, 'feature')
-    logger.info('Saving qualifiers')
-    save_to_sql(validated_qualifiers, 'qualifier')
-    logger.info('Finished posting to sql')
+    logger.info("Saving features")
+    save_to_sql(validated_features, "feature")
+    logger.info("Saving qualifiers")
+    save_to_sql(validated_qualifiers, "qualifier")
+    logger.info("Finished posting to sql")

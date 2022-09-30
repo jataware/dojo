@@ -9,7 +9,14 @@ import uuid
 from datetime import datetime
 from typing import Any, Dict, Generator, List, Optional
 from urllib.parse import urlparse
-from .sql import save_indicator_to_sql, create_db_and_tables, feature_dataset, Feature, Qualifier, feature_datasets
+from .sql import (
+    save_indicator_to_sql,
+    create_db_and_tables,
+    feature_dataset,
+    Feature,
+    Qualifier,
+    feature_datasets,
+)
 import json
 import pandas as pd
 
@@ -204,17 +211,21 @@ def get_indicators(indicator_id: str) -> IndicatorSchema.IndicatorMetadataSchema
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     return indicator
 
-@router.get('/create_postgres_tables')
+
+@router.get("/create_postgres_tables")
 def create_db():
     create_db_and_tables()
 
-@router.get('/features',response_model=List[Feature])
+
+@router.get("/features", response_model=List[Feature])
 def view_features():
     return feature_datasets()
 
-@router.get('/features/{dataset_id}')
+
+@router.get("/features/{dataset_id}")
 def features_dataset(dataset_id):
     return feature_dataset(dataset_id)
+
 
 @router.put("/indicators/{indicator_id}/publish")
 def publish_indicator(indicator_id: str):
@@ -511,7 +522,9 @@ def validate_date(payload: IndicatorSchema.DateValidationRequestSchema):
 
 @router.post("/indicators/{indicator_id}/preview/{preview_type}")
 async def create_preview(
-    indicator_id: str, preview_type: IndicatorSchema.PreviewType, filename: Optional[str] = Query(None),
+    indicator_id: str,
+    preview_type: IndicatorSchema.PreviewType,
+    filename: Optional[str] = Query(None),
     filepath: Optional[str] = Query(None),
 ):
     """Get preview for a dataset.
@@ -524,19 +537,19 @@ async def create_preview(
     """
     try:
         if filename:
-            file_suffix_match = re.search(r'raw_data(_\d+)?\.', filename)
+            file_suffix_match = re.search(r"raw_data(_\d+)?\.", filename)
             if file_suffix_match:
-                file_suffix = file_suffix_match.group(1) or ''
+                file_suffix = file_suffix_match.group(1) or ""
             else:
-                file_suffix = ''
+                file_suffix = ""
         else:
-            file_suffix = ''
+            file_suffix = ""
         # TODO - Get all potential string files concatenated together using list file utility
         if preview_type == IndicatorSchema.PreviewType.processed:
             if filepath:
                 rawfile_path = os.path.join(
                     settings.DATASET_STORAGE_BASE_URL,
-                    filepath.replace(".csv", ".parquet.gzip")
+                    filepath.replace(".csv", ".parquet.gzip"),
                 )
             else:
                 rawfile_path = os.path.join(
@@ -561,9 +574,7 @@ async def create_preview(
 
         else:
             if filepath:
-                rawfile_path = os.path.join(
-                    settings.DATASET_STORAGE_BASE_URL, filepath
-                )
+                rawfile_path = os.path.join(settings.DATASET_STORAGE_BASE_URL, filepath)
             else:
                 rawfile_path = os.path.join(
                     settings.DATASET_STORAGE_BASE_URL, indicator_id, "raw_data.csv"
@@ -571,7 +582,9 @@ async def create_preview(
             file = get_rawfile(rawfile_path)
             df = pd.read_csv(file, delimiter=",")
 
-        obj = json.loads(df.sort_index().reset_index(drop=True).head(100).to_json(orient="index"))
+        obj = json.loads(
+            df.sort_index().reset_index(drop=True).head(100).to_json(orient="index")
+        )
         indexed_rows = [{"__id": key, **value} for key, value in obj.items()]
 
         return indexed_rows
