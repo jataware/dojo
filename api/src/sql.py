@@ -297,6 +297,7 @@ def feature_dataset(dataset_id):
 
     except Exception as e:
         logger.exception(e)
+
 # see if data was populated
 def feature_datasets():
     try:

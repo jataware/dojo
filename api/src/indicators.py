@@ -214,7 +214,6 @@ def view_features():
 
 @router.get('/features/{dataset_id}')
 def features_dataset(dataset_id):
-    logger.info('starsst')
     return feature_dataset(dataset_id)
 
 @router.put("/indicators/{indicator_id}/publish")
