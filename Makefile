@@ -16,6 +16,9 @@ COMPOSE_FILES := $(CLOUSEAU_DIR)/docker-compose.yaml $(DOJO_API_DIR)/docker-comp
 				 $(DOJO_DMC_DIR)/docker-compose.yaml $(WORKERS_DIR)/docker-compose.yaml \
 				 $(RQ_DIR)/docker-compose.yaml
 TEMP_COMPOSE_FILES := $(foreach file,$(subst /,_,$(COMPOSE_FILES)),temp_$(file))
+IMAGE_NAMES = api clouseau phantom tasks
+BUILD_FILES = $(wildcard */.build)
+BUILD_DIRS = $(dir $(BUILD_FILES))
 
 .PHONY:update
 update:
@@ -45,6 +48,15 @@ ifeq ($(wildcard envfile),)
 	echo -e "\nDon't forget to update 'envfile' with all your secrets!";
 endif
 
+.PHONY:static
+static:docker-compose.yaml phantom/ui/node_modules phantom/ui/package-lock.json phantom/ui/package.json
+	( cd phantom/ui && rm -fr dist/; NODE_OPTIONS="--openssl-legacy-provider" npm run build)
+
+.PHONY:images
+images:static
+	for dir in $(BUILD_DIRS); do \
+		(cd $${dir} && bash .build); \
+	done
 
 .PHONY:clean
 clean:

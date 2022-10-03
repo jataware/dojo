@@ -1,6 +1,6 @@
 {
   "name": "phantom",
-  "version": "0.5.13",
+  "version": "1.0.0",
   "description": "..",
   "scripts": {
     "lint": "eslint -c .eslintrc.js --fix --ext .js,.jsx client",
