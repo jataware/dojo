@@ -1,0 +1,24 @@
+version: "3.7"
+services:
+
+  cato:
+      # image: jataware/clouseau:cato_2.4.7
+    image: jataware/clouseau:cato_1.0.0
+    container_name: cato1
+    command: -debug -trace -pull-images=false
+    ports:
+      - 3000:3000
+    env_file:
+      - .env
+    environment:
+      DOCKERHUB_AUTH: "${DOCKERHUB_AUTH}"
+      HTTP_STATIC: "/home/app/cato/static"
+    volumes:
+      - ${PWD}/settings.yaml:/home/app/cato/settings.yaml
+      - /tmp:/tmp 
+    logging:
+      driver: json-file
+      options:
+        max-size: 200m
+        max-file: "3"
+

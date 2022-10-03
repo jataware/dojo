@@ -1,0 +1,16 @@
+version: "3.7"
+services:
+  tasks:
+    image: jataware/tasks:1.0.0
+    container_name: tasks
+    command:
+      - rq
+      - worker
+      - --url
+      - redis://${REDIS_HOST}:${REDIS_PORT}
+      - high
+      - default
+      - low
+    deploy:
+      mode: replicated
+      replicas: 3
