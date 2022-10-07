@@ -1,10 +1,13 @@
 import logging
+from operator import ne
+from uuid import uuid4
 
 
 import uvicorn
 from elasticsearch import Elasticsearch
-from fastapi import FastAPI, Request, HTTPException
+from fastapi import FastAPI, Request, HTTPException, Response
 from typing import Union
+from starlette.requests import cookie_parser
 
 from src import (
     auth,
@@ -18,7 +21,7 @@ from src import (
     runs,
 )
 from src.settings import settings
-from src.auth import check_auth
+from src.auth import check_session
 
 logger = logging.getLogger(__name__)
 
@@ -36,15 +39,22 @@ api.include_router(data.router, tags=["Data"])
 if settings.REQUIRE_AUTH:
     @api.middleware("http")
     async def check_keycloak_auth(request: Request, call_next):
-        headers = dict(request['headers'])
-        bearer = headers.get('bearer', None)
-
-        if not request['path'].startswith(('/auth', '/healthcheck')):
-            # Check_auth raises a 401 if it is invalid
-            try:
-                check_auth(bearer)
-            except HTTPException as err:
-                return err
+        authenticated = False
+        # Allow authentication, healthcheck and swagger endpoints
+        if not (
+            request['path'].startswith((
+                '/auth', 
+                '/healthcheck', 
+                '/favicon.'
+            )) 
+            or request['path'] in (
+                '/',
+                '/openapi.json',
+            )
+        ):
+            authenticated, _ = check_session(request)
+            if not authenticated:
+                return Response(status_code=403)
         
         # If we make it to here, we don't need to auth or have a valid token
         response = await call_next(request)

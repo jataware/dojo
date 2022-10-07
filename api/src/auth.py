@@ -1,104 +1,78 @@
 from __future__ import annotations
 
 import uuid
-from datetime import datetime
-from typing import Any, Dict, Generator, List, Optional
-from urllib.parse import urlparse
-import json
+from typing import Optional, Tuple
 
-from keycloak import KeycloakOpenID
-from elasticsearch import Elasticsearch
-from fastapi import (
-    APIRouter,
-    HTTPException,
-    Query,
-    Response,
-    status,
-    UploadFile,
-    File,
-    Request,
-)
+from keycloak.exceptions import KeycloakError
+from fastapi import (APIRouter, Response, Request,)
 from fastapi.logger import logger
-from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 
-from validation import IndicatorSchema, DojoSchema, MetadataSchema
+from src.keycloak import keycloak
+from src.session import SessionData, session_backend
 from src.settings import settings
 
 
-from enum import Enum
-from typing import Dict, List, Optional
-from pydantic import BaseModel, Field
-
 class AuthRequest(BaseModel):
+    session_id: Optional[str] = None
     auth_code: Optional[str] = None
-    access_token: Optional[str] = None
-    refresh_token: Optional[str] = None
 
 
-# logger: Logger = logging.getLogger(__name__)
 router = APIRouter()
 
-# TODO: Move config to env variables, especially client secret key
-keycloak = KeycloakOpenID(server_url="http://keycloak:8080/",
-                                 client_id="causemos",
-                                 realm_name="Uncharted",
-                                 client_secret_key="jtbQhs6SlfynqJaygVpwav2kLzAme2b4")
 
+def check_session(request: Request) -> Tuple[bool, Optional[SessionData]]:
+    session_id = request.cookies.get(settings.SESSION_COOKIE_NAME, None)
+    if not session_id:
+        return False, None
 
-def check_auth(access_token):
-    valid = False
+    session_data = session_backend.read(session_id)
+    if not session_data:
+        return False, None
+    access_token = session_data.access_token
+    refresh_token = session_data.refresh_token
+
     try:
-        logger.info(access_token)
-        user_info = keycloak.userinfo(access_token)
-        user_info("Checking access token")
-        if user_info:
-            return True
-    except Exception as err:
-        logger.error(err)
-    
-    if not valid:
-        raise HTTPException(status_code=401)
-    return True
+        # Validate token. Is there a lighter 
+        keycloak.userinfo(access_token)
+    except KeycloakError as auth_error:
+        try:
+            logger.info("Access token expired, checking refresh token.")
+            token_info = keycloak.refresh_token(refresh_token)
+            new_session_data = SessionData(
+                userid=session_data.userid,
+                access_token=token_info['access_token'],
+                refresh_token=token_info['refresh_token'],
+            )
+            session_backend.update(session_id, new_session_data)
+            return True, new_session_data
+        except KeycloakError:
+            logger.info("Access and refresh tokens are expired, need to log in.")
+            return False, None
+    return True, session_data
 
 
 @router.post("/auth/status")
-async def auth(response: Response, payload: AuthRequest) -> str:
-    logger.info(payload)
+async def auth(request: Request, response: Response, payload: AuthRequest) -> str:
+
+    is_session_valid, session_data = check_session(request)
+    session_id = request.cookies.get(settings.SESSION_COOKIE_NAME, None)
+
+    if is_session_valid:
+        return {
+            "authenticated": True,
+            "auth_url": None,
+            "user": session_data.userid,
+        }
 
     redirect_uri="http://localhost:8080/auth"
     auth_code = payload.auth_code
-    if payload.access_token:
-        logger.info("Checking access token")
-        try:
-            # logger.info(f'access token "{payload.access_token}"')
-            user_info = keycloak.userinfo(payload.access_token)
-            # user_info("Checking access token")
-            if user_info:
-                return {
-                    "authenticated": True,
-                    "auth_url": None,
-                    "user": user_info['email'],
-                    "access_token": payload.access_token,
-                    "refresh_token": payload.refresh_token,
-                }
-        except Exception as err:
-            logger.error(err)
-
-    if payload.refresh_token:
-        try:
-            logger.info(payload.refresh_token)
-            token = keycloak.refresh_token(payload.refresh_token)
-            logger.info(token)
-        except Exception as err:
-            logger.error(err)
-
     if not auth_code:
         auth_url = keycloak.auth_url(
             redirect_uri=redirect_uri,
             scope="email",
             state=uuid.uuid4()
         )
-        logger.info(auth_url)
         return {
             "authenticated": False,
             "auth_url": auth_url,
@@ -110,18 +84,23 @@ async def auth(response: Response, payload: AuthRequest) -> str:
         code=auth_code,
         redirect_uri=redirect_uri,
     )
-    logger.info(token)
     access_token = token["access_token"]
-    refresh_token = token.get("refresh_token"),
+    refresh_token = token["refresh_token"]
     user_info = keycloak.userinfo(access_token)
-    logger.info(f'access token  ORIG: "{access_token}"')
-    response.set_cookie(key="access-token", value=access_token, secure=False, httponly=False)
-    response.set_cookie(key="refresh-token", value=refresh_token, secure=False, httponly=False)
-    logger.info(user_info)
+    session_id = uuid.uuid4()
+
+    session_data = SessionData(
+        userid=user_info['email'],
+        access_token=access_token,
+        refresh_token=refresh_token,
+    )
+
+    logger.info(f"Creating new session for user {session_data.userid}")
+    session_backend.create(session_id, session_data)
+    response.set_cookie(key=settings.SESSION_COOKIE_NAME, value=session_id, secure=False, httponly=False)
+
     return {
         "authenticated": True,
         "auth_url": None,
         "user": user_info['email'],
-        "access_token": access_token,
-        "refresh_token": refresh_token,
     }

@@ -104,7 +104,17 @@ module.exports = {
         ],
       }),
       new webpack.DefinePlugin({
-        'process.env': JSON.stringify(process.env),
+        // Copy environmental variables in to build environment, replacing string versions of true/false with booleans.
+        // Note: This becomes static at compile time and does not pass env variables from the hosting system to the UI.
+        'process.env': JSON.stringify(Object.fromEntries(Object.entries(process.env).map(([key, value], i) => {
+          if (typeof(value) === "string") {
+            const lc_value = value.toLowerCase();
+            if (lc_value === "true" || lc_value === "false") {
+              value = Boolean(lc_value === "true");
+            }
+          }
+          return [key, value];
+        }))),
       }),
     ],
 };

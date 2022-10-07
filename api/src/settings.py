@@ -28,6 +28,11 @@ class Settings(BaseSettings):
     CONFIG_STORAGE_BASE: str = "file:///dojo/configs/"
 
     REQUIRE_AUTH: bool = True
+    SESSION_COOKIE_NAME: str = "dojo-auth-session"
+    KEYCLOAK_URL: str = "http://keycloak:8080/"
+    KEYCLOAK_CLIENT_ID: str = "causemos"
+    KEYCLOAK_REALM_NAME: str = "Uncharted"
+    KEYCLOAK_CLIENT_SECRET_KEY: str = "jtbQhs6SlfynqJaygVpwav2kLzAme2b4"
 
     UVICORN_RELOAD: bool = False
 
