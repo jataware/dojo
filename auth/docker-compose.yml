@@ -7,6 +7,12 @@ services:
     environment:
       POSTGRES_USER: keycloak
       POSTGRES_PASSWORD: keycloak
+    env_file:
+      - ../envfile
+    networks:
+      - dojo-stack
+    volumes:
+      - auth-storage:/var/lib/postgresql/data
   keycloak:
     image: docker-hub.uncharted.com/auth/keycloak:latest
     command: ["start-dev", "--hostname=localhost", "--hostname-port=8079"]
@@ -22,6 +28,10 @@ services:
       - "9990"
     ports:
       - "8079:8080"
+    env_file:
+      - ../envfile
+    networks:
+      - dojo-stack
   apache:
     image: docker-hub.uncharted.software/auth/httpd-openidc
     environment:
@@ -47,3 +57,10 @@ services:
       - "8078:80"
     volumes:
       - ./html-ajax:/usr/local/apache2/htdocs
+    env_file:
+      - ../envfile
+    networks:
+      - dojo-stack
+volumes:
+  dataset-storage:
+  auth-storage:

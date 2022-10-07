@@ -148,23 +148,6 @@ services:
       - dmc-data-results:/data/results
       - dmc-data-mappers:/data/mappers
       - dmc-data-model_configs:/data/model_configs
-  keycloak:
-    env_file:
-      - envfile
-    networks:
-      - dojo-stack
-  postgres:
-    env_file:
-      - envfile
-    networks:
-      - dojo-stack
-    volumes:
-      - auth-storage:/var/lib/postgresql/data
-  apache:
-    env_file:
-      - envfile
-    networks:
-      - dojo-stack
   phantom:
     build:
       context: ./phantom/
@@ -218,4 +201,3 @@ volumes:
   dmc-data-mappers:
   dmc-data-model_configs:
   dataset-storage:
-  auth-storage:

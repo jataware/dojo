@@ -12,10 +12,15 @@ MIXMASTA_DIR = mixmasta
 PHANTOM_DIR = phantom
 RQ_DIR = tasks
 WORKERS_DIR = workers
-COMPOSE_DIRS := $(CLOUSEAU_DIR) $(DOJO_API_DIR) $(DOJO_DMC_DIR) $(WORKERS_DIR) $(AUTH_DIR)
 COMPOSE_FILES := $(CLOUSEAU_DIR)/docker-compose.yaml $(DOJO_API_DIR)/docker-compose.yaml \
 				 $(DOJO_DMC_DIR)/docker-compose.yaml $(WORKERS_DIR)/docker-compose.yaml \
-				 $(RQ_DIR)/docker-compose.yaml $(AUTH_DIR)/docker-compose.yml
+				 $(RQ_DIR)/docker-compose.yaml
+
+AUTH_ENABLED = $(shell export $$(cat envfile | xargs) && echo $${AUTH_ENABLED})
+ifeq ($(AUTH_ENABLED), true)
+COMPOSE_FILES := $(COMPOSE_FILES) $(AUTH_DIR)/docker-compose.yml
+endif
+				 
 TEMP_COMPOSE_FILES := $(foreach file,$(subst /,_,$(COMPOSE_FILES)),temp_$(file))
 
 .PHONY:update

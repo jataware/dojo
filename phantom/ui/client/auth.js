@@ -9,7 +9,7 @@ const authEndpoint = "/api/dojo/auth/status";
 export const authContext = createContext();
 
 export function AuthWrapper({ children }) {
-  const auth = getAuth();
+  const auth = (process.env.AUTH_ENABLED ? getAuth() : {});
   return (
     <authContext.Provider value={auth}>
       {children}
@@ -25,7 +25,7 @@ function getAuth() {
   const defaultState = {
     user,
     isAuthenticated
-  }
+  };
   const [auth, setAuth] = useState(defaultState);
   if (!auth.isAuthenticated) {
     axios.post(authEndpoint, {}).then((userData) => {
@@ -50,9 +50,17 @@ function useAuth() {
 
 export function ProtectedRoute({ children, ...props }) {
 
+  if (!process.env.AUTH_ENABLED) {
+    return <Route {...props} render={
+      ({ location }) => {
+        return children;
+      }}
+    />
+  }
+
   let { auth, setAuth } = useAuth();
 
-  if (process.env.REQUIRE_AUTH !== "true" || auth.isAuthenticated) {
+  if (auth.isAuthenticated) {
     return <Route {...props} render={
       ({ location }) => {
         return children;
@@ -84,7 +92,7 @@ export function AuthRedirectHandler({ children }) {
             user: newUser,
             isAuthenticated: true,
         });
-        document.location = "/";
+        setTimeout(() => {document.location = "/";}, 30);
     });
 
     return <>

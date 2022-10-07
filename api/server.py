@@ -36,7 +36,7 @@ api.include_router(clouseau.router, prefix="/clouseau", tags=["Clouseau"])
 api.include_router(phantom.router, prefix="/phantom", tags=["Phantom"])
 api.include_router(data.router, tags=["Data"])
 
-if settings.REQUIRE_AUTH:
+if settings.AUTH_ENABLED:
     @api.middleware("http")
     async def check_keycloak_auth(request: Request, call_next):
         authenticated = False

@@ -27,7 +27,7 @@ class Settings(BaseSettings):
 
     CONFIG_STORAGE_BASE: str = "file:///dojo/configs/"
 
-    REQUIRE_AUTH: bool = True
+    AUTH_ENABLED: bool = True
     SESSION_COOKIE_NAME: str = "dojo-auth-session"
     KEYCLOAK_URL: str = "http://keycloak:8080/"
     KEYCLOAK_CLIENT_ID: str = "causemos"
