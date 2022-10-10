@@ -50,7 +50,7 @@ const EndSessionDialog = ({
   const { directive } = useDirective(model.id);
   const { mutateModel } = useModel(model.id);
 
-  const causemosUrl = `https://causemos.uncharted.software/#/model/${model.family_name}/model-publishing-experiment?datacube_id=${model.id}`;
+  const causemosUrl = `${process.env.CAUSEMOS_UI_URL}/#/model/${model.family_name}/model-publishing-experiment?datacube_id=${model.id}`;
 
   const handleClose = () => {
     setOpen(false);

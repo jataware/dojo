@@ -75,7 +75,7 @@ function DatasetSummaryDetails({ dataset }) {
             <Button
               variant="outlined"
               color="primary"
-              href={`https://causemos.uncharted.software/#/dataset/${dataset.id}/datasetOverview`}
+              href={`${process.env.CAUSEMOS_UI_URL}/#/dataset/${dataset.id}/datasetOverview`}
               target="_blank"
               rel="noopener"
             >

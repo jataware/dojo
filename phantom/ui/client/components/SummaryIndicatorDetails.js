@@ -87,7 +87,7 @@ function SummaryIndicatorDetails({ indicator }) {
           <Typography variant="body2" className={classes.subsection}>
             <Button
               className={classes.buttonStyle}
-              href={`https://causemos.uncharted.software/#/dataset/${indicator.id}/datasetOverview`}
+              href={`${process.env.CAUSEMOS_UI_URL}/#/dataset/${indicator.id}/datasetOverview`}
               target="_blank"
               rel="noopener"
             > View In Causemos
