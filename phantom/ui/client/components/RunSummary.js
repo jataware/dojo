@@ -18,6 +18,7 @@ import RunningJobIcon from '@material-ui/icons/PlayCircleFilledWhite';
 import { withStyles } from '@material-ui/core/styles';
 import { useRun } from './SWRHooks';
 
+import CSVDownload from './CSVDownload';
 import { ExternalLink, InternalTab } from './Links';
 import LoadingOverlay from './LoadingOverlay';
 import { parseDatetimeString, formatDatetime } from '../utils';
@@ -56,7 +57,11 @@ const styles = (theme) => ({
     border: '2px solid black',
     backgroundColor: 'white',
     color: 'black'
-  }
+  },
+  downloadButton: {
+    paddingTop: theme.spacing(1),
+  },
+
 });
 
 // -------------------------- Helper Components --------------------------------
@@ -197,8 +202,7 @@ const RunSummary = ({ classes }) => {
   }
 
   const {
-    parameters, pre_gen_output_paths: preGenOutputPaths,
-    data_paths: dataPaths, created_at: createdAt
+    parameters, pre_gen_output_paths: preGenOutputPaths, created_at: createdAt
   } = run;
 
   const outputPaths = preGenOutputPaths || [];
@@ -283,6 +287,13 @@ const RunSummary = ({ classes }) => {
               >
                 View Logs
               </Button>
+              {get(run, 'attributes.status') === 'success' && (
+                <CSVDownload
+                  resource={run}
+                  className={classes.downloadButton}
+                  index="runs"
+                />
+              )}
             </SectionGridItem>
 
             <SectionGridItem
@@ -300,25 +311,6 @@ const RunSummary = ({ classes }) => {
                     <Typography variant="h6">
                       {value}
                     </Typography>
-                  </li>
-                ))}
-              </ul>
-            </SectionGridItem>
-
-            <SectionGridItem
-              title="Data Paths"
-              empty={isEmpty(dataPaths)}
-              md={12}
-            >
-              <ul>
-                {dataPaths.map((path) => (
-                  <li key={path}>
-                    <Value
-                      href={path}
-                      title="Data Path Value"
-                    >
-                      {path}
-                    </Value>
                   </li>
                 ))}
               </ul>
