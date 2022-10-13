@@ -102,8 +102,8 @@ const BaseData = ({
     </div>
 
     <FormAwareTextField
-      name="filename"
-      value={fileMetadata.filename}
+      formik={formik}
+      name="filepath"
     />
     <ExtraInput
       formik={formik}
@@ -136,7 +136,7 @@ export default withStyles(({ spacing }) => ({
   const history = useHistory();
   const [file, setFile] = useState(null);
   const [fileMetadata, setFileMetadata] = useState({
-    filename: props.pattern,
+    filename: null,
   });
 
   const back = (event) => {}; // Do nothing
@@ -182,6 +182,7 @@ export default withStyles(({ spacing }) => ({
     description: datasetInfo?.description || '',
     domains: datasetInfo?.domains || [],
     temporal_resolution: 'annual',
+    filepath: props?.file_path,
     'x-resolution': '',
     'y-resolution': '',
   };
@@ -207,11 +208,14 @@ export default withStyles(({ spacing }) => ({
         onSubmit={(values) => {
           setAnnotations({
             annotations: annotations.annotations,
-            metadata: fileMetadata,
+            metadata: {
+              ...fileMetadata,
+              filename: values.filepath,
+            }
           });
           setDatasetInfo({
             ...datasetInfo,
-            ...values
+            ...values,
           })
           handleNext();
         }}
