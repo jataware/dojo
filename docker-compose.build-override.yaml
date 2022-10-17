@@ -99,14 +99,14 @@ services:
     depends_on:
       elasticsearch:
         condition: service_healthy
-  cato:
+  terminal:
     command: -debug -pull-images=false
-    build:
-      context: ./clouseau
-      dockerfile: cato/Dockerfile
-    image: jataware/clouseau:cato-dev
+    # build:
+    # context: ./clouseau
+    # dockerfile: cato/Dockerfile
+    # image: jataware/clouseau:cato-dev
     volumes:
-      - ${PWD}/clouseau/claudine/server/settings.yaml:/home/app/cato/settings.yaml:rw
+      - ${PWD}/terminal/api/server/settings.yaml:/home/app/connector/settings.yaml:rw
     env_file:
       - envfile
     environment:

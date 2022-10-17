@@ -4,7 +4,7 @@ PYTHON = $(shell which python3 || which python)
 export LANG
 
 BASEDIR = $(shell pwd)
-CLOUSEAU_DIR = clouseau
+CLOUSEAU_DIR = terminal
 DOJO_API_DIR = api
 DOJO_DMC_DIR = dmc
 MIXMASTA_DIR = mixmasta
@@ -16,7 +16,7 @@ COMPOSE_FILES := $(CLOUSEAU_DIR)/docker-compose.yaml $(DOJO_API_DIR)/docker-comp
 				 $(DOJO_DMC_DIR)/docker-compose.yaml $(WORKERS_DIR)/docker-compose.yaml \
 				 $(RQ_DIR)/docker-compose.yaml
 TEMP_COMPOSE_FILES := $(foreach file,$(subst /,_,$(COMPOSE_FILES)),temp_$(file))
-IMAGE_NAMES = api clouseau phantom tasks
+IMAGE_NAMES = api terminal phantom tasks
 BUILD_FILES = $(wildcard */.build)
 BUILD_DIRS = $(dir $(BUILD_FILES))
 
@@ -34,7 +34,7 @@ init:
 	git submodule foreach 'git checkout $$(git config -f ../.gitmodules --get "submodule.$$name.branch")'; \
 	mkdir -p -m 0777 $(DOJO_DMC_DIR)/logs $(DOJO_DMC_DIR)/configs $(DOJO_DMC_DIR)/plugins $(DOJO_DMC_DIR)/model_configs \
 		$(DOJO_DMC_DIR)/dojo; \
-	touch clouseau/.dockerenv; \
+	touch terminal/.dockerenv; \
 	make envfile;
 
 .PHONY:rebuild-all
@@ -66,10 +66,10 @@ clean:
 	docker-compose run app rm -r ./data/*/ && \
 	echo "Done"
 
-clouseau/.dockerenv:
-	touch clouseau/.dockerenv
+terminal/.dockerenv:
+	touch terminal/.dockerenv
 
-docker-compose.yaml:$(COMPOSE_FILES) docker-compose.build-override.yaml clouseau/.dockerenv envfile
+docker-compose.yaml:$(COMPOSE_FILES) docker-compose.build-override.yaml terminal/.dockerenv envfile
 	export $$(cat envfile | xargs); \
 	export AWS_SECRET_ACCESS_KEY_ENCODED=$$(echo -n $${AWS_SECRET_ACCESS_KEY} | \
 		curl -Gso /dev/null -w %{url_effective} --data-urlencode @- "" | cut -c 3-); \
