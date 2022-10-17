@@ -7,8 +7,9 @@ import Typography from '@material-ui/core/Typography';
 
 import BasicAlert from './BasicAlert';
 
-function DatasetDownload({ dataset, className }) {
+function CSVDownload({ resource, index = 'indicators', className }) {
   const [openDownload, setDownload] = useState(false);
+  const name = `${resource.id}.csv`;
   return (
     <>
 
@@ -16,13 +17,13 @@ function DatasetDownload({ dataset, className }) {
         <Button
           variant="outlined"
           color="primary"
-          href={`/api/dojo/indicators/${dataset.id}/download/csv`}
-          download={`${dataset.id}.csv`}
+          href={`/api/dojo/dojo/download/csv/${index}/${resource.id}`}
+          download={name}
           type="text/csv"
           onClick={() => setDownload(true)}
           disabled={openDownload ? true : undefined}
         >
-          Download Dataset
+          Download CSV
         </Button>
       </Typography>
       <BasicAlert
@@ -51,4 +52,4 @@ function DatasetDownload({ dataset, className }) {
   );
 }
 
-export default DatasetDownload;
+export default CSVDownload;

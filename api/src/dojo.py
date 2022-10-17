@@ -8,10 +8,11 @@ from typing import List
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import NotFoundError
 
-from fastapi import APIRouter, Response, status
+from fastapi import APIRouter, Response, status, Request, HTTPException
+from fastapi.responses import StreamingResponse
 from validation import DojoSchema
 from src.settings import settings
-from src.utils import delete_matching_records_from_model, put_rawfile, get_rawfile
+from src.utils import delete_matching_records_from_model, put_rawfile, get_rawfile, stream_csv_from_data_paths, compress_stream
 import logging
 
 logger = logging.getLogger(__name__)
@@ -540,3 +541,26 @@ def get_domains() -> List[str]:
     ]
 
     return domains
+
+
+@router.get("/dojo/download/csv/{index}/{obj_id}")
+def get_csv(index: str, obj_id: str, request: Request):
+    try:
+        run = es.get(index=index, id=obj_id)["_source"]
+    except NotFoundError:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+    run_status = run.get("attributes", {}).get("status", None)
+
+    if "deflate" in request.headers.get("accept-encoding", ""):
+        return StreamingResponse(
+            compress_stream(stream_csv_from_data_paths(run["data_paths"])),
+            media_type="text/csv",
+            headers={'Content-Encoding': 'deflate'}
+        )
+    else:
+        return StreamingResponse(
+            stream_csv_from_data_paths(run["data_paths"]),
+            media_type="text/csv",
+        )
+

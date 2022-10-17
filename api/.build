@@ -2,7 +2,6 @@
 
 VERSION="1.0.0"
 TAG="api-${VERSION}"
-
 GROUP=jataware
 NAME=dojo
 IMAGE="${GROUP}/${NAME}"
