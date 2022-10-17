@@ -128,7 +128,7 @@ func NewSettings(fp string) *Settings {
 	}
 
 	settings.Docker.Auth = GetEnvFatal("DOCKERHUB_AUTH")
-	settings.BootstrapWorkers = GetEnvAsSlice("CLOUSEAU_WORKERS", ",")
+	settings.BootstrapWorkers = GetEnvAsSlice("TERMINAL_WORKERS", ",")
 
 	return &settings
 }

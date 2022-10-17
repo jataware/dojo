@@ -92,7 +92,7 @@ export function useDirective(modelId) {
 
 export function useShellHistory(modelId) {
   const { data, error, mutate } = useSWR(
-    modelId ? `/api/dojo/clouseau/container/history/${modelId}` : null, fetcher
+    modelId ? `/api/dojo/terminal/container/history/${modelId}` : null, fetcher
   );
 
   return {
@@ -132,7 +132,7 @@ export function useRun(runId) {
 }
 
 export function useLocks() {
-  const { data, error, mutate } = useSWR('/api/clouseau/docker/locks', fetcher);
+  const { data, error, mutate } = useSWR('/api/terminal/docker/locks', fetcher);
 
   // we only use the locks property inside the object here
   return {
@@ -165,7 +165,7 @@ export function useLock(modelId) {
 
   // use this custom fetcher because we also want to throw an error when containerId is 'unset'
   const { data, error } = useSWR(
-    `/api/clouseau/docker/locks/${modelId}`, lockFetcher
+    `/api/terminal/docker/locks/${modelId}`, lockFetcher
   );
 
   return {
@@ -176,7 +176,7 @@ export function useLock(modelId) {
 }
 
 export function useNodes() {
-  const { data, error, mutate } = useSWR('/api/clouseau/docker/nodes?v', fetcher);
+  const { data, error, mutate } = useSWR('/api/terminal/docker/nodes?v', fetcher);
 
   return {
     nodes: data,

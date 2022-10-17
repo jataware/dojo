@@ -42,23 +42,23 @@ func setup() *gin.Engine {
 	go pool.Start()
 
 	redisStore := NewRedisStore(settings.Redis.Host, settings.Redis.Port)
-	clouseauWorkerPool, err := NewClouseauWorkerPool(redisStore)
+	terminalWorkerPool, err := NewTerminalWorkerPool(redisStore)
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	shutdownTimerStore := NewShutdownTimerStore(&settings.AutoShutdownSettings, clouseauWorkerPool, pool)
+	shutdownTimerStore := NewShutdownTimerStore(&settings.AutoShutdownSettings, terminalWorkerPool, pool)
 
 	//Bootstrap Workers
 	for _, host := range settings.BootstrapWorkers {
 		log.Printf("Bootstrapping worker host: %s", host)
-		if err := clouseauWorkerPool.AddWorker(host); err != nil {
+		if err := terminalWorkerPool.AddWorker(host); err != nil {
 			LogError(fmt.Sprintf("Error bootstrapping host: %s", host), err)
 		}
 	}
 
 	//check workers
-	if workers, err := clouseauWorkerPool.Workers(); err != nil {
+	if workers, err := terminalWorkerPool.Workers(); err != nil {
 		LogError("Error getting workers", err)
 	} else {
 		if len(workers) == 0 {
@@ -67,7 +67,7 @@ func setup() *gin.Engine {
 			workerHosts := make([]string, 0)
 			for i := range workers {
 				workerHosts = append(workerHosts, workers[i].Host)
-				go func(w *ClouseauWorker) {
+				go func(w *TerminalWorker) {
 					info := w.Info(false)
 					log.Printf("Docker Worker - %s, Status: %s\n", w.Host, info.Status)
 				}(&workers[i])
@@ -78,7 +78,7 @@ func setup() *gin.Engine {
 
 	// disabled
 	// containerDiffStore := NewContainerDiffStore(docker)
-	engine := SetupRoutes(pool, settings, clouseauWorkerPool, shutdownTimerStore, redisStore)
+	engine := SetupRoutes(pool, settings, terminalWorkerPool, shutdownTimerStore, redisStore)
 	return engine
 }
 

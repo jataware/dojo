@@ -163,7 +163,7 @@ const PublishContainer = ({ modelId, setUploading, mutateModel }) => {
       console.debug(directive);
       console.debug('start publish');
       console.debug(postBody);
-      await fetch(`/api/clouseau/docker/${modelId}/commit`, {
+      await fetch(`/api/terminal/docker/${modelId}/commit`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

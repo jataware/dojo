@@ -91,7 +91,7 @@ const ShellHistory = ({
   const { directive } = useDirective(modelId);
 
   const removeItem = async (item) => {
-    const resp = await fetch(`/api/dojo/clouseau/container/history/${modelId}/${item.idx}`,
+    const resp = await fetch(`/api/dojo/terminal/container/history/${modelId}/${item.idx}`,
       { method: 'DELETE' });
     if (resp.ok) {
       mutateShellHistory();

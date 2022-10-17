@@ -88,7 +88,7 @@ const SummaryWebSocketHandler = ({ modelId, relaunch }) => {
   }, [register, unregister, history, modelId, closeSocket]);
 
   const cancelShutdown = () => {
-    axios.get(`/api/clouseau/docker/${modelId}/shutdown/extend`)
+    axios.get(`/api/terminal/docker/${modelId}/shutdown/extend`)
       .then(() => {
         setAlertType('success');
       }).catch(() => {

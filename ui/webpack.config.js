@@ -55,9 +55,9 @@ module.exports = {
       ignored: /node_modules/,
     },
     proxy: {
-      '/api/clouseau': {
+      '/api/terminal': {
         target: 'http://localhost:3000',
-        pathRewrite: { '^/api/clouseau': '' },
+        pathRewrite: { '^/api/terminal': '' },
         secure: false,
         changeOrigin: true,
       },

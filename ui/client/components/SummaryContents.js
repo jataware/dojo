@@ -181,7 +181,7 @@ const SummaryContents = ({
   };
 
   const saveEditor = async () => {
-    await fetch(`/api/clouseau/container/${model.id}/ops/save?path=${editor.file}`, {
+    await fetch(`/api/terminal/container/${model.id}/ops/save?path=${editor.file}`, {
       method: 'POST',
       body: editor.text
     });
@@ -204,7 +204,7 @@ const SummaryContents = ({
   const afterPublish = () => {
     // release the container lock
     if (locked) {
-      axios.delete(`/api/clouseau/docker/${model.id}/release`)
+      axios.delete(`/api/terminal/docker/${model.id}/release`)
         .then(() => {
           console.info('Successfully released the lock');
           // get rid of any query params in the url

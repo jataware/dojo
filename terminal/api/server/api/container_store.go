@@ -5,8 +5,8 @@ import (
 )
 
 const (
-	REDIS_CONTAINER_KEY     = "clouseau:container:%s"
-	REDIS_CONTAINER_HISTORY = "clouseau:history:%s"
+	REDIS_CONTAINER_KEY     = "terminal:container:%s"
+	REDIS_CONTAINER_HISTORY = "terminal:history:%s"
 )
 
 type ContainerStore struct {

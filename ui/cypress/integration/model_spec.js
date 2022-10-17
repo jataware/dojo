@@ -15,7 +15,7 @@ describe('Creating a model', () => {
   /* this will fail gracefully if there isn't a worker running to shut down */
   const shutdownWorker = () => {
     /* give the shutdown endpoint an alias so we can know when it is complete */
-    cy.intercept('/api/clouseau/docker/*/release').as('shutdown');
+    cy.intercept('/api/terminal/docker/*/release').as('shutdown');
     cy.visit('/admin');
     /* find our shutdown button */
     cy.get('[data-test=adminShutDownBtn]').then((btn) => {
@@ -88,7 +88,7 @@ describe('Creating a model', () => {
     cy.get('[data-test=modelFormSubmitBtn]').click();
     // intercept our request to fetch the base images, so we aren't relying on dockerhub
     // and respond with the mock set of images in ../fixtures/images.json
-    cy.intercept('GET', '/api/dojo/phantom/base_images', { fixture: 'images.json' });
+    cy.intercept('GET', '/api/dojo/ui/base_images', { fixture: 'images.json' });
     cy.get('[data-test=selectImage]').click();
     cy.contains('Ubuntu').click();
 
@@ -103,7 +103,7 @@ describe('Creating a model', () => {
     cy.get('.xterm-helper-textarea').should('exist');
 
     // watch for our requests for the shell history, so we know when we get the new directive
-    cy.intercept('/api/dojo/clouseau/container/history/*').as('shellHistory');
+    cy.intercept('/api/dojo/terminal/container/history/*').as('shellHistory');
 
     // type in a directive
     cy.get('.xterm-helper-textarea').type(`${directiveCmd}{enter}`);
@@ -180,7 +180,7 @@ describe('Creating a model', () => {
     });
 
     // provision page
-    cy.intercept('GET', '/api/dojo/phantom/base_images', { fixture: 'images.json' });
+    cy.intercept('GET', '/api/dojo/ui/base_images', { fixture: 'images.json' });
     cy.get('[data-test=selectImage]').click();
     cy.contains('Ubuntu').click();
     cy.get('[data-test=modelContainerLaunchBtn]').click();

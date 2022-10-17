@@ -47,7 +47,7 @@ const UploadFileDialog = ({
     try {
       axios({
         method: 'POST',
-        url: `/api/clouseau/container/${modelID}/ops/save?path=${uploadPath}/${file.name}`,
+        url: `/api/terminal/container/${modelID}/ops/save?path=${uploadPath}/${file.name}`,
         data: file,
         headers: { 'Content-Type': 'multipart/form-data' },
       })

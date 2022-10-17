@@ -49,7 +49,6 @@ COPY --from=build /out/api .
 
 RUN useradd --user-group --create-home app
 
-RUN mkdir -p /home/app/cato/static
 COPY --from=build /out/pkg.tgz /home/app/api/static/pkg.tgz
 RUN chown -v -R app:app /home/app
 

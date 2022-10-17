@@ -15,7 +15,7 @@ import {
 } from '../context';
 
 const storeFileRequest = async (info) => {
-  const rsp = await fetch('/api/dojo/clouseau/file', {
+  const rsp = await fetch('/api/dojo/terminal/file', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -75,7 +75,7 @@ const ContainerWebSocket = ({
         const p = `${s.substring(5)}`;
         const f = (p.startsWith('/')) ? p : `${cwd}/${p}`;
         const rsp = await fetch(
-          `/api/clouseau/container/${modelId}/ops/cat?path=${encodeURIComponent(f)}`
+          `/api/terminal/container/${modelId}/ops/cat?path=${encodeURIComponent(f)}`
         );
         if (rsp.ok) {
           setEditorContents({ text: await rsp.text(), file: f });
@@ -88,7 +88,7 @@ const ContainerWebSocket = ({
 
         // load that file's contents
         const rsp = await fetch(
-          `/api/clouseau/container/${modelId}/ops/cat?path=${encodeURIComponent(fullPath)}`
+          `/api/terminal/container/${modelId}/ops/cat?path=${encodeURIComponent(fullPath)}`
         );
         if (rsp.ok) {
           const fileContent = await rsp.text();
@@ -139,7 +139,7 @@ const ContainerWebSocket = ({
       if (id === 'edit') {
         // file editor
         const rsp = await fetch(
-          `/api/clouseau/container/${modelId}/ops/cat?path=${encodeURIComponent(meta.file)}`
+          `/api/terminal/container/${modelId}/ops/cat?path=${encodeURIComponent(meta.file)}`
         );
         if (rsp.ok) {
           setEditorContents({ text: await rsp.text(), file: meta.file });
@@ -148,7 +148,7 @@ const ContainerWebSocket = ({
       } else if (id === 'config') {
         // load the file's contents
         const rsp = await fetch(
-          `/api/clouseau/container/${modelId}/ops/cat?path=${encodeURIComponent(meta.file)}`
+          `/api/terminal/container/${modelId}/ops/cat?path=${encodeURIComponent(meta.file)}`
         );
 
         // fetch an existing config if one exists, so we don't write a new blank config on top
@@ -201,7 +201,7 @@ const ContainerWebSocket = ({
         // Download file from container.
 
         const fileName = meta.file.split('/').pop();
-        const url = `/api/clouseau/container/${modelId}/ops/cat?path=${meta.file}`;
+        const url = `/api/terminal/container/${modelId}/ops/cat?path=${meta.file}`;
         fetch(url, {
           method: 'GET',
         })

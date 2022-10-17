@@ -46,9 +46,9 @@ module.exports = {
       'Access-Control-Allow-Headers': 'Origin, X-Requested-With, Content-Type, Accept'
     },
     proxy: {
-      '/api/clouseau': {
+      '/api/terminal': {
         target: 'http://localhost:3000',
-        pathRewrite: { '^/api/clouseau': '' },
+        pathRewrite: { '^/api/terminal': '' },
         secure: false,
         changeOrigin: true,
       },

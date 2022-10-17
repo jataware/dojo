@@ -1,6 +1,6 @@
 
 
-![Clouseau](docs/clouseau.png)
+![Dojo Terminal](docs/clouseau.png)
 
 ![Build](https://github.com/jataware/clouseau/workflows/Build/badge.svg)
 
@@ -21,9 +21,9 @@ go  v1.17
 make docker_build
 ```
 
-`CLOUSEAU_WORKERS` - is a comma seperated list of "docker engines" for dev this will be your local ip
+`TERMINAL_WORKERS` - is a comma seperated list of "docker engines" for dev this will be your local ip
 
-Add `DOCKERHUB_AUTH` Token and `REDIS_HOST` and `CLOUSEAU_WORKERS` to `.dockerenv` and `connector/server/.env`
+Add `DOCKERHUB_AUTH` Token and `REDIS_HOST` and `TERMINAL_WORKERS` to `.dockerenv` and `connector/server/.env`
 
 Generate base64 auth token
 ```
@@ -33,7 +33,7 @@ echo '{"username":"<username>","password":"<password>","email":"<email>"}' | bas
 ```
 DOCKERHUB_AUTH=<auth token>
 REDIS_HOST=192.168.1.6
-CLOUSEAU_WORKERS=192.168.1.6,192.168.1.7
+TERMINAL_WORKERS=192.168.1.6,192.168.1.7
 ```
 
 
@@ -66,7 +66,7 @@ make socat-start
 
 Start server
 ```
-make cato_run_dev
+make api_run_dev
 ```
 
 ### Bump Version

@@ -101,10 +101,6 @@ services:
         condition: service_healthy
   terminal:
     command: -debug -pull-images=false
-    # build:
-    # context: ./clouseau
-    # dockerfile: cato/Dockerfile
-    # image: jataware/clouseau:cato-dev
     volumes:
       - ${PWD}/terminal/api/server/settings.yaml:/home/app/connector/settings.yaml:rw
     env_file:

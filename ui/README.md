@@ -1,6 +1,6 @@
 
 
-![Phantom](docs/phantom.jpg)
+![Dojo UI](docs/pinkpanther.jpg)
 
 ![Build](https://github.com/jataware/phantom/workflows/Build/badge.svg)
 

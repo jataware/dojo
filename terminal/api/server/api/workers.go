@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-type ClouseauWorker struct {
+type TerminalWorker struct {
 	Host   string  `json:"host"`
 	Birth  string  `json:"birth"`
 	Docker *Docker `json:"-"`
@@ -25,19 +25,19 @@ const (
 	WORKER_STATUS_DOWN = "down"
 )
 
-type ClouseauWorkerInfo struct {
+type TerminalWorkerInfo struct {
 	Status string
 	Info   interface{}
 }
 
-type ClouseauWorkerPool struct {
+type TerminalWorkerPool struct {
 	mu    sync.RWMutex
 	Store *WorkerStore
-	//	Workers map[string]ClouseauWorker
+	//	Workers map[string]TerminalWorker
 }
 
-func NewClouseauWorkerPool(redis *RedisStore) (*ClouseauWorkerPool, error) {
-	pool := &ClouseauWorkerPool{Store: NewWorkerStore(redis)}
+func NewTerminalWorkerPool(redis *RedisStore) (*TerminalWorkerPool, error) {
+	pool := &TerminalWorkerPool{Store: NewWorkerStore(redis)}
 	return pool, nil
 }
 
@@ -50,36 +50,36 @@ func findWorker(s []WorkerInfo, host string) (WorkerInfo, bool) {
 	return WorkerInfo{}, false
 }
 
-func (p *ClouseauWorkerPool) GetWorker(host string) (ClouseauWorker, error) {
+func (p *TerminalWorkerPool) GetWorker(host string) (TerminalWorker, error) {
 
 	workers, err := p.Store.Workers()
 
 	if err != nil {
-		return ClouseauWorker{}, err
+		return TerminalWorker{}, err
 	}
 
 	worker, found := findWorker(workers, host)
 
 	if !found {
-		return ClouseauWorker{}, errors.New(fmt.Sprintf("Worker not found for host: %s", host))
+		return TerminalWorker{}, errors.New(fmt.Sprintf("Worker not found for host: %s", host))
 	}
 
 	docker, err := NewDocker(worker.Host)
 	if err != nil {
-		return ClouseauWorker{}, err
+		return TerminalWorker{}, err
 	}
 
-	return ClouseauWorker{Host: host, Docker: docker}, nil
+	return TerminalWorker{Host: host, Docker: docker}, nil
 
 }
 
-func (p *ClouseauWorkerPool) Workers() ([]ClouseauWorker, error) {
+func (p *TerminalWorkerPool) Workers() ([]TerminalWorker, error) {
 
-	var workers = make([]ClouseauWorker, 0)
+	var workers = make([]TerminalWorker, 0)
 	workersInfo, err := p.Store.Workers()
 
 	if err != nil {
-		return []ClouseauWorker{}, err
+		return []TerminalWorker{}, err
 	}
 
 	for _, w := range workersInfo {
@@ -88,17 +88,17 @@ func (p *ClouseauWorkerPool) Workers() ([]ClouseauWorker, error) {
 			LogError(fmt.Sprintf("Failed to create docker for host %s", w.Host), err)
 			continue
 		}
-		workers = append(workers, ClouseauWorker{Host: w.Host, Docker: docker})
+		workers = append(workers, TerminalWorker{Host: w.Host, Docker: docker})
 	}
 
 	return workers, nil
 }
 
-func (p *ClouseauWorkerPool) Locks() ([]WorkerLock, error) {
+func (p *TerminalWorkerPool) Locks() ([]WorkerLock, error) {
 	return p.Store.Locks()
 }
 
-func (p *ClouseauWorkerPool) FindLock(modelId string) (WorkerLock, bool, error) {
+func (p *TerminalWorkerPool) FindLock(modelId string) (WorkerLock, bool, error) {
 	locks, err := p.Store.Locks()
 	if err != nil {
 		return WorkerLock{}, false, err
@@ -113,14 +113,14 @@ func (p *ClouseauWorkerPool) FindLock(modelId string) (WorkerLock, bool, error) 
 	return WorkerLock{}, false, nil
 }
 
-func (p *ClouseauWorkerPool) Acquire(modelId string) (WorkerLock, error) {
+func (p *TerminalWorkerPool) Acquire(modelId string) (WorkerLock, error) {
 	p.mu.Lock()
 	lock, err := p.Store.Acquire(modelId)
 	p.mu.Unlock()
 	return lock, err
 }
 
-func (p *ClouseauWorkerPool) Release(modelId string) error {
+func (p *TerminalWorkerPool) Release(modelId string) error {
 	p.mu.Lock()
 	err := p.Store.Release(modelId)
 	p.mu.Unlock()
@@ -159,11 +159,11 @@ func dockerTmpl(tmpl string, image string, out string) error {
 	return nil
 }
 
-func (p *ClouseauWorkerPool) AddWorker(host string) error {
+func (p *TerminalWorkerPool) AddWorker(host string) error {
 	return p.Store.AddWorker(host)
 }
 
-func (p *ClouseauWorkerPool) RemoveWorker(host string) error {
+func (p *TerminalWorkerPool) RemoveWorker(host string) error {
 
 	p.mu.Lock()
 	err := p.Store.DeleteWorker(host)
@@ -173,7 +173,7 @@ func (p *ClouseauWorkerPool) RemoveWorker(host string) error {
 	return err
 }
 
-func (w *ClouseauWorker) Provision(pool *WebSocketPool, store *ProvisionStore, r ProvisionRequest) (types.IDResponse, error) {
+func (w *TerminalWorker) Provision(pool *WebSocketPool, store *ProvisionStore, r ProvisionRequest) (types.IDResponse, error) {
 
 	var id types.IDResponse
 
@@ -266,8 +266,8 @@ func (w *ClouseauWorker) Provision(pool *WebSocketPool, store *ProvisionStore, r
 
 }
 
-func (w *ClouseauWorker) Info(verbose bool) ClouseauWorkerInfo {
-	var info ClouseauWorkerInfo
+func (w *TerminalWorker) Info(verbose bool) TerminalWorkerInfo {
+	var info TerminalWorkerInfo
 
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second*10)
 	defer cancel()

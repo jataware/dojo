@@ -40,11 +40,11 @@ ip:| ip-addr
 	@echo ${ip_address}
 
 .PHONY: docker_build
-docker_build: docker_build-phantom  ## Build all docker containers
+docker_build: docker_build-ui  ## Build all docker images
 
-.PHONY: docker_build-phantom
-docker_build-phantom: | npm_build ## Build Phantom container
-	./build-phantom.sh
+.PHONY: docker_build-ui
+docker_build-ui: | npm_build ## Build dojo-ui image
+	./build-ui.sh
 
 
 .PHONY: docker_login-dockerhub
@@ -52,11 +52,11 @@ docker_login-dockerhub:| check-DOCKERHUB_USER check-DOCKERHUB_PASS  ## Login to 
 	@printf "${DOCKERHUB_PASS}\n" | docker login -u "${DOCKERHUB_USER}" --password-stdin
 
 .PHONY: docker_push-dockerhub
-docker_push-dockerhub: docker_push-phantom | docker_login-dockerhub  ## Push all containers to docker registry
+docker_push-dockerhub: docker_push-ui | docker_login-dockerhub  ## Push all images to docker registry
 
 docker_push-%:| docker_login-dockerhub
 	@echo "push $* ${VERSION}"
-	docker push "jataware/phantom:${VERSION}"
+	docker push "jataware/dojo-ui:${VERSION}"
 
 .PHONY: npm_lint
 npm_lint:   ## Format js files

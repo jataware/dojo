@@ -130,7 +130,7 @@ export default withStyles(({ spacing }) => ({
     flexGrow: 0
   }
 }))(({
-  classes, datasetInfo, setDatasetInfo, stepTitle, handleNext, handleBack, modelId, 
+  classes, datasetInfo, setDatasetInfo, stepTitle, handleNext, handleBack, modelId,
   annotations, setAnnotations, ...props
 }) => {
   const history = useHistory();
@@ -153,24 +153,24 @@ export default withStyles(({ spacing }) => ({
       annotations: {},
     });
 
-    const clouseau_ready_filepath = props["request_path"];
+    const terminal_ready_filepath = props["request_path"];
     const url = `/api/dojo/job/${props.modelId}/tasks.model_output_analysis`;
     await axios({
       method: 'post',
       url,
       data: {
         model_id: modelId,
-        fileurl: clouseau_ready_filepath,
+        fileurl: terminal_ready_filepath,
         filepath: props?.file_path || "",
-        synchronous: true, 
+        synchronous: true,
         context: {},
       },
     }).then((result) => {
       const jobResult = result.data.result;
       setFileMetadata({
-        ...fileMetadata, 
+        ...fileMetadata,
         ...jobResult,
-        fileurl: clouseau_ready_filepath,
+        fileurl: terminal_ready_filepath,
         filepath: props?.file_path || "",
       });
     })

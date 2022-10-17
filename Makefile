@@ -4,15 +4,15 @@ PYTHON = $(shell which python3 || which python)
 export LANG
 
 BASEDIR = $(shell pwd)
-CLOUSEAU_DIR = terminal
+TERMINAL_DIR = terminal
 DOJO_API_DIR = api
 DOJO_DMC_DIR = dmc
 MIXMASTA_DIR = mixmasta
-PHANTOM_DIR = ui
+UI_DIR = ui
 RQ_DIR = tasks
 WORKERS_DIR = workers
-COMPOSE_DIRS := $(CLOUSEAU_DIR) $(DOJO_API_DIR) $(DOJO_DMC_DIR) $(WORKERS_DIR)
-COMPOSE_FILES := $(CLOUSEAU_DIR)/docker-compose.yaml $(DOJO_API_DIR)/docker-compose.yaml \
+COMPOSE_DIRS := $(TERMINAL_DIR) $(DOJO_API_DIR) $(DOJO_DMC_DIR) $(WORKERS_DIR)
+COMPOSE_FILES := $(TERMINAL_DIR)/docker-compose.yaml $(DOJO_API_DIR)/docker-compose.yaml \
 				 $(DOJO_DMC_DIR)/docker-compose.yaml $(WORKERS_DIR)/docker-compose.yaml \
 				 $(RQ_DIR)/docker-compose.yaml
 TEMP_COMPOSE_FILES := $(foreach file,$(subst /,_,$(COMPOSE_FILES)),temp_$(file))

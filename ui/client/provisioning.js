@@ -64,7 +64,7 @@ const useLockStatusCheck = (modelId) => {
     // don't run this again if we've already checked for a lock
     if (checked.current === true) return;
 
-    axios.get(`/api/clouseau/docker/locks/${modelId}`)
+    axios.get(`/api/terminal/docker/locks/${modelId}`)
       .then((response) => {
         // here we're just checking if the lock exists for this model id, not whether it has
         // fully loaded (ie returns response.data.containerId.length && !== 'unset')
@@ -107,7 +107,7 @@ const Provisioning = () => {
   const { lockExists, lockLoading, lockError } = useLockStatusCheck(modelId);
 
   const fetchProvisionState = useCallback(() => {
-    axios.get(`/api/clouseau/provision/state/${modelId}`)
+    axios.get(`/api/terminal/provision/state/${modelId}`)
       .then((response) => {
         setProvisionState(response.data?.state);
       });

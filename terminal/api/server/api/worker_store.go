@@ -8,10 +8,10 @@ import (
 )
 
 const (
-	REDIS_WORKERS_KEY                  = "clouseau:workers"
-	REDIS_WORKER_KEY_PREFIX            = "clouseau:worker:"
-	REDIS_WORKER_LOCK_PREFIX           = "clouseau:lock:"
-	REDIS_WORKER_CONTAINER_LOCK_PREFIX = "clouseau:container.lock:"
+	REDIS_WORKERS_KEY                  = "terminal:workers"
+	REDIS_WORKER_KEY_PREFIX            = "terminal:worker:"
+	REDIS_WORKER_LOCK_PREFIX           = "terminal:lock:"
+	REDIS_WORKER_CONTAINER_LOCK_PREFIX = "terminal:container.lock:"
 )
 
 var (

@@ -9,7 +9,7 @@ GROUP=jataware
 NAME=dojo-ui
 IMAGE="${GROUP}/${NAME}"
 
-docker build -f phantom/Dockerfile \
+docker build -f deploy/Dockerfile \
        -t "${IMAGE}:dev" \
        -t "${IMAGE}:${TAG}" \
        -t "${IMAGE}:${TAG}-dev" \

@@ -1,7 +1,7 @@
 version: "3"
 services:
 
-  phantom:
+  ui:
     image: jataware/ui:dev
     container_name: ui
     ports:

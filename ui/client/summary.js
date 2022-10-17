@@ -48,7 +48,7 @@ const Summary = () => {
     // if we have a container locked (a terminal session running)
     if (lock) {
       // start auto shutdown timer when we hit the page
-      axios.put(`/api/clouseau/docker/${modelId}/shutdown/start`)
+      axios.put(`/api/terminal/docker/${modelId}/shutdown/start`)
         .then(() => {
           console.log('Container auto-shutdown sequence initiated');
         });

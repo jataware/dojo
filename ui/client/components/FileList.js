@@ -12,7 +12,7 @@ import { useConfigs, useOutputFiles } from './SWRHooks';
 const FileTile = ({ item }) => {
   const fileParts = new URL(`file://${item}`).pathname.split('/');
   const fileName = fileParts.pop();
-  const filePath = fileParts.join('/').replace('/home/clouseau/', '~/');
+  const filePath = fileParts.join('/').replace('/home/terminal/', '~/');
   return (
     <span>
       <Typography variant="subtitle1" noWrap>{fileName}</Typography>
@@ -86,7 +86,7 @@ const FileList = ({
 
   const openConfigParameterAnnotation = async (item) => {
     const response = await fetch(
-      `/api/clouseau/container/${model.id}/ops/cat?path=${encodeURIComponent(item.path)}`
+      `/api/terminal/container/${model.id}/ops/cat?path=${encodeURIComponent(item.path)}`
     );
 
     if (response.ok) {

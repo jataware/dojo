@@ -14,12 +14,12 @@ const fetchTimeout = () => new Promise((resolve, reject) => {
 });
 
 export const refreshContainerInfo = async () => {
-  const resp = await fetch('/api/clouseau/docker/nodes');
+  const resp = await fetch('/api/terminal/docker/nodes');
   const nodes = await resp.json();
 
   const nodeContainers = await Promise.all(nodes.map(async (n, i) => {
     try {
-      const r = await Promise.race([fetch(`/api/clouseau/docker/${n.i}/containers`),
+      const r = await Promise.race([fetch(`/api/terminal/docker/${n.i}/containers`),
         fetchTimeout()]);
       if (!r.ok) {
         return { ...n, i, status: 'down' };
@@ -45,7 +45,7 @@ export const refreshContainerInfo = async () => {
     cs.map(async (c) => {
       let info = { ok: false };
       if (c.container.Id) {
-        const r = await fetch(`/api/dojo/clouseau/container/${c.container.Id}`);
+        const r = await fetch(`/api/dojo/terminal/container/${c.container.Id}`);
         if (r.ok) {
           info = { ok: r.ok, ...(await r.json()) };
         }

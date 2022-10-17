@@ -113,7 +113,7 @@ const Provision = () => {
       return;
     }
 
-    axios.post(`/api/clouseau/docker/provision/${modelId}`,
+    axios.post(`/api/terminal/docker/provision/${modelId}`,
       {
         name: modelId,
         image: imageInfo.dockerImage,
@@ -203,7 +203,7 @@ const Provision = () => {
   useEffect(() => {
     // skip this fetch if we are relaunching, then we won't show a list at all
     if (!relaunch) {
-      axios('/api/dojo/phantom/base_images').then((response) => setBaseImageList(response.data));
+      axios('/api/dojo/ui/base_images').then((response) => setBaseImageList(response.data));
     }
   }, [relaunch]);
 

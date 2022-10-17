@@ -88,7 +88,7 @@ const CenteredGrid = ({ model }) => {
   const history = useHistory();
 
   const handleAbandonSession = () => {
-    axios.delete(`/api/clouseau/docker/${model.id}/release`).then(() => {
+    axios.delete(`/api/terminal/docker/${model.id}/release`).then(() => {
       history.push(`/summary/${model.id}`);
     }).catch((error) => {
       console.log('There was an error shutting down the container: ', error);
@@ -97,7 +97,7 @@ const CenteredGrid = ({ model }) => {
   };
 
   const saveEditor = async () => {
-    await fetch(`/api/clouseau/container/${model.id}/ops/save?path=${editorContents.file}`, {
+    await fetch(`/api/terminal/container/${model.id}/ops/save?path=${editorContents.file}`, {
       method: 'POST',
       body: editorContents.text
     });
@@ -136,7 +136,7 @@ const CenteredGrid = ({ model }) => {
   useEffect(() => {
     // Clear any shutdown timers for this model if we're coming back from the summary page
     // returns a 404 if there are none to cancel (if we aren't coming from summary)
-    axios.delete(`/api/clouseau/docker/${model.id}/shutdown`)
+    axios.delete(`/api/terminal/docker/${model.id}/shutdown`)
       .then(() => console.debug('Cancelling container auto-shutdown timer'))
       .catch(() => console.debug('No auto-shutdown timers found to cancel'));
   }, [model.id]);

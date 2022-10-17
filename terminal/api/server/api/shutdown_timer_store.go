@@ -29,16 +29,16 @@ type ShutdownTimer struct {
 
 type ShutdownTimerStore struct {
 	Timers             map[string]*ShutdownTimer
-	clouseauWorkerPool *ClouseauWorkerPool
+	terminalWorkerPool *TerminalWorkerPool
 	websocketPool      *WebSocketPool
 	shutdownSettings   *AutoShutdownSettings
 	mu                 sync.RWMutex
 }
 
-func NewShutdownTimerStore(settings *AutoShutdownSettings, clouseauWorkerPool *ClouseauWorkerPool, websocketPool *WebSocketPool) *ShutdownTimerStore {
+func NewShutdownTimerStore(settings *AutoShutdownSettings, terminalWorkerPool *TerminalWorkerPool, websocketPool *WebSocketPool) *ShutdownTimerStore {
 	return &ShutdownTimerStore{
 		Timers:             map[string]*ShutdownTimer{},
-		clouseauWorkerPool: clouseauWorkerPool,
+		terminalWorkerPool: terminalWorkerPool,
 		websocketPool:      websocketPool,
 		shutdownSettings:   settings,
 	}
@@ -107,7 +107,7 @@ func (s *ShutdownTimer) TimeRemaining() time.Duration {
 	return s.end.Sub(time.Now())
 }
 
-func NewShutdownTimer(shutdownSettings *AutoShutdownSettings, clouseauWorkerPool *ClouseauWorkerPool, pool *WebSocketPool, lock *WorkerLock, worker *ClouseauWorker, remove func()) *ShutdownTimer {
+func NewShutdownTimer(shutdownSettings *AutoShutdownSettings, terminalWorkerPool *TerminalWorkerPool, pool *WebSocketPool, lock *WorkerLock, worker *TerminalWorker, remove func()) *ShutdownTimer {
 
 	ctx, cancel := context.WithCancel(context.Background())
 
@@ -144,7 +144,7 @@ func NewShutdownTimer(shutdownSettings *AutoShutdownSettings, clouseauWorkerPool
 			return
 		}
 
-		if err := clouseauWorkerPool.Release(lock.ModelId); err != nil {
+		if err := terminalWorkerPool.Release(lock.ModelId); err != nil {
 			LogError("Error releasing for lock for unsuccessful worker ", err)
 			return
 		}
@@ -170,7 +170,7 @@ func NewShutdownTimer(shutdownSettings *AutoShutdownSettings, clouseauWorkerPool
 	return &timer
 }
 
-func (s *ShutdownTimerStore) CreateResetTimer(lock *WorkerLock, worker *ClouseauWorker) {
+func (s *ShutdownTimerStore) CreateResetTimer(lock *WorkerLock, worker *TerminalWorker) {
 
 	t, exist := s.Timers[lock.ModelId]
 	if exist {
@@ -182,7 +182,7 @@ func (s *ShutdownTimerStore) CreateResetTimer(lock *WorkerLock, worker *Clouseau
 		s.DestroyTimer(lock)
 	}
 	s.mu.Lock()
-	s.Timers[lock.ModelId] = NewShutdownTimer(s.shutdownSettings, s.clouseauWorkerPool, s.websocketPool, lock, worker, removeTimer)
+	s.Timers[lock.ModelId] = NewShutdownTimer(s.shutdownSettings, s.terminalWorkerPool, s.websocketPool, lock, worker, removeTimer)
 	s.mu.Unlock()
 }
 

@@ -56,7 +56,7 @@ const Admin = () => {
     const refreshNodeInfo = async () => {
       // go through all the locks and fetch their states
       const lockStates = await Promise.all(locks.map(async (lock) => {
-        const response = await fetch(`/api/clouseau/provision/state/${lock.modelId}`);
+        const response = await fetch(`/api/terminal/provision/state/${lock.modelId}`);
         if (response.ok) {
           return { ...lock, status: (await response.json()) };
         }
@@ -107,7 +107,7 @@ const Admin = () => {
   }, [locks, nodes]);
 
   const destroyLock = (modelId) => {
-    axios.delete(`/api/clouseau/docker/${modelId}/release`).then(() => {
+    axios.delete(`/api/terminal/docker/${modelId}/release`).then(() => {
       mutateLocks();
       mutateNodes();
     }).catch((error) => {

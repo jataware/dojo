@@ -8,10 +8,10 @@ import (
 )
 
 const (
-	REDIS_PROVISION_LOGS  = "clouseau:provision:logs:%s"
-	REDIS_PROVISION_LOG   = "clouseau:provision:log:%s:%s"
-	REDIS_PROVISION_META  = "clouseau:provision:meta:%s:%s"
-	REDIS_PROVISION_STATE = "clouseau:provisioning:state:%s"
+	REDIS_PROVISION_LOGS  = "terminal:provision:logs:%s"
+	REDIS_PROVISION_LOG   = "terminal:provision:log:%s:%s"
+	REDIS_PROVISION_META  = "terminal:provision:meta:%s:%s"
+	REDIS_PROVISION_STATE = "terminal:provisioning:state:%s"
 
 	PROVISION_STATE_INITALIZING = "initalizing"
 	PROVISION_STATE_PROCESSING  = "processing"

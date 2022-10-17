@@ -1,14 +1,14 @@
 const baseConfig = require('./webpack.config');
 
 baseConfig.devServer.proxy = {
-  '/api/clouseau': {
-    target: (process.env.CLOUSEAU_ENDPOINT ? process.env.CLOUSEAU_ENDPOINT : 'http://localhost:3000'),
-    pathRewrite: { '^/api/clouseau': '' },
+  '/api/terminal': {
+    target: (process.env.TERMINAL_ENDPOINT ? process.env.TERMINAL_ENDPOINT : 'http://localhost:3000'),
+    pathRewrite: { '^/api/terminal': '' },
     secure: false,
     changeOrigin: true,
   },
   '/api/ws': {
-    target: (process.env.CLOUSEAU_ENDPOINT ? process.env.CLOUSEAU_ENDPOINT : 'http://localhost:3000'),
+    target: (process.env.TERMINAL_ENDPOINT ? process.env.TERMINAL_ENDPOINT : 'http://localhost:3000'),
     pathRewrite: { '^/api': '' },
     secure: false,
     changeOrigin: true,
