@@ -58,7 +58,6 @@ export default function DatasetDownloadSplitButton({ dataset, className }) {
 
         <ButtonGroup variant="outlined" color="primary" ref={anchorRef} aria-label="split button">
           <Button 
-            // onClick={handleClick}
             href={(returnCorrectUrl())}
             download={`${dataset.id}.csv`}
             type="text/csv"

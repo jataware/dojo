@@ -85,7 +85,6 @@ function DatasetSummaryDetails({ dataset }) {
 
           <DatasetDownloadSplitButton dataset={dataset} className={classes.buttonWrapper}/>
 
-
         </div>
       </Grid>
       <Grid className={classes.detailsPanel} item xs={3}>
