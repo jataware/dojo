@@ -8,7 +8,7 @@ CLOUSEAU_DIR = terminal
 DOJO_API_DIR = api
 DOJO_DMC_DIR = dmc
 MIXMASTA_DIR = mixmasta
-PHANTOM_DIR = phantom
+PHANTOM_DIR = ui
 RQ_DIR = tasks
 WORKERS_DIR = workers
 COMPOSE_DIRS := $(CLOUSEAU_DIR) $(DOJO_API_DIR) $(DOJO_DMC_DIR) $(WORKERS_DIR)
@@ -16,7 +16,7 @@ COMPOSE_FILES := $(CLOUSEAU_DIR)/docker-compose.yaml $(DOJO_API_DIR)/docker-comp
 				 $(DOJO_DMC_DIR)/docker-compose.yaml $(WORKERS_DIR)/docker-compose.yaml \
 				 $(RQ_DIR)/docker-compose.yaml
 TEMP_COMPOSE_FILES := $(foreach file,$(subst /,_,$(COMPOSE_FILES)),temp_$(file))
-IMAGE_NAMES = api terminal phantom tasks
+IMAGE_NAMES = api terminal ui tasks
 BUILD_FILES = $(wildcard */.build)
 BUILD_DIRS = $(dir $(BUILD_FILES))
 
@@ -49,8 +49,8 @@ ifeq ($(wildcard envfile),)
 endif
 
 .PHONY:static
-static:docker-compose.yaml phantom/ui/node_modules phantom/ui/package-lock.json phantom/ui/package.json
-	( cd phantom/ui && rm -fr dist/; NODE_OPTIONS="--openssl-legacy-provider" npm run build)
+static:docker-compose.yaml ui/node_modules ui/package-lock.json ui/package.json
+	( cd ui && rm -fr dist/; NODE_OPTIONS="--openssl-legacy-provider" npm run build)
 
 .PHONY:images
 images:static
@@ -86,16 +86,16 @@ docker-compose.yaml:$(COMPOSE_FILES) docker-compose.build-override.yaml terminal
 	rm $(TEMP_COMPOSE_FILES) *.sedbkp;
 
 
-phantom/ui/node_modules:docker-compose.yaml phantom/ui/package-lock.json phantom/ui/package.json
-	docker-compose run phantom npm ci -y
+ui/node_modules:docker-compose.yaml ui/package-lock.json ui/package.json
+	docker-compose run ui npm ci -y
 
 
 .PHONY:up
-up:docker-compose.yaml phantom/ui/node_modules
+up:docker-compose.yaml ui/node_modules
 	docker-compose up -d
 
 .PHONY:up-rebuild
-up-rebuild:docker-compose.yaml phantom/ui/node_modules
+up-rebuild:docker-compose.yaml ui/node_modules
 	docker-compose up --build -d
 
 

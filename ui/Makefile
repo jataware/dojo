@@ -60,11 +60,11 @@ docker_push-%:| docker_login-dockerhub
 
 .PHONY: npm_lint
 npm_lint:   ## Format js files
-	(cd ui && npm run lint)
+	npm run lint
 
 .PHONY: npm_build
 npm_build:  ## Build npm package
-	(cd ui && rm -fr dist/; npm run build)
+	rm -fr dist/; npm run build
 
 .PHONY: fmt
 fmt:| npm_lint ## Format all
@@ -74,11 +74,11 @@ compile:| npm_build ## Compile all builds
 
 .PHONY: npm_run_dev
 npm_run_dev:  ## Dev - run react dev server locally
-	(cd ui && npm run dev)
+	npm run dev
 
 .PHONY: cypress_open
 cypress_open: ## Opens Cypress E2E testing app
-	(cd ui && npx cypress open)
+	npx cypress open
 
 .PHONY: docker-compose_up
 docker-compose_up:|ip-addr  ## Dev - run local cluster

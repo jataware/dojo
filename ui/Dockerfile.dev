@@ -1,0 +1,14 @@
+FROM node:lts
+USER node
+
+COPY --chown=node package.json /ui/
+COPY --chown=node package-lock.json /ui/
+
+WORKDIR /ui
+RUN npm install
+
+COPY --chown=node . /ui
+
+EXPOSE 8080
+CMD ["npm", "run", "dev"]
+

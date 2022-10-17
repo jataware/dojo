@@ -2,8 +2,8 @@ version: "3"
 services:
 
   phantom:
-    image: jataware/phantom:dev
-    container_name: phantom1
+    image: jataware/ui:dev
+    container_name: ui
     ports:
       - 8080:80
     environment:

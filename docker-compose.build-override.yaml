@@ -148,15 +148,15 @@ services:
       - dmc-data-results:/data/results
       - dmc-data-mappers:/data/mappers
       - dmc-data-model_configs:/data/model_configs
-  phantom:
+  ui:
     build:
-      context: ./phantom/
+      context: ./ui/
       dockerfile: Dockerfile.dev
-    container_name: phantom
+    container_name: ui
     env_file:
       - envfile
     volumes:
-      - "./phantom/ui:/ui"
+      - "./ui:/ui"
     expose:
       - 8080
     ports:
