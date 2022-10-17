@@ -232,7 +232,10 @@ def publish_indicator(indicator_id: str):
 
 
 @router.get("/indicators/{indicator_id}/download/csv")
-def get_csv(indicator_id: str, request: Request):
+def get_csv(indicator_id: str,
+            request: Request,
+            wide_format: str = 'false'):
+
     try:
         indicator = es.get(index="indicators", id=indicator_id)["_source"]
     except Exception as e:
@@ -252,6 +255,12 @@ def get_csv(indicator_id: str, request: Request):
             # Note: This links it to the previous `df` so not a full copy
             copy=False,
         )
+
+        ## make wide if wide_format is set to true
+        if wide_format == "true":
+            df_wide=pd.pivot(df, index=None, columns='feature', values='value')  # Reshape from long to wide
+            df = df.drop(['feature', 'value'], axis=1)
+            df = pd.merge(df, df_wide, left_index=True, right_index=True)
 
         # Prepare for writing CSV to a temporary buffer
         buffer = io.StringIO()
