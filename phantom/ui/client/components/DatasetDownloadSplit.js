@@ -25,7 +25,7 @@ export default function DatasetDownloadSplitButton({ dataset, className }) {
     setSelectedIndex(index);
    
     if(index==1){
-        setWideFormat(true);
+        setWideFormat(true)
     }else{
         setWideFormat(false)    
     }
