@@ -61,7 +61,7 @@ def main():
 
         # save data to csv and metadata to json
         df.to_csv(os.path.join('output', f'{name}.csv'), index=False)
-        with open(os.path.join('output', f'{name}_meta.json'), 'w') as f:
+        with open(os.path.join('output', f'{name} - meta.json'), 'w') as f:
             json.dump(meta, f)
 
         # make parquet files
@@ -113,9 +113,6 @@ def save_indicators(df, series_info):
                 groups[second] = []
             groups[second].append(indicator)
 
-    # TODO: maybe this returns names?
-    # abbrevs = find_abbreviations(groups, series_info)
-
     # collect all indicators in groups of size 1 and put them in a group called 'misc'
     misc = []
     todelete = []
@@ -127,8 +124,11 @@ def save_indicators(df, series_info):
         del groups[group]
     groups['misc'] = misc
 
+    # get the fully qualified names based on the indicator code groupings
+    abbrevs = find_abbreviations(groups, series_info)
+
     # map from name of group to its indicators
-    indicators = {f"World_Development_Indicators.{name}": indicators for name, indicators in groups.items()}
+    indicators = {f"WDI - {abbrevs[prefix]}": indicators for prefix, indicators in groups.items()}
 
     with open('indicator_groups.json', 'w') as f:
         json.dump(indicators, f)
@@ -208,13 +208,18 @@ def make_metadata(df, series_info, name, description):
         return ret
 
     def get_unit(info) -> str:
-        unit = info.get('Unit of measure', None)
+        unit = None
+        try:
+            #sometimes units are at the end of the indicator name (e.g. 'GDP (current US$)')
+            name:str = info['Indicator Name']
+            if name.endswith(')'):
+                unit = name[name.rfind('(')+1:-1]
+        except:
+            unit = None
+        if unit is None:
+            unit = info.get('Unit of measure', None)
         if pd.isnull(unit):
-            try:
-                # sometimes units are at the end of the indicator name (e.g. 'GDP (current US$)')
-                unit = info['Indicator Name'].split('(')[-1].split(')')[0]
-            except:
-                unit = 'NA'
+            unit = 'NA'
         return unit
 
     def get_unit_description(info) -> str:
@@ -308,125 +313,248 @@ def make_metadata(df, series_info, name, description):
     return meta
 
 
-code_abbreviations = {
-    'EG': '',
-    'FX': '',
-    'SE': '',
-    'PRM': '',
-    'NY': '',
-    'SP': '',
-    'SEC': '',
-    'SH': '',
-    'HIV': '',
-    'AG': '',
-    'EN': '',
-    'TX': '',
-    'TM': '',
-    'NV': '',
-    'IS': '',
-    'ER': '',
-    'SI': '',
-    'STA': '',
-    'MS': '',
-    'FB': '',
-    'IC': '',
-    'SL': '',
-    'TLF': '',
-    'FD': '',
-    'VC': '',
-    'FM': '',
-    'DTH': '',
-    'GC': '',
-    'NE': '',
-    'BM': '',
-    'BX': '',
-    'AGR': '',
-    'MNF': '',
-    'SRV': '',
-    'SLF': '',
-    'FAM': '',
-    'WAG': '',
-    'MLR': '',
-    'FS': '',
-    'DT': '',
-    'MED': '',
-    'COM': '',
-    'CON': '',
-    'FP': '',
-    'SN': '',
-    'IQ': '',
-    'BN': '',
-    'XPD': '',
-    'PA': '',
-    'FPL': '',
-    'FR': '',
-    'TER': '',
-    'EMP': '',
-    'IND': '',
-    'IT': '',
-    'GDP': '',
-    'HD': '',
-    'IMM': '',
-    'TBS': '',
-    'UHC': '',
-    'IP': '',
-    'SM': '',
-    'ST': '',
-    'IE': '',
-    'LP': '',
-    'MMR': '',
-    'CM': '',
-    'ADT': '',
-    'TG': '',
-    'DYN': '',
-    'TT': '',
-    'DC': '',
-    'VAC': '',
-    'SGR': '',
-    'H2O': '',
-    'PRE': '',
-    'ANM': '',
-    'PRG': '',
-    'PRV': '',
-    'SVR': '',
-    'GF': '',
-    'SG': '',
-    'EP': '',
-    'PX': '',
-    'GB': '',
-    'ENR': '',
-    'UEM': '',
-    'ALC': '',
-    'FI': '',
-    'BG': '',
-}
-
-
 def find_abbreviations(all_codes, info):
+    # prefill some of the abbreviations
+    code_chunk_abbreviations = {
+        'EG': '',
+        'FX': '',
+        'SE': 'education',
+        'PRM': '',
+        'NY': 'national_accounts',
+        'SP': 'health.SP',#'health', #TODO:
+        'SEC': '',
+        'SH': 'health.SH',#'health', #TODO:shared health?
+        'HIV': 'HIV',
+        'AG': '',
+        'EN': 'environment.EN',
+        'TX': 'trade_exports',
+        'TM': 'trade_imports',
+        'NV': 'national_value',
+        'IS': '',
+        'ER': 'environment.ER',
+        'SI': 'share_income',
+        'STA': 'standard',
+        'MS': '',
+        'FB': 'financial_banking',
+        'IC': '',
+        'SL': '',
+        'TLF': 'total_labor_force',
+        'FD': '',
+        'VC': '',
+        'FM': 'financial_monetary',
+        'DTH': 'death',
+        'GC': 'government_currency',
+        'NE': 'national_expenditure',
+        'BM': 'balance_money',
+        'BX': 'balance_exports',
+        'AGR': '',
+        'MNF': '',
+        'SRV': '',
+        'SLF': '',
+        'FAM': '',
+        'WAG': '',
+        'MLR': '',
+        'FS': '',
+        'DT': 'external_debt',
+        'MED': '',
+        'COM': '',
+        'CON': '',
+        'FP': 'financial_prices',
+        'SN': '',
+        'IQ': '',
+        'BN': 'balances',
+        'XPD': 'expenditure',
+        'PA': '',
+        'FPL': 'family_planning',
+        'FR': 'interest_rate',
+        'TER': '',
+        'EMP': 'employment',
+        'IND': '',
+        'IT': 'information_technology',
+        'GDP': 'GDP',
+        'HD': 'human_development',
+        'IMM': '',
+        'TBS': '',
+        'UHC': 'universal_health_coverage',
+        'IP': 'intellectual_property',
+        'SM': 'social_migration',
+        'ST': 'travel_tourism',
+        'IE': '',
+        'LP': 'logistics_performance',
+        'MMR': 'maternal_mortality',
+        'CM': 'capital_market',
+        'ADT': '',
+        'TG': 'trade_goods',
+        'DYN': '',
+        'TT': 'trade_index',
+        'DC': 'debt',
+        'VAC': 'vaccination',
+        'SGR': '',
+        'H2O': 'water',
+        'PRE': '',
+        'ANM': '',
+        'PRG': '',
+        'PRV': '',
+        'SVR': '',
+        'GF': 'government_finance',
+        'SG': 'social_gender',
+        'EP': 'energy_price',
+        'PX': 'private_exchange',
+        'GB': 'research_expenditure',
+        'ENR': '',
+        'UEM': '',
+        'ALC': '',
+        'FI': '',
+        'BG': 'balance_goods',
+        'per_si_allsi': 'social_insurance',
+        'per_allsp': 'social_protection',
+        'per_sa_allsa': 'socal_assistance',
+        'per_lm_alllm': 'labor_market',
+        'misc': 'miscellaneous',
+    }
+
     # separate out codes that contain lower case letters
     auto = [code for code in all_codes if not any([char.islower() for char in code])]
     manual = [code for code in all_codes if code not in set(auto)]
 
-    chunks = {chunk: all_codes[code] for code in auto for chunk in code.split('.')}
+    chunks = {chunk:all_codes[code] for code in auto for chunk in code.split('.')}
+
+    def count_nonletters(string):
+        return len([char for char in string if not char.isalpha()])
+
+    def is_abbreviation(abbr:str, word:str)->int:
+        """
+        returns a score for how well the abbreviation matches the word.
+        lower score is better
+        None if it doesn't match
+        """
+        abbr, word = abbr.lower(), word.lower()
+        letters = set(word)
+
+        if any([char not in letters for char in abbr]):
+            return None
+
+        #must start with the same letter
+        if abbr[0] != word[0]:
+            return None
+
+        # check if the letters in abbr appear in order in word
+        i = 0
+        for char in abbr:
+            i = word.find(char, i)
+            if i == -1:
+                return None
+            i += 1
+
+        return i #1 #TODO score
+
+    from typing import List
+    def get_candidates(sentences:List[str])->List[str]:
+        candidates = []
+        for sentence in sentences:
+            if not isinstance(sentence, str):
+                continue
+            for word in sentence.split():
+                if count_nonletters(word) > 1:
+                    continue
+                word = ''.join([char for char in word if char.isalpha()])
+                word = word.lower()
+                if (score:=is_abbreviation(chunk, word)) is not None:
+                    candidates.append((word, score))
+
+        # collect candidates with the lowest score
+        candidates = sorted(candidates, key=lambda x:x[1])
+        candidates = [(word, score) for word, score in candidates if score == candidates[0][1]]
+
+        return [*set(candidates)]
+
 
     for chunk, codes in chunks.items():
+        if code_chunk_abbreviations[chunk] != '':
+            continue
+
         # collect lines from info where info['Series Code'] is in codes
         codes = set(codes)
         lines = info[info['Series Code'].isin(codes)]
 
+        # get the topic strings, filtering out any lines that were nan
         topics = lines['Topic'].unique().tolist()
-        names = lines['Indicator Name'].unique().tolist()
-        shortdefs = lines['Short definition'].unique().tolist()
-        longdefs = lines['Long definition'].unique().tolist()
+        candidates = get_candidates(topics)
 
-        # get a single string that combines with space all lines['Topic'], lines['Indicator Name'], lines['Short Definition'],  lines['Long Definition']
+        if len(candidates) == 1:
+            code_chunk_abbreviations[chunk] = candidates[0][0]
+            continue
+        elif len(candidates) > 1:
+            print(f"Multiple candidates for {chunk}: {candidates}")
+            pdb.set_trace()
+
+        names = lines['Indicator Name'].unique().tolist()
+        candidates = get_candidates(names)
+
+        if len(candidates) == 1:
+            code_chunk_abbreviations[chunk] = candidates[0][0]
+            continue
+        elif len(candidates) > 1:
+            print(f"Multiple candidates for {chunk}: {candidates}")
+            pdb.set_trace()
+
+        shortdefs = lines['Short definition'].unique().tolist()
+        candidates = get_candidates(shortdefs)
+
+        if len(candidates) == 1:
+            code_chunk_abbreviations[chunk] = candidates[0][0]
+            continue
+        elif len(candidates) > 1:
+            print(f"Multiple candidates for {chunk}: {candidates}")
+            pdb.set_trace()
+
+        longdefs = lines['Long definition'].unique().tolist()
+        candidates = get_candidates(longdefs)
+
+        if len(candidates) == 1:
+            code_chunk_abbreviations[chunk] = candidates[0][0]
+            continue
+        elif len(candidates) > 1:
+            print(f"Multiple candidates for {chunk}: {candidates}")
+            pdb.set_trace()
+
+        source = lines['Source'].unique().tolist()
+        candidates = get_candidates(source)
+
+        if len(candidates) == 1:
+            code_chunk_abbreviations[chunk] = candidates[0][0]
+            continue
+        elif len(candidates) > 1:
+            print(f"Multiple candidates for {chunk}: {candidates}")
+            pdb.set_trace()
+
+        print(f"No candidates for {chunk}")
+
+        #get a single string that combines with space all lines['Topic'], lines['Indicator Name'], lines['Short Definition'],  lines['Long Definition']
         # lines = lines['Topic'].tolist() + lines['Indicator Name'].tolist() + lines['Short definition'].tolist()# + lines['Long definition'].tolist()
         # lines = set([line for line in lines if not pd.isnull(line)])
-        pdb.set_trace()
         # text = '\n'.join()
 
-    pdb.set_trace()
+    #find duplicates in code_chunk_abbreviations
+    # abbreviations = set(code_chunk_abbreviations.values())
+    # duplicates = [abbr for abbr in abbreviations if list(code_chunk_abbreviations.values()).count(abbr) > 1]
 
+    # pdb.set_trace()
+    def unabbreviate_prefix(prefix):
+        chunks = prefix.split('.')
+        chunks = [code_chunk_abbreviations[chunk] for chunk in chunks]
+        return '.'.join(chunks)
+
+    # create a map from the full code to the abbreviation
+    code_abbreviations = {}
+    for prefix, codes in all_codes.items():
+        full = unabbreviate_prefix(prefix)
+        code_abbreviations[prefix] = full
+        # for code in codes:
+        #     code_abbreviations[code] = full
+
+
+    return code_abbreviations
 
 def optimize_df_types(df: pd.DataFrame):
     """
