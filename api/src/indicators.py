@@ -230,6 +230,7 @@ def publish_indicator(indicator_id: str):
         content=f"Published indicator with id {indicator_id}",
     )
 
+
 @router.put("/indicators/{indicator_id}/deprecate")
 def deprecate_indicator(indicator_id: str):
     try:
