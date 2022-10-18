@@ -26,6 +26,7 @@ from urllib.parse import urlparse
 import boto3
 import pdb
 import pydantic
+from src.settings import settings
 
 from elasticsearch import Elasticsearch
 import pandas as pd
@@ -979,7 +980,7 @@ def upload_files_to_s3(id, name):
             output_path = location_info.path.lstrip("/")
             logger.info(location_info)
             logger.info(output_path)
-            s3.put_object(Bucket=location_info.netloc, Key=output_path, Body=f)
+            s3.put_object(Bucket=settings.DATASET_STORAGE_BASE_URL, Key=output_path, Body=f)
     # filename = f'{name}.parquet.gzip'
     # # dest_path = os.path.join(DATASET_STORAGE_BASE_URL, id, filename)
     # # location_info = urlparse(dest_path)
