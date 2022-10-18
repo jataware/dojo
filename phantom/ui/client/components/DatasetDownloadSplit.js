@@ -11,7 +11,7 @@ import MenuList from '@material-ui/core/MenuList';
 import Typography from '@material-ui/core/Typography';
 import axios from 'axios';
 
-const options = ['Download dataset - (Long format)','Download dataset - (Wide format)'];
+const options = ['Long format)','Download dataset - (Wide format)'];
 
 export default function DatasetDownloadSplitButton({ dataset, className }) {
   const [open, setOpen] = React.useState(false);

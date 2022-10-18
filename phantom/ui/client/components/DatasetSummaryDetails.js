@@ -1,14 +1,26 @@
 import React from 'react';
 
 import Button from '@material-ui/core/Button';
+import ButtonGroup from '@material-ui/core/ButtonGroup';
+import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown';
+import ClickAwayListener from '@material-ui/core/ClickAwayListener';
 import Grid from '@material-ui/core/Grid';
+import Grow from '@material-ui/core/Grow';
+import Paper from '@material-ui/core/Paper';
+import Popper from '@material-ui/core/Popper';
+import MenuItem from '@material-ui/core/MenuItem';
+import MenuList from '@material-ui/core/MenuList';
 import Typography from '@material-ui/core/Typography';
 
 import { makeStyles } from '@material-ui/core/styles';
 
 import CollapseText from './CollapseText';
 import CountryMap from './CountryMap';
-import DatasetDownloadSplitButton from './DatasetDownloadSplit'
+// <<<<<<< HEAD
+// import DatasetDownloadSplitButton from './DatasetDownloadSplit'
+// =======
+import CSVDownload from './CSVDownload';
+// >>>>>>> dev
 
 const useStyles = makeStyles((theme) => ({
   detailsPanel: {
@@ -33,9 +45,38 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
+const options = ['Long','Wide'];
+
 function DatasetSummaryDetails({ dataset }) {
   const classes = useStyles();
+  const [wideFormat, setWideFormat] = React.useState("false");
+  const [open, setOpen] = React.useState(false);
+  const anchorRef = React.useRef(null);
+  const [selectedIndex, setSelectedIndex] = React.useState(0);
+  
+  const handleMenuItemClick = (event, index) => {
+    setSelectedIndex(index);
+   
+    if(index==1){
+        setWideFormat("true")
+    }else{
+        setWideFormat("false")    
+    }
 
+    setOpen(false);
+  };
+
+  const handleToggle = () => {
+    setOpen((prevOpen) => !prevOpen);
+  };
+
+  const handleClose = (event) => {
+    if (anchorRef.current && anchorRef.current.contains(event.target)) {
+      return;
+    }
+
+    setOpen(false);
+  };
   // no need to spread the following out onto a million lines
   /* eslint-disable react/jsx-one-expression-per-line */
   return (
@@ -82,9 +123,51 @@ function DatasetSummaryDetails({ dataset }) {
               View In Causemos
             </Button>
           </Typography>
+          <Typography component={'span'} variant="body2" className={classes.buttonWrapper}>
 
-          <DatasetDownloadSplitButton dataset={dataset} className={classes.buttonWrapper}/>
+            <ButtonGroup variant="outlined" color="primary" ref={anchorRef} aria-label="split button">
+            <CSVDownload resource={dataset} wideFormat={wideFormat} />
 
+            <Button
+              variant="outlined"
+              color="primary"
+              aria-controls={open ? 'split-button-menu' : undefined}
+              aria-expanded={open ? 'true' : undefined}
+              aria-label="select merge strategy"
+              aria-haspopup="menu"
+              onClick={handleToggle}
+            >
+              <ArrowDropDownIcon />
+            </Button>
+            <Popper open={open} anchorEl={anchorRef.current} role={undefined} transition disablePortal>
+            {({ TransitionProps, placement }) => (
+              <Grow
+                {...TransitionProps}
+                style={{
+                  transformOrigin: placement === 'bottom' ? 'center top' : 'center bottom',
+                }}
+              >
+                <Paper>
+                  <ClickAwayListener onClickAway={handleClose}>
+                    <MenuList id="split-button-menu">
+                      {options.map((option, index) => (
+                        <MenuItem
+                          key={option}
+                          disabled={index === 2}
+                          selected={index === selectedIndex}
+                          onClick={(event) => handleMenuItemClick(event, index)}
+                        >
+                          {option}
+                        </MenuItem>
+                      ))}
+                    </MenuList>
+                  </ClickAwayListener>
+                </Paper>
+              </Grow>
+            )}
+          </Popper>
+          </ButtonGroup>
+        </Typography>
         </div>
       </Grid>
       <Grid className={classes.detailsPanel} item xs={3}>

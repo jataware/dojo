@@ -231,6 +231,7 @@ def publish_indicator(indicator_id: str):
     )
 
 
+# <<<<<<< HEAD
 @router.get("/indicators/{indicator_id}/download/csv")
 def get_csv(indicator_id: str,
             request: Request,
@@ -255,9 +256,10 @@ def get_csv(indicator_id: str,
             # Note: This links it to the previous `df` so not a full copy
             copy=False,
         )
-
+        logger.info('made it to here')
         ## make wide if wide_format is set to true
         if wide_format == "true":
+            logger.info('made it to here')
             df_wide=pd.pivot(df, index=None, columns='feature', values='value')  # Reshape from long to wide
             df = df.drop(['feature', 'value'], axis=1)
             df = pd.merge(df, df_wide, left_index=True, right_index=True)
@@ -301,6 +303,8 @@ def get_csv(indicator_id: str,
         )
 
 
+# =======
+# >>>>>>> dev
 @router.put("/indicators/{indicator_id}/deprecate")
 def deprecate_indicator(indicator_id: str):
     try:

@@ -7,8 +7,18 @@ import Typography from '@material-ui/core/Typography';
 
 import BasicAlert from './BasicAlert';
 
-function DatasetDownload({ dataset, className }) {
+function CSVDownload({ resource, index = 'indicators', className , wideFormat="false"}) {
   const [openDownload, setDownload] = useState(false);
+  const name = `${resource.id}.csv`;
+  let dataset_url= useState(`/api/dojo/dojo/download/${resource.id}/download/csv?wide_format=false`)
+
+  const returnCorrectUrl= () =>{
+    
+    dataset_url='/api/dojo/indicators/'+`${dataset.id}`+'/download/csv?wide_format='+`${wideFormat}`
+    //  for some reason it is adding on ,function () { [native code] } so I am removing that
+    final_url=dataset_url.split(",")[0]
+    return final_url
+  }
   return (
     <>
 
@@ -16,13 +26,14 @@ function DatasetDownload({ dataset, className }) {
         <Button
           variant="outlined"
           color="primary"
-          href={`/api/dojo/indicators/${dataset.id}/download/csv`}
-          download={`${dataset.id}.csv`}
+          // href={(returnCorrectUrl())}
+          href={`/api/dojo/dojo/download/csv/${index}/${resource.id}?wide_format=${wideFormat}`}
+          download={name}
           type="text/csv"
           onClick={() => setDownload(true)}
           disabled={openDownload ? true : undefined}
         >
-          Download Dataset
+          Download CSV
         </Button>
       </Typography>
       <BasicAlert
@@ -51,4 +62,4 @@ function DatasetDownload({ dataset, className }) {
   );
 }
 
-export default DatasetDownload;
+export default CSVDownload;
