@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     DOCKERHUB_PWD: str = ""
     DOCKERHUB_ORG: str = "jataware"
 
-    DATASET_STORAGE_BASE_URL: str = "file:///datasets/"
+    DATASET_STORAGE_BASE_URL: str = "s3://jataware-world-modelers-dev/wbi/"
 
     CONFIG_STORAGE_BASE: str = "file:///dojo/configs/"
 

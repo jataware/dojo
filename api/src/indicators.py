@@ -973,10 +973,12 @@ def upload_files_to_s3(id, name):
 
         name_=name+file_type
         logger.info(name_)
-        dest_path = os.path.join(settings.DATASET_STORAGE_BASE_URL+"/wdi/", id, name_)
+        dest_path = os.path.join(settings.DATASET_STORAGE_BASE_URL, id, name_)
         location_info = urlparse(dest_path)
         with open(f'/api/output/{name}{file_type}') as f:
             output_path = location_info.path.lstrip("/")
+            logger.info(location_info)
+            logger.info(output_path)
             s3.put_object(Bucket=location_info.netloc, Key=output_path, Body=f)
     # filename = f'{name}.parquet.gzip'
     # # dest_path = os.path.join(DATASET_STORAGE_BASE_URL, id, filename)
