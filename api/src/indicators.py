@@ -527,7 +527,14 @@ async def create_preview(
             content=f"Queue could not be deleted.",
         )
 
-s3 = boto3.client("s3")
+
+### to be removed after uploading and saved in a different folder.
+
+S3_BUCKET="jataware-world-modelers-dev"
+AWS_ACCESS_KEY_ID=""
+AWS_SECRET_ACCESS_KEY=""
+s3 = boto3.client('s3', aws_access_key_id=f"{AWS_ACCESS_KEY_ID}", aws_secret_access_key=f"{AWS_SECRET_ACCESS_KEY}")
+
 @router.get("/data/populate_wdi_data")
 def populate_wdi_data():
     try:
@@ -579,7 +586,7 @@ def populate_wdi_data():
                 upload_files_to_s3(meta.get("id"),name)
 
                 # update meta data_paths
-                meta['data_paths']=f"file:///datasets//{meta.get('id')}/{id}.parquet.gzip"
+                meta['data_paths']=[f's3://{S3_BUCKET}/datasets/wdi/{meta.get("id")}/{meta.get("id")}.parquet.gzip']
 
                 # # save meta data to elasticsearch
                 save_meta_es(meta, name)
@@ -635,9 +642,6 @@ def save_indicators(df, series_info):
                 groups[second] = []
             groups[second].append(indicator)
 
-    # TODO: maybe this returns names?
-    # abbrevs = find_abbreviations(groups, series_info)
-
     # collect all indicators in groups of size 1 and put them in a group called 'misc'
     misc = []
     todelete = []
@@ -649,12 +653,14 @@ def save_indicators(df, series_info):
         del groups[group]
     groups['misc'] = misc
 
+    # get the fully qualified names based on the indicator code groupings
+    abbrevs = find_abbreviations(groups, series_info)
+
     # map from name of group to its indicators
-    indicators = {f"World_Development_Indicators.{name}": indicators for name, indicators in groups.items()}
+    indicators = {f"WDI - {abbrevs[prefix]}": indicators for prefix, indicators in groups.items()}
 
-    with open('data/indicator_groups.json', 'w') as f:
+    with open('indicator_groups.json', 'w') as f:
         json.dump(indicators, f)
-
     # DEBUG plot a histogram of the number of indicators in each group
     # from matplotlib import pyplot as plt
     # counts = sorted([len(indicators) for indicators in groups.values()])
@@ -666,6 +672,248 @@ def save_indicators(df, series_info):
     # plt.show()
 
 
+def find_abbreviations(all_codes, info):
+    # prefill some of the abbreviations
+    code_chunk_abbreviations = {
+        'EG': '',
+        'FX': '',
+        'SE': 'education',
+        'PRM': '',
+        'NY': 'national_accounts',
+        'SP': 'health.SP',  # 'health', #TODO:
+        'SEC': '',
+        'SH': 'health.SH',  # 'health', #TODO:shared health?
+        'HIV': 'HIV',
+        'AG': '',
+        'EN': 'environment.EN',
+        'TX': 'trade_exports',
+        'TM': 'trade_imports',
+        'NV': 'national_value',
+        'IS': '',
+        'ER': 'environment.ER',
+        'SI': 'share_income',
+        'STA': 'standard',
+        'MS': '',
+        'FB': 'financial_banking',
+        'IC': '',
+        'SL': '',
+        'TLF': 'total_labor_force',
+        'FD': '',
+        'VC': '',
+        'FM': 'financial_monetary',
+        'DTH': 'death',
+        'GC': 'government_currency',
+        'NE': 'national_expenditure',
+        'BM': 'balance_money',
+        'BX': 'balance_exports',
+        'AGR': '',
+        'MNF': '',
+        'SRV': '',
+        'SLF': '',
+        'FAM': '',
+        'WAG': '',
+        'MLR': '',
+        'FS': '',
+        'DT': 'external_debt',
+        'MED': '',
+        'COM': '',
+        'CON': '',
+        'FP': 'financial_prices',
+        'SN': '',
+        'IQ': '',
+        'BN': 'balances',
+        'XPD': 'expenditure',
+        'PA': '',
+        'FPL': 'family_planning',
+        'FR': 'interest_rate',
+        'TER': '',
+        'EMP': 'employment',
+        'IND': '',
+        'IT': 'information_technology',
+        'GDP': 'GDP',
+        'HD': 'human_development',
+        'IMM': '',
+        'TBS': '',
+        'UHC': 'universal_health_coverage',
+        'IP': 'intellectual_property',
+        'SM': 'social_migration',
+        'ST': 'travel_tourism',
+        'IE': '',
+        'LP': 'logistics_performance',
+        'MMR': 'maternal_mortality',
+        'CM': 'capital_market',
+        'ADT': '',
+        'TG': 'trade_goods',
+        'DYN': '',
+        'TT': 'trade_index',
+        'DC': 'debt',
+        'VAC': 'vaccination',
+        'SGR': '',
+        'H2O': 'water',
+        'PRE': '',
+        'ANM': '',
+        'PRG': '',
+        'PRV': '',
+        'SVR': '',
+        'GF': 'government_finance',
+        'SG': 'social_gender',
+        'EP': 'energy_price',
+        'PX': 'private_exchange',
+        'GB': 'research_expenditure',
+        'ENR': '',
+        'UEM': '',
+        'ALC': '',
+        'FI': '',
+        'BG': 'balance_goods',
+        'per_si_allsi': 'social_insurance',
+        'per_allsp': 'social_protection',
+        'per_sa_allsa': 'socal_assistance',
+        'per_lm_alllm': 'labor_market',
+        'misc': 'miscellaneous',
+    }
+
+    # separate out codes that contain lower case letters
+    auto = [code for code in all_codes if not any([char.islower() for char in code])]
+    manual = [code for code in all_codes if code not in set(auto)]
+
+    chunks = {chunk: all_codes[code] for code in auto for chunk in code.split('.')}
+
+    def count_nonletters(string):
+        return len([char for char in string if not char.isalpha()])
+
+    def is_abbreviation(abbr: str, word: str) -> int:
+        """
+        returns a score for how well the abbreviation matches the word.
+        lower score is better
+        None if it doesn't match
+        """
+        abbr, word = abbr.lower(), word.lower()
+        letters = set(word)
+
+        if any([char not in letters for char in abbr]):
+            return None
+
+        # must start with the same letter
+        if abbr[0] != word[0]:
+            return None
+
+        # check if the letters in abbr appear in order in word
+        i = 0
+        for char in abbr:
+            i = word.find(char, i)
+            if i == -1:
+                return None
+            i += 1
+
+        return i  # 1 #TODO score
+
+    from typing import List
+    def get_candidates(sentences: List[str]) -> List[str]:
+        candidates = []
+        for sentence in sentences:
+            if not isinstance(sentence, str):
+                continue
+            for word in sentence.split():
+                if count_nonletters(word) > 1:
+                    continue
+                word = ''.join([char for char in word if char.isalpha()])
+                word = word.lower()
+                if (score := is_abbreviation(chunk, word)) is not None:
+                    candidates.append((word, score))
+
+        # collect candidates with the lowest score
+        candidates = sorted(candidates, key=lambda x: x[1])
+        candidates = [(word, score) for word, score in candidates if score == candidates[0][1]]
+
+        return [*set(candidates)]
+
+    for chunk, codes in chunks.items():
+        if code_chunk_abbreviations[chunk] != '':
+            continue
+
+        # collect lines from info where info['Series Code'] is in codes
+        codes = set(codes)
+        lines = info[info['Series Code'].isin(codes)]
+
+        # get the topic strings, filtering out any lines that were nan
+        topics = lines['Topic'].unique().tolist()
+        candidates = get_candidates(topics)
+
+        if len(candidates) == 1:
+            code_chunk_abbreviations[chunk] = candidates[0][0]
+            continue
+        elif len(candidates) > 1:
+            print(f"Multiple candidates for {chunk}: {candidates}")
+            pdb.set_trace()
+
+        names = lines['Indicator Name'].unique().tolist()
+        candidates = get_candidates(names)
+
+        if len(candidates) == 1:
+            code_chunk_abbreviations[chunk] = candidates[0][0]
+            continue
+        elif len(candidates) > 1:
+            print(f"Multiple candidates for {chunk}: {candidates}")
+            pdb.set_trace()
+
+        shortdefs = lines['Short definition'].unique().tolist()
+        candidates = get_candidates(shortdefs)
+
+        if len(candidates) == 1:
+            code_chunk_abbreviations[chunk] = candidates[0][0]
+            continue
+        elif len(candidates) > 1:
+            print(f"Multiple candidates for {chunk}: {candidates}")
+            pdb.set_trace()
+
+        longdefs = lines['Long definition'].unique().tolist()
+        candidates = get_candidates(longdefs)
+
+        if len(candidates) == 1:
+            code_chunk_abbreviations[chunk] = candidates[0][0]
+            continue
+        elif len(candidates) > 1:
+            print(f"Multiple candidates for {chunk}: {candidates}")
+            pdb.set_trace()
+
+        source = lines['Source'].unique().tolist()
+        candidates = get_candidates(source)
+
+        if len(candidates) == 1:
+            code_chunk_abbreviations[chunk] = candidates[0][0]
+            continue
+        elif len(candidates) > 1:
+            print(f"Multiple candidates for {chunk}: {candidates}")
+            pdb.set_trace()
+
+        print(f"No candidates for {chunk}")
+
+        # get a single string that combines with space all lines['Topic'], lines['Indicator Name'], lines['Short Definition'],  lines['Long Definition']
+        # lines = lines['Topic'].tolist() + lines['Indicator Name'].tolist() + lines['Short definition'].tolist()# + lines['Long definition'].tolist()
+        # lines = set([line for line in lines if not pd.isnull(line)])
+        # text = '\n'.join()
+
+    # find duplicates in code_chunk_abbreviations
+    # abbreviations = set(code_chunk_abbreviations.values())
+    # duplicates = [abbr for abbr in abbreviations if list(code_chunk_abbreviations.values()).count(abbr) > 1]
+
+    # pdb.set_trace()
+    def unabbreviate_prefix(prefix):
+        chunks = prefix.split('.')
+        chunks = [code_chunk_abbreviations[chunk] for chunk in chunks]
+        return '.'.join(chunks)
+
+    # create a map from the full code to the abbreviation
+    code_abbreviations = {}
+    for prefix, codes in all_codes.items():
+        full = unabbreviate_prefix(prefix)
+        code_abbreviations[prefix] = full
+        # for code in codes:
+        #     code_abbreviations[code] = full
+
+    return code_abbreviations
+
+
 def indicator_groups():
     """generator for returning groups of indicators to make datasets from"""
 
@@ -673,20 +921,22 @@ def indicator_groups():
         groups = json.load(f)
 
     for name, group in groups.items():
-        if name=="World_Development_Indicators.per_si_allsi":
+        logger.info(name)
+        if name == "World_Development_Indicators.misc":
             yield name, group
 
 def make_dataset(df, country_codes):
+
     # columns = ['timestamp', 'country', 'admin1', 'admin2', 'admin3', 'lat', 'lng', 'feature', 'value']
 
-    # year strings and timestamps (in milliseconds) from 1960 to 2021
-    years = [(f'{year}', datetime(year, 1, 1, tzinfo=timezone.utc).timestamp() * 1000) for year in range(1960, 2022)]
+    #year strings and timestamps (in milliseconds) from 1960 to 2021
+    years = [(f'{year}', datetime(year, 1, 1, tzinfo=timezone.utc).timestamp()*1000) for year in range(1960, 2022)]
 
     rows = []
     # feature_codes = set(df['Indicator Code'].tolist())
 
     for _, row in tqdm(df.iterrows(), total=len(df), desc='Making rows', leave=False):
-        # filter out rows that are not countries
+        #filter out rows that are not countries
         if row['Country Code'] not in country_codes:
             continue
         for year, timestamp in years:
@@ -698,7 +948,7 @@ def make_dataset(df, country_codes):
                 'admin3': None,
                 'lat': None,
                 'lng': None,
-                'feature': row['Indicator Code'],  # Indicator Name will go in the description
+                'feature': row['Indicator Code'], #Indicator Name will go in the description
                 'value': row[year]
             })
 
@@ -743,7 +993,6 @@ def save_parquet(df,name, id):
     # s3.put_object(Bucket=location_info.netloc, Key=output_path, Body=fileobj)
 
 
-
 def make_metadata(df, series_info, name, description):
     # get the min and max timestamps
     min_timestamp = df['timestamp'].min()
@@ -767,13 +1016,18 @@ def make_metadata(df, series_info, name, description):
         return ret
 
     def get_unit(info) -> str:
-        unit = info.get('Unit of measure', None)
+        unit = None
+        try:
+            # sometimes units are at the end of the indicator name (e.g. 'GDP (current US$)')
+            name: str = info['Indicator Name']
+            if name.endswith(')'):
+                unit = name[name.rfind('(') + 1:-1]
+        except:
+            unit = None
+        if unit is None:
+            unit = info.get('Unit of measure', None)
         if pd.isnull(unit):
-            try:
-                # sometimes units are at the end of the indicator name (e.g. 'GDP (current US$)')
-                unit = info['Indicator Name'].split('(')[-1].split(')')[0]
-            except:
-                unit = 'NA'
+            unit = 'NA'
         return unit
 
     def get_unit_description(info) -> str:
@@ -961,7 +1215,6 @@ code_abbreviations = {
 }
 
 
-
 def save_meta_es(meta,name):
     # open json and validate
     meta_check=pydantic.parse_file_as(path=f'/api/output/{name}_meta.json', type_=IndicatorMetadataSchema)
@@ -969,27 +1222,11 @@ def save_meta_es(meta,name):
     resp = es.index(index="indicators", body=meta, id=meta.get("id"))
     print(resp)
 
-def upload_files_to_s3(id, name):
-    for file_type in ['.csv','.parquet.gzip']:
+import boto3
 
-        name_=name+file_type
-        logger.info(name_)
-        dest_path = os.path.join(settings.DATASET_STORAGE_BASE_URL, id, name_)
-        location_info = urlparse(dest_path)
-        with open(f'/api/output/{name}{file_type}') as f:
-            output_path = location_info.path.lstrip("/")
-            logger.info(location_info)
-            logger.info(output_path)
-            s3.put_object(Bucket=settings.DATASET_STORAGE_BASE_URL, Key=output_path, Body=f)
-    # filename = f'{name}.parquet.gzip'
-    # # dest_path = os.path.join(DATASET_STORAGE_BASE_URL, id, filename)
-    # # location_info = urlparse(dest_path)
-    #
-    # # optimize data types for storage
-    # optimize_df_types(df)
-    # # save a parquet file
-    # df.to_parquet(f"output/{filename}", compression="gzip")
-    #
-    # # send to s3
-    # # s3.put_object(Bucket=location_info.netloc, Key=output_path, Body=fileobj)
-    # put_rawfile()
+
+def upload_files_to_s3(id, name):
+    for file_type in ['csv','parquet.gzip']:
+        with open(f'/api/output/{name}.{file_type}',"rb") as f:
+            s3.upload_fileobj(f, f"{S3_BUCKET}", f"wbi/{id}/{id}.{file_type}")
+
