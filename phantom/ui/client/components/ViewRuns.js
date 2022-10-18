@@ -9,6 +9,7 @@ import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 import { DataGrid } from '@material-ui/data-grid';
 
+import ExpandableDataGridCell from './ExpandableDataGridCell';
 import LoadingOverlay from './LoadingOverlay';
 import Search from './SearchItems';
 import { formatDatetime, parseDatetimeString } from '../utils';
@@ -40,6 +41,25 @@ const columns = [
     headerName: 'Model ID',
     minWidth: 180,
     flex: 3,
+  },
+  {
+    field: 'parameters',
+    headerName: 'Parameters',
+    minWidth: 180,
+    flex: 1,
+    renderCell: ({ value, colDef }) => {
+      const lines = value.map(
+        ({ name, value: userVal }) => `${name}: ${userVal}\n`
+      );
+      const paramsTextBody = lines.reduce((prev, curr) => prev + curr);
+      return (
+        <ExpandableDataGridCell
+          value={paramsTextBody}
+          width={colDef.computedWidth * 2}
+          whiteSpace="break-spaces"
+        />
+      );
+    }
   },
   {
     field: 'model_name',
@@ -98,15 +118,19 @@ const columns = [
   },
 ];
 
-const getRuns = async (setRuns, setRunsError, setRunsLoading, scrollId) => {
+const getRuns = async (setRuns, setRunsError, setRunsLoading, modelId, scrollId) => {
   if (!scrollId) {
     // only do this for the first call
     // so we don't show the full page spinner for every subsequent set of run
     setRunsLoading(true);
   }
 
-  const url = scrollId
-    ? `/api/dojo/runs?scroll_id=${scrollId}` : '/api/dojo/runs';
+  const baseUrl = scrollId
+    ? `/api/dojo/runs?scroll_id=${scrollId}&` : '/api/dojo/runs?';
+
+  const url = modelId
+    ? `${baseUrl}model_id=${modelId}` : baseUrl;
+
   axios.get(url)
     .then((response) => {
       console.log('request for /runs response:', response);
@@ -117,7 +141,7 @@ const getRuns = async (setRuns, setRunsError, setRunsLoading, scrollId) => {
 
       // when there's no scroll id, we've hit the end of the results
       if (response.data?.scroll_id) {
-        getRuns(setRuns, setRunsError, setRunsLoading, response.data?.scroll_id);
+        getRuns(setRuns, setRunsError, setRunsLoading, modelId, response.data?.scroll_id);
       }
     })
     .catch((error) => {
@@ -129,26 +153,31 @@ const getRuns = async (setRuns, setRunsError, setRunsLoading, scrollId) => {
 // TODO filter by tags, when these are not shown?
 const filterKeys = ['id', 'model_name', 'tags'];
 
+// NOTE: Do we need this??
 const rowsPerPageOptions = [25, 50, 100];
 
-const ViewRuns = ({ classes }) => {
+const ViewRuns = ({
+  classes,
+  rowsPerPage = rowsPerPageOptions[0],
+  modelId
+}) => {
   const [runs, setRuns] = useState([]);
   const [fetchErrors, setFetchErrors] = useState(false);
   const [areRunsLoading, setAreRunsLoading] = useState(false);
 
   const [search, setSearch] = useState(null);
-  const [pageSize, setPageSize] = useState(rowsPerPageOptions[0]);
+  const [pageSize, setPageSize] = React.useState(rowsPerPage);
 
   useEffect(() => {
-    getRuns(setRuns, setFetchErrors, setAreRunsLoading);
+    getRuns(setRuns, setFetchErrors, setAreRunsLoading, modelId);
     document.title = 'View Model Runs - Dojo';
-  }, []);
+  }, [modelId]);
 
-  if (areRunsLoading) {
+  if (areRunsLoading && !modelId) {
     return <LoadingOverlay text="Loading Model Runs Data" />;
   }
 
-  if (fetchErrors) {
+  if (fetchErrors && !modelId) {
     return (
       <LoadingOverlay
         text="There was an error loading the list of all model runs"
@@ -157,7 +186,34 @@ const ViewRuns = ({ classes }) => {
     );
   }
 
-  return !runs?.length ? (
+  if (fetchErrors || areRunsLoading) {
+    return <div />;
+  }
+
+  const columnsToUse = modelId
+    ? columns.filter((entry) => !['model_id', 'model_name'].includes(entry.field))
+    : columns.filter((entry) => !['parameters'].includes(entry.field));
+
+  const runResults = (
+    <div className={classes.gridContainer}>
+      <Search
+        setSearch={setSearch}
+        items={runs}
+        name="Run"
+        searchKeys={filterKeys}
+      />
+      <DataGrid
+        autoHeight
+        columns={columnsToUse}
+        pageSize={pageSize}
+        onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
+        rowsPerPageOptions={rowsPerPageOptions}
+        rows={search || runs}
+      />
+    </div>
+  );
+
+  return modelId ? runResults : !runs?.length ? (
     <LoadingOverlay text="No Previous Runs Found" error />
   ) : (
     <Container
@@ -173,22 +229,7 @@ const ViewRuns = ({ classes }) => {
       >
         All Model Runs
       </Typography>
-      <div className={classes.gridContainer}>
-        <Search
-          setSearch={setSearch}
-          items={runs}
-          name="Run"
-          searchKeys={filterKeys}
-        />
-        <DataGrid
-          autoHeight
-          columns={columns}
-          pageSize={pageSize}
-          onPageSizeChange={setPageSize}
-          rowsPerPageOptions={rowsPerPageOptions}
-          rows={search || runs}
-        />
-      </div>
+      {runResults}
     </Container>
   );
 };
