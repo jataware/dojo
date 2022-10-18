@@ -16,11 +16,7 @@ import { makeStyles } from '@material-ui/core/styles';
 
 import CollapseText from './CollapseText';
 import CountryMap from './CountryMap';
-// <<<<<<< HEAD
-// import DatasetDownloadSplitButton from './DatasetDownloadSplit'
-// =======
 import CSVDownload from './CSVDownload';
-// >>>>>>> dev
 
 const useStyles = makeStyles((theme) => ({
   detailsPanel: {
