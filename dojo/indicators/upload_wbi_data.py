@@ -591,6 +591,7 @@ def make_metadata(df, series_info, name, description):
         "deprecated": False,
         "data_sensitivity": "",
         "data_quality": "",
+        "published":True,
     }
 
     return meta
