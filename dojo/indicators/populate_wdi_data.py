@@ -12,12 +12,8 @@ from uuid import uuid4
 from urllib.parse import urlparse
 import boto3
 import pdb
-
-ELASTICSEARCH_URL="http://elasticsearch:9200"
-ELASTICSEARCH_PORT=9200
-es = Elasticsearch([ELASTICSEARCH_URL], port=ELASTICSEARCH_PORT)
-
-s3 = boto3.client("s3")
+import argparse
+import pydantic
 
 def main():
     download_data()
@@ -601,3 +597,18 @@ def save_parquet(df,name, id):
     # send to s3
     s3.put_object(Bucket=location_info.netloc, Key=output_path, Body=fileobj)
 
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--es", help="Elasticsearch connection string")
+    parser.add_argument("--aws_key", help="aws_key")
+    parser.add_argument("--aws_secret", help="aws_secret")
+    args = parser.parse_args()
+
+    ELASTICSEARCH_URL=args.es
+    es = Elasticsearch([ELASTICSEARCH_URL])
+
+    s3 = boto3.client("s3",
+                    aws_access_key_id=args.aws_key,
+                    aws_secret_access_key=args.aws_secret)
+    
+    main()
