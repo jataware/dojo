@@ -1,13 +1,7 @@
 import React from 'react';
 
 import Button from '@material-ui/core/Button';
-import ButtonGroup from '@material-ui/core/ButtonGroup';
-import ArrowDropDownIcon from '@material-ui/icons/ArrowDropDown';
-import ClickAwayListener from '@material-ui/core/ClickAwayListener';
 import Grid from '@material-ui/core/Grid';
-import Grow from '@material-ui/core/Grow';
-import Paper from '@material-ui/core/Paper';
-import Popper from '@material-ui/core/Popper';
 import MenuItem from '@material-ui/core/MenuItem';
 import MenuList from '@material-ui/core/MenuList';
 import Typography from '@material-ui/core/Typography';
@@ -119,51 +113,10 @@ function DatasetSummaryDetails({ dataset }) {
               View In Causemos
             </Button>
           </Typography>
-          <Typography component={'span'} variant="body2" className={classes.buttonWrapper}>
 
-            <ButtonGroup variant="outlined" color="primary" ref={anchorRef} aria-label="split button">
-            <CSVDownload resource={dataset} wideFormat={wideFormat} />
-
-            <Button
-              variant="outlined"
-              color="primary"
-              aria-controls={open ? 'split-button-menu' : undefined}
-              aria-expanded={open ? 'true' : undefined}
-              aria-label="select merge strategy"
-              aria-haspopup="menu"
-              onClick={handleToggle}
-            >
-              <ArrowDropDownIcon />
-            </Button>
-            <Popper open={open} anchorEl={anchorRef.current} role={undefined} transition disablePortal>
-            {({ TransitionProps, placement }) => (
-              <Grow
-                {...TransitionProps}
-                style={{
-                  transformOrigin: placement === 'bottom' ? 'center top' : 'center bottom',
-                }}
-              >
-                <Paper>
-                  <ClickAwayListener onClickAway={handleClose}>
-                    <MenuList id="split-button-menu">
-                      {options.map((option, index) => (
-                        <MenuItem
-                          key={option}
-                          disabled={index === 2}
-                          selected={index === selectedIndex}
-                          onClick={(event) => handleMenuItemClick(event, index)}
-                        >
-                          {option}
-                        </MenuItem>
-                      ))}
-                    </MenuList>
-                  </ClickAwayListener>
-                </Paper>
-              </Grow>
-            )}
-          </Popper>
-          </ButtonGroup>
-        </Typography>
+          <div style={{ marginLeft: '8px' }}>
+            <CSVDownload resource={dataset} />
+          </div>
         </div>
       </Grid>
       <Grid className={classes.detailsPanel} item xs={3}>

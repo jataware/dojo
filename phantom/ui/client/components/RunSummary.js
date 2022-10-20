@@ -288,11 +288,13 @@ const RunSummary = ({ classes }) => {
                 View Logs
               </Button>
               {get(run, 'attributes.status') === 'success' && (
-                <CSVDownload
-                  resource={run}
-                  className={classes.downloadButton}
-                  index="runs"
-                />
+                <div style={{ marginTop: '16px' }}>
+                  <CSVDownload
+                    resource={run}
+                    className={classes.downloadButton}
+                    index="runs"
+                  />
+                </div>
               )}
             </SectionGridItem>
 
