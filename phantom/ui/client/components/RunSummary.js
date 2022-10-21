@@ -287,15 +287,17 @@ const RunSummary = ({ classes }) => {
               >
                 View Logs
               </Button>
-              {get(run, 'attributes.status') === 'success' && (
-                <div style={{ marginTop: '16px' }}>
-                  <CSVDownload
-                    resource={run}
-                    className={classes.downloadButton}
-                    index="runs"
-                  />
-                </div>
-              )}
+              {/*
+                Model run download is currently broken, removing this until the issue is resolved
+                {get(run, 'attributes.status') === 'success' && (
+                  <div style={{ marginTop: '16px' }}>
+                    <CSVDownload
+                      resource={run}
+                      index="runs"
+                    />
+                  </div>
+                )}
+              */}
             </SectionGridItem>
 
             <SectionGridItem

@@ -28,7 +28,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }))
 
-function CSVDownload({ resource, index = 'indicators', className}) {
+function CSVDownload({ resource, index = 'indicators' }) {
   const [openDownload, setDownload] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
   const [csvChoice, setCsvChoice] = useState('wide');
@@ -67,7 +67,7 @@ function CSVDownload({ resource, index = 'indicators', className}) {
             <FormControlLabel value="long" control={<Radio />} label="Long" />
           </RadioGroup>
 
-          <Typography variant="body2" className={className}>
+          <Typography variant="body2">
             <Button
               variant="contained"
               disableElevation
