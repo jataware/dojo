@@ -159,7 +159,7 @@ const LandingPage = () => {
             Dojo helps researchers share their models <br />and datasets
           </Typography>
           <Typography variant="h6" className={classes.topHeaderSubtitle}>
-            Create containerized, shareable models for reproduceable research with easy-to-consume
+            Create containerized, shareable models for reproducible research with easy-to-consume
             outputs. Register and transform datasets for use in downstream modeling workflows.
           </Typography>
           <div className={classes.linksWrapper}>
