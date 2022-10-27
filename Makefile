@@ -86,9 +86,11 @@ docker-compose.yaml:$(COMPOSE_FILES) docker-compose.build-override.yaml clouseau
 	rm $(TEMP_COMPOSE_FILES) *.sedbkp;
 
 
-phantom/ui/node_modules:docker-compose.yaml phantom/ui/package-lock.json phantom/ui/package.json
-	docker-compose run phantom npm ci -y
+phantom/ui/package-lock.json:phantom/ui/package.json
+	docker-compose run phantom npm i -y --package-lock-only
 
+phantom/ui/node_modules:phantom/ui/package-lock.json | 
+	docker-compose run phantom npm ci -y
 
 .PHONY:up
 up:docker-compose.yaml phantom/ui/node_modules
