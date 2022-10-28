@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 
 import axios from 'axios';
 
+
 import AutorenewIcon from '@material-ui/icons/Autorenew';
 import Button from '@material-ui/core/Button';
 import CheckOutlinedIcon from '@material-ui/icons/CheckOutlined';
@@ -10,6 +11,7 @@ import Container from '@material-ui/core/Container';
 import { DataGrid } from '@material-ui/data-grid';
 import ErrorOutlineOutlinedIcon from '@material-ui/icons/ErrorOutlineOutlined';
 import HelpIcon from '@material-ui/icons/Help';
+import { Link } from 'react-router-dom';
 import Typography from '@material-ui/core/Typography';
 
 import { makeStyles } from '@material-ui/core/styles';
@@ -58,6 +60,11 @@ const useStyles = makeStyles((theme) => ({
   searchInput: {
     width: '400px',
     marginRight: theme.spacing(2),
+  },
+  aboveTableWrapper: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
   },
 }));
 
@@ -150,6 +157,8 @@ const ViewModels = ({
   const [models, setModels] = useState([]);
   const [modelsError, setModelsError] = useState(false);
   const [modelsLoading, setModelsLoading] = useState(false);
+  const [displayedModels, setDisplayedModels] = useState([]);
+  const [displayUnpublished, setDisplayUnpublished] = useState(true);
 
   const [searchedModels, setSearchedModels] = useState(null);
 
@@ -157,6 +166,21 @@ const ViewModels = ({
     fetchModels(includeStatuses, setModels, setModelsLoading, setModelsError);
     document.title = 'View Models - Dojo';
   }, [includeStatuses]);
+
+  useEffect(() => {
+    setDisplayedModels(models);
+  }, [models]);
+
+  const toggleDisplayUnpublished = () => {
+    if (displayUnpublished) {
+      const filtered = models.filter((model) => (model.is_published));
+      setDisplayedModels(filtered);
+      setDisplayUnpublished(false);
+    } else {
+      setDisplayedModels(models);
+      setDisplayUnpublished(true);
+    }
+  };
 
   if (modelsLoading) {
     return <LoadingOverlay text="Loading models" />;
@@ -169,10 +193,6 @@ const ViewModels = ({
         error
       />
     );
-  }
-
-  if (!models?.length) {
-    return <LoadingOverlay text="No Models Found" error />;
   }
 
   const viewModelClick = (modelId) => {
@@ -286,16 +306,37 @@ const ViewModels = ({
         All Models
       </Typography>
       <div className={classes.gridContainer}>
-        <Search
-          name="Model"
-          searchKeys={filterKeys}
-          setSearch={setSearchedModels}
-          items={models}
-        />
+        <div className={classes.aboveTableWrapper}>
+          <Search
+            name="Model"
+            searchKeys={filterKeys}
+            setSearch={setSearchedModels}
+            items={displayedModels}
+          />
+          <Button
+            component={Link}
+            size="large"
+            variant="outlined"
+            color="primary"
+            disableElevation
+            to="/model"
+          >
+            Register a New Model
+          </Button>
+          <Button
+            color="primary"
+            disableElevation
+            variant="outlined"
+            size="large"
+            onClick={toggleDisplayUnpublished}
+          >
+            {displayUnpublished ? 'Hide Unpublished Models' : 'Show Unpublished Models'}
+          </Button>
+        </div>
         <DataGrid
           autoHeight
           columns={columns}
-          rows={searchedModels !== null ? searchedModels : models}
+          rows={searchedModels !== null ? searchedModels : displayedModels}
         />
       </div>
     </Container>
