@@ -253,7 +253,7 @@ def RunExit(**kwargs):
         print("testing Debug mode: no need to notify Uncharted")
         return
     else:
-        print('Notifying Uncharted...')
+        print(f'Notifying Uncharted at {causemos_base_url}/{run_id}/post-process')
         response = requests.post(f'{causemos_base_url}/{run_id}/post-process',
                                 headers={'Content-Type': 'application/json'}, 
                                 json=run, 

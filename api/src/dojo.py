@@ -544,7 +544,7 @@ def get_domains() -> List[str]:
 
 
 @router.get("/dojo/download/csv/{index}/{obj_id}")
-def get_csv(index: str, obj_id: str, request: Request):
+def get_csv(index: str, obj_id: str, request: Request , wide_format: str = 'false'):
     try:
         run = es.get(index=index, id=obj_id)["_source"]
     except NotFoundError:
@@ -554,13 +554,13 @@ def get_csv(index: str, obj_id: str, request: Request):
 
     if "deflate" in request.headers.get("accept-encoding", ""):
         return StreamingResponse(
-            compress_stream(stream_csv_from_data_paths(run["data_paths"])),
+            compress_stream(stream_csv_from_data_paths(run["data_paths"], wide_format)),
             media_type="text/csv",
             headers={'Content-Encoding': 'deflate'}
         )
     else:
         return StreamingResponse(
-            stream_csv_from_data_paths(run["data_paths"]),
+            stream_csv_from_data_paths(run["data_paths"],wide_format),
             media_type="text/csv",
         )
 

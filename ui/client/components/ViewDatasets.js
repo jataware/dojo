@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
+import { Link } from 'react-router-dom';
+
 import axios from 'axios';
 
 import Button from '@material-ui/core/Button';
@@ -117,10 +119,6 @@ function ViewDatasets() {
     );
   }
 
-  if (!datasets?.length) {
-    return <LoadingOverlay text="No Datasets Found" error />;
-  }
-
   const toggleDeprecatedDatasets = () => {
     if (displayDeprecated) {
       // we are currently showing the deprecated datasets, so filter them out
@@ -228,6 +226,16 @@ function ViewDatasets() {
             setSearchedDatasets={setSearchedDatasets}
             datasets={displayedDatasets}
           />
+          <Button
+            component={Link}
+            size="large"
+            variant="outlined"
+            color="primary"
+            disableElevation
+            to="/datasets/register"
+          >
+            Register a New Dataset
+          </Button>
           <Button
             color="primary"
             disableElevation

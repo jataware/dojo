@@ -86,9 +86,11 @@ docker-compose.yaml:$(COMPOSE_FILES) docker-compose.build-override.yaml terminal
 	rm $(TEMP_COMPOSE_FILES) *.sedbkp;
 
 
-ui/node_modules:docker-compose.yaml ui/package-lock.json ui/package.json
-	docker-compose run ui npm ci -y
+ui/package-lock.json:ui/package.json
+	docker-compose run ui npm i -y --package-lock-only
 
+ui/node_modules:ui/package-lock.json | 
+	docker-compose run ui npm ci -y
 
 .PHONY:up
 up:docker-compose.yaml ui/node_modules
