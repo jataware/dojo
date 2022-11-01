@@ -163,7 +163,7 @@ def list_files(path):
         raise RuntimeError("File storage format is unknown")
 
 
-async def stream_csv_from_data_paths(data_paths):
+async def stream_csv_from_data_paths(data_paths, wide_format='false'):
     # Build single dataframe
     df = pd.concat(pd.read_parquet(file) for file in data_paths)
 
@@ -173,6 +173,10 @@ async def stream_csv_from_data_paths(data_paths):
         # Note: This links it to the previous `df` so not a full copy
         copy=False
     )
+    if wide_format == "true":
+        df_wide = pd.pivot(df, index=None, columns='feature', values='value')  # Reshape from long to wide
+        df = df.drop(['feature', 'value'], axis=1)
+        df = pd.merge(df, df_wide, left_index=True, right_index=True)
 
     # Prepare for writing CSV to a temporary buffer
     buffer = StringIO()
@@ -198,5 +202,4 @@ async def compress_stream(content):
     async for buff in content:
         yield compressor.compress(buff.encode())
     yield compressor.flush()
-
 

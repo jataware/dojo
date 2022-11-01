@@ -36,7 +36,7 @@ function SummaryModelDetails({ model }) {
     });
   }
 
-  const causemosUrl = `https://causemos.uncharted.software/#/model/${model.family_name}/model-publishing-experiment?datacube_id=${model.id}`;
+  const causemosUrl = `${process.env.CAUSEMOS_UI_URL}/#/model/${model.family_name}/model-publishing-experiment?datacube_id=${model.id}`;
 
   // no need to spread the following out onto a million lines
   /* eslint-disable react/jsx-one-expression-per-line */

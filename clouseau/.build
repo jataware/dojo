@@ -1,5 +1,6 @@
 #!/usr/bin/env sh
 
+<<<<<<< HEAD
 DT=$(date +"%Y%m%d")
 BUILD_TIME=$(date +%FT%T%Z)
 COMMIT=$(git rev-parse --short HEAD)
@@ -20,4 +21,16 @@ docker build --no-cache -f cato/Dockerfile \
        -t "${IMAGE}:${TAG}" \
        -t "${IMAGE}:${TAG}-dev" \
        -t "${IMAGE}:${GIT}" \
+=======
+VERSION="1.0.0"
+TAG="clouseau-${VERSION}"
+
+GROUP=jataware
+NAME=dojo
+IMAGE="${GROUP}/${NAME}"
+
+docker build --no-cache -f cato/Dockerfile \
+       --build-arg CLOUSEAU_VERSION="${VERSION}" \
+       -t "${IMAGE}:${TAG}" \
+>>>>>>> dev
        .
