@@ -1,5 +1,5 @@
 """
-    Docker Hub helper to scrape phantom images.
+    Docker Hub helper to scrape model images for the UI.
     see https://docs.docker.com/docker-hub/api/latest/#
     see https://github.com/jataware/dojo/issues/77
     Requires credentials for Pro or Team plan.
@@ -64,7 +64,7 @@ def get_image_tags(repo):
     """
     Description
     -----------
-    Called by phantom.py get_base_images() to scrape DockerHub for
+    Called by ui.py get_base_images() to scrape DockerHub for
     Jataware/dojo-publish images.
 
     Returns
@@ -136,7 +136,6 @@ def get_image_tags(repo):
         )
     )
 
-    # Enumerate and set sort_order; although, Phantom does not seem to use this.
     for idx, d in enumerate(curated_tags):
         d["sort_order"] = idx
 

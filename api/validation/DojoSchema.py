@@ -135,7 +135,7 @@ class ModelDirective(BaseModel):
     cwd: str = Field(
         title="Current Working Directory",
         description="Current Working Directory for Model Container command",
-        example="/home/clouseau/model",
+        example="/home/terminal/model",
     )
     parameters: List[Parameter] = Field(
         ...,

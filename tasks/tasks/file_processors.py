@@ -151,7 +151,7 @@ def model_output_preview(context, *args, **kwargs):
     filepath = context['annotations']['metadata']['filepath']
     file_uuid = context['annotations']['metadata']['file_uuid']
 
-    url = f"{os.environ['CLOUSEAU_ENDPOINT']}{fileurl}"
+    url = f"{os.environ['TERMINAL_ENDPOINT']}{fileurl}"
 
     req = requests.get(url, stream=True)
     stream = req.raw
