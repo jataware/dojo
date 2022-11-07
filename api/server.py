@@ -11,13 +11,13 @@ from starlette.requests import cookie_parser
 
 from src import (
     auth,
-    clouseau,
+    terminal,
     data,
     dojo,
     healthcheck,
     indicators,
     models,
-    phantom,
+    ui,
     runs,
 )
 from src.settings import settings
@@ -32,8 +32,8 @@ api.include_router(models.router, tags=["Models"])
 api.include_router(dojo.router, tags=["Dojo"])
 api.include_router(runs.router, tags=["Runs"])
 api.include_router(indicators.router, tags=["Indicators"])
-api.include_router(clouseau.router, prefix="/clouseau", tags=["Clouseau"])
-api.include_router(phantom.router, prefix="/phantom", tags=["Phantom"])
+api.include_router(terminal.router, prefix="/terminal", tags=["Terminal"])
+api.include_router(ui.router, prefix="/ui", tags=["Dojo UI"])
 api.include_router(data.router, tags=["Data"])
 
 if settings.AUTH_ENABLED:
@@ -43,10 +43,10 @@ if settings.AUTH_ENABLED:
         # Allow authentication, healthcheck and swagger endpoints
         if not (
             request['path'].startswith((
-                '/auth', 
-                '/healthcheck', 
+                '/auth',
+                '/healthcheck',
                 '/favicon.'
-            )) 
+            ))
             or request['path'] in (
                 '/',
                 '/openapi.json',
@@ -55,7 +55,7 @@ if settings.AUTH_ENABLED:
             authenticated, _ = check_session(request)
             if not authenticated:
                 return Response(status_code=403)
-        
+
         # If we make it to here, we don't need to auth or have a valid token
         response = await call_next(request)
         return response

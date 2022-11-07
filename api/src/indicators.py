@@ -36,6 +36,7 @@ from src.ontologies import get_ontologies
 from src.causemos import notify_causemos
 from src.causemos import deprecate_dataset
 from src.utils import put_rawfile, get_rawfile, list_files
+from src.plugins import plugin_action
 from validation.IndicatorSchema import (
     IndicatorMetadataSchema,
     QualifierOutput,
@@ -64,9 +65,18 @@ def create_indicator(payload: IndicatorSchema.IndicatorMetadataSchema):
     body = payload.json()
     payload.published = False
 
+    plugin_action("before_create", data=body, type="indicator")
     es.index(index="indicators", body=body, id=indicator_id)
+    plugin_action("post_create", data=body, type="indicator")
+
+
     empty_annotations_payload = MetadataSchema.MetaModel(metadata={}).json()
+    # (?): SHOULD WE HAVE PLUGINS AROUND THE ANNOTATION CREATION?
+    plugin_action("before_create", data=body, type="annotation")
     es.index(index="annotations", body=empty_annotations_payload, id=indicator_id)
+    plugin_action("post_create", data=body, type="annotation")
+
+ 
 
     return Response(
         status_code=status.HTTP_201_CREATED,
@@ -83,7 +93,11 @@ def update_indicator(payload: IndicatorSchema.IndicatorMetadataSchema):
     indicator_id = payload.id
     payload.created_at = current_milli_time()
     body = payload.json()
+
+    plugin_action("before_update", data=body, type="indicator")
     es.index(index="indicators", body=body, id=indicator_id)
+    plugin_action("post_update", data=body, type="indicator")
+
     return Response(
         status_code=status.HTTP_200_OK,
         headers={"location": f"/api/indicators/{indicator_id}"},
@@ -202,7 +216,11 @@ def publish_indicator(indicator_id: str):
         es.index(index="indicators", body=data, id=indicator_id)
 
         # Notify Causemos that an indicator was created
+        plugin_action("before_register", data=indicator, type="indicator")
+        # TODO: Move notify_causemose only to causemos plugin
         notify_causemos(data, type="indicator")
+        plugin_action("register", data=indicator, type="indicator")
+        plugin_action("post_register", data=indicator, type="indicator")
     except Exception as e:
         logger.exception(e)
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
@@ -211,67 +229,6 @@ def publish_indicator(indicator_id: str):
         headers={"location": f"/api/indicators/{indicator_id}/publish"},
         content=f"Published indicator with id {indicator_id}",
     )
-
-
-@router.get("/indicators/{indicator_id}/download/csv")
-def get_csv(indicator_id: str, request: Request):
-    try:
-        indicator = es.get(index="indicators", id=indicator_id)["_source"]
-    except Exception as e:
-        logger.exception(e)
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-
-    async def iter_csv():
-        # Build single dataframe
-        df = pd.concat(pd.read_parquet(file) for file in indicator["data_paths"])
-
-        # Ensure pandas floats are used because vanilla python ones are problematic
-        df = df.fillna("").astype(
-            {
-                col: "str"
-                for col in df.select_dtypes(include=["float32", "float64"]).columns
-            },
-            # Note: This links it to the previous `df` so not a full copy
-            copy=False,
-        )
-
-        # Prepare for writing CSV to a temporary buffer
-        buffer = io.StringIO()
-        writer = csv.writer(buffer)
-
-        # Write out the header row
-        writer.writerow(df.columns)
-
-        yield buffer.getvalue()
-        buffer.seek(
-            0
-        )  # To clear the buffer we need to seek back to the start and truncate
-        buffer.truncate()
-
-        # Iterate over dataframe tuples, writing each one out as a CSV line one at a time
-        for record in df.itertuples(index=False, name=None):
-            writer.writerow(str(i) for i in record)
-            yield buffer.getvalue()
-            buffer.seek(0)
-            buffer.truncate()
-
-    async def compress(content):
-        compressor = zlib.compressobj()
-        async for buff in content:
-            yield compressor.compress(buff.encode())
-        yield compressor.flush()
-
-    if "deflate" in request.headers.get("accept-encoding", ""):
-        return StreamingResponse(
-            compress(iter_csv()),
-            media_type="text/csv",
-            headers={"Content-Encoding": "deflate"},
-        )
-    else:
-        return StreamingResponse(
-            iter_csv(),
-            media_type="text/csv",
-        )
 
 
 @router.put("/indicators/{indicator_id}/deprecate")
