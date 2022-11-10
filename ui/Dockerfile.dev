@@ -1,4 +1,4 @@
-FROM node:17-buster
+FROM node:18-buster
 USER node
 
 COPY --chown=node package.json /ui/

@@ -74,18 +74,6 @@ module.exports = {
         secure: false,
         changeOrigin: true,
       },
-      '/api/shorthand': {
-        target: 'http://localhost:5000',
-        pathRewrite: { '^/api/shorthand': '' },
-        secure: false,
-        changeOrigin: true,
-      },
-      '/api/spacetag': {
-        target: 'http://localhost:8001',
-        pathRewrite: { '^/api/spacetag': '' },
-        secure: false,
-        changeOrigin: true,
-      },
     }
   },
     plugins: [

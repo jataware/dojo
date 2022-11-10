@@ -40,9 +40,7 @@ To view logs: `$ make logs` or `$ docker-compose logs {service-name}`
 
 * Dojo UI: http://localhost:8080/
 * Dojo API: http://localhost:8000/
-* Spacetag: http://localhost:8001/
 * Terminal API: http://localhost:3000/
-* Shorthand: http://localhost:5000/
 * Elasticsearch: http://localhost:9200/
 * Redis: http://localhost:6379/
 * DMC (Airflow): http://localhost:8090/

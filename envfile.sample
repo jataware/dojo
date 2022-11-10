@@ -31,7 +31,6 @@ ELASTICSEARCH_PORT=9200
 MIXMASTA_VERSION=latest
 REDIS_HOST=redis.dojo-stack
 REDIS_PORT=6379
-SPACETAG_URL=http://app.dojo-stack:8000
 TERMINAL_ENDPOINT=http://terminal.dojo-stack:3000
 TERMINAL_WORKERS=docker.dojo-stack
 UAZ_URL=http://linking.cs.arizona.edu/v1
