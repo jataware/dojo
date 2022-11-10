@@ -20,6 +20,7 @@ export function AuthWrapper({ children }) {
         if (userData.data.authenticated) {
           setAuth({
             ...auth,
+            user: userData.data.user,
             isAuthenticated: userData.data.authenticated,
           });
         }
@@ -43,7 +44,7 @@ export function AuthWrapper({ children }) {
   );
 }
 
-function useAuth() {
+export function useAuth() {
   return useContext(authContext);
 }
 
@@ -62,7 +63,6 @@ export function ProtectedRoute({ children, ...props }) {
   // }
 
   const { auth } = useAuth();
-
   if (auth.isAuthenticated) {
     return (
       <Route
@@ -86,7 +86,6 @@ export function ProtectedRoute({ children, ...props }) {
 }
 
 export function AuthRedirectHandler({ children }) {
-  console.log('hitting AuthRedirectHandler')
   const { auth, setAuth } = useAuth();
   const params = new URLSearchParams(location.search);
   const payload = { auth_code: params.get('code') };
