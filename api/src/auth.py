@@ -104,3 +104,20 @@ async def auth(request: Request, response: Response, payload: AuthRequest) -> st
         "auth_url": None,
         "user": user_info['email'],
     }
+
+
+@router.post("/auth/logout")
+async def logout(request: Request, response: Response) -> str:
+
+    is_session_valid, session_data = check_session(request)
+    session_id = request.cookies.get(settings.SESSION_COOKIE_NAME, None)
+
+    if not is_session_valid:
+        return True
+
+    try:
+        keycloak.logout(session_data.refresh_token)
+        session_backend.delete(session_id)
+        return True
+    except:
+        return False
