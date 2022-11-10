@@ -70,7 +70,7 @@ terminal/.dockerenv:
 	touch terminal/.dockerenv
 
 docker-compose.yaml:$(COMPOSE_FILES) docker-compose.build-override.yaml terminal/.dockerenv envfile
-	export $$(cat envfile | xargs); \
+	export $$(grep -v '^#' envfile | xargs); \
 	export AWS_SECRET_ACCESS_KEY_ENCODED=$$(echo -n $${AWS_SECRET_ACCESS_KEY} | \
 		curl -Gso /dev/null -w %{url_effective} --data-urlencode @- "" | cut -c 3-); \
 	if [[ -z  "$${DOCKERHUB_AUTH}" ]]; then \
