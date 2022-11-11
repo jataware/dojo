@@ -2,7 +2,7 @@ import React, { useContext, useState } from 'react';
 
 import axios from 'axios';
 
-import { Link, Redirect } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 
 import AccountCircleIcon from '@material-ui/icons/AccountCircle';
 import AppBar from '@material-ui/core/AppBar';
@@ -16,6 +16,9 @@ import { lighten, makeStyles } from '@material-ui/core/styles';
 
 import { ThemeContext } from './ThemeContextProvider';
 import { useAuth } from '../auth';
+
+import ConfirmDialog from './ConfirmDialog';
+import BasicAlert from './BasicAlert';
 
 const useStyles = makeStyles((theme) => ({
   appBarRoot: {
@@ -41,6 +44,8 @@ const useStyles = makeStyles((theme) => ({
 
 const UserMenu = ({ user }) => {
   const [anchorEl, setAnchorEl] = useState(null);
+  const [confirmLogoutOpen, setConfirmLogoutOpen] = useState(false);
+  const [logoutError, setLogoutError] = useState(false);
   const classes = useStyles();
 
   const handleClick = (event) => {
@@ -54,8 +59,11 @@ const UserMenu = ({ user }) => {
   const handleLogout = () => {
     axios.post('/api/dojo/auth/logout')
       // todo: add confirm logout
-      .then(() => window.location.replace('/'));
-      // todo: handle failure
+      .then(() => window.location.replace('/'))
+      .catch(() => {
+        setConfirmLogoutOpen(false);
+        setLogoutError(true);
+      });
   };
 
   return (
@@ -77,10 +85,26 @@ const UserMenu = ({ user }) => {
         onClose={handleClose}
         classes={{ paper: classes.userMenuPaper }}
       >
-        <MenuItem onClick={handleLogout}>
+        <MenuItem onClick={() => setConfirmLogoutOpen(true)}>
           Logout
         </MenuItem>
       </Menu>
+      {confirmLogoutOpen && (
+        <ConfirmDialog
+          accept={handleLogout}
+          open={confirmLogoutOpen}
+          reject={() => setConfirmLogoutOpen(false)}
+          title="Are you sure you want to logout?"
+        />
+      )}
+      <BasicAlert
+        alert={{
+          message: 'There was an error logging out, please try again.',
+          severity: 'error',
+        }}
+        visible={logoutError}
+        setVisible={setLogoutError}
+      />
     </div>
   );
 };
@@ -95,51 +119,54 @@ const NavBar = () => {
   }
 
   return (
-    <AppBar position="static" classes={{ root: classes.appBarRoot }}>
-      <Toolbar variant="dense" disableGutters className={classes.toolbar}>
-        <Tooltip title="Dojo home" arrow>
-          <IconButton
-            component={Link}
-            to="/"
-            size="small"
-          >
-            <img
-              src="/assets/Dojo_Logo_black.svg"
-              alt="Dojo Logo"
-              className={classes.dojoIcon}
-            />
-          </IconButton>
-        </Tooltip>
-        {auth.isAuthenticated && (
-          <>
-            <Button
+    <>
+      <AppBar position="static" classes={{ root: classes.appBarRoot }}>
+        <Toolbar variant="dense" disableGutters className={classes.toolbar}>
+          <Tooltip title="Dojo home" arrow>
+            <IconButton
               component={Link}
-              to="/models"
+              to="/"
+              size="small"
             >
-              Models
-            </Button>
-            <Button
-              component={Link}
-              to="/datasets"
-            >
-              Datasets
-            </Button>
-            <Button
-              component={Link}
-              to="/runs"
-            >
-              Model Runs
-            </Button>
-          </>
-        )}
-        <span className={classes.spacer} />
-        <Button href="https://www.dojo-modeling.com" target="_blank">Documentation</Button>
-        <Button href="https://github.com/dojo-modeling/dojo" target="_blank">GitHub</Button>
-        {(auth.isAuthenticated && auth.user) && (
-          <UserMenu user={auth.user} />
-        )}
-      </Toolbar>
-    </AppBar>
+              <img
+                src="/assets/Dojo_Logo_black.svg"
+                alt="Dojo Logo"
+                className={classes.dojoIcon}
+              />
+            </IconButton>
+          </Tooltip>
+          {auth.isAuthenticated && (
+            <>
+              <Button
+                component={Link}
+                to="/models"
+              >
+                Models
+              </Button>
+              <Button
+                component={Link}
+                to="/datasets"
+              >
+                Datasets
+              </Button>
+              <Button
+                component={Link}
+                to="/runs"
+              >
+                Model Runs
+              </Button>
+            </>
+          )}
+          <span className={classes.spacer} />
+          <Button href="https://www.dojo-modeling.com" target="_blank">Documentation</Button>
+          <Button href="https://github.com/dojo-modeling/dojo" target="_blank">GitHub</Button>
+          {(auth.isAuthenticated && auth.user) && (
+            <UserMenu user={auth.user} />
+          )}
+        </Toolbar>
+      </AppBar>
+
+    </>
   );
 };
 
