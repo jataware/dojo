@@ -222,7 +222,7 @@ const LoggedOutLinks = () => {
         if (!response?.data?.authenticated && response?.data?.auth_url) {
           setLoginLink(response.data.auth_url);
           // replace 'auth' with 'registrations' to link directly to the register page
-          setRegisterLink(response.data.auth_url.split('auth').join('registrations'));
+          setRegisterLink(response.data.auth_url.replace('auth', 'registrations'));
         }
       });
   }, []);
@@ -232,7 +232,6 @@ const LoggedOutLinks = () => {
       <Button
         variant="contained"
         color="inherit"
-        // eslint-disable-next-line no-alert
         href={registerLink}
         disableElevation
         size="large"
@@ -244,7 +243,6 @@ const LoggedOutLinks = () => {
       <Button
         variant="contained"
         color="inherit"
-        // eslint-disable-next-line no-alert
         href={loginLink}
         disableElevation
         size="large"
