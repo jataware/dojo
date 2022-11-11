@@ -2,21 +2,23 @@ import axios from 'axios';
 import React, { useContext, createContext, useState } from 'react';
 import { Redirect, Route } from 'react-router-dom';
 
-const authEndpoint = '/api/dojo/auth/status';
+export const authStatusEndpoint = '/api/dojo/auth/status';
 export const authContext = createContext();
 
 export function AuthWrapper({ children }) {
   const user = null;
   const isAuthenticated = false;
+  const auth_url = null;
   const defaultState = {
     user,
-    isAuthenticated
+    isAuthenticated,
+    auth_url,
   };
   const [auth, setAuth] = useState(defaultState);
 
   function getAuth() {
     if (!auth.isAuthenticated) {
-      axios.post(authEndpoint, {}).then((userData) => {
+      axios.post(authStatusEndpoint, {}).then((userData) => {
         if (userData.data.authenticated) {
           setAuth({
             ...auth,
@@ -75,7 +77,7 @@ export function ProtectedRoute({ children, ...props }) {
       />
     );
   } else {
-    axios.post(authEndpoint, {}).then((response) => {
+    axios.post(authStatusEndpoint, {}).then((response) => {
         if (!response?.data?.authenticated && response?.data?.auth_url) {
             window.location = response.data.auth_url;
             return <Redirect to={response.data.auth_url}/>
@@ -90,7 +92,7 @@ export function AuthRedirectHandler({ children }) {
   const params = new URLSearchParams(location.search);
   const payload = { auth_code: params.get('code') };
 
-  axios.post(authEndpoint, payload).then((response) => {
+  axios.post(authStatusEndpoint, payload).then((response) => {
     const newUser = response.data.user;
     setAuth({
       ...auth,

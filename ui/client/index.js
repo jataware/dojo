@@ -42,7 +42,7 @@ export default function Main() {
       <Router>
         <NavBar />
         <Switch>
-          <ProtectedRoute component={LandingPage} exact path="/" />
+          <Route component={LandingPage} exact path="/" />
           <Route component={AuthRedirectHandler} exact path="/auth" />
           <ProtectedRoute component={Model} exact path="/model" />
           <ProtectedRoute component={ViewModels} exact path="/models" />

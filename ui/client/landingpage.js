@@ -21,6 +21,8 @@ import useSWRImmutable from 'swr/immutable';
 
 import { makeStyles } from '@material-ui/core/styles';
 
+import { authStatusEndpoint, useAuth } from './auth';
+
 const useStyles = makeStyles((theme) => ({
   topContentWrapper: {
     display: 'flex',
@@ -137,12 +139,137 @@ const useRuns = () => {
   };
 };
 
-const LandingPage = () => {
+// split this out into its own component so we don't hit these endpoints if we aren't logged in
+const LoggedInLinks = () => {
   const classes = useStyles();
-  const [loggedIn] = useState(true);
-
   const { models, modelsLoading, modelsError } = useModels();
   const { runs, runsLoading, runsError } = useRuns();
+
+  return (
+    <div className={classes.linksWrapper}>
+      {/* specific top margin to center this on the existing model text */}
+      <Typography
+        variant="h4"
+        align="center"
+        className={classes.linkCta}
+        style={{ marginTop: '50px' }}
+      >
+        Or continue <ArrowForwardIcon fontSize="large" />
+      </Typography>
+      <div className={classes.links}>
+        <div>
+          <ComputerIcon className={classes.bigIcon} />
+          <Typography
+            component={RouterLink}
+            to="/models"
+            variant="h5"
+            className={classes.link}
+          >
+            View existing models
+          </Typography>
+          <Typography variant="subtitle1">
+            Browse {
+              modelsLoading || modelsError ? 'all' : <b>{models?.hits}</b>
+            } registered models
+          </Typography>
+        </div>
+        <div>
+          <AssessmentIcon className={classes.bigIcon} />
+          <Typography
+            component={RouterLink}
+            to="/datasets"
+            variant="h5"
+            className={classes.link}
+          >
+            View existing datasets
+          </Typography>
+          <Typography variant="subtitle1">
+            Browse all registered datasets
+          </Typography>
+        </div>
+        <div>
+          <LoopIcon className={classes.bigIcon} />
+          <Typography
+            component={RouterLink}
+            to="/runs"
+            variant="h5"
+            className={classes.link}
+          >
+            View existing model runs
+          </Typography>
+          <Typography variant="subtitle1">
+            Browse {
+              runsLoading || runsError ? 'all' : <b>{runs?.hits}</b>
+            } existing model runs
+          </Typography>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const LoggedOutLinks = () => {
+  const [loginLink, setLoginLink] = useState();
+  const [registerLink, setRegisterLink] = useState();
+  const classes = useStyles();
+
+  useEffect(() => {
+// TODO: calling this here and in auth.js - ideally set this in the auth context
+// and don't need to call again here. However, this causes an endless cascade of calls.
+// try to fix this, or just let this call happen twice
+    axios.post(authStatusEndpoint, {})
+      .then((response) => {
+        if (!response?.data?.authenticated && response?.data?.auth_url) {
+          setLoginLink(response.data.auth_url);
+          // replace 'auth' with 'registrations' to link directly to the register page
+          setRegisterLink(response.data.auth_url.split('auth').join('registrations'));
+        }
+      });
+  }, []);
+
+  return (
+    <>
+      <Button
+        variant="contained"
+        color="inherit"
+        // eslint-disable-next-line no-alert
+        href={registerLink}
+        disableElevation
+        size="large"
+        className={classes.button}
+        disabled={!registerLink}
+      >
+        {registerLink ? 'Create an account' : 'Loading...'}
+      </Button>
+      <Button
+        variant="contained"
+        color="inherit"
+        // eslint-disable-next-line no-alert
+        href={loginLink}
+        disableElevation
+        size="large"
+        className={classes.button}
+        disabled={!loginLink}
+      >
+        {loginLink ? 'Log In' : 'Loading...'}
+      </Button>
+    </>
+  );
+};
+
+const LandingPage = () => {
+  const classes = useStyles();
+  const [loggedIn, setLoggedIn] = useState(false);
+
+  const { auth } = useAuth();
+
+  useEffect(() => {
+    if (auth.isAuthenticated) {
+      setLoggedIn(true);
+    } else {
+      setLoggedIn(false);
+    }
+  }, [auth]);
 
   useEffect(() => {
     document.title = 'Home - Dojo';
@@ -197,30 +324,7 @@ const LandingPage = () => {
                   </Button>
                 </>
               ) : (
-                <>
-                  <Button
-                    variant="contained"
-                    color="inherit"
-                    // eslint-disable-next-line no-alert
-                    onClick={() => alert('This feature has not been implemented yet.')}
-                    disableElevation
-                    size="large"
-                    className={classes.button}
-                  >
-                    Create an account
-                  </Button>
-                  <Button
-                    variant="contained"
-                    color="inherit"
-                    // eslint-disable-next-line no-alert
-                    onClick={() => alert('This feature has not been implemented yet.')}
-                    disableElevation
-                    size="large"
-                    className={classes.button}
-                  >
-                    Log In
-                  </Button>
-                </>
+                <LoggedOutLinks />
               )}
             </div>
           </div>
@@ -229,74 +333,9 @@ const LandingPage = () => {
       <div className={classes.bottomContentWrapper}>
         <Container maxWidth="lg" className={classes.bottomContentContainer}>
           {loggedIn ? (
-            <div className={classes.linksWrapper}>
-              {/* specific top margin to center this on the existing model text */}
-              <Typography
-                variant="h4"
-                align="center"
-                className={classes.linkCta}
-                style={{ marginTop: '50px' }}
-              >
-                Or continue <ArrowForwardIcon fontSize="large" />
-              </Typography>
-              <div className={classes.links}>
-                <div>
-                  <ComputerIcon className={classes.bigIcon} />
-                  <Typography
-                    component={RouterLink}
-                    to="/models"
-                    variant="h5"
-                    className={classes.link}
-                  >
-                    View existing models
-                  </Typography>
-                  <Typography variant="subtitle1">
-                    Browse {
-                      modelsLoading || modelsError ? 'all' : <b>{models?.hits}</b>
-                    } registered models
-                  </Typography>
-                </div>
-                <div>
-                  <AssessmentIcon className={classes.bigIcon} />
-                  <Typography
-                    component={RouterLink}
-                    to="/datasets"
-                    variant="h5"
-                    className={classes.link}
-                  >
-                    View existing datasets
-                  </Typography>
-                  <Typography variant="subtitle1">
-                    Browse all registered datasets
-                  </Typography>
-                </div>
-                <div>
-                  <LoopIcon className={classes.bigIcon} />
-                  <Typography
-                    component={RouterLink}
-                    to="/runs"
-                    variant="h5"
-                    className={classes.link}
-                  >
-                    View existing model runs
-                  </Typography>
-                  <Typography variant="subtitle1">
-                    Browse {
-                      runsLoading || runsError ? 'all' : <b>{runs?.hits}</b>
-                    } existing model runs
-                  </Typography>
-                </div>
-              </div>
-            </div>
+            <LoggedInLinks />
           ) : (
-            <div>
-              <img
-                src="./assets/terminal-screenshot.png"
-                alt="Terminal Emulator Page"
-                height="450"
-                style={{ borderRadius: '16px' }}
-              />
-            </div>
+            <div />
           )}
           <div className={loggedIn ? classes.learnMoreLoggedIn : classes.learnMoreLoggedOut}>
             <Typography variant="h6" component="div" gutterBottom>

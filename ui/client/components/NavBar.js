@@ -110,24 +110,28 @@ const NavBar = () => {
             />
           </IconButton>
         </Tooltip>
-        <Button
-          component={Link}
-          to="/models"
-        >
-          Models
-        </Button>
-        <Button
-          component={Link}
-          to="/datasets"
-        >
-          Datasets
-        </Button>
-        <Button
-          component={Link}
-          to="/runs"
-        >
-          Model Runs
-        </Button>
+        {auth.isAuthenticated && (
+          <>
+            <Button
+              component={Link}
+              to="/models"
+            >
+              Models
+            </Button>
+            <Button
+              component={Link}
+              to="/datasets"
+            >
+              Datasets
+            </Button>
+            <Button
+              component={Link}
+              to="/runs"
+            >
+              Model Runs
+            </Button>
+          </>
+        )}
         <span className={classes.spacer} />
         <Button href="https://www.dojo-modeling.com" target="_blank">Documentation</Button>
         <Button href="https://github.com/dojo-modeling/dojo" target="_blank">GitHub</Button>
