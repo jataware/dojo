@@ -33,14 +33,14 @@ def populate_wdi_data(args):
 
         # delete all CSVs and json files in output folder
         for filename in (
-            glob("output/*.csv") + glob("output/*.json") + glob("output/*.gzip")
+                glob("output/*.csv") + glob("output/*.json") + glob("output/*.gzip")
         ):
             os.remove(filename)
 
         for name, indicators in tqdm(
-            indicator_groups(),
-            total=sum(1 for _ in indicator_groups()),
-            desc="Making datasets",
+                indicator_groups(),
+                total=sum(1 for _ in indicator_groups()),
+                desc="Making datasets",
         ):
 
             # TODO: come up with better description from somewhere...
@@ -49,8 +49,9 @@ def populate_wdi_data(args):
             # collect all rows in df that have an indicator in indicators
             df_subset = raw_data[raw_data["Indicator Code"].isin(set(indicators))]
 
+            print(country_codes)
             # make dataset
-            df = make_dataset(df_subset, country_codes)
+            df = make_dataset(df_subset, country_codes, countries)
 
             # create metadata for dataset
             meta = make_metadata(df, series_info, name, description)  # , feature_codes)
@@ -70,15 +71,15 @@ def populate_wdi_data(args):
             save_parquet(df, name)
 
             # # upload csv and parquet to s3
-            upload_files_to_s3(meta.get("id"), name, args)
-
-            # update meta data_paths
-            meta["data_paths"] = [
-                f's3://{args.bucket}/datasets/{meta.get("id")}/{meta.get("id")}.parquet.gzip'
-            ]
-
-            # # save meta data to elasticsearch
-            save_meta_es(meta)
+            # upload_files_to_s3(meta.get("id"), name, args)
+            #
+            # # update meta data_paths
+            # meta["data_paths"] = [
+            #     f's3://{args.bucket}/datasets/{meta.get("id")}/{meta.get("id")}.parquet.gzip'
+            # ]
+            #
+            # # # save meta data to elasticsearch
+            # save_meta_es(meta)
     except Exception as e:
         print(f"error {e}")
 
@@ -412,13 +413,19 @@ def indicator_groups():
         groups = json.load(f)
 
     for name, group in groups.items():
+        if name == "WDI - agricultural" or name == "WDI - balance_exports":
 
-        if name == "WDI - social_migration":
             yield name, group
 
 
-def make_dataset(df, country_codes):
+def gadm_country_lookup(country_code, countries):
+    try:
+        return countries.loc[countries['Alpha-3_Code'] == country_code, "country_name"].iloc[0]
+    except Exception as e:
+        print(f'error with gadm lookup {e}- {country_code}')
 
+
+def make_dataset(df, country_codes, countries):
     # columns = ['timestamp', 'country', 'admin1', 'admin2', 'admin3', 'lat', 'lng', 'feature', 'value']
 
     # year strings and timestamps (in milliseconds) from 1960 to 2021
@@ -429,7 +436,6 @@ def make_dataset(df, country_codes):
 
     rows = []
     # feature_codes = set(df['Indicator Code'].tolist())
-
     for _, row in tqdm(df.iterrows(), total=len(df), desc="Making rows", leave=False):
         # filter out rows that are not countries
         if row["Country Code"] not in country_codes:
@@ -438,7 +444,7 @@ def make_dataset(df, country_codes):
             rows.append(
                 {
                     "timestamp": timestamp,
-                    "country": row["Country Name"],
+                    "country": gadm_country_lookup(row["Country Code"], countries),
                     "admin1": None,
                     "admin2": None,
                     "admin3": None,
@@ -451,8 +457,9 @@ def make_dataset(df, country_codes):
                 }
             )
 
-    df = pd.DataFrame(rows)
+    # print(f' need thsee {all_countries}')
 
+    df = pd.DataFrame(rows)
     return df
 
 
@@ -518,7 +525,7 @@ def make_metadata(df, series_info, name, description):
             # sometimes units are at the end of the indicator name (e.g. 'GDP (current US$)')
             name: str = info["Indicator Name"]
             if name.endswith(")"):
-                unit = name[name.rfind("(") + 1 : -1]
+                unit = name[name.rfind("(") + 1: -1]
         except:
             unit = None
         if unit is None:
@@ -591,7 +598,7 @@ def make_metadata(df, series_info, name, description):
         "deprecated": False,
         "data_sensitivity": "",
         "data_quality": "",
-        "published":True,
+        "published": True,
     }
 
     return meta
@@ -712,18 +719,18 @@ def upload_files_to_s3(id, name, args):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--es", help="Elasticsearch connection string")
-    parser.add_argument("--bucket", help="S3 bucket to save to")
-    parser.add_argument("--aws_key", help="aws_key")
-    parser.add_argument("--aws_secret", help="aws_secret")
-    args = parser.parse_args()
-
-    ELASTICSEARCH_URL = args.es
-    es = Elasticsearch([ELASTICSEARCH_URL])
-
-    s3 = boto3.client(
-        "s3", aws_access_key_id=args.aws_key, aws_secret_access_key=args.aws_secret
-    )
-
+    # parser = argparse.ArgumentParser()
+    # parser.add_argument("--es", help="Elasticsearch connection string")
+    # parser.add_argument("--bucket", help="S3 bucket to save to")
+    # parser.add_argument("--aws_key", help="aws_key")
+    # parser.add_argument("--aws_secret", help="aws_secret")
+    # args = parser.parse_args()
+    #
+    # ELASTICSEARCH_URL = args.es
+    # es = Elasticsearch([ELASTICSEARCH_URL])
+    #
+    # s3 = boto3.client(
+    #     "s3", aws_access_key_id=args.aws_key, aws_secret_access_key=args.aws_secret
+    # )
+    args = {}
     populate_wdi_data(args)
