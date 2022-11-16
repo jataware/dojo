@@ -135,7 +135,7 @@ class ModelDirective(BaseModel):
     cwd: str = Field(
         title="Current Working Directory",
         description="Current Working Directory for Model Container command",
-        example="/home/clouseau/model",
+        example="/home/terminal/model",
     )
     parameters: List[Parameter] = Field(
         ...,
@@ -176,7 +176,7 @@ class ModelConfigCreate(BaseModel):
         title="File Contents",
         description="The contents of the config file that need to be written"
     )
-    
+
 
 class ModelOutputFile(BaseModel):
     id: str
@@ -207,8 +207,8 @@ class ModelOutputFile(BaseModel):
         example="csv",
     )
     transform: Dict = Field(
-        title="SpaceTag Transform Directives",
-        description="A dictionary of SpaceTag generated transform directives that are used to convert the model output file into a CauseMos compliant schema",
+        title="Annotater Transform Directives",
+        description="A dictionary of Annotater generated transform directives that are used to convert the model output file into a geotemporal compliant schema",
         example={"x": "lng", "y": "lat"},
     )
     prev_id: Optional[str] = Field(

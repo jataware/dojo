@@ -4,19 +4,19 @@ PYTHON = $(shell which python3 || which python)
 export LANG
 
 BASEDIR = $(shell pwd)
-CLOUSEAU_DIR = clouseau
+TERMINAL_DIR = terminal
 DOJO_API_DIR = api
 DOJO_DMC_DIR = dmc
 MIXMASTA_DIR = mixmasta
-PHANTOM_DIR = phantom
+UI_DIR = ui
 RQ_DIR = tasks
 WORKERS_DIR = workers
-COMPOSE_DIRS := $(CLOUSEAU_DIR) $(DOJO_API_DIR) $(DOJO_DMC_DIR) $(WORKERS_DIR)
-COMPOSE_FILES := $(CLOUSEAU_DIR)/docker-compose.yaml $(DOJO_API_DIR)/docker-compose.yaml \
+COMPOSE_DIRS := $(TERMINAL_DIR) $(DOJO_API_DIR) $(DOJO_DMC_DIR) $(WORKERS_DIR)
+COMPOSE_FILES := $(TERMINAL_DIR)/docker-compose.yaml $(DOJO_API_DIR)/docker-compose.yaml \
 				 $(DOJO_DMC_DIR)/docker-compose.yaml $(WORKERS_DIR)/docker-compose.yaml \
 				 $(RQ_DIR)/docker-compose.yaml
 TEMP_COMPOSE_FILES := $(foreach file,$(subst /,_,$(COMPOSE_FILES)),temp_$(file))
-IMAGE_NAMES = api clouseau phantom tasks
+IMAGE_NAMES = api terminal ui tasks
 BUILD_FILES = $(wildcard */.build)
 BUILD_DIRS = $(dir $(BUILD_FILES))
 
@@ -34,7 +34,7 @@ init:
 	git submodule foreach 'git checkout $$(git config -f ../.gitmodules --get "submodule.$$name.branch")'; \
 	mkdir -p -m 0777 $(DOJO_DMC_DIR)/logs $(DOJO_DMC_DIR)/configs $(DOJO_DMC_DIR)/plugins $(DOJO_DMC_DIR)/model_configs \
 		$(DOJO_DMC_DIR)/dojo; \
-	touch clouseau/.dockerenv; \
+	touch terminal/.dockerenv; \
 	make envfile;
 
 .PHONY:rebuild-all
@@ -49,8 +49,8 @@ ifeq ($(wildcard envfile),)
 endif
 
 .PHONY:static
-static:docker-compose.yaml phantom/ui/node_modules phantom/ui/package-lock.json phantom/ui/package.json
-	( cd phantom/ui && rm -fr dist/; NODE_OPTIONS="--openssl-legacy-provider" npm run build)
+static:docker-compose.yaml ui/node_modules ui/package-lock.json ui/package.json
+	( cd ui && rm -fr dist/; NODE_OPTIONS="--openssl-legacy-provider" npm run build)
 
 .PHONY:images
 images:static
@@ -66,11 +66,11 @@ clean:
 	docker-compose run app rm -r ./data/*/ && \
 	echo "Done"
 
-clouseau/.dockerenv:
-	touch clouseau/.dockerenv
+terminal/.dockerenv:
+	touch terminal/.dockerenv
 
-docker-compose.yaml:$(COMPOSE_FILES) docker-compose.build-override.yaml clouseau/.dockerenv envfile
-	export $$(cat envfile | xargs); \
+docker-compose.yaml:$(COMPOSE_FILES) docker-compose.build-override.yaml terminal/.dockerenv envfile
+	export $$(grep -v '^#' envfile | xargs); \
 	export AWS_SECRET_ACCESS_KEY_ENCODED=$$(echo -n $${AWS_SECRET_ACCESS_KEY} | \
 		curl -Gso /dev/null -w %{url_effective} --data-urlencode @- "" | cut -c 3-); \
 	if [[ -z  "$${DOCKERHUB_AUTH}" ]]; then \
@@ -86,18 +86,18 @@ docker-compose.yaml:$(COMPOSE_FILES) docker-compose.build-override.yaml clouseau
 	rm $(TEMP_COMPOSE_FILES) *.sedbkp;
 
 
-phantom/ui/package-lock.json:phantom/ui/package.json
-	docker-compose run phantom npm i -y --package-lock-only
+ui/package-lock.json:ui/package.json
+	docker-compose run ui npm i -y --package-lock-only
 
-phantom/ui/node_modules:phantom/ui/package-lock.json | 
-	docker-compose run phantom npm ci -y
+ui/node_modules:ui/package-lock.json | 
+	docker-compose run ui npm ci -y
 
 .PHONY:up
-up:docker-compose.yaml phantom/ui/node_modules
+up:docker-compose.yaml ui/node_modules
 	docker-compose up -d
 
 .PHONY:up-rebuild
-up-rebuild:docker-compose.yaml phantom/ui/node_modules
+up-rebuild:docker-compose.yaml ui/node_modules
 	docker-compose up --build -d
 
 

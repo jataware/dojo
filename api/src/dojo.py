@@ -358,16 +358,15 @@ def copy_outputfiles(model_id: str, new_model_id: str):
     model_outputs = []
     changed_uuids = {}
 
-    for f in outputfiles:
-        old_id = f['id']
-        f['id'] = str(uuid.uuid4())
-        changed_uuids[old_id] = f['id']
-        f['model_id'] = new_model_id
-        f['prev_id'] = old_id
+    for outputfile_dict in outputfiles:
+        old_id = outputfile_dict['id']
+        outputfile_dict['id'] = str(uuid.uuid4())
+        changed_uuids[old_id] = outputfile_dict['id']
+        outputfile_dict['model_id'] = new_model_id
+        outputfile_dict['prev_id'] = old_id
 
-        requests.get(f'{os.getenv("SPACETAG_URL")}/version?old_uuid={old_id}&new_uuid={f["id"]}&old_model_id={model_id}&new_model_id={new_model_id}')
-        m = DojoSchema.ModelOutputFile(**f)
-        model_outputs.append(m)
+        model_output_obj = DojoSchema.ModelOutputFile(**outputfile_dict)
+        model_outputs.append(model_output_obj)
 
     create_outputfiles(model_outputs)
     return changed_uuids

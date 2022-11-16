@@ -12,11 +12,10 @@ from rq import job
 router = APIRouter()
 
 redis = Redis(
-    os.environ.get("REDIS_HOST", "redis-spacetag"), os.environ.get("REDIS_PORT", "6379")
+    os.environ.get("REDIS_HOST", "redis.dojo-stack"), os.environ.get("REDIS_PORT", "6379")
 )
 
 
-@router.get("/dojo/spacetag/get_job_by_args")
 def get_job_by_args(args):
     workers = Worker.all(connection=redis)
     running_jobs = [worker.get_current_job() for worker in workers]
@@ -26,7 +25,6 @@ def get_job_by_args(args):
     return None
 
 
-@router.get("/dojo/spacetag/get_job_by_id")
 def get_job_by_id(job_id):
     try:
         return Job.fetch(job_id, connection=redis)

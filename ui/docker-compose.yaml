@@ -1,0 +1,13 @@
+version: "3"
+services:
+
+  ui:
+    image: jataware/ui:dev
+    container_name: ui
+    ports:
+      - 8080:80
+    environment:
+      API_HOST: ${PRIVATE_IP}
+      WEBSOCKET_HOST: ${PRIVATE_IP}
+
+

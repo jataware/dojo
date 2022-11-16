@@ -212,7 +212,7 @@ def version_model(model_id : str, exclude_files: bool = False):
 
         Each output or qualifier output has a uuid corresponding to the outputfile idx
         this function changes the uuids in the models outputs and qualifiers to the new model version
-        outputfiles uuid. This is the uuid used by spacetag.
+        outputfiles uuid. This is the uuid of the dataset.
         """
         updated_outputs = []
         for output in deepcopy(outputs):
