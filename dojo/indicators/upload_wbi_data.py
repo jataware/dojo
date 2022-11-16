@@ -70,16 +70,16 @@ def populate_wdi_data(args):
             # make parquet files
             save_parquet(df, name)
 
-            # # upload csv and parquet to s3
-            # upload_files_to_s3(meta.get("id"), name, args)
-            #
-            # # update meta data_paths
-            # meta["data_paths"] = [
-            #     f's3://{args.bucket}/datasets/{meta.get("id")}/{meta.get("id")}.parquet.gzip'
-            # ]
-            #
-            # # # save meta data to elasticsearch
-            # save_meta_es(meta)
+            # upload csv and parquet to s3
+            upload_files_to_s3(meta.get("id"), name, args)
+            
+            # update meta data_paths
+            meta["data_paths"] = [
+                f's3://{args.bucket}/datasets/{meta.get("id")}/{meta.get("id")}.parquet.gzip'
+            ]
+            
+            # # save meta data to elasticsearch
+            save_meta_es(meta)
     except Exception as e:
         print(f"error {e}")
 
@@ -413,9 +413,8 @@ def indicator_groups():
         groups = json.load(f)
 
     for name, group in groups.items():
-        if name == "WDI - agricultural" or name == "WDI - balance_exports":
 
-            yield name, group
+        yield name, group
 
 
 def gadm_country_lookup(country_code, countries):
@@ -719,18 +718,18 @@ def upload_files_to_s3(id, name, args):
 
 
 if __name__ == "__main__":
-    # parser = argparse.ArgumentParser()
-    # parser.add_argument("--es", help="Elasticsearch connection string")
-    # parser.add_argument("--bucket", help="S3 bucket to save to")
-    # parser.add_argument("--aws_key", help="aws_key")
-    # parser.add_argument("--aws_secret", help="aws_secret")
-    # args = parser.parse_args()
-    #
-    # ELASTICSEARCH_URL = args.es
-    # es = Elasticsearch([ELASTICSEARCH_URL])
-    #
-    # s3 = boto3.client(
-    #     "s3", aws_access_key_id=args.aws_key, aws_secret_access_key=args.aws_secret
-    # )
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--es", help="Elasticsearch connection string")
+    parser.add_argument("--bucket", help="S3 bucket to save to")
+    parser.add_argument("--aws_key", help="aws_key")
+    parser.add_argument("--aws_secret", help="aws_secret")
+    args = parser.parse_args()
+    
+    ELASTICSEARCH_URL = args.es
+    es = Elasticsearch([ELASTICSEARCH_URL])
+    
+    s3 = boto3.client(
+        "s3", aws_access_key_id=args.aws_key, aws_secret_access_key=args.aws_secret
+    )
     args = {}
     populate_wdi_data(args)
