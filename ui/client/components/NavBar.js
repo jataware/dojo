@@ -10,6 +10,7 @@ import Button from '@material-ui/core/Button';
 import IconButton from '@material-ui/core/IconButton';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
+import MuiLink from '@material-ui/core/Link';
 import Toolbar from '@material-ui/core/Toolbar';
 import Tooltip from '@material-ui/core/Tooltip';
 import { lighten, makeStyles } from '@material-ui/core/styles';
@@ -42,7 +43,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const UserMenu = ({ user }) => {
+const UserMenu = ({ user, keycloakUrl }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const [confirmLogoutOpen, setConfirmLogoutOpen] = useState(false);
   const [logoutError, setLogoutError] = useState(false);
@@ -89,9 +90,13 @@ const UserMenu = ({ user }) => {
           Logout
         </MenuItem>
         <MenuItem>
-          <a href="http://localhost:8079/realms/Uncharted/account">
+          <MuiLink
+            color="inherit"
+            href={`${keycloakUrl}/account`}
+            underline="none"
+          >
             Account
-          </a>
+          </MuiLink>
         </MenuItem>
       </Menu>
       {confirmLogoutOpen && (
@@ -166,7 +171,7 @@ const NavBar = () => {
           <Button href="https://www.dojo-modeling.com" target="_blank">Documentation</Button>
           <Button href="https://github.com/dojo-modeling/dojo" target="_blank">GitHub</Button>
           {(auth.isAuthenticated && auth.user) && (
-            <UserMenu user={auth.user} />
+            <UserMenu user={auth.user} keycloakUrl={auth.keycloak_url} />
           )}
         </Toolbar>
       </AppBar>

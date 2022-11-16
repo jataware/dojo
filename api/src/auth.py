@@ -65,20 +65,22 @@ async def auth(request: Request, response: Response, payload: AuthRequest) -> st
         admin = KeycloakAdmin(server_url="http://keycloak.dojo-stack:8080/",
                               username="admin",
                               # TODO: replace this with an env variable
-                              password="",
+                              password="openidctest",
                               realm_name="master",
                               # TODO: is this going to change ever?
                               user_realm_name="Uncharted",
                               client_id="causemos",
                               # TODO: replace this with an env variable
-                              client_secret_key="",
+                              client_secret_key="jtbQhs6SlfynqJaygVpwav2kLzAme2b4",
                               verify=True)
         # TODO: do this before each return? or how to include groups in each authenticated return?
         first_user_info = keycloak.userinfo(session_data.access_token)
         userGroups = admin.get_user_groups(first_user_info['sub'])
+        wellKnown = keycloak.well_known()
         return {
             "authenticated": True,
             "auth_url": None,
+            "keycloak_url": wellKnown['issuer'],
             "user": session_data.userid,
             "groups": userGroups,
         }

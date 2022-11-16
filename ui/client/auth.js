@@ -9,10 +9,12 @@ export function AuthWrapper({ children }) {
   const user = null;
   const isAuthenticated = false;
   const auth_url = null;
+  const keycloak_url = null;
   const defaultState = {
     user,
     isAuthenticated,
     auth_url,
+    keycloak_url,
   };
   const [auth, setAuth] = useState(defaultState);
 
@@ -22,6 +24,7 @@ export function AuthWrapper({ children }) {
         if (userData.data.authenticated) {
           setAuth({
             ...auth,
+            keycloak_url: userData.data.keycloak_url,
             user: userData.data.user,
             isAuthenticated: userData.data.authenticated,
           });
@@ -93,11 +96,11 @@ export function AuthRedirectHandler({ children }) {
   const payload = { auth_code: params.get('code') };
 
   axios.post(authStatusEndpoint, payload).then((response) => {
-    const newUser = response.data.user;
     setAuth({
       ...auth,
-      user: newUser,
+      user: response.data.user,
       isAuthenticated: true,
+      keycloak_url: response.data.keycloak_url,
     });
     setTimeout(() => { document.location = '/'; }, 30);
   });
