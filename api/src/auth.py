@@ -9,6 +9,7 @@ from fastapi.logger import logger
 from pydantic import BaseModel
 
 from src.keycloak import keycloak
+from keycloak import KeycloakAdmin
 from src.session import SessionData, session_backend
 from src.settings import settings
 
@@ -55,14 +56,31 @@ def check_session(request: Request) -> Tuple[bool, Optional[SessionData]]:
 @router.post("/auth/status")
 async def auth(request: Request, response: Response, payload: AuthRequest) -> str:
 
+
     is_session_valid, session_data = check_session(request)
     session_id = request.cookies.get(settings.SESSION_COOKIE_NAME, None)
 
     if is_session_valid:
+        # TODO: move this somewhere else
+        admin = KeycloakAdmin(server_url="http://keycloak.dojo-stack:8080/",
+                              username="admin",
+                              # TODO: replace this with an env variable
+                              password="",
+                              realm_name="master",
+                              # TODO: is this going to change ever?
+                              user_realm_name="Uncharted",
+                              client_id="causemos",
+                              # TODO: replace this with an env variable
+                              client_secret_key="",
+                              verify=True)
+        # TODO: do this before each return? or how to include groups in each authenticated return?
+        first_user_info = keycloak.userinfo(session_data.access_token)
+        userGroups = admin.get_user_groups(first_user_info['sub'])
         return {
             "authenticated": True,
             "auth_url": None,
             "user": session_data.userid,
+            "groups": userGroups,
         }
 
     redirect_uri="http://localhost:8080/auth"

@@ -88,6 +88,11 @@ const UserMenu = ({ user }) => {
         <MenuItem onClick={() => setConfirmLogoutOpen(true)}>
           Logout
         </MenuItem>
+        <MenuItem>
+          <a href="http://localhost:8079/realms/Uncharted/account">
+            Account
+          </a>
+        </MenuItem>
       </Menu>
       {confirmLogoutOpen && (
         <ConfirmDialog
