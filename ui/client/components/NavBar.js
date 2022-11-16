@@ -43,18 +43,34 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const UserMenu = ({ user, keycloakUrl }) => {
+const NavBar = () => {
+  const classes = useStyles();
+  const { showNavBar } = useContext(ThemeContext);
+  const { auth } = useAuth();
+
+  // userMenu states
   const [anchorEl, setAnchorEl] = useState(null);
   const [confirmLogoutOpen, setConfirmLogoutOpen] = useState(false);
   const [logoutError, setLogoutError] = useState(false);
-  const classes = useStyles();
+  const [accountPageOpen, setAccountPageOpen] = useState(false);
 
-  const handleClick = (event) => {
+  if (!showNavBar) {
+    return null;
+  }
+
+  const handleUserMenuClick = (event) => {
     setAnchorEl(event.currentTarget);
   };
 
-  const handleClose = () => {
+  const handleUserMenuClose = () => {
     setAnchorEl(null);
+  };
+
+  const handleAccountClick = () => {
+    // toggle it if it's already open
+    setAccountPageOpen((currentVal) => !currentVal);
+    // add a slight delay to prevent it from closing too fast
+    setTimeout(() => handleUserMenuClose(), 400);
   };
 
   const handleLogout = () => {
@@ -67,36 +83,30 @@ const UserMenu = ({ user, keycloakUrl }) => {
       });
   };
 
-  return (
+  const userMenu = () => (
     <div>
       <Button
         aria-controls="simple-menu"
         aria-haspopup="true"
-        onClick={handleClick}
+        onClick={handleUserMenuClick}
         size="small"
         startIcon={<AccountCircleIcon />}
       >
-        {user}
+        {auth.user}
       </Button>
       <Menu
         id="simple-menu"
         anchorEl={anchorEl}
         keepMounted
         open={Boolean(anchorEl)}
-        onClose={handleClose}
+        onClose={handleUserMenuClose}
         classes={{ paper: classes.userMenuPaper }}
       >
         <MenuItem onClick={() => setConfirmLogoutOpen(true)}>
           Logout
         </MenuItem>
-        <MenuItem>
-          <MuiLink
-            color="inherit"
-            href={`${keycloakUrl}/account`}
-            underline="none"
-          >
-            Account
-          </MuiLink>
+        <MenuItem onClick={handleAccountClick}>
+          Account
         </MenuItem>
       </Menu>
       {confirmLogoutOpen && (
@@ -105,6 +115,21 @@ const UserMenu = ({ user, keycloakUrl }) => {
           open={confirmLogoutOpen}
           reject={() => setConfirmLogoutOpen(false)}
           title="Are you sure you want to logout?"
+        />
+      )}
+      {accountPageOpen && (
+        <iframe
+          title="keycloakAccountPage"
+          src={`${auth.keycloak_url}/account`}
+          style={{
+            height: 'calc(100vh - 48px)',
+            width: '100vw',
+            border: 'none',
+            position: 'absolute',
+            left: 0,
+            top: '48px',
+            overflow: 'auto',
+          }}
         />
       )}
       <BasicAlert
@@ -117,16 +142,6 @@ const UserMenu = ({ user, keycloakUrl }) => {
       />
     </div>
   );
-};
-
-const NavBar = () => {
-  const classes = useStyles();
-  const { showNavBar } = useContext(ThemeContext);
-  const { auth } = useAuth();
-
-  if (!showNavBar) {
-    return null;
-  }
 
   return (
     <>
@@ -170,9 +185,7 @@ const NavBar = () => {
           <span className={classes.spacer} />
           <Button href="https://www.dojo-modeling.com" target="_blank">Documentation</Button>
           <Button href="https://github.com/dojo-modeling/dojo" target="_blank">GitHub</Button>
-          {(auth.isAuthenticated && auth.user) && (
-            <UserMenu user={auth.user} keycloakUrl={auth.keycloak_url} />
-          )}
+          {(auth.isAuthenticated && auth.user) && userMenu()}
         </Toolbar>
       </AppBar>
 
