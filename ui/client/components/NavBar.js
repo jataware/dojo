@@ -10,7 +10,6 @@ import Button from '@material-ui/core/Button';
 import IconButton from '@material-ui/core/IconButton';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
-import MuiLink from '@material-ui/core/Link';
 import Toolbar from '@material-ui/core/Toolbar';
 import Tooltip from '@material-ui/core/Tooltip';
 import { lighten, makeStyles } from '@material-ui/core/styles';
@@ -83,6 +82,13 @@ const NavBar = () => {
       });
   };
 
+  const handleCloseAccount = () => {
+    // toggle the account page shut if it is open
+    if (accountPageOpen) {
+      setAccountPageOpen(false);
+    }
+  };
+
   const userMenu = () => (
     <div>
       <Button
@@ -150,6 +156,7 @@ const NavBar = () => {
           <Tooltip title="Dojo home" arrow>
             <IconButton
               component={Link}
+              onClick={handleCloseAccount}
               to="/"
               size="small"
             >
@@ -164,18 +171,21 @@ const NavBar = () => {
             <>
               <Button
                 component={Link}
+                onClick={handleCloseAccount}
                 to="/models"
               >
                 Models
               </Button>
               <Button
                 component={Link}
+                onClick={handleCloseAccount}
                 to="/datasets"
               >
                 Datasets
               </Button>
               <Button
                 component={Link}
+                onClick={handleCloseAccount}
                 to="/runs"
               >
                 Model Runs
