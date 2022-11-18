@@ -8,6 +8,7 @@ import AccountCircleIcon from '@material-ui/icons/AccountCircle';
 import AppBar from '@material-ui/core/AppBar';
 import Button from '@material-ui/core/Button';
 import IconButton from '@material-ui/core/IconButton';
+import KeyboardReturnIcon from '@material-ui/icons/KeyboardReturn';
 import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import Toolbar from '@material-ui/core/Toolbar';
@@ -49,6 +50,20 @@ const useStyles = makeStyles({
     marginTop: (props) => props.theme.spacing(3),
     width: '160px',
   },
+  /* position the button directly on top of the User Menu button */
+  closeAccountButtonWrapper: {
+    position: 'absolute',
+    top: 0,
+    left: 0,
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    height: '100%',
+  },
+  userMenuButtonsWrapper: {
+    position: 'relative',
+  },
 });
 
 const NavBar = () => {
@@ -81,8 +96,7 @@ const NavBar = () => {
   const handleAccountClick = () => {
     // toggle it if it's already open
     setAccountPageOpen((currentVal) => !currentVal);
-    // add a slight delay to prevent it from closing too fast
-    setTimeout(() => handleUserMenuClose(), 400);
+    handleUserMenuClose();
   };
 
   const handleLogout = () => {
@@ -104,15 +118,30 @@ const NavBar = () => {
 
   const userMenu = () => (
     <div>
-      <Button
-        aria-controls="simple-menu"
-        aria-haspopup="true"
-        onClick={handleUserMenuClick}
-        size="small"
-        startIcon={<AccountCircleIcon />}
-      >
-        {auth.user}
-      </Button>
+      <div className={classes.userMenuButtonsWrapper}>
+        {accountPageOpen && (
+          <div className={classes.closeAccountButtonWrapper}>
+            <Button
+              endIcon={<KeyboardReturnIcon />}
+              onClick={handleCloseAccount}
+            >
+              Back
+            </Button>
+          </div>
+        )}
+        <Button
+          aria-controls="simple-menu"
+          aria-haspopup="true"
+          onClick={handleUserMenuClick}
+          size="small"
+          startIcon={<AccountCircleIcon />}
+          disabled={accountPageOpen}
+          /* When this button is covered by the BACK button, make it harder to see */
+          style={{ opacity: accountPageOpen ? 0.3 : 1 }}
+        >
+          {auth.user}
+        </Button>
+      </div>
       <Menu
         id="simple-menu"
         anchorEl={anchorEl}
