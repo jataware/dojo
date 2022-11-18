@@ -12,7 +12,7 @@ import Menu from '@material-ui/core/Menu';
 import MenuItem from '@material-ui/core/MenuItem';
 import Toolbar from '@material-ui/core/Toolbar';
 import Tooltip from '@material-ui/core/Tooltip';
-import { lighten, makeStyles } from '@material-ui/core/styles';
+import { lighten, makeStyles, useTheme } from '@material-ui/core/styles';
 
 import { ThemeContext } from './ThemeContextProvider';
 import { useAuth } from '../auth';
@@ -20,38 +20,51 @@ import { useAuth } from '../auth';
 import ConfirmDialog from './ConfirmDialog';
 import BasicAlert from './BasicAlert';
 
-const useStyles = makeStyles((theme) => ({
+// using this prop passing style https://mui.com/system/styles/basics/#adapting-based-on-props
+// specifically so we can manage overflow for the account managment iframe on the @global body
+const useStyles = makeStyles({
+  '@global': {
+    body: {
+      // prevent users from seeing the overflow when the account iframe is open
+      // so we don't end up with a scrollbar to extra content below the account management page
+      overflow: (props) => (props.accountPageOpen ? 'hidden' : 'auto'),
+    },
+  },
   appBarRoot: {
-    backgroundColor: lighten(theme.palette.primary.light, 0.6),
+    backgroundColor: (props) => lighten(props.theme.palette.primary.light, 0.6),
   },
-  toolbar: {
-    padding: [[0, theme.spacing(5)]],
-    gap: theme.spacing(3),
-  },
+  toolbar: (props) => ({
+    padding: [[0, props.theme.spacing(5)]],
+    gap: props.theme.spacing(3),
+  }),
   dojoIcon: {
     height: '40px',
     width: '40px',
-    marginRight: theme.spacing(1),
+    marginRight: (props) => props.theme.spacing(1),
   },
   spacer: {
     flexGrow: 1,
   },
   userMenuPaper: {
-    marginTop: theme.spacing(3),
+    marginTop: (props) => props.theme.spacing(3),
     width: '160px',
   },
-}));
+});
 
 const NavBar = () => {
-  const classes = useStyles();
   const { showNavBar } = useContext(ThemeContext);
   const { auth } = useAuth();
+  const theme = useTheme();
 
   // userMenu states
   const [anchorEl, setAnchorEl] = useState(null);
   const [confirmLogoutOpen, setConfirmLogoutOpen] = useState(false);
   const [logoutError, setLogoutError] = useState(false);
   const [accountPageOpen, setAccountPageOpen] = useState(false);
+
+  const styleProps = { theme, accountPageOpen };
+
+  const classes = useStyles(styleProps);
 
   if (!showNavBar) {
     return null;
