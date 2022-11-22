@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 
 import axios from 'axios';
 
-
 import AutorenewIcon from '@material-ui/icons/Autorenew';
 import Button from '@material-ui/core/Button';
 import CheckOutlinedIcon from '@material-ui/icons/CheckOutlined';
@@ -11,16 +10,16 @@ import Container from '@material-ui/core/Container';
 import { DataGrid } from '@material-ui/data-grid';
 import ErrorOutlineOutlinedIcon from '@material-ui/icons/ErrorOutlineOutlined';
 import HelpIcon from '@material-ui/icons/Help';
-import { Link } from 'react-router-dom';
 import Typography from '@material-ui/core/Typography';
 
 import { makeStyles } from '@material-ui/core/styles';
 
-import { useHistory } from 'react-router-dom';
+import { Link, useHistory } from 'react-router-dom';
 
 import ExpandableDataGridCell from './ExpandableDataGridCell';
 import LoadingOverlay from './LoadingOverlay';
 import Search from './SearchItems';
+import ToggleRole from './ToggleRole';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -162,6 +161,9 @@ const ViewModels = ({
 
   const [searchedModels, setSearchedModels] = useState(null);
 
+  const [selectedRole, setSelectedRole] = useState(null);
+  const [disableUnpublished, setDisableUnpublished] = useState(false);
+
   useEffect(() => {
     fetchModels(includeStatuses, setModels, setModelsLoading, setModelsError);
     document.title = 'View Models - Dojo';
@@ -170,6 +172,21 @@ const ViewModels = ({
   useEffect(() => {
     setDisplayedModels(models);
   }, [models]);
+
+  useEffect(() => {
+    if (selectedRole) {
+      const filtered = models.filter((model) => (model.role && model.role === selectedRole));
+      setDisplayedModels(filtered);
+      // toggle this because we have no way of keeping track of this and the role at the same time
+      setDisplayUnpublished(true);
+      // and disable the button while we're in the role state for the time being
+    // TODO: think about how to use both of these at the same time
+      setDisableUnpublished(true);
+    } else {
+      setDisplayedModels(models);
+      setDisableUnpublished(false);
+    }
+  }, [selectedRole, models]);
 
   const toggleDisplayUnpublished = () => {
     if (displayUnpublished) {
@@ -262,6 +279,13 @@ const ViewModels = ({
       renderCell: expandableCell,
       width: 270,
     },
+/* TODO this makes it too wide - what to do? */
+    {
+      field: 'role',
+      headerName: 'Organization',
+      renderCell: expandableCell,
+      width: 170,
+    },
     lastRunStatus,
     {
       field: 'is_published',
@@ -313,6 +337,7 @@ const ViewModels = ({
             setSearch={setSearchedModels}
             items={displayedModels}
           />
+          <ToggleRole updateRole={setSelectedRole} />
           <Button
             component={Link}
             size="large"
@@ -329,6 +354,7 @@ const ViewModels = ({
             variant="outlined"
             size="large"
             onClick={toggleDisplayUnpublished}
+            disabled={disableUnpublished}
           >
             {displayUnpublished ? 'Hide Unpublished Models' : 'Show Unpublished Models'}
           </Button>

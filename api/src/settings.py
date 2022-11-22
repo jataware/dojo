@@ -34,8 +34,11 @@ class Settings(BaseSettings):
     SESSION_COOKIE_NAME: str = "dojo-auth-session"
     KEYCLOAK_URL: str = "http://keycloak:8080/"
     KEYCLOAK_CLIENT_ID: str = "causemos"
-    KEYCLOAK_REALM_NAME: str = "Uncharted"
+    KEYCLOAK_USER_REALM_NAME: str = "Uncharted"
     KEYCLOAK_CLIENT_SECRET_KEY: str = "jtbQhs6SlfynqJaygVpwav2kLzAme2b4"
+    KEYCLOAK_ADMIN_USERNAME: str = "admin"
+    KEYCLOAK_ADMIN_PASSWORD: str = "openidctest"
+    KEYCLOAK_MASTER_REALM_NAME: str = "master"
 
     UVICORN_RELOAD: bool = False
 

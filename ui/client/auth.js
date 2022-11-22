@@ -42,6 +42,8 @@ export function AuthWrapper({ children }) {
 
 
   const authValue = (process.env.AUTH_ENABLED || true ? getAuth() : {});
+
+  console.log('THIS IS AUTHVALUE', authValue)
   return (
     <authContext.Provider value={authValue}>
       {children}

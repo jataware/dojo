@@ -8,8 +8,7 @@ from fastapi import (APIRouter, Response, Request,)
 from fastapi.logger import logger
 from pydantic import BaseModel
 
-from src.keycloak import keycloak
-from keycloak import KeycloakAdmin
+from src.keycloak import keycloak, keycloakAdmin
 from src.session import SessionData, session_backend
 from src.settings import settings
 
@@ -61,30 +60,21 @@ async def auth(request: Request, response: Response, payload: AuthRequest) -> st
     session_id = request.cookies.get(settings.SESSION_COOKIE_NAME, None)
 
     if is_session_valid:
-        # TODO: move this somewhere else
-        admin = KeycloakAdmin(server_url="http://keycloak.dojo-stack:8080/",
-                              username="admin",
-                              # TODO: replace this with an env variable
-                              password="openidctest",
-                              realm_name="master",
-                              # TODO: is this going to change ever?
-                              user_realm_name="Uncharted",
-                              client_id="causemos",
-                              # TODO: replace this with an env variable
-                              client_secret_key="jtbQhs6SlfynqJaygVpwav2kLzAme2b4",
-                              verify=True)
-        # TODO: do this before each return? or how to include groups in each authenticated return?
-        first_user_info = keycloak.userinfo(session_data.access_token)
-        userGroups = admin.get_user_groups(first_user_info['sub'])
+
+
+        # userinfo contains roles
+        user_info2 = keycloak.userinfo(session_data.access_token)
+        # no need to use keycloakAdmin - we get roles out of userinfo
+        # user_with_roles = keycloakAdmin.get_user(user_info2['sub'])
+        # logger.info(f'USER WITH ROLES: {user_with_roles}; {user_info2}')
         wellKnown = keycloak.well_known()
         return {
             "authenticated": True,
             "auth_url": None,
             "keycloak_url": wellKnown['issuer'],
-            "user": session_data.userid,
-            "groups": userGroups,
+            "user": user_info2,
         }
-
+# TODO: update the rest of the return blocks below
     redirect_uri="http://localhost:8080/auth"
     auth_code = payload.auth_code
     if not auth_code:

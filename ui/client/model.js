@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import Container from '@material-ui/core/Container';
 import Typography from '@material-ui/core/Typography';
@@ -7,6 +7,7 @@ import { makeStyles } from '@material-ui/core/styles';
 import { useLocation } from 'react-router-dom';
 
 import { HorizontalLinearStepper } from './components/ModelFormStepper';
+import ToggleRole from './components/ToggleRole';
 
 const useStyles = makeStyles((theme) => ({
   paper: {
@@ -22,10 +23,14 @@ const useStyles = makeStyles((theme) => ({
 
 export default function Model() {
   const classes = useStyles();
+  const [selectedRole, setSelectedRole] = useState(null);
 
   const query = new URLSearchParams(useLocation().search);
   const modelFamily = query.get('family');
 
+  useEffect(() => {
+    console.log('selectedRole in model.js', selectedRole)
+  }, [selectedRole])
   useEffect(() => {
     document.title = 'Model Registration - Dojo';
   }, []);
@@ -35,12 +40,15 @@ export default function Model() {
       <Container component="main" maxWidth="md">
         <div className={classes.paper}>
 
-          <Typography component="h3" variant="h4">
-            Model Registration
-          </Typography>
+          <div style={{ display: 'flex' }}>
+            <Typography component="h3" variant="h4">
+              Model Registration
+            </Typography>
+            <ToggleRole updateRole={setSelectedRole} />
+          </div>
 
           <Container className={classes.stepper}>
-            <HorizontalLinearStepper modelFamily={modelFamily} />
+            <HorizontalLinearStepper modelFamily={modelFamily} currentRole={selectedRole} />
           </Container>
         </div>
       </Container>

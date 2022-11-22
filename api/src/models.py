@@ -5,18 +5,21 @@ import uuid
 import time
 from copy import deepcopy
 import json
+import re
 from typing import Dict, List, Union
 
 from elasticsearch import Elasticsearch
 
-from fastapi import APIRouter, HTTPException, Query, Response, status
+from fastapi import APIRouter, HTTPException, Query, Response, Request, status
 from fastapi.logger import logger
 from validation import ModelSchema, DojoSchema
 
+from src.auth import check_session
 from src.settings import settings
 from src.dojo import search_and_scroll, copy_configs, copy_outputfiles, copy_directive, copy_accessory_files
 from src.plugins import plugin_action
 from src.utils import run_model_with_defaults
+from src.keycloak import keycloak, keycloakAdmin
 
 router = APIRouter()
 
@@ -56,10 +59,17 @@ def create_model_family(family: ModelSchema.ModelFamilySchema):
 
 
 @router.post("/models")
-def create_model(payload: ModelSchema.ModelMetadataSchema):
+def create_model(request: Request, payload: ModelSchema.ModelMetadataSchema):
+    is_session_valid, session_data = check_session(request)
     model_id = payload.id
     payload.created_at = current_milli_time()
     body = payload.json()
+
+    # we can't attach every role to the model - only the relevant one(s)
+    # maybe the user tells us in advance which role they're creating it under?
+    user_info = keycloak.userinfo(session_data.access_token)
+    # get_user still happens with KeycloakAdmin
+    logger.info(f'USER WITH ROLES: {user_info}')
 
     # Create a new model family if it doesn't already exist
     if not es.exists(index="model_families", id=payload.family_name):
@@ -86,13 +96,32 @@ def create_model(payload: ModelSchema.ModelMetadataSchema):
 
 
 @router.get("/models/latest", response_model=DojoSchema.ModelSearchResult)
-def get_latest_models(size=100, scroll_id=None) -> DojoSchema.ModelSearchResult:
+def get_latest_models(request: Request, size=100, scroll_id=None) -> DojoSchema.ModelSearchResult:
+    is_session_valid, session_data = check_session(request)
+    user_info = keycloak.userinfo(session_data.access_token)
+    # list comprehension - create list of relevant roles up here
+    dojo_roles = [role for role in user_info['realm_access']['roles'] if re.search('^dojo:', role)]
+    # then down below: something like: match_q = [{"match_phrase": {"role": rolename}} for rolename in user.roles]
+    logger.info(f'this is dojo_roles: {dojo_roles}')
     q = {
         'query': {
             'bool':{
-            'must_not': {
-                'exists': {'field' : 'next_version'}
-            }}
+                "filter":[
+                    {
+                        "bool":{
+                            'must_not': {
+                                'exists': {'field' : 'next_version'}
+                            }
+                        },
+                    },
+                    {
+                        'bool':{
+                            'should':
+                                [{"match_phrase": {"role": rolename}} for rolename in dojo_roles]
+                        }
+                    }
+                ]
+            }
         }
     }
     if not scroll_id:
@@ -111,6 +140,7 @@ def get_latest_models(size=100, scroll_id=None) -> DojoSchema.ModelSearchResult:
     else:
         scroll_id = results.get("_scroll_id", None)
     results = [i["_source"] for i in results["hits"]["hits"]]
+    logger.info(f'this is results response: {results}')
     return {
         "hits": count["count"],
         "scroll_id": scroll_id,

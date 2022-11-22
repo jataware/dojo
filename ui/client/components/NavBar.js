@@ -139,7 +139,7 @@ const NavBar = () => {
           /* When this button is covered by the BACK button, make it harder to see */
           style={{ opacity: accountPageOpen ? 0.3 : 1 }}
         >
-          {auth.user}
+          {auth.user?.email}
         </Button>
       </div>
       <Menu
