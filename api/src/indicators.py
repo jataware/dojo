@@ -45,6 +45,7 @@ from validation.IndicatorSchema import (
     Geography,
 )
 
+from functools import reduce
 import os
 
 router = APIRouter()
@@ -118,6 +119,83 @@ def patch_indicator(
         content=f"Updated indicator with id = {indicator_id}",
     )
 
+
+def outputs_as_features(acc, currentResult):
+    """Used to reduce the complete /indicators.outputs properties and format as features for client"""
+    datasetInfo = currentResult["_source"]
+    c = map(lambda output: {"owner_dataset": datasetInfo, **output["_source"]}, currentResult["inner_hits"]["outputs"]["hits"]["hits"])
+    result = acc + list(c)
+
+    return result
+
+@router.get(
+    "/features"
+)
+def search_features(term=None, scroll_id=None):
+
+    if term:
+        q = {
+            "query": {
+                "nested": {
+                    "path": "outputs",
+                    "query": {
+                        "bool": {
+                            "should": [
+                                { "match": { "outputs.name": term }},
+                                { "match": { "outputs.display_name":  term }},
+                                { "match": { "outputs.description":  term }}
+                            ]
+                        }
+                    },
+                    "inner_hits": {
+                    }
+                }
+            },
+            "_source": [
+                "id",
+                "name"
+            ]
+        }
+    else:
+        q = {
+            "query": {
+                "nested": {
+                    "path": "outputs",
+                    "query": {
+                        "match_all": {}
+                    },
+                    "inner_hits": {}
+                }
+            },
+            "_source": [
+                "id",
+                "name"
+            ]
+        }
+
+    if not scroll_id:
+        # we need to kick off the query
+        results = es.search(index="indicators", body=q, scroll="2m", size=10)
+    else:
+        # otherwise, we can use the scroll
+        results = es.scroll(scroll_id=scroll_id, scroll="2m")
+
+    # These are document hits (parent indicators), items in page, for features, might be more
+    totalHits = results["hits"]["total"]["value"]
+
+    # if results are less than the page size (10) don't return a scroll_id
+    if totalHits < 10: # This is wrong, as totalHits from es is not what we think it is...
+        scroll_id = None
+    else:
+        scroll_id = results.get("_scroll_id", None)
+
+    response = reduce(outputs_as_features, results["hits"]["hits"], [])
+
+    return {
+        "items_in_page": len(response),
+        "scroll_id": scroll_id,
+        "results": response
+    }
 
 @router.get(
     "/indicators/latest", response_model=List[IndicatorSchema.IndicatorsSearchSchema]

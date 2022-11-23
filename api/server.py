@@ -134,7 +134,7 @@ def setup_elasticsearch_indexes():
                         "type": "text",
                         "fields": {"keyword": {"type": "keyword", "ignore_above": 256}},
                     },
-                    "outputs": {"type": "object", "enabled": False},
+                    "outputs": {"type": "nested"},
                     "period": {
                         "properties": {"gte": {"type": "long"}, "lte": {"type": "long"}}
                     },
