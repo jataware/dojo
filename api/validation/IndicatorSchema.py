@@ -260,6 +260,24 @@ class Output(BaseModel):
     )
 
 
+class OwnerDataset(BaseModel):
+    id: str = Field(
+        ...,
+        description="A unique dataset id",
+        examples=["123e4567-e89b-12d3-a456-426614174000"],
+        title="Dataset ID",
+    )
+    name: str = Field(
+        ..., description="The dataset name that owns an object.", examples=["WDI"], title="Dataset Name"
+    )
+
+class Feature(Output):
+    owner_dataset: OwnerDataset = Field(
+        ...,
+        description="Information for Owner, or parent, Dataset where the feature exists.",
+        title="Owner Dataset",
+    )
+
 class QualifierOutput(BaseModel):
     class Config:
         extra = Extra.allow
@@ -451,7 +469,7 @@ class IndicatorsSearchSchema(BaseModel):
         description="Information about the dataset maintainer.",
         title="Dataset Maintainer",
     )
-   
+
 
 class DateValidationRequestSchema(BaseModel):
     format: str = Field(
@@ -480,4 +498,19 @@ class DateValidationResponseSchema(BaseModel):
         ...,
         description="Indicates if format provided (and returned) matches the values sent in",
         examples=[True, False],
+    )
+
+class FeaturesSearchSchema(BaseModel):
+    items_in_page: int = Field(
+        ...,
+        description="Feature item count in response. Varies per page, per implementation details.",
+        examples=[10, 15, 45]
+    )
+    scroll_id: Optional[str] = Field(
+        title="Scroll ID",
+        description= "Scroll id to use as query param, in order to navigate to the next page of feature results. Will return None|null when there are no pages left."
+    )
+    results: List[Feature] = Field(
+        ...,
+        description="Features data in current page for a given list or search."
     )

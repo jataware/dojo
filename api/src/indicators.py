@@ -43,6 +43,7 @@ from validation.IndicatorSchema import (
     Output,
     Period,
     Geography,
+    FeaturesSearchSchema
 )
 
 from functools import reduce
@@ -129,11 +130,19 @@ def outputs_as_features(acc, currentResult):
     return result
 
 @router.get(
-    "/features"
+    "/features", response_model=IndicatorSchema.FeaturesSearchSchema
 )
-def search_features(term=None, scroll_id=None):
+def search_features(term: Optional[str]=None, scroll_id: Optional[str]=None):
+    """
+    Returns all features, or results from searching through them, if a search term is provided.
+    Will match `term` with wildcard to feature name, `display_name`, or `description`.
+    Elasticsearch (es) index/nested object names and updated terminology:
+      `Indicators`=>`Datasets`; `Outputs`=>`Features`.
+    """
 
     if term:
+        wildcardTerm = f"*{term}*"
+
         q = {
             "query": {
                 "nested": {
@@ -141,9 +150,9 @@ def search_features(term=None, scroll_id=None):
                     "query": {
                         "bool": {
                             "should": [
-                                { "match": { "outputs.name": term }},
-                                { "match": { "outputs.display_name":  term }},
-                                { "match": { "outputs.description":  term }}
+                                { "wildcard": { "outputs.name": wildcardTerm }},
+                                { "wildcard": { "outputs.display_name": wildcardTerm }},
+                                { "wildcard": { "outputs.description": wildcardTerm }}
                             ]
                         }
                     },
@@ -180,21 +189,24 @@ def search_features(term=None, scroll_id=None):
         # otherwise, we can use the scroll
         results = es.scroll(scroll_id=scroll_id, scroll="2m")
 
-    # These are document hits (parent indicators), items in page, for features, might be more
-    totalHits = results["hits"]["total"]["value"]
+    # These are document hits (es parent indicators) in current page
+    # The final response items_in_page property will group features within
+    # these indicators (will be more than indicator count)
+    totalIndicatorHitsInPage = len(results["hits"]["hits"])
 
     # if results are less than the page size (10) don't return a scroll_id
-    if totalHits < 10: # This is wrong, as totalHits from es is not what we think it is...
+    if totalIndicatorHitsInPage < 10:
         scroll_id = None
     else:
         scroll_id = results.get("_scroll_id", None)
 
+    # Groups features as array list from `results`, into `response`
     response = reduce(outputs_as_features, results["hits"]["hits"], [])
 
     return {
         "items_in_page": len(response),
         "scroll_id": scroll_id,
-        "results": response
+        "results": response # array of features
     }
 
 @router.get(

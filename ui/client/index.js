@@ -28,8 +28,6 @@ import Summary from './summary';
 import Terminal from './terminal';
 import theme from './theme';
 import ViewDatasets from './components/ViewDatasets';
-import ViewDatasetsAlpha from './components/ViewDatasetsAlpha';
-import ViewDatasetsBravo from './components/ViewDatasetsBravo';
 import ViewModels from './components/ViewModels';
 import ViewRuns from './components/ViewRuns';
 // import DatasetRegistration from './datasets/Register';
@@ -46,8 +44,6 @@ export default function Main() {
         <Route component={Model} exact path="/model" />
         <Route component={ViewModels} exact path="/models" />
         <Route component={ViewDatasets} exact path="/datasets" />
-        <Route component={ViewDatasetsAlpha} exact path="/datasets-alpha" />
-        <Route component={ViewDatasetsBravo} exact path="/datasets-bravo" />
         <Route component={DatasetAnnotate} exact path="/datasets/annotate" />
         <Route component={DatasetPreview} exact path="/datasets/preview" />
         <Route component={DatasetRegistrationStepper} path="/datasets/:flowslug/:step?/:datasetId?" />
