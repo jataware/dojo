@@ -29,9 +29,6 @@ import TextField from '@material-ui/core/TextField';
 const useStyles = makeStyles((theme) => ({
   root: {
     padding: [[theme.spacing(8), theme.spacing(2), theme.spacing(2)]],
-    height: "calc(100% - 48px)",
-    display: "flex",
-    flexDirection: "column"
   },
   gridContainer: {
     flex: 1,
@@ -72,9 +69,10 @@ const useStyles = makeStyles((theme) => ({
     alignItems: 'center',
   },
   featureGridRoot: {
-    '& .MuiTablePagination-caption:last-of-type': {
+    // In case we want to remove portions of pagination with CSS
+    // '& .MuiTablePagination-caption:last-of-type': {
       // display: "none"
-    }
+    // }
   }
 }));
 
@@ -151,42 +149,6 @@ const columns = [
     },
   ];
 
-const isOverflown = (el) => el &&
-      (el.scrollHeight > el.clientHeight || el.scrollWidth > el.clientWidth);
-
-const FeatureTooltip = withStyles((theme) => ({
-  root: {
-  },
-  tooltip: {
-    fontSize: '0.9rem',
-    backgroundColor: theme.palette.grey[50],
-    color: 'rgba(0, 0, 0, 0.87)',
-    boxShadow: theme.shadows[1],
-    padding: "0.75rem"
-  },
-  textContainer: {
-    overflow: "hidden",
-    whitespace: "nowrap",
-    textOverflow: "ellipsis"
-  }
-}))(({ classes, text }) => {
-
-  return (
-    <Tooltip
-      placement="bottom-end"
-      classes={{ tooltip: classes.tooltip }}
-      title={text}
-      enterNextDelay={400}
-    >
-      <span
-        className={classes.textContainer}
-        >
-        {text}
-      </span>
-    </Tooltip>
-  );
-});
-
 const featureColumns = [
     {
       field: 'name',
@@ -197,22 +159,14 @@ const featureColumns = [
     {
       field: 'display_name',
       headerName: 'Display Name',
-      renderCell: ({ value }) => {
-        return (
-          <FeatureTooltip text={value} />
-        );
-      },
+      renderCell: expandableCell,
       minWidth: 200,
       flex: 1
     },
     {
       field: 'description',
       headerName: 'Description',
-      renderCell: ({ value, colDef }) => {
-        return (
-          <FeatureTooltip text={value} />
-        );
-      },
+      renderCell: expandableCell,
       minWidth: 200,
       flex: 1
     },
@@ -538,6 +492,7 @@ function ViewDatasets() {
               Click on a row, then CTRL+C or CMD+C to copy contents.
             </Alert>
             <DataGrid
+              autoHeight
               classes={{
                 root: classes.featureGridRoot
               }}
