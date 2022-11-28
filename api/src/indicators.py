@@ -122,24 +122,25 @@ def patch_indicator(
 
 
 def outputs_as_features(acc, currentResult):
-    """Used to reduce the complete /indicators.outputs properties and format as features for client"""
+    """Used to reduce the complete `indicators.outputs` properties and
+    format as features for client"""
     datasetInfo = currentResult["_source"]
-    c = map(lambda output: {"owner_dataset": datasetInfo, **output["_source"]}, currentResult["inner_hits"]["outputs"]["hits"]["hits"])
+    c = map(lambda output: {"owner_dataset": datasetInfo, **output["_source"]},
+            currentResult["inner_hits"]["outputs"]["hits"]["hits"])
     result = acc + list(c)
 
     return result
+
 
 @router.get(
     "/features", response_model=IndicatorSchema.FeaturesSearchSchema
 )
 def search_features(term: Optional[str]=None, scroll_id: Optional[str]=None):
     """
-    Returns all features, or results from searching through them, if a search term is provided.
-    Will match `term` with wildcard to feature name, `display_name`, or `description`.
-    Elasticsearch (es) index/nested object names and updated terminology:
-      `Indicators`=>`Datasets`; `Outputs`=>`Features`.
+    Return all features, or results from searching through them, if a search
+    term is provided. Will match `term` with wildcard to feature `name`,
+    `display_name`, or `description`.
     """
-
     if term:
         wildcardTerm = f"*{term}*"
 
@@ -423,7 +424,6 @@ def put_annotation(payload: MetadataSchema.MetaModel, indicator_id: str):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content=f"Could not create annotation with id = {indicator_id}",
         )
-
 
 @router.patch("/indicators/{indicator_id}/annotations")
 def patch_annotation(payload: MetadataSchema.MetaModel, indicator_id: str):

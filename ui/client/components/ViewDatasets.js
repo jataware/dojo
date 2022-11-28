@@ -9,7 +9,7 @@ import Button from '@material-ui/core/Button';
 import ToggleButton from '@material-ui/lab/ToggleButton';
 import ToggleButtonGroup from '@material-ui/lab/ToggleButtonGroup';
 import Container from '@material-ui/core/Container';
-import { DataGrid } from '@material-ui/data-grid';
+import { GridOverlay, DataGrid, useGridSlotComponentProps } from '@material-ui/data-grid';
 import Typography from '@material-ui/core/Typography';
 import { darken, makeStyles, withStyles } from '@material-ui/core/styles';
 import Tooltip from '@material-ui/core/Tooltip';
@@ -19,7 +19,9 @@ import ExpandableDataGridCell from './ExpandableDataGridCell';
 import LoadingOverlay from './LoadingOverlay';
 import SearchDatasets from './SearchDatasets';
 
+import LinearProgress from '@material-ui/core/LinearProgress';
 import CancelIcon from '@material-ui/icons/Cancel';
+import OpenInNewIcon from '@material-ui/icons/OpenInNew';
 import IconButton from '@material-ui/core/IconButton';
 import InputAdornment from '@material-ui/core/InputAdornment';
 import TextField from '@material-ui/core/TextField';
@@ -70,7 +72,9 @@ const useStyles = makeStyles((theme) => ({
     alignItems: 'center',
   },
   featureGridRoot: {
-    flex: 1
+    '& .MuiTablePagination-caption:last-of-type': {
+      // display: "none"
+    }
   }
 }));
 
@@ -166,9 +170,6 @@ const FeatureTooltip = withStyles((theme) => ({
     textOverflow: "ellipsis"
   }
 }))(({ classes, text }) => {
-  const textContainerRef = React.useRef(null);
-
-  const isCurrentlyOverflown = isOverflown(textContainerRef.current);
 
   return (
     <Tooltip
@@ -178,7 +179,6 @@ const FeatureTooltip = withStyles((theme) => ({
       enterNextDelay={400}
     >
       <span
-        ref={textContainerRef}
         className={classes.textContainer}
         >
         {text}
@@ -236,6 +236,7 @@ const featureColumns = [
           variant="outlined"
         >
           Parent Dataset
+          <OpenInNewIcon />
         </Button>
       ),
       minWidth: 210,
@@ -286,10 +287,18 @@ const fetchFeatures = async (
   );
 
   let preparedFeatures = null;
+  let hitFeatureCountThreshold = false;
 
   preparedFeatures = featuresRequest.then((featuresData) => {
 
-    setFeatures((prev) => !scrollId ? featuresData.results : prev.concat(featuresData.results));
+    setFeatures((prev) => {
+
+      if (prev.length > 500) {
+        hitFeatureCountThreshold = true;
+      }
+
+      return !scrollId ? featuresData.results : prev.concat(featuresData.results);
+    });
 
     return [featuresData.scroll_id, featuresData.results];
   });
@@ -297,7 +306,7 @@ const fetchFeatures = async (
   preparedFeatures.then(([ newScrollId, results ]) => {
 
     // when there's no scroll id, we've hit the end of the results
-    if (newScrollId) {
+    if (newScrollId && !hitFeatureCountThreshold) {
       // if we get a scroll id back, there are more results
       // so call fetchModels again to fetch the next set
       fetchFeatures(setFeatures, setFeaturesLoading, setFeaturesError, searchTerm, newScrollId);
@@ -315,20 +324,30 @@ const fetchFeatures = async (
 /**
  *
  */
+function CustomLoadingOverlay() {
+  return (
+    <GridOverlay>
+      <div style={{ position: 'absolute', top: 0, width: '100%' }}>
+        <LinearProgress />
+      </div>
+    </GridOverlay>
+  );
+}
+
+/**
+ *
+ */
 function ViewDatasets() {
   const classes = useStyles();
   const [datasets, setDatasets] = useState([]);
   const [datasetsError, setDatasetsError] = useState(false);
   const [datasetsLoading, setDatasetsLoading] = useState(false);
   const [searchedDatasets, setSearchedDatasets] = useState(null);
-  // false = hide deprecated datasets, true = show deprecated datasets
   const [displayDeprecated, setDisplayDeprecated] = useState(false);
   const [displayedDatasets, setDisplayedDatasets] = useState([]);
 
   // TODO probably move the features grid and related logic to its own file
-  // TODO decide what to do with expanded cell, overflows, and table scrolling (popup disallows scrolling...)
-  // TODO verify that features results are capped at 500... so that we don't keep fetching more scrolls if so
-  // TODO if implement above, add text to explain to the user that they need to add more specific terms if they get to 500ish
+  // TODO Add text to explain to the user that they need to add more specific terms if they get to 500ish? Address this later.
 
   const [mode, setMode] = useState("datasets");
 
@@ -379,11 +398,8 @@ function ViewDatasets() {
       clearFeaturesSearch();
       return;
     }
-
     setFeaturesSearchTermValue(value);
-
     updateFeaturesSearchTerm(value);
-
   };
 
   if (datasetsLoading) {
@@ -522,8 +538,14 @@ function ViewDatasets() {
               Click on a row, then CTRL+C or CMD+C to copy contents.
             </Alert>
             <DataGrid
-              classes={{root: classes.featureGridRoot}}
-              getRowId={(row) => `${row.dataset_id}-${row.name}`}
+              classes={{
+                root: classes.featureGridRoot
+              }}
+              components={{
+                LoadingOverlay: CustomLoadingOverlay
+              }}
+              loading={featuresLoading}
+              getRowId={(row) => `${row.owner_dataset.id}-${row.name}`}
               columns={featureColumns}
               rows={features}
             />
