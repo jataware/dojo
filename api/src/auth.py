@@ -62,11 +62,9 @@ async def auth(request: Request, response: Response, payload: AuthRequest) -> st
     if is_session_valid:
 
 
+    # TODO: update this entire file so that we return consistent auth results throughout
         # userinfo contains roles
         user_info2 = keycloak.userinfo(session_data.access_token)
-        # no need to use keycloakAdmin - we get roles out of userinfo
-        # user_with_roles = keycloakAdmin.get_user(user_info2['sub'])
-        # logger.info(f'USER WITH ROLES: {user_with_roles}; {user_info2}')
         wellKnown = keycloak.well_known()
         return {
             "authenticated": True,

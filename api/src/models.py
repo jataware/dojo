@@ -65,10 +65,11 @@ def create_model(request: Request, payload: ModelSchema.ModelMetadataSchema):
     payload.created_at = current_milli_time()
     body = payload.json()
 
+#TODO: remove this unless we are going to need it
     # we can't attach every role to the model - only the relevant one(s)
     # maybe the user tells us in advance which role they're creating it under?
     user_info = keycloak.userinfo(session_data.access_token)
-    # get_user still happens with KeycloakAdmin
+
     logger.info(f'USER WITH ROLES: {user_info}')
 
     # Create a new model family if it doesn't already exist
@@ -97,12 +98,27 @@ def create_model(request: Request, payload: ModelSchema.ModelMetadataSchema):
 
 @router.get("/models/latest", response_model=DojoSchema.ModelSearchResult)
 def get_latest_models(request: Request, size=100, scroll_id=None) -> DojoSchema.ModelSearchResult:
+
+# TODO: break most of this out into a reusable function in auth.py so we can also use it in datasets & elsewhere
+# or possibly return all the time as we may want to use roles more often
+    # validate the user's access token and grab their info from keycloak
     is_session_valid, session_data = check_session(request)
     user_info = keycloak.userinfo(session_data.access_token)
-    # list comprehension - create list of relevant roles up here
-    dojo_roles = [role for role in user_info['realm_access']['roles'] if re.search('^dojo:', role)]
-    # then down below: something like: match_q = [{"match_phrase": {"role": rolename}} for rolename in user.roles]
-    logger.info(f'this is dojo_roles: {dojo_roles}')
+
+    # create empty overwriteable roles list
+    roles = []
+
+    # select out all the dojo: prefixed roles from the roles in the user's access token
+    roles = [role for role in user_info['realm_access']['roles'] if re.search('^dojo:', role)]
+
+    # if they have the admin role
+    if 'admin' in user_info['realm_access']['roles']:
+        # fetch all the roles from across the entire realm (ie not just the ones the user has)
+        realm_roles = keycloakAdmin.get_realm_roles(True)
+        # select out all the dojo: prefixed roles from across the realm and replace the user's ones with these
+        roles = [realm_role['name'] for realm_role in realm_roles if re.search('^dojo:', realm_role['name'])]
+
+    # now build the query with our set of roles from above
     q = {
         'query': {
             'bool':{
@@ -117,13 +133,23 @@ def get_latest_models(request: Request, size=100, scroll_id=None) -> DojoSchema.
                     {
                         'bool':{
                             'should':
-                                [{"match_phrase": {"role": rolename}} for rolename in dojo_roles]
+                                [{"match_phrase": {"role": rolename}} for rolename in roles]
                         }
                     }
                 ]
             }
         }
     }
+
+    # TODO: handle public/ungated content
+    # if there are no roles, don't do a query. Just return an empty list
+    if len(roles) == 0:
+        return {
+            "hits": 0,
+            "scroll_id": None,
+            "results": [],
+        }
+
     if not scroll_id:
         # we need to kick off the query
         results = es.search(index='models', body=q, scroll="2m", size=size)
