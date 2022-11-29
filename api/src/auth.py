@@ -20,7 +20,6 @@ class AuthRequest(BaseModel):
 
 router = APIRouter()
 
-
 def check_session(request: Request) -> Tuple[bool, Optional[SessionData]]:
     session_id = request.cookies.get(settings.SESSION_COOKIE_NAME, None)
     if not session_id:
@@ -51,28 +50,44 @@ def check_session(request: Request) -> Tuple[bool, Optional[SessionData]]:
             return False, None
     return True, session_data
 
+def find_user_roles(user_info):
+    # create empty overwriteable roles list
+    roles = []
+
+    # select out all the dojo: prefixed roles from the roles in the user's access token
+    roles = [role for role in user_info['realm_access']['roles'] if role.startswith('dojo:')]
+
+    # if they have the admin role
+    if 'admin' in user_info['realm_access']['roles']:
+        # fetch all the roles from across the entire realm (ie not just the ones the user has)
+        realm_roles = keycloakAdmin.get_realm_roles(True)
+        # select out all the dojo: prefixed roles from across the realm and replace the user's ones with these
+        roles = [realm_role['name'] for realm_role in realm_roles if realm_role['name'].startswith('dojo:')]
+
+    return roles
+
 
 @router.post("/auth/status")
 async def auth(request: Request, response: Response, payload: AuthRequest) -> str:
 
+    wellKnown = keycloak.well_known()
 
     is_session_valid, session_data = check_session(request)
     session_id = request.cookies.get(settings.SESSION_COOKIE_NAME, None)
 
     if is_session_valid:
+        user_info = keycloak.userinfo(session_data.access_token)
 
+        roles = find_user_roles(user_info)
 
-    # TODO: update this entire file so that we return consistent auth results throughout
-        # userinfo contains roles
-        user_info2 = keycloak.userinfo(session_data.access_token)
-        wellKnown = keycloak.well_known()
         return {
             "authenticated": True,
             "auth_url": None,
             "keycloak_url": wellKnown['issuer'],
-            "user": user_info2,
+            "user": user_info,
+            "dojo_roles": roles,
         }
-# TODO: update the rest of the return blocks below
+
     redirect_uri="http://localhost:8080/auth"
     auth_code = payload.auth_code
     if not auth_code:
@@ -84,7 +99,9 @@ async def auth(request: Request, response: Response, payload: AuthRequest) -> st
         return {
             "authenticated": False,
             "auth_url": auth_url,
-            "user": None
+            "keycloak_url": wellKnown['issuer'],
+            "user": None,
+            "dojo_roles": None,
         }
 
     token = keycloak.token(
@@ -96,6 +113,7 @@ async def auth(request: Request, response: Response, payload: AuthRequest) -> st
     refresh_token = token["refresh_token"]
     user_info = keycloak.userinfo(access_token)
     session_id = uuid.uuid4()
+    roles = find_user_roles(user_info)
 
     session_data = SessionData(
         userid=user_info['email'],
@@ -110,7 +128,9 @@ async def auth(request: Request, response: Response, payload: AuthRequest) -> st
     return {
         "authenticated": True,
         "auth_url": None,
+        "keycloak_url": wellKnown['issuer'],
         "user": user_info['email'],
+        "dojo_roles": roles,
     }
 
 

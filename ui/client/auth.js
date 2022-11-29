@@ -10,11 +10,13 @@ export function AuthWrapper({ children }) {
   const isAuthenticated = false;
   const auth_url = null;
   const keycloak_url = null;
+  const dojo_roles = [];
   const defaultState = {
     user,
     isAuthenticated,
     auth_url,
     keycloak_url,
+    dojo_roles,
   };
   const [auth, setAuth] = useState(defaultState);
 
@@ -27,6 +29,7 @@ export function AuthWrapper({ children }) {
             keycloak_url: userData.data.keycloak_url,
             user: userData.data.user,
             isAuthenticated: userData.data.authenticated,
+            dojo_roles: userData.data.dojo_roles,
           });
         }
       });
@@ -103,6 +106,7 @@ export function AuthRedirectHandler({ children }) {
       user: response.data.user,
       isAuthenticated: true,
       keycloak_url: response.data.keycloak_url,
+      dojo_roles: response.data.dojo_roles,
     });
     setTimeout(() => { document.location = '/'; }, 30);
   });

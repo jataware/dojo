@@ -10,13 +10,6 @@ import { makeStyles } from '@material-ui/core/styles';
 
 import { useAuth } from '../auth';
 
-/* MOCK EXAMPLE */
-const validOrgs = {
-  'dojo:university-of-example': true,
-  admin: true,
-  'dojo:university-of-test': true,
-};
-
 const useStyles = makeStyles((theme) => ({
   formControl: {
     margin: theme.spacing(1),
@@ -46,12 +39,9 @@ const ToggleRole = ({ updateRole }) => {
         onChange={handleSelectRole}
       >
         <MenuItem value="">All organizations</MenuItem>
-        {auth.user?.realm_access.roles.map((role) => {
-          if (validOrgs[role]) {
-            const displayName = role.replace(/-|_/g, ' ');
-            return <MenuItem key={role} value={role}>{displayName}</MenuItem>;
-          }
-          return false;
+        {auth?.dojo_roles?.map((role) => {
+          const displayName = role.replace(/-|_/g, ' ');
+          return <MenuItem key={role} value={role}>{displayName}</MenuItem>;
         })}
       </Select>
       <FormHelperText>
