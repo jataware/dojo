@@ -13,6 +13,7 @@ import { GridOverlay, DataGrid, useGridSlotComponentProps } from '@material-ui/d
 import Typography from '@material-ui/core/Typography';
 import { darken, makeStyles, withStyles } from '@material-ui/core/styles';
 import Tooltip from '@material-ui/core/Tooltip';
+import TablePagination from '@material-ui/core/TablePagination';
 import Alert from '@material-ui/lab/Alert';
 
 import ExpandableDataGridCell from './ExpandableDataGridCell';
@@ -69,10 +70,6 @@ const useStyles = makeStyles((theme) => ({
     alignItems: 'center',
   },
   featureGridRoot: {
-    // In case we want to remove portions of pagination with CSS
-    // '& .MuiTablePagination-caption:last-of-type': {
-      // display: "none"
-    // }
   }
 }));
 
@@ -278,6 +275,30 @@ const fetchFeatures = async (
 /**
  *
  */
+const CustomTablePagination = props => {
+
+  const { state, apiRef } = useGridSlotComponentProps();
+
+  return (
+      <TablePagination
+                              labelDisplayedRows={({from, to, count}) => {
+                                const displayCount = count > 500 ? "Many" : count;
+                                return `${from}-${to} of ${displayCount}`;
+                              }}
+    {...props}
+    page={state.pagination.page}
+    onPageChange={(event, value) => {
+      return apiRef.current.setPage(value);
+    }}
+    rowsPerPage={100}
+    count={state.pagination.rowCount}
+      />
+  );
+};
+
+/**
+ *
+ */
 function CustomLoadingOverlay() {
   return (
     <GridOverlay>
@@ -301,7 +322,6 @@ function ViewDatasets() {
   const [displayedDatasets, setDisplayedDatasets] = useState([]);
 
   // TODO probably move the features grid and related logic to its own file
-  // TODO Add text to explain to the user that they need to add more specific terms if they get to 500ish? Address this later.
 
   const [mode, setMode] = useState("datasets");
 
@@ -497,7 +517,8 @@ function ViewDatasets() {
                 root: classes.featureGridRoot
               }}
               components={{
-                LoadingOverlay: CustomLoadingOverlay
+                LoadingOverlay: CustomLoadingOverlay,
+                Pagination: CustomTablePagination
               }}
               loading={featuresLoading}
               getRowId={(row) => `${row.owner_dataset.id}-${row.name}`}
