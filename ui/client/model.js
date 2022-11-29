@@ -29,9 +29,6 @@ export default function Model() {
   const modelFamily = query.get('family');
 
   useEffect(() => {
-    console.log('selectedRole in model.js', selectedRole)
-  }, [selectedRole])
-  useEffect(() => {
     document.title = 'Model Registration - Dojo';
   }, []);
 

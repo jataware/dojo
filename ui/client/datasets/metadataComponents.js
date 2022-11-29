@@ -1,39 +1,21 @@
-import React, { useState } from 'react';
-import { Form, Formik } from 'formik';
+import React, { useEffect } from 'react';
 
-import isEmpty from 'lodash/isEmpty';
-import Accordion from '@material-ui/core/Accordion';
-import AccordionDetails from '@material-ui/core/AccordionDetails';
-import AccordionSummary from '@material-ui/core/AccordionSummary';
 import axios from 'axios';
-import Container from '@material-ui/core/Container';
-import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
-import Grid from '@material-ui/core/Grid';
-import Typography from '@material-ui/core/Typography';
+
+import get from 'lodash/get';
+import isEmpty from 'lodash/isEmpty';
 
 import * as yup from 'yup';
-import get from 'lodash/get';
 
+import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
+
 import { DomainsAutocomplete } from '../components/ModelDetailForm';
 
-import { Navigation } from '.';
 import { FormAwareTextField, FormAwareSelect } from './FormFields';
 
 import { FileSelector } from './FileSelector';
 
-
-
-/**
- * Uses already-defined validation schema to derive if a field is required
- * Used in this file by FormAwareTextField
- * */
-const checkRequired = (fieldName) =>
-      get(formSchema, `fields.${fieldName}.exclusiveTests.required`, false);
-
-/**
- *
- **/
 export const formSchema = yup.object({
   name: yup
     .string('Enter the Dataset name')
@@ -61,12 +43,21 @@ export const formSchema = yup.object({
     .required('Registering a Dataset requires selecting a file.')
 });
 
+/**
+ * Uses already-defined validation schema to derive if a field is required
+ * Used in this file by FormAwareTextField
+ * */
+const checkRequired = (fieldName) => get(
+  formSchema, `fields.${fieldName}.exclusiveTests.required`, false
+);
+
 export const genRegisterDefaultValues = (datasetInfo) => ({
   name: datasetInfo?.name || '',
   description: datasetInfo?.description || '',
   domains: datasetInfo?.domains || [],
   'registerer-name': datasetInfo?.maintainer?.name || '',
   'registerer-email': datasetInfo?.maintainer?.email || '',
+  'registerer-role': datasetInfo?.maintainer?.role || '',
   'source-organization': datasetInfo?.maintainer?.organization || '',
   'source-website': datasetInfo?.maintainer?.website || '',
   temporal_resolution: datasetInfo?.temporal_resolution || 'annual',
@@ -77,12 +68,11 @@ export const genRegisterDefaultValues = (datasetInfo) => ({
   file: datasetInfo?.fileData?.raw?.url || undefined
 });
 
-/**
- * Uploads a file to the backend service.
- * Receives a form dom reference, datasetId, and optional params.
- **/
-export const uploadFile = async (form, datasetID, params={}) => {
-
+/*
+*  Uploads a file to the backend service.
+*  Receives a form dom reference, datasetId, and optional params.
+*/
+export const uploadFile = async (form, datasetID, params = {}) => {
   const uploadData = new window.FormData();
   const formfile = form.file;
   const file = formfile.files[0];
@@ -93,13 +83,12 @@ export const uploadFile = async (form, datasetID, params={}) => {
     method: 'post',
     url: `/api/dojo/indicators/${datasetID}/upload`,
     data: uploadData,
-    params: params
+    params
   });
   return response;
 };
 
 export const updateMetadata = async (datasetId, fileMetadataData, storeAnnotations) => {
-
   const payload = {
     metadata: {
       files: {
@@ -119,9 +108,6 @@ export const updateMetadata = async (datasetId, fileMetadataData, storeAnnotatio
   return response.data;
 };
 
-/**
- *
- * */
 const Section = withStyles(() => ({
   root: {
   }
@@ -139,12 +125,7 @@ const Section = withStyles(() => ({
   </section>
 ));
 
-
-/**
- *
- * */
 export const BaseData = (props) => {
-
   const {
     formik, error, isReadOnlyMode,
     datasetInfo, setDatasetInfo, fileMetadata, setFileMetadata,
@@ -154,99 +135,101 @@ export const BaseData = (props) => {
   const displayUploadedFile = Boolean(datasetInfo?.fileData?.raw?.uploaded);
 
   return (
-  <Section title="Data Information">
-    <FormAwareTextField
-      name="name"
-      requiredFn={checkRequired}
-      label="Name"
-      placeholder="Dataset Name"
-      disabled={isReadOnlyMode}
-    />
-
-    <FormAwareTextField
-      name="description"
-      requiredFn={checkRequired}
-      label="Description"
-      placeholder="Provide a description of the dataset"
-      multiline
-      minRows="2"
-      disabled={isReadOnlyMode}
-    />
-
-    <div style={{ margin: '0.5rem 0' }}>
-      <DomainsAutocomplete
-        formik={formik}
-        label="Domains"
-        textFieldProps={{
-          placeholder: isEmpty(formik.values.domains) ? 'Select as many as appropriate' : '',
-          InputLabelProps: { shrink: true }
-        }}
+    <Section title="Data Information">
+      <FormAwareTextField
+        name="name"
+        requiredFn={checkRequired}
+        label="Name"
+        placeholder="Dataset Name"
         disabled={isReadOnlyMode}
       />
-    </div>
 
-    <FileSelector
-      formik={formik}
-      disabled={Boolean(error)}
-      name="file"
-      label="File Upload"
-      requiredFn={checkRequired}
-      datasetInfo={datasetInfo}
-      setDatasetInfo={setDatasetInfo}
-      fileMetadata={fileMetadata}
-      setFileMetadata={setFileMetadata}
-      displayUploadedFile={displayUploadedFile}
-      isUpdatingUploadedFile={isUpdatingUploadedFile}
-      setUpdatingUploadedFile={setUpdatingUploadedFile}
-      uploadedFilesData={uploadedFilesData}
-    />
+      <FormAwareTextField
+        name="description"
+        requiredFn={checkRequired}
+        label="Description"
+        placeholder="Provide a description of the dataset"
+        multiline
+        minRows="2"
+        disabled={isReadOnlyMode}
+      />
 
-  </Section>
-)};
+      <div style={{ margin: '0.5rem 0' }}>
+        <DomainsAutocomplete
+          formik={formik}
+          label="Domains"
+          textFieldProps={{
+            placeholder: isEmpty(formik.values.domains) ? 'Select as many as appropriate' : '',
+            InputLabelProps: { shrink: true }
+          }}
+          disabled={isReadOnlyMode}
+        />
+      </div>
 
-/**
- *
- * */
-export const ContactInformation = ({isReadOnlyMode}) => (
-  <Section title="Your Contact Information">
-    <FormAwareTextField
-      name="registerer-name"
-      label="Registerer Name (Organization)"
-      requiredFn={checkRequired}
-      placeholder="Name of individual registering this dataset"
-      disabled={isReadOnlyMode}
-    />
+      <FileSelector
+        formik={formik}
+        disabled={Boolean(error)}
+        name="file"
+        label="File Upload"
+        requiredFn={checkRequired}
+        datasetInfo={datasetInfo}
+        setDatasetInfo={setDatasetInfo}
+        fileMetadata={fileMetadata}
+        setFileMetadata={setFileMetadata}
+        displayUploadedFile={displayUploadedFile}
+        isUpdatingUploadedFile={isUpdatingUploadedFile}
+        setUpdatingUploadedFile={setUpdatingUploadedFile}
+        uploadedFilesData={uploadedFilesData}
+      />
+    </Section>
+  );
+};
 
-    <FormAwareTextField
-      name="registerer-email"
-      label="Registerer Email"
-      requiredFn={checkRequired}
-      placeholder="registerer@your_organization.org"
-      disabled={isReadOnlyMode}
-    />
+export const ContactInformation = ({ isReadOnlyMode, currentRole, formik }) => {
+  useEffect(() => {
+    if (formik.values['registerer-role'] !== currentRole) {
+      formik.setFieldValue('registerer-role', currentRole);
+    }
+  }, [formik, currentRole]);
 
-    <FormAwareTextField
-      name="source-organization"
-      label="Source Organization"
-      requiredFn={checkRequired}
-      placeholder="Primary organization(s) responsible for the source data"
-      disabled={isReadOnlyMode}
-    />
+  return (
+    <Section title="Your Contact Information">
+      <FormAwareTextField
+        name="registerer-name"
+        label="Registerer Name (Organization)"
+        requiredFn={checkRequired}
+        placeholder="Name of individual registering this dataset"
+        disabled={isReadOnlyMode}
+      />
 
-    <FormAwareTextField
-      name="source-website"
-      label="Source Website"
-      requiredFn={checkRequired}
-      placeholder="http://source_organization.org/"
-      disabled={isReadOnlyMode}
-    />
-  </Section>
-);
+      <FormAwareTextField
+        name="registerer-email"
+        label="Registerer Email"
+        requiredFn={checkRequired}
+        placeholder="registerer@your_organization.org"
+        disabled={isReadOnlyMode}
+      />
 
-/**
- *
- * */
-export const Resolution = ({isReadOnlyMode}) => (
+      <FormAwareTextField
+        name="source-organization"
+        label="Source Organization"
+        requiredFn={checkRequired}
+        placeholder="Primary organization(s) responsible for the source data"
+        disabled={isReadOnlyMode}
+      />
+
+      <FormAwareTextField
+        name="source-website"
+        label="Source Website"
+        requiredFn={checkRequired}
+        placeholder="http://source_organization.org/"
+        disabled={isReadOnlyMode}
+      />
+    </Section>
+  );
+};
+
+export const Resolution = ({ isReadOnlyMode }) => (
   <Section title="Resolution">
 
     <FormAwareSelect
@@ -281,10 +264,7 @@ export const Resolution = ({isReadOnlyMode}) => (
   </Section>
 );
 
-/**
- *
- * */
-export const DataQualitySensitivity = ({isReadOnlyMode}) => (
+export const DataQualitySensitivity = ({ isReadOnlyMode }) => (
   <Section title="Data Quality and Sensitivity">
     <FormAwareTextField
       name="data_sensitivity"
@@ -305,4 +285,3 @@ export const DataQualitySensitivity = ({isReadOnlyMode}) => (
     />
   </Section>
 );
-

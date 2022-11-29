@@ -22,6 +22,7 @@ import {
   BaseData, ContactInformation,
   Resolution, DataQualitySensitivity
 } from './metadataComponents';
+import ToggleRole from '../components/ToggleRole';
 
 const skipValidation = false;
 
@@ -48,18 +49,18 @@ export default withStyles(({ spacing }) => ({
   }
 }))(({
   classes, datasetInfo, stepTitle, setDatasetInfo, setAnnotations,
-  annotations, handleNext, handleBack, rawFileName, uploadedFilesData, ...props
+  handleNext, rawFileName, uploadedFilesData,
 }) => {
   // This is the file metadata as we fill in the form (not the one stored in services):
   const [fileMetadata, setFileMetadata] = useState({});
+  const [selectedRole, setSelectedRole] = useState('');
 
-  const back = (event) => {}; // Do nothing
+  const back = () => {}; // Do nothing
 
-  /**
-   * Creates or updates a dataset (indicator) resource in the backend
-   **/
-  const updateDataset = async (validatedData, { method='post', id }) => {
-
+  /*
+  *  Creates or updates a dataset (indicator) resource in the backend
+  */
+  const updateDataset = async (validatedData, { method = 'post', id }) => {
     const payload = {
       id,
       name: validatedData.name,
@@ -70,6 +71,7 @@ export default withStyles(({ spacing }) => ({
         email: validatedData['registerer-email'],
         organization: validatedData['source-organization'],
         website: validatedData['source-website'],
+        role: validatedData['registerer-role'],
       },
       spatial_resolution: validatedData.spatial_resolution,
       temporal_resolution: validatedData.temporal_resolution,
@@ -120,10 +122,10 @@ export default withStyles(({ spacing }) => ({
         enableReinitialize
 
         onSubmit={(values, { setSubmitting }) => {
-
           setSubmitting(true);
 
           if (values['x-resolution'] && values['y-resolution']) {
+            // eslint-disable-next-line no-param-reassign
             values.spatial_resolution = [
               values['x-resolution'],
               values['y-resolution']
@@ -133,11 +135,10 @@ export default withStyles(({ spacing }) => ({
           const isUpdate = Boolean(datasetInfo?.id);
 
           async function createAndUploadDataset() {
-
             const httpMethod = isUpdate ? 'PATCH' : 'POST';
             // TODO try/catch promise error handling
             // Creates or updates a dataset. Update returns no data
-            const dataset = await updateDataset(values, {method: httpMethod, id: datasetInfo.id});
+            const dataset = await updateDataset(values, { method: httpMethod, id: datasetInfo.id });
 
             const latestDatasetData = isUpdate ? datasetInfo : dataset;
             const datasetId = latestDatasetData.id;
@@ -146,23 +147,25 @@ export default withStyles(({ spacing }) => ({
             if (datasetId && (!isFileUploaded || isUpdatingUploadedFile)) {
               const uploadResponse = await uploadFile(formRef.current, datasetId);
               const newRawFileName = uploadResponse.data.filename;
-              const fileMetadataData = {...fileMetadata, rawFileName: newRawFileName};
+              const fileMetadataData = { ...fileMetadata, rawFileName: newRawFileName };
               await updateMetadata(datasetId, fileMetadataData, setAnnotations);
 
               return { dataset: latestDatasetData, rawFileName: newRawFileName };
-            } else {
-              return { dataset: latestDatasetData, rawFileName };
             }
 
+            return { dataset: latestDatasetData, rawFileName };
           }
 
           createAndUploadDataset()
-            .then(({dataset, rawFileName}) => handleNext({dataset: dataset, filename: rawFileName}));
+            .then(
+              // eslint-disable-next-line no-shadow
+              ({ dataset, rawFileName }) => handleNext({ dataset, filename: rawFileName })
+            );
         }}
       >
         {(formik) => (
           <Form ref={formRef}>
-
+            <ToggleRole updateRole={setSelectedRole} />
             <Grid
               container
               spacing={4}
@@ -181,7 +184,7 @@ export default withStyles(({ spacing }) => ({
               </Grid>
 
               <Grid item xs={12}>
-                <ContactInformation />
+                <ContactInformation currentRole={selectedRole} formik={formik} />
               </Grid>
             </Grid>
 

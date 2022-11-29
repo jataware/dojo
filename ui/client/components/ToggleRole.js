@@ -30,22 +30,22 @@ const ToggleRole = ({ updateRole }) => {
 
   return (
     <FormControl variant="outlined" className={classes.formControl}>
-      <InputLabel id="organization">Organization</InputLabel>
+      <InputLabel id="role">Select a Role</InputLabel>
       <Select
-        label-id="organization"
-        id="organization"
+        label-id="role"
+        id="role"
         value={selectedRole}
-        label="Organization"
+        label="Role"
         onChange={handleSelectRole}
       >
-        <MenuItem value="">All organizations</MenuItem>
+        <MenuItem value="">All roles</MenuItem>
         {auth?.dojo_roles?.map((role) => {
           const displayName = role.replace(/-|_/g, ' ');
           return <MenuItem key={role} value={role}>{displayName}</MenuItem>;
         })}
       </Select>
       <FormHelperText>
-        Select the organization you would like to create/view content for
+        Select the role you would like to create/view content for
       </FormHelperText>
     </FormControl>
   );
