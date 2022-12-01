@@ -21,5 +21,6 @@ keycloakAdmin = KeycloakAdmin(
     client_id=settings.KEYCLOAK_CLIENT_ID,
     # TODO: replace this with an env variable
     client_secret_key=settings.KEYCLOAK_CLIENT_SECRET_KEY,
-    verify=True
+    verify=True,
+    auto_refresh_token=["get", "post", "put", "delete"],
 )

@@ -32,7 +32,7 @@ def check_session(request: Request) -> Tuple[bool, Optional[SessionData]]:
     refresh_token = session_data.refresh_token
 
     try:
-        # Validate token. Is there a lighter 
+        # Validate token. Is there a lighter
         keycloak.userinfo(access_token)
     except KeycloakError as auth_error:
         try:
@@ -51,6 +51,8 @@ def check_session(request: Request) -> Tuple[bool, Optional[SessionData]]:
     return True, session_data
 
 def find_user_roles(user_info):
+    if not user_info or not user_info.get('realm_access', None):
+        return []
     # create empty overwriteable roles list
     roles = []
 
