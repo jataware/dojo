@@ -1,4 +1,4 @@
-FROM node:lts
+FROM node:17-buster
 USER node
 
 COPY --chown=node package.json /ui/
@@ -9,6 +9,7 @@ RUN npm install
 
 COPY --chown=node . /ui
 
+ENV NODE_OPTIONS=--openssl-legacy-provider
 EXPOSE 8080
 CMD ["npm", "run", "dev"]
 
