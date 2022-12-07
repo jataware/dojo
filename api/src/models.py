@@ -13,7 +13,7 @@ from fastapi import APIRouter, HTTPException, Query, Response, Request, status
 from fastapi.logger import logger
 from validation import ModelSchema, DojoSchema
 
-from src.auth import check_session, find_user_roles
+from src.auth import check_session, find_dojo_role
 from src.settings import settings
 from src.dojo import search_and_scroll, copy_configs, copy_outputfiles, copy_directive, copy_accessory_files
 from src.plugins import plugin_action
@@ -62,14 +62,15 @@ def create_model(request: Request, payload: ModelSchema.ModelMetadataSchema):
     is_session_valid, session_data = check_session(request)
     model_id = payload.id
     payload.created_at = current_milli_time()
-    body = payload.json()
 
-#TODO: remove this unless we are going to need it
-    # we can't attach every role to the model - only the relevant one(s)
-    # maybe the user tells us in advance which role they're creating it under?
+    # TODO: perhaps strip out the trailing :user/etc?
+    # fetch the user info from keycloak in order to get their role
     user_info = keycloak.userinfo(session_data.access_token)
+    dojo_organization = find_dojo_role(user_info)
+    # and then attach their organization name to the model
+    payload.dojo_organization = dojo_organization
 
-    logger.info(f'USER WITH ROLES: {user_info}')
+    body = payload.json()
 
     # Create a new model family if it doesn't already exist
     if not es.exists(index="model_families", id=payload.family_name):
@@ -80,7 +81,7 @@ def create_model(request: Request, payload: ModelSchema.ModelMetadataSchema):
                 family_name=payload.family_name,
                 display_name=payload.family_name,
             ).json(),
-            id=payload.family_name
+            id=payload.family_name,
         )
 
 
@@ -100,10 +101,12 @@ def get_latest_models(request: Request, size=100, scroll_id=None) -> DojoSchema.
     # validate the user's access token and grab their info from keycloak
     is_session_valid, session_data = check_session(request)
     user_info = keycloak.userinfo(session_data.access_token)
-    # find the keycloak realm roles
-    roles = find_user_roles(user_info)
 
-    # build the query with our set of roles from above
+    # TODO: strip out the trailing :user/etc qualifier so we get the whole organization
+    # find the user's role
+    dojo_role = find_dojo_role(user_info)
+    # build the query with our user's role from above
+    logger.info(f"dojo role is {dojo_role}")
     q = {
         'query': {
             'bool':{
@@ -118,7 +121,7 @@ def get_latest_models(request: Request, size=100, scroll_id=None) -> DojoSchema.
                     {
                         'bool':{
                             'should':
-                                [{"match_phrase": {"role": rolename}} for rolename in roles]
+                                {"match_phrase": {"dojo_organization": dojo_role}}
                         }
                     }
                 ]
@@ -128,7 +131,7 @@ def get_latest_models(request: Request, size=100, scroll_id=None) -> DojoSchema.
 
     # TODO: handle public/ungated content
     # if there are no roles, don't do a query. Just return an empty list
-    if len(roles) == 0:
+    if dojo_role == None:
         return {
             "hits": 0,
             "scroll_id": None,

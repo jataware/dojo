@@ -126,7 +126,7 @@ const createModel = async (model, history) => {
   }
 };
 
-export const HorizontalLinearStepper = ({ modelFamily, currentRole }) => {
+export const HorizontalLinearStepper = ({ modelFamily }) => {
   const history = useHistory();
   const classes = useStyles();
   const [lockFamilyName, setLockFamilyName] = useState(false);
@@ -160,13 +160,6 @@ export const HorizontalLinearStepper = ({ modelFamily, currentRole }) => {
       setLockFamilyName(true);
     }
   }, [modelFamily]);
-
-  useEffect(() => {
-    console.log('THIS IS CURRENT ROLE???', currentRole)
-    if (currentRole) {
-      setModelInfo((prevModelInfo) => ({ ...prevModelInfo, role: currentRole }));
-    }
-  }, [currentRole]);
 
   const steps = getSteps();
 
