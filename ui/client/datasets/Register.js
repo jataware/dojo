@@ -22,17 +22,11 @@ import {
   BaseData, ContactInformation,
   Resolution, DataQualitySensitivity
 } from './metadataComponents';
-import ToggleRole from '../components/ToggleRole';
 
 const skipValidation = false;
 
 /**
  * Dataset Registration landing page (fileMetadata, file upload).
- * */
-
-
-/**
- *
  * */
 export default withStyles(({ spacing }) => ({
   root: {
@@ -53,7 +47,6 @@ export default withStyles(({ spacing }) => ({
 }) => {
   // This is the file metadata as we fill in the form (not the one stored in services):
   const [fileMetadata, setFileMetadata] = useState({});
-  const [selectedRole, setSelectedRole] = useState('');
 
   const back = () => {}; // Do nothing
 
@@ -109,7 +102,6 @@ export default withStyles(({ spacing }) => ({
         initialValues={defaultValues}
         validationSchema={!skipValidation && formSchema}
         validate={(values) => {
-
           const bothResolutionsSet = Boolean(values['x-resolution'] && values['y-resolution']);
           const eitherResSet = values['x-resolution'] || values['y-resolution'];
 
@@ -165,7 +157,6 @@ export default withStyles(({ spacing }) => ({
       >
         {(formik) => (
           <Form ref={formRef}>
-            <ToggleRole updateRole={setSelectedRole} />
             <Grid
               container
               spacing={4}
@@ -184,7 +175,7 @@ export default withStyles(({ spacing }) => ({
               </Grid>
 
               <Grid item xs={12}>
-                <ContactInformation currentRole={selectedRole} formik={formik} />
+                <ContactInformation formik={formik} />
               </Grid>
             </Grid>
 

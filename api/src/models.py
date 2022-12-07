@@ -106,7 +106,6 @@ def get_latest_models(request: Request, size=100, scroll_id=None) -> DojoSchema.
     # find the user's role
     dojo_role = find_dojo_role(user_info)
     # build the query with our user's role from above
-    logger.info(f"dojo role is {dojo_role}")
     q = {
         'query': {
             'bool':{
@@ -120,7 +119,7 @@ def get_latest_models(request: Request, size=100, scroll_id=None) -> DojoSchema.
                     },
                     {
                         'bool':{
-                            'should':
+                            'must':
                                 {"match_phrase": {"dojo_organization": dojo_role}}
                         }
                     }
@@ -154,13 +153,13 @@ def get_latest_models(request: Request, size=100, scroll_id=None) -> DojoSchema.
     else:
         scroll_id = results.get("_scroll_id", None)
     results = [i["_source"] for i in results["hits"]["hits"]]
-    logger.info(f'this is results response: {results}')
     return {
         "hits": count["count"],
         "scroll_id": scroll_id,
         "results": results,
     }
 
+# TODO: add role gating to most of the below
 
 @router.put("/models/{model_id}")
 def update_model(model_id: str, payload: ModelSchema.ModelMetadataSchema):

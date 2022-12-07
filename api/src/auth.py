@@ -50,6 +50,7 @@ def check_session(request: Request) -> Tuple[bool, Optional[SessionData]]:
             return False, None
     return True, session_data
 
+# TODO: maybe start from request in here to reduce boilerplate everywhere else?
 def find_dojo_role(user_info):
     if not user_info or not user_info.get('realm_access', None):
         return None

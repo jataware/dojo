@@ -31,12 +31,14 @@ from fastapi.responses import StreamingResponse
 from validation import IndicatorSchema, DojoSchema, MetadataSchema
 from src.settings import settings
 
+from src.auth import check_session, find_dojo_role
 from src.dojo import search_and_scroll
 from src.ontologies import get_ontologies
 from src.causemos import notify_causemos
 from src.causemos import deprecate_dataset
 from src.utils import put_rawfile, get_rawfile, list_files
 from src.plugins import plugin_action
+from src.keycloak import keycloak
 from validation.IndicatorSchema import (
     IndicatorMetadataSchema,
     QualifierOutput,
@@ -58,7 +60,13 @@ def current_milli_time():
 
 
 @router.post("/indicators")
-def create_indicator(payload: IndicatorSchema.IndicatorMetadataSchema):
+def create_indicator(request: Request, payload: IndicatorSchema.IndicatorMetadataSchema):
+    # fetch the user's dojo role and add it to the payload
+    is_session_valid, session_data = check_session(request)
+    user_info = keycloak.userinfo(session_data.access_token)
+    dojo_organization = find_dojo_role(user_info)
+    payload.dojo_organization = dojo_organization
+
     indicator_id = str(uuid.uuid4())
     payload.id = indicator_id
     payload.created_at = current_milli_time()
@@ -122,7 +130,10 @@ def patch_indicator(
 @router.get(
     "/indicators/latest", response_model=List[IndicatorSchema.IndicatorsSearchSchema]
 )
-def get_latest_indicators(size=10000):
+def get_latest_indicators(request: Request, size=10000):
+    is_session_valid, session_data = check_session(request)
+    user_info = keycloak.userinfo(session_data.access_token)
+    dojo_organization = find_dojo_role(user_info)
     q = {
         "_source": [
             "description",
@@ -137,6 +148,7 @@ def get_latest_indicators(size=10000):
             "bool": {
                 "must": [{"match_all": {}}],
                 "filter": [{"term": {"published": True}}],
+                "must": [{"match_phrase": {"dojo_organization": dojo_organization}}]
             }
         },
     }
@@ -146,6 +158,8 @@ def get_latest_indicators(size=10000):
         IndicatorsSchemaArray.append(res.get("_source"))
     return IndicatorsSchemaArray
 
+
+# TODO: update other calls with role gating
 
 @router.get("/indicators", response_model=DojoSchema.IndicatorSearchResult)
 def search_indicators(
