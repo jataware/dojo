@@ -13,12 +13,11 @@ from fastapi import APIRouter, HTTPException, Query, Response, Request, status
 from fastapi.logger import logger
 from validation import ModelSchema, DojoSchema
 
-from src.auth import check_session, find_dojo_role
+from src.auth import find_dojo_role
 from src.settings import settings
 from src.dojo import search_and_scroll, copy_configs, copy_outputfiles, copy_directive, copy_accessory_files
 from src.plugins import plugin_action
 from src.utils import run_model_with_defaults
-from src.keycloak import keycloak, keycloakAdmin
 
 router = APIRouter()
 
@@ -59,16 +58,13 @@ def create_model_family(family: ModelSchema.ModelFamilySchema):
 
 @router.post("/models")
 def create_model(request: Request, payload: ModelSchema.ModelMetadataSchema):
-    is_session_valid, session_data = check_session(request)
     model_id = payload.id
     payload.created_at = current_milli_time()
 
     # TODO: perhaps strip out the trailing :user/etc?
-    # fetch the user info from keycloak in order to get their role
-    user_info = keycloak.userinfo(session_data.access_token)
-    dojo_organization = find_dojo_role(user_info)
+    dojo_role = find_dojo_role(request)
     # and then attach their organization name to the model
-    payload.dojo_organization = dojo_organization
+    payload.dojo_organization = dojo_role
 
     body = payload.json()
 
@@ -98,13 +94,9 @@ def create_model(request: Request, payload: ModelSchema.ModelMetadataSchema):
 
 @router.get("/models/latest", response_model=DojoSchema.ModelSearchResult)
 def get_latest_models(request: Request, size=100, scroll_id=None) -> DojoSchema.ModelSearchResult:
-    # validate the user's access token and grab their info from keycloak
-    is_session_valid, session_data = check_session(request)
-    user_info = keycloak.userinfo(session_data.access_token)
-
     # TODO: strip out the trailing :user/etc qualifier so we get the whole organization
     # find the user's role
-    dojo_role = find_dojo_role(user_info)
+    dojo_role = find_dojo_role(request)
     # build the query with our user's role from above
     q = {
         'query': {

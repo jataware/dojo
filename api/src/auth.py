@@ -50,8 +50,11 @@ def check_session(request: Request) -> Tuple[bool, Optional[SessionData]]:
             return False, None
     return True, session_data
 
-# TODO: maybe start from request in here to reduce boilerplate everywhere else?
-def find_dojo_role(user_info):
+
+def find_dojo_role(request):
+    is_session_valid, session_data = check_session(request)
+    user_info = keycloak.userinfo(session_data.access_token)
+
     if not user_info or not user_info.get('realm_access', None):
         return None
     # By default return nothing
@@ -62,8 +65,14 @@ def find_dojo_role(user_info):
         if role.startswith('dojo:'):
             dojo_role = role
             break
-
+# TODO: maybe strip out trailing :user/etc here before returning role?
     return dojo_role
+
+def find_all_dojo_roles():
+    realm_roles = keycloakAdmin.get_realm_roles()
+    # select out all the dojo: prefixed roles from across the realm
+    roles = [realm_role['name'] for realm_role in realm_roles if realm_role['name'].startswith('dojo:')]
+    return roles
 
     # roles = [role for role in user_info['realm_access']['roles'] if role.startswith('dojo:')]
 # TODO: Admin will get their roles somewhere else
@@ -82,19 +91,22 @@ async def auth(request: Request, response: Response, payload: AuthRequest) -> st
     is_session_valid, session_data = check_session(request)
     session_id = request.cookies.get(settings.SESSION_COOKIE_NAME, None)
 
+    authResponse = {
+        "authenticated": False,
+        "auth_url": None,
+        "keycloak_url": wellKnown['issuer'],
+        "user": None,
+    }
+
     if is_session_valid:
         user_info = keycloak.userinfo(session_data.access_token)
+        if 'admin' in user_info['realm_access']['roles']:
+            authResponse["admin_roles"] = find_all_dojo_roles()
 
-        # TODO: do we need to return dojo_role at all now? probably not
-        dojo_role = find_dojo_role(user_info)
+        authResponse["authenticated"] = True
+        authResponse["user"] = user_info
 
-        return {
-            "authenticated": True,
-            "auth_url": None,
-            "keycloak_url": wellKnown['issuer'],
-            "user": user_info,
-            "dojo_role": dojo_role,
-        }
+        return authResponse
 
     redirect_uri="http://localhost:8080/auth"
     auth_code = payload.auth_code
@@ -104,13 +116,10 @@ async def auth(request: Request, response: Response, payload: AuthRequest) -> st
             scope="email",
             state=uuid.uuid4()
         )
-        return {
-            "authenticated": False,
-            "auth_url": auth_url,
-            "keycloak_url": wellKnown['issuer'],
-            "user": None,
-            "dojo_role": None,
-        }
+
+        authResponse["auth_url"] = auth_url
+
+        return authResponse
 
     token = keycloak.token(
         grant_type=["authorization_code"],
@@ -121,7 +130,6 @@ async def auth(request: Request, response: Response, payload: AuthRequest) -> st
     refresh_token = token["refresh_token"]
     user_info = keycloak.userinfo(access_token)
     session_id = uuid.uuid4()
-    dojo_role = find_dojo_role(user_info)
 
     session_data = SessionData(
         userid=user_info['email'],
@@ -133,13 +141,13 @@ async def auth(request: Request, response: Response, payload: AuthRequest) -> st
     session_backend.create(session_id, session_data)
     response.set_cookie(key=settings.SESSION_COOKIE_NAME, value=session_id, secure=False, httponly=False)
 
-    return {
-        "authenticated": True,
-        "auth_url": None,
-        "keycloak_url": wellKnown['issuer'],
-        "user": user_info['email'],
-        "dojo_role": dojo_role,
-    }
+    if 'admin' in user_info['realm_access']['roles']:
+        authResponse["admin_roles"] = find_all_dojo_roles()
+
+    authResponse["authenticated"] = True
+    authResponse["user"] = user_info["email"]
+
+    return authResponse
 
 
 @router.post("/auth/logout")
