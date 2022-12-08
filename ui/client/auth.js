@@ -10,13 +10,11 @@ export function AuthWrapper({ children }) {
   const isAuthenticated = false;
   const auth_url = null;
   const keycloak_url = null;
-  const dojo_roles = [];
   const defaultState = {
     user,
     isAuthenticated,
     auth_url,
     keycloak_url,
-    dojo_roles,
   };
   const [auth, setAuth] = useState(defaultState);
 
@@ -24,12 +22,18 @@ export function AuthWrapper({ children }) {
     if (!auth.isAuthenticated) {
       axios.post(authStatusEndpoint, {}).then((userData) => {
         if (userData.data.authenticated) {
-          setAuth({
-            ...auth,
-            keycloak_url: userData.data.keycloak_url,
-            user: userData.data.user,
-            isAuthenticated: userData.data.authenticated,
-            dojo_roles: userData.data.dojo_roles,
+          setAuth((prevAuth) => {
+            const newAuth = {
+              ...prevAuth,
+              keycloak_url: userData.data.keycloak_url,
+              user: userData.data.user,
+              isAuthenticated: userData.data.authenticated,
+            };
+            // conditionally add admin_roles so it doesn't show up at all if users don't have it
+            // admin_roles is a list of all the roles in the keycloak realm
+            // not just the ones the user has
+            if (userData.data.admin_roles) newAuth.admin_roles = userData.data.admin_roles;
+            return newAuth;
           });
         }
       });
@@ -101,13 +105,17 @@ export function AuthRedirectHandler({ children }) {
   const payload = { auth_code: params.get('code') };
 
   axios.post(authStatusEndpoint, payload).then((response) => {
-    setAuth({
-      ...auth,
-      user: response.data.user,
-      isAuthenticated: true,
-      keycloak_url: response.data.keycloak_url,
-      dojo_roles: response.data.dojo_roles,
+    setAuth((prevAuth) => {
+      const newAuth = {
+        ...prevAuth,
+        keycloak_url: response.data.keycloak_url,
+        user: response.data.user,
+        isAuthenticated: true,
+      };
+      if (userData.data.admin_roles) newAuth.admin_roles = response.data.admin_roles;
+      return newAuth;
     });
+
     setTimeout(() => { document.location = '/'; }, 30);
   });
 

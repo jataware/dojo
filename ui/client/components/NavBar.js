@@ -20,6 +20,7 @@ import { useAuth } from '../auth';
 
 import ConfirmDialog from './ConfirmDialog';
 import BasicAlert from './BasicAlert';
+import ToggleRole from './ToggleRole';
 
 // using this prop passing style https://mui.com/system/styles/basics/#adapting-based-on-props
 // specifically so we can manage overflow for the account managment iframe on the @global body
@@ -235,6 +236,7 @@ const NavBar = () => {
             </>
           )}
           <span className={classes.spacer} />
+          {(auth.isAuthenticated && auth.admin_roles?.length) && <ToggleRole />}
           <Button href="https://www.dojo-modeling.com" target="_blank">Documentation</Button>
           <Button href="https://github.com/dojo-modeling/dojo" target="_blank">GitHub</Button>
           {(auth.isAuthenticated && auth.user) && userMenu()}

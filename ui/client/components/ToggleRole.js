@@ -17,7 +17,7 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const ToggleRole = ({ updateRole }) => {
+const ToggleRole = ({  }) => {
   const classes = useStyles();
   const [selectedRole, setSelectedRole] = useState('');
   const { auth } = useAuth();
@@ -25,7 +25,7 @@ const ToggleRole = ({ updateRole }) => {
   const handleSelectRole = (event) => {
     setSelectedRole(event.target.value);
     // Also update the parent component on the selected role
-    updateRole(event.target.value);
+    // updateRole(event.target.value);
   };
 
   return (
@@ -39,7 +39,7 @@ const ToggleRole = ({ updateRole }) => {
         onChange={handleSelectRole}
       >
         <MenuItem value="">All roles</MenuItem>
-        {auth?.dojo_roles?.map((role) => {
+        {auth?.admin_roles?.map((role) => {
           const displayName = role.replace(/-|_/g, ' ');
           return <MenuItem key={role} value={role}>{displayName}</MenuItem>;
         })}
