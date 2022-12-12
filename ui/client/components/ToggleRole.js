@@ -17,15 +17,16 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const ToggleRole = ({  }) => {
+const ToggleRole = () => {
   const classes = useStyles();
   const [selectedRole, setSelectedRole] = useState('');
-  const { auth } = useAuth();
+  const { auth, setAdminRole } = useAuth();
 
   const handleSelectRole = (event) => {
     setSelectedRole(event.target.value);
-    // Also update the parent component on the selected role
-    // updateRole(event.target.value);
+
+    // set the admin role in the auth context
+    setAdminRole(event.target.value);
   };
 
   return (
@@ -37,16 +38,14 @@ const ToggleRole = ({  }) => {
         value={selectedRole}
         label="Role"
         onChange={handleSelectRole}
+        margin="dense"
       >
         <MenuItem value="">All roles</MenuItem>
-        {auth?.admin_roles?.map((role) => {
+        {auth.admin_roles?.map((role) => {
           const displayName = role.replace(/-|_/g, ' ');
           return <MenuItem key={role} value={role}>{displayName}</MenuItem>;
         })}
       </Select>
-      <FormHelperText>
-        Select the role you would like to create/view content for
-      </FormHelperText>
     </FormControl>
   );
 };

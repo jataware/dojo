@@ -51,19 +51,23 @@ def check_session(request: Request) -> Tuple[bool, Optional[SessionData]]:
     return True, session_data
 
 
-def find_dojo_role(request):
+def find_dojo_role(request, role):
     is_session_valid, session_data = check_session(request)
     user_info = keycloak.userinfo(session_data.access_token)
-
     if not user_info or not user_info.get('realm_access', None):
         return None
     # By default return nothing
     dojo_role = None
 
+    # if a role is passed through from an API call, and the user has 'admin'
+    # don't search for the user's dojo role, just use the role they've selected
+    if role and 'admin' in user_info['realm_access']['roles']:
+        return role
+
     # Only return a single role if we find one
-    for role in user_info['realm_access']['roles']:
-        if role.startswith('dojo:'):
-            dojo_role = role
+    for user_role in user_info['realm_access']['roles']:
+        if user_role.startswith('dojo:'):
+            dojo_role = user_role
             break
 # TODO: maybe strip out trailing :user/etc here before returning role?
     return dojo_role

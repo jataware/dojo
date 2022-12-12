@@ -16,6 +16,7 @@ import { makeStyles } from '@material-ui/core/styles';
 
 import { Link, useHistory } from 'react-router-dom';
 
+import { useAuth } from '../auth';
 import ExpandableDataGridCell from './ExpandableDataGridCell';
 import LoadingOverlay from './LoadingOverlay';
 import Search from './SearchItems';
@@ -79,7 +80,7 @@ const fetchStatuses = async (modelIDs) => {
 };
 
 const fetchModels = async (
-  includeStatuses, setModels, setModelsLoading, setModelsError, scrollId
+  includeStatuses, setModels, setModelsLoading, setModelsError, scrollId, adminRole
 ) => {
   if (!scrollId) {
     // only do this for the first call to fetchModels, when we don't have a scrollId
@@ -87,8 +88,16 @@ const fetchModels = async (
     setModelsLoading(true);
   }
 
-  const url = scrollId
-    ? `/api/dojo/models/latest?scroll_id=${scrollId}` : '/api/dojo/models/latest';
+  let url = '/api/dojo/models/latest';
+  if (scrollId) {
+    url = `${url}?scroll_id=${scrollId}`;
+  }
+
+  if (adminRole) {
+    // use & if we have a scrollId param before this and ? if we don't
+    url = `${url}${scrollId ? '&' : '?'}role=${adminRole}`;
+  }
+
   const modelsRequest = axios.get(url).then(
     (response) => {
       console.log('request for /latest response:', response);
@@ -121,7 +130,14 @@ const fetchModels = async (
     if (newScrollId) {
     // if we get a scroll id back, there are more results
     // so call fetchModels again to fetch the next set
-      fetchModels(includeStatuses, setModels, setModelsLoading, setModelsError, newScrollId);
+      fetchModels(
+        includeStatuses,
+        setModels,
+        setModelsLoading,
+        setModelsError,
+        newScrollId,
+        adminRole
+      );
     }
   });
   preparedModels.catch((error) => {
@@ -159,11 +175,18 @@ const ViewModels = ({
   const [displayUnpublished, setDisplayUnpublished] = useState(true);
 
   const [searchedModels, setSearchedModels] = useState(null);
+  const { adminRole } = useAuth();
 
   useEffect(() => {
-    fetchModels(includeStatuses, setModels, setModelsLoading, setModelsError);
     document.title = 'View Models - Dojo';
-  }, [includeStatuses]);
+  }, []);
+
+  useEffect(() => {
+    // clear the models list if the admin role changes
+    setModels([]);
+    // then fetch the model list
+    fetchModels(includeStatuses, setModels, setModelsLoading, setModelsError, null, adminRole);
+  }, [includeStatuses, adminRole]);
 
   useEffect(() => {
     setDisplayedModels(models);

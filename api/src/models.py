@@ -93,10 +93,10 @@ def create_model(request: Request, payload: ModelSchema.ModelMetadataSchema):
 
 
 @router.get("/models/latest", response_model=DojoSchema.ModelSearchResult)
-def get_latest_models(request: Request, size=100, scroll_id=None) -> DojoSchema.ModelSearchResult:
+def get_latest_models(request: Request, size=100, scroll_id=None, role=None) -> DojoSchema.ModelSearchResult:
     # TODO: strip out the trailing :user/etc qualifier so we get the whole organization
     # find the user's role
-    dojo_role = find_dojo_role(request)
+    dojo_role = find_dojo_role(request, role)
     # build the query with our user's role from above
     q = {
         'query': {

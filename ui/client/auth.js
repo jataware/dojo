@@ -17,6 +17,7 @@ export function AuthWrapper({ children }) {
     keycloak_url,
   };
   const [auth, setAuth] = useState(defaultState);
+  const [adminRole, setAdminRole] = useState(null);
 
   function getAuth() {
     if (!auth.isAuthenticated) {
@@ -44,15 +45,11 @@ export function AuthWrapper({ children }) {
     };
   }
 
-
-// TODO: remove this true
-
-
-  const authValue = (process.env.AUTH_ENABLED || true ? getAuth() : {});
+  const authValue = (process.env.AUTH_ENABLED ? getAuth() : {});
 
   console.log('THIS IS AUTHVALUE', authValue)
   return (
-    <authContext.Provider value={authValue}>
+    <authContext.Provider value={{ ...authValue, adminRole, setAdminRole }}>
       {children}
     </authContext.Provider>
   );
@@ -64,17 +61,13 @@ export function useAuth() {
 
 export function ProtectedRoute({ children, ...props }) {
 
-
-// TODO: turn this back on
-
-
-  // if (!process.env.AUTH_ENABLED) {
-  //   return <Route {...props} render={
-  //     ({ location }) => {
-  //       return children;
-  //     }}
-  //   />
-  // }
+  if (!process.env.AUTH_ENABLED) {
+    return <Route {...props} render={
+      ({ location }) => {
+        return children;
+      }}
+    />
+  }
 
   const { auth } = useAuth();
   if (auth.isAuthenticated) {
@@ -100,7 +93,7 @@ export function ProtectedRoute({ children, ...props }) {
 }
 
 export function AuthRedirectHandler({ children }) {
-  const { auth, setAuth } = useAuth();
+  const { setAuth } = useAuth();
   const params = new URLSearchParams(location.search);
   const payload = { auth_code: params.get('code') };
 
@@ -112,7 +105,7 @@ export function AuthRedirectHandler({ children }) {
         user: response.data.user,
         isAuthenticated: true,
       };
-      if (userData.data.admin_roles) newAuth.admin_roles = response.data.admin_roles;
+      if (response.data.admin_roles) newAuth.admin_roles = response.data.admin_roles;
       return newAuth;
     });
 
