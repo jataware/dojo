@@ -1,5 +1,9 @@
 import axios from 'axios';
-import React, { useContext, createContext, useState } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useState
+} from 'react';
 import { Redirect, Route } from 'react-router-dom';
 
 export const authStatusEndpoint = '/api/dojo/auth/status';
@@ -18,6 +22,13 @@ export function AuthWrapper({ children }) {
   };
   const [auth, setAuth] = useState(defaultState);
   const [adminRole, setAdminRole] = useState(null);
+
+  // This gets passed through to context children rather than the direct state setter
+  // so that we can ensure that the header stays synced with the current adminRole state
+  function setDojoAdmin(role) {
+    axios.defaults.headers.common['X-Keycloak-Admin-Dojo-Role'] = role;
+    setAdminRole(role);
+  }
 
   function getAuth() {
     if (!auth.isAuthenticated) {
@@ -49,7 +60,7 @@ export function AuthWrapper({ children }) {
 
   console.log('THIS IS AUTHVALUE', authValue)
   return (
-    <authContext.Provider value={{ ...authValue, adminRole, setAdminRole }}>
+    <authContext.Provider value={{ ...authValue, adminRole, setDojoAdmin }}>
       {children}
     </authContext.Provider>
   );

@@ -88,15 +88,8 @@ const fetchModels = async (
     setModelsLoading(true);
   }
 
-  let url = '/api/dojo/models/latest';
-  if (scrollId) {
-    url = `${url}?scroll_id=${scrollId}`;
-  }
-
-  if (adminRole) {
-    // use & if we have a scrollId param before this and ? if we don't
-    url = `${url}${scrollId ? '&' : '?'}role=${adminRole}`;
-  }
+  const url = scrollId
+    ? `/api/dojo/models/latest?scroll_id=${scrollId}` : '/api/dojo/models/latest';
 
   const modelsRequest = axios.get(url).then(
     (response) => {

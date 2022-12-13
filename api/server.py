@@ -21,7 +21,7 @@ from src import (
     runs,
 )
 from src.settings import settings
-from src.auth import check_session
+from src.auth import check_session, find_dojo_role
 
 logger = logging.getLogger(__name__)
 
@@ -55,6 +55,12 @@ if settings.AUTH_ENABLED:
             authenticated, _ = check_session(request)
             if not authenticated:
                 return Response(status_code=403)
+
+        # Pull the admin selected role out of the header if it is there
+        dojo_role_header = request.headers.get('X-Keycloak-Admin-Dojo-Role')
+        # and use our auth.find_dojo_role function to find the appropriate role
+        # or return the selected one if the user has the admin role
+        request.state.dojo_role = find_dojo_role(request, dojo_role_header)
 
         # If we make it to here, we don't need to auth or have a valid token
         response = await call_next(request)

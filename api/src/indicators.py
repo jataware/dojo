@@ -31,7 +31,6 @@ from fastapi.responses import StreamingResponse
 from validation import IndicatorSchema, DojoSchema, MetadataSchema
 from src.settings import settings
 
-from src.auth import find_dojo_role
 from src.dojo import search_and_scroll
 from src.ontologies import get_ontologies
 from src.causemos import notify_causemos
@@ -61,8 +60,7 @@ def current_milli_time():
 @router.post("/indicators")
 def create_indicator(request: Request, payload: IndicatorSchema.IndicatorMetadataSchema):
     # fetch the user's dojo role and add it to the payload
-    dojo_role = find_dojo_role(request)
-    payload.dojo_organization = dojo_role
+    payload.dojo_organization = request.state.dojo_role
 
     indicator_id = str(uuid.uuid4())
     payload.id = indicator_id
@@ -128,7 +126,7 @@ def patch_indicator(
     "/indicators/latest", response_model=List[IndicatorSchema.IndicatorsSearchSchema]
 )
 def get_latest_indicators(request: Request, size=10000):
-    dojo_role = find_dojo_role(request)
+    dojo_role = request.state.dojo_role
     q = {
         "_source": [
             "description",

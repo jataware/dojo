@@ -20,13 +20,13 @@ const useStyles = makeStyles((theme) => ({
 const ToggleRole = () => {
   const classes = useStyles();
   const [selectedRole, setSelectedRole] = useState('');
-  const { auth, setAdminRole } = useAuth();
+  const { auth, setDojoAdmin } = useAuth();
 
   const handleSelectRole = (event) => {
     setSelectedRole(event.target.value);
 
     // set the admin role in the auth context
-    setAdminRole(event.target.value);
+    setDojoAdmin(event.target.value);
   };
 
   return (

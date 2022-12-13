@@ -30,7 +30,8 @@ def check_session(request: Request) -> Tuple[bool, Optional[SessionData]]:
         return False, None
     access_token = session_data.access_token
     refresh_token = session_data.refresh_token
-
+# TODO: add roles to session_data from keycloak.userinfo
+# also add to line 139 sessionData
     try:
         # Validate token. Is there a lighter
         keycloak.userinfo(access_token)
@@ -53,13 +54,16 @@ def check_session(request: Request) -> Tuple[bool, Optional[SessionData]]:
 
 def find_dojo_role(request, role):
     is_session_valid, session_data = check_session(request)
+    if not session_data:
+        return None
+
     user_info = keycloak.userinfo(session_data.access_token)
     if not user_info or not user_info.get('realm_access', None):
         return None
     # By default return nothing
     dojo_role = None
 
-    # if a role is passed through from an API call, and the user has 'admin'
+    # if a role is passed through from the UI, and the user has 'admin'
     # don't search for the user's dojo role, just use the role they've selected
     if role and 'admin' in user_info['realm_access']['roles']:
         return role
@@ -77,15 +81,6 @@ def find_all_dojo_roles():
     # select out all the dojo: prefixed roles from across the realm
     roles = [realm_role['name'] for realm_role in realm_roles if realm_role['name'].startswith('dojo:')]
     return roles
-
-    # roles = [role for role in user_info['realm_access']['roles'] if role.startswith('dojo:')]
-# TODO: Admin will get their roles somewhere else
-    # if they have the admin role
-    # if 'admin' in user_info['realm_access']['roles']:
-    #     # fetch all the roles from across the entire realm (ie not just the ones the user has)
-    #     realm_roles = keycloakAdmin.get_realm_roles(True)
-    #     # select out all the dojo: prefixed roles from across the realm and replace the user's ones with these
-    #     roles = [realm_role['name'] for realm_role in realm_roles if realm_role['name'].startswith('dojo:')]
 
 @router.post("/auth/status")
 async def auth(request: Request, response: Response, payload: AuthRequest) -> str:
@@ -135,6 +130,7 @@ async def auth(request: Request, response: Response, payload: AuthRequest) -> st
     user_info = keycloak.userinfo(access_token)
     session_id = uuid.uuid4()
 
+    # TODO: add roles here
     session_data = SessionData(
         userid=user_info['email'],
         access_token=access_token,
