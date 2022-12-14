@@ -80,7 +80,7 @@ const fetchStatuses = async (modelIDs) => {
 };
 
 const fetchModels = async (
-  includeStatuses, setModels, setModelsLoading, setModelsError, scrollId, adminRole
+  includeStatuses, setModels, setModelsLoading, setModelsError, scrollId
 ) => {
   if (!scrollId) {
     // only do this for the first call to fetchModels, when we don't have a scrollId
@@ -128,8 +128,7 @@ const fetchModels = async (
         setModels,
         setModelsLoading,
         setModelsError,
-        newScrollId,
-        adminRole
+        newScrollId
       );
     }
   });
@@ -168,18 +167,26 @@ const ViewModels = ({
   const [displayUnpublished, setDisplayUnpublished] = useState(true);
 
   const [searchedModels, setSearchedModels] = useState(null);
+
   const { adminRole } = useAuth();
+  const [savedAdminRole, setSavedAdminRole] = useState(adminRole);
 
   useEffect(() => {
+    // effectively do this once
+    fetchModels(includeStatuses, setModels, setModelsLoading, setModelsError);
     document.title = 'View Models - Dojo';
-  }, []);
+  }, [includeStatuses]);
 
   useEffect(() => {
-    // clear the models list if the admin role changes
-    setModels([]);
-    // then fetch the model list
-    fetchModels(includeStatuses, setModels, setModelsLoading, setModelsError, null, adminRole);
-  }, [includeStatuses, adminRole]);
+    if (adminRole !== savedAdminRole) {
+      // match our saved admin with the current admin so we won't re-enter this conditional
+      setSavedAdminRole(adminRole);
+      // clear the models list if the admin role changes
+      setModels([]);
+      // then fetch the model list
+      fetchModels(includeStatuses, setModels, setModelsLoading, setModelsError);
+    }
+  }, [includeStatuses, adminRole, savedAdminRole]);
 
   useEffect(() => {
     setDisplayedModels(models);

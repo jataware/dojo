@@ -13,6 +13,7 @@ import { darken, makeStyles } from '@material-ui/core/styles';
 import ExpandableDataGridCell from './ExpandableDataGridCell';
 import LoadingOverlay from './LoadingOverlay';
 import SearchDatasets from './SearchDatasets';
+import { useAuth } from '../auth';
 
 const useStyles = makeStyles((theme) => ({
   root: {
@@ -91,11 +92,26 @@ function ViewDatasets() {
 
   const [displayedDatasets, setDisplayedDatasets] = useState([]);
 
+  const { adminRole } = useAuth();
+  const [savedAdminRole, setSavedAdminRole] = useState(adminRole);
+
   useEffect(() => {
     // only do this once when the page loads
     getDatasets(setDatasets, setDatasetsError, setDatasetsLoading);
     document.title = 'View Datasets - Dojo';
   }, []);
+
+  useEffect(() => {
+    if (adminRole !== savedAdminRole) {
+      // match our saved admin with the current admin so we won't re-enter this conditional
+      setSavedAdminRole(adminRole);
+      // clear all our stored datasets
+      setDatasets([]);
+      setDisplayedDatasets([]);
+      // and fetch the new ones with the current adminRole (in the header set in auth.js)
+      getDatasets(setDatasets, setDatasetsError, setDatasetsLoading);
+    }
+  }, [adminRole, savedAdminRole]);
 
   useEffect(() => {
     // when we load our datasets
