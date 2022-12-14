@@ -45,9 +45,13 @@ from validation.IndicatorSchema import (
     Geography,
     FeaturesSearchSchema
 )
-
 from functools import reduce
 import os
+
+from src.datasearch.corpora import Corpus
+from src.datasearch.indicators import Indicators
+from src.search.bert_search import BertSentenceSearch
+
 
 router = APIRouter()
 
@@ -58,6 +62,64 @@ es = Elasticsearch([settings.ELASTICSEARCH_URL], port=settings.ELASTICSEARCH_POR
 def current_milli_time():
     return round(time.time() * 1000)
 
+# TODO function that gets outputs and calcs embeddings for each, then inserts/updates
+# them in the index. indicator-id + indicator-version + output-name
+
+# Start your engines
+
+# TODO if this works, an engine management where if engine crashes it can be restarted?
+corpus = Corpus.from_list(["a"])
+engine = BertSentenceSearch(corpus, cuda=False)
+
+# corpus = Indicators.set_format_corpus([indicatorPayload])
+# engine = BertSentenceSearch(corpus, cuda=False)
+# index for the only one indicator, but this is also an array
+# of embeddings per output
+# outputEmbeddings = engine.embeddings[0]
+
+
+# TODO is this going to take more than x ms? rqworker discussion if so
+def calcOutputEmbeddings(output):
+    """
+    Embeddings are created from a subset of the output properties:
+    - name, display_name, description, unit, unit_description.
+    """
+    description = \
+        f"""name: {output['name']};
+        display name: {output['display_name']};
+        description: {output['description']};
+        unit: {output['unit']};
+        unit description: {output['unit_description']};"""
+
+    return engine.embed_query(description).tolist()
+
+
+def saveAllOutputEmbeddings(indicatorPayload, indicator_id):
+    """
+    Saves all outputs within an indicator to elasticsearch,
+    including the LLM embeddings to use in search.
+    """
+    indicatorDictionary = json.loads(indicatorPayload.json())
+
+    for index, output in enumerate(indicatorDictionary["outputs"]):
+        print(f"=== Transforming outputs # {index + 1}")
+
+        feature = {
+            **output,
+            "embeddings": calcOutputEmbeddings(output),
+            "owner_dataset": {
+                "id": indicator_id,
+                "name": indicatorDictionary["name"]
+            }
+        }
+
+        feature_id = f"{indicator_id}-{output['name']}"
+
+        print(f"feature id: {feature_id}")
+        print(f"feature as dict: {feature}")
+
+        es.index(index="features-preview", body=feature, id=feature_id)
+
 
 @router.post("/indicators")
 def create_indicator(payload: IndicatorSchema.IndicatorMetadataSchema):
@@ -65,12 +127,11 @@ def create_indicator(payload: IndicatorSchema.IndicatorMetadataSchema):
     payload.id = indicator_id
     payload.created_at = current_milli_time()
     body = payload.json()
-    payload.published = False
+    payload.published = False  # TODO ask about this
 
     plugin_action("before_create", data=body, type="indicator")
     es.index(index="indicators", body=body, id=indicator_id)
     plugin_action("post_create", data=body, type="indicator")
-
 
     empty_annotations_payload = MetadataSchema.MetaModel(metadata={}).json()
     # (?): SHOULD WE HAVE PLUGINS AROUND THE ANNOTATION CREATION?
@@ -78,7 +139,10 @@ def create_indicator(payload: IndicatorSchema.IndicatorMetadataSchema):
     es.index(index="annotations", body=empty_annotations_payload, id=indicator_id)
     plugin_action("post_create", data=body, type="annotation")
 
- 
+    # Saves all outputs, as features in a new index, with LLM embeddings
+    if payload.outputs:
+        print("=== create: body contains 'outputs'")
+        saveAllOutputEmbeddings(payload, indicator_id)
 
     return Response(
         status_code=status.HTTP_201_CREATED,
@@ -100,6 +164,10 @@ def update_indicator(payload: IndicatorSchema.IndicatorMetadataSchema):
     es.index(index="indicators", body=body, id=indicator_id)
     plugin_action("post_update", data=body, type="indicator")
 
+    if payload.outputs:
+        print("=== update: body contains 'outputs'")
+        saveAllOutputEmbeddings(payload, indicator_id)
+
     return Response(
         status_code=status.HTTP_200_OK,
         headers={"location": f"/api/indicators/{indicator_id}"},
@@ -114,11 +182,66 @@ def patch_indicator(
     payload.created_at = current_milli_time()
     body = json.loads(payload.json(exclude_unset=True))
     es.update(index="indicators", body={"doc": body}, id=indicator_id)
+
+    if payload.outputs:
+        print("=== update: body contains 'outputs'")
+        saveAllOutputEmbeddings(payload, indicator_id)
+
     return Response(
         status_code=status.HTTP_200_OK,
         headers={"location": f"/api/indicators/{indicator_id}"},
         content=f"Updated indicator with id = {indicator_id}",
     )
+
+
+@router.get(
+"/features/search" # , response_model=IndicatorSchema.FeaturesSearchSchema
+)
+def semantic_search_features(query: str, scroll_id: Optional[str]=None):
+    """
+    Given a text query, uses semantic search engine to search for features that
+    match the query semantically. Query is a sentence that can be interpreted to
+    be related to a concept, such as:
+    'number of people who have been vaccinated'
+    """
+
+    # TODO scroll id later
+
+    query_embedding = engine.embed_query(query)
+
+    features_query = {
+        "query": {
+            "script_score": {
+                "query": {"match_all": {}},
+                "script": {
+                    "source": "cosineSimilarity(params.query_vector, 'embeddings') + 1.0",
+                    "params": {
+                        "query_vector": query_embedding.tolist()
+                    }
+                }
+            }
+        },
+        "_source": [
+            "unit",
+            "is_primary",
+            "name",
+            "description",
+            "unit_description",
+            "display_name",
+            "type",
+            "owner_dataset"
+        ]
+    }
+
+    results = es.search(index="features-preview", body=features_query)
+    results = results["hits"]["hits"]
+
+    return {
+        "total": None,  # TODO, can be done with top-level index
+        "items_in_page": len(results), # TODO?
+        # "scroll_id": scroll_id,  # TODO
+        "results": results  # array of features
+    }
 
 
 def outputs_as_features(acc, currentResult):

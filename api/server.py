@@ -44,6 +44,7 @@ def setup_elasticsearch_indexes():
         },
         "configs": {},
         "directives": {},
+        # TODO Add Features
         "indicators": {
             "mappings": {
                 "properties": {
