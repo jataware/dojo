@@ -117,14 +117,12 @@ const createModel = async (model, history) => {
     if (resp.status === 201) {
       localStorage.removeItem('modelInfo');
       localStorage.removeItem('modelStep');
-      const modelResp = await fetch(`/api/dojo/models/${parsedModelInfo.id}`);
-      if (modelResp.ok) {
+      axios.get(`/api/dojo/models/${parsedModelInfo.id}`).then(() => {
         history.push(`/provision/${parsedModelInfo.id}`);
-      }
+      });
     }
   } catch (e) {
-    console.log('error!...');
-    console.log(e);
+    throw new Error(e);
   }
 };
 
