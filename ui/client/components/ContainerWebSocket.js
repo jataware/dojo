@@ -3,6 +3,8 @@ import React, {
   useState,
 } from 'react';
 
+import axios from 'axios';
+
 import { saveAs } from 'file-saver';
 
 import BasicAlert from './BasicAlert';
@@ -15,36 +17,44 @@ import {
 } from '../context';
 
 const storeFileRequest = async (info) => {
-  const rsp = await fetch('/api/dojo/terminal/file', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json'
-    },
-    body: JSON.stringify(info)
-  });
+  try {
+    const response = await axios.post(
+      '/api/dojo/terminal/file',
+      info,
+      {
+        headers: {
+          'Content-Type': 'application/json'
+        },
+      }
+    );
 
-  if (!rsp.ok) {
-    throw new Error(`Failed to send file info ${rsp.status}`);
+    if (response.status === 200) {
+      return response.data;
+    }
+  } catch (error) {
+    throw new Error(error);
   }
-
-  return rsp.json();
 };
 
 const storeAccessoryRequest = async (info) => {
-  const rsp = await fetch('/api/dojo/dojo/accessories', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      Accept: 'application/json'
-    },
-    body: JSON.stringify(info)
-  });
+  try {
+    const response = await axios.post(
+      '/api/dojo/dojo/accessories',
+      info,
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Accept: 'application/json'
+        },
+      }
+    );
 
-  if (!rsp.ok) {
-    throw new Error(`Failed to send accessory info ${rsp.status}`);
+    if (response.status === 201) {
+      return response;
+    }
+  } catch (error) {
+    throw new Error(error);
   }
-
-  return rsp;
 };
 
 const ContainerWebSocket = ({
@@ -103,7 +113,6 @@ const ContainerWebSocket = ({
       } else if (s.startsWith('tag ')) {
         const p = `${s.substring(4)}`;
         const f = (p.startsWith('/')) ? p : `${cwd}/${p}`;
-
 
         const { id: reqid } = await storeFileRequest({
           model_id: modelId,
