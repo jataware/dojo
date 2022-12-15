@@ -19,8 +19,17 @@ const useStyles = makeStyles((theme) => ({
 
 const ToggleRole = () => {
   const classes = useStyles();
-  const [selectedRole, setSelectedRole] = useState('');
-  const { auth, setDojoAdmin } = useAuth();
+  const { auth, adminRole, setDojoAdmin } = useAuth();
+
+  const [selectedRole, setSelectedRole] = useState(() => {
+    // we can get adminRole as a 'null' string from localstorage if it isn't set
+    // so explicitly check for that here
+    if (!adminRole || adminRole === 'null') {
+      return '';
+    }
+
+    return adminRole;
+  });
 
   const handleSelectRole = (event) => {
     setSelectedRole(event.target.value);

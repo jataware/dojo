@@ -1,7 +1,9 @@
 import axios from 'axios';
 import React, {
   createContext,
+  useCallback,
   useContext,
+  useEffect,
   useState
 } from 'react';
 import { Redirect, Route } from 'react-router-dom';
@@ -25,10 +27,18 @@ export function AuthWrapper({ children }) {
 
   // This gets passed through to context children rather than the direct state setter
   // so that we can ensure that the header stays synced with the current adminRole state
-  function setDojoAdmin(role) {
+  const setDojoAdmin = useCallback((role) => {
     axios.defaults.headers.common['X-Keycloak-Admin-Dojo-Role'] = role;
     setAdminRole(role);
-  }
+    // Always set the role in localstorage so we can retrieve it after refresh
+    localStorage.setItem('adminRole', role);
+  }, []);
+
+  // Fetch the admin role from localstorage
+  useEffect(() => {
+    const savedRole = localStorage.getItem('adminRole');
+    setDojoAdmin(savedRole);
+  }, [setDojoAdmin]);
 
   function getAuth() {
     if (!auth.isAuthenticated) {
