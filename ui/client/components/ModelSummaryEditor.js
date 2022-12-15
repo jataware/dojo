@@ -1,5 +1,7 @@
 import React, { useCallback, useState } from 'react';
 
+import axios from 'axios';
+
 import { FormikProvider, useFormik } from 'formik';
 
 import Container from '@material-ui/core/Container';
@@ -70,18 +72,19 @@ export const ModelSummaryEditor = ({
     // as ModelRegionForm isn't part of our single Formik form
     parsedModelInfo.geography = parsedModel.geography;
 
-    const settings = {
-      method: 'PUT',
-      headers: {
-        Accept: 'application/json',
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(parsedModelInfo)
-    };
-
     try {
-      const resp = await fetch(`/api/dojo/models/${parsedModelInfo.id}`, settings);
-      if (resp.ok) {
+      const resp = await axios.put(
+        `/api/dojo/models/${parsedModelInfo.id}`,
+        parsedModelInfo,
+        {
+          headers: {
+            Accept: 'application/json',
+            'Content-Type': 'application/json',
+          },
+        },
+      );
+
+      if (resp.status === 201) {
         // tell SWR to update the model
         mutateModel();
         // close the FullScreenDialog
@@ -89,9 +92,8 @@ export const ModelSummaryEditor = ({
         // TODO: add a success toast
         console.log('success! model updated');
       }
-    } catch (e) {
-      console.log('error!...');
-      console.log(e);
+    } catch (error) {
+      console.error(`There was an error updating the model: ${error}`);
     }
   };
 

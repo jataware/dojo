@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 
+import axios from 'axios';
+
 import Button from '@material-ui/core/Button';
 import Step from '@material-ui/core/Step';
 import StepLabel from '@material-ui/core/StepLabel';
@@ -100,19 +102,19 @@ const createModel = async (model, history) => {
   // then add in an ID
   parsedModelInfo.id = uuidv4();
 
-  const settings = {
-    method: 'POST',
-    headers: {
-      Accept: 'application/json',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(parsedModelInfo)
-  };
-
   try {
-    console.log('submitted model:', parsedModelInfo);
-    const resp = await fetch('/api/dojo/models', settings);
-    if (resp.ok) {
+    const resp = await axios.post(
+      '/api/dojo/models',
+      parsedModelInfo,
+      {
+        headers: {
+          Accept: 'application/json',
+          'Content-Type': 'application/json',
+        },
+      },
+    );
+
+    if (resp.status === 201) {
       localStorage.removeItem('modelInfo');
       localStorage.removeItem('modelStep');
       const modelResp = await fetch(`/api/dojo/models/${parsedModelInfo.id}`);

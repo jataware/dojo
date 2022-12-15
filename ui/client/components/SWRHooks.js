@@ -1,17 +1,9 @@
 import useSWR from 'swr';
+import axios from 'axios';
 
-const fetcher = async (url) => {
-  const response = await fetch(url);
-
-  if (!response.ok) {
-    const error = new Error(`Error fetching data from ${url}`);
-    error.info = await response.json();
-    error.status = response.status;
-    throw error;
-  }
-
-  return response.json();
-};
+const fetcher = (url) => axios.get(url)
+  .then((response) => response.data)
+  .catch((error) => console.error(`There was an error loading ${url}: ${error}`));
 
 export function useModel(modelId) {
   const { data, error, mutate } = useSWR(modelId ? `/api/dojo/models/${modelId}` : null, fetcher);
