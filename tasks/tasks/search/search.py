@@ -1,3 +1,4 @@
+# from __future__ import annotations
 from abc import ABC, abstractmethod
 from src.datasearch.corpora import Corpus
 from typing import Union

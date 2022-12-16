@@ -1,8 +1,6 @@
 # simple place to collect all the corpora available to search over
-
 from abc import ABC, abstractmethod
 from typing import TypeVar, Generic, Iterator, Iterable, Callable
-
 
 T = TypeVar('T')
 class Corpus(Generic[T]):

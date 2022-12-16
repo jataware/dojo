@@ -209,7 +209,6 @@ const ViewFeatures = withStyles((theme) => ({
       fetchFeatures(setFeatures, setFeaturesLoading, setFeaturesError, featuresSearchTerm);
   }, [featuresSearchTerm]);
 
-
   useEffect(() => {
 
     if (!featuresSemanticSearchTerm) {
@@ -245,6 +244,8 @@ const ViewFeatures = withStyles((theme) => ({
       return;
     }
     setFeaturesSemanticSearchTermValue(value);
+    // TODO call updateFeaturesSemanticTerm when value search term value changes as useEffect instead?
+    // Easier to distribute the effect everywhere
     updateFeaturesSemanticSearchTerm(value);
   };
 

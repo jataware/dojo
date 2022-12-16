@@ -1,3 +1,4 @@
+# from __future__ import annotations
 from math import prod
 from .search import Search
 from src.datasearch.corpora import Corpus, T, Generic
@@ -64,7 +65,7 @@ class BertWordSearch(Search, Generic[T]):
             self.encoded_corpus = torch.cat(encoded_corpus_chunks, dim=0)
 
             #save the corpus to disk
-            torch.save(self.encoded_corpus, self.save_path)
+            # torch.save(self.encoded_corpus, self.save_path)
 
     def embed_query(self, query: str) -> torch.Tensor:
         with torch.no_grad():
