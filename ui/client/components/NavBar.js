@@ -102,8 +102,12 @@ const NavBar = () => {
 
   const handleLogout = () => {
     axios.post('/api/dojo/auth/logout')
-      // todo: add confirm logout
-      .then(() => window.location.replace('/'))
+      .then(() => {
+        // clear adminRole in case it is present
+        localStorage.removeItem('adminRole');
+        // and redirect back to the (now logged out) landing page
+        window.location.replace('/');
+      })
       .catch(() => {
         setConfirmLogoutOpen(false);
         setLogoutError(true);
@@ -163,7 +167,7 @@ const NavBar = () => {
           accept={handleLogout}
           open={confirmLogoutOpen}
           reject={() => setConfirmLogoutOpen(false)}
-          title="Are you sure you want to logout?"
+          title="Are you sure you want to log out?"
         />
       )}
       {accountPageOpen && (

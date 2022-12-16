@@ -30,8 +30,10 @@ export function AuthWrapper({ children }) {
   const setDojoAdmin = useCallback((role) => {
     axios.defaults.headers.common['X-Keycloak-Admin-Dojo-Role'] = role;
     setAdminRole(role);
-    // Always set the role in localstorage so we can retrieve it after refresh
-    localStorage.setItem('adminRole', role);
+    // Set the role in localstorage so we can retrieve it after refresh
+    if (role) {
+      localStorage.setItem('adminRole', role);
+    }
   }, []);
 
   // Fetch the admin role from localstorage
@@ -81,36 +83,27 @@ export function useAuth() {
 }
 
 export function ProtectedRoute({ children, ...props }) {
+  const { auth } = useAuth();
 
   if (!process.env.AUTH_ENABLED) {
-    return <Route {...props} render={
-      ({ location }) => {
-        return children;
-      }}
-    />
+    return (
+      <Route {...props} render={() => children} />
+    );
   }
 
-  const { auth } = useAuth();
   if (auth.isAuthenticated) {
     return (
-      <Route
-        {...props}
-        render={
-          ({ location }) => {
-            return children;
-          }
-        }
-      />
+      <Route {...props} render={() => children} />
     );
-  } else {
-    axios.post(authStatusEndpoint, {}).then((response) => {
-        if (!response?.data?.authenticated && response?.data?.auth_url) {
-            window.location = response.data.auth_url;
-            return <Redirect to={response.data.auth_url}/>
-        }
-    });
-    return <h1>Checking Authentication</h1>
   }
+
+  axios.post(authStatusEndpoint, {}).then((response) => {
+    if (!response?.data?.authenticated && response?.data?.auth_url) {
+      window.location = response.data.auth_url;
+      return <Redirect to={response.data.auth_url} />;
+    }
+  });
+  return <h1>Checking Authentication</h1>
 }
 
 export function AuthRedirectHandler({ children }) {
@@ -119,6 +112,10 @@ export function AuthRedirectHandler({ children }) {
   const payload = { auth_code: params.get('code') };
 
   axios.post(authStatusEndpoint, payload).then((response) => {
+    // clear any previously saved admin role on login if it is still around
+    // this won't cause any problems if there are no admin roles
+    localStorage.removeItem('adminRole');
+
     setAuth((prevAuth) => {
       const newAuth = {
         ...prevAuth,
