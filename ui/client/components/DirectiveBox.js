@@ -34,12 +34,16 @@ const DirectiveBox = ({
   const classes = useStyles();
   const theme = useTheme();
 
-  const { directive, directiveLoading } = useDirective(modelId);
+  const { directive, directiveError, directiveLoading } = useDirective(modelId);
 
   if (!modelId) return null;
 
   if (directiveLoading) {
-    return <Typography variant="body2" align="center">Loading Execution Directive</Typography>;
+    return <Typography variant="subtitle1" align="center">Loading Execution Directive</Typography>;
+  }
+
+  if (directiveError) {
+    return <Typography variant="subtitle1" align="center">No Directive Found</Typography>;
   }
 
   return (

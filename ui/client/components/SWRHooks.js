@@ -3,7 +3,7 @@ import axios from 'axios';
 
 const fetcher = (url) => axios.get(url)
   .then((response) => response.data)
-  .catch((error) => console.error(`There was an error loading ${url}: ${error}`));
+  .catch((error) => throw new Error(error));
 
 export function useModel(modelId) {
   const { data, error, mutate } = useSWR(modelId ? `/api/dojo/models/${modelId}` : null, fetcher);
