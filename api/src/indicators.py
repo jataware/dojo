@@ -48,15 +48,27 @@ from validation.IndicatorSchema import (
 from functools import reduce
 import os
 
+from rq import Worker, Queue
+from rq.job import Job
+from redis import Redis
+from rq.exceptions import NoSuchJobError
+from rq import job
+
 from src.datasearch.corpora import Corpus
-from src.datasearch.indicators import Indicators
 from src.search.bert_search import BertSentenceSearch
 
+# from src.data import job # , get_rq_job_results
 
 router = APIRouter()
 
 es = Elasticsearch([settings.ELASTICSEARCH_URL], port=settings.ELASTICSEARCH_PORT)
 
+# REDIS CONNECTION AND QUEUE OBJECTS
+# redis = Redis(
+#     os.environ.get("REDIS_HOST", "redis.dojo-stack"),
+#     os.environ.get("REDIS_PORT", "6379"),
+# )
+# q = Queue(connection=redis, default_timeout=-1)
 
 # For created_at times in epoch milliseconds
 def current_milli_time():
@@ -71,14 +83,8 @@ def current_milli_time():
 corpus = Corpus.from_list(["a"])
 engine = BertSentenceSearch(corpus, cuda=False)
 
-# corpus = Indicators.set_format_corpus([indicatorPayload])
-# engine = BertSentenceSearch(corpus, cuda=False)
-# index for the only one indicator, but this is also an array
-# of embeddings per output
-# outputEmbeddings = engine.embeddings[0]
 
 
-# TODO is this going to take more than x ms? rqworker discussion if so
 def calcOutputEmbeddings(output):
     """
     Embeddings are created from a subset of the output properties:
@@ -118,7 +124,7 @@ def saveAllOutputEmbeddings(indicatorPayload, indicator_id):
         print(f"feature id: {feature_id}")
         print(f"feature as dict: {feature}")
 
-        es.index(index="features-preview", body=feature, id=feature_id)
+        result = es.index(index="features-preview", body=feature, id=feature_id)
 
 
 @router.post("/indicators")
@@ -142,6 +148,22 @@ def create_indicator(payload: IndicatorSchema.IndicatorMetadataSchema):
     # Saves all outputs, as features in a new index, with LLM embeddings
     if payload.outputs:
         print("=== create: body contains 'outputs'")
+        indicator_dict = json.loads(payload.json())
+
+
+        # TODO create RQ job instead
+        # job_string = "embeddings_processors.calculate_store_embeddings"
+        # job_id = f"{indicator_id}_{job_string}"
+
+        # context = {
+        #     "indicator_id": indicator_id,
+        #     "full_indicator": indicator_dict
+        # }
+
+        # job = q.enqueue_call(
+        #     func=job_string, args=[context], kwargs={}, job_id=job_id
+        # )
+
         saveAllOutputEmbeddings(payload, indicator_id)
 
     return Response(
@@ -234,7 +256,7 @@ def semantic_search_features(query: str, scroll_id: Optional[str]=None):
     }
 
     results = es.search(index="features-preview", body=features_query)
-    results = results["hits"]["hits"]
+    results = list(map(lambda x: x["_source"], results["hits"]["hits"]))
 
     return {
         "total": None,  # TODO, can be done with top-level index

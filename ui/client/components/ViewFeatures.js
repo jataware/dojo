@@ -75,6 +75,12 @@ const featureColumns = [
     }
   ];
 
+const semanticSearchFeatures = async(query) => {
+  let url = `/api/dojo/features/search?query=${query}`;
+  const response = await axios.get(url);
+  return response.data;
+};
+
 /**
  * Adapted from ViewModels.js::fetchModels
  */
@@ -187,8 +193,13 @@ const ViewFeatures = withStyles((theme) => ({
 
   const [featuresSearchTerm, setFeaturesSearchTerm] = useState('');
   const [featuresSearchTermValue, setFeaturesSearchTermValue] = useState('');
-
   const updateFeaturesSearchTerm = useCallback(debounce(setFeaturesSearchTerm, 500), []);
+
+  const [featuresSemanticSearchTerm, setFeaturesSemanticSearchTerm] = useState('');
+  const [featuresSemanticSearchTermValue, setFeaturesSemanticSearchTermValue] = useState('');
+  const updateFeaturesSemanticSearchTerm = useCallback(debounce(setFeaturesSemanticSearchTerm, 500), []);
+
+  const [semanticResults, setSemanticResults] = useState(null);
 
   const [features, setFeatures] = useState([]);
   const [featuresError, setFeaturesError] = useState(false);
@@ -198,9 +209,43 @@ const ViewFeatures = withStyles((theme) => ({
       fetchFeatures(setFeatures, setFeaturesLoading, setFeaturesError, featuresSearchTerm);
   }, [featuresSearchTerm]);
 
+
+  useEffect(() => {
+
+    if (!featuresSemanticSearchTerm) {
+      setSemanticResults(null);
+      return;
+    }
+
+    setFeaturesLoading(true);
+    semanticSearchFeatures(featuresSemanticSearchTerm)
+      .then((newFeatures) => {
+        setSemanticResults(newFeatures.results);
+      })
+      .finally(() => {
+        setFeaturesLoading(false);
+      });
+
+  }, [featuresSemanticSearchTerm]);
+
   const clearFeaturesSearch = () => {
     setFeaturesSearchTerm('');
     setFeaturesSearchTermValue('');
+  };
+
+  const clearFeaturesSemanticSearch = () => {
+    setFeaturesSemanticSearchTerm('');
+    setFeaturesSemanticSearchTermValue('');
+  };
+
+  const handleFeatureSemanticSearchChange = ({ target: { value } }) => {
+    // if we have no search term, clear everything
+    if (value.length === 0) {
+      clearFeaturesSemanticSearch();
+      return;
+    }
+    setFeaturesSemanticSearchTermValue(value);
+    updateFeaturesSemanticSearchTerm(value);
   };
 
   const handleFeatureSearchChange = ({ target: { value } }) => {
@@ -238,6 +283,26 @@ const ViewFeatures = withStyles((theme) => ({
             )
           }}
         />
+        &nbsp;
+        <TextField
+          style={{
+            width: '400px',
+            marginRight: 16,
+          }}
+          label="Enter a query sentence to search"
+          variant="outlined"
+          value={featuresSemanticSearchTermValue}
+          onChange={handleFeatureSemanticSearchChange}
+          role="searchbox"
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton onClick={clearFeaturesSemanticSearch}><CancelIcon /></IconButton>
+              </InputAdornment>
+            )
+          }}
+        />
+
       </div>
       <Alert
         variant="outlined"
@@ -255,7 +320,7 @@ const ViewFeatures = withStyles((theme) => ({
         loading={featuresLoading}
         getRowId={(row) => `${row.owner_dataset.id}-${row.name}`}
         columns={featureColumns}
-        rows={features}
+        rows={semanticResults || features}
       />
     </div>
   );
