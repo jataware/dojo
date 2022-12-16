@@ -1,15 +1,15 @@
 # simple place to collect all the corpora available to search over
 from abc import ABC, abstractmethod
-from typing import TypeVar, Generic, Iterator, Iterable, Callable
+from typing import TypeVar, Generic, Iterator, Iterable, Callable, Dict, Tuple, List
 
 T = TypeVar('T')
 class Corpus(Generic[T]):
-    def __init__(self, docs: dict[T, str]):
-        assert isinstance(docs, dict), "corpus must be a dict[T, str]"
+    def __init__(self, docs: Dict[T, str]):
+        assert isinstance(docs, dict), "corpus must be a Dict[T, str]"
         assert all(isinstance(doc, str) for doc in docs.values()), 'corpus may only contain strings'
         self.keyed_corpus = docs
 
-    def get_keyed_corpus(self) -> dict[T, str]:
+    def get_keyed_corpus(self) -> Dict[T, str]:
         return self.keyed_corpus
 
     def __getitem__(self, key: T) -> str:
@@ -27,19 +27,19 @@ class Corpus(Generic[T]):
     def values(self) -> Iterable[str]:
         return self.keyed_corpus.values()
 
-    def items(self) -> Iterable[tuple[T, str]]:
+    def items(self) -> Iterable[Tuple[T, str]]:
         return self.keyed_corpus.items()
 
     @staticmethod
-    def from_list(docs: list[str]) -> 'Corpus[int]':
+    def from_list(docs: List[str]) -> 'Corpus[int]':
         return Corpus({i: doc for i, doc in enumerate(docs)})
 
     @staticmethod
-    def from_dict(docs: dict[T, str]) -> 'Corpus[T]':
+    def from_dict(docs: Dict[T, str]) -> 'Corpus[T]':
         return Corpus(docs)
 
     @staticmethod
-    def chunk(corpus: 'Corpus[T]', chunker: Callable[[str], list[str]]) -> 'Corpus[tuple[T, int]]':
+    def chunk(corpus: 'Corpus[T]', chunker: Callable[[str], List[str]]) -> 'Corpus[Tuple[T, int]]':
         """chunk a corpus into smaller documents"""
         new_docs = {}
         for key, doc in corpus.items():

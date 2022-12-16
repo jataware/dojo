@@ -1,5 +1,6 @@
 import json
 from .corpora import Corpus, CorpusLoader
+from typing import Dict, Tuple, List
 
 
 class Indicators(CorpusLoader):
@@ -7,7 +8,7 @@ class Indicators(CorpusLoader):
     Description for Indicators loading a corpus for neural semantic search
     """
     @staticmethod
-    def get_corpus() -> Corpus[tuple[str,str]]:
+    def get_corpus() -> Corpus[Tuple[str,str]]:
         with open('data/indicators.jsonl') as f:
             lines = f.readlines()
             indicators = [json.loads(line) for line in lines]

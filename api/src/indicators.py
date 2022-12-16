@@ -48,8 +48,7 @@ from validation.IndicatorSchema import (
 from functools import reduce
 import os
 
-from rq import Worker, Queue
-from rq.job import Job
+from rq import Queue
 from redis import Redis
 from rq.exceptions import NoSuchJobError
 from rq import job
@@ -57,74 +56,44 @@ from rq import job
 from src.datasearch.corpora import Corpus
 from src.search.bert_search import BertSentenceSearch
 
-# from src.data import job # , get_rq_job_results
-
 router = APIRouter()
 
 es = Elasticsearch([settings.ELASTICSEARCH_URL], port=settings.ELASTICSEARCH_PORT)
 
 # REDIS CONNECTION AND QUEUE OBJECTS
-# redis = Redis(
-#     os.environ.get("REDIS_HOST", "redis.dojo-stack"),
-#     os.environ.get("REDIS_PORT", "6379"),
-# )
-# q = Queue(connection=redis, default_timeout=-1)
+redis = Redis(
+    os.environ.get("REDIS_HOST", "redis.dojo-stack"),
+    os.environ.get("REDIS_PORT", "6379"),
+)
+q = Queue(connection=redis, default_timeout=-1)
 
 # For created_at times in epoch milliseconds
 def current_milli_time():
     return round(time.time() * 1000)
 
-# TODO function that gets outputs and calcs embeddings for each, then inserts/updates
-# them in the index. indicator-id + indicator-version + output-name
-
-# Start your engines
-
-# TODO if this works, an engine management where if engine crashes it can be restarted?
+# Initialize LLM Semantic Search Engine. Requires a corpus on instantiation
+# for now. We'll refactor the embedder engine once out of PoC stage.
 corpus = Corpus.from_list(["a"])
 engine = BertSentenceSearch(corpus, cuda=False)
 
 
-
-def calcOutputEmbeddings(output):
+def enqueue_indicator_feature(indicator_id, indicator_dict):
     """
-    Embeddings are created from a subset of the output properties:
-    - name, display_name, description, unit, unit_description.
+    Adds indiciator to queue to process by embeddings_process, which
+    at this time creates and attaches LLM embeddings to its features (outputs)
     """
-    description = \
-        f"""name: {output['name']};
-        display name: {output['display_name']};
-        description: {output['description']};
-        unit: {output['unit']};
-        unit description: {output['unit_description']};"""
+    job_string = "embeddings_processors.calculate_store_embeddings"
+    job_id = f"{indicator_id}_{job_string}"
 
-    return engine.embed_query(description).tolist()
+    context = {
+        "indicator_id": indicator_id,
+        "full_indicator": indicator_dict
+    }
 
+    job = q.enqueue_call(
+        func=job_string, args=[context], kwargs={}, job_id=job_id
+    )
 
-def saveAllOutputEmbeddings(indicatorPayload, indicator_id):
-    """
-    Saves all outputs within an indicator to elasticsearch,
-    including the LLM embeddings to use in search.
-    """
-    indicatorDictionary = json.loads(indicatorPayload.json())
-
-    for index, output in enumerate(indicatorDictionary["outputs"]):
-        print(f"=== Transforming outputs # {index + 1}")
-
-        feature = {
-            **output,
-            "embeddings": calcOutputEmbeddings(output),
-            "owner_dataset": {
-                "id": indicator_id,
-                "name": indicatorDictionary["name"]
-            }
-        }
-
-        feature_id = f"{indicator_id}-{output['name']}"
-
-        print(f"feature id: {feature_id}")
-        print(f"feature as dict: {feature}")
-
-        result = es.index(index="features-preview", body=feature, id=feature_id)
 
 
 @router.post("/indicators")
@@ -133,7 +102,7 @@ def create_indicator(payload: IndicatorSchema.IndicatorMetadataSchema):
     payload.id = indicator_id
     payload.created_at = current_milli_time()
     body = payload.json()
-    payload.published = False  # TODO ask about this
+    payload.published = False
 
     plugin_action("before_create", data=body, type="indicator")
     es.index(index="indicators", body=body, id=indicator_id)
@@ -147,24 +116,7 @@ def create_indicator(payload: IndicatorSchema.IndicatorMetadataSchema):
 
     # Saves all outputs, as features in a new index, with LLM embeddings
     if payload.outputs:
-        print("=== create: body contains 'outputs'")
-        indicator_dict = json.loads(payload.json())
-
-
-        # TODO create RQ job instead
-        # job_string = "embeddings_processors.calculate_store_embeddings"
-        # job_id = f"{indicator_id}_{job_string}"
-
-        # context = {
-        #     "indicator_id": indicator_id,
-        #     "full_indicator": indicator_dict
-        # }
-
-        # job = q.enqueue_call(
-        #     func=job_string, args=[context], kwargs={}, job_id=job_id
-        # )
-
-        saveAllOutputEmbeddings(payload, indicator_id)
+        enqueue_indicator_feature(indicator_id, json.loads(payload.json()))
 
     return Response(
         status_code=status.HTTP_201_CREATED,
@@ -187,8 +139,7 @@ def update_indicator(payload: IndicatorSchema.IndicatorMetadataSchema):
     plugin_action("post_update", data=body, type="indicator")
 
     if payload.outputs:
-        print("=== update: body contains 'outputs'")
-        saveAllOutputEmbeddings(payload, indicator_id)
+        enqueue_indicator_feature(indicator_id, json.loads(payload.json()))
 
     return Response(
         status_code=status.HTTP_200_OK,
@@ -206,8 +157,7 @@ def patch_indicator(
     es.update(index="indicators", body={"doc": body}, id=indicator_id)
 
     if payload.outputs:
-        print("=== update: body contains 'outputs'")
-        saveAllOutputEmbeddings(payload, indicator_id)
+        enqueue_indicator_feature(indicator_id, json.loads(payload.json()))
 
     return Response(
         status_code=status.HTTP_200_OK,

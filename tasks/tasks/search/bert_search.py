@@ -1,8 +1,8 @@
 # from __future__ import annotations
 from math import prod
 from .search import Search
-from src.datasearch.corpora import Corpus, T, Generic
-from typing import Union
+from datasearch.corpora import Corpus, T, Generic
+from typing import TypeVar, Generic, Iterator, Iterable, Callable, Dict, Tuple, List, Union
 from transformers import BertTokenizer, BertModel, logging # type: ignore[import]
 from sentence_transformers import SentenceTransformer
 import torch
@@ -76,7 +76,7 @@ class BertWordSearch(Search, Generic[T]):
 
     
     
-    def search(self, query:str, n:Union[int,None]=None) -> list[tuple[T, float]]:
+    def search(self, query:str, n:Union[int,None]=None) -> List[Tuple[T, float]]:
         with torch.no_grad():
             encoded_query = self.embed_query(query) # tokenize and encode with BERT
 
@@ -88,7 +88,7 @@ class BertWordSearch(Search, Generic[T]):
             # idf = torch.max(scores, dim=2).values.sum(dim=0)
             
             #chunked version
-            tf_list: list[torch.Tensor] = [] 
+            tf_list: List[torch.Tensor] = [] 
             idf = torch.zeros(encoded_query.shape[0], device=self.device)
             
             #chunk size scales based on the number of tokens in the query
@@ -160,7 +160,7 @@ class BertSentenceSearch(Search, Generic[T]):
         with torch.no_grad():
             return self.model.encode(query, show_progress_bar=False, device=self.device, convert_to_tensor=True)
 
-    def search(self, query:str, n:Union[int,None]=None) -> list[tuple[T, float]]:
+    def search(self, query:str, n:Union[int,None]=None) -> List[Tuple[T, float]]:
         with torch.no_grad():
             encoded_query = self.embed_query(query)
             scores = torch.cosine_similarity(encoded_query[None,:], self.embeddings, dim=1)
