@@ -104,7 +104,7 @@ const NavBar = () => {
     axios.post('/api/dojo/auth/logout')
       .then(() => {
         // clear adminRole in case it is present
-        localStorage.removeItem('adminRole');
+        sessionStorage.removeItem('adminRole');
         // and redirect back to the (now logged out) landing page
         window.location.replace('/');
       })

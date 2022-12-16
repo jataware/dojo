@@ -30,15 +30,16 @@ export function AuthWrapper({ children }) {
   const setDojoAdmin = useCallback((role) => {
     axios.defaults.headers.common['X-Keycloak-Admin-Dojo-Role'] = role;
     setAdminRole(role);
-    // Set the role in localstorage so we can retrieve it after refresh
+    // Set the role in sessionStorage so we can retrieve it after refresh
+    // Session rather than localstorage so admins can use multiple roles in different tabs
     if (role) {
-      localStorage.setItem('adminRole', role);
+      sessionStorage.setItem('adminRole', role);
     }
   }, []);
 
-  // Fetch the admin role from localstorage
+  // Fetch the admin role from sessionStorage
   useEffect(() => {
-    const savedRole = localStorage.getItem('adminRole');
+    const savedRole = sessionStorage.getItem('adminRole');
     setDojoAdmin(savedRole);
   }, [setDojoAdmin]);
 
@@ -99,6 +100,11 @@ export function ProtectedRoute({ children, ...props }) {
 
   axios.post(authStatusEndpoint, {}).then((response) => {
     if (!response?.data?.authenticated && response?.data?.auth_url) {
+      // build up the path with all its modifiers
+      const redirect = props.location.pathname + props.location.search + props.location.hash;
+      // and store it so we can redirect after login
+      sessionStorage.setItem('redirectLocation', redirect);
+
       window.location = response.data.auth_url;
       return <Redirect to={response.data.auth_url} />;
     }
@@ -114,8 +120,17 @@ export function AuthRedirectHandler({ children }) {
   axios.post(authStatusEndpoint, payload).then((response) => {
     // clear any previously saved admin role on login if it is still around
     // this won't cause any problems if there are no admin roles
-    localStorage.removeItem('adminRole');
+    sessionStorage.removeItem('adminRole');
 
+    // pull the redirect location out of memory
+    let redirect = sessionStorage.getItem('redirectLocation');
+    if (redirect) {
+      // if it was there, clear it
+      sessionStorage.removeItem('redirectLocation');
+    } else {
+      // if it wasn't, set redirect to point at the landing page
+      redirect = '/';
+    }
     setAuth((prevAuth) => {
       const newAuth = {
         ...prevAuth,
@@ -127,7 +142,7 @@ export function AuthRedirectHandler({ children }) {
       return newAuth;
     });
 
-    setTimeout(() => { document.location = '/'; }, 30);
+    setTimeout(() => { document.location = redirect; }, 30);
   });
 
   return (
