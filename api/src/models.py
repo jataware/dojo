@@ -190,9 +190,11 @@ def search_models(
 
 
 @router.get("/models/{model_id}", response_model=ModelSchema.ModelMetadataSchema)
-def get_model(model_id: str) -> ModelSchema.ModelMetadataSchema:
+def get_model(request: Request, model_id: str) -> ModelSchema.ModelMetadataSchema:
     try:
         model = es.get(index="models", id=model_id)["_source"]
+        if model["dojo_organization"] != request.state.dojo_role:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     except:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     return model
@@ -230,7 +232,7 @@ def register_model(model_id: str):
 
 
 @router.get("/models/version/{model_id}")
-def version_model(model_id : str, exclude_files: bool = False):
+def version_model(request: Request, model_id : str, exclude_files: bool = False):
     """
     This endpoint creates a new version of a model. It is primarily used as part of the model
     editing workflow. When a modeler wishes to edit their model, a new version is created
@@ -282,9 +284,9 @@ def version_model(model_id : str, exclude_files: bool = False):
         else:
             # Make copies of related items
             outputfile_uuid_mapping = copy_outputfiles(model_id, new_id)
-            copy_configs(model_id, new_id)
-            copy_directive(model_id, new_id)
-            copy_accessory_files(model_id, new_id)
+            copy_configs(request, model_id, new_id)
+            copy_directive(request, model_id, new_id)
+            copy_accessory_files(request, model_id, new_id)
 
             # Update the created model with the changes related to copying
             if new_model.outputs:
@@ -344,14 +346,14 @@ def model_versions(model_id : str) -> ModelSchema.VersionSchema:
 
 
 @router.post("/models/{model_id}/publish")
-def publish_model(model_id: str, publish_data: ModelSchema.PublishSchema):
+def publish_model(request: Request, model_id: str, publish_data: ModelSchema.PublishSchema):
     """
     This endpoint finalizes the model, setting the state to published and saving a commit message.
     A model should only be able to be edited while is_published is set to false.
     Once a model is published, any changes should be done via a new version.
     """
     # Update the model, setting is_published to True and saving the commit message.
-    model = get_model(model_id)
+    model = get_model(request, model_id)
     if model.get("is_published", False):
         return Response(
             status_code=status.HTTP_403_FORBIDDEN,

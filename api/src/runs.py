@@ -153,8 +153,8 @@ def replace_along_params(string, new_values, available_parameters):
     return string
 
 @router.post("/runs")
-def create_run(run: RunSchema.ModelRunSchema):
-    model = get_model(run.model_id)
+def create_run(request: Request, run: RunSchema.ModelRunSchema):
+    model = get_model(request, run.model_id)
 
     # get parameters
     params = {p.name: p.value for p in run.parameters}

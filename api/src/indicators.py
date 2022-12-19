@@ -203,9 +203,11 @@ def search_indicators(
 @router.get(
     "/indicators/{indicator_id}", response_model=IndicatorSchema.IndicatorMetadataSchema
 )
-def get_indicators(indicator_id: str) -> IndicatorSchema.IndicatorMetadataSchema:
+def get_indicators(request: Request, indicator_id: str) -> IndicatorSchema.IndicatorMetadataSchema:
     try:
         indicator = es.get(index="indicators", id=indicator_id)["_source"]
+        if indicator["dojo_organization"] != request.state.dojo_role:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     except Exception as e:
         logger.exception(e)
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
@@ -410,8 +412,8 @@ def upload_file(
 
 
 @router.get("/indicators/{indicator_id}/verbose")
-def get_all_indicator_info(indicator_id: str):
-    indicator = get_indicators(indicator_id)
+def get_all_indicator_info(request: Request, indicator_id: str):
+    indicator = get_indicators(request, indicator_id)
     annotations = get_annotations(indicator_id)
 
     verbose_return_object = {"indicators": indicator, "annotations": annotations}

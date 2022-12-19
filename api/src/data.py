@@ -13,7 +13,7 @@ import pandas as pd
 from sqlite3 import connect
 
 from requests import put
-from fastapi import APIRouter, Response, File, UploadFile, status
+from fastapi import APIRouter, Response, Request, File, UploadFile, status
 from elasticsearch import Elasticsearch
 from rq import Worker, Queue
 from rq.job import Job
@@ -43,13 +43,13 @@ q = Queue(connection=redis, default_timeout=-1)
 s3 = boto3.resource("s3")
 
 
-def get_context(uuid):
+def get_context(request, uuid):
     try:
         annotations = get_annotations(uuid)
     except:
         annotations = {}
     try:
-        dataset = get_indicators(uuid)
+        dataset = get_indicators(request, uuid)
     except:
         dataset = {}
 
@@ -126,7 +126,7 @@ def cancel_job(job_id):
 
 # Last to not interfere with other routes
 @router.post("/job/{uuid}/{job_string}")
-def job(uuid: str, job_string: str, options: Optional[Dict[Any, Any]] = None):
+def job(request: Request, uuid: str, job_string: str, options: Optional[Dict[Any, Any]] = None):
 
     if options is None:
         options = {}
@@ -146,7 +146,7 @@ def job(uuid: str, job_string: str, options: Optional[Dict[Any, Any]] = None):
     if not job or force_restart:
         try:
             if not context:
-                context = get_context(uuid=uuid)
+                context = get_context(request, uuid=uuid)
         except Exception as e:
             logging.error(e)
         job = q.enqueue_call(
