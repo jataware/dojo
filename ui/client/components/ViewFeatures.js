@@ -27,53 +27,17 @@ const expandableCell = ({ value, colDef }) => (
     />
 );
 
-const featureColumns = [
-    {
-      field: 'name',
-      headerName: 'Name',
-      minWidth: 200,
-      flex: 1
-    },
-    {
-      field: 'display_name',
-      headerName: 'Display Name',
-      renderCell: expandableCell,
-      minWidth: 200,
-      flex: 1
-    },
-    {
-      field: 'description',
-      headerName: 'Description',
-      renderCell: expandableCell,
-      minWidth: 200,
-      flex: 1
-    },
-    {
-      field: 'owner_dataset_name',
-      headerName: 'Dataset Name',
-      valueGetter: (cell) => cell.row.owner_dataset.name,
-      minWidth: 200,
-      flex: 1
-    },
-    {
-      field: 'link',
-      headerName: ' ',
-      sortable: false,
-      disableColumnMenu: true,
-      renderCell: ({ row }) => (
-        <Button
-          component="a"
-          href={`/dataset_summary?dataset=${row.owner_dataset.id}`}
-          target="_blank"
-          variant="outlined"
-        >
-          Parent Dataset
-          <OpenInNewIcon />
-        </Button>
-      ),
-      minWidth: 210,
-    }
-  ];
+export const ConfidenceBar = withStyles((theme) => ({
+  root: {
+    height: 15,
+  },
+  colorPrimary: {
+    backgroundColor: theme.palette.error.main,
+  },
+  bar: {
+    backgroundColor: '#00cd00',
+  },
+}))(LinearProgress);
 
 const semanticSearchFeatures = async(query) => {
   let url = `/api/dojo/features/search?query=${query}`;
@@ -205,6 +169,76 @@ const ViewFeatures = withStyles((theme) => ({
   const [featuresError, setFeaturesError] = useState(false);
   const [featuresLoading, setFeaturesLoading] = useState(false); // Loading unused for now.
 
+  const maxScore = React.useRef(0);
+
+  const featureColumns = [
+    {
+      field: 'name',
+      headerName: 'Name',
+      minWidth: 200,
+      flex: 1
+    },
+    {
+      field: 'display_name',
+      headerName: 'Display Name',
+      renderCell: expandableCell,
+      minWidth: 200,
+      flex: 1
+    },
+    {
+      field: 'description',
+      headerName: 'Description',
+      renderCell: expandableCell,
+      minWidth: 200,
+      flex: 1
+    },
+    {
+      field: '_score',
+      headerName: 'Match %',
+      renderCell: (row) => {
+
+        const { value } = row;
+
+        const shouldDisplay = value && maxScore.current > 1;
+        const over = shouldDisplay && ((value - 1) / (maxScore.current - 1)) * 100;
+
+        return shouldDisplay ? (
+          <div style={{width: "100%"}}>
+            <ConfidenceBar value={over} variant="determinate" />
+          </div>
+        ) : null;
+
+      },
+      disableColumnMenu: true,
+      width: 130,
+    },
+    {
+      field: 'owner_dataset_name',
+      headerName: 'Dataset Name',
+      valueGetter: (cell) => cell.row.owner_dataset.name,
+      minWidth: 200,
+      flex: 1
+    },
+    {
+      field: 'link',
+      headerName: ' ',
+      sortable: false,
+      disableColumnMenu: true,
+      renderCell: ({ row }) => (
+        <Button
+          component="a"
+          href={`/dataset_summary?dataset=${row.owner_dataset.id}`}
+          target="_blank"
+          variant="outlined"
+        >
+          Parent Dataset
+          <OpenInNewIcon />
+        </Button>
+      ),
+      minWidth: 210,
+    }
+  ];
+
   useEffect(() => {
       fetchFeatures(setFeatures, setFeaturesLoading, setFeaturesError, featuresSearchTerm);
   }, [featuresSearchTerm]);
@@ -219,6 +253,8 @@ const ViewFeatures = withStyles((theme) => ({
     setFeaturesLoading(true);
     semanticSearchFeatures(featuresSemanticSearchTerm)
       .then((newFeatures) => {
+        console.log("new max score: ", newFeatures.max_score);
+        maxScore.current = newFeatures.max_score;
         setSemanticResults(newFeatures.results);
       })
       .finally(() => {

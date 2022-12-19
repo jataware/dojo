@@ -165,7 +165,8 @@ def patch_indicator(
         content=f"Updated indicator with id = {indicator_id}",
     )
 
-
+# TODO if we reuse the search schema response model, we need to allow extra for
+# semantic search max_score and other properties
 @router.get(
 "/features/search" # , response_model=IndicatorSchema.FeaturesSearchSchema
 )
@@ -177,7 +178,7 @@ def semantic_search_features(query: str, scroll_id: Optional[str]=None):
     'number of people who have been vaccinated'
     """
 
-    # TODO scroll id later
+    size = 20
 
     query_embedding = engine.embed_query(query)
 
@@ -193,26 +194,32 @@ def semantic_search_features(query: str, scroll_id: Optional[str]=None):
                 }
             }
         },
-        "_source": [
-            "unit",
-            "is_primary",
-            "name",
-            "description",
-            "unit_description",
-            "display_name",
-            "type",
-            "owner_dataset"
-        ]
+        "_source": {
+            "excludes" : [ "embeddings" ]
+        }
     }
 
-    results = es.search(index="features-preview", body=features_query)
-    results = list(map(lambda x: x["_source"], results["hits"]["hits"]))
+    results = es.search(index="features", body=features_query, scroll="2m", size=size)
+
+    if len(results["hits"]["hits"]) < size:
+        scroll_id = None
+    else:
+        scroll_id = results.get("_scroll_id", None)
+
+    max_score = results["hits"]["max_score"]
+
+    results["hits"]["hits"] # | ["_source"] ["_score"] ;; add score property to object
+
+    def formatOneResult(r):
+        r["_source"]["_score"] = r["_score"]
+        return r["_source"]
 
     return {
-        "total": None,  # TODO, can be done with top-level index
-        "items_in_page": len(results), # TODO?
-        # "scroll_id": scroll_id,  # TODO
-        "results": results  # array of features
+        "hits": results["hits"]["total"]["value"],
+        "items_in_page": len(results["hits"]["hits"]),
+        "scroll_id": scroll_id,
+        "max_score": max_score,
+        "results": [formatOneResult(i) for i in results["hits"]["hits"]],
     }
 
 
