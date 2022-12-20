@@ -206,14 +206,19 @@ def delete_model(model_id: str) -> None:
     except:
         pass
 
+
 @router.post("/models/register/{model_id}")
-def register_model(model_id: str):
+def register_model(request: Request, model_id: str):
     """
     This endpoint finalizes the registration of a model by notifying
     Uncharted and submitting to them a default run for the model.
     """
     logger.info("Updating model with latest ontologies.")
     model = es.get(index="models", id=model_id)["_source"]
+
+    if model["dojo_organization"] != request.state.dojo_role:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
     model_obj = ModelSchema.ModelMetadataSchema.parse_obj(model)
     update_model(model_id=model_id, payload=model_obj)
 

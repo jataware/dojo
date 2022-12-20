@@ -215,10 +215,15 @@ def get_indicators(request: Request, indicator_id: str) -> IndicatorSchema.Indic
 
 
 @router.put("/indicators/{indicator_id}/publish")
-def publish_indicator(indicator_id: str):
+def publish_indicator(request: Request, indicator_id: str):
     try:
         # Update indicator model with ontologies from UAZ
         indicator = es.get(index="indicators", id=indicator_id)["_source"]
+
+        # If the user doesn't have the correct role, return a 404
+        if indicator["dojo_organization"] != request.state.dojo_role:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
         indicator["published"] = True
         data = get_ontologies(indicator, type="indicator")
         logger.info(f"Sent indicator to UAZ")
@@ -241,9 +246,13 @@ def publish_indicator(indicator_id: str):
 
 
 @router.put("/indicators/{indicator_id}/deprecate")
-def deprecate_indicator(indicator_id: str):
+def deprecate_indicator(request: Request, indicator_id: str):
     try:
         indicator = es.get(index="indicators", id=indicator_id)["_source"]
+
+        if indicator["dojo_organization"] != request.state.dojo_role:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
         indicator["deprecated"] = True
         es.index(index="indicators", id=indicator_id, body=indicator)
 

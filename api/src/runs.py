@@ -64,13 +64,21 @@ def search_runs(request: Request, model_name: str = Query(None), model_id: str =
     know ahead of time what all of the possible key/values are that people might search for in
     the run's parameters, we're accessing the raw FastAPI/Starlette request object's query args.
     """
+    dojo_role = request.state.dojo_role
 
     if model_name:
         q = {"query": {"term": {"model_name.keyword": {"value": model_name, "boost": 1.0}}}}
     elif model_id:
         q = {"query": {"term": {"model_id.keyword": {"value": model_id, "boost": 1.0}}}}
     else:  # no model name specified
-        q = {"query": {"match_all": {}}}
+        q = {
+            "query": {
+                "bool": {
+                    "must": [{"match_all": {}}],
+                    "must": [{"match_phrase": {"dojo_organization": dojo_role}}]
+                }
+            },
+        }
 
     count = es.count(index='runs', body=q)
 
@@ -132,9 +140,11 @@ def search_runs(request: Request, model_name: str = Query(None), model_id: str =
 
 
 @router.get("/runs/{run_id}")
-def get_run(run_id: str) -> RunSchema.ModelRunSchema:
+def get_run(request: Request, run_id: str) -> RunSchema.ModelRunSchema:
     try:
         run = es.get(index="runs", id=run_id)["_source"]
+        if run["dojo_organization"] != request.state.dojo_role:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     except:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     return run
@@ -298,6 +308,7 @@ def create_run(request: Request, run: RunSchema.ModelRunSchema):
     logging.info(f"Response from DMC: {json.dumps(response.json(), indent=4)}")
 
     run.created_at = current_milli_time()
+    run.dojo_organization = request.state.dojo_role
     if hasattr(run, 'attributes'):
         run.attributes["status"] = "Running"
     else:
@@ -374,8 +385,8 @@ def update_run(payload: RunSchema.ModelRunSchema):
     )
 
 @router.get("/runs/{run_id}/test")
-def test_run_status(run_id: str) -> RunSchema.RunStatusSchema:
-    run = get_run(run_id)
+def test_run_status(request: Request, run_id: str) -> RunSchema.RunStatusSchema:
+    run = get_run(request, run_id)
     status = run.get("attributes",{}).get("status",None)
     model_id = run.get("model_id")
     body = {"run_id": run_id,
