@@ -34,7 +34,9 @@ export const ConfidenceBar = withStyles((theme) => ({
     height: 15,
   },
   colorPrimary: {
-    backgroundColor: theme.palette.error.main,
+    border: '1px solid gray',
+    backgroundColor: 'transparent',
+    background: 'repeating-linear-gradient( -45deg, gray, gray 1px, white 1px, white 4px )'
   },
   bar: {
     backgroundColor: '#00cd00',
@@ -180,7 +182,10 @@ const featureColumns = [
 
         return matchScore ? (
           <div style={{width: '100%'}}>
-            <ConfidenceBar value={Math.sqrt(matchScore) * 100} variant='determinate' />
+            <ConfidenceBar
+              value={Math.sqrt(matchScore) * 100}
+              variant='determinate'
+            />
           </div>
         ) : null;
 
@@ -315,7 +320,7 @@ const ViewFeatures = withStyles((theme) => ({
             style={{marginRight: "1rem"}}
           >
             <option value={SEARCH_MODE.KEYWORD}>Keyword</option>
-            <option value={SEARCH_MODE.SEMANTIC}>Query</option>
+            <option value={SEARCH_MODE.SEMANTIC}>Fuzzy</option>
           </TextField>
           <TextField
             label="Search Features"
