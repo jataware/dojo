@@ -178,7 +178,7 @@ def semantic_search_features(query: str, scroll_id: Optional[str]=None):
     'number of people who have been vaccinated'
     """
 
-    size = 20
+    size = 200
 
     query_embedding = engine.embed_query(query)
 
@@ -187,7 +187,7 @@ def semantic_search_features(query: str, scroll_id: Optional[str]=None):
             "script_score": {
                 "query": {"match_all": {}},
                 "script": {
-                    "source": "cosineSimilarity(params.query_vector, 'embeddings') + 1.0",
+                    "source": "Math.max(cosineSimilarity(params.query_vector, 'embeddings'), 0)",
                     "params": {
                         "query_vector": query_embedding.tolist()
                     }
@@ -555,6 +555,7 @@ def patch_annotation(payload: MetadataSchema.MetaModel, indicator_id: str):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content=f"Could not update annotation with id = {indicator_id}",
         )
+
 
 
 @router.post("/indicators/{indicator_id}/upload")

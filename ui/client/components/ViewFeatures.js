@@ -20,6 +20,8 @@ import IconButton from '@material-ui/core/IconButton';
 import InputAdornment from '@material-ui/core/InputAdornment';
 import TextField from '@material-ui/core/TextField';
 
+
+
 const expandableCell = ({ value, colDef }) => (
     <ExpandableDataGridCell
       value={value}
@@ -103,7 +105,10 @@ const fetchFeatures = async (
 };
 
 /**
- *
+ * Uses internal DataGrid API to:
+ * a) Decide if we should display "Many" for features count
+ * b) Wire and display the rest of the labels that are usually
+ *    set for us when we don't need custom behavior.
  */
 const CustomTablePagination = props => {
 
@@ -112,7 +117,7 @@ const CustomTablePagination = props => {
   return (
     <TablePagination
       labelDisplayedRows={({from, to, count}) => {
-        const displayCount = count > 500 ? "Many" : count;
+        const displayCount = count > 500 ? 'Many' : count;
         return `${from}-${to} of ${displayCount}`;
       }}
       {...props}
@@ -127,7 +132,8 @@ const CustomTablePagination = props => {
 };
 
 /**
- *
+ * Blue linear loading animation displayed when table loading/searching of
+ * features is still in progress.
  */
 function CustomLoadingOverlay() {
   return (
@@ -139,39 +145,12 @@ function CustomLoadingOverlay() {
   );
 }
 
-/**
- *
- */
-const ViewFeatures = withStyles((theme) => ({
-  root: {
-    flex: 1,
-    display: "flex",
-    flexDirection: "column"
-  },
-  aboveTableWrapper: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  }
-}))(({classes}) => {
+const SEARCH_MODE = {
+  KEYWORD: 'KEYWORD',
+  SEMANTIC: 'SEMANTIC'
+};
 
-  const [featuresSearchTerm, setFeaturesSearchTerm] = useState('');
-  const [featuresSearchTermValue, setFeaturesSearchTermValue] = useState('');
-  const updateFeaturesSearchTerm = useCallback(debounce(setFeaturesSearchTerm, 500), []);
-
-  const [featuresSemanticSearchTerm, setFeaturesSemanticSearchTerm] = useState('');
-  const [featuresSemanticSearchTermValue, setFeaturesSemanticSearchTermValue] = useState('');
-  const updateFeaturesSemanticSearchTerm = useCallback(debounce(setFeaturesSemanticSearchTerm, 500), []);
-
-  const [semanticResults, setSemanticResults] = useState(null);
-
-  const [features, setFeatures] = useState([]);
-  const [featuresError, setFeaturesError] = useState(false);
-  const [featuresLoading, setFeaturesLoading] = useState(false); // Loading unused for now.
-
-  const maxScore = React.useRef(0);
-
-  const featureColumns = [
+const featureColumns = [
     {
       field: 'name',
       headerName: 'Name',
@@ -197,14 +176,11 @@ const ViewFeatures = withStyles((theme) => ({
       headerName: 'Match %',
       renderCell: (row) => {
 
-        const { value } = row;
+        const { value: matchScore } = row;
 
-        const shouldDisplay = value && maxScore.current > 1;
-        const over = shouldDisplay && ((value - 1) / (maxScore.current - 1)) * 100;
-
-        return shouldDisplay ? (
-          <div style={{width: "100%"}}>
-            <ConfidenceBar value={over} variant="determinate" />
+        return matchScore ? (
+          <div style={{width: '100%'}}>
+            <ConfidenceBar value={Math.sqrt(matchScore) * 100} variant='determinate' />
           </div>
         ) : null;
 
@@ -226,10 +202,10 @@ const ViewFeatures = withStyles((theme) => ({
       disableColumnMenu: true,
       renderCell: ({ row }) => (
         <Button
-          component="a"
+          component='a'
           href={`/dataset_summary?dataset=${row.owner_dataset.id}`}
-          target="_blank"
-          variant="outlined"
+          target='_blank'
+          variant='outlined'
         >
           Parent Dataset
           <OpenInNewIcon />
@@ -239,61 +215,85 @@ const ViewFeatures = withStyles((theme) => ({
     }
   ];
 
-  useEffect(() => {
-      fetchFeatures(setFeatures, setFeaturesLoading, setFeaturesError, featuresSearchTerm);
-  }, [featuresSearchTerm]);
+/**
+ *
+ */
+const ViewFeatures = withStyles((theme) => ({
+  root: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column'
+  },
+  aboveTableWrapper: {
+    display: 'flex',
+    maxWidth: "100vw",
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    marginBottom: '1rem',
+  }
+}))(({classes}) => {
+
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTermValue, setSearchTermValue] = useState('');
+  const updateSearchTerm = useCallback(debounce(setSearchTerm, 500), []);
+  const [searchMode, setSearchMode] = useState(SEARCH_MODE.KEYWORD);
+
+  const [features, setFeatures] = useState([]);
+  const [featuresError, setFeaturesError] = useState(false);
+  const [featuresLoading, setFeaturesLoading] = useState(false);
 
   useEffect(() => {
+    updateSearchTerm(searchTermValue);
+  }, [searchTermValue]);
 
-    if (!featuresSemanticSearchTerm) {
-      setSemanticResults(null);
-      return;
+  const performSearch = () => {
+    if (searchMode === SEARCH_MODE.KEYWORD) {
+      fetchFeatures(setFeatures, setFeaturesLoading, setFeaturesError, searchTerm);
+    } else {
+      if (!searchTerm) {
+        fetchFeatures(setFeatures, setFeaturesLoading, setFeaturesError, searchTerm);
+        return;
+      }
+
+      setFeaturesLoading(true);
+      semanticSearchFeatures(searchTerm)
+        .then((newFeatures) => {
+          setFeatures(newFeatures.results);
+        })
+        .finally(() => {
+          setFeaturesLoading(false);
+        });
     }
-
-    setFeaturesLoading(true);
-    semanticSearchFeatures(featuresSemanticSearchTerm)
-      .then((newFeatures) => {
-        console.log("new max score: ", newFeatures.max_score);
-        maxScore.current = newFeatures.max_score;
-        setSemanticResults(newFeatures.results);
-      })
-      .finally(() => {
-        setFeaturesLoading(false);
-      });
-
-  }, [featuresSemanticSearchTerm]);
-
-  const clearFeaturesSearch = () => {
-    setFeaturesSearchTerm('');
-    setFeaturesSearchTermValue('');
   };
 
-  const clearFeaturesSemanticSearch = () => {
-    setFeaturesSemanticSearchTerm('');
-    setFeaturesSemanticSearchTermValue('');
+  useEffect(() => {
+    performSearch();
+  }, [searchTerm]);
+
+  const clearSearch = () => {
+    setSearchTerm('');
+    setSearchTermValue('');
   };
 
-  const handleFeatureSemanticSearchChange = ({ target: { value } }) => {
+  const handleSearchModeChange = ({ target: { value } }) => {
+    setSearchMode(value);
+    // performSearch();
+    clearSearch();
+  };
+
+  const handleSearchChange = ({ target: { value } }) => {
     // if we have no search term, clear everything
     if (value.length === 0) {
-      clearFeaturesSemanticSearch();
+      clearSearch();
       return;
     }
-    setFeaturesSemanticSearchTermValue(value);
-    // TODO call updateFeaturesSemanticTerm when value search term value changes as useEffect instead?
-    // Easier to distribute the effect everywhere
-    updateFeaturesSemanticSearchTerm(value);
+    setSearchTermValue(value);
   };
 
-  const handleFeatureSearchChange = ({ target: { value } }) => {
-    // if we have no search term, clear everything
-    if (value.length === 0) {
-      clearFeaturesSearch();
-      return;
-    }
-    setFeaturesSearchTermValue(value);
-    updateFeaturesSearchTerm(value);
-  };
+  const displayableColumns = searchMode === SEARCH_MODE.SEMANTIC ?
+        featureColumns
+        : featureColumns.filter(col => col.field !== "_score");
 
   return featuresError ? (
     <Typography>
@@ -302,52 +302,45 @@ const ViewFeatures = withStyles((theme) => ({
   ) : (
     <div className={classes.root}>
       <div className={classes.aboveTableWrapper}>
-        <TextField
-          style={{
-            width: '400px',
-            marginRight: 16,
-          }}
-          label="Filter Features"
+        <div>
+          <TextField
+            label="Search By"
+            select
+            SelectProps={{
+              native: true,
+            }}
+            variant="outlined"
+            value={searchMode}
+            onChange={handleSearchModeChange}
+            style={{marginRight: "1rem"}}
+          >
+            <option value={SEARCH_MODE.KEYWORD}>Keyword</option>
+            <option value={SEARCH_MODE.SEMANTIC}>Query</option>
+          </TextField>
+          <TextField
+            label="Search Features"
+            variant="outlined"
+            value={searchTermValue}
+            onChange={handleSearchChange}
+            role="searchbox"
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton onClick={clearSearch}><CancelIcon /></IconButton>
+                </InputAdornment>
+              )
+            }}
+          />
+        </div>
+        <Alert
           variant="outlined"
-          value={featuresSearchTermValue}
-          onChange={handleFeatureSearchChange}
-          role="searchbox"
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <IconButton onClick={clearFeaturesSearch}><CancelIcon /></IconButton>
-              </InputAdornment>
-            )
-          }}
-        />
-        &nbsp;
-        <TextField
-          style={{
-            width: '400px',
-            marginRight: 16,
-          }}
-          label="Enter a query sentence to search"
-          variant="outlined"
-          value={featuresSemanticSearchTermValue}
-          onChange={handleFeatureSemanticSearchChange}
-          role="searchbox"
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <IconButton onClick={clearFeaturesSemanticSearch}><CancelIcon /></IconButton>
-              </InputAdornment>
-            )
-          }}
-        />
-
+          severity="info"
+          style={{border: 'none'}}
+        >
+          Click on a row, then CTRL+C or CMD+C to copy contents.
+        </Alert>
       </div>
-      <Alert
-        variant="outlined"
-        severity="info"
-        style={{border: "none"}}
-      >
-        Click on a row, then CTRL+C or CMD+C to copy contents.
-      </Alert>
+
       <DataGrid
         autoHeight
         components={{
@@ -356,8 +349,8 @@ const ViewFeatures = withStyles((theme) => ({
         }}
         loading={featuresLoading}
         getRowId={(row) => `${row.owner_dataset.id}-${row.name}`}
-        columns={featureColumns}
-        rows={semanticResults || features}
+        columns={displayableColumns}
+        rows={features}
       />
     </div>
   );
