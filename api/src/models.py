@@ -264,7 +264,7 @@ def version_model(request: Request, model_id : str, exclude_files: bool = False)
                 updated_outputs.append(output)
         return updated_outputs
 
-    original_model_definition = get_model(model_id)
+    original_model_definition = get_model(request, model_id)
     new_id = str(uuid.uuid4())
 
     # Update required fields from the original definition
@@ -333,12 +333,12 @@ def model_versions(model_id : str) -> ModelSchema.VersionSchema:
 
     while prev_leaf:
         prev_versions.append(prev_leaf)
-        prev_model = get_model(prev_leaf)
+        prev_model = get_model(request, prev_leaf)
         prev_leaf = prev_model.get("prev_version", None)
 
     while next_leaf:
         later_versions.append(next_leaf)
-        next_model = get_model(next_leaf)
+        next_model = get_model(request, next_leaf)
         next_leaf = next_model.get("next_version", None)
 
     prev_versions.reverse()
