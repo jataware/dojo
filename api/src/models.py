@@ -300,11 +300,9 @@ def version_model(request: Request, model_id : str, exclude_files: bool = False)
                 new_model.qualifier_outputs = get_updated_outputs(new_model.qualifier_outputs, outputfile_uuid_mapping)
 
         # Save model
-        create_model(new_model)
-
+        create_model(request, new_model)
         # Assign next_version id to original model after save
         modify_model(model_id=model_id, payload=ModelSchema.ModelMetadataPatchSchema(next_version=new_id))
-
     except Exception as e:
         # Delete partially created model
         # TODO: Clean up copies configs, directives, accessories, and output file data which may exist even if the
@@ -320,12 +318,12 @@ def version_model(request: Request, model_id : str, exclude_files: bool = False)
 
 
 @router.get("/models/{model_id}/versions", response_model=ModelSchema.VersionSchema)
-def model_versions(model_id : str) -> ModelSchema.VersionSchema:
+def model_versions(request: Request, model_id : str) -> ModelSchema.VersionSchema:
     """
     This endpoint returns the model ids for all versions of the model, both any previous version or any later versions.
     """
 
-    model_definition = get_model(model_id)
+    model_definition = get_model(request, model_id)
     prev_versions = []
     later_versions = []
     prev_leaf = model_definition.get("prev_version", None)
