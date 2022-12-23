@@ -28,17 +28,15 @@ export function AuthWrapper({ children }) {
   // This gets passed through to context children rather than the direct state setter
   // so that we can ensure that the header stays synced with the current adminRole state
   const setDojoAdmin = useCallback((role) => {
-    if (role) {
-      axios.defaults.headers.common['X-Keycloak-Admin-Dojo-Role'] = role;
-    } else {
-      // Don't send the header if no role so that we can receive the user's non-admin role
-      delete axios.defaults.headers.common['X-Keycloak-Admin-Dojo-Role'];
-    }
+    axios.defaults.headers.common['X-Keycloak-Admin-Dojo-Role'] = role;
 
     setAdminRole(role);
-    // Set the role in sessionStorage so we can retrieve it after refresh
-    // Session rather than localstorage so admins can use multiple roles in different tabs
-    sessionStorage.setItem('adminRole', role);
+
+    if (role) {
+      // Set the role in sessionStorage so we can retrieve it after refresh
+      // Session rather than localstorage so admins can use multiple roles in different tabs
+      sessionStorage.setItem('adminRole', role);
+    }
   }, []);
 
   // Fetch the admin role from sessionStorage

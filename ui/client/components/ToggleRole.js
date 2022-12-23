@@ -1,7 +1,6 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import FormControl from '@material-ui/core/FormControl';
-import FormHelperText from '@material-ui/core/FormHelperText';
 import InputLabel from '@material-ui/core/InputLabel';
 import MenuItem from '@material-ui/core/MenuItem';
 import Select from '@material-ui/core/Select';
@@ -25,17 +24,22 @@ const ToggleRole = () => {
     // we can get adminRole as a 'null' string from localstorage if it isn't set
     // so explicitly check for that here
     if (!adminRole || adminRole === 'null') {
-      return '';
+      // Get the first role from our list of roles(skip over any potential falsy values)
+      return auth.admin_roles.find(Boolean);
     }
 
     return adminRole;
   });
 
+  useEffect(() => {
+    // keep adminRole up to date with selectedRole
+    if (selectedRole !== adminRole) {
+      setDojoAdmin(selectedRole);
+    }
+  }, [adminRole, selectedRole, setDojoAdmin]);
+
   const handleSelectRole = (event) => {
     setSelectedRole(event.target.value);
-
-    // set the admin role in the auth context
-    setDojoAdmin(event.target.value);
   };
 
   return (
@@ -49,7 +53,6 @@ const ToggleRole = () => {
         onChange={handleSelectRole}
         margin="dense"
       >
-        <MenuItem value="">Default user role</MenuItem>
         {auth.admin_roles?.map((role) => {
           const displayName = role.replace(/-|_/g, ' ');
           return <MenuItem key={role} value={role}>{displayName}</MenuItem>;
