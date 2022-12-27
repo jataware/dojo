@@ -8,6 +8,8 @@ import React, {
 } from 'react';
 import { Redirect, Route } from 'react-router-dom';
 
+import LoadingOverlay from './components/LoadingOverlay';
+
 export const authStatusEndpoint = '/api/dojo/auth/status';
 export const authContext = createContext();
 
@@ -111,7 +113,8 @@ export function ProtectedRoute({ children, ...props }) {
       return <Redirect to={response.data.auth_url} />;
     }
   });
-  return <h1>Checking Authentication</h1>
+
+  return <LoadingOverlay text="Checking Authentication" />;
 }
 
 export function AuthRedirectHandler({ children }) {
@@ -148,8 +151,6 @@ export function AuthRedirectHandler({ children }) {
   });
 
   return (
-    <div>
-      <h1>Handling auth</h1>
-    </div>
+    <LoadingOverlay text="Handling authentication..." />
   );
 }

@@ -43,15 +43,14 @@ const ToggleRole = () => {
   };
 
   return (
-    <FormControl variant="outlined" className={classes.formControl}>
-      <InputLabel id="role">Select a Role</InputLabel>
+    <FormControl margin="dense" className={classes.formControl}>
+      <InputLabel id="role">Select an Organization</InputLabel>
       <Select
         label-id="role"
         id="role"
         value={selectedRole}
         label="Role"
         onChange={handleSelectRole}
-        margin="dense"
       >
         {auth.admin_roles?.map((role) => {
           const displayName = role.replace(/-|_/g, ' ');
