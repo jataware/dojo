@@ -10,6 +10,7 @@ from src import (
     dojo,
     healthcheck,
     indicators,
+    documents,
     models,
     ui,
     runs,
@@ -24,6 +25,7 @@ api.include_router(models.router, tags=["Models"])
 api.include_router(dojo.router, tags=["Dojo"])
 api.include_router(runs.router, tags=["Runs"])
 api.include_router(indicators.router, tags=["Indicators"])
+api.include_router(documents.router, tags=["Documents"])
 api.include_router(terminal.router, prefix="/terminal", tags=["Terminal"])
 api.include_router(ui.router, prefix="/ui", tags=["Dojo UI"])
 api.include_router(data.router, tags=["Data"])

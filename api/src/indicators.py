@@ -95,7 +95,6 @@ def enqueue_indicator_feature(indicator_id, indicator_dict):
     )
 
 
-
 @router.post("/indicators")
 def create_indicator(payload: IndicatorSchema.IndicatorMetadataSchema):
     indicator_id = str(uuid.uuid4())
@@ -195,7 +194,7 @@ def semantic_search_features(query: str, scroll_id: Optional[str]=None):
             }
         },
         "_source": {
-            "excludes" : [ "embeddings" ]
+            "excludes": ["embeddings"]
         }
     }
 
