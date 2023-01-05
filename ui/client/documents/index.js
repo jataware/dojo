@@ -10,26 +10,35 @@ import { withStyles } from '@material-ui/core/styles';
 import TablePagination from '@material-ui/core/TablePagination';
 import Alert from '@material-ui/lab/Alert';
 
-// import ExpandableDataGridCell from './ExpandableDataGridCell';
-// import LoadingOverlay from '../components/LoadingOverlay';
-
 import LinearProgress from '@material-ui/core/LinearProgress';
 import CancelIcon from '@material-ui/icons/Cancel';
 import OpenInNewIcon from '@material-ui/icons/OpenInNew';
 import IconButton from '@material-ui/core/IconButton';
 import InputAdornment from '@material-ui/core/InputAdornment';
 import TextField from '@material-ui/core/TextField';
+import Chip from '@material-ui/core/Chip';
+import identity from 'lodash/identity';
+import isEmpty from 'lodash/isEmpty';
+import startCase from 'lodash/startCase';
+
+import Dialog from '@material-ui/core/Dialog';
+import DialogActions from '@material-ui/core/DialogActions';
+import DialogContent from '@material-ui/core/DialogContent';
+import DialogContentText from '@material-ui/core/DialogContentText';
+import DialogTitle from '@material-ui/core/DialogTitle';
 
 import Container from '@material-ui/core/Container';
 
+import { useDocuments } from "../components/SWRHooks";
+import { highlightText } from "./utils";
 
+import ExpandableDataGridCell from "../components/ExpandableDataGridCell";
 
 const expandableCell = ({ value, colDef }) => (
-  value
-    /* <ExpandableDataGridCell */
-    /*   value={value} */
-    /*   width={colDef.computedWidth} */
-    /* /> */
+    <ExpandableDataGridCell
+      value={value}
+      width={colDef.computedWidth}
+    />
 );
 
 export const ConfidenceBar = withStyles((theme) => ({
@@ -46,8 +55,14 @@ export const ConfidenceBar = withStyles((theme) => ({
   },
 }))(LinearProgress);
 
-const semanticSearchFeatures = async(query) => {
-  let url = `/api/dojo/features/search?query=${query}`;
+const semanticSearchParagraphs = async(query) => {
+  let url = `/api/dojo/paragraphs/search?query=${query}`;
+  const response = await axios.get(url);
+  return response.data;
+};
+
+const semanticSearchDocuments = async(query) => {
+  let url = `/api/dojo/documents/search?query=${query}`;
   const response = await axios.get(url);
   return response.data;
 };
@@ -56,9 +71,9 @@ const semanticSearchFeatures = async(query) => {
  * Adapted from ViewModels.js::fetchModels
  */
 const fetchFeatures = async (
-  setFeatures, setFeaturesLoading, setFeaturesError, searchTerm, scrollId
+  setFeatures, setParagraphsLoading, setFeaturesError, searchTerm, scrollId
 ) => {
-  setFeaturesLoading(true);
+  setParagraphsLoading(true);
 
   let url = `/api/dojo/features`;
   if (scrollId) {
@@ -81,7 +96,7 @@ const fetchFeatures = async (
 
     setFeatures((prev) => {
 
-      if (prev.length > 500) {
+      if (prev.length > 100) { // TODO 100 for now
         hitFeatureCountThreshold = true;
       }
 
@@ -97,15 +112,110 @@ const fetchFeatures = async (
     if (newScrollId && !hitFeatureCountThreshold) {
       // if we get a scroll id back, there are more results
       // so call fetchModels again to fetch the next set
-      fetchFeatures(setFeatures, setFeaturesLoading, setFeaturesError, searchTerm, newScrollId);
+      fetchFeatures(setFeatures, setParagraphsLoading, setFeaturesError, searchTerm, newScrollId);
     } else {
-      setFeaturesLoading(false);
+      setParagraphsLoading(false);
     }
   });
 
   preparedFeatures.catch((error) => {
     console.log('error:', error);
     setFeaturesError(true);
+  });
+};
+
+const fetchSurroundingParagraphs = async (documentId, paragraphId) => {
+
+  const indexId = Number(paragraphId.match(/[0-9]+$/g));
+
+  let baseUrl = `/api/dojo/paragraphs`;
+
+  // TODO rename urls to pids (paragraph ids)
+  const urls = [];
+
+  if (indexId > 0) {
+    urls.push(indexId - 1);
+  }
+  urls.push(indexId);
+  urls.push(indexId + 1);
+
+  if (indexId === 0) {
+    urls.push(indexId + 2);
+  }
+
+  const allIds = urls.map(p => `${documentId}-${p}`);
+  const urlsToUse = allIds.map(id => `${baseUrl}/${id}`);
+
+  // TODO paragraph might be last of doc! need to handle promise.all individually first,
+  // then await for all to properly resolve subset of successful responses.
+  const p = Promise
+        .all([axios.get(`/api/dojo/documents/${documentId}`), ...urlsToUse.map(u => axios.get(u))])
+        .then(responses => {
+          console.log("all doc, p responses:", responses);
+
+          const [ docInfo, ...pInfo ] = responses.map(r => r.data);
+          const docText = pInfo.map(pp => pp.text);
+
+          docInfo.text = docText;
+
+          console.log("docInfo", docInfo);
+
+          return docInfo;
+        });
+
+  return p;
+};
+
+const fetchParagraphs = async (
+  setParagraphs, setParagraphsLoading, setParagraphsError, scrollId
+) => {
+  setParagraphsLoading(true);
+
+  let url = `/api/dojo/paragraphs`;
+  if (scrollId) {
+    url += `?scroll_id=${scrollId}`;
+  }
+
+  const paragraphsRequest = axios.get(url).then(
+    (response) => {
+      const data = response.data;
+      return data;
+    }
+  );
+
+  let preparedParagraphs = null;
+  let hitCountThreshold = false;
+
+  preparedParagraphs = paragraphsRequest.then((paragraphsData) => {
+
+    setParagraphs((prev) => {
+
+      // TODO Lets fetch max 100 paragraphs for now
+      if (prev.length > 100) {
+        hitCountThreshold = true;
+      }
+
+      return !scrollId ? paragraphsData.results : prev.concat(paragraphsData.results);
+    });
+
+    return [paragraphsData.scroll_id, paragraphsData.results];
+  });
+
+  preparedParagraphs.then(([ newScrollId, results ]) => {
+
+    // when there's no scroll id, we've hit the end of the results
+    if (newScrollId && !hitCountThreshold) {
+      // if we get a scroll id back, there are more results
+      // so call fetchModels again to fetch the next set
+      fetchParagraphs(setParagraphs, setParagraphsLoading, setParagraphsError, newScrollId);
+    } else {
+      setParagraphsLoading(false);
+    }
+  });
+
+  preparedParagraphs.catch((error) => {
+    console.log('error:', error);
+    setParagraphsError(true);
   });
 };
 
@@ -155,82 +265,191 @@ const SEARCH_MODE = {
   SEMANTIC: 'SEMANTIC'
 };
 
-const featureColumns = [
+const paragraphColumns = [
     {
-      field: 'name',
-      headerName: 'Name',
-      minWidth: 200,
+      field: 'id',
+      headerName: 'ID',
       flex: 1
     },
     {
-      field: 'display_name',
-      headerName: 'Display Name',
+      field: 'text',
+      headerName: 'Content Text',
+      renderCell: expandableCell,
+      minWidth: 200,
+      flex: 3
+    },
+    {
+      field: 'document_id',
+      headerName: 'Document ID',
       renderCell: expandableCell,
       minWidth: 200,
       flex: 1
     },
-    {
-      field: 'description',
-      headerName: 'Description',
-      renderCell: expandableCell,
-      minWidth: 200,
-      flex: 1
-    },
-    {
-      field: '_score',
-      headerName: 'Match %',
-      renderCell: (row) => {
-
-        const { value: matchScore } = row;
-
-        return matchScore ? (
-          <div style={{width: '100%'}}>
-            <ConfidenceBar
-              value={Math.sqrt(matchScore) * 100}
-              variant='determinate'
-            />
-          </div>
-        ) : null;
-
-      },
-      disableColumnMenu: true,
-      width: 130,
-    },
-    {
-      field: 'owner_dataset_name',
-      headerName: 'Dataset Name',
-      valueGetter: (cell) => cell.row.owner_dataset.name,
-      minWidth: 200,
-      flex: 1
-    },
-    {
-      field: 'link',
-      headerName: ' ',
-      sortable: false,
-      disableColumnMenu: true,
-      renderCell: ({ row }) => (
-        <Button
-          component='a'
-          href={`/dataset_summary?dataset=${row.owner_dataset.id}`}
-          target='_blank'
-          variant='outlined'
-        >
-          Parent Dataset
-          <OpenInNewIcon />
-        </Button>
-      ),
-      minWidth: 210,
-    }
   ];
 
 /**
  *
+ **/
+const documentColumns = [
+  {
+    field: 'id',
+    headerName: 'ID',
+    minWidth: 200,
+    // flex: 1
+  },
+  {
+    field: 'title',
+    headerName: 'Title',
+    flex: 1
+  },
+  // {
+  //   field: 'creation_date',
+  //   headerName: 'Created Date',
+  //   renderCell: expandableCell,
+  //   // minWidth: 200,
+  //   // flex: 1
+  // },
+  {
+    field: 'publisher',
+    headerName: 'Publisher',
+    // renderCell: expandableCell,
+    width: 200,
+    // flex: 1
+  },
+  {
+    field: 'description',
+    headerName: 'Description',
+    renderCell: expandableCell,
+    // minWidth: 200,
+    flex: 2
+  }
+];
+
+/**
+ *
+ **/
+export const ViewDocumentDialog = ({doc, onClose}) => {
+
+  const document = doc || {};
+
+  return (
+    <Dialog
+      open={Boolean(doc)}
+      onClose={onClose}
+      maxWidth="md"
+    >
+      <DialogTitle>{document.title}</DialogTitle>
+
+      <DialogContent>
+
+        {!isEmpty(doc) && (
+          <dl>
+            {["publisher", "creation_date", "title"].map(item => document[item] ? (
+            <>
+              <dt>{startCase(item)}</dt>
+              <dd>{document[item]}</dd>
+            </>
+          ) : null)}
+        </dl>
+        )}
+
+        <DialogContentText>
+          {document?.text?.length && (
+            <>
+              <Typography variant="body1">Excerpt</Typography>
+              {document.text.map(tip => (
+                <p>{tip}</p>
+              ))}
+            </>
+          )}
+        </DialogContentText>
+      </DialogContent>
+
+    </Dialog>
+  );
+
+}
+
+export const ParagraphTile = withStyles((theme) => ({
+  root: {
+    padding: "0.5rem 1.5rem",
+    margin: "0.75rem 0",
+    border: "1px solid #B2dfee",
+    borderRadius: 2,
+    background: "#f9f9f9",
+    boxShadow: "4px 4px 8px 0px #9a999969",
+    cursor: "pointer",
+    ["& dl > div"]: {display: "flex", // alignItems: "center"
+                    },
+    ["& dd"]: {margin: 0}
+  },
+  squareChip: {
+    borderRadius: 0,
+    background: "#e7e6e6",
+    marginRight: "0.75rem"
+  },
+  chipLabel: {
+    fontWeight: "bold",
+    width: "2rem",
+    display: "flex",
+    justifyContent: "center"
+  }
+}))(({classes, paragraph, highlights, onClick}) => {
+
+  const handleClick = () => onClick(paragraph);
+
+  return (
+    <div
+      className={classes.root}
+      onClick={handleClick}
+    >
+      <Typography
+        variant="body1"
+        component="div">
+
+        <dl>
+          <div style={{alignItems: "center", marginBottom: "1rem"}}>
+            <dt>
+              <Chip classes={{root: classes.squareChip, label: classes.chipLabel}} label="ID" />
+            </dt>
+            <dd>{paragraph.id}</dd>
+          </div>
+
+          <div>
+            <dt>
+              <Chip classes={{root: classes.squareChip, label: classes.chipLabel}} label="text" />
+            </dt>
+            <dd>{highlightText(paragraph.text, highlights)}</dd>
+          </div>
+        </dl>
+
+        <div style={{display: "flex"}}>
+          <Chip classes={{root: classes.squareChip, label: classes.chipLabel}} label="Hit%" />
+          <div style={{display: "block", width: "8rem"}}>
+            <ConfidenceBar
+              value={Math.sqrt(paragraph.score) * 100}
+              variant='determinate'
+            />
+          </div>
+        </div>
+      </Typography>
+
+      <br />
+    </div>
+  );
+});
+
+
+/**
+ *
  */
-const ViewDocuments = withStyles((theme) => ({
+const ViewDocumentsGrid = withStyles((theme) => ({
   root: {
     flex: 1,
     display: 'flex',
-    flexDirection: 'column'
+    flexDirection: 'column',
+    padding: "2rem",
+    marginTop: "1rem"
   },
   aboveTableWrapper: {
     display: 'flex',
@@ -245,34 +464,46 @@ const ViewDocuments = withStyles((theme) => ({
   const [searchTerm, setSearchTerm] = useState('');
   const [searchTermValue, setSearchTermValue] = useState('');
   const updateSearchTerm = useCallback(debounce(setSearchTerm, 500), []);
-  const [searchMode, setSearchMode] = useState(SEARCH_MODE.KEYWORD);
 
-  const [features, setFeatures] = useState([]);
-  const [featuresError, setFeaturesError] = useState(false);
-  const [featuresLoading, setFeaturesLoading] = useState(false);
+  const [paragraphs, setParagraphs] = useState([]);
+  const [paragraphsError, setParagraphsError] = useState(false);
+  const [paragraphsLoading, setParagraphsLoading] = useState(false);
+
+  // TODO rename doc results
+  const [docResults, setDocResults] = useState(null);
+
+  const [openedDocument, setOpenedDocument] = useState(null);
+
+  // TODO unalias this and use scrollId... also create a placeholder to catch results
+  const { documents: documentsData, documentsLoading, documentsError } = useDocuments();
+
+  const documents = documentsData?.results;
 
   useEffect(() => {
     updateSearchTerm(searchTermValue);
   }, [searchTermValue]);
 
   const performSearch = () => {
-    if (searchMode === SEARCH_MODE.KEYWORD) {
-      fetchFeatures(setFeatures, setFeaturesLoading, setFeaturesError, searchTerm);
-    } else {
-      if (!searchTerm) {
-        fetchFeatures(setFeatures, setFeaturesLoading, setFeaturesError, searchTerm);
-        return;
-      }
+    // TODO
 
-      setFeaturesLoading(true);
-      semanticSearchFeatures(searchTerm)
-        .then((newFeatures) => {
-          setFeatures(newFeatures.results);
-        })
-        .finally(() => {
-          setFeaturesLoading(false);
-        });
+    if (!searchTerm) {
+      setDocResults(null);
+      return;
     }
+
+    console.log('search term:', searchTerm);
+
+    setParagraphsLoading(true);
+
+    semanticSearchParagraphs(searchTerm)
+      .then((results) => {
+        console.log('results', results);
+        setDocResults(results.results);
+      })
+      .finally(() => {
+        setParagraphsLoading(false);
+      });
+
   };
 
   useEffect(() => {
@@ -284,12 +515,6 @@ const ViewDocuments = withStyles((theme) => ({
     setSearchTermValue('');
   };
 
-  const handleSearchModeChange = ({ target: { value } }) => {
-    setSearchMode(value);
-    // performSearch();
-    clearSearch();
-  };
-
   const handleSearchChange = ({ target: { value } }) => {
     // if we have no search term, clear everything
     if (value.length === 0) {
@@ -299,11 +524,32 @@ const ViewDocuments = withStyles((theme) => ({
     setSearchTermValue(value);
   };
 
-  const displayableColumns = searchMode === SEARCH_MODE.SEMANTIC ?
-        featureColumns
-        : featureColumns.filter(col => col.field !== "_score");
+  const displayableColumns = documentColumns;
 
-  return featuresError ? (
+  // const openDocument = identity; // TODO open dialog with doc data
+
+  const openDocument = (doc) => {
+    setOpenedDocument(doc);
+  };
+
+  const unselectDocument = () => {
+    setOpenedDocument(null);
+  };
+
+  const onParagraphResultClick = (p) => {
+    console.log("selected p", p);
+
+    setParagraphsLoading(true);
+
+    fetchSurroundingParagraphs(p.document_id, p.id)
+      .then(extractedDocData => {
+        console.log("extracted doc data:", extractedDocData);
+        openDocument(extractedDocData);
+      })
+      .finally(()=> {setParagraphsLoading(false);});
+  };
+
+  return documentsError ? (
     <Typography>
       Error loading documents.
     </Typography>
@@ -313,22 +559,17 @@ const ViewDocuments = withStyles((theme) => ({
       component="main"
       maxWidth="xl"
     >
+      <Typography
+        className={classes.header}
+        component="h3"
+        variant="h4"
+        align="center"
+        paragraph
+      >
+        Document Explorer
+      </Typography>
       <div className={classes.aboveTableWrapper}>
         <div>
-          <TextField
-            label="Search By"
-            select
-            SelectProps={{
-              native: true,
-            }}
-            variant="outlined"
-            value={searchMode}
-            onChange={handleSearchModeChange}
-            style={{marginRight: "1rem"}}
-          >
-            <option value={SEARCH_MODE.KEYWORD}>Keyword</option>
-            <option value={SEARCH_MODE.SEMANTIC}>Fuzzy</option>
-          </TextField>
           <TextField
             label="Search Documents"
             variant="outlined"
@@ -344,28 +585,156 @@ const ViewDocuments = withStyles((theme) => ({
             }}
           />
         </div>
-        <Alert
-          variant="outlined"
-          severity="info"
-          style={{border: 'none'}}
-        >
-          Click on a row, then CTRL+C or CMD+C to copy contents.
-        </Alert>
+        {!docResults && (
+          <Alert
+            variant="outlined"
+            severity="info"
+            style={{border: 'none'}}
+          >
+            Click on a row, then CTRL+C or CMD+C to copy contents.
+          </Alert>
+        )}
       </div>
 
-      <DataGrid
-        autoHeight
-        components={{
-          LoadingOverlay: CustomLoadingOverlay,
-          Pagination: CustomTablePagination
-        }}
-        loading={featuresLoading}
-        getRowId={(row) => `${row.owner_dataset.id}-${row.name}`}
-        columns={displayableColumns}
-        rows={features}
+      <ViewDocumentDialog
+        doc={openedDocument}
+        onClose={unselectDocument}
       />
+
+      {docResults?.length ? (
+        <div>
+          {paragraphsLoading && (
+              <LinearProgress style={{width: "90%"}} />
+          )}
+          {docResults.map(p => (
+            <ParagraphTile
+              onClick={onParagraphResultClick}
+              key={p.id}
+              paragraph={p}
+              highlights={searchTerm}
+            />
+          ))}
+        </div>
+      ) : (
+        <DataGrid
+          autoHeight
+          components={{
+            LoadingOverlay: CustomLoadingOverlay,
+            Pagination: CustomTablePagination
+          }}
+          loading={documentsLoading || paragraphsLoading}
+          columns={displayableColumns}
+          rows={documents || []}
+        />
+
+      )}
     </Container>
   );
 });
 
-export default ViewDocuments;
+/**
+ *
+ */
+export const ParagraphListings = withStyles((theme) => ({
+  root: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column',
+    padding: "2rem",
+    marginTop: "1rem"
+  },
+  aboveTableWrapper: {
+    display: 'flex',
+    maxWidth: "100vw",
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    marginBottom: '1rem',
+  }
+}))(({classes}) => {
+
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTermValue, setSearchTermValue] = useState('');
+  const updateSearchTerm = useCallback(debounce(setSearchTerm, 500), []);
+
+  const [paragraphs, setParagraphs] = useState([]);
+  const [paragraphsError, setParagraphsError] = useState(false);
+  const [paragraphsLoading, setParagraphsLoading] = useState(false);
+
+  const { documents, documentsLoading, documentsError } = useDocuments();
+
+  console.log("documents", documents);
+
+  useEffect(() => {
+    updateSearchTerm(searchTermValue);
+  }, [searchTermValue]);
+
+  // useEffect(() => {
+  //   performSearch();
+  // }, [searchTerm]);
+
+  const clearSearch = () => {
+    setSearchTerm('');
+    setSearchTermValue('');
+  };
+
+  const handleSearchChange = ({ target: { value } }) => {
+    // if we have no search term, clear everything
+    if (value.length === 0) {
+      clearSearch();
+      return;
+    }
+    setSearchTermValue(value);
+  };
+
+  const displayableColumns = paragraphColumns;
+
+  return paragraphsError ? (
+    <Typography>
+      Error loading paragraphs.
+    </Typography>
+  ) : (
+    <Container
+      className={classes.root}
+      component="main"
+      maxWidth="xl"
+    >
+      <Typography
+        className={classes.header}
+        component="h3"
+        variant="h4"
+        align="center"
+      >
+        Document Explorer
+      </Typography>
+      <div className={classes.aboveTableWrapper}>
+        <div>
+          <TextField
+            label="Search Documents"
+            variant="outlined"
+            value={searchTermValue}
+            onChange={handleSearchChange}
+            role="searchbox"
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton onClick={clearSearch}><CancelIcon /></IconButton>
+                </InputAdornment>
+              )
+            }}
+          />
+        </div>
+      </div>
+
+      {/* <div> */}
+      {/*   {paragraphs.map(p => ( */}
+      {/*     <ParagraphTile paragraph={p} /> */}
+      {/*   ))} */}
+      {/* </div> */}
+
+    </Container>
+  );
+});
+
+
+export default ViewDocumentsGrid;

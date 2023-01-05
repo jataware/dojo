@@ -195,3 +195,24 @@ export function useParams(modelId) {
     paramsError: error,
   };
 }
+
+export function useDocuments(scrollId) {
+
+  let url = '/api/dojo/documents';
+
+  if (scrollId) {
+    url += `?scrollId=${scrollId}`;
+  }
+
+  const { data, error, mutate } = useSWR(
+    url, fetcher
+  );
+
+  return {
+    documents: data,
+    documentsLoading: !error && !data,
+    documentsError: error,
+    // scrollId: data.scroll_id
+    // mutateDocument: mutate,
+  };
+}
