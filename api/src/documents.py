@@ -21,8 +21,6 @@ from fastapi.logger import logger
 from validation import IndicatorSchema, DojoSchema, MetadataSchema
 from src.settings import settings
 
-# from src.dojo import search_and_scroll
-
 from validation.IndicatorSchema import (
     IndicatorMetadataSchema,
     QualifierOutput,
@@ -97,8 +95,6 @@ def semantic_search_paragraphs(query: str, scroll_id: Optional[str]=None):
     where we use LLM embeddings to compare a query to items stored.
     """
 
-    # print(f"searching paragrpahs with query: '{query}'")
-
     size = 20 # TODO change later
 
     query_embedding = engine.embed_query(query)
@@ -128,8 +124,6 @@ def semantic_search_paragraphs(query: str, scroll_id: Optional[str]=None):
 
     result_len = len(results["hits"]["hits"])
 
-    # print(f"result lenght: {result_len}")
-
     if result_len < size:
         scroll_id = None
     else:
@@ -152,22 +146,20 @@ def semantic_search_paragraphs(query: str, scroll_id: Optional[str]=None):
 
 
 @router.get(
-    "/paragraphs/{paragraph_id}"  # , response_model=IndicatorSchema.IndicatorMetadataSchema
+    "/paragraphs/{paragraph_id}"
 )
-def get_paragraph(paragraph_id: str): # -> IndicatorSchema.IndicatorMetadataSchema:
+def get_paragraph(paragraph_id: str):
     """
     """
-
-    # print(f"get paragraph_id: {paragraph_id}")
-
     try:
-        p = es.get(index="document_paragraphs", id=paragraph_id)
-        # print(f"p  result of get p by id is {p}")
+        p = es.get_source(index="document_paragraphs",
+                          id=paragraph_id,
+                          _source_excludes=["embeddings"])
     except Exception as e:
         logger.exception(e)
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
-    return formatHitWithId(p)
+    return {**p, "id": paragraph_id}
 
 
 def camel_to_snake(str):
@@ -180,7 +172,6 @@ def dict_keys_to_snake_case(a_dict):
     return {camel_to_snake(k): v for k, v in a_dict.items()}
 
 
-# TODO merge with response = DEFAULTDOC|result to always contain all keys
 DEFAULT_DOC = {
     "creation_date": None,
     "mod_date": None,
@@ -191,12 +182,10 @@ DEFAULT_DOC = {
     "title": "",
     "producer": "",
     "stated_genre": ""
-    # "id": "7be23e5cb2b7b2eb1b03f4997068df7c"
 }
 
 def format_document(doc):
     """
-    TODO use
     """
     return DEFAULT_DOC|dict_keys_to_snake_case(formatHitWithId(doc))
 
@@ -233,32 +222,6 @@ def list_documents(scroll_id: Optional[str]=None):
         "results": [format_document(i)
                     for i in results["hits"]["hits"]]
     }
-
-@router.get(
-"/documents/search"
-)
-def semantic_search_documents(query: str, scroll_id: Optional[str]=None):
-    """
-    TODO
-    """
-    results_dict = semantic_search_paragraphs(query)
-
-    # print(f"results of search p in doc: {results_dict}")
-
-    p = results_dict["results"]
-
-    all_docs = []
-
-    for r in p:
-        doc = get_document(r["document_id"])
-        doc["match_paragraph_id"] = r["id"]
-
-        # print(f" found doc from p res: {doc}\n\n")
-
-        all_docs.append(doc)
-
-    return all_docs
-
 
 @router.get(
     "/documents/{document_id}"  # , response_model=IndicatorSchema.IndicatorMetadataSchema

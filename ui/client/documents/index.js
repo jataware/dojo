@@ -11,6 +11,7 @@ import TablePagination from '@material-ui/core/TablePagination';
 import Alert from '@material-ui/lab/Alert';
 
 import LinearProgress from '@material-ui/core/LinearProgress';
+import CircularProgress from '@material-ui/core/CircularProgress';
 import CancelIcon from '@material-ui/icons/Cancel';
 import OpenInNewIcon from '@material-ui/icons/OpenInNew';
 import IconButton from '@material-ui/core/IconButton';
@@ -71,9 +72,9 @@ const semanticSearchDocuments = async(query) => {
  * Adapted from ViewModels.js::fetchModels
  */
 const fetchFeatures = async (
-  setFeatures, setParagraphsLoading, setFeaturesError, searchTerm, scrollId
+  setFeatures, setSearchLoading, setFeaturesError, searchTerm, scrollId
 ) => {
-  setParagraphsLoading(true);
+  setSearchLoading(true);
 
   let url = `/api/dojo/features`;
   if (scrollId) {
@@ -112,9 +113,9 @@ const fetchFeatures = async (
     if (newScrollId && !hitFeatureCountThreshold) {
       // if we get a scroll id back, there are more results
       // so call fetchModels again to fetch the next set
-      fetchFeatures(setFeatures, setParagraphsLoading, setFeaturesError, searchTerm, newScrollId);
+      fetchFeatures(setFeatures, setSearchLoading, setFeaturesError, searchTerm, newScrollId);
     } else {
-      setParagraphsLoading(false);
+      setSearchLoading(false);
     }
   });
 
@@ -124,52 +125,79 @@ const fetchFeatures = async (
   });
 };
 
-const fetchSurroundingParagraphs = async (documentId, paragraphId) => {
-
-  const indexId = Number(paragraphId.match(/[0-9]+$/g));
-
-  let baseUrl = `/api/dojo/paragraphs`;
-
-  // TODO rename urls to pids (paragraph ids)
-  const urls = [];
-
-  if (indexId > 0) {
-    urls.push(indexId - 1);
-  }
-  urls.push(indexId);
-  urls.push(indexId + 1);
-
-  if (indexId === 0) {
-    urls.push(indexId + 2);
-  }
-
-  const allIds = urls.map(p => `${documentId}-${p}`);
-  const urlsToUse = allIds.map(id => `${baseUrl}/${id}`);
-
-  // TODO paragraph might be last of doc! need to handle promise.all individually first,
-  // then await for all to properly resolve subset of successful responses.
-  const p = Promise
-        .all([axios.get(`/api/dojo/documents/${documentId}`), ...urlsToUse.map(u => axios.get(u))])
-        .then(responses => {
-          console.log("all doc, p responses:", responses);
-
-          const [ docInfo, ...pInfo ] = responses.map(r => r.data);
-          const docText = pInfo.map(pp => pp.text);
-
-          docInfo.text = docText;
-
-          console.log("docInfo", docInfo);
-
-          return docInfo;
-        });
-
-  return p;
+/**
+ * @param docId the document id to fetch for.
+ *
+ * Fetch an individual dart document.
+ **/
+const fetchDocument = async (docId) => {
+  const response = await axios.get(`/api/dojo/documents/${docId}`);
+  return response.data;
 };
 
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+const fetchDocumentFullText = async (documentId) => {
+  // paragraph id format: documentId-<paragraphIndex>
+  const baseUrl = `/api/dojo/paragraphs/${documentId}-`;
+
+  // fetch paragraph 0. While a HTTP 200, and not a 404, keep fetching and
+  // accumulating all paragraph responses into a text array.
+
+  const allParagraphPromises = [];
+  let paragraphIndex = 0;
+  let got404 = false;
+  let irregularError = false;
+
+  do {
+
+    console.log("one loop cycle on fetching a paragraph:", paragraphIndex);
+
+    // pp = paragraph promise
+    const pp = axios.get(`${baseUrl}${paragraphIndex}`);
+
+    const formattedResponsePromise = pp
+      .then(response => response.data)
+      .catch(e => {
+        console.log("fetch paragraphs failed", e);
+        // TODO check status code, detail
+        got404 = true;
+        return null;
+      });
+
+    // await sleep(100); // This might be necessary....., fetch 10 at a time until 10th returns and we know to stop?
+
+    paragraphIndex++;
+
+    // Wait every 10 requests for the last response
+    // to allow to check if we've reached the end of the doc
+    if (paragraphIndex % 10 === 0) {
+      await formattedResponsePromise;
+    }
+
+    allParagraphPromises.push(formattedResponsePromise);
+
+  } while(!got404 && paragraphIndex < 100);
+
+  console.log('exited from do while..', got404, paragraphIndex);
+
+  return Promise.all(allParagraphPromises);
+
+};
+
+
+/**
+ * Fetches ALL paragraphs in DB until there's no more scroll ID
+ * or the max limit of items is reached.
+ * Logic copies from ViewFeatures.js, although we have different requirements here.
+ * Only used on experimental paragraph listings.
+ **/
 const fetchParagraphs = async (
-  setParagraphs, setParagraphsLoading, setParagraphsError, scrollId
+  setParagraphs, setSearchLoading, setParagraphsError, scrollId
 ) => {
-  setParagraphsLoading(true);
+  setSearchLoading(true);
 
   let url = `/api/dojo/paragraphs`;
   if (scrollId) {
@@ -207,9 +235,9 @@ const fetchParagraphs = async (
     if (newScrollId && !hitCountThreshold) {
       // if we get a scroll id back, there are more results
       // so call fetchModels again to fetch the next set
-      fetchParagraphs(setParagraphs, setParagraphsLoading, setParagraphsError, newScrollId);
+      fetchParagraphs(setParagraphs, setSearchLoading, setParagraphsError, newScrollId);
     } else {
-      setParagraphsLoading(false);
+      setSearchLoading(false);
     }
   });
 
@@ -295,32 +323,21 @@ const documentColumns = [
     field: 'id',
     headerName: 'ID',
     minWidth: 200,
-    // flex: 1
   },
   {
     field: 'title',
     headerName: 'Title',
     flex: 1
   },
-  // {
-  //   field: 'creation_date',
-  //   headerName: 'Created Date',
-  //   renderCell: expandableCell,
-  //   // minWidth: 200,
-  //   // flex: 1
-  // },
   {
     field: 'publisher',
     headerName: 'Publisher',
-    // renderCell: expandableCell,
     width: 200,
-    // flex: 1
   },
   {
     field: 'description',
     headerName: 'Description',
     renderCell: expandableCell,
-    // minWidth: 200,
     flex: 2
   }
 ];
@@ -331,6 +348,26 @@ const documentColumns = [
 export const ViewDocumentDialog = ({doc, onClose}) => {
 
   const document = doc || {};
+  const [documentText, setDocumentText] = useState(null);
+  const [documentTextLoading, setDocumentTextLoading] = useState(null);
+
+  useEffect(() => {
+
+    if(!doc?.id) {
+      return;
+    }
+
+    setDocumentTextLoading(true);
+
+    fetchDocumentFullText(doc.id)
+      .then(response => {
+        console.log("full document text response:", response);
+        setDocumentText(response);
+      })
+      .finally(() => setDocumentTextLoading(false));
+
+  }, [doc]);
+
 
   return (
     <Dialog
@@ -338,37 +375,46 @@ export const ViewDocumentDialog = ({doc, onClose}) => {
       onClose={onClose}
       maxWidth="md"
     >
-      <DialogTitle>{document.title}</DialogTitle>
+      <DialogTitle style={{paddingBottom: 1}}>
+        {document.title}
+      </DialogTitle>
 
       <DialogContent>
-
         {!isEmpty(doc) && (
           <dl>
-            {["publisher", "creation_date", "title"].map(item => document[item] ? (
-            <>
+            {["publisher", "creation_date", "type", "original_language",
+              "classification", "producer", "stated_genre"]
+             .map((item, idx) => document[item] ? (
+            <div>
               <dt>{startCase(item)}</dt>
               <dd>{document[item]}</dd>
-            </>
+              {idx % 3 === 0 && (<br />)}
+            </div>
           ) : null)}
         </dl>
         )}
 
-        <DialogContentText>
-          {document?.text?.length && (
-            <>
-              <Typography variant="body1">Excerpt</Typography>
-              {document.text.map(tip => (
-                <p>{tip}</p>
+        {documentTextLoading ? (
+          <CircularProgress />
+        ) : documentText?.length ? (
+          <div>
+            <p>Full Text</p>
+              {documentText.map(paragraph => Boolean(paragraph) && (
+                <DialogContentText key={paragraph.id}>
+                  {paragraph.text}
+                </DialogContentText>
               ))}
-            </>
-          )}
-        </DialogContentText>
+          </div>
+        ) : (
+          <p>Document only contains property fields. does not contain full text.</p>
+        )}
+
       </DialogContent>
 
     </Dialog>
   );
 
-}
+};
 
 export const ParagraphTile = withStyles((theme) => ({
   root: {
@@ -423,7 +469,7 @@ export const ParagraphTile = withStyles((theme) => ({
           </div>
         </dl>
 
-        <div style={{display: "flex"}}>
+        <div style={{display: "flex", alignItems: "center"}}>
           <Chip classes={{root: classes.squareChip, label: classes.chipLabel}} label="Hit%" />
           <div style={{display: "block", width: "8rem"}}>
             <ConfidenceBar
@@ -454,9 +500,8 @@ const ViewDocumentsGrid = withStyles((theme) => ({
   aboveTableWrapper: {
     display: 'flex',
     maxWidth: "100vw",
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     alignItems: 'center',
-    flexWrap: 'wrap',
     marginBottom: '1rem',
   }
 }))(({classes}) => {
@@ -465,12 +510,8 @@ const ViewDocumentsGrid = withStyles((theme) => ({
   const [searchTermValue, setSearchTermValue] = useState('');
   const updateSearchTerm = useCallback(debounce(setSearchTerm, 500), []);
 
-  const [paragraphs, setParagraphs] = useState([]);
-  const [paragraphsError, setParagraphsError] = useState(false);
-  const [paragraphsLoading, setParagraphsLoading] = useState(false);
-
-  // TODO rename doc results
-  const [docResults, setDocResults] = useState(null);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [docParagraphResults, setDocParagraphResults] = useState(null);
 
   const [openedDocument, setOpenedDocument] = useState(null);
 
@@ -484,24 +525,22 @@ const ViewDocumentsGrid = withStyles((theme) => ({
   }, [searchTermValue]);
 
   const performSearch = () => {
-    // TODO
-
     if (!searchTerm) {
-      setDocResults(null);
+      setDocParagraphResults(null);
       return;
     }
 
     console.log('search term:', searchTerm);
 
-    setParagraphsLoading(true);
+    setSearchLoading(true);
 
     semanticSearchParagraphs(searchTerm)
       .then((results) => {
         console.log('results', results);
-        setDocResults(results.results);
+        setDocParagraphResults(results.results);
       })
       .finally(() => {
-        setParagraphsLoading(false);
+        setSearchLoading(false);
       });
 
   };
@@ -526,8 +565,6 @@ const ViewDocumentsGrid = withStyles((theme) => ({
 
   const displayableColumns = documentColumns;
 
-  // const openDocument = identity; // TODO open dialog with doc data
-
   const openDocument = (doc) => {
     setOpenedDocument(doc);
   };
@@ -539,14 +576,15 @@ const ViewDocumentsGrid = withStyles((theme) => ({
   const onParagraphResultClick = (p) => {
     console.log("selected p", p);
 
-    setParagraphsLoading(true);
+    setSearchLoading(true);
 
-    fetchSurroundingParagraphs(p.document_id, p.id)
+    fetchDocument(p.document_id)
       .then(extractedDocData => {
         console.log("extracted doc data:", extractedDocData);
         openDocument(extractedDocData);
       })
-      .finally(()=> {setParagraphsLoading(false);});
+      .finally(()=> {setSearchLoading(false);});
+
   };
 
   return documentsError ? (
@@ -557,21 +595,22 @@ const ViewDocumentsGrid = withStyles((theme) => ({
     <Container
       className={classes.root}
       component="main"
-      maxWidth="xl"
+      maxWidth="lg"
     >
       <Typography
-        className={classes.header}
-        component="h3"
-        variant="h4"
+        variant="h3"
         align="center"
         paragraph
       >
         Document Explorer
       </Typography>
+
+      <br />
+
       <div className={classes.aboveTableWrapper}>
-        <div>
           <TextField
-            label="Search Documents"
+            style={{width: "100%", maxWidth: "60rem"}}
+            label="Enter keyword or sentence to fuzzy match document text"
             variant="outlined"
             value={searchTermValue}
             onChange={handleSearchChange}
@@ -584,29 +623,19 @@ const ViewDocumentsGrid = withStyles((theme) => ({
               )
             }}
           />
-        </div>
-        {!docResults && (
-          <Alert
-            variant="outlined"
-            severity="info"
-            style={{border: 'none'}}
-          >
-            Click on a row, then CTRL+C or CMD+C to copy contents.
-          </Alert>
-        )}
       </div>
 
-      <ViewDocumentDialog
-        doc={openedDocument}
-        onClose={unselectDocument}
-      />
-
-      {docResults?.length ? (
+      {docParagraphResults?.length ? (
         <div>
-          {paragraphsLoading && (
+          <Typography variant="h5">
+            Paragraph Search Results
+          </Typography>
+
+          {searchLoading && (
               <LinearProgress style={{width: "90%"}} />
           )}
-          {docResults.map(p => (
+
+          {docParagraphResults.map(p => (
             <ParagraphTile
               onClick={onParagraphResultClick}
               key={p.id}
@@ -616,18 +645,35 @@ const ViewDocumentsGrid = withStyles((theme) => ({
           ))}
         </div>
       ) : (
-        <DataGrid
-          autoHeight
-          components={{
-            LoadingOverlay: CustomLoadingOverlay,
-            Pagination: CustomTablePagination
-          }}
-          loading={documentsLoading || paragraphsLoading}
-          columns={displayableColumns}
-          rows={documents || []}
-        />
+        <>
+          <br />
 
+          <Typography
+            variant="h5"
+          >
+            All Documents
+          </Typography>
+
+          <br />
+
+          <DataGrid
+            autoHeight
+            components={{
+              LoadingOverlay: CustomLoadingOverlay,
+              Pagination: CustomTablePagination
+            }}
+            loading={documentsLoading || searchLoading}
+            columns={displayableColumns}
+            rows={documents || []}
+          />
+        </>
       )}
+
+      <ViewDocumentDialog
+        doc={openedDocument}
+        onClose={unselectDocument}
+      />
+
     </Container>
   );
 });
@@ -659,19 +705,21 @@ export const ParagraphListings = withStyles((theme) => ({
 
   const [paragraphs, setParagraphs] = useState([]);
   const [paragraphsError, setParagraphsError] = useState(false);
-  const [paragraphsLoading, setParagraphsLoading] = useState(false);
+  const [searchLoading, setSearchLoading] = useState(false);
 
   const { documents, documentsLoading, documentsError } = useDocuments();
-
-  console.log("documents", documents);
 
   useEffect(() => {
     updateSearchTerm(searchTermValue);
   }, [searchTermValue]);
 
-  // useEffect(() => {
-  //   performSearch();
-  // }, [searchTerm]);
+  const performSearch = () => {
+      fetchParagraphs(setParagraphs, setSearchLoading, setParagraphsError, searchTerm);
+  };
+
+  useEffect(() => {
+    performSearch();
+  }, [searchTerm]);
 
   const clearSearch = () => {
     setSearchTerm('');
@@ -700,17 +748,15 @@ export const ParagraphListings = withStyles((theme) => ({
       maxWidth="xl"
     >
       <Typography
-        className={classes.header}
-        component="h3"
         variant="h4"
         align="center"
       >
-        Document Explorer
+        All Paragraphs
       </Typography>
       <div className={classes.aboveTableWrapper}>
         <div>
           <TextField
-            label="Search Documents"
+            label="Search Paragraphs"
             variant="outlined"
             value={searchTermValue}
             onChange={handleSearchChange}
@@ -726,11 +772,16 @@ export const ParagraphListings = withStyles((theme) => ({
         </div>
       </div>
 
-      {/* <div> */}
-      {/*   {paragraphs.map(p => ( */}
-      {/*     <ParagraphTile paragraph={p} /> */}
-      {/*   ))} */}
-      {/* </div> */}
+      <DataGrid
+        autoHeight
+        components={{
+          LoadingOverlay: CustomLoadingOverlay,
+          Pagination: CustomTablePagination
+        }}
+        loading={searchLoading}
+        columns={displayableColumns}
+        rows={paragraphs || []}
+      />
 
     </Container>
   );
