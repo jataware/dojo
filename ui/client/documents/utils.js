@@ -25,7 +25,7 @@ export function highlightText(text, highlights) {
       {parts.map((part, i) => (
         <span
           key={i}
-          style={highlightChunks.includes(part.toLowerCase()) ?
+          style={highlightChunks.includes(part && part.toLowerCase()) ?
                  { fontWeight: 'bold', background: "yellow"/* , outline: "2px solid yellow" */ } :
                  {}}
         >

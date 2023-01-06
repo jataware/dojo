@@ -62,69 +62,6 @@ const semanticSearchParagraphs = async(query) => {
   return response.data;
 };
 
-const semanticSearchDocuments = async(query) => {
-  let url = `/api/dojo/documents/search?query=${query}`;
-  const response = await axios.get(url);
-  return response.data;
-};
-
-/**
- * Adapted from ViewModels.js::fetchModels
- */
-const fetchFeatures = async (
-  setFeatures, setSearchLoading, setFeaturesError, searchTerm, scrollId
-) => {
-  setSearchLoading(true);
-
-  let url = `/api/dojo/features`;
-  if (scrollId) {
-    url += `?scroll_id=${scrollId}`;
-  } else if (searchTerm) {
-    url += `?term=${searchTerm}`;
-  }
-
-  const featuresRequest = axios.get(url).then(
-    (response) => {
-      const featuresData = response.data;
-      return featuresData;
-    }
-  );
-
-  let preparedFeatures = null;
-  let hitFeatureCountThreshold = false;
-
-  preparedFeatures = featuresRequest.then((featuresData) => {
-
-    setFeatures((prev) => {
-
-      if (prev.length > 100) { // TODO 100 for now
-        hitFeatureCountThreshold = true;
-      }
-
-      return !scrollId ? featuresData.results : prev.concat(featuresData.results);
-    });
-
-    return [featuresData.scroll_id, featuresData.results];
-  });
-
-  preparedFeatures.then(([ newScrollId, results ]) => {
-
-    // when there's no scroll id, we've hit the end of the results
-    if (newScrollId && !hitFeatureCountThreshold) {
-      // if we get a scroll id back, there are more results
-      // so call fetchModels again to fetch the next set
-      fetchFeatures(setFeatures, setSearchLoading, setFeaturesError, searchTerm, newScrollId);
-    } else {
-      setSearchLoading(false);
-    }
-  });
-
-  preparedFeatures.catch((error) => {
-    console.log('error:', error);
-    setFeaturesError(true);
-  });
-};
-
 /**
  * @param docId the document id to fetch for.
  *
@@ -141,50 +78,10 @@ function sleep(ms) {
 
 const fetchDocumentFullText = async (documentId) => {
   // paragraph id format: documentId-<paragraphIndex>
-  const baseUrl = `/api/dojo/paragraphs/${documentId}-`;
+  const url = `/api/dojo/documents/${documentId}/text`;
 
-  // fetch paragraph 0. While a HTTP 200, and not a 404, keep fetching and
-  // accumulating all paragraph responses into a text array.
-
-  const allParagraphPromises = [];
-  let paragraphIndex = 0;
-  let got404 = false;
-  let irregularError = false;
-
-  do {
-
-    console.log("one loop cycle on fetching a paragraph:", paragraphIndex);
-
-    // pp = paragraph promise
-    const pp = axios.get(`${baseUrl}${paragraphIndex}`);
-
-    const formattedResponsePromise = pp
-      .then(response => response.data)
-      .catch(e => {
-        console.log("fetch paragraphs failed", e);
-        // TODO check status code, detail
-        got404 = true;
-        return null;
-      });
-
-    // await sleep(100); // This might be necessary....., fetch 10 at a time until 10th returns and we know to stop?
-
-    paragraphIndex++;
-
-    // Wait every 10 requests for the last response
-    // to allow to check if we've reached the end of the doc
-    if (paragraphIndex % 10 === 0) {
-      await formattedResponsePromise;
-    }
-
-    allParagraphPromises.push(formattedResponsePromise);
-
-  } while(!got404 && paragraphIndex < 100);
-
-  console.log('exited from do while..', got404, paragraphIndex);
-
-  return Promise.all(allParagraphPromises);
-
+  const response = await axios.get(url);
+  return response.data.text;
 };
 
 
@@ -361,7 +258,7 @@ export const ViewDocumentDialog = ({doc, onClose}) => {
 
     fetchDocumentFullText(doc.id)
       .then(response => {
-        console.log("full document text response:", response);
+        console.log("document text P count:", response?.length);
         setDocumentText(response);
       })
       .finally(() => setDocumentTextLoading(false));
@@ -388,7 +285,6 @@ export const ViewDocumentDialog = ({doc, onClose}) => {
             <div>
               <dt>{startCase(item)}</dt>
               <dd>{document[item]}</dd>
-              {idx % 3 === 0 && (<br />)}
             </div>
           ) : null)}
         </dl>
@@ -404,9 +300,12 @@ export const ViewDocumentDialog = ({doc, onClose}) => {
                   {paragraph.text}
                 </DialogContentText>
               ))}
+            {documentText.length >= 100 && (
+              <p>Document continues. Redacted.</p>
+            )}
           </div>
         ) : (
-          <p>Document only contains property fields. does not contain full text.</p>
+          <p>Document only contains metadata fields. Does not have text contents.</p>
         )}
 
       </DialogContent>
@@ -587,6 +486,18 @@ const ViewDocumentsGrid = withStyles((theme) => ({
 
   };
 
+  const onDocumentRowClick = (docData) => {
+    setSearchLoading(true);
+
+    fetchDocument(docData.id)
+      .then(extractedDocData => {
+        console.log("extracted doc data:", extractedDocData);
+        openDocument(extractedDocData);
+      })
+      .finally(() => {setSearchLoading(false);});
+
+  };
+
   return documentsError ? (
     <Typography>
       Error loading documents.
@@ -625,10 +536,12 @@ const ViewDocumentsGrid = withStyles((theme) => ({
           />
       </div>
 
+      <br />
+
       {docParagraphResults?.length ? (
         <div>
           <Typography variant="h5">
-            Paragraph Search Results
+            Top Matches (20)
           </Typography>
 
           {searchLoading && (
@@ -646,8 +559,6 @@ const ViewDocumentsGrid = withStyles((theme) => ({
         </div>
       ) : (
         <>
-          <br />
-
           <Typography
             variant="h5"
           >
@@ -662,6 +573,7 @@ const ViewDocumentsGrid = withStyles((theme) => ({
               LoadingOverlay: CustomLoadingOverlay,
               Pagination: CustomTablePagination
             }}
+            onRowClick={onDocumentRowClick}
             loading={documentsLoading || searchLoading}
             columns={displayableColumns}
             rows={documents || []}

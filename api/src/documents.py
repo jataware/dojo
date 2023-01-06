@@ -90,8 +90,7 @@ def list_paragraphs(scroll_id: Optional[str]=None):
 )
 def semantic_search_paragraphs(query: str, scroll_id: Optional[str]=None):
     """
-    Uses query to perform a fuzzy search on paragraphs. These paragraphs belog
-    to DART documents. Our fuzzy search is also referred to as semantic search,
+    Uses query to perform a fuzzy search on paragraphs. Our fuzzy search is also referred to as semantic search,
     where we use LLM embeddings to compare a query to items stored.
     """
 
@@ -222,6 +221,46 @@ def list_documents(scroll_id: Optional[str]=None):
         "results": [format_document(i)
                     for i in results["hits"]["hits"]]
     }
+
+# TODO handle/parse scrollId
+@router.get(
+    "/documents/{document_id}/text"  # , response_model=IndicatorSchema.IndicatorMetadataSchema
+)
+def get_document_text(document_id: str): # -> IndicatorSchema.IndicatorMetadataSchema:
+    """
+    """
+
+    size = 100
+
+    try:
+        q = {
+            "query": {
+                "term": {"document_id": document_id}
+            },
+            "_source": ["text"]
+        }
+
+        # Get all the paragraphs for the document, ordered by indexed order
+        #  (should follow paragraph order).
+        paragraphs = es.search(index="document_paragraphs", body=q, size=size, scroll="2m")
+
+    except Exception as e:
+        logger.exception(e)
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+
+    totalDocsInPage = len(paragraphs["hits"]["hits"])
+
+    if totalDocsInPage < size:
+        scroll_id = None
+    else:
+        scroll_id = paragraphs.get("_scroll_id", None)
+
+    return {
+        "items_in_page": totalDocsInPage,
+        "scroll_id": scroll_id,
+        "text": [i["_source"] for i in paragraphs["hits"]["hits"]],
+    }
+
 
 @router.get(
     "/documents/{document_id}"  # , response_model=IndicatorSchema.IndicatorMetadataSchema
