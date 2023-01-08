@@ -53,9 +53,19 @@ const Summary = () => {
           console.log('Container auto-shutdown sequence initiated');
         });
     }
-    // if we arrive with the terminal param but no lock, get rid of the terminal param
+
+    // save an empty variable so we can clear the timeout later on
+    let clearLock;
     if (terminal === 'true' && !lock) {
-      history.replace(`/summary/${modelId}`);
+      // if we arrive with the terminal param but no lock
+      // set a timeout to get rid of it in 30 seconds (enough time to fetch a lock)
+      clearLock = setTimeout(() => history.replace(`/summary/${modelId}`), 30000);
+    }
+
+    if (terminal === 'true' && lock) {
+      // if we fetch a lock in the meantime, clear the timeout
+      // if there was never a timeout, calling this will do nothing
+      clearTimeout(clearLock);
     }
   }, [modelId, terminal, history, lock]);
 
