@@ -10,6 +10,8 @@ import {
   Switch,
 } from 'react-router-dom';
 
+import { SWRConfig } from 'swr';
+
 import { ThemeProvider } from '@material-ui/core/styles';
 
 import { AuthWrapper, ProtectedRoute, AuthRedirectHandler } from './auth';
@@ -72,9 +74,15 @@ export default function Main() {
 ReactDOM.render(
   <ThemeProvider theme={theme}>
     <CssBaseline />
-    <ThemeContextProvider>
-      <Main />
-    </ThemeContextProvider>
+    <SWRConfig
+      value={{
+        errorRetryCount: 10,
+      }}
+    >
+      <ThemeContextProvider>
+        <Main />
+      </ThemeContextProvider>
+    </SWRConfig>
   </ThemeProvider>,
   document.getElementById('app')
 );
