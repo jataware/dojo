@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import clsx from 'clsx';
 import { Form, Formik } from 'formik';
 import * as yup from 'yup';
@@ -250,10 +250,24 @@ export default withStyles(({ palette, spacing, breakpoints }) => ({
   multiPartData, setMultiPartData,
   validateDateFormat,
   onSubmit, onClose, columnStats,
-  fieldsConfig=()=>({})
+  fieldsConfig = () => ({})
 }) => {
 
   const [displayStatistics, setDisplayStatistics] = React.useState(false);
+
+  useEffect(() => {
+    const onEscape = (event) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    document.addEventListener('keydown', onEscape);
+
+    return () => {
+      document.removeEventListener('keydown', onEscape);
+    };
+  }, [onClose]);
 
   function clearColumnAnnotations() {
     const multiPart = get(multiPartData, columnName);
@@ -295,25 +309,25 @@ export default withStyles(({ palette, spacing, breakpoints }) => ({
 
   const statDataAvailable = !isEmpty(statistics) || !isEmpty(histogramData.labels);
 
-  const allAnnotatedColumns = columns.filter(column => annotations[column.field]);
+  const allAnnotatedColumns = columns.filter((column) => annotations[column.field]);
 
   return (
     <Drawer
       variant="persistent"
-      classes={{ paper: clsx({[classes.root]: true, [classes.expanded]: displayStatistics }) }}
+      classes={{ paper: clsx({ [classes.root]: true, [classes.expanded]: displayStatistics }) }}
       anchor={anchorPosition}
       open={Boolean(columnName)}
       onClose={onClose}
     >
       {columnName && (
-        <div style={{height: '200%', display: 'flex'}}>
+        <div style={{ height: '200%', display: 'flex' }}>
 
           <div className={classes.tabsPanel}>
             <div>
               <Button
                 fullWidth
                 disableRipple
-                classes={{root: classes.statisticsButton}}
+                classes={{ root: classes.statisticsButton }}
                 onClick={() => setDisplayStatistics(!displayStatistics)}
                 disabled={!statDataAvailable}
                 color="primary"
@@ -472,6 +486,7 @@ export default withStyles(({ palette, spacing, breakpoints }) => ({
                           <Button
                             color="primary"
                             onClick={formik.handleSubmit}
+                            type="submit"
                           >
                             Save
                           </Button>
