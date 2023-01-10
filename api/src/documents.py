@@ -94,7 +94,9 @@ def semantic_search_paragraphs(query: str, scroll_id: Optional[str]=None):
     where we use LLM embeddings to compare a query to items stored.
     """
 
-    size = 20 # TODO change later
+    # TODO parse scroll_id query param
+
+    size = 20 # TODO change later, accept as parameter maybe
 
     query_embedding = engine.embed_query(query)
 
@@ -119,7 +121,10 @@ def semantic_search_paragraphs(query: str, scroll_id: Optional[str]=None):
         }
     }
 
-    results = es.search(index="document_paragraphs", body=p_query, scroll="2m", size=size)
+    results = es.search(index="document_paragraphs",
+                        body=p_query,
+                        scroll="2m",
+                        size=size)
 
     result_len = len(results["hits"]["hits"])
 
@@ -136,7 +141,6 @@ def semantic_search_paragraphs(query: str, scroll_id: Optional[str]=None):
         return r["_source"]
 
     return {
-        # "hits": results["hits"]["total"]["value"],
         "items_in_page": result_len,
         "scroll_id": scroll_id,
         "max_score": max_score,

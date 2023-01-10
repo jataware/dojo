@@ -29,6 +29,7 @@ import Terminal from './terminal';
 import theme from './theme';
 import ViewDatasets from './components/ViewDatasets';
 import ViewDocuments, { ParagraphListings } from './documents';
+import UploadDocument from './documents/UploadForm';
 import ViewModels from './components/ViewModels';
 import ViewRuns from './components/ViewRuns';
 // import DatasetRegistration from './datasets/Register';
@@ -46,6 +47,7 @@ export default function Main() {
         <Route component={ViewModels} exact path="/models" />
         <Route component={ViewDatasets} exact path="/datasets" />
         <Route component={ViewDocuments} exact path="/documents" />
+        <Route component={UploadDocument} exact path="/documents/upload" />
         <Route component={ParagraphListings} exact path="/paragraphs" />
         <Route component={DatasetAnnotate} exact path="/datasets/annotate" />
         <Route component={DatasetPreview} exact path="/datasets/preview" />

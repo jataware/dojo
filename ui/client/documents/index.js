@@ -22,13 +22,15 @@ import identity from 'lodash/identity';
 import isEmpty from 'lodash/isEmpty';
 import startCase from 'lodash/startCase';
 
+import Container from '@material-ui/core/Container';
 import Dialog from '@material-ui/core/Dialog';
 import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
 import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
+import Divider from '@material-ui/core/Divider';
 
-import Container from '@material-ui/core/Container';
+import { Link as RouteLink } from 'react-router-dom';
 
 import { useDocuments } from "../components/SWRHooks";
 import { highlightText } from "./utils";
@@ -71,10 +73,6 @@ const fetchDocument = async (docId) => {
   const response = await axios.get(`/api/dojo/documents/${docId}`);
   return response.data;
 };
-
-function sleep(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
 
 const fetchDocumentFullText = async (documentId) => {
   // paragraph id format: documentId-<paragraphIndex>
@@ -275,6 +273,11 @@ export const ViewDocumentDialog = ({doc, onClose}) => {
       <DialogTitle style={{paddingBottom: 1}}>
         {document.title}
       </DialogTitle>
+
+      <Divider
+        variant="fullWidth"
+        style={{margin: "0.5rem 0"}}
+      />
 
       <DialogContent>
         {!isEmpty(doc) && (
@@ -559,11 +562,20 @@ const ViewDocumentsGrid = withStyles((theme) => ({
         </div>
       ) : (
         <>
-          <Typography
-            variant="h5"
-          >
-            All Documents
-          </Typography>
+          <div style={{display: "flex", justifyContent: "space-between"}}>
+            <Typography
+              variant="h5"
+            >
+              All Documents
+            </Typography>
+            <Button
+              to="upload"
+              component={RouteLink}
+              variant="contained"
+              color="primary">
+              Upload Document
+            </Button>
+          </div>
 
           <br />
 

@@ -207,8 +207,6 @@ def semantic_search_features(query: str, scroll_id: Optional[str]=None):
 
     max_score = results["hits"]["max_score"]
 
-    results["hits"]["hits"] # | ["_source"] ["_score"] ;; add score property to object
-
     def formatOneResult(r):
         r["_source"]["_score"] = r["_score"]
         return r["_source"]
