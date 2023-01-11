@@ -320,7 +320,7 @@ const ViewFeatures = withStyles((theme) => ({
             style={{marginRight: "1rem"}}
           >
             <option value={SEARCH_MODE.KEYWORD}>Keyword</option>
-            <option value={SEARCH_MODE.SEMANTIC}>Fuzzy</option>
+            <option value={SEARCH_MODE.SEMANTIC}>Semantic</option>
           </TextField>
           <TextField
             label="Search Features"
