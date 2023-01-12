@@ -231,83 +231,87 @@ def outputs_as_features(acc, currentResult):
     return result
 
 
+def formatHitWithId(hit):
+    return {
+        "id": hit["_id"],
+        **hit["_source"]
+    }
+
+
+def getWildcardsForAllProperties(t):
+            return [{"wildcard": {"name": f"*{t}*"}},
+                    {"wildcard": {"display_name": f"*{t}*"}},
+                    {"wildcard": {"description": f"*{t}*"}}]
+
+
 @router.get(
     "/features", response_model=IndicatorSchema.FeaturesSearchSchema
 )
-def search_features(term: Optional[str]=None, scroll_id: Optional[str]=None):
+def list_features(term: Optional[str]=None, scroll_id: Optional[str]=None):
     """
-    Return all features, or results from searching through them, if a search
-    term is provided. Will match `term` with wildcard to feature `name`,
+    Lists all features, with pagination, or results from searching
+    through them by keywords (within input `term`).
+    Will match `term` with wildcard to feature `name`,
     `display_name`, or `description`.
     """
-    if term:
-        wildcardTerm = f"*{term}*"
 
+    size = 10
+
+    if term:
         q = {
             "query": {
-                "nested": {
-                    "path": "outputs",
-                    "query": {
-                        "bool": {
-                            "should": [
-                                { "wildcard": { "outputs.name": wildcardTerm }},
-                                { "wildcard": { "outputs.display_name": wildcardTerm }},
-                                { "wildcard": { "outputs.description": wildcardTerm }}
-                            ]
-                        }
-                    },
-                    "inner_hits": {
-                    }
+                "bool": {
+                    "should": [
+                        # TODO End result format, 3 properties matched for each
+                        #      word in text (split by whitespace)
+                        # Note: This is a slow search. Use es token indexing features
+                        #       in the future
+                        # { "wildcard": { "name": wildcardTerm }},
+                        # { "wildcard": { "display_name": wildcardTerm }},
+                        # { "wildcard": { "description": wildcardTerm }}
+                    ]
                 }
             },
-            "_source": [
-                "id",
-                "name"
-            ]
+            "_source": {
+                "excludes": "embeddings"
+            }
         }
+
+        for item in term.split():
+            q["query"]["bool"]["should"] += getWildcardsForAllProperties(item)
+
     else:
         q = {
             "query": {
-                "nested": {
-                    "path": "outputs",
-                    "query": {
-                        "match_all": {}
-                    },
-                    "inner_hits": {}
-                }
+                "match_all": {}
             },
-            "_source": [
-                "id",
-                "name"
-            ]
+            "_source": {
+                "excludes": "embeddings"
+            }
         }
 
     if not scroll_id:
-        # we need to kick off the query
-        results = es.search(index="indicators", body=q, scroll="2m", size=10)
+        results = es.search(index="features", body=q, scroll="2m", size=10)
     else:
-        # otherwise, we can use the scroll
         results = es.scroll(scroll_id=scroll_id, scroll="2m")
 
-    # These are document hits (es parent indicators) in current page
-    # The final response items_in_page property will group features within
-    # these indicators (will be more than indicator count)
     totalIndicatorHitsInPage = len(results["hits"]["hits"])
 
     # if results are less than the page size (10) don't return a scroll_id
-    if totalIndicatorHitsInPage < 10:
+    if totalIndicatorHitsInPage < size:
         scroll_id = None
     else:
         scroll_id = results.get("_scroll_id", None)
 
     # Groups features as array list from `results`, into `response`
-    response = reduce(outputs_as_features, results["hits"]["hits"], [])
+    response = results["hits"]["hits"]
 
     return {
         "items_in_page": len(response),
         "scroll_id": scroll_id,
-        "results": response # array of features
+        "results": [formatHitWithId(i) for i in response]
     }
+
 
 @router.get(
     "/indicators/latest", response_model=List[IndicatorSchema.IndicatorsSearchSchema]
