@@ -39,7 +39,7 @@ Three files and where to store them, relative to this file's directory:
 *Put this in the ./data/ folder*
 
 - `DartPapers_sentence_embeddings.pt` is the embeddings of each of the paragraphs of each of the papers.
-*Put this under ./weights/*
+*Put this under ./weights/bert_sentence_embedded_corpus.pt* <- Ensure to rename to correct filename.
 
 - `statements_2022_march_v4` is all of the concept matches/indra statements we were talking about.
 *Store this under ./data/*

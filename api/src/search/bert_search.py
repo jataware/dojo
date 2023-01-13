@@ -53,3 +53,8 @@ class BertSentenceSearch(Search, Generic[T]):
             if n is not None:
                 results = results[:n]
             return results
+
+    def __iter__(self):
+        """Iterate over (key, embedding) pairs"""
+        for key, embedding in zip(self.keys, self.embeddings):
+            yield key, embedding

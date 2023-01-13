@@ -1,6 +1,6 @@
 import json
 from typing import List, Tuple
-from .src.datasearch.corpora import Corpus, CorpusLoader
+from src.datasearch.corpora import Corpus, CorpusLoader
 
 class DartPapers(CorpusLoader):
     @staticmethod
