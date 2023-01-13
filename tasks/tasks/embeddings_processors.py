@@ -14,7 +14,7 @@ es = Elasticsearch(es_url)
 
 print("Starting Embedder Engine")
 
- # Ignore this first input corpus while we start engine. Discarded.
+# Ignore this first input corpus while we start engine. Discarded.
 corpus = Corpus.from_list(["I"])
 engine = BertSentenceSearch(corpus, cuda=False)
 

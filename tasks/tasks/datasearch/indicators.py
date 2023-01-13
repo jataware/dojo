@@ -1,6 +1,6 @@
 import json
 from .corpora import Corpus, CorpusLoader
-from typing import Dict, Tuple, List
+from typing import Tuple
 
 
 class Indicators(CorpusLoader):
@@ -28,28 +28,3 @@ unit description: {out['unit_description']};"""
 
 
         return Corpus(docs)
-
-    # def set_format_corpus(indicators):
-#         """
-#         Prepares indicator outputs docs to correct format and returns the new
-#         formatted 'docs' wrapped ina Corpus.
-
-#         Only accepts a json array of indicators. Pass an individual indicator
-#         within the array to process one indicator at a time.
-#         """
-
-#         docs = {}
-#         for indicator in indicators:
-#             indicator_id = indicator['id']
-#             for out in indicator['outputs']:
-#                 # name, display name, description, unit, unit description
-#                 description = \
-# f"""name: {out['name']};
-# display name: {out['display_name']};
-# description: {out['description']};
-# unit: {out['unit']};
-# unit description: {out['unit_description']};"""
-#                 docs[(indicator_id, out['name'])] = description
-
-#         return Corpus(docs)
-
