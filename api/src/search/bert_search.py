@@ -1,6 +1,6 @@
 from .search import Search
 from src.datasearch.corpora import Corpus, T, Generic
-from typing import Union
+from typing import Union, List, Tuple
 from sentence_transformers import SentenceTransformer
 import torch
 
@@ -45,7 +45,7 @@ class BertSentenceSearch(Search, Generic[T]):
         with torch.no_grad():
             return self.model.encode(query, show_progress_bar=False, device=self.device, convert_to_tensor=True)
 
-    def search(self, query:str, n:Union[int,None]=None) -> list[tuple[T, float]]:
+    def search(self, query:str, n:Union[int,None]=None) -> List[Tuple[T, float]]:
         with torch.no_grad():
             encoded_query = self.embed_query(query)
             scores = torch.cosine_similarity(encoded_query[None,:], self.embeddings, dim=1)
