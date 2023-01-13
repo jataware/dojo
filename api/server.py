@@ -160,15 +160,24 @@ def setup_elasticsearch_indexes():
         "features": {
             "mappings": {
                 "properties": {
-                "embeddings": {
-                    "type": "dense_vector",
-                    "dims": 768
-                }
+                    "embeddings": {
+                        "type": "dense_vector",
+                        "dims": 768
+                    }
                 }
             }
         },
         "documents": {},
-        "document_paragraphs": {},
+        "document_paragraphs": {
+            "mappings": {
+                "properties": {
+                    "embeddings": {
+                        "type": "dense_vector",
+                        "dims": 768
+                    }
+                }
+            }
+        },
     }
     es = Elasticsearch([settings.ELASTICSEARCH_URL], port=settings.ELASTICSEARCH_PORT)
 
