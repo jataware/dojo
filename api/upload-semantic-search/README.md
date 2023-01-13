@@ -33,16 +33,16 @@ Download the data from Google Drive:
 
 https://drive.google.com/drive/folders/1bUNoOTfefmYRuEWuaZhfOqQIyyMV72QE?usp=sharing
 
-Three files and where to store them on this project:
+Three files and where to store them, relative to this file's directory:
 
 - `dart_cdr.json_mar_2022` is the corpus of the papers in plain text (nested inside json structures**.
-*Put this in the data/ folder*
+*Put this in the ./data/ folder*
 
 - `DartPapers_sentence_embeddings.pt` is the embeddings of each of the paragraphs of each of the papers.
-*Put this under weights/*
+*Put this under ./weights/*
 
 - `statements_2022_march_v4` is all of the concept matches/indra statements we were talking about.
-*Store this in data/*
+*Store this under ./data/*
 
 All data is about ~4GB total.
 

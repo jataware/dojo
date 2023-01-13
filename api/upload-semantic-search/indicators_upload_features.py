@@ -59,7 +59,7 @@ def saveAllOutputEmbeddings(indicatorDictionary, indicator_id):
         }
 
         feature_id = f"{indicator_id}-{output['name']}"
-        return es.index(index="features", body=feature, id=feature_id)
+        es.index(index="features", body=feature, id=feature_id)
 
 
 es_body = {
