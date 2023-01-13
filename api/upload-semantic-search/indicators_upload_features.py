@@ -1,9 +1,10 @@
 #!/usr/bin/env python
 
 import sys,os
+from pathlib import Path
 import argparse
 
-sys.path.append(os.path.realpath('..'))
+sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 from src.search.bert_search import BertSentenceSearch
 from elasticsearch import Elasticsearch
