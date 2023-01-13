@@ -162,3 +162,5 @@ cython_debug/
 
 dojo/api/es-mappings/import/*.json
 dojo/**/tasks/venv_tasks/
+
+api/upload-semantic-search/data/*
