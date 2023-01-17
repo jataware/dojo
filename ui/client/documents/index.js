@@ -256,7 +256,6 @@ export const ViewDocumentDialog = ({doc, onClose}) => {
 
     fetchDocumentFullText(doc.id)
       .then(response => {
-        console.log("document text P count:", response?.length);
         setDocumentText(response);
       })
       .finally(() => setDocumentTextLoading(false));
@@ -338,7 +337,7 @@ export const ParagraphTile = withStyles((theme) => ({
   },
   chipLabel: {
     fontWeight: "bold",
-    width: "2rem",
+    width: "4rem",
     display: "flex",
     justifyContent: "center"
   }
@@ -362,6 +361,22 @@ export const ParagraphTile = withStyles((theme) => ({
             </dt>
             <dd>{paragraph.id}</dd>
           </div>
+
+          <div style={{alignItems: "center", marginBottom: "1rem"}}>
+            <dt>
+              <Chip classes={{root: classes.squareChip, label: classes.chipLabel}} label="Title" />
+            </dt>
+            <dd>{paragraph.parent_document.title || "No Title Available"}</dd>
+          </div>
+
+          {paragraph.parent_document.publisher && (
+            <div style={{alignItems: "center", marginBottom: "1rem"}}>
+              <dt>
+                <Chip classes={{root: classes.squareChip, label: classes.chipLabel}} label="Publisher" />
+              </dt>
+              <dd>{paragraph.parent_document.publisher}</dd>
+            </div>
+          )}
 
           <div>
             <dt>
@@ -410,7 +425,7 @@ const ViewDocumentsGrid = withStyles((theme) => ({
 
   const [searchTerm, setSearchTerm] = useState('');
   const [searchTermValue, setSearchTermValue] = useState('');
-  const updateSearchTerm = useCallback(debounce(setSearchTerm, 500), []);
+  const updateSearchTerm = useCallback(debounce(setSearchTerm, 1000), []);
 
   const [searchLoading, setSearchLoading] = useState(false);
   const [docParagraphResults, setDocParagraphResults] = useState(null);
@@ -432,14 +447,28 @@ const ViewDocumentsGrid = withStyles((theme) => ({
       return;
     }
 
-    console.log('search term:', searchTerm);
-
     setSearchLoading(true);
 
     semanticSearchParagraphs(searchTerm)
       .then((results) => {
-        console.log('results', results);
-        setDocParagraphResults(results.results);
+        const allParagraphs = results.results;
+
+        // for each, fetch their parent document's in order to append its
+        // title and publisher
+        const allDocPromises = allParagraphs.map((paragraph, idx) => {
+          const documentPromise = fetchDocument(paragraph.document_id);
+
+          documentPromise.then(doc => {
+            allParagraphs[idx].parent_document = doc;
+          });
+
+          return documentPromise;
+        });
+
+        Promise.all(allDocPromises).then(() => {
+          setDocParagraphResults(allParagraphs);
+        });
+
       })
       .finally(() => {
         setSearchLoading(false);
@@ -476,29 +505,11 @@ const ViewDocumentsGrid = withStyles((theme) => ({
   };
 
   const onParagraphResultClick = (p) => {
-    console.log("selected p", p);
-
-    setSearchLoading(true);
-
-    fetchDocument(p.document_id)
-      .then(extractedDocData => {
-        console.log("extracted doc data:", extractedDocData);
-        openDocument(extractedDocData);
-      })
-      .finally(()=> {setSearchLoading(false);});
-
+    openDocument(p.parent_document);
   };
 
   const onDocumentRowClick = (docData) => {
-    setSearchLoading(true);
-
-    fetchDocument(docData.id)
-      .then(extractedDocData => {
-        console.log("extracted doc data:", extractedDocData);
-        openDocument(extractedDocData);
-      })
-      .finally(() => {setSearchLoading(false);});
-
+    openDocument(docData.row);
   };
 
   return documentsError ? (
@@ -544,7 +555,7 @@ const ViewDocumentsGrid = withStyles((theme) => ({
       {docParagraphResults?.length ? (
         <div>
           <Typography variant="h5">
-            Top Matches (20)
+            Top Matches ({docParagraphResults?.length})
           </Typography>
 
           {searchLoading && (
