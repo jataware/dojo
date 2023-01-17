@@ -252,7 +252,6 @@ export default withStyles(({ palette, spacing, breakpoints }) => ({
   onSubmit, onClose, columnStats,
   fieldsConfig=()=>({})
 }) => {
-
   const [displayStatistics, setDisplayStatistics] = React.useState(false);
 
   function clearColumnAnnotations() {
@@ -428,7 +427,7 @@ export default withStyles(({ palette, spacing, breakpoints }) => ({
                     annotateColumns(newAnnotations);
 
                     onClose();
-                    onSubmit();
+                    onSubmit(columnName);
                   }}
                 >
                   {(formik) => (
