@@ -65,7 +65,6 @@ const useStyles = makeStyles((theme) => ({
     fontWeight: 'bold'
   },
   headerWrapper: {
-    cursor: 'pointer',
     width: '100%',
   },
   headerText: {
@@ -87,7 +86,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const MultiPartHeader = ({
-  status, colSpan, TypeIcon, qualifies, showMarkers
+  status, colSpan, TypeIcon, qualifies, showMarkers, buttonClick, column
 }) => {
   const classes = useStyles();
   const shouldDisplayStatus = ((['inferred', 'primary'].includes(status) || qualifies));
@@ -109,6 +108,7 @@ const MultiPartHeader = ({
         <Button
           variant="outlined"
           size="small"
+          onClick={() => buttonClick(column)}
         >
           Edit
         </Button>
@@ -130,7 +130,9 @@ const Header = ({
   category, // type
   qualifies,
   showMarkers,
-  addingAnnotationsAllowed
+  addingAnnotationsAllowed,
+  column,
+  buttonClick
 }) => {
   const classes = useStyles();
   const isAnnotated = ['annotated', 'primary'].includes(status);
@@ -162,6 +164,8 @@ const Header = ({
           qualifies={qualifies}
           TypeIcon={TypeIcon}
           showMarkers={showMarkers}
+          column={column}
+          buttonClick={buttonClick}
         />
       )}
 
@@ -176,6 +180,7 @@ const Header = ({
             disabled={isMultiPartMember}
             style={{ visibility: isMultiPartMember ? 'hidden' : 'visible' }}
             size="small"
+            onClick={() => buttonClick(column)}
           >
             {isAnnotated ? 'Edit' : 'Annotate'}
           </Button>

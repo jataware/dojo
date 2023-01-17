@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useRef } from 'react';
 import clsx from 'clsx';
 import { Form, Formik } from 'formik';
 import * as yup from 'yup';
@@ -252,8 +252,18 @@ export default withStyles(({ palette, spacing, breakpoints }) => ({
   onSubmit, onClose, columnStats,
   fieldsConfig = () => ({})
 }) => {
-
   const [displayStatistics, setDisplayStatistics] = React.useState(false);
+  // focusRef is passed down to columnAnnotation to autofocus on the first input
+  // which we have to do manually due to the potential focus on grid cells (MUI autofocus fails)
+  const focusRef = useRef(null);
+
+  useEffect(() => {
+    if (focusRef.current) {
+      // setTimeout is necessary here to bump this back in the render cycle
+      // to after the drawer is on the page (this seems to be the issue, at least)
+      setTimeout(() => focusRef.current.focus());
+    }
+  }, [columnName]);
 
   useEffect(() => {
     const onEscape = (event) => {
@@ -453,8 +463,9 @@ export default withStyles(({ palette, spacing, breakpoints }) => ({
                           variant="body2"
                           paragraph
                           component="div"
-                          style={{display: 'flex', alignItems: 'center'}}>
-                          <InfoRoundedIcon style={{marginRight: '0.5rem', color: '#51abf1b3'}} />
+                          style={{ display: 'flex', alignItems: 'center' }}
+                        >
+                          <InfoRoundedIcon style={{ marginRight: '0.5rem', color: '#51abf1b3' }} />
                           Defaults include inferred values from Dojo analysis.
                         </Typography>
                       )}
@@ -467,6 +478,7 @@ export default withStyles(({ palette, spacing, breakpoints }) => ({
                         validateDateFormat={validateDateFormat}
                         annotatedColumns={allAnnotatedColumns}
                         fieldsConfig={fieldsConfig}
+                        focusRef={focusRef}
                       />
 
                       <div className={classes.buttonContainer}>
