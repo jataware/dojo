@@ -71,6 +71,12 @@ const NavBar = () => {
         >
           Model Runs
         </Button>
+        <Button
+          component={Link}
+          to="/documents"
+        >
+          Documents
+        </Button>
         <span className={classes.spacer} />
         <Button href="https://www.dojo-modeling.com" target="_blank">Documentation</Button>
         <Button href="https://github.com/dojo-modeling/dojo" target="_blank">GitHub</Button>
