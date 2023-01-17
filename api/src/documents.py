@@ -51,11 +51,9 @@ def formatHitWithId(hit):
 @router.get(
     "/paragraphs"  # , response_model=IndicatorSchema.FeaturesSearchSchema
 )
-def list_paragraphs(scroll_id: Optional[str]=None):
+def list_paragraphs(scroll_id: Optional[str]=None, size: int = 10):
     """
     """
-
-    size = 10
 
     q = {
         "query": {
@@ -67,7 +65,10 @@ def list_paragraphs(scroll_id: Optional[str]=None):
     }
 
     if not scroll_id:
-        results = es.search(index="document_paragraphs", body=q, scroll="2m", size=size)
+        results = es.search(index="document_paragraphs",
+                            body=q,
+                            scroll="2m",
+                            size=size)
     else:
         results = es.scroll(scroll_id=scroll_id, scroll="2m")
 
@@ -88,43 +89,60 @@ def list_paragraphs(scroll_id: Optional[str]=None):
 @router.get(
 "/paragraphs/search"
 )
-def semantic_search_paragraphs(query: str, scroll_id: Optional[str]=None):
+def semantic_search_paragraphs(query: str,
+                               scroll_id: Optional[str]=None,
+                               size: int = 10):
     """
-    Uses query to perform a fuzzy search on paragraphs. Our fuzzy search is also referred to as semantic search,
-    where we use LLM embeddings to compare a query to items stored.
+    Uses query to perform a Semantic Search on paragraphs; where LLM embeddings
+    are used to compare a text query to items stored.
     """
+    if scroll_id:
+        results = es.scroll(scroll_id=scroll_id, scroll="2m")
+    else:
+        query_embedding = engine.embed_query(query)
 
-    # TODO parse scroll_id query param
+        MIN_TEXT_LENGTH_THRESHOLD = 100
 
-    size = 20 # TODO change later, accept as parameter maybe
-
-    query_embedding = engine.embed_query(query)
-
-    p_query = {
-        "query": {
-            "script_score": {
-                "query": {"match_all": {}},
-                "script": {
-                    # ES doesnt allow negative numbers. We can either:
-                    # - a) clamp at 0, and not allow negatives, or
-                    # - b) Add 1 to the result to compare score
-                    # We use option (a): it has better score % for top results
-                    "source": "Math.max(cosineSimilarity(params.query_vector, 'embeddings'), 0)",
-                    "params": {
-                        "query_vector": query_embedding.tolist()
-                    }
+        p_query = {
+            "query": {
+                "bool": {
+                    "must": [
+                        {
+                            "script_score": {
+                                "query": {"match_all": {}},
+                                "script": {
+                                    # ES doesnt allow negative numbers. We can either:
+                                    # - a) clamp at 0, and not allow negatives, or
+                                    # - b) Add 1 to the result to compare score
+                                    # We use option (a): it has better score % for top results
+                                    "source": "Math.max(cosineSimilarity(params.query_vector, 'embeddings'), 0)",
+                                    "params": {
+                                        "query_vector": query_embedding.tolist()
+                                    }
+                                }
+                            }
+                        }
+                    ],
+                    "filter": [
+                        {
+                            "range": {
+                                "length": {
+                                    "gte": MIN_TEXT_LENGTH_THRESHOLD
+                                }
+                            }
+                        }
+                    ]
                 }
+            },
+            "_source": {
+                "excludes": ["embeddings"]
             }
-        },
-        "_source": {
-            "excludes": ["embeddings"]
         }
-    }
 
-    results = es.search(index="document_paragraphs",
-                        body=p_query,
-                        scroll="2m",
-                        size=size)
+        results = es.search(index="document_paragraphs",
+                            body=p_query,
+                            scroll="2m",
+                            size=size)
 
     result_len = len(results["hits"]["hits"])
 
@@ -195,11 +213,9 @@ def format_document(doc):
 @router.get(
     "/documents"
 )
-def list_documents(scroll_id: Optional[str]=None):
+def list_documents(scroll_id: Optional[str]=None, size: int = 10):
     """
     """
-
-    size = 20
 
     q = {
         "query": {
@@ -226,31 +242,31 @@ def list_documents(scroll_id: Optional[str]=None):
                     for i in results["hits"]["hits"]]
     }
 
-# TODO handle/parse scrollId
 @router.get(
-    "/documents/{document_id}/text"  # , response_model=IndicatorSchema.IndicatorMetadataSchema
+    "/documents/{document_id}/text"
 )
-def get_document_text(document_id: str): # -> IndicatorSchema.IndicatorMetadataSchema:
+def get_document_text(document_id: str,
+                      scroll_id: Optional[str] = None,
+                      size: int = 10):
     """
+    Returns a document's text, where each entry is separated by newline.
     """
-
-    size = 100
-
-    try:
-        q = {
-            "query": {
-                "term": {"document_id": document_id}
-            },
-            "_source": ["text"]
-        }
-
-        # Get all the paragraphs for the document, ordered by indexed order
-        #  (should follow paragraph order).
-        paragraphs = es.search(index="document_paragraphs", body=q, size=size, scroll="2m")
-
-    except Exception as e:
-        logger.exception(e)
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    if not scroll_id:
+        try:
+            q = {
+                "query": {
+                    "term": {"document_id": document_id}
+                },
+                "_source": ["text"]
+            }
+            # Get all the paragraphs for the document, ordered by indexed order
+            #  (should follow paragraph order).
+            paragraphs = es.search(index="document_paragraphs", body=q, size=size, scroll="2m")
+        except Exception as e:
+            logger.exception(e)
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
+    else:
+        paragraphs = es.scroll(scroll_id=scroll_id, scroll="2m")
 
     totalDocsInPage = len(paragraphs["hits"]["hits"])
 

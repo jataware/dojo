@@ -59,7 +59,7 @@ export const ConfidenceBar = withStyles((theme) => ({
 }))(LinearProgress);
 
 const semanticSearchParagraphs = async(query) => {
-  let url = `/api/dojo/paragraphs/search?query=${query}`;
+  let url = `/api/dojo/paragraphs/search?query=${query}&size=50`;
   const response = await axios.get(url);
   return response.data;
 };
@@ -76,7 +76,7 @@ const fetchDocument = async (docId) => {
 
 const fetchDocumentFullText = async (documentId) => {
   // paragraph id format: documentId-<paragraphIndex>
-  const url = `/api/dojo/documents/${documentId}/text`;
+  const url = `/api/dojo/documents/${documentId}/text?size=200`;
 
   const response = await axios.get(url);
   return response.data.text;
@@ -303,8 +303,8 @@ export const ViewDocumentDialog = ({doc, onClose}) => {
                   {paragraph.text}
                 </DialogContentText>
               ))}
-            {documentText.length >= 100 && (
-              <p>Document continues. Redacted.</p>
+            {documentText.length > 200 && (
+              <p>Document continues. Truncated to 200 lines.</p>
             )}
           </div>
         ) : (
@@ -524,7 +524,7 @@ const ViewDocumentsGrid = withStyles((theme) => ({
       <div className={classes.aboveTableWrapper}>
           <TextField
             style={{width: "100%", maxWidth: "60rem"}}
-            label="Enter keyword or sentence to fuzzy match document text"
+            label="Enter query to perform Semantic Search through Documents"
             variant="outlined"
             value={searchTermValue}
             onChange={handleSearchChange}

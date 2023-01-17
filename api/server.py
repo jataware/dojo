@@ -174,6 +174,9 @@ def setup_elasticsearch_indexes():
                     "embeddings": {
                         "type": "dense_vector",
                         "dims": 768
+                    },
+                    "length": {
+                        "type": "short"
                     }
                 }
             }

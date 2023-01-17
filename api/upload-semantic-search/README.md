@@ -74,6 +74,9 @@ PUT /document_paragraphs
       "embeddings": {
         "type": "dense_vector",
         "dims": 768
+      },
+      "length": {
+        "type": "short"
       }
     }
   }
@@ -86,8 +89,25 @@ The script files point to hardcoded local elasticsearch urls.
 
 To upload document metadata to es, run:
 
-`python upload_all_document_metadata.py`
+`python upload_es_dart_documents.py`
 
 To upload paragraph text and llm embeddings to es:
 
-`python upload_paragraphs_embeddings.py`
+`python upload_es_dart_doc_paragraphs.py`
+
+
+### Updating existing paragraphs
+
+We'll update populate/reindex scripts later, but for now the following can be performed in order to populate the text length property to all paragraphs:
+
+```
+# Loop through all paragraphs, attach text length; update paragraph doc with that count
+
+POST /document_paragraphs/_update_by_query
+{
+  "script": {
+    "source": "ctx._source.length = ctx._source.text?.length()",
+    "lang": "painless"
+  }
+}
+```
