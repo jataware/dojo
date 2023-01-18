@@ -96,6 +96,16 @@ const BasicRegistrationFlow = {
             await axios.put(`/api/dojo/indicators`, updatedDataset);
           }
         },
+      ]
+    }
+  },
+  {
+    slug: 'scale',
+    title: 'Scaling Data',
+    label: 'Scaling',
+    component: RunJobs,
+    options: {
+      jobs: [
         {
           id: 'mixmasta_processors.scale_features',
           send_context: true,

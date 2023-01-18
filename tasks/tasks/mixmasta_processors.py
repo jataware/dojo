@@ -357,7 +357,7 @@ def scale_features(context):
             settings.DATASET_STORAGE_BASE_URL, "normalized", uuid, file_out_name
         )
 
-        file_buffer = io.StringIO()
+        file_buffer = io.BytesIO()
 
         dataframe_scaled.to_parquet(file_buffer)
         file_buffer.seek(0)
@@ -365,6 +365,8 @@ def scale_features(context):
         put_rawfile(path=s3_filepath, fileobj=file_buffer)
         data_paths_normalized.append(s3_filepath)
     update_indicator(uuid=uuid, data_paths_normalized=data_paths_normalized)
+
+    return
 
 
 def update_indicator(uuid, data_paths_normalized):
