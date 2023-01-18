@@ -88,6 +88,11 @@ const RunJobs = withStyles(({ spacing }) => ({
   };
 
   useEffect(() => {
+    setJobIndex(0);
+    setJobData(null);
+  }, [jobs]);
+
+  useEffect(() => {
 
     let timeoutHandle;
 
@@ -117,8 +122,6 @@ const RunJobs = withStyles(({ spacing }) => ({
         setJobIndex(newJobIndex);
         setJobData(null);
       } else {
-        setJobIndex(0);
-        setJobData(null);
         handleNext({});
       }
     } else if (jobData.status == 'failed') {
