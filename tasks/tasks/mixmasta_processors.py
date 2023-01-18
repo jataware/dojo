@@ -337,7 +337,7 @@ def run_model_mixmasta(context, *args, **kwargs):
     return response
 
 
-def scale_features(context):
+def scale_features(context, filename=None):
     # 0 to 1 scaled dataframe
     uuid = context["uuid"]
     data_paths = context["dataset"]["data_paths"]

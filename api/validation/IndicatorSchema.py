@@ -58,6 +58,7 @@ class PreviewType(Enum):
 #         title="Final Alias Name",
 #     )
 
+
 class Maintainer(BaseModel):
     class Config:
         extra = Extra.allow
@@ -253,10 +254,8 @@ class Output(BaseModel):
         description="Spatial and temporal resolution of the data",
         title="Data Resolution",
     )
-    alias: Optional[Dict[Any,Any]] = Field(
-        None,
-        description="alias dictionary",
-        title="Alias"
+    alias: Optional[Dict[Any, Any]] = Field(
+        None, description="alias dictionary", title="Alias"
     )
 
 
@@ -367,10 +366,16 @@ class IndicatorMetadataSchema(BaseModel):
         examples=[["https://jataware-world-modelers.s3.amazonaws.com/WDI/data.csv"]],
         title="Data Path URLs",
     )
-    outputs: Optional[List[Output]] = Field(
+    data_paths_normalized: Optional[List[str]] = Field(
         [],
-        description="An array of dataset variables",
-        title="Dataset Outputs"
+        description="URL paths to normalized data",
+        examples=[
+            ["https://jataware-world-modelers.s3.amazonaws.com/WDI/data_normalized.csv"]
+        ],
+        title="Normalized Data Path URLs",
+    )
+    outputs: Optional[List[Output]] = Field(
+        [], description="An array of dataset variables", title="Dataset Outputs"
     )
     qualifier_outputs: Optional[List[QualifierOutput]] = Field(
         None,
@@ -398,17 +403,13 @@ class IndicatorMetadataSchema(BaseModel):
     data_sensitivity: Optional[str] = Field(
         None,
         description="Specifies any restrictions on data use.",
-        examples=[
-            "..."
-        ],
+        examples=["..."],
         title="Dataset Sensitivity",
     )
     data_quality: Optional[str] = Field(
         None,
         description="Specify if the data is measured, derived, or estimated data and what was the methodology associated with each of these.",
-        examples=[
-            "measured"
-        ],
+        examples=["measured"],
         title="Dataset Quality",
     )
     published: Boolean = Field(
@@ -451,7 +452,7 @@ class IndicatorsSearchSchema(BaseModel):
         description="Information about the dataset maintainer.",
         title="Dataset Maintainer",
     )
-   
+
 
 class DateValidationRequestSchema(BaseModel):
     format: str = Field(
@@ -466,7 +467,7 @@ class DateValidationRequestSchema(BaseModel):
             ["2001-01-01", "2022-07-11", "2011-03-27"],
             ["2002", "2005", "1998"],
             ["Nov 11, 1911", "Dec 25, 2020", "Feb 9, 1999"],
-        ]
+        ],
     )
 
 
