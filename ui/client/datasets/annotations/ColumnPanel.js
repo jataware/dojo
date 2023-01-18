@@ -272,12 +272,15 @@ export default withStyles(({ palette, spacing, breakpoints }) => ({
       }
     };
 
-    document.addEventListener('keydown', onEscape);
+    // only add the event listener if we have the drawer open
+    if (columnName) {
+      document.addEventListener('keydown', onEscape);
+    }
 
     return () => {
       document.removeEventListener('keydown', onEscape);
     };
-  }, [onClose]);
+  }, [onClose, columnName]);
 
   function clearColumnAnnotations() {
     const multiPart = get(multiPartData, columnName);
