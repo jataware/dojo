@@ -117,6 +117,8 @@ const RunJobs = withStyles(({ spacing }) => ({
         setJobIndex(newJobIndex);
         setJobData(null);
       } else {
+        setJobIndex(0);
+        setJobData(null);
         handleNext({});
       }
     } else if (jobData.status == 'failed') {
