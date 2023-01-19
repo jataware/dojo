@@ -363,7 +363,7 @@ def scale_features(context, filename=None):
         file_buffer.seek(0)
 
         put_rawfile(path=s3_filepath, fileobj=file_buffer)
-        data_paths_normalized.append(s3_filepath)
+        data_paths_normalized.append(str(s3_filepath))
     update_indicator(uuid=uuid, data_paths_normalized=data_paths_normalized)
 
     return
