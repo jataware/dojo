@@ -100,6 +100,20 @@ const BasicRegistrationFlow = {
     }
   },
   {
+    slug: 'scale',
+    title: 'Scaling Data',
+    label: 'Scaling',
+    component: RunJobs,
+    options: {
+      jobs: [
+        {
+          id: 'mixmasta_processors.scale_features',
+          send_context: true,
+        },
+      ]
+    }
+  },
+  {
     slug: 'preview',
     title: 'Preview Dataset',
     label: 'Preview',
