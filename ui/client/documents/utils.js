@@ -1,6 +1,29 @@
 import React from 'react';
 
 /**
+ * highlightText helper. Returns raw data of which words should be highlighted.
+ * Easier for testing (see uni test).
+ **/
+export function calculateHighlightTargets(text, highlights) {
+
+  const partSplitBoundaries = highlights.toLowerCase().split(" ").map(h => `\\b${h}\\b`);
+
+  const parts = text.split(new RegExp(`(${partSplitBoundaries.join("|")})`, 'gi'));
+
+  const highlightWords = highlights
+        .toLowerCase()
+        .split(" ")
+        .map(i => i.trim());
+
+  const highlighted = parts.map((part) => ({
+    text: part,
+    highlight: highlightWords.includes(part && part.toLowerCase().trim())
+  }));
+
+  return highlighted;
+}
+
+/**
  *
  **/
 export function highlightText(text, highlights) {
@@ -10,26 +33,18 @@ export function highlightText(text, highlights) {
     return text;
   }
 
-  const highlightChunks = highlights.toLowerCase().split(" ").map(h => `${h}`); // .map(h => `${h}\s`);
-
-  // console.log('highlight chunks', highlightChunks);
-
-  const parts = text.split(new RegExp(`(${highlightChunks.join("|")})`, 'gi'));
-
-  // console.log("parts", parts);
-
-  // TODO do proper regex-foo to not match tokens within a word in the query.
+  const highlightData = calculateHighlightTargets(text, highlights);
 
   return (
     <span>
-      {parts.map((part, i) => (
+      {highlightData.map((partInfo, idx) => (
         <span
-          key={i}
-          style={highlightChunks.includes(part && part.toLowerCase()) ?
-                 { fontWeight: 'bold', background: "yellow"/* , outline: "2px solid yellow" */ } :
+          key={idx}
+          style={partInfo.highlight ?
+                 {fontWeight: 'bold', background: "yellow"} :
                  {}}
         >
-          {part}
+          {partInfo.text}
         </span>
       ))}
     </span>
