@@ -34,11 +34,12 @@ const Cell = withStyles(({ palette, spacing }) => ({
     cursor: 'pointer',
   },
 }))(({
-  classes, value
+  isHighlighted, classes, value
 }) => (
   <span
     className={clsx({
       [classes.root]: true,
+      [classes.hoveredCell]: isHighlighted,
     })}
   >
     {value}
@@ -80,6 +81,11 @@ export default withStyles(({ palette }) => ({
       '&:focus-within': {
         outline: 'none',
       }
+    },
+    '& .MuiDataGrid-cell': {
+      '&:focus-within': {
+        outline: 'none',
+      }
     }
   },
   gridScroll: {
@@ -104,12 +110,6 @@ export default withStyles(({ palette }) => ({
       visibility: 'hidden',
     },
   },
-  cellHighlight: {
-    '&:focus-within': {
-      backgroundColor: palette.grey[200],
-      outline: 'none',
-    },
-  },
 }), { name: 'TableAnnotation' })(({
   classes, annotateColumns, rows,
   columns, annotations, inferredData,
@@ -118,6 +118,7 @@ export default withStyles(({ palette }) => ({
   fieldsConfig, addingAnnotationsAllowed
 }) => {
   const [pageSize, setPageSize] = useState(rowsPerPageOptions[0]);
+  const [highlightedColumn, setHighlightedColumn] = useState(null);
   const [editingColumn, setEditingColumn] = useState(null);
   const [anchorPosition, setAnchorPosition] = useState('right');
 
@@ -168,6 +169,9 @@ export default withStyles(({ palette }) => ({
     const isMultiPartBase = get(mpData, 'baseColumn') === columnFieldName;
     const isMultiPartMember = Boolean(mpData);
 
+    const isHighlighted = isMultiPartMember ? mpData.members.includes(highlightedColumn)
+      : highlightedColumn === columnFieldName;
+
     const targetColumn = isMultiPartMember ? mpData.name : columnFieldName;
     const columnAnnotation = annotations[targetColumn];
 
@@ -184,6 +188,7 @@ export default withStyles(({ palette }) => ({
     }
 
     return {
+      isHighlighted,
       status,
       isMultiPartMember,
       isMultiPartBase,
@@ -217,6 +222,8 @@ export default withStyles(({ palette }) => ({
           heading={colDef.headerName}
           column={column}
           buttonClick={handleCellClick}
+          isHighlighted={(colDef.field === highlightedColumn)}
+          drawerOpen={Boolean(editingColumn)}
         />
       ),
 
@@ -237,6 +244,19 @@ export default withStyles(({ palette }) => ({
     const scrollWindow = grid.querySelector('.MuiDataGrid-window');
     scrollWindow.scrollTo(0, scrollWindow.scrollTop);
   }
+
+  const highlightColumn = (cell, event) => {
+    const nextField = event.relatedTarget?.getAttribute('data-field');
+    if (nextField) {
+      setHighlightedColumn(nextField);
+    }
+  };
+
+  const handleCellKeyDown = (cell, event) => {
+    if (event.key === 'Enter') {
+      handleCellClick(cell);
+    }
+  };
 
   return (
     <div className={classes.root}>
@@ -268,7 +288,7 @@ export default withStyles(({ palette }) => ({
         classes={{
           root: clsx([classes.grid, classes.gridScroll, classes.hideHeaderBorder]),
           row: classes.row,
-          cell: clsx({ [classes.disabledEvents]: isEditing, [classes.cellHighlight]: true }),
+          cell: clsx({ [classes.disabledEvents]: isEditing }),
           columnHeader: clsx({
             [classes.disabledEvents]: isEditing,
             [classes.columnHeaderTitle]: true,
@@ -283,11 +303,9 @@ export default withStyles(({ palette }) => ({
         onCellDoubleClick={handleCellClick}
         onColumnHeaderDoubleClick={handleCellClick}
         GridSortModel={null}
-        onCellKeyDown={(cell, event) => {
-          if (event.key === 'Enter') {
-            handleCellClick(cell);
-          }
-        }}
+        onCellKeyDown={handleCellKeyDown}
+        onCellBlur={highlightColumn}
+        onCellClick={(cell) => setHighlightedColumn(cell.field)}
       />
 
       <ColumnPanel

@@ -82,6 +82,18 @@ const useStyles = makeStyles((theme) => ({
     position: 'absolute',
     height: '14px',
     top: '33px',
+  },
+  highlightedButton: {
+    backgroundColor: theme.palette.grey[100],
+    animation: '$pulse 1.5s infinite alternate',
+  },
+  '@keyframes pulse': {
+    from: {
+      outline: `1px solid ${theme.palette.primary.light}`,
+    },
+    to: {
+      outline: '1px solid white',
+    }
   }
 }));
 
@@ -132,7 +144,8 @@ const Header = ({
   showMarkers,
   addingAnnotationsAllowed,
   column,
-  buttonClick
+  buttonClick,
+  drawerOpen = false,
 }) => {
   const classes = useStyles();
   const isAnnotated = ['annotated', 'primary'].includes(status);
@@ -181,6 +194,10 @@ const Header = ({
             style={{ visibility: isMultiPartMember ? 'hidden' : 'visible' }}
             size="small"
             onClick={() => buttonClick(column)}
+            className={
+              isHighlighted && !isAnnotated && !drawerOpen
+                ? classes.highlightedButton : null
+            }
           >
             {isAnnotated ? 'Edit' : 'Annotate'}
           </Button>
