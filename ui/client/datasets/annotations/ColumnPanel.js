@@ -455,7 +455,7 @@ export default withStyles(({ palette, spacing, breakpoints }) => ({
                     annotateColumns(newAnnotations);
 
                     onClose();
-                    onSubmit();
+                    onSubmit(columnName);
                   }}
                 >
                   {(formik) => (

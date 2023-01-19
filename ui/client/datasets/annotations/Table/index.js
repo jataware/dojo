@@ -11,6 +11,8 @@ import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Checkbox from '@material-ui/core/Checkbox';
 import Tooltip from '@material-ui/core/Tooltip';
 
+import BasicAlert from '../../../components/BasicAlert';
+
 import ColumnPanel from '../ColumnPanel';
 
 import { calcPointerLocation, groupColumns } from './helpers';
@@ -120,7 +122,11 @@ export default withStyles(({ palette }) => ({
   const [pageSize, setPageSize] = useState(rowsPerPageOptions[0]);
   const [highlightedColumn, setHighlightedColumn] = useState(null);
   const [editingColumn, setEditingColumn] = useState(null);
-  const [anchorPosition, setAnchorPosition] = useState('right');
+  const [annotationSuccessAlert, setAnnotationSuccessAlert] = useState();
+  const [annotationAlertMessage, setAnnotationAlertMessage] = useState({
+    message: '',
+    severity: 'success',
+  });
 
   const [isShowMarkers, setShowMarkers] = useState(true);
 
@@ -139,12 +145,6 @@ export default withStyles(({ palette }) => ({
     if (!isColumnAnnotated && !addingAnnotationsAllowed) {
       return;
     }
-
-    // NOTE removed opening panel on different screen areas
-    //      due to UX + having a statistics tab always on left side.
-    //      We can add/revisit if we'd like. Else remove all this comment if
-    //      it ages badly.
-    // setAnchorPosition(calcPointerLocation(event));
 
     const multiPartMember = find(
       multiPartData, (item) => item && item.members.includes(cell.field)
@@ -237,12 +237,11 @@ export default withStyles(({ palette }) => ({
 
   const gridRef = useRef(null);
 
-  function onAnnotationSave() {
-    const grid = gridRef.current;
-    // Scroll internal Table window to left when saving an annotation.
-    // Only useful when creating a new annotation (not editing). We can enhance further.
-    const scrollWindow = grid.querySelector('.MuiDataGrid-window');
-    scrollWindow.scrollTo(0, scrollWindow.scrollTop);
+  function onAnnotationSave(columnName) {
+    setAnnotationSuccessAlert(true);
+    setAnnotationAlertMessage({
+      message: `Your annotation of ${columnName} was successfully added`, severity: 'success'
+    });
   }
 
   const highlightColumn = (cell, event) => {
@@ -266,16 +265,16 @@ export default withStyles(({ palette }) => ({
           classes={{ tooltip: classes.tooltip }}
           title="Display context icons for columns with inferred data, annotated as primary, or as qualifier."
         >
-        <FormControlLabel
-          control={
-            <Checkbox
-              checked={isShowMarkers}
-              onChange={e => setShowMarkers(e.target.checked)}
-              color="primary"
-            />
-          }
-          label="Show Additional Markers"
-        />
+          <FormControlLabel
+            control={(
+              <Checkbox
+                checked={isShowMarkers}
+                onChange={(e) => setShowMarkers(e.target.checked)}
+                color="primary"
+              />
+            )}
+            label="Show Additional Markers"
+          />
         </Tooltip>
       </div>
 
@@ -309,7 +308,6 @@ export default withStyles(({ palette }) => ({
       />
 
       <ColumnPanel
-        anchorPosition={anchorPosition}
         onClose={toggleDrawer}
         onSubmit={onAnnotationSave}
 
@@ -328,7 +326,12 @@ export default withStyles(({ palette }) => ({
 
         fieldsConfig={fieldsConfig}
       />
-
+      <BasicAlert
+        alert={annotationAlertMessage}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        visible={annotationSuccessAlert}
+        setVisible={setAnnotationSuccessAlert}
+      />
     </div>
   );
 });
