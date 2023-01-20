@@ -252,6 +252,11 @@ export default withStyles(({ palette }) => ({
   };
 
   const handleCellKeyDown = (cell, event) => {
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      // DataGrid's vertical scroll is only disabled with both stopPropagation and preventDefault
+      event.stopPropagation();
+      event.preventDefault();
+    }
     if (event.key === 'Enter') {
       handleCellClick(cell);
     }
