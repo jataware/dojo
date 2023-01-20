@@ -339,8 +339,17 @@ def run_model_mixmasta(context, *args, **kwargs):
 
 def scale_features(context, filename=None):
     # 0 to 1 scaled dataframe
+    es = Elasticsearch(settings.ELASTICSEARCH_URL)
     uuid = context["uuid"]
     data_paths = context["dataset"]["data_paths"]
+    if not data_paths:
+        query = {
+            "query": {"match": {"id": uuid}},
+            "fields": ["data_paths"],
+            "_source": False,
+        }
+        es_response = es.search(index="indicators", body=query)
+        data_paths = es_response["hits"]["hits"][0]["fields"]["data_paths"]
     paths_to_process = [
         path for path in data_paths if "_str" not in path and "_normed" not in path
     ]
@@ -356,6 +365,7 @@ def scale_features(context, filename=None):
         s3_filepath = os.path.join(
             settings.DATASET_STORAGE_BASE_URL, "normalized", uuid, file_out_name
         )
+        print(f"filepath: {s3_filepath}")
 
         file_buffer = io.BytesIO()
 
@@ -364,13 +374,15 @@ def scale_features(context, filename=None):
 
         put_rawfile(path=s3_filepath, fileobj=file_buffer)
         data_paths_normalized.append(str(s3_filepath))
-    update_indicator(uuid=uuid, data_paths_normalized=data_paths_normalized)
+    response = update_indicator(
+        uuid=uuid, data_paths_normalized=data_paths_normalized, elasticsearch=es
+    )
+    print(f"Indicator update response: {response}")
 
     return
 
 
-def update_indicator(uuid, data_paths_normalized):
-    es = Elasticsearch(settings.ELASTICSEARCH_URL)
+def update_indicator(uuid, data_paths_normalized, elasticsearch):
     update_body = {"doc": {"data_paths_normalized": data_paths_normalized}}
-    resp = es.update(index="indicators", id=uuid, body=update_body)
+    resp = elasticsearch.update(index="indicators", id=uuid, body=update_body)
     return resp
