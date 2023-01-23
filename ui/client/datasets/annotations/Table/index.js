@@ -140,7 +140,7 @@ export default withStyles(({ palette }) => ({
     find(multiPartData, (mp) => mp.members.includes(columnFieldName))
   );
 
-  const handleCellClick = (cell) => {
+  const openAnnotationPanel = (cell) => {
     const isColumnAnnotated = !isEmpty(annotations[cell.field]);
     if (!isColumnAnnotated && !addingAnnotationsAllowed) {
       return;
@@ -221,7 +221,7 @@ export default withStyles(({ palette }) => ({
           {...calcColumnAttrs(colDef.field)}
           heading={colDef.headerName}
           column={column}
-          buttonClick={handleCellClick}
+          buttonClick={openAnnotationPanel}
           isHighlighted={(colDef.field === highlightedColumn)}
           drawerOpen={Boolean(editingColumn)}
         />
@@ -252,8 +252,10 @@ export default withStyles(({ palette }) => ({
       return;
     }
 
+    // Fetch the column name out of the element's data-field attribute
     const nextHighlight = clicked.getAttribute('data-field');
 
+    // and set our state to the column name, if it existed
     if (nextHighlight) setHighlightedColumn(nextHighlight);
   };
 
@@ -264,7 +266,7 @@ export default withStyles(({ palette }) => ({
       event.preventDefault();
     }
     if (event.key === 'Enter') {
-      handleCellClick(cell);
+      openAnnotationPanel(cell);
     }
   };
 
@@ -310,8 +312,8 @@ export default withStyles(({ palette }) => ({
         headerHeight={HEADER_HEIGHT}
         rowsPerPageOptions={rowsPerPageOptions}
         rows={rows}
-        onCellDoubleClick={handleCellClick}
-        onColumnHeaderDoubleClick={handleCellClick}
+        onCellDoubleClick={openAnnotationPanel}
+        onColumnHeaderDoubleClick={openAnnotationPanel}
         GridSortModel={null}
         onCellKeyDown={handleCellKeyDown}
         onCellBlur={highlightColumn}

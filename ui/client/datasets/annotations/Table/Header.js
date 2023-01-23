@@ -194,6 +194,7 @@ const Header = ({
             style={{ visibility: isMultiPartMember ? 'hidden' : 'visible' }}
             size="small"
             onClick={() => buttonClick(column)}
+            /* Disable the pulse animation when the drawer is open or once it's annotated */
             className={
               isHighlighted && !isAnnotated && !drawerOpen
                 ? classes.highlightedButton : null
