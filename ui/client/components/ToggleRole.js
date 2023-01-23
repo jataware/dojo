@@ -53,7 +53,7 @@ const ToggleRole = () => {
         onChange={handleSelectRole}
       >
         {auth.admin_roles?.map((role) => {
-          const displayName = role.replace(/-|_/g, ' ');
+          const displayName = role.replace(/^dojo:/, '').replace(/-|_/g, ' ');
           return <MenuItem key={role} value={role}>{displayName}</MenuItem>;
         })}
       </Select>
