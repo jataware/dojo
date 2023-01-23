@@ -30,10 +30,10 @@ const Cell = withStyles(({ palette, spacing }) => ({
     marginRight: -6,
     // NOTE How much to space cell content left. We can also use flex + center items
     paddingLeft: spacing(2),
+    cursor: 'pointer',
   },
   hoveredCell: {
     backgroundColor: palette.grey[100],
-    cursor: 'pointer',
   },
 }))(({
   isHighlighted, classes, value
@@ -245,10 +245,16 @@ export default withStyles(({ palette }) => ({
   }
 
   const highlightColumn = (cell, event) => {
-    const nextField = event.relatedTarget?.getAttribute('data-field');
-    if (nextField) {
-      setHighlightedColumn(nextField);
+    // Get the next column to highlight from relatedTarget - this works for arrow key navigation
+    const clicked = event.relatedTarget;
+    if (clicked?.getAttribute('role') !== 'cell') {
+      // only continue if the user has clicked on a 'cell'
+      return;
     }
+
+    const nextHighlight = clicked.getAttribute('data-field');
+
+    if (nextHighlight) setHighlightedColumn(nextHighlight);
   };
 
   const handleCellKeyDown = (cell, event) => {
