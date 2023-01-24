@@ -8,7 +8,7 @@ import pandas as pd
 import xarray as xr
 from raster2xyz.raster2xyz import Raster2xyz
 
-from mixmasta import mixmasta as mix
+from mixmasta import file_processor as mix
 from base_annotation import BaseProcessor
 from utils import DATASET_STORAGE_BASE_URL, get_rawfile, put_rawfile
 
