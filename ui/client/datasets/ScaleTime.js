@@ -1,6 +1,8 @@
 import React, { useEffect, useRef, useState } from 'react';
 
 import Button from '@material-ui/core/Button';
+import FormControl from '@material-ui/core/FormControl';
+import InputLabel from '@material-ui/core/InputLabel';
 import MenuItem from '@material-ui/core/MenuItem';
 import Select from '@material-ui/core/Select';
 import Typography from '@material-ui/core/Typography';
@@ -35,7 +37,16 @@ const data = {
   labels: ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul']
 };
 
-export default withStyles(({}) => ({
+export default withStyles((theme) => ({
+  controls: {
+    paddingTop: theme.spacing(6),
+    display: 'flex',
+    justifyContent: 'center',
+    gap: theme.spacing(2),
+  },
+  formControl: {
+    minWidth: 120,
+  },
 }))(({
   classes,
 }) => {
@@ -73,42 +84,50 @@ export default withStyles(({}) => ({
     <div>
       <Typography align="center" variant="h5">Scale Temporal Data</Typography>
       <Chart type="bar" data={displayData} />
-      <Select
-        value={startValue}
-        onChange={handleChangeStart}
-        disabled={displayData !== data}
-      >
-        {data.labels.map((label, index) => (
-          // eslint-disable-next-line react/no-array-index-key
-          <MenuItem value={index} key={index}>{label}</MenuItem>
-        ))}
-      </Select>
-      <Select
-        value={endValue}
-        onChange={handleChangeEnd}
-        disabled={startValue === '' || displayData !== data}
-      >
-        {data.labels.slice(startValue).map((label, index) => (
-          // eslint-disable-next-line react/no-array-index-key
-          <MenuItem value={index} key={index}>{label}</MenuItem>
-        ))}
-      </Select>
-      <Button
-        variant="contained"
-        color="primary"
-        disableElevation
-        onClick={handleScaleClick}
-        // only allow these to be set once before resetting
-        disabled={displayData !== data}
-      >
-        Scale Time
-      </Button>
-      <Button
-        variant="outlined"
-        onClick={handleReset}
-      >
-        Reset
-      </Button>
+      <div className={classes.controls}>
+        <FormControl variant="outlined" className={classes.formControl}>
+          <InputLabel>Start</InputLabel>
+          <Select
+            value={startValue}
+            onChange={handleChangeStart}
+            disabled={displayData !== data}
+          >
+            {data.labels.map((label, index) => (
+              // eslint-disable-next-line react/no-array-index-key
+              <MenuItem value={index} key={index}>{label}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        <FormControl variant="outlined" className={classes.formControl}>
+          <InputLabel>End</InputLabel>
+          <Select
+            value={endValue}
+            onChange={handleChangeEnd}
+            disabled={startValue === '' || displayData !== data}
+          >
+            {data.labels.slice(startValue).map((label, index) => (
+              // eslint-disable-next-line react/no-array-index-key
+              <MenuItem value={index} key={index}>{label}</MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+        <Button
+          variant="contained"
+          color="primary"
+          disableElevation
+          onClick={handleScaleClick}
+          // only allow these to be set once before resetting
+          disabled={displayData !== data}
+        >
+          Scale Time
+        </Button>
+        <Button
+          variant="outlined"
+          onClick={handleReset}
+        >
+          Reset
+        </Button>
+      </div>
     </div>
   );
 });
