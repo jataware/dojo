@@ -7,6 +7,7 @@ import { withStyles } from '@material-ui/core/styles';
 import Drawer from '../components/Drawer';
 import { Navigation } from '.';
 import ScaleTime from './ScaleTime';
+import ClipMap from './ClipMap';
 
 export default withStyles(({ spacing }) => ({
   root: {
@@ -39,7 +40,7 @@ export default withStyles(({ spacing }) => ({
         );
       case 'clipMap':
         return (
-          <Typography align="center" variant="h5">Clip Map Data</Typography>
+          <ClipMap />
         );
       case 'scaleTime':
         return (
