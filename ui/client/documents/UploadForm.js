@@ -1,9 +1,11 @@
-
 import React, { useEffect, useState, useCallback } from 'react';
 
 import axios from 'axios';
 import debounce from 'lodash/debounce';
 
+import { useDropzone } from 'react-dropzone';
+import clsx from 'clsx';
+import { PDFDocument } from 'pdf-lib';
 
 import { Form, Formik } from 'formik';
 
@@ -23,12 +25,17 @@ import AccordionSummary from '@material-ui/core/AccordionSummary';
 
 
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+import ClearIcon from '@material-ui/icons/Clear';
 import Alert from '@material-ui/lab/Alert';
 
 import Container from '@material-ui/core/Container';
 
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
+import ListItemIcon from '@material-ui/core/ListItemIcon';
+import ListItemText from '@material-ui/core/ListItemText';
+import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
+import ListSubheader from '@material-ui/core/ListSubheader';
 import Divider from '@material-ui/core/Divider';
 
 import LinearProgress from '@material-ui/core/LinearProgress';
@@ -60,6 +67,7 @@ import { FormAwareTextField, FormAwareSelect } from '../datasets/FormFields';
 
 import { Link as RouteLink } from 'react-router-dom';
 
+import InboxIcon from '@material-ui/icons/MoveToInbox';
 
 import DateFnsUtils from '@date-io/date-fns';
 import { KeyboardDatePicker } from 'material-ui-formik-components/KeyboardDatePicker';
@@ -80,51 +88,25 @@ const defaultValues = {
   publication_date: ""
 };
 
-/**
- * Submit button is not type=submit for now, since pressing enter
- * causes issues on inconvenient input boxes.
- **/
-const UploadDocumentForm = withStyles((theme) => ({
+export const EditDocumentMetadata = withStyles((theme) => ({
   root: {
-    padding: '3rem'
+    padding: '1rem',
+    paddingRight: 0
   },
   formfields: {
   },
-  navContainer: {
-    display: 'flex',
-    justifyContent: 'flex-end',
-    // margin: '0.5rem',
-    width: '100%',
-    ['& > button']: {
-      margin: '0.5rem'
-    }
-  },
   datePickerContainer: {
   }
-}))(({ title, children, classes }) => {
+}))(({ classes, metadata }) => {
   return (
-    <Container
-      className={classes.root}
-      component="main"
-      maxWidth="md"
-    >
-      <Typography
-        variant="h3"
-        align="center"
-        gutterBottom
-      >
-        Document Explorer
-      </Typography>
-
-      <br />
-
+    <div className={classes.root}>
       <Typography
         variant="h5"
         color="textSecondary"
         style={{paddingLeft: "1rem"}}
         gutterBottom
       >
-        Upload New Document
+        Edit Metadata Fields
       </Typography>
 
       <Formik
@@ -148,13 +130,13 @@ const UploadDocumentForm = withStyles((theme) => ({
                   />
                 </ListItem>
 
-                <ListItem style={{display: 'block'}}>
-                  <FileInput
-                    name="file"
-                    required
-                    label="PDF File Upload"
-                  />
-                </ListItem>
+                {/* <ListItem style={{display: 'block'}}> */}
+                {/*   <FileInput */}
+                {/*     name="file" */}
+                {/*     required */}
+                {/*     label="PDF File Upload" */}
+                {/*   /> */}
+                {/* </ListItem> */}
 
                 <ListItem>
                   <FormAwareTextField
@@ -252,26 +234,374 @@ const UploadDocumentForm = withStyles((theme) => ({
                   </fieldset>
                 </ListItem>
 
-                <ListItem>
-                  <div className={classes.navContainer}>
-                    <Button variant="contained">
-                      Go Back
-                    </Button>
-                    <Button
-                      type="submit"
-                      color="primary"
-                      variant="contained"
-                    >
-                      Upload
-                    </Button>
-                  </div>
-                </ListItem>
+                
               </List>
             </div>
 
           </Form>
         )}
       </Formik>
+    </div>
+  );
+});
+
+export const FileDropSelector = withStyles((theme => ({
+  root: {
+    margin: '2rem 0',
+    padding: '2rem',
+    borderRadius: '1rem',
+    width: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    flex: 1,
+    alignItems: 'center',
+    backgroundImage: `url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='15' ry='15' stroke='${theme.palette.grey[300].replace('#','%23')}' stroke-width='8' stroke-dasharray='6%2c 20' stroke-dashoffset='19' stroke-linecap='square'/%3e%3c/svg%3e")`,
+    borderRadius: 15,
+  },
+  dropActive: {
+    backgroundImage: `url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='15' ry='15' stroke='${theme.palette.primary.main.replace('#','%23')}' stroke-width='8' stroke-dasharray='6%2c 20' stroke-dashoffset='19' stroke-linecap='square'/%3e%3c/svg%3e")`,
+  },
+  dropIcon: {
+    width: '7rem',
+    height: '7rem',
+    padding: '0.5rem',
+    // color: '#b4d3f0'
+  }
+})))(({classes, onFileSelect}) => {
+  const {getRootProps, getInputProps, isDragActive} = useDropzone({onDrop: onFileSelect});
+
+  // console.log("getRootProps", getRootProps());
+  // console.log("getInputProps", getInputProps());
+  // console.log("isDragActive", isDragActive);
+
+  // TODO lighter color for icon button color on default
+
+  return (
+    <div
+      className={clsx({
+        [classes.root]: true,
+        [classes.dropActive]: isDragActive
+      })}
+      {...getRootProps()}
+    >
+      <IconButton size="medium" color={isDragActive ? "primary" : "default"}>
+        <InboxIcon className={classes.dropIcon}  />
+      </IconButton>
+
+      <input {...getInputProps()} /> {/*is hidden*/}
+
+      <Typography variant="h6" color="textSecondary">
+        {
+          isDragActive ?
+            'Drop the files here' :
+            'Drag PDFs here. Click to select files.'
+        }
+      </Typography>
+    </div>
+  );
+});
+
+/**
+ * TODO check if we had this fn in project;
+ * TODO move to utils
+ **/
+function formatBytes(bytes,decimals) {
+  if(bytes == 0) return '0 Bytes';
+  var k = 1024,
+      dm = decimals || 2,
+      sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'],
+      i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+}
+
+/**
+ *
+ **/
+export const FileTile = withStyles((theme) => ({
+  root: {
+    cursor: 'pointer',
+    maxWidth: '100%' // TODO finish addressing long file name issue.....
+  },
+  dataGrouping: {
+    display: 'flex',
+    alignItems: 'center'
+  },
+  selectedContainer: {
+  },
+  fileInfo: {
+    flex: 1,
+    display: 'flex',
+    alignItems: 'center',
+    ['& > *']: {
+      // margin: '0.5rem'
+    }
+  },
+  loadingContainer: {
+    // width: '100%',
+    // padding: '1rem 0 0 0'
+  }
+}))(({ classes, file, index, uploadStatus, onClick, selectedIndex }) => {
+
+  // TODO revisit probably. this is aware that onClick receives an index..
+  const handleClick = () => {
+    console.log('handling list button click calling with index', index);
+    onClick(index);
+  };
+
+  return (
+    <ListItem
+      selected={index === selectedIndex}
+      className={classes.root}
+      button
+      onClick={handleClick}
+    >
+
+      <ListItemIcon className={classes.selectedContainer}>
+        <Radio value={index+""} disableRipple />
+      </ListItemIcon>
+
+      <ListItemText
+        primary={file.path}
+        secondary={`Size: ${formatBytes(file.size)}`}
+      />
+
+      <ListItemSecondaryAction>
+        <IconButton edge="end" aria-label="delete">
+          <ClearIcon />
+        </IconButton>
+      </ListItemSecondaryAction>
+
+    </ListItem>
+  );
+});
+
+/**
+ *
+ **/
+export const SelectedFileList = withStyles((theme) => ({
+  root: {
+    // border: '1px solid gray'
+    maxWidth: '100%'
+  },
+  list: {
+    overflowY: 'auto',
+    maxWidth: '100%',
+    maxHeight: 650, // TODO rem, maybe px to rem util
+  }
+}))(({ classes, files, onItemClick, selectedIndex }) => {
+
+  console.log("files", files);
+  console.log("selectedIndex", selectedIndex);
+
+  // RadioGroup:
+  // defaultValue="0"
+
+  return (
+    <Paper
+      className={classes.root}
+    >
+      <RadioGroup
+        value={selectedIndex+""}
+      >
+
+        <List className={classes.list}>
+          {files.map((file, index) =>
+            <FileTile
+              onClick={onItemClick}
+              selectedIndex={selectedIndex}
+              index={index}
+              file={file}
+              key={file.path+file.size}
+            />
+          )}
+        </List>
+      </RadioGroup>
+    </Paper>
+  );
+});
+
+const PDF_ATTR_GETTERS = [
+  'getTitle', 'getAuthor', 'getSubject', 'getCreator', 'getKeywords',
+  'getProducer', 'getCreationDate', 'getModificationDate', 'getPageCount'
+];
+
+/**
+ *
+ **/
+function preparePDFData(f) {
+  return {
+    file: f,
+    pdf: {},
+    editing: {},
+    states: {}
+  };
+}
+
+/**
+ * Promise API for reading binary string
+ **/
+function readFile(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      resolve(reader.result);
+    };
+    reader.onabort = reject;
+    reader.onerror = reject;
+
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+/**
+ * Submit button is not type=submit for now, since pressing enter
+ * causes issues on inconvenient input boxes.
+ **/
+const UploadDocumentForm = withStyles((theme) => ({
+  root: {
+    padding: '4rem',
+  },
+  fileList: {
+    display: 'flex',
+  },
+  navContainer: {
+    display: 'flex',
+    justifyContent: 'flex-end'
+  }
+}))(({ title, children, classes }) => {
+
+  const [files, setFiles] = useState([]);
+  const [allPDFMetadata, setAllPDFMetadata] = useState([]);
+
+  const [selectedFileIndex, setSelectedFileIndex] = useState(null);
+
+  console.log('files', files);
+  console.log('allPDFMetadata', allPDFMetadata);
+  console.log('selectedFileIndex', selectedFileIndex);
+
+  const handleFileSelect = useCallback(acceptedFiles => {
+
+    function parseAll() {
+
+      console.log("acceptedFiles", acceptedFiles);
+
+      // acceptedFiles.type === 'application/pdf;
+      // acceptedFiles.size = 141843 bytes
+
+      if (acceptedFiles.length === 0) {
+        console.log("something went wrong. files length is 0");
+        // return false;
+      }
+
+      const filtered = acceptedFiles
+            .filter(i => i.type === 'application/pdf');
+
+      if (filtered.length === 0) {
+        throw new Error('Please select pdf files');
+      }
+
+      if (filtered.length !== acceptedFiles.length) {
+        // TODO inform this to the user "set warnings"
+        console.log("some files were ignored, as they were not of PDF file type.");
+      }
+
+      // gather PDF data. TODO cleanup once e2e prototype is complete
+      const pdfData = filtered.map(pdfFile => {
+        return readFile(pdfFile)
+          .then(binary => {
+
+            return PDFDocument.load(binary)
+              .then(pdf => {
+
+                const acc = {};
+                PDF_ATTR_GETTERS.forEach(fun => {
+
+                  let val = pdf[fun]();
+
+                  if (val) {
+                    val = val.toString();
+                  }
+
+                  acc[fun.replace('get', '')] = val;
+                });
+
+                console.log('acc', acc);
+
+                return acc;
+              });
+          });
+      });
+
+      Promise.all(pdfData)
+        .then((allPdfData) => {
+          setAllPDFMetadata(allPdfData);
+          setFiles(filtered);
+          setSelectedFileIndex(0);
+        });
+    }
+
+    parseAll();
+
+  }, []);
+
+  return (
+    <Container
+      className={classes.root}
+      component="main"
+      maxWidth="md"
+    >
+      <Typography
+        variant="h3"
+        align="center"
+        gutterBottom
+        style={{paddingBottom: "2rem"}}
+      >
+        Document Explorer
+      </Typography>
+
+      <Typography
+        variant="h5"
+        color="textSecondary"
+        gutterBottom
+      >
+        Upload New Documents
+      </Typography>
+
+      <FileDropSelector onFileSelect={handleFileSelect}/>
+
+      {!isEmpty(files) && (
+        <div className={classes.fileList}>
+          <div style={{flex: '1 1 350px', maxWidth: '50%'}}>
+            <SelectedFileList
+              files={files}
+              selectedIndex={selectedFileIndex}
+              onItemClick={setSelectedFileIndex}
+            />
+          </div>
+
+          {selectedFileIndex !== null && (
+            <div style={{flex: '1 1 auto'}}>
+              <EditDocumentMetadata metadata={allPDFMetadata[selectedFileIndex]} />
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className={classes.navContainer}>
+        <Button variant="contained">
+          Go Back
+        </Button>
+        &nbsp;
+        &nbsp;
+        <Button
+          type="submit"
+          color="primary"
+          variant="contained"
+        >
+          Save
+        </Button>
+      </div>
 
     </Container>
   );
@@ -282,3 +612,21 @@ export default UploadDocumentForm;
 
 // onClick={formik.handleSubmit}
 
+
+// .then(pdfDoc => {
+
+//   window.pdfDoc = pdfDoc;
+
+//   // console.log('Title:', pdfDoc.getTitle())
+//   // console.log('Author:', pdfDoc.getAuthor())
+//   // console.log('Subject:', pdfDoc.getSubject())
+//   // console.log('Creator:', pdfDoc.getCreator())
+//   // console.log('Keywords:', pdfDoc.getKeywords())
+//   // console.log('Producer:', pdfDoc.getProducer())
+//   // console.log('Creation Date:', pdfDoc.getCreationDate())
+//   // console.log('Modification Date:', pdfDoc.getModificationDate());
+
+//   // pdfDoc.getPageCount()
+
+//   setEditingMetadata(true);
+// });

@@ -18,6 +18,9 @@ from fastapi import (
 )
 from fastapi.logger import logger
 
+import os
+import json
+
 from validation import IndicatorSchema, DojoSchema, MetadataSchema
 from src.settings import settings
 
@@ -28,6 +31,7 @@ from validation.IndicatorSchema import (
     Period
 )
 
+from src.utils import put_rawfile, get_rawfile, list_files
 from src.datasearch.corpora import Corpus
 from src.search.bert_search import BertSentenceSearch
 
@@ -294,3 +298,67 @@ def get_document(document_id: str): # -> IndicatorSchema.IndicatorMetadataSchema
         logger.exception(e)
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     return format_document(document)
+
+def current_milli_time():
+    return round(time.time() * 1000)
+
+@router.post("/documents")
+def create_document(payload):
+    """
+    """
+    document_id = str(uuid.uuid4())
+    payload.id = document_id
+    payload.created_at = current_milli_time()
+    body = payload.json()
+
+    es.index(index="documents", body=body, id=document_id)
+
+    return Response(
+        status_code=status.HTTP_201_CREATED,
+        headers={
+            "location": f"/api/documents/{document_id}",
+            "content-type": "application/json",
+        },
+        content=body,
+    )
+
+
+@router.post("/documents/{document_id}/upload")
+def upload_file(
+    document_id: str,
+    file: UploadFile = File(...),
+    filename: Optional[str] = None,
+    append: Optional[bool] = False,
+):
+    """
+    TODO- Do we upload after creating the id? How do we do this on datasets?
+    TODO Which bucket should we upload to
+    """
+    original_filename = file.filename
+    _, ext = os.path.splitext(original_filename)
+    dir_path = os.path.join(settings.DATASET_STORAGE_BASE_URL, document_id)
+    if filename is None:
+        if append:
+            filenum = len(
+                [
+                    f
+                    for f in list_files(dir_path)
+                    if f.startswith("raw_data") and f.endswith(ext)
+                ]
+            )
+            filename = f"raw_data_{filenum}{ext}"
+        else:
+            filename = f"raw_data{ext}"
+
+    # Upload file
+    dest_path = os.path.join(settings.DATASET_STORAGE_BASE_URL, document_id, filename)
+    put_rawfile(path=dest_path, fileobj=file.file)
+
+    return Response(
+        status_code=status.HTTP_201_CREATED,
+        headers={
+            "location": f"/api/indicators/{document_id}",
+            "content-type": "application/json",
+        },
+        content=json.dumps({"id": document_id, "filename": filename}),
+    )

@@ -84,6 +84,7 @@ services:
     volumes:
       - ./api:/api
       - dataset-storage:/datasets
+      - ./documents:/documents
     env_file:
       - envfile
     environment:
