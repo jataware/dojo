@@ -21,15 +21,9 @@ from fastapi.logger import logger
 import os
 import json
 
-from validation import IndicatorSchema, DojoSchema, MetadataSchema
+from validation import DocumentSchema
 from src.settings import settings
 
-from validation.IndicatorSchema import (
-    IndicatorMetadataSchema,
-    QualifierOutput,
-    Output,
-    Period
-)
 
 from src.utils import put_rawfile, get_rawfile, list_files
 from src.datasearch.corpora import Corpus
@@ -196,6 +190,12 @@ def camel_to_snake(str):
 def dict_keys_to_snake_case(a_dict):
     return {camel_to_snake(k): v for k, v in a_dict.items()}
 
+def snake_to_pascal(str):
+    x = str.split("_")
+    return "".join([i.title() for i in x])
+
+def dict_keys_to_pascal(a_dict):
+    return {snake_to_pascal(k): v for k, v in a_dict.items()}
 
 DEFAULT_DOC = {
     "creation_date": None,
@@ -303,13 +303,14 @@ def current_milli_time():
     return round(time.time() * 1000)
 
 @router.post("/documents")
-def create_document(payload):
+def create_document(payload: DocumentSchema.Model):
     """
     """
     document_id = str(uuid.uuid4())
-    payload.id = document_id
-    payload.created_at = current_milli_time()
-    body = payload.json()
+
+    payload_dict = DEFAULT_DOC | payload.dict()
+
+    body = json.dumps(payload_dict)
 
     es.index(index="documents", body=body, id=document_id)
 
@@ -319,7 +320,7 @@ def create_document(payload):
             "location": f"/api/documents/{document_id}",
             "content-type": "application/json",
         },
-        content=body,
+        content=json.dumps({'id' : document_id}|payload_dict)
     )
 
 

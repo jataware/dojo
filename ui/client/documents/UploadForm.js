@@ -234,7 +234,6 @@ export const EditDocumentMetadata = withStyles((theme) => ({
                   </fieldset>
                 </ListItem>
 
-                
               </List>
             </div>
 
@@ -251,21 +250,24 @@ export const FileDropSelector = withStyles((theme => ({
     padding: '2rem',
     borderRadius: '1rem',
     width: '100%',
+    height: 'auto',
     display: 'flex',
     flexDirection: 'column',
     flex: 1,
     alignItems: 'center',
-    backgroundImage: `url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='15' ry='15' stroke='${theme.palette.grey[300].replace('#','%23')}' stroke-width='8' stroke-dasharray='6%2c 20' stroke-dashoffset='19' stroke-linecap='square'/%3e%3c/svg%3e")`,
-    borderRadius: 15,
+    border: `3px dashed ${theme.palette.grey[200]}`
+
+    // TODO stopped working?: begtter dahsed border...
+    // backgroundImage: `url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='15' ry='15' stroke='${theme.palette.grey[300].replace('#','%23')}' stroke-width='8' stroke-dasharray='6%2c 20' stroke-dashoffset='19' stroke-linecap='square'/%3e%3c/svg%3e")`,
   },
   dropActive: {
-    backgroundImage: `url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='15' ry='15' stroke='${theme.palette.primary.main.replace('#','%23')}' stroke-width='8' stroke-dasharray='6%2c 20' stroke-dashoffset='19' stroke-linecap='square'/%3e%3c/svg%3e")`,
+    borderColor: theme.palette.primary.main,
+    // backgroundImage: `url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='15' ry='15' stroke='${theme.palette.primary.main.replace('#','%23')}' stroke-width='8' stroke-dasharray='6%2c 20' stroke-dashoffset='19' stroke-linecap='square'/%3e%3c/svg%3e")`,
   },
   dropIcon: {
     width: '7rem',
     height: '7rem',
-    padding: '0.5rem',
-    // color: '#b4d3f0'
+    padding: '0.5rem'
   }
 })))(({classes, onFileSelect}) => {
   const {getRootProps, getInputProps, isDragActive} = useDropzone({onDrop: onFileSelect});
@@ -320,7 +322,7 @@ function formatBytes(bytes,decimals) {
 export const FileTile = withStyles((theme) => ({
   root: {
     cursor: 'pointer',
-    maxWidth: '100%' // TODO finish addressing long file name issue.....
+    // maxWidth: '100%' // TODO finish addressing long file name issue.....
   },
   dataGrouping: {
     display: 'flex',
@@ -331,10 +333,7 @@ export const FileTile = withStyles((theme) => ({
   fileInfo: {
     flex: 1,
     display: 'flex',
-    alignItems: 'center',
-    ['& > *']: {
-      // margin: '0.5rem'
-    }
+    alignItems: 'center'
   },
   loadingContainer: {
     // width: '100%',
@@ -380,21 +379,17 @@ export const FileTile = withStyles((theme) => ({
  **/
 export const SelectedFileList = withStyles((theme) => ({
   root: {
-    // border: '1px solid gray'
+    border: '1px solid #eaeaea',
     maxWidth: '100%'
   },
   list: {
     overflowY: 'auto',
-    maxWidth: '100%',
+    // maxWidth: '100%',
     maxHeight: 650, // TODO rem, maybe px to rem util
   }
 }))(({ classes, files, onItemClick, selectedIndex }) => {
 
   console.log("files", files);
-  console.log("selectedIndex", selectedIndex);
-
-  // RadioGroup:
-  // defaultValue="0"
 
   return (
     <Paper
@@ -426,18 +421,6 @@ const PDF_ATTR_GETTERS = [
 ];
 
 /**
- *
- **/
-function preparePDFData(f) {
-  return {
-    file: f,
-    pdf: {},
-    editing: {},
-    states: {}
-  };
-}
-
-/**
  * Promise API for reading binary string
  **/
 function readFile(file) {
@@ -453,6 +436,29 @@ function readFile(file) {
     reader.readAsArrayBuffer(file);
   });
 }
+
+/**
+ * Uploads a file to the backend service.
+ * Receives a form dom reference, datasetId, and optional params.
+ * TODO move to common project location, as datasets also uses this..?
+ * will need to receive url or so.
+ **/
+export const uploadFile = async (file, documentID, params={}) => {
+
+  const uploadData = new window.FormData();
+  // const formfile = form.file;
+  // const file = formfile.files[0];
+
+  uploadData.append('file', file);
+
+  const response = await axios({
+    method: 'post',
+    url: `/api/dojo/documents/${documentID}/upload`,
+    data: uploadData,
+    params: params
+  });
+  return response;
+};
 
 /**
  * Submit button is not type=submit for now, since pressing enter
@@ -498,13 +504,34 @@ const UploadDocumentForm = withStyles((theme) => ({
             .filter(i => i.type === 'application/pdf');
 
       if (filtered.length === 0) {
-        throw new Error('Please select pdf files');
+        throw new Error('Please select pdf files'); // TODO display to user.
       }
 
       if (filtered.length !== acceptedFiles.length) {
         // TODO inform this to the user "set warnings"
         console.log("some files were ignored, as they were not of PDF file type.");
       }
+
+
+      // TODO start uploading filtered files here for now
+      filtered.forEach(file => {
+        // TODO create a document on API
+        // const documentId = 
+        const document = axios({
+          method: 'post',
+          url: `/api/dojo/documents`,
+          data: {"creation_date": "2018-12-25"},
+          params: {}
+        }).then(doc => {
+          console.log('Document response:', doc);
+        }).catch((e) => {
+          console.log('error creating doc', e);
+        });
+
+        // TODO then uploadFile
+        // uploadFile(file, documentId);
+      });
+
 
       // gather PDF data. TODO cleanup once e2e prototype is complete
       const pdfData = filtered.map(pdfFile => {
@@ -571,37 +598,40 @@ const UploadDocumentForm = withStyles((theme) => ({
       <FileDropSelector onFileSelect={handleFileSelect}/>
 
       {!isEmpty(files) && (
-        <div className={classes.fileList}>
-          <div style={{flex: '1 1 350px', maxWidth: '50%'}}>
-            <SelectedFileList
-              files={files}
-              selectedIndex={selectedFileIndex}
-              onItemClick={setSelectedFileIndex}
-            />
+        <div>
+          <div className={classes.fileList}>
+            <div style={{flex: '1 1 350px', maxWidth: '50%'}}>
+              <SelectedFileList
+                files={files}
+                selectedIndex={selectedFileIndex}
+                onItemClick={setSelectedFileIndex}
+              />
+            </div>
+
+            {selectedFileIndex !== null && (
+              <div style={{flex: '1 1 auto'}}>
+                <EditDocumentMetadata metadata={allPDFMetadata[selectedFileIndex]} />
+              </div>
+            )}
           </div>
 
-          {selectedFileIndex !== null && (
-            <div style={{flex: '1 1 auto'}}>
-              <EditDocumentMetadata metadata={allPDFMetadata[selectedFileIndex]} />
-            </div>
-          )}
+          <div className={classes.navContainer}>
+            <Button variant="contained">
+              Cancel
+            </Button>
+            &nbsp;
+            &nbsp;
+            <Button
+              type="submit"
+              color="primary"
+              variant="contained"
+            >
+              Save All
+            </Button>
+          </div>
         </div>
-      )}
 
-      <div className={classes.navContainer}>
-        <Button variant="contained">
-          Go Back
-        </Button>
-        &nbsp;
-        &nbsp;
-        <Button
-          type="submit"
-          color="primary"
-          variant="contained"
-        >
-          Save
-        </Button>
-      </div>
+      )}
 
     </Container>
   );
