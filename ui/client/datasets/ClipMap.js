@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
 import Typography from '@material-ui/core/Typography';
-import { withStyles } from '@material-ui/core/styles';
+import { withStyles, useTheme } from '@material-ui/core/styles';
 
 import '@geoman-io/leaflet-geoman-free';
 import '@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css';
@@ -9,6 +9,7 @@ import '@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css';
 import { useLeafletContext } from '@react-leaflet/core';
 import 'leaflet/dist/leaflet.css';
 import {
+  GeoJSON,
   MapContainer,
   TileLayer,
 } from 'react-leaflet';
@@ -70,9 +71,29 @@ const Geoman = ({ setDrawings }) => {
 };
 
 export default withStyles((theme) => ({
-}))(({}) => {
+}))(({ countries, }) => {
   const [drawings, setDrawings] = useState([]);
+  const [countriesJSON, setCountriesJSON] = useState();
+  const theme = useTheme();
 
+  useEffect(() => {
+    axios.get('/assets/countries_borders.json')
+      .then((countryBorderData) => {
+        const validCountries = countryBorderData.data.features.filter((country) => (
+          countries.has(country.properties.ADMIN)
+        ));
+        setCountriesJSON(validCountries);
+      });
+  }, [countries]);
+
+  const mapStyle = {
+    weight: 1,
+    opacity: 1,
+    color: theme.palette.warning.dark,
+    fillColor: theme.palette.warning.main,
+    fillOpacity: 0.1,
+  };
+  // TODO: delay loading whole map component if there are countries until geojson is drawn
   return (
     <div>
       <Typography align="center" variant="h5">Clip Map Data</Typography>
@@ -82,6 +103,10 @@ export default withStyles((theme) => ({
         scrollWheelZoom={false}
         style={{ height: 340, margin: '0 auto' }}
       >
+        {/* Don't load GeoJSON until the countriesJSON is loaded or they won't get drawn */}
+        {countriesJSON && (
+          <GeoJSON style={mapStyle} data={countriesJSON} />
+        )}
         <Geoman setDrawings={setDrawings} />
         <TileLayer
           attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'

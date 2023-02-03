@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 
+import axios from 'axios';
+
 import Container from '@material-ui/core/Container';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 
+import ClipMap from './ClipMap';
+import ClipTime from './ClipTime';
 import Drawer from '../components/Drawer';
 import { Navigation } from '.';
 import ScaleTime from './ScaleTime';
-import ClipMap from './ClipMap';
 
 export default withStyles(({ spacing }) => ({
   root: {
@@ -17,10 +20,71 @@ export default withStyles(({ spacing }) => ({
     marginBottom: spacing(6),
   },
 }))(({
-  classes, stepTitle, handleNext, handleBack, ...props
+  classes, annotations, datasetInfo, stepTitle, handleNext, handleBack, useFilepath = false, rawFileName, ...props
 }) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerName, setDrawerName] = useState(null);
+  const [countries, setCountries] = useState(null);
+
+  useEffect(() => {
+    if (!datasetInfo?.id) {
+      return;
+    }
+
+    const fileArg = (useFilepath ? "filepath" : "filename");
+    const previewUrl = `/api/dojo/indicators/${datasetInfo.id}/preview/raw${rawFileName ? `?${fileArg}=${rawFileName}` : ''}`;
+
+    // const getAnnotations = async () => {
+    //   // TODO verify and document this:
+    //   // Model Output condition: We store STATE in memory (no backing indicator created)
+    //   // So we need to ensure we return the data received from props, and not do a new fetch
+    //   if (annotations?.metadata?.geotime_classify) {
+    //     return {data: annotations};
+    //   }
+    //   else {
+    //     // Load annotations from API, which also include other data unavailable if we don't call this
+    //     return axios.get(`/api/dojo/indicators/${datasetInfo.id}/annotations`);
+    //   }
+    // };
+
+    Promise
+      .all([
+        // getAnnotations(),
+        axios.post(previewUrl)
+      ])
+      .then(([serverAnnotationData, preview]) => {
+        const { data } = serverAnnotationData;
+        const datasetCountries = new Set();
+        data.forEach((item) => {
+          if (item.country) {
+            datasetCountries.add(item.country);
+          }
+        });
+        setCountries(datasetCountries);
+        console.log('here are the countries!!', datasetCountries)
+      //   const inferred = metadata.geotime_classify;
+      //   const stats = {histograms: metadata.histograms, statistics: metadata.column_statistics};
+
+      //   const parsedColumns = prepareColumns(preview.data[0]);
+      //   const { annotations: serverAnnotations } = serverAnnotationData.data;
+
+      //   setRows(preview.data);
+      //   setColumns(parsedColumns);
+      //   setInferredData(inferred);
+      //   setColumnStats(stats);
+
+      //   if (serverAnnotations) {
+      //     const formattedIn = formatAnnotationsIN(serverAnnotations);
+      //     setInternalAnnotations(formattedIn.annotations);
+      //     setMultiPartData(formattedIn.multiPartData);
+      //   }
+      })
+      .catch((e) => {
+        // setPromptMessage('Error loading annotation data.');
+        // console.error('Error fetching geoclassify or raw preview:', e);
+      })
+      // .finally(() => { setLoading(false); });
+  }, [datasetInfo, rawFileName, useFilepath]);
 
   const handleDrawerClose = () => {
     setDrawerOpen(false);
@@ -40,7 +104,7 @@ export default withStyles(({ spacing }) => ({
         );
       case 'clipMap':
         return (
-          <ClipMap />
+          <ClipMap countries={countries} />
         );
       case 'scaleTime':
         return (
@@ -48,7 +112,7 @@ export default withStyles(({ spacing }) => ({
         );
       case 'clipTime':
         return (
-          <Typography align="center" variant="h5">Clip Temporal Data</Typography>
+          <ClipTime />
         );
       default:
         return (
