@@ -96,6 +96,31 @@ export default withStyles(({ spacing }) => ({
     setDrawerName(name);
   };
 
+  // TODO: expand this to include the other data transformation steps as we do them
+  const saveDrawings = async (drawings) => {
+    const transformation = {
+      'map-shapes': drawings,
+      geo_columns: [
+        'latitude',
+        'longitude',
+      ],
+    };
+    const jobQueueResp = await axios.post(
+      `/api/dojo/job/${datasetInfo.id}/mixmasta_processors.clip_data`,
+      transformation
+    );
+
+    if (jobQueueResp.status === 200) {
+      const jobId = jobQueueResp.data.id;
+
+      const transformationResp = await axios.post(`/api/dojo/job/fetch/${jobId}`);
+
+      // TODO: currently job/fetch returns nothing (but no error)
+      console.log('This is the transformation response', transformationResp);
+    }
+    // TODO: error handling
+  };
+
   const drawerInner = () => {
     switch (drawerName) {
       case 'regridMap':
@@ -104,7 +129,7 @@ export default withStyles(({ spacing }) => ({
         );
       case 'clipMap':
         return (
-          <ClipMap countries={countries} />
+          <ClipMap countries={countries} saveDrawings={saveDrawings} />
         );
       case 'scaleTime':
         return (

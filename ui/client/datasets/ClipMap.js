@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 
 import axios from 'axios';
 
+import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
 import { withStyles, useTheme } from '@material-ui/core/styles';
 
@@ -79,7 +80,7 @@ export default withStyles((theme) => ({
   header: {
     paddingBottom: theme.spacing(2),
   }
-}))(({ countries, classes }) => {
+}))(({ countries, classes, saveDrawings }) => {
   const [drawings, setDrawings] = useState([]);
   const [countriesJSON, setCountriesJSON] = useState();
   const theme = useTheme();
@@ -98,6 +99,10 @@ export default withStyles((theme) => ({
         });
     }
   }, [countries]);
+
+  const onSaveClick = () => {
+    saveDrawings(drawings);
+  };
 
   const mapStyle = {
     weight: 1,
@@ -136,6 +141,9 @@ export default withStyles((theme) => ({
           Here is a drawing: {JSON.stringify(drawing)}
         </Typography>
       ))}
+      <Button variant="contained" color="primary" onClick={onSaveClick}>
+        Save Clips
+      </Button>
     </div>
   );
 });
