@@ -73,19 +73,30 @@ const Geoman = ({ setDrawings }) => {
 };
 
 export default withStyles((theme) => ({
-}))(({ countries, }) => {
+  noMapData: {
+    paddingTop: theme.spacing(14),
+  },
+  header: {
+    paddingBottom: theme.spacing(2),
+  }
+}))(({ countries, classes }) => {
   const [drawings, setDrawings] = useState([]);
   const [countriesJSON, setCountriesJSON] = useState();
   const theme = useTheme();
 
   useEffect(() => {
-    axios.get('/assets/countries_borders.json')
-      .then((countryBorderData) => {
-        const validCountries = countryBorderData.data.features.filter((country) => (
-          countries.has(country.properties.ADMIN)
-        ));
-        setCountriesJSON(validCountries);
-      });
+    if (countries) {
+      // fetch the countries geoJSON shapes
+      axios.get('/assets/countries_borders.json')
+        .then((countryBorderData) => {
+          const validCountries = countryBorderData.data.features.filter((country) => (
+            // countries is a Set made in DataTransformation
+            countries.has(country.properties.ADMIN)
+          ));
+          // and only include the shapes named in our Set list
+          setCountriesJSON(validCountries);
+        });
+    }
   }, [countries]);
 
   const mapStyle = {
@@ -95,26 +106,31 @@ export default withStyles((theme) => ({
     fillColor: theme.palette.warning.main,
     fillOpacity: 0.1,
   };
-  // TODO: delay loading whole map component if there are countries until geojson is drawn
+
   return (
     <div>
-      <Typography align="center" variant="h5">Clip Map Data</Typography>
-      <MapContainer
-        center={[51.505, -0.09]}
-        zoom={1}
-        scrollWheelZoom={false}
-        style={{ height: 340, margin: '0 auto' }}
-      >
-        {/* Don't load GeoJSON until the countriesJSON is loaded or they won't get drawn */}
-        {countriesJSON && (
+      <Typography align="center" variant="h5" className={classes.header}>
+        Clip Map Data
+      </Typography>
+      {countries ? countriesJSON && (
+        <MapContainer
+          center={[51.505, -0.09]}
+          zoom={1}
+          scrollWheelZoom={false}
+          style={{ height: 340, margin: '0 auto' }}
+        >
           <GeoJSON style={mapStyle} data={countriesJSON} />
-        )}
-        <Geoman setDrawings={setDrawings} />
-        <TileLayer
-          attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
-      </MapContainer>
+          <Geoman setDrawings={setDrawings} />
+          <TileLayer
+            attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
+        </MapContainer>
+      ) : (
+        <Typography variant="subtitle1" align="center" className={classes.noMapData}>
+          No Map Data Found
+        </Typography>
+      )}
       {drawings.map((drawing) => (
         <Typography variant="h6" key={`${drawing[0].lat}${drawing[0].lng}`}>
           Here is a drawing: {JSON.stringify(drawing)}
