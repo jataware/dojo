@@ -29,9 +29,21 @@ from src.utils import put_rawfile, get_rawfile, list_files
 from src.datasearch.corpora import Corpus
 from src.search.bert_search import BertSentenceSearch
 
+from rq import Queue
+from redis import Redis
+from rq.exceptions import NoSuchJobError
+from rq import job
+
 router = APIRouter()
 
 es = Elasticsearch([settings.ELASTICSEARCH_URL], port=settings.ELASTICSEARCH_PORT)
+
+# REDIS CONNECTION AND QUEUE OBJECTS
+redis = Redis(
+    os.environ.get("REDIS_HOST", "redis.dojo-stack"),
+    os.environ.get("REDIS_PORT", "6379"),
+)
+q = Queue(connection=redis, default_timeout=-1)
 
 # Initialize LLM Semantic Search Engine. Requires a corpus on instantiation
 # for now. We'll refactor the embedder engine once out of PoC stage.
@@ -302,6 +314,7 @@ def get_document(document_id: str): # -> IndicatorSchema.IndicatorMetadataSchema
 def current_milli_time():
     return round(time.time() * 1000)
 
+
 @router.post("/documents")
 def create_document(payload: DocumentSchema.Model):
     """
@@ -324,6 +337,40 @@ def create_document(payload: DocumentSchema.Model):
     )
 
 
+@router.put("/documents/{document_id}")
+def update_document(payload: DocumentSchema.Model, document_id: str):
+    """
+    """
+    body = payload.json()
+
+    es.index(index="documents", body=body, id=document_id)
+
+    return Response(
+        status_code=status.HTTP_200_OK,
+        headers={
+            "location": f"/api/documents/{document_id}",
+            "content-type": "application/json",
+        },
+        content=f"Updated document with id = {document_id}",
+    )
+
+def enqueue_document_paragraphs_processing(document_id, s3Url):
+    """
+    Adds document to queue to process by paragraph.
+    Embedder creates and attaches LLM embeddings to its paragraphs
+    """
+    job_string = "paragraph_embeddings_processors.calculate_store_embeddings"
+    job_id = f"{document_id}_{job_string}"
+
+    context = {
+        "document_id": indicator_id,
+        "s3_url": s3Url
+    }
+
+    job = q.enqueue_call(
+        func=job_string, args=[context], kwargs={}, job_id=job_id
+    )
+
 @router.post("/documents/{document_id}/upload")
 def upload_file(
     document_id: str,
@@ -332,33 +379,30 @@ def upload_file(
     append: Optional[bool] = False,
 ):
     """
-    TODO- Do we upload after creating the id? How do we do this on datasets?
-    TODO Which bucket should we upload to
     """
+
     original_filename = file.filename
     _, ext = os.path.splitext(original_filename)
-    dir_path = os.path.join(settings.DATASET_STORAGE_BASE_URL, document_id)
+
     if filename is None:
-        if append:
-            filenum = len(
-                [
-                    f
-                    for f in list_files(dir_path)
-                    if f.startswith("raw_data") and f.endswith(ext)
-                ]
-            )
-            filename = f"raw_data_{filenum}{ext}"
-        else:
-            filename = f"raw_data{ext}"
+        filename = f"raw_data{ext}"
+
+    # TODO settings.DOCUMENT_STORAGE_BASE_URL
 
     # Upload file
-    dest_path = os.path.join(settings.DATASET_STORAGE_BASE_URL, document_id, filename)
+    dest_path = os.path.join("s3://jataware-world-modelers-dev/documents/", f"{document_id}-{filename}")
+    logger.info(f"file upload dest_path: {dest_path}")
     put_rawfile(path=dest_path, fileobj=file.file)
+
+    # TODO enqueue for rq worker to add paragraphs and embeddings to es
+    # enqueue_document_paragraphs_processing(document_id, dest_path)
+
+    # TODO update document data id to include source_url pointing to new s3 url dest_path above.
 
     return Response(
         status_code=status.HTTP_201_CREATED,
         headers={
-            "location": f"/api/indicators/{document_id}",
+            "location": f"/api/documents/{document_id}",
             "content-type": "application/json",
         },
         content=json.dumps({"id": document_id, "filename": filename}),

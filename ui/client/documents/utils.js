@@ -50,3 +50,10 @@ export function highlightText(text, highlights) {
     </span>
   );
 }
+
+/**
+ * TODO
+ **/
+export function pdfMetadataToForm(pdfExtractedMetadata) {
+  return {};
+}

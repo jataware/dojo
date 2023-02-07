@@ -79,7 +79,7 @@ engine = BertSentenceSearch(corpus, cuda=False)
 
 def enqueue_indicator_feature(indicator_id, indicator_dict):
     """
-    Adds indiciator to queue to process by embeddings_process, which
+    Adds indicator (dataset!) to queue to process by embeddings_process, which
     at this time creates and attaches LLM embeddings to its features (outputs)
     """
     job_string = "embeddings_processors.calculate_store_embeddings"

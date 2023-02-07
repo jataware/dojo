@@ -74,6 +74,7 @@ import { KeyboardDatePicker } from 'material-ui-formik-components/KeyboardDatePi
 import {
   MuiPickersUtilsProvider,
 } from '@material-ui/pickers';
+import { pdfMetadataToForm } from './utils';
 
 const defaultValues = {
   title: "",
@@ -88,6 +89,21 @@ const defaultValues = {
   publication_date: ""
 };
 
+// TODO compare this extracted metadata to servers'
+// NOTE Metadata format from PDF js lib:
+// Author: undefined,
+// CreationDate: "Tue Jan 24 2023 15:24:20 GMT-0500 (Eastern Standard Time)",
+// Creator: "TeX",
+// Keywords: undefined,
+// ModificationDate: "Fri Feb 03 2023 13:48:08 GMT-0500 (Eastern Standard Time)",
+// PageCount: "8",
+// Producer: "pdf-lib (https://github.com/Hopding/pdf-lib)",
+// Subject: undefined,
+// Title: undefined
+
+/**
+ *
+ **/
 export const EditDocumentMetadata = withStyles((theme) => ({
   root: {
     padding: '1rem',
@@ -270,7 +286,13 @@ export const FileDropSelector = withStyles((theme => ({
     padding: '0.5rem'
   }
 })))(({classes, onFileSelect}) => {
-  const {getRootProps, getInputProps, isDragActive} = useDropzone({onDrop: onFileSelect});
+  // NOTE other params: onDropAccepted/onDropRejected/validator
+  const {getRootProps, getInputProps, isDragActive} = useDropzone({onDrop: onFileSelect,
+                                                                   accept: {
+                                                                     // NOTE only accepting PDFs for now.
+                                                                     // Any others?
+                                                                     'application/pdf': ['.pdf'],
+                                                                   }});
 
   // console.log("getRootProps", getRootProps());
   // console.log("getInputProps", getInputProps());
@@ -442,12 +464,12 @@ function readFile(file) {
  * Receives a form dom reference, datasetId, and optional params.
  * TODO move to common project location, as datasets also uses this..?
  * will need to receive url or so.
+ * TODO check why the datasets version needs a ref to the form, instead
+ * of a reference to the selected file as we do here.
  **/
 export const uploadFile = async (file, documentID, params={}) => {
 
   const uploadData = new window.FormData();
-  // const formfile = form.file;
-  // const file = formfile.files[0];
 
   uploadData.append('file', file);
 
@@ -504,7 +526,8 @@ const UploadDocumentForm = withStyles((theme) => ({
             .filter(i => i.type === 'application/pdf');
 
       if (filtered.length === 0) {
-        throw new Error('Please select pdf files'); // TODO display to user.
+        // TODO display to user. Can be handled by DropZone hook instead
+        throw new Error('Please select pdf files');
       }
 
       if (filtered.length !== acceptedFiles.length) {
@@ -512,24 +535,25 @@ const UploadDocumentForm = withStyles((theme) => ({
         console.log("some files were ignored, as they were not of PDF file type.");
       }
 
-
       // TODO start uploading filtered files here for now
       filtered.forEach(file => {
-        // TODO create a document on API
-        // const documentId = 
+
+        // TODO format metadata
         const document = axios({
           method: 'post',
           url: `/api/dojo/documents`,
           data: {"creation_date": "2018-12-25"},
           params: {}
-        }).then(doc => {
-          console.log('Document response:', doc);
+        }).then(response => {
+          const doc = response.data;
+
+          console.log('response doc', doc);
+
+          uploadFile(file, doc.id, {filename: file.name});
+
         }).catch((e) => {
           console.log('error creating doc', e);
         });
-
-        // TODO then uploadFile
-        // uploadFile(file, documentId);
       });
 
 
