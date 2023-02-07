@@ -42,8 +42,7 @@ from validation.IndicatorSchema import (
     QualifierOutput,
     Output,
     Period,
-    Geography,
-    FeaturesSearchSchema
+    Geography
 )
 from functools import reduce
 import os
@@ -71,6 +70,7 @@ q = Queue(connection=redis, default_timeout=-1)
 def current_milli_time():
     return round(time.time() * 1000)
 
+# TODO import already initialized engine for reuse across files/endpoints
 # Initialize LLM Semantic Search Engine. Requires a corpus on instantiation
 # for now. We'll refactor the embedder engine once out of PoC stage.
 corpus = Corpus.from_list(["a"])
@@ -164,12 +164,10 @@ def patch_indicator(
         content=f"Updated indicator with id = {indicator_id}",
     )
 
-# TODO if we reuse the search schema response model, we need to allow extra for
-# semantic search max_score and other properties
 @router.get(
-"/features/search" # , response_model=IndicatorSchema.FeaturesSearchSchema
+"/features/search", response_model=IndicatorSchema.FeaturesSemanticSearchSchema
 )
-def semantic_search_features(query: str, scroll_id: Optional[str]=None):
+def semantic_search_features(query: Optional[str], size=10, scroll_id: Optional[str]=None):
     """
     Given a text query, uses semantic search engine to search for features that
     match the query semantically. Query is a sentence that can be interpreted to
@@ -177,30 +175,32 @@ def semantic_search_features(query: str, scroll_id: Optional[str]=None):
     'number of people who have been vaccinated'
     """
 
-    size = 200
+    if scroll_id:
+        results = es.scroll(scroll_id=scroll_id, scroll="2m")
+    else:
+        query_embedding = engine.embed_query(query)
 
-    query_embedding = engine.embed_query(query)
-
-    features_query = {
-        "query": {
-            "script_score": {
-                "query": {"match_all": {}},
-                "script": {
-                    "source": "Math.max(cosineSimilarity(params.query_vector, 'embeddings'), 0)",
-                    "params": {
-                        "query_vector": query_embedding.tolist()
+        features_query = {
+            "query": {
+                "script_score": {
+                    "query": {"match_all": {}},
+                    "script": {
+                        "source": "Math.max(cosineSimilarity(params.query_vector, 'embeddings'), 0)",
+                        "params": {
+                            "query_vector": query_embedding.tolist()
+                        }
                     }
                 }
+            },
+            "_source": {
+                "excludes": ["embeddings"]
             }
-        },
-        "_source": {
-            "excludes": ["embeddings"]
         }
-    }
+        results = es.search(index="features", body=features_query, scroll="2m", size=size)
 
-    results = es.search(index="features", body=features_query, scroll="2m", size=size)
+    items_in_page = len(results["hits"]["hits"])
 
-    if len(results["hits"]["hits"]) < size:
+    if items_in_page < int(size):
         scroll_id = None
     else:
         scroll_id = results.get("_scroll_id", None)
@@ -208,27 +208,18 @@ def semantic_search_features(query: str, scroll_id: Optional[str]=None):
     max_score = results["hits"]["max_score"]
 
     def formatOneResult(r):
-        r["_source"]["_score"] = r["_score"]
+        r["_source"]["metadata"]={}
+        r["_source"]["metadata"]["match_score"] = r["_score"]
+        r["_source"]["id"] = r["_id"]
         return r["_source"]
 
     return {
         "hits": results["hits"]["total"]["value"],
-        "items_in_page": len(results["hits"]["hits"]),
-        "scroll_id": scroll_id,
+        "items_in_page": items_in_page,
         "max_score": max_score,
         "results": [formatOneResult(i) for i in results["hits"]["hits"]],
+        "scroll_id": scroll_id
     }
-
-
-def outputs_as_features(acc, currentResult):
-    """Used to reduce the complete `indicators.outputs` properties and
-    format as features for client"""
-    datasetInfo = currentResult["_source"]
-    c = map(lambda output: {"owner_dataset": datasetInfo, **output["_source"]},
-            currentResult["inner_hits"]["outputs"]["hits"]["hits"])
-    result = acc + list(c)
-
-    return result
 
 
 def formatHitWithId(hit):
@@ -247,7 +238,9 @@ def getWildcardsForAllProperties(t):
 @router.get(
     "/features", response_model=IndicatorSchema.FeaturesSearchSchema
 )
-def list_features(term: Optional[str]=None, scroll_id: Optional[str]=None):
+def list_features(term: Optional[str]=None,
+                  size: int = 10,
+                  scroll_id: Optional[str]=None):
     """
     Lists all features, with pagination, or results from searching
     through them by keywords (within input `term`).
@@ -255,14 +248,12 @@ def list_features(term: Optional[str]=None, scroll_id: Optional[str]=None):
     `display_name`, or `description`.
     """
 
-    size = 10
-
     if term:
         q = {
             "query": {
                 "bool": {
                     "should": [
-                        # TODO End result format, 3 properties matched for each
+                        # NOTE End result format, 3 properties matched for each
                         #      word in text (split by whitespace)
                         # Note: This is a slow search. Use es token indexing features
                         #       in the future
@@ -291,14 +282,14 @@ def list_features(term: Optional[str]=None, scroll_id: Optional[str]=None):
         }
 
     if not scroll_id:
-        results = es.search(index="features", body=q, scroll="2m", size=10)
+        results = es.search(index="features", body=q, scroll="2m", size=size)
     else:
         results = es.scroll(scroll_id=scroll_id, scroll="2m")
 
-    totalIndicatorHitsInPage = len(results["hits"]["hits"])
+    totalHitsInPage = len(results["hits"]["hits"])
 
     # if results are less than the page size (10) don't return a scroll_id
-    if totalIndicatorHitsInPage < size:
+    if totalHitsInPage < size:
         scroll_id = None
     else:
         scroll_id = results.get("_scroll_id", None)
@@ -307,9 +298,10 @@ def list_features(term: Optional[str]=None, scroll_id: Optional[str]=None):
     response = results["hits"]["hits"]
 
     return {
+        "hits": results["hits"]["total"]["value"],
         "items_in_page": len(response),
-        "scroll_id": scroll_id,
-        "results": [formatHitWithId(i) for i in response]
+        "results": [formatHitWithId(i) for i in response],
+        "scroll_id": scroll_id
     }
 
 
@@ -556,7 +548,6 @@ def patch_annotation(payload: MetadataSchema.MetaModel, indicator_id: str):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content=f"Could not update annotation with id = {indicator_id}",
         )
-
 
 
 @router.post("/indicators/{indicator_id}/upload")
