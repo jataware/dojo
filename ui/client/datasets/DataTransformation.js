@@ -24,67 +24,12 @@ export default withStyles(({ spacing }) => ({
 }) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerName, setDrawerName] = useState(null);
-  const [countries, setCountries] = useState(null);
+  const [mapBounds, setMapBounds] = useState(null);
 
   useEffect(() => {
-    if (!datasetInfo?.id) {
-      return;
-    }
-
-    const fileArg = (useFilepath ? "filepath" : "filename");
-    const previewUrl = `/api/dojo/indicators/${datasetInfo.id}/preview/raw${rawFileName ? `?${fileArg}=${rawFileName}` : ''}`;
-
-    // const getAnnotations = async () => {
-    //   // TODO verify and document this:
-    //   // Model Output condition: We store STATE in memory (no backing indicator created)
-    //   // So we need to ensure we return the data received from props, and not do a new fetch
-    //   if (annotations?.metadata?.geotime_classify) {
-    //     return {data: annotations};
-    //   }
-    //   else {
-    //     // Load annotations from API, which also include other data unavailable if we don't call this
-    //     return axios.get(`/api/dojo/indicators/${datasetInfo.id}/annotations`);
-    //   }
-    // };
-
-    Promise
-      .all([
-        // getAnnotations(),
-        axios.post(previewUrl)
-      ])
-      .then(([serverAnnotationData, preview]) => {
-        const { data } = serverAnnotationData;
-        const datasetCountries = new Set();
-        data.forEach((item) => {
-          if (item.country) {
-            datasetCountries.add(item.country);
-          }
-        });
-        setCountries(datasetCountries);
-        console.log('here are the countries!!', datasetCountries)
-      //   const inferred = metadata.geotime_classify;
-      //   const stats = {histograms: metadata.histograms, statistics: metadata.column_statistics};
-
-      //   const parsedColumns = prepareColumns(preview.data[0]);
-      //   const { annotations: serverAnnotations } = serverAnnotationData.data;
-
-      //   setRows(preview.data);
-      //   setColumns(parsedColumns);
-      //   setInferredData(inferred);
-      //   setColumnStats(stats);
-
-      //   if (serverAnnotations) {
-      //     const formattedIn = formatAnnotationsIN(serverAnnotations);
-      //     setInternalAnnotations(formattedIn.annotations);
-      //     setMultiPartData(formattedIn.multiPartData);
-      //   }
-      })
-      .catch((e) => {
-        // setPromptMessage('Error loading annotation data.');
-        // console.error('Error fetching geoclassify or raw preview:', e);
-      })
-      // .finally(() => { setLoading(false); });
-  }, [datasetInfo, rawFileName, useFilepath]);
+    // TODO do this by getting from cartwright process, for now mock lat/lng
+    setMapBounds([['12', '40'], ['-44', '-15']]);
+  }, []);
 
   const handleDrawerClose = () => {
     setDrawerOpen(false);
@@ -129,7 +74,7 @@ export default withStyles(({ spacing }) => ({
         );
       case 'clipMap':
         return (
-          <ClipMap countries={countries} saveDrawings={saveDrawings} />
+          <ClipMap mapBounds={mapBounds} saveDrawings={saveDrawings} />
         );
       case 'scaleTime':
         return (
