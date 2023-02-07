@@ -2,6 +2,7 @@ import logging
 from base_annotation import BaseProcessor
 from elasticsearch import Elasticsearch
 import os
+import uuid
 
 from datasearch.corpora import Corpus
 from search.bert_search import BertSentenceSearch
@@ -47,7 +48,7 @@ def saveAllOutputEmbeddings(indicatorDictionary, indicator_id):
             }
         }
 
-        feature_id = f"{indicator_id}-{output['name']}"
+        feature_id = str(uuid.uuid4())
         return es.index(index="features", body=feature, id=feature_id)
 
 
