@@ -46,7 +46,6 @@ def setup_elasticsearch_indexes():
         },
         "configs": {},
         "directives": {},
-        # TODO Add Features
         "indicators": {
             "mappings": {
                 "properties": {
@@ -167,7 +166,24 @@ def setup_elasticsearch_indexes():
                 }
             }
         },
-        "documents": {},
+        "documents": {
+            "settings": {
+                "index": {
+                    "sort.field": "uploaded_at",
+                    "sort.order": "desc"
+                }
+            },
+            "mappings": {
+                "properties": {
+                    "uploaded_at": {
+                        "type": "date"
+                    },
+                    "processed_at": {
+                        "type": "date"
+                    }
+                }
+            }
+        },
         "document_paragraphs": {
             "mappings": {
                 "properties": {
