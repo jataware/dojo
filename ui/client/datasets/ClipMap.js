@@ -1,6 +1,7 @@
 import React, {
   useCallback,
   useEffect,
+  useRef,
   useState
 } from 'react';
 
@@ -13,13 +14,14 @@ import '@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css';
 
 import { useLeafletContext } from '@react-leaflet/core';
 import 'leaflet/dist/leaflet.css';
+import L from 'leaflet';
 import {
   MapContainer,
   Rectangle,
   TileLayer,
 } from 'react-leaflet';
 
-const Geoman = ({ setDrawings }) => {
+const Geoman = ({ setDrawings, mapBoundsLatLng }) => {
   const context = useLeafletContext();
 
   useEffect(() => {
@@ -34,6 +36,18 @@ const Geoman = ({ setDrawings }) => {
     };
 
     if (leafletContainer) {
+      // when a drawing is started
+      leafletContainer.on('pm:drawstart', ({ workingLayer }) => {
+        workingLayer.on('pm:vertexadded', ({ latlng }) => {
+          // if it is outside the mapBounds box
+          if (!mapBoundsLatLng.current.contains(latlng)) {
+            // TODO: add snackbar warning of clicking outside box
+            // disable drawing
+            leafletContainer.pm.disableDraw();
+          }
+        });
+      });
+
       // when a drawing is removed
       leafletContainer.on('pm:remove', () => {
         setNewDrawings();
@@ -64,13 +78,15 @@ const Geoman = ({ setDrawings }) => {
         drawPolyline: false,
         cutPolygon: false,
         rotateMode: false,
+        editMode: false,
+        dragMode: false,
       });
     }
     // TODO: clean up leafletContainer event listeners?
     return () => {
       leafletContainer.pm.removeControls();
     };
-  }, [context, setDrawings]);
+  }, [context, setDrawings, mapBoundsLatLng]);
 
   return null;
 };
@@ -85,6 +101,23 @@ export default withStyles((theme) => ({
 }))(({ mapBounds, classes, saveDrawings }) => {
   const [drawings, setDrawings] = useState([]);
   const theme = useTheme();
+  const [map, setMap] = useState(null);
+  // use a ref for this so we don't recreate it on every render
+  const mapBoundsLatLng = useRef(null);
+
+  if (mapBoundsLatLng.current === null) {
+    mapBoundsLatLng.current = L.latLngBounds(mapBounds);
+  }
+
+  useEffect(() => {
+    if (map && mapBoundsLatLng.current) {
+      // fit the map to the size of the bounds and lock it in place
+      map.fitBounds(mapBoundsLatLng.current);
+      map.setMaxBounds(mapBoundsLatLng.current);
+      const currentZoom = map.getZoom();
+      map.setMinZoom(currentZoom);
+    }
+  }, [map, mapBounds]);
 
   // pseudo-ref that will allow us to know when the node is available on the page
   // https://reactjs.org/docs/hooks-faq.html#how-can-i-measure-a-dom-node
@@ -108,11 +141,11 @@ export default withStyles((theme) => ({
       {mapBounds ? (
         <MapContainer
           center={[51.505, -0.09]}
-          zoom={1}
-          scrollWheelZoom={false}
           style={{ height: 340, margin: '0 auto' }}
+          maxBoundsViscosity={1}
+          whenCreated={setMap}
         >
-          <Geoman setDrawings={setDrawings} />
+          <Geoman setDrawings={setDrawings} mapBoundsLatLng={mapBoundsLatLng} />
           <Rectangle
             bounds={mapBounds}
             ref={rectangleCallbackRef}
