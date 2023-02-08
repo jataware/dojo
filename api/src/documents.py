@@ -24,14 +24,14 @@ import json
 from validation import DocumentSchema
 from src.settings import settings
 
-from src.utils import put_rawfile, get_rawfile, list_files
-from src.datasearch.corpora import Corpus
-from src.search.bert_search import BertSentenceSearch
+from src.utils import put_rawfile  # , get_rawfile, list_files
 
 from rq import Queue
 from redis import Redis
 from rq.exceptions import NoSuchJobError
 from rq import job
+
+from src.embedder_engine import embedder
 
 router = APIRouter()
 
@@ -40,14 +40,9 @@ es = Elasticsearch([settings.ELASTICSEARCH_URL], port=settings.ELASTICSEARCH_POR
 # REDIS CONNECTION AND QUEUE OBJECTS
 redis = Redis(
     os.environ.get("REDIS_HOST", "redis.dojo-stack"),
-    os.environ.get("REDIS_PORT", "6379"),
+    int(os.environ.get("REDIS_PORT", 6379)),
 )
 q = Queue(connection=redis, default_timeout=-1)
-
-# Initialize LLM Semantic Search Engine. Requires a corpus on instantiation
-# for now. We'll refactor the embedder engine once out of PoC stage.
-corpus = Corpus.from_list(["a"])
-engine = BertSentenceSearch(corpus, cuda=False)
 
 
 def current_milli_time():
@@ -115,7 +110,9 @@ def semantic_search_paragraphs(query: str,
     if scroll_id:
         results = es.scroll(scroll_id=scroll_id, scroll="2m")
     else:
-        query_embedding = engine.embed_query(query)
+        # Retrieve first item in output, since it accepts an array and returns
+        # an array, and we provided only one item (query)
+        query_embedding = embedder.embed([query])[0]
 
         MIN_TEXT_LENGTH_THRESHOLD = 100
 
@@ -133,7 +130,7 @@ def semantic_search_paragraphs(query: str,
                                     # We use option (a): it has better score % for top results
                                     "source": "Math.max(cosineSimilarity(params.query_vector, 'embeddings'), 0)",
                                     "params": {
-                                        "query_vector": query_embedding.tolist()
+                                        "query_vector": query_embedding
                                     }
                                 }
                             }

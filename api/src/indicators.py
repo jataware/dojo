@@ -49,11 +49,9 @@ import os
 
 from rq import Queue
 from redis import Redis
-from rq.exceptions import NoSuchJobError
-from rq import job
+from rq.exceptions import NoSuchJobError # TODO handle
 
-from src.datasearch.corpora import Corpus
-from src.search.bert_search import BertSentenceSearch
+from src.embedder_engine import embedder
 
 router = APIRouter()
 
@@ -62,19 +60,13 @@ es = Elasticsearch([settings.ELASTICSEARCH_URL], port=settings.ELASTICSEARCH_POR
 # REDIS CONNECTION AND QUEUE OBJECTS
 redis = Redis(
     os.environ.get("REDIS_HOST", "redis.dojo-stack"),
-    os.environ.get("REDIS_PORT", "6379"),
+    int(os.environ.get("REDIS_PORT", 6379))
 )
 q = Queue(connection=redis, default_timeout=-1)
 
 # For created_at times in epoch milliseconds
 def current_milli_time():
     return round(time.time() * 1000)
-
-# TODO import already initialized engine for reuse across files/endpoints
-# Initialize LLM Semantic Search Engine. Requires a corpus on instantiation
-# for now. We'll refactor the embedder engine once out of PoC stage.
-corpus = Corpus.from_list(["a"])
-engine = BertSentenceSearch(corpus, cuda=False)
 
 
 def enqueue_indicator_feature(indicator_id, indicator_dict):
@@ -178,7 +170,9 @@ def semantic_search_features(query: Optional[str], size=10, scroll_id: Optional[
     if scroll_id:
         results = es.scroll(scroll_id=scroll_id, scroll="2m")
     else:
-        query_embedding = engine.embed_query(query)
+        # Retrieve first item in output, since it returns an array output
+        # that matches its input, and we provide only one- query.
+        query_embedding = embedder.embed([query])[0]
 
         features_query = {
             "query": {
@@ -187,7 +181,7 @@ def semantic_search_features(query: Optional[str], size=10, scroll_id: Optional[
                     "script": {
                         "source": "Math.max(cosineSimilarity(params.query_vector, 'embeddings'), 0)",
                         "params": {
-                            "query_vector": query_embedding.tolist()
+                            "query_vector": query_embedding
                         }
                     }
                 }
