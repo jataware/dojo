@@ -1,6 +1,8 @@
-import React, { useEffect, useState } from 'react';
-
-import axios from 'axios';
+import React, {
+  useCallback,
+  useEffect,
+  useState
+} from 'react';
 
 import Button from '@material-ui/core/Button';
 import Typography from '@material-ui/core/Typography';
@@ -12,8 +14,8 @@ import '@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css';
 import { useLeafletContext } from '@react-leaflet/core';
 import 'leaflet/dist/leaflet.css';
 import {
-  GeoJSON,
   MapContainer,
+  Rectangle,
   TileLayer,
 } from 'react-leaflet';
 
@@ -80,36 +82,22 @@ export default withStyles((theme) => ({
   header: {
     paddingBottom: theme.spacing(2),
   }
-}))(({ countries, classes, saveDrawings }) => {
+}))(({ mapBounds, classes, saveDrawings }) => {
   const [drawings, setDrawings] = useState([]);
-  const [countriesJSON, setCountriesJSON] = useState();
   const theme = useTheme();
 
-  useEffect(() => {
-    if (countries) {
-      // fetch the countries geoJSON shapes
-      axios.get('/assets/countries_borders.json')
-        .then((countryBorderData) => {
-          const validCountries = countryBorderData.data.features.filter((country) => (
-            // countries is a Set made in DataTransformation
-            countries.has(country.properties.ADMIN)
-          ));
-          // and only include the shapes named in our Set list
-          setCountriesJSON(validCountries);
-        });
+  // pseudo-ref that will allow us to know when the node is available on the page
+  // https://reactjs.org/docs/hooks-faq.html#how-can-i-measure-a-dom-node
+  const rectangleCallbackRef = useCallback((node) => {
+    if (node !== null) {
+      // disable geoman for this layer so users can't edit the bounding box
+      // eslint-disable-next-line no-param-reassign
+      node.pm._layer.options.pmIgnore = true;
     }
-  }, [countries]);
+  }, []);
 
   const onSaveClick = () => {
     saveDrawings(drawings);
-  };
-
-  const mapStyle = {
-    weight: 1,
-    opacity: 1,
-    color: theme.palette.warning.dark,
-    fillColor: theme.palette.warning.main,
-    fillOpacity: 0.1,
   };
 
   return (
@@ -117,15 +105,19 @@ export default withStyles((theme) => ({
       <Typography align="center" variant="h5" className={classes.header}>
         Clip Map Data
       </Typography>
-      {countries ? countriesJSON && (
+      {mapBounds ? (
         <MapContainer
           center={[51.505, -0.09]}
           zoom={1}
           scrollWheelZoom={false}
           style={{ height: 340, margin: '0 auto' }}
         >
-          <GeoJSON style={mapStyle} data={countriesJSON} />
           <Geoman setDrawings={setDrawings} />
+          <Rectangle
+            bounds={mapBounds}
+            ref={rectangleCallbackRef}
+            pathOptions={{ color: theme.palette.success.main, opacity: 0.7 }}
+          />
           <TileLayer
             attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
