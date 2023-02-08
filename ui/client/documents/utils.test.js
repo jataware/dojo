@@ -1,5 +1,5 @@
 import React from 'react';
-import { calculateHighlightTargets } from "./utils";
+import { calculateHighlightTargets, pdfMetadataToForm } from "./utils";
 
 describe('calculateHighlightTargets', () => {
   test('returns split array with text and expected hightlight data', () => {
@@ -38,5 +38,50 @@ describe('calculateHighlightTargets', () => {
       { text: 'Ethiopia', highlight: true },
       { text: '.', highlight: false }
     ]);
+  });
+});
+
+const defaultValues = {
+  title: "",
+  description: "",
+  publisher: "",
+  producer: "",
+  original_language: "en",
+  genre: "news-article",
+  type: "article",
+  classification: "unclassified",
+  publication_date: ""
+};
+
+
+describe.skip('pdfMetadataToForm', () => {
+  test('accepts pdf extracted metadata and returns our DB/form data format with defaults filled', () => {
+    // NOTE Metadata format from PDF js lib:
+    const extractedInput = {
+      Author: undefined,
+      CreationDate: "Tue Jan 24 2023 15:24:20 GMT-0500 (Eastern Standard Time)",
+      Creator: "TeX",
+      Keywords: undefined,
+      ModificationDate: "Fri Feb 03 2023 13:48:08 GMT-0500 (Eastern Standard Time)",
+      PageCount: "8",
+      Producer: "",
+      Subject: undefined,
+      Title: undefined
+    };
+
+    const out = pdfMetadataToForm(extractedInput);
+
+    expect(out).toEqual({
+      title: "",
+      description: "",
+      publisher: "",
+      producer: "",
+      original_language: "en",
+      genre: "news-article",
+      type: "article",
+      classification: "unclassified",
+      publication_date: ""
+    });
+
   });
 });

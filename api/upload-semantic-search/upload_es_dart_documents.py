@@ -5,6 +5,9 @@ from pathlib import Path
 import argparse
 from elasticsearch import Elasticsearch
 
+import time
+import re
+
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 from dart_papers import DartPapers
@@ -22,6 +25,23 @@ print(es.info())
 
 document_metadata = DartPapers.get_metadata()
 
+
+def current_milli_time():
+    return round(time.time() * 1000)
+
+
+def camel_to_snake(str):
+    """Receives a lowercase, snake_case, camelCase, or PascalCase input string
+    and returns it as snake_case. In the case of snake_case input, no
+    transformation occurs.
+    """
+    return re.sub(r'(?<!^)(?=[A-Z])', '_', str).lower()
+
+
+def dict_to_snake_case(a_dict):
+    return {camel_to_snake(k): v for k, v in a_dict.items()}
+
+
 def index_all_documents():
     """
     Loops through Dart Document metadata in the corpus and uploads to elasticsearch `documents`.
@@ -30,7 +50,10 @@ def index_all_documents():
 
     for id, metadata in document_metadata.items():
         print(f"{parsedCount} Processing document id: {id}")
-        es.index(index="documents", body=metadata, id=id)
+
+        es.index(index="documents",
+                 body=dict_to_snake_case(metadata)|{processed_at: current_milli_time(), uploaded_at: None},
+                 id=id)
         parsedCount += 1
 
 

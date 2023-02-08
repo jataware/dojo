@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-import sys,os
+import sys, os
 from pathlib import Path
 import argparse
 from elasticsearch import Elasticsearch
@@ -39,7 +39,18 @@ for key, embedding in engine:
     es.index(index="document_paragraphs",
              body={
                  "text": paragraph,
+                 "length": len(paragraph),
                  "document_id": document_id,
                  "embeddings": embedding.tolist()
              },
              id=p_id)
+
+
+# If Paragraphs are missing length property, add with elasticsearch script:
+# POST /document_paragraphs/_update_by_query
+# {
+#   "script": {
+#     "source": "ctx._source.length = ctx._source.text?.length()",
+#     "lang": "painless"
+#   }
+# }

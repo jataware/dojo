@@ -4,6 +4,8 @@ import sys,os
 from pathlib import Path
 import argparse
 
+import uuid
+
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 from src.search.bert_search import BertSentenceSearch
@@ -57,8 +59,7 @@ def saveAllOutputEmbeddings(indicatorDictionary, indicator_id):
                 "name": indicatorDictionary["name"]
             }
         }
-
-        feature_id = f"{indicator_id}-{output['name']}"
+        feature_id = str(uuid.uuid4())
         es.index(index="features", body=feature, id=feature_id)
 
 

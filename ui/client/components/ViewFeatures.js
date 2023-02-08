@@ -174,11 +174,10 @@ const featureColumns = [
       flex: 1
     },
     {
-      field: '_score',
+      field: 'match_score',
       headerName: 'Match %',
-      renderCell: (row) => {
-
-        const { value: matchScore } = row;
+      renderCell: (rowParent) => {
+        const matchScore = rowParent?.row?.metadata?.match_score;
 
         return matchScore ? (
           <div style={{width: '100%'}}>
@@ -298,7 +297,7 @@ const ViewFeatures = withStyles((theme) => ({
 
   const displayableColumns = searchMode === SEARCH_MODE.SEMANTIC ?
         featureColumns
-        : featureColumns.filter(col => col.field !== "_score");
+        : featureColumns.filter(col => col.field !== "match_score");
 
   return featuresError ? (
     <Typography>

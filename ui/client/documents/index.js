@@ -390,7 +390,7 @@ export const ParagraphTile = withStyles((theme) => ({
           <Chip classes={{root: classes.squareChip, label: classes.chipLabel}} label="Hit%" />
           <div style={{display: "block", width: "8rem"}}>
             <ConfidenceBar
-              value={Math.sqrt(paragraph.score) * 100}
+              value={Math.sqrt(paragraph?.metadata?.match_score || 0) * 100}
               variant='determinate'
             />
           </div>
@@ -579,13 +579,13 @@ const ViewDocumentsGrid = withStyles((theme) => ({
             >
               All Documents
             </Typography>
-            {/* <Button */}
-            {/*   to="upload" */}
-            {/*   component={RouteLink} */}
-            {/*   variant="contained" */}
-            {/*   color="primary"> */}
-            {/*   Upload Document */}
-            {/* </Button> */}
+            <Button
+              to="documents/upload"
+              component={RouteLink}
+              variant="contained"
+              color="primary">
+              Upload Documents
+            </Button>
           </div>
 
           <br />

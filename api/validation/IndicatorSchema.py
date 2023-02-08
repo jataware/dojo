@@ -271,11 +271,21 @@ class OwnerDataset(BaseModel):
     )
 
 class Feature(Output):
+    class Config:
+        extra = Extra.allow
+
     owner_dataset: OwnerDataset = Field(
         ...,
         description="Information for Owner, or parent, Dataset where the feature exists.",
         title="Owner Dataset",
     )
+    id: str = Field(
+        ...,
+        description="A unique feature id",
+        examples=["123e4567-e89b-12d3-a456-426614174000"],
+        title="Feature ID",
+    )
+
 
 class QualifierOutput(BaseModel):
     class Config:
@@ -502,9 +512,14 @@ class DateValidationResponseSchema(BaseModel):
     )
 
 class FeaturesSearchSchema(BaseModel):
+    hits: int = Field(
+        ...,
+        description="Total feature count matching your request.",
+        examples=[10, 15, 45]
+    )
     items_in_page: int = Field(
         ...,
-        description="Feature item count in response. Varies per page, per implementation details.",
+        description="Feature item count in current page/scroll response.",
         examples=[10, 15, 45]
     )
     scroll_id: Optional[str] = Field(
@@ -514,4 +529,12 @@ class FeaturesSearchSchema(BaseModel):
     results: List[Feature] = Field(
         ...,
         description="Features data in current page for a given list or search."
+    )
+
+
+class FeaturesSemanticSearchSchema(FeaturesSearchSchema):
+    max_score: float = Field(
+        ...,
+        description="Max search engine score from all matches. This will match the first result's score within the first scroll page.",
+        examples=[0.72]
     )
