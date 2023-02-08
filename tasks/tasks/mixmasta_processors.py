@@ -516,3 +516,41 @@ def scale_time(context, filename=None, **kwargs):
         "dataframe": json.loads(json.dumps(original_dataframe)),
     }
     return response
+
+
+def get_boundary_box(context, filename=None, **kwargs):
+    # Setup
+    # If no filename is passed in, default to the converted raw_data file.
+    if filename is None:
+        filename = "raw_data.csv"
+
+    # Always analyze the csv version of the file
+    if not filename.endswith(".csv"):
+        filename = filename.split(".")[0] + ".csv"
+
+    rawfile_path = os.path.join(
+        settings.DATASET_STORAGE_BASE_URL, context["uuid"], filename
+    )
+    file = get_rawfile(rawfile_path)
+    original_dataframe = pd.read_csv(file, delimiter=",")
+
+    # Main Call
+    geo_columns = kwargs.get("geo_columns", [])
+
+    if geo_columns:
+        boundary_dict = mix.get_boundary_box(
+            dataframe=original_dataframe,
+            geo_columns=geo_columns,
+        )
+
+        response = {
+            "messsage": "Boundary box generated successfully",
+            "boundary_box": boundary_dict,
+        }
+        return response
+
+    response = {
+        "message": "Boundary box not generated, some information was not provided (geography column names).",
+        "bounday_box": {},
+    }
+    return response
