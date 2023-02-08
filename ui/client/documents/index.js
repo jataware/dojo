@@ -390,7 +390,7 @@ export const ParagraphTile = withStyles((theme) => ({
           <Chip classes={{root: classes.squareChip, label: classes.chipLabel}} label="Hit%" />
           <div style={{display: "block", width: "8rem"}}>
             <ConfidenceBar
-              value={Math.sqrt(paragraph.score) * 100}
+              value={Math.sqrt(paragraph?.metadata?.match_score || 0) * 100}
               variant='determinate'
             />
           </div>
