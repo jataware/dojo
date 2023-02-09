@@ -41,47 +41,77 @@ describe('calculateHighlightTargets', () => {
   });
 });
 
-const defaultValues = {
-  title: "",
-  description: "",
-  publisher: "",
-  producer: "",
-  original_language: "en",
-  genre: "news-article",
-  type: "article",
-  classification: "unclassified",
-  publication_date: ""
-};
 
-
-describe.skip('pdfMetadataToForm', () => {
+describe('pdfMetadataToForm', () => {
   test('accepts pdf extracted metadata and returns our DB/form data format with defaults filled', () => {
     // NOTE Metadata format from PDF js lib:
     const extractedInput = {
-      Author: undefined,
-      CreationDate: "Tue Jan 24 2023 15:24:20 GMT-0500 (Eastern Standard Time)",
-      Creator: "TeX",
-      Keywords: undefined,
-      ModificationDate: "Fri Feb 03 2023 13:48:08 GMT-0500 (Eastern Standard Time)",
-      PageCount: "8",
-      Producer: "",
-      Subject: undefined,
-      Title: undefined
+      Author: "Rossa",
+      CreationDate: "Fri Dec 02 2011 11:37:02 GMT-0500 (Eastern Standard Time)",
+      Creator: "Microsoft Word 2010",
+      PageCount: "41",
+      Producer: "pdf-lib (https://github.com/Hopding/pdf-lib)",
+      Title : "The Cost of Adaptation to Climate Change in Africa"
     };
 
     const out = pdfMetadataToForm(extractedInput);
 
     expect(out).toEqual({
-      title: "",
+      title: "The Cost of Adaptation to Climate Change in Africa",
       description: "",
+      author: "Rossa",
       publisher: "",
       producer: "",
+      creator: "Microsoft Word 2010",
       original_language: "en",
-      genre: "news-article",
+      stated_genre: "news-article",
       type: "article",
       classification: "unclassified",
-      publication_date: ""
+      creation_date: "Fri Dec 02 2011 11:37:02 GMT-0500 (Eastern Standard Time)",
+      pages: 41
     });
 
   });
+
+  test('works with multiple items at a time while mapping array', () => {
+    const extractedInputs = [{
+      Author: "Rossa",
+      CreationDate: "Fri Dec 02 2011 11:37:02 GMT-0500 (Eastern Standard Time)",
+      Creator: "Microsoft Word 2010",
+      PageCount: "41",
+      Producer: "pdf-lib (https://github.com/Hopding/pdf-lib)",
+      Title : "The Cost of Adaptation to Climate Change in Africa"
+    }, {
+      Author: undefined,
+      CreationDate: "Tue Jan 24 2023 15:24:20 GMT-0500 (Eastern Standard Time)",
+      Creator: "TeX",
+      PageCount: "8",
+      Producer: "pdf-lib (https://github.com/Hopding/pdf-lib)",
+      Title: undefined
+    }];
+
+    const out = extractedInputs.map(pdfMetadataToForm);
+
+    const compare = out.map((val) => val.author);
+
+    expect(compare).toEqual(["Rossa", ""]);
+  });
 });
+
+// Sample format from DART sample extracted doc data
+
+// "CreationDate" : "2011-12-02",
+// "ModDate" : "2011-12-02",
+// "Author" : "Rossa",
+// "Title" : "The Cost of Adaptation to Climate Change in Africa",
+// "Pages" : 41,
+// "Creator" : ""
+// "Type" : "article",
+// "Description" : "Sectors Material relief assistance and services (072010): 100% March 2015 - Ethiopia faces a wide variety of humanitarian challenges, including the effects of chronic drought in many areas of the country, widespread food insecurity, an ongoing low to medium intensity conflict in its south-eastern Somali region, and the impact of hosting a growing population of Eritrean, Somali, South Sudanese, and Sudanese refugees on its soil.",
+// "OriginalLanguage" : "en",
+// "Classification" : "UNCLASSIFIED",
+// "Title" : "Ethiopia - Humanitarian Response for South Sudanese Refugees in Gambella - MSF 2015",
+// "Publisher" : "Cihan News Agency",
+// "Producer" : "Dow Jones",
+// "StatedGenre" : "news-article"
+

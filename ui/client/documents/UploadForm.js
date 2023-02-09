@@ -62,7 +62,6 @@ import { Field, getIn, useField } from 'formik';
 import isFunction from 'lodash/isFunction';
 import get from 'lodash/get';
 
-import { FileInput } from '../datasets/FileSelector';
 import { FormAwareTextField, FormAwareSelect } from '../datasets/FormFields';
 
 import { Link as RouteLink } from 'react-router-dom';
@@ -78,18 +77,17 @@ import { pdfMetadataToForm } from './utils';
 
 const defaultValues = {
   title: "",
+  author: "",
   description: "",
   publisher: "",
-  file: "",
   producer: "",
   original_language: "en",
-  genre: "news-article",
+  stated_genre: "news-article",
   type: "article",
   classification: "unclassified",
-  publication_date: ""
+  creation_date: ""
 };
 
-// TODO compare this extracted metadata to servers'
 // NOTE Metadata format from PDF js lib:
 // Author: undefined,
 // CreationDate: "Tue Jan 24 2023 15:24:20 GMT-0500 (Eastern Standard Time)",
@@ -97,8 +95,6 @@ const defaultValues = {
 // Keywords: undefined,
 // ModificationDate: "Fri Feb 03 2023 13:48:08 GMT-0500 (Eastern Standard Time)",
 // PageCount: "8",
-// Producer: "pdf-lib (https://github.com/Hopding/pdf-lib)",
-// Subject: undefined,
 // Title: undefined
 
 /**
@@ -113,7 +109,7 @@ export const EditDocumentMetadata = withStyles((theme) => ({
   },
   datePickerContainer: {
   }
-}))(({ classes, metadata }) => {
+}))(({ classes, metadata, filename, id }) => {
   return (
     <div className={classes.root}>
       <Typography
@@ -122,12 +118,19 @@ export const EditDocumentMetadata = withStyles((theme) => ({
         style={{paddingLeft: "1rem"}}
         gutterBottom
       >
-        Edit Metadata Fields
+        Metadata Fields for `{filename}`
       </Typography>
 
       <Formik
-        initialValues={defaultValues}
+        key={id}
+        initialValues={metadata}
         onSubmit={(values, { setSubmitting }) => {
+          // TODO ... maybe not use Formik?
+          // Check their API on reinitializing or saving
+          // while changing a specific prop (index, in this case).
+
+          // TODO Maybe `save` on leave the current form, where `onSubmit` is a prop
+          // So we would call onSubmit when we need to reinitialize (on index or filename change)
           console.log('values', values);
           return true;
         }}
@@ -146,14 +149,6 @@ export const EditDocumentMetadata = withStyles((theme) => ({
                   />
                 </ListItem>
 
-                {/* <ListItem style={{display: 'block'}}> */}
-                {/*   <FileInput */}
-                {/*     name="file" */}
-                {/*     required */}
-                {/*     label="PDF File Upload" */}
-                {/*   /> */}
-                {/* </ListItem> */}
-
                 <ListItem>
                   <FormAwareTextField
                     required
@@ -167,6 +162,14 @@ export const EditDocumentMetadata = withStyles((theme) => ({
 
                 <ListItem>
                   <Grid container spacing={2}>
+
+                    <Grid item xs={12} sm={6}>
+                      <FormAwareTextField
+                        name="author"
+                        label="Author"
+                      />
+                    </Grid>
+
                     <Grid item xs={12} sm={6}>
                       <FormAwareTextField
                         name="publisher"
@@ -186,10 +189,10 @@ export const EditDocumentMetadata = withStyles((theme) => ({
                         <Field
                           format="MM/dd/yyyy"
                           component={KeyboardDatePicker}
-                          label="Publication Date"
+                          label="Creation Date"
                           TextFieldComponent={FormAwareTextField}
                           inputVariant="outlined"
-                          name="publication_date"
+                          name="creation_date"
                           placeholder="mm/dd/yyyy"
                         />
                       </MuiPickersUtilsProvider>
@@ -228,7 +231,7 @@ export const EditDocumentMetadata = withStyles((theme) => ({
 
                       <Grid item xs={12} sm={6}>
                         <FormAwareSelect
-                          name="genre"
+                          name="stated_genre"
                           label="Genre"
                           options={[
                             { value: 'news-article', label: 'News Article' }
@@ -262,7 +265,7 @@ export const EditDocumentMetadata = withStyles((theme) => ({
 
 export const FileDropSelector = withStyles((theme => ({
   root: {
-    margin: '2rem 0',
+    margin: '2rem 0 1rem 0',
     padding: '2rem',
     borderRadius: '1rem',
     width: '100%',
@@ -287,12 +290,14 @@ export const FileDropSelector = withStyles((theme => ({
   }
 })))(({classes, onFileSelect}) => {
   // NOTE other params: onDropAccepted/onDropRejected/validator
-  const {getRootProps, getInputProps, isDragActive} = useDropzone({onDrop: onFileSelect,
-                                                                   accept: {
-                                                                     // NOTE only accepting PDFs for now.
-                                                                     // Any others?
-                                                                     'application/pdf': ['.pdf'],
-                                                                   }});
+  const {getRootProps, getInputProps, isDragActive} = useDropzone({
+    onDrop: onFileSelect,
+    accept: {
+      // NOTE only accepting PDFs for now.
+      // Any others?
+      'application/pdf': ['.pdf'],
+    }
+  });
 
   // console.log("getRootProps", getRootProps());
   // console.log("getInputProps", getInputProps());
@@ -343,8 +348,7 @@ function formatBytes(bytes,decimals) {
  **/
 export const FileTile = withStyles((theme) => ({
   root: {
-    cursor: 'pointer',
-    // maxWidth: '100%' // TODO finish addressing long file name issue.....
+    cursor: 'pointer'
   },
   dataGrouping: {
     display: 'flex',
@@ -358,14 +362,13 @@ export const FileTile = withStyles((theme) => ({
     alignItems: 'center'
   },
   loadingContainer: {
-    // width: '100%',
-    // padding: '1rem 0 0 0'
   }
 }))(({ classes, file, index, uploadStatus, onClick, selectedIndex }) => {
 
   // TODO revisit probably. this is aware that onClick receives an index..
   const handleClick = () => {
-    console.log('handling list button click calling with index', index);
+    // TODO AHA! This is where we could potentially save the existing (previous)
+    // Formik values into state....... Think of something better.
     onClick(index);
   };
 
@@ -402,11 +405,9 @@ export const FileTile = withStyles((theme) => ({
 export const SelectedFileList = withStyles((theme) => ({
   root: {
     border: '1px solid #eaeaea',
-    maxWidth: '100%'
   },
   list: {
     overflowY: 'auto',
-    // maxWidth: '100%',
     maxHeight: 650, // TODO rem, maybe px to rem util
   }
 }))(({ classes, files, onItemClick, selectedIndex }) => {
@@ -438,8 +439,13 @@ export const SelectedFileList = withStyles((theme) => ({
 });
 
 const PDF_ATTR_GETTERS = [
-  'getTitle', 'getAuthor', 'getSubject', 'getCreator', 'getKeywords',
-  'getProducer', 'getCreationDate', 'getModificationDate', 'getPageCount'
+  'getTitle', 'getAuthor',
+  'getCreator',
+  // 'getKeywords',
+  // 'getSubject',
+  // 'getModificationDate',
+  // 'getProducer',
+  'getCreationDate', 'getPageCount'
 ];
 
 /**
@@ -517,8 +523,9 @@ const UploadDocumentForm = withStyles((theme) => ({
       // acceptedFiles.type === 'application/pdf;
       // acceptedFiles.size = 141843 bytes
 
+      // TODO
       if (acceptedFiles.length === 0) {
-        console.log("something went wrong. files length is 0");
+        console.log("Something went wrong. files length is 0");
         // return false;
       }
 
@@ -526,36 +533,14 @@ const UploadDocumentForm = withStyles((theme) => ({
             .filter(i => i.type === 'application/pdf');
 
       if (filtered.length === 0) {
-        // TODO display to user. Can be handled by DropZone hook instead
+        // TODO Display to user. Can be handled by DropZone hook instead
         throw new Error('Please select pdf files');
       }
 
       if (filtered.length !== acceptedFiles.length) {
-        // TODO inform this to the user "set warnings"
+        // TODO Inform this to the user "set warnings"
         console.log("some files were ignored, as they were not of PDF file type.");
       }
-
-      // TODO start uploading filtered files here for now
-      filtered.forEach(file => {
-
-        // TODO format metadata
-        const document = axios({
-          method: 'post',
-          url: `/api/dojo/documents`,
-          data: {"creation_date": "2018-12-25"},
-          params: {}
-        }).then(response => {
-          const doc = response.data;
-
-          console.log('response doc', doc);
-
-          uploadFile(file, doc.id, {filename: file.name});
-
-        }).catch((e) => {
-          console.log('error creating doc', e);
-        });
-      });
-
 
       // gather PDF data. TODO cleanup once e2e prototype is complete
       const pdfData = filtered.map(pdfFile => {
@@ -565,6 +550,8 @@ const UploadDocumentForm = withStyles((theme) => ({
             return PDFDocument.load(binary)
               .then(pdf => {
 
+                // TODO this bit and pdfMetadataToForm formatting can be done in
+                // one go. One reduce, before we handle the promise and reformat
                 const acc = {};
                 PDF_ATTR_GETTERS.forEach(fun => {
 
@@ -574,10 +561,9 @@ const UploadDocumentForm = withStyles((theme) => ({
                     val = val.toString();
                   }
 
+                  // Follow above TODO and get rid of this nonsense
                   acc[fun.replace('get', '')] = val;
                 });
-
-                console.log('acc', acc);
 
                 return acc;
               });
@@ -586,7 +572,34 @@ const UploadDocumentForm = withStyles((theme) => ({
 
       Promise.all(pdfData)
         .then((allPdfData) => {
-          setAllPDFMetadata(allPdfData);
+
+          console.log('raw all pdf data', allPdfData);
+
+          const formattedMetadata = allPdfData.map(pdfMetadataToForm);
+
+          console.log('formatted pdf Metadata', formattedMetadata);
+
+          filtered.forEach((file, idx) => {
+
+            return; // TODO remove. used to skip side effects for now.
+
+            const document = axios({
+              method: 'post',
+              url: `/api/dojo/documents`,
+              data: formattedMetadata[idx],
+              params: {}
+            }).then(response => {
+              const doc = response.data;
+
+              // TODO ? await promise to ensure docs uploaded before leaving
+              uploadFile(file, doc.id, {filename: file.name});
+
+            }).catch((e) => {
+              console.log('Error creating doc', e);
+            });
+          });
+
+          setAllPDFMetadata(formattedMetadata);
           setFiles(filtered);
           setSelectedFileIndex(0);
         });
@@ -600,7 +613,7 @@ const UploadDocumentForm = withStyles((theme) => ({
     <Container
       className={classes.root}
       component="main"
-      maxWidth="md"
+      maxWidth="lg"
     >
       <Typography
         variant="h3"
@@ -623,8 +636,22 @@ const UploadDocumentForm = withStyles((theme) => ({
 
       {!isEmpty(files) && (
         <div>
+
+          <br />
+
+          <Typography
+            color="textSecondary"
+            paragraph
+            variant="h6"
+          >
+            The following files are being uploaded. Confirm or edit
+            document metadata fields for each file.
+          </Typography>
+
+          <br />
+
           <div className={classes.fileList}>
-            <div style={{flex: '1 1 350px', maxWidth: '50%'}}>
+            <div style={{flex: '6 1 400px'}}>
               <SelectedFileList
                 files={files}
                 selectedIndex={selectedFileIndex}
@@ -633,26 +660,32 @@ const UploadDocumentForm = withStyles((theme) => ({
             </div>
 
             {selectedFileIndex !== null && (
-              <div style={{flex: '1 1 auto'}}>
-                <EditDocumentMetadata metadata={allPDFMetadata[selectedFileIndex]} />
+              <div
+                style={{flex: '3 2 600px'}}
+              >
+                <EditDocumentMetadata
+                  id={selectedFileIndex+files[selectedFileIndex].name}
+                  filename={files[selectedFileIndex].name}
+                  metadata={allPDFMetadata[selectedFileIndex]} />
               </div>
             )}
           </div>
 
-          <div className={classes.navContainer}>
-            <Button variant="contained">
-              Cancel
-            </Button>
-            &nbsp;
-            &nbsp;
-            <Button
-              type="submit"
-              color="primary"
-              variant="contained"
-            >
-              Save All
-            </Button>
-          </div>
+          {/* <div className={classes.navContainer}> */}
+          {/*   <Button variant="contained"> */}
+          {/*     Cancel */}
+          {/*   </Button> */}
+          {/*   &nbsp; */}
+          {/*   &nbsp; */}
+          {/*   <Button */}
+          {/*     type="submit" */}
+          {/*     color="primary" */}
+          {/*     variant="contained" */}
+          {/*   > */}
+          {/*     Save All */}
+          {/*   </Button> */}
+          {/* </div> */}
+
         </div>
 
       )}
@@ -664,8 +697,8 @@ const UploadDocumentForm = withStyles((theme) => ({
 
 export default UploadDocumentForm;
 
-// onClick={formik.handleSubmit}
 
+// onClick={formik.handleSubmit}
 
 // .then(pdfDoc => {
 

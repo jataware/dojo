@@ -20,6 +20,10 @@ const Template = (args) => (
 export const Basic = Template.bind({});
 Basic.args = {
   paragraph: {
+    parent_document: {
+      title: "A Tex Document",
+      publisher: "Amazon Basics"
+    },
     id: "20d0a7a4-c8c7-478e-b62e-b89972f67ce0",
     text: "Lorem ipsum dolor sit amet, consectetuer adipiscing elit.  Donec hendrerit tempor tellus.  Donec pretium posuere tellus.  Proin quam nisl, tincidunt et, mattis eget, convallis nec, purus.  Cum sociis natoque penatibus et magnis dis parturient montes, nascetur ridiculus mus.  Nulla posuere.  Donec vitae dolor.  Nullam tristique diam non turpis.  Cras placerat accumsan nulla.  Nullam rutrum.  Nam vestibulum accumsan nisl."
   },

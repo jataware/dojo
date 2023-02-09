@@ -1,8 +1,12 @@
 import React from 'react';
+import snakeCase from 'lodash/snakeCase';
+import mapKeys from 'lodash/mapKeys';
+import reduce from 'lodash/reduce';
+import flow from 'lodash/flow';
 
 /**
- * highlightText helper. Returns raw data of which words should be highlighted.
- * Easier for testing (see uni test).
+ * `highlightText` helper. Returns raw data of which words should be highlighted.
+ * Easier for testing (see unit test).
  **/
 export function calculateHighlightTargets(text, highlights) {
 
@@ -41,7 +45,7 @@ export function highlightText(text, highlights) {
         <span
           key={idx}
           style={partInfo.highlight ?
-                 {fontWeight: 'bold', background: "yellow"} :
+                 {fontWeight: 'bold', background: 'yellow'} :
                  {}}
         >
           {partInfo.text}
@@ -52,8 +56,71 @@ export function highlightText(text, highlights) {
 }
 
 /**
- * TODO
+ * Below setup to transform metadata for readyness of form and API shapes.
+ **/
+
+const defaultValues = {
+  title: '',
+  author: '',
+  description: '',
+  publisher: '',
+  producer: '',
+  original_language: 'en',
+  stated_genre: 'news-article',
+  type: 'article',
+  classification: 'unclassified',
+  creation_date: ''
+};
+
+const invalidProducers = ['pdf-lib', 'pdf-lib (https://github.com/Hopding/pdf-lib)'];
+
+const keysMappings = {
+  page_count: 'pages'
+};
+
+const valueTransforms = {
+  pages: Number
+};
+
+function renameKeys(key) {
+  return keysMappings[key] || key;
+}
+
+function transformValues(key, value) {
+  if (valueTransforms[key]) {
+    return valueTransforms[key](value);
+  }
+  return value;
+}
+
+function formatKey(key) {
+  return flow(snakeCase, renameKeys)(key);
+}
+
+/**
+ *
  **/
 export function pdfMetadataToForm(pdfExtractedMetadata) {
-  return {};
+
+  const reduced = reduce(pdfExtractedMetadata, (acc, value, key) => {
+
+    const formattedKey = formatKey(key);
+    const isInvalidProducer = formattedKey === 'producer' && Boolean(invalidProducers.includes(value));
+    const useDefault = isInvalidProducer || value === undefined;
+
+    // Don't override defaults with undefined nor add excluded keys
+    if (useDefault) {
+      console.log("using default", formattedKey, value);
+      return acc;
+    }
+
+    const useValue = transformValues(formattedKey, value);
+
+    acc[formattedKey] = useValue;
+    return acc;
+
+    // lodash/reduce's accumulator will be mutated in place (not auto-cloned)
+  }, {...defaultValues});
+
+  return reduced;
 }
