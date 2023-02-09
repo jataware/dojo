@@ -140,7 +140,6 @@ export function pdfMetadataToForm(pdfExtractedMetadata) {
 
     // Don't override defaults with undefined nor add excluded keys
     if (useDefault) {
-      console.log("using default", formattedKey, value);
       return acc;
     }
 

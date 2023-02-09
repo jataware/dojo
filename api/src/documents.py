@@ -338,41 +338,41 @@ def get_document(document_id: str) -> DocumentSchema.Model:
     return format_document(document)
 
 
-# TODO GET documents/latest properly implement
-@router.get(
-    "/documents/latest", response_model=DocumentSchema.DocumentListResponse
-)
-def latest_documents(scroll_id: Optional[str]=None, size: int = 10):
-    """
-    Same as list documents. Not Implemented.
-    """
+# TODO GET documents/latest properly implement (reindex/schema changes needed)
+# @router.get(
+#     "/documents/latest", response_model=DocumentSchema.DocumentListResponse
+# )
+# def latest_documents(scroll_id: Optional[str]=None, size: int = 10):
+#     """
+#     Same as list documents. Not Implemented.
+#     """
 
-    q = {
-        "query": {
-            # TODO sort by most recently uploaded_at
-            "match_all": {}
-        }
-    }
+#     q = {
+#         "query": {
+#             # TODO sort by most recently uploaded_at
+#             "match_all": {}
+#         }
+#     }
 
-    if not scroll_id:
-        results = es.search(index="documents", body=q, scroll="2m", size=size)
-    else:
-        results = es.scroll(scroll_id=scroll_id, scroll="2m")
+#     if not scroll_id:
+#         results = es.search(index="documents", body=q, scroll="2m", size=size)
+#     else:
+#         results = es.scroll(scroll_id=scroll_id, scroll="2m")
 
-    totalDocsInPage = len(results["hits"]["hits"])
+#     totalDocsInPage = len(results["hits"]["hits"])
 
-    if totalDocsInPage < size:
-        scroll_id = None
-    else:
-        scroll_id = results.get("_scroll_id", None)
+#     if totalDocsInPage < size:
+#         scroll_id = None
+#     else:
+#         scroll_id = results.get("_scroll_id", None)
 
-    return {
-        "hits": results["hits"]["total"]["value"],
-        "items_in_page": totalDocsInPage,
-        "results": [format_document(i)
-                    for i in results["hits"]["hits"]],
-        "scroll_id": scroll_id
-    }
+#     return {
+#         "hits": results["hits"]["total"]["value"],
+#         "items_in_page": totalDocsInPage,
+#         "results": [format_document(i)
+#                     for i in results["hits"]["hits"]],
+#         "scroll_id": scroll_id
+#     }
 
 
 @router.post("/documents")

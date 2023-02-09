@@ -589,7 +589,7 @@ const UploadDocumentForm = withStyles((theme) => ({
         color="textSecondary"
         gutterBottom
       >
-        Bulk Upload New Documents
+        Bulk Upload Documents
       </Typography>
 
       <FileDropSelector onFileSelect={handleFileSelect}/>

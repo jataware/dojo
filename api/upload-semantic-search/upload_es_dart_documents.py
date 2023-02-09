@@ -41,6 +41,19 @@ def camel_to_snake(str):
 def dict_to_snake_case(a_dict):
     return {camel_to_snake(k): v for k, v in a_dict.items()}
 
+DEFAULT_DOC = {
+    "creation_date": None,
+    "mod_date": None,
+    "type": "article",
+    "description": "",
+    "original_language": "",
+    "classification": "UNCLASSIFIED",
+    "title": "",
+    "producer": "",
+    "stated_genre": "",
+    "uploaded_at": None,
+    "processed_at": None
+}
 
 def index_all_documents():
     """
@@ -52,7 +65,7 @@ def index_all_documents():
         print(f"{parsedCount} Processing document id: {id}")
 
         es.index(index="documents",
-                 body=dict_to_snake_case(metadata)|{processed_at: current_milli_time(), uploaded_at: None},
+                 body=DEFAULT_DOC|dict_to_snake_case(metadata)|{"processed_at": current_milli_time(), "uploaded_at": None},
                  id=id)
         parsedCount += 1
 
