@@ -510,95 +510,82 @@ const UploadDocumentForm = withStyles((theme) => ({
 
   const handleFileSelect = useCallback(acceptedFiles => {
 
-    function parseAll() {
-
-      console.log("acceptedFiles", acceptedFiles);
-
-      // acceptedFiles.type === 'application/pdf;
-      // acceptedFiles.size = 141843 bytes
-
-      // TODO
-      if (acceptedFiles.length === 0) {
-        console.log("Something went wrong. files length is 0");
-        // return false;
-      }
-
-      const filtered = acceptedFiles
-            .filter(i => i.type === 'application/pdf');
-
-      if (filtered.length === 0) {
-        // TODO Display to user. Can be handled by DropZone hook instead
-        throw new Error('Please select pdf files');
-      }
-
-      if (filtered.length !== acceptedFiles.length) {
-        // TODO Inform this to the user "set warnings"
-        console.log("some files were ignored, as they were not of PDF file type.");
-      }
-
-      // gather PDF data. TODO cleanup once e2e prototype is complete
-      const pdfData = filtered.map(pdfFile => {
-        return readFile(pdfFile)
-          .then(binary => {
-
-            return PDFDocument.load(binary)
-              .then(pdf => {
-
-                // TODO this bit and pdfMetadataToForm formatting can be done in
-                // one go. One reduce, before we handle the promise and reformat
-                const acc = {};
-                PDF_ATTR_GETTERS.forEach(fun => {
-
-                  let val = pdf[fun]();
-
-                  if (val) {
-                    val = val.toString();
-                  }
-
-                  // Follow above TODO and get rid of this nonsense
-                  acc[fun.replace('get', '')] = val;
-                });
-
-                return acc;
-              });
-          });
-      });
-
-      Promise.all(pdfData)
-        .then((allPdfData) => {
-
-          const formattedMetadata = allPdfData.map(pdfMetadataToForm);
-
-          filtered.forEach((file, idx) => {
-
-            return; // TODO remove. used to skip side effects for now.
-
-            const document = axios({
-              method: 'post',
-              url: `/api/dojo/documents`,
-              data: formattedMetadata[idx],
-              params: {}
-            }).then(response => {
-              const doc = response.data;
-
-              // TODO ? await promise to ensure docs uploaded before leaving
-              uploadFile(file, doc.id, {filename: file.name});
-
-            }).catch((e) => {
-              console.log('Error creating doc', e);
-            });
-          });
-
-          setAllPDFMetadata(prevMetadata => [ ...prevMetadata, ...formattedMetadata ]);
-          setFiles(prevFiles => [ ...prevFiles, ...filtered ]);
-
-          if (!selectedFileIndex) {
-            setSelectedFileIndex(0);
-          }
-        });
+    // TODO
+    if (acceptedFiles.length === 0) {
+      console.log("Something went wrong. files length is 0");
+      // return false;
     }
 
-    parseAll();
+    const filtered = acceptedFiles
+          .filter(i => i.type === 'application/pdf');
+
+    if (filtered.length === 0) {
+      // TODO Display to user. Can/Should be handled by DropZone hook instead
+      throw new Error('Please select pdf files');
+    }
+
+    if (filtered.length !== acceptedFiles.length) {
+      // TODO Inform this to the user "set warnings"
+      console.log("some files were ignored, as they were not of PDF file type.");
+    }
+
+    // gather PDF data. TODO cleanup once e2e prototype is complete
+    const pdfData = filtered.map(pdfFile => {
+      return readFile(pdfFile)
+        .then(binary => {
+
+          return PDFDocument.load(binary)
+            .then(pdf => {
+
+              // TODO this bit and pdfMetadataToForm formatting can be done in
+              // one go. One reduce, before we handle the promise and reformat
+              const acc = {};
+              PDF_ATTR_GETTERS.forEach(fun => {
+
+                let val = pdf[fun]();
+
+                if (val) {
+                  val = val.toString();
+                }
+
+                // Follow above TODO and get rid of this nonsense
+                acc[fun.replace('get', '')] = val;
+              });
+
+              return acc;
+            });
+        });
+    });
+
+    Promise.all(pdfData)
+      .then((allPdfData) => {
+
+        const formattedMetadata = allPdfData.map(pdfMetadataToForm);
+
+        filtered.forEach((file, idx) => {
+
+          return; // TODO remove. used to skip side effects for now.
+
+          const document = axios({
+            method: 'post',
+            url: `/api/dojo/documents`,
+            data: formattedMetadata[idx],
+            params: {}
+          }).then(response => {
+            const doc = response.data;
+
+            // TODO ? await promise to ensure docs uploaded before leaving
+            uploadFile(file, doc.id, {filename: file.name});
+
+          }).catch((e) => {
+            console.log('Error creating doc', e);
+          });
+        });
+
+        setAllPDFMetadata(prevMetadata => [ ...prevMetadata, ...formattedMetadata ]);
+        setFiles(prevFiles => [ ...prevFiles, ...filtered ]);
+        setSelectedFileIndex(selectedFileIndex => selectedFileIndex || 0);
+      });
 
   }, []);
 
