@@ -6,6 +6,7 @@ import React, {
 } from 'react';
 
 import Button from '@material-ui/core/Button';
+import CircularProgress from '@material-ui/core/CircularProgress';
 import DeleteIcon from '@material-ui/icons/Delete';
 import IconButton from '@material-ui/core/IconButton';
 import List from '@material-ui/core/List';
@@ -87,6 +88,10 @@ const Geoman = ({ setDrawings, mapBoundsLatLng }) => {
         editMode: false,
         dragMode: false,
       });
+
+      leafletContainer.pm.setGlobalOptions({
+        snapSegment: false,
+      });
     }
     // TODO: clean up leafletContainer event listeners?
     return () => {
@@ -108,17 +113,27 @@ export default withStyles((theme) => ({
     width: '220px',
 
   },
+  mapLoading: {
+    display: 'flex',
+    alignItems: 'center',
+    flexDirection: 'column',
+    gap: theme.spacing(4),
+  },
+  saveButton: {
+    position: 'absolute',
+    bottom: theme.spacing(8),
+    right: theme.spacing(4),
+  },
 }))(({
-  mapBounds, classes, saveDrawings, savedDrawings
+  mapBounds, classes, saveDrawings, savedDrawings, closeDrawer
 }) => {
   const [drawings, setDrawings] = useState([]);
-  const [loadedDrawings, setLoadedDrawings] = useState(savedDrawings)
   const theme = useTheme();
   const [map, setMap] = useState(null);
   // use a ref for this so we don't recreate it on every render
   const mapBoundsLatLng = useRef(null);
 
-  if (mapBoundsLatLng.current === null) {
+  if (mapBoundsLatLng.current === null && mapBounds) {
     mapBoundsLatLng.current = L.latLngBounds(mapBounds);
   }
 
@@ -144,6 +159,7 @@ export default withStyles((theme) => ({
 
   const onSaveClick = () => {
     saveDrawings(drawings);
+    closeDrawer();
   };
 
   return (
@@ -170,9 +186,12 @@ export default withStyles((theme) => ({
           />
         </MapContainer>
       ) : (
-        <Typography variant="subtitle1" align="center" className={classes.noMapData}>
-          No Map Data Found
-        </Typography>
+        <div className={classes.mapLoading}>
+          <Typography variant="subtitle1" align="center" className={classes.noMapData}>
+            Map Data Loading
+          </Typography>
+          <CircularProgress />
+        </div>
       )}
       <List className={classes.subtitleList} disablePadding dense>
         {drawings.map((drawing, index) => (
@@ -184,7 +203,13 @@ export default withStyles((theme) => ({
           </ListItem>
         ))}
       </List>
-      <Button variant="contained" color="primary" onClick={onSaveClick}>
+      <Button
+        variant="contained"
+        color="primary"
+        onClick={onSaveClick}
+        disableElevation
+        className={classes.saveButton}
+      >
         Save Clips
       </Button>
     </div>

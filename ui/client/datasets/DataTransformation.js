@@ -2,9 +2,14 @@ import React, { useState, useEffect } from 'react';
 
 import axios from 'axios';
 
+import CheckIcon from '@material-ui/icons/Check';
 import Container from '@material-ui/core/Container';
+import List from '@material-ui/core/List';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemIcon from '@material-ui/core/ListItemIcon';
+import ListItemText from '@material-ui/core/ListItemText';
 import Typography from '@material-ui/core/Typography';
-import { withStyles } from '@material-ui/core/styles';
+import { withStyles, useTheme } from '@material-ui/core/styles';
 
 import ClipMap from './ClipMap';
 import ClipTime from './ClipTime';
@@ -26,6 +31,7 @@ export default withStyles(({ spacing }) => ({
   const [drawerName, setDrawerName] = useState(null);
   const [mapBounds, setMapBounds] = useState(null);
   const [savedDrawings, setSavedDrawings] = useState([]);
+  const theme = useTheme();
 
   // useEffect(() => {
   //   // TODO do this by getting from cartwright process, for now mock lat/lng
@@ -34,7 +40,8 @@ export default withStyles(({ spacing }) => ({
 
   const handleDrawerClose = () => {
     setDrawerOpen(false);
-    setDrawerName(null);
+    // delay this slightly so we don't get a flicker as the drawer closes
+    setTimeout(() => setDrawerName(null), 400);
   };
 
   const handleDrawerOpen = (name) => {
@@ -138,6 +145,7 @@ export default withStyles(({ spacing }) => ({
             mapBounds={mapBounds}
             saveDrawings={setSavedDrawings}
             savedDrawings={savedDrawings}
+            closeDrawer={handleDrawerClose}
           />
         );
       case 'scaleTime':
@@ -171,11 +179,33 @@ export default withStyles(({ spacing }) => ({
         {stepTitle}
       </Typography>
 
-      <Typography variant="h5" onClick={() => handleDrawerOpen('regridMap')}>Regrid Map Data</Typography>
-      <Typography variant="h5" onClick={() => handleDrawerOpen('clipMap')}>Clip Map Data</Typography>
-      <Typography variant="h5" onClick={() => handleDrawerOpen('scaleTime')}>Scale Temporal Data</Typography>
-      <Typography variant="h5" onClick={() => handleDrawerOpen('clipTime')}>Clip Temporal Data</Typography>
-
+      <List>
+        <ListItem>
+          <ListItemText primaryTypographyProps={{ variant: 'h6' }} onClick={() => handleDrawerOpen('regridMap')}>Regrid Map Data</ListItemText>
+        </ListItem>
+        <ListItem>
+          <ListItemText
+            primaryTypographyProps={{ variant: 'h6' }}
+            onClick={() => handleDrawerOpen('clipMap')}
+            style={{
+              color: savedDrawings.length ? theme.palette.grey[500] : theme.palette.text.primary
+            }}
+          >
+            Clip Map Data
+          </ListItemText>
+          {savedDrawings.length !== 0 && (
+            <ListItemIcon>
+              <CheckIcon style={{ color: theme.palette.success.light }} />
+            </ListItemIcon>
+          )}
+        </ListItem>
+        <ListItem>
+          <ListItemText primaryTypographyProps={{ variant: 'h6' }} onClick={() => handleDrawerOpen('scaleTime')}>Scale Temporal Data</ListItemText>
+        </ListItem>
+        <ListItem>
+          <ListItemText primaryTypographyProps={{ variant: 'h6' }} onClick={() => handleDrawerOpen('clipTime')}>Clip Temporal Data</ListItemText>
+        </ListItem>
+      </List>
       <Navigation
         label="Next"
         handleNext={handleNext}
