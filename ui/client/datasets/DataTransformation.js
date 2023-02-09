@@ -25,11 +25,12 @@ export default withStyles(({ spacing }) => ({
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerName, setDrawerName] = useState(null);
   const [mapBounds, setMapBounds] = useState(null);
+  const [savedDrawings, setSavedDrawings] = useState([]);
 
-  useEffect(() => {
-    // TODO do this by getting from cartwright process, for now mock lat/lng
-    setMapBounds([['12', '40'], ['-44', '-15']]);
-  }, []);
+  // useEffect(() => {
+  //   // TODO do this by getting from cartwright process, for now mock lat/lng
+  //   setMapBounds([['12', '40'], ['-44', '-15']]);
+  // }, []);
 
   const handleDrawerClose = () => {
     setDrawerOpen(false);
@@ -40,6 +41,65 @@ export default withStyles(({ spacing }) => ({
     setDrawerOpen(true);
     setDrawerName(name);
   };
+
+  // useEffect(() => {
+  //   console.log('this is saveDrawings', savedDrawings);
+  // }, [savedDrawings]);
+
+  useEffect(() => {
+    const startBoundingBoxJob = async () => {
+      const args = {
+        geo_columns: [
+          'latitude',
+          'longitude',
+        ],
+      };
+      const jobQueueResp = await axios.post(
+        `/api/dojo/job/${datasetInfo.id}/mixmasta_processors.get_boundary_box`, args
+      );
+
+      if (jobQueueResp.status === 200) {
+        return jobQueueResp.data?.id;
+      }
+    };
+
+    // We need to fetch from mixmasta multiple times to get the bounding box job result
+    const repeatFetch = (jobId) => {
+      setTimeout(() => {
+        axios.post(`/api/dojo/job/fetch/${jobId}`).then((response) => {
+          console.log('fetching bounding box data...', response);
+          if (response.status === 200) {
+            if (response.data?.boundary_box) {
+              const bObj = response.data?.boundary_box;
+              const bounds = [[bObj.xmin, bObj.xmax], [bObj.ymin, bObj.ymax]];
+              setMapBounds(bounds);
+              return;
+            }
+
+            // if no data, try the fetch again
+            repeatFetch(jobId);
+          }
+        }).catch(() => {
+          // TODO: this is currently an endless loop - handle actual errors
+          startBoundingBoxJob().then((resp) => {
+            repeatFetch(resp);
+          });
+        });
+      }, 500);
+    };
+
+    // only do this once we have the ID and if we don't already have bounds loaded
+    if (datasetInfo.id) {
+      if (!mapBounds) {
+        startBoundingBoxJob().then((jobId) => {
+          repeatFetch(jobId);
+        });
+      }
+    }
+
+    // TODO this won't work
+    // return () => clearTimeout(repeatFetch);
+  }, [datasetInfo.id, mapBounds]);
 
   // TODO: expand this to include the other data transformation steps as we do them
   const saveDrawings = async (drawings) => {
@@ -74,7 +134,11 @@ export default withStyles(({ spacing }) => ({
         );
       case 'clipMap':
         return (
-          <ClipMap mapBounds={mapBounds} saveDrawings={saveDrawings} />
+          <ClipMap
+            mapBounds={mapBounds}
+            saveDrawings={setSavedDrawings}
+            savedDrawings={savedDrawings}
+          />
         );
       case 'scaleTime':
         return (

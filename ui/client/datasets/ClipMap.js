@@ -6,6 +6,12 @@ import React, {
 } from 'react';
 
 import Button from '@material-ui/core/Button';
+import DeleteIcon from '@material-ui/icons/Delete';
+import IconButton from '@material-ui/core/IconButton';
+import List from '@material-ui/core/List';
+import ListItem from '@material-ui/core/ListItem';
+import ListItemIcon from '@material-ui/core/ListItemIcon';
+import ListItemText from '@material-ui/core/ListItemText';
 import Typography from '@material-ui/core/Typography';
 import { withStyles, useTheme } from '@material-ui/core/styles';
 
@@ -17,6 +23,7 @@ import 'leaflet/dist/leaflet.css';
 import L from 'leaflet';
 import {
   MapContainer,
+  Polygon,
   Rectangle,
   TileLayer,
 } from 'react-leaflet';
@@ -37,16 +44,16 @@ const Geoman = ({ setDrawings, mapBoundsLatLng }) => {
 
     if (leafletContainer) {
       // when a drawing is started
-      leafletContainer.on('pm:drawstart', ({ workingLayer }) => {
-        workingLayer.on('pm:vertexadded', ({ latlng }) => {
-          // if it is outside the mapBounds box
-          if (!mapBoundsLatLng.current.contains(latlng)) {
-            // TODO: add snackbar warning of clicking outside box
-            // disable drawing
-            leafletContainer.pm.disableDraw();
-          }
-        });
-      });
+      // leafletContainer.on('pm:drawstart', ({ workingLayer }) => {
+      //   workingLayer.on('pm:vertexadded', ({ latlng }) => {
+      //     // if it is outside the mapBounds box
+      //     if (!mapBoundsLatLng.current.contains(latlng)) {
+      //       // TODO: add snackbar warning of clicking outside box
+      //       // disable drawing
+      //       leafletContainer.pm.disableDraw();
+      //     }
+      //   });
+      // });
 
       // when a drawing is removed
       leafletContainer.on('pm:remove', () => {
@@ -72,7 +79,6 @@ const Geoman = ({ setDrawings, mapBoundsLatLng }) => {
         position: 'topleft',
         drawCircle: false,
         drawMarker: false,
-        drawRectangle: false,
         drawCircleMarker: false,
         drawText: false,
         drawPolyline: false,
@@ -97,9 +103,16 @@ export default withStyles((theme) => ({
   },
   header: {
     paddingBottom: theme.spacing(2),
-  }
-}))(({ mapBounds, classes, saveDrawings }) => {
+  },
+  subtitleList: {
+    width: '220px',
+
+  },
+}))(({
+  mapBounds, classes, saveDrawings, savedDrawings
+}) => {
   const [drawings, setDrawings] = useState([]);
+  const [loadedDrawings, setLoadedDrawings] = useState(savedDrawings)
   const theme = useTheme();
   const [map, setMap] = useState(null);
   // use a ref for this so we don't recreate it on every render
@@ -161,11 +174,16 @@ export default withStyles((theme) => ({
           No Map Data Found
         </Typography>
       )}
-      {drawings.map((drawing) => (
-        <Typography variant="h6" key={`${drawing[0].lat}${drawing[0].lng}`}>
-          Here is a drawing: {JSON.stringify(drawing)}
-        </Typography>
-      ))}
+      <List className={classes.subtitleList} disablePadding dense>
+        {drawings.map((drawing, index) => (
+          <ListItem key={`${drawing[0].lat}${drawing[0].lng}`}>
+            <ListItemText>Drawing #{index + 1}</ListItemText>
+            <ListItemIcon>
+              <IconButton color="secondary"><DeleteIcon /></IconButton>
+            </ListItemIcon>
+          </ListItem>
+        ))}
+      </List>
       <Button variant="contained" color="primary" onClick={onSaveClick}>
         Save Clips
       </Button>
