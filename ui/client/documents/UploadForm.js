@@ -73,7 +73,7 @@ import { KeyboardDatePicker } from 'material-ui-formik-components/KeyboardDatePi
 import {
   MuiPickersUtilsProvider,
 } from '@material-ui/pickers';
-import { pdfMetadataToForm } from './utils';
+import { pdfMetadataToForm, formatBytes, readFile } from './utils';
 
 const defaultValues = {
   title: "",
@@ -97,6 +97,7 @@ const defaultValues = {
 // PageCount: "8",
 // Title: undefined
 
+
 /**
  *
  **/
@@ -109,7 +110,21 @@ export const EditDocumentMetadata = withStyles((theme) => ({
   },
   datePickerContainer: {
   }
-}))(({ classes, metadata, filename, id }) => {
+}))(({ classes, metadata, filename, id, onSave=identity }) => {
+
+  const sharedTextFieldProps = (fieldName) => ({
+    name: fieldName,
+    label: startCase(fieldName),
+    onBlur: (event) => onSave(fieldName, event.target.value)
+  });
+
+  const sharedSelectFieldProps = (fieldName) => ({
+    name: fieldName,
+    label: startCase(fieldName)
+    // TODO prob not use Formik
+    // onChange: (event) => onSave(fieldName, event.target.value)
+  });
+
   return (
     <div className={classes.root}>
       <Typography
@@ -124,16 +139,6 @@ export const EditDocumentMetadata = withStyles((theme) => ({
       <Formik
         key={id}
         initialValues={metadata}
-        onSubmit={(values, { setSubmitting }) => {
-          // TODO ... maybe not use Formik?
-          // Check their API on reinitializing or saving
-          // while changing a specific prop (index, in this case).
-
-          // TODO Maybe `save` on leave the current form, where `onSubmit` is a prop
-          // So we would call onSubmit when we need to reinitialize (on index or filename change)
-          console.log('values', values);
-          return true;
-        }}
       >
         {(formik) => (
           <Form>
@@ -142,21 +147,18 @@ export const EditDocumentMetadata = withStyles((theme) => ({
               <List>
                 <ListItem>
                   <FormAwareTextField
-                    name="title"
                     required
-                    label="Title"
                     placeholder="Document Title"
+                    {...sharedTextFieldProps("title")}
                   />
                 </ListItem>
 
                 <ListItem>
                   <FormAwareTextField
-                    required
-                    name="description"
-                    label="Description"
                     placeholder="Provide a description of the Document"
                     multiline
                     minRows="2"
+                    {...sharedTextFieldProps("description")}
                   />
                 </ListItem>
 
@@ -165,22 +167,19 @@ export const EditDocumentMetadata = withStyles((theme) => ({
 
                     <Grid item xs={12} sm={6}>
                       <FormAwareTextField
-                        name="author"
-                        label="Author"
+                        {...sharedTextFieldProps("author")}
                       />
                     </Grid>
 
                     <Grid item xs={12} sm={6}>
                       <FormAwareTextField
-                        name="publisher"
-                        label="Publisher"
+                        {...sharedTextFieldProps("publisher")}
                       />
                     </Grid>
 
                     <Grid item xs={12} sm={6}>
                       <FormAwareTextField
-                        name="producer"
-                        label="Producer"
+                        {...sharedTextFieldProps("producer")}
                       />
                     </Grid>
 
@@ -189,11 +188,10 @@ export const EditDocumentMetadata = withStyles((theme) => ({
                         <Field
                           format="MM/dd/yyyy"
                           component={KeyboardDatePicker}
-                          label="Creation Date"
                           TextFieldComponent={FormAwareTextField}
                           inputVariant="outlined"
-                          name="creation_date"
                           placeholder="mm/dd/yyyy"
+                          {...sharedSelectFieldProps("creation_date")}
                         />
                       </MuiPickersUtilsProvider>
                     </Grid>
@@ -209,19 +207,17 @@ export const EditDocumentMetadata = withStyles((theme) => ({
                     <Grid container spacing={2}>
                       <Grid item xs={12} sm={6}>
                         <FormAwareSelect
-                          name="original_language"
-                          label="Original Language"
                           options={[
                             { value: 'en', label: 'English' },
                             { value: 'es', label: 'Spanish' }
                           ]}
+                          {...sharedSelectFieldProps("original_language")}
                         />
                       </Grid>
 
                       <Grid item xs={12} sm={6}>
                         <FormAwareSelect
-                          name="type"
-                          label="Type"
+                          {...sharedSelectFieldProps("type")}
                           options={[
                             { value: 'article', label: 'Article' },
                             { value: 'paper', label: 'Paper' }
@@ -231,8 +227,7 @@ export const EditDocumentMetadata = withStyles((theme) => ({
 
                       <Grid item xs={12} sm={6}>
                         <FormAwareSelect
-                          name="stated_genre"
-                          label="Genre"
+                          {...sharedSelectFieldProps("stated_genre")}
                           options={[
                             { value: 'news-article', label: 'News Article' }
                           ]}
@@ -241,8 +236,7 @@ export const EditDocumentMetadata = withStyles((theme) => ({
 
                       <Grid item xs={12} sm={6}>
                         <FormAwareSelect
-                          name="classification"
-                          label="Classification"
+                          {...sharedSelectFieldProps("classification")}
                           options={[
                             { value: 'unclassified', label: 'Unclassified' }
                           ]}
@@ -274,14 +268,10 @@ export const FileDropSelector = withStyles((theme => ({
     flexDirection: 'column',
     flex: 1,
     alignItems: 'center',
-    border: `3px dashed ${theme.palette.grey[200]}`
-
-    // TODO stopped working?: begtter dahsed border...
-    // backgroundImage: `url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='15' ry='15' stroke='${theme.palette.grey[300].replace('#','%23')}' stroke-width='8' stroke-dasharray='6%2c 20' stroke-dashoffset='19' stroke-linecap='square'/%3e%3c/svg%3e")`,
+    border: `3px dashed ${theme.palette.grey[200]}`,
   },
   dropActive: {
     borderColor: theme.palette.primary.main,
-    // backgroundImage: `url("data:image/svg+xml,%3csvg width='100%25' height='100%25' xmlns='http://www.w3.org/2000/svg'%3e%3crect width='100%25' height='100%25' fill='none' rx='15' ry='15' stroke='${theme.palette.primary.main.replace('#','%23')}' stroke-width='8' stroke-dasharray='6%2c 20' stroke-dashoffset='19' stroke-linecap='square'/%3e%3c/svg%3e")`,
   },
   dropIcon: {
     width: '7rem',
@@ -326,18 +316,7 @@ export const FileDropSelector = withStyles((theme => ({
   );
 });
 
-/**
- * TODO check if we had this fn in project;
- * TODO move to utils
- **/
-function formatBytes(bytes,decimals) {
-  if(bytes == 0) return '0 Bytes';
-  var k = 1024,
-      dm = decimals || 2,
-      sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'],
-      i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
-}
+
 
 /**
  *
@@ -443,23 +422,6 @@ const PDF_ATTR_GETTERS = [
 ];
 
 /**
- * Promise API for reading binary string
- **/
-function readFile(file) {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-
-    reader.onload = () => {
-      resolve(reader.result);
-    };
-    reader.onabort = reject;
-    reader.onerror = reject;
-
-    reader.readAsArrayBuffer(file);
-  });
-}
-
-/**
  * Uploads a file to the backend service.
  * Receives a form dom reference, datasetId, and optional params.
  * TODO move to common project location, as datasets also uses this..?
@@ -482,6 +444,7 @@ export const uploadFile = async (file, documentID, params={}) => {
   return response;
 };
 
+
 /**
  * Submit button is not type=submit for now, since pressing enter
  * causes issues on inconvenient input boxes.
@@ -501,7 +464,6 @@ const UploadDocumentForm = withStyles((theme) => ({
 
   const [files, setFiles] = useState([]);
   const [allPDFMetadata, setAllPDFMetadata] = useState([]);
-
   const [selectedFileIndex, setSelectedFileIndex] = useState(null);
 
   console.log('files', files);
@@ -510,8 +472,8 @@ const UploadDocumentForm = withStyles((theme) => ({
 
   const handleFileSelect = useCallback(acceptedFiles => {
 
-    // TODO
     if (acceptedFiles.length === 0) {
+      // TODO
       console.log("Something went wrong. files length is 0");
       // return false;
     }
@@ -564,7 +526,7 @@ const UploadDocumentForm = withStyles((theme) => ({
 
         filtered.forEach((file, idx) => {
 
-          return; // TODO remove. used to skip side effects for now.
+          return; // TODO remove return. used to skip side effects for now.
 
           const document = axios({
             method: 'post',
@@ -582,12 +544,30 @@ const UploadDocumentForm = withStyles((theme) => ({
           });
         });
 
+        // Let's update the state all together when we have everything available.
+        // It's hard to trust and coordinate batch updates when performing updates
+        // both outside and inside async promise handler:
         setAllPDFMetadata(prevMetadata => [ ...prevMetadata, ...formattedMetadata ]);
         setFiles(prevFiles => [ ...prevFiles, ...filtered ]);
         setSelectedFileIndex(selectedFileIndex => selectedFileIndex || 0);
       });
 
   }, []);
+
+  /**
+   * Trying this experiment now.
+   **/
+  const handleDocFieldChange = (fieldName, value) => {
+    const updatedPDFMetadata = {
+      ...allPDFMetadata[selectedFileIndex],
+      [fieldName]: value
+    };
+
+    const allPDFMetadataClone = [...allPDFMetadata];
+    allPDFMetadataClone[selectedFileIndex] = updatedPDFMetadata;
+
+    setAllPDFMetadata(allPDFMetadataClone);
+  };
 
   return (
     <Container
@@ -609,7 +589,7 @@ const UploadDocumentForm = withStyles((theme) => ({
         color="textSecondary"
         gutterBottom
       >
-        Upload New Documents
+        Bulk Upload New Documents
       </Typography>
 
       <FileDropSelector onFileSelect={handleFileSelect}/>
@@ -644,7 +624,8 @@ const UploadDocumentForm = withStyles((theme) => ({
                 style={{flex: '3 2 600px'}}
               >
                 <EditDocumentMetadata
-                  id={files[selectedFileIndex].name}
+                  onSave={handleDocFieldChange}
+                  id={files[selectedFileIndex].name+files[selectedFileIndex].size}
                   filename={files[selectedFileIndex].name}
                   metadata={allPDFMetadata[selectedFileIndex]} />
               </div>
@@ -674,26 +655,4 @@ const UploadDocumentForm = withStyles((theme) => ({
   );
 });
 
-
 export default UploadDocumentForm;
-
-
-// onClick={formik.handleSubmit}
-
-// .then(pdfDoc => {
-
-//   window.pdfDoc = pdfDoc;
-
-//   // console.log('Title:', pdfDoc.getTitle())
-//   // console.log('Author:', pdfDoc.getAuthor())
-//   // console.log('Subject:', pdfDoc.getSubject())
-//   // console.log('Creator:', pdfDoc.getCreator())
-//   // console.log('Keywords:', pdfDoc.getKeywords())
-//   // console.log('Producer:', pdfDoc.getProducer())
-//   // console.log('Creation Date:', pdfDoc.getCreationDate())
-//   // console.log('Modification Date:', pdfDoc.getModificationDate());
-
-//   // pdfDoc.getPageCount()
-
-//   setEditingMetadata(true);
-// });

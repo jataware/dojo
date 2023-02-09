@@ -56,6 +56,36 @@ export function highlightText(text, highlights) {
 }
 
 /**
+ * Promise API for reading binary string
+ **/
+export function readFile(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+
+    reader.onload = () => {
+      resolve(reader.result);
+    };
+    reader.onabort = reject;
+    reader.onerror = reject;
+
+    reader.readAsArrayBuffer(file);
+  });
+}
+
+
+/**
+ * TODO check if we had this fn in project
+ **/
+export function formatBytes(bytes,decimals) {
+  if(bytes == 0) return '0 Bytes';
+  var k = 1024,
+      dm = decimals || 2,
+      sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'],
+      i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+}
+
+/**
  * Below setup to transform metadata for readyness of form and API shapes.
  **/
 
