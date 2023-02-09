@@ -299,10 +299,6 @@ export const FileDropSelector = withStyles((theme => ({
     }
   });
 
-  // console.log("getRootProps", getRootProps());
-  // console.log("getInputProps", getInputProps());
-  // console.log("isDragActive", isDragActive);
-
   // TODO lighter color for icon button color on default
 
   return (
@@ -411,8 +407,6 @@ export const SelectedFileList = withStyles((theme) => ({
     maxHeight: 650, // TODO rem, maybe px to rem util
   }
 }))(({ classes, files, onItemClick, selectedIndex }) => {
-
-  console.log("files", files);
 
   return (
     <Paper
@@ -573,11 +567,7 @@ const UploadDocumentForm = withStyles((theme) => ({
       Promise.all(pdfData)
         .then((allPdfData) => {
 
-          console.log('raw all pdf data', allPdfData);
-
           const formattedMetadata = allPdfData.map(pdfMetadataToForm);
-
-          console.log('formatted pdf Metadata', formattedMetadata);
 
           filtered.forEach((file, idx) => {
 
@@ -599,9 +589,12 @@ const UploadDocumentForm = withStyles((theme) => ({
             });
           });
 
-          setAllPDFMetadata(formattedMetadata);
-          setFiles(filtered);
-          setSelectedFileIndex(0);
+          setAllPDFMetadata(prevMetadata => [ ...prevMetadata, ...formattedMetadata ]);
+          setFiles(prevFiles => [ ...prevFiles, ...filtered ]);
+
+          if (!selectedFileIndex) {
+            setSelectedFileIndex(0);
+          }
         });
     }
 
@@ -664,7 +657,7 @@ const UploadDocumentForm = withStyles((theme) => ({
                 style={{flex: '3 2 600px'}}
               >
                 <EditDocumentMetadata
-                  id={selectedFileIndex+files[selectedFileIndex].name}
+                  id={files[selectedFileIndex].name}
                   filename={files[selectedFileIndex].name}
                   metadata={allPDFMetadata[selectedFileIndex]} />
               </div>
