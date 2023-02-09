@@ -28,7 +28,7 @@ class Settings(BaseSettings):
 
     DATASET_STORAGE_BASE_URL: str = "file:///datasets/"
 
-    DOCUMENT_STORAGE_BASE_URL: str = "s3://jataware-world-modelers-dev/documents/"
+    DOCUMENT_STORAGE_BASE_URL: str = "file:///documents/"
 
     CONFIG_STORAGE_BASE: str = "file:///dojo/configs/"
 
