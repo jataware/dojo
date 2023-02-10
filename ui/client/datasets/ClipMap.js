@@ -172,7 +172,12 @@ export default withStyles((theme) => ({
       {mapBounds ? (
         <MapContainer
           center={[51.505, -0.09]}
-          style={{ height: 340, margin: '0 auto' }}
+          style={{
+            height: 340,
+            margin: '0 auto',
+            border: `1px solid ${theme.palette.grey[400]}`,
+            borderRadius: theme.shape.borderRadius,
+          }}
           // don't allow much bounce outside of the map bounds
           // maxBoundsViscosity={1}
           whenCreated={setMap}

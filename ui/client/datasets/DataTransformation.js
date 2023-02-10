@@ -2,7 +2,12 @@ import React, { useState, useEffect } from 'react';
 
 import axios from 'axios';
 
+import AspectRatioIcon from '@material-ui/icons/AspectRatio';
+import TodayIcon from '@material-ui/icons/Today';
 import CheckIcon from '@material-ui/icons/Check';
+import GridOnIcon from '@material-ui/icons/GridOn';
+import MapIcon from '@material-ui/icons/Map';
+
 import Container from '@material-ui/core/Container';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
@@ -24,6 +29,7 @@ export default withStyles(({ spacing }) => ({
   header: {
     marginBottom: spacing(6),
   },
+
 }))(({
   classes, annotations, datasetInfo, stepTitle, handleNext, handleBack, useFilepath = false, rawFileName, ...props
 }) => {
@@ -200,10 +206,26 @@ export default withStyles(({ spacing }) => ({
       </Typography>
 
       <List>
-        <ListItem>
+        <ListItem button>
+          <ListItemIcon>
+            <GridOnIcon
+              fontSize="large"
+              style={{
+                color: theme.palette.text.primary
+              }}
+            />
+          </ListItemIcon>
           <ListItemText primaryTypographyProps={{ variant: 'h6' }} onClick={() => handleDrawerOpen('regridMap')}>Regrid Map Data</ListItemText>
         </ListItem>
-        <ListItem>
+        <ListItem button>
+          <ListItemIcon>
+            <MapIcon
+              fontSize="large"
+              style={{
+                color: savedDrawings.length ? theme.palette.grey[500] : theme.palette.text.primary
+              }}
+            />
+          </ListItemIcon>
           <ListItemText
             primaryTypographyProps={{ variant: 'h6' }}
             onClick={() => handleDrawerOpen('clipMap')}
@@ -215,14 +237,30 @@ export default withStyles(({ spacing }) => ({
           </ListItemText>
           {savedDrawings.length !== 0 && (
             <ListItemIcon>
-              <CheckIcon style={{ color: theme.palette.success.light }} />
+              <CheckIcon style={{ color: theme.palette.success.light }} fontSize="large" />
             </ListItemIcon>
           )}
         </ListItem>
-        <ListItem>
+        <ListItem button>
+          <ListItemIcon>
+            <AspectRatioIcon
+              fontSize="large"
+              style={{
+                color: theme.palette.text.primary
+              }}
+            />
+          </ListItemIcon>
           <ListItemText primaryTypographyProps={{ variant: 'h6' }} onClick={() => handleDrawerOpen('scaleTime')}>Scale Temporal Data</ListItemText>
         </ListItem>
-        <ListItem>
+        <ListItem button>
+          <ListItemIcon>
+            <TodayIcon
+              fontSize="large"
+              style={{
+                color: theme.palette.text.primary
+              }}
+            />
+          </ListItemIcon>
           <ListItemText primaryTypographyProps={{ variant: 'h6' }} onClick={() => handleDrawerOpen('clipTime')}>Clip Temporal Data</ListItemText>
         </ListItem>
       </List>
