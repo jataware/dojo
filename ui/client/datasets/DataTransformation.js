@@ -49,11 +49,57 @@ export default withStyles(({ spacing }) => ({
     setDrawerName(name);
   };
 
-  // useEffect(() => {
-  //   console.log('this is saveDrawings', savedDrawings);
-  // }, [savedDrawings]);
+  useEffect(() => {
+    // TODO: extract this and the following useEffect into a shared mixmasta repeat call function
+    console.log('this is saveDrawings', savedDrawings);
+    let timeout;
+    const startProcessClippingsJob = async (drawings) => {
+      const args = {
+        'map-shapes': drawings,
+        geo_columns: [
+          'latitude',
+          'longitude',
+        ],
+      };
+      const jobQueueResp = await axios.post(
+        `/api/dojo/job/${datasetInfo.id}/mixmasta_processors.clip_data`, args
+      );
+
+      if (jobQueueResp.status === 200) {
+        return jobQueueResp.data?.id;
+      }
+    };
+
+    const repeatFetch = (jobId) => {
+      timeout = setTimeout(() => {
+        axios.post(`/api/dojo/job/fetch/${jobId}`).then((response) => {
+          if (response.status === 200) {
+            console.log('this is the clippings response', response)
+            if (response.data) {
+              // TODO: do something with the response
+              return;
+            }
+            // if no data, try the fetch again
+            repeatFetch(jobId);
+          }
+        }).catch(() => {
+          // TODO: this is currently an endless loop - handle actual errors
+          console.log('repeating clippings job')
+          startProcessClippingsJob().then((resp) => {
+            repeatFetch(resp);
+          });
+        });
+      }, 500);
+    };
+
+    if (datasetInfo.id && savedDrawings.length > 0) {
+      startProcessClippingsJob().then((jobId) => repeatFetch(jobId));
+    }
+    return () => clearTimeout(timeout);
+  }, [savedDrawings, datasetInfo.id]);
 
   useEffect(() => {
+    let timeout;
     const startBoundingBoxJob = async () => {
       const args = {
         geo_columns: [
@@ -72,7 +118,7 @@ export default withStyles(({ spacing }) => ({
 
     // We need to fetch from mixmasta multiple times to get the bounding box job result
     const repeatFetch = (jobId) => {
-      setTimeout(() => {
+      timeout = setTimeout(() => {
         axios.post(`/api/dojo/job/fetch/${jobId}`).then((response) => {
           console.log('fetching bounding box data...', response);
           if (response.status === 200) {
@@ -104,34 +150,8 @@ export default withStyles(({ spacing }) => ({
       }
     }
 
-    // TODO this won't work
-    // return () => clearTimeout(repeatFetch);
+    return () => clearTimeout(timeout);
   }, [datasetInfo.id, mapBounds]);
-
-  // TODO: expand this to include the other data transformation steps as we do them
-  const saveDrawings = async (drawings) => {
-    const transformation = {
-      'map-shapes': drawings,
-      geo_columns: [
-        'latitude',
-        'longitude',
-      ],
-    };
-    const jobQueueResp = await axios.post(
-      `/api/dojo/job/${datasetInfo.id}/mixmasta_processors.clip_data`,
-      transformation
-    );
-
-    if (jobQueueResp.status === 200) {
-      const jobId = jobQueueResp.data.id;
-
-      const transformationResp = await axios.post(`/api/dojo/job/fetch/${jobId}`);
-
-      // TODO: currently job/fetch returns nothing (but no error)
-      console.log('This is the transformation response', transformationResp);
-    }
-    // TODO: error handling
-  };
 
   const drawerInner = () => {
     switch (drawerName) {

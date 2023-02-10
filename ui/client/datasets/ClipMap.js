@@ -141,9 +141,11 @@ export default withStyles((theme) => ({
     if (map && mapBoundsLatLng.current) {
       // fit the map to the size of the bounds and lock it in place
       map.fitBounds(mapBoundsLatLng.current);
-      map.setMaxBounds(mapBoundsLatLng.current);
-      const currentZoom = map.getZoom();
-      map.setMinZoom(currentZoom);
+      // don't allow the map to be moved outside of its bounds
+      // map.setMaxBounds(mapBoundsLatLng.current);
+      // get the zoom level, and limit the zoom out to that level
+      // const currentZoom = map.getZoom();
+      // map.setMinZoom(currentZoom);
     }
   }, [map, mapBounds]);
 
@@ -171,7 +173,8 @@ export default withStyles((theme) => ({
         <MapContainer
           center={[51.505, -0.09]}
           style={{ height: 340, margin: '0 auto' }}
-          maxBoundsViscosity={1}
+          // don't allow much bounce outside of the map bounds
+          // maxBoundsViscosity={1}
           whenCreated={setMap}
         >
           <Geoman setDrawings={setDrawings} mapBoundsLatLng={mapBoundsLatLng} />
@@ -181,6 +184,7 @@ export default withStyles((theme) => ({
             pathOptions={{ color: theme.palette.success.main, opacity: 0.7 }}
           />
           <TileLayer
+            noWrap
             attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
