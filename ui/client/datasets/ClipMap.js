@@ -44,6 +44,9 @@ const Geoman = ({ setDrawings, mapBoundsLatLng }) => {
     };
 
     if (leafletContainer) {
+      // This handles stopping users from drawing outside the bounding box
+      // though now that it is inverted (the bounding box is a hole in a world-shaped polygon)
+      // the logic will need to be tweaked
       // when a drawing is started
       // leafletContainer.on('pm:drawstart', ({ workingLayer }) => {
       //   workingLayer.on('pm:vertexadded', ({ latlng }) => {
@@ -132,6 +135,7 @@ export default withStyles((theme) => ({
   const [map, setMap] = useState(null);
   // use a ref for this so we don't recreate it on every render
   const mapBoundsLatLng = useRef(null);
+  const [outerBounds, setOuterBounds] = useState(null);
 
   if (mapBoundsLatLng.current === null && mapBounds) {
     mapBoundsLatLng.current = L.latLngBounds(mapBounds);
@@ -146,12 +150,29 @@ export default withStyles((theme) => ({
       // get the zoom level, and limit the zoom out to that level
       // const currentZoom = map.getZoom();
       // map.setMinZoom(currentZoom);
+      const bounds = new L.LatLngBounds([-90, -360], [90, 360]);
+      // const bounds = map.getBounds();
+      const outerBoundsLatLngs = [
+        bounds.getSouthWest(),
+        bounds.getNorthWest(),
+        bounds.getNorthEast(),
+        bounds.getSouthEast(),
+      ];
+      const innerBoundsArray = [
+        mapBoundsLatLng.current.getSouthWest(),
+        mapBoundsLatLng.current.getNorthWest(),
+        mapBoundsLatLng.current.getNorthEast(),
+        mapBoundsLatLng.current.getSouthEast(),
+      ];
+
+      console.log('these are bounds', bounds, outerBoundsLatLngs)
+      setOuterBounds([outerBoundsLatLngs, innerBoundsArray]);
     }
   }, [map, mapBounds]);
 
   // pseudo-ref that will allow us to know when the node is available on the page
   // https://reactjs.org/docs/hooks-faq.html#how-can-i-measure-a-dom-node
-  const rectangleCallbackRef = useCallback((node) => {
+  const polygonCallbackRef = useCallback((node) => {
     if (node !== null) {
       // disable geoman for this layer so users can't edit the bounding box
       // eslint-disable-next-line no-param-reassign
@@ -170,30 +191,44 @@ export default withStyles((theme) => ({
         Clip Map Data
       </Typography>
       {mapBounds ? (
-        <MapContainer
-          center={[51.505, -0.09]}
-          style={{
-            height: 340,
-            margin: '0 auto',
-            border: `1px solid ${theme.palette.grey[400]}`,
-            borderRadius: theme.shape.borderRadius,
-          }}
-          // don't allow much bounce outside of the map bounds
-          // maxBoundsViscosity={1}
-          whenCreated={setMap}
-        >
-          <Geoman setDrawings={setDrawings} mapBoundsLatLng={mapBoundsLatLng} />
-          <Rectangle
-            bounds={mapBounds}
-            ref={rectangleCallbackRef}
-            pathOptions={{ color: theme.palette.success.main, opacity: 0.7 }}
-          />
-          <TileLayer
-            noWrap
-            attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-        </MapContainer>
+        <div>
+          <MapContainer
+            center={[51.505, -0.09]}
+            style={{
+              height: 340,
+              margin: '0 auto',
+              border: `1px solid ${theme.palette.grey[400]}`,
+              borderRadius: theme.shape.borderRadius,
+            }}
+            // don't allow much bounce outside of the map bounds
+            // maxBoundsViscosity={1}
+            whenCreated={setMap}
+          >
+            <Geoman setDrawings={setDrawings} mapBoundsLatLng={mapBoundsLatLng} />
+            {outerBounds && (
+              <Polygon
+                positions={outerBounds}
+                pathOptions={{
+                  fillColor: theme.palette.grey[700],
+                  fillOpacity: 0.5,
+                  color: theme.palette.common.black,
+                  stroke: true,
+                  weight: 1,
+                  opacity: 0.5
+                }}
+                ref={polygonCallbackRef}
+              />
+            )}
+            <TileLayer
+              noWrap
+              attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'
+              url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+            />
+          </MapContainer>
+          <Typography variant="subtitle2" style={{ margin: theme.spacing(1) }}>
+            Note: any areas clipped outside of the bounding box will not capture data
+          </Typography>
+        </div>
       ) : (
         <div className={classes.mapLoading}>
           <Typography variant="subtitle1" align="center" className={classes.noMapData}>
