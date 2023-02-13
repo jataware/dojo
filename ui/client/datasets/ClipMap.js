@@ -183,7 +183,7 @@ export default withStyles((theme) => ({
   }, []);
 
   const onSaveClick = () => {
-    saveDrawings(() => ([drawings, ...loadedDrawings]));
+    saveDrawings(drawings);
     closeDrawer();
   };
 

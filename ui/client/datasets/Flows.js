@@ -70,17 +70,17 @@ const BasicRegistrationFlow = {
     }
   },
   {
-    slug: 'transform',
-    title: 'Transform Data',
-    label: 'Transformation',
-    component: DataTransformation,
-    options: {}
-  },
-  {
     slug: 'annotate',
     title: 'Annotate Dataset',
     label: 'Annotation',
     component: Annotate,
+    options: {}
+  },
+  {
+    slug: 'transform',
+    title: 'Transform Data',
+    label: 'Transformation',
+    component: DataTransformation,
     options: {}
   },
   {

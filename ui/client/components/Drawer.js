@@ -14,6 +14,11 @@ export default withStyles(({ spacing }) => ({
     minWidth: '20rem',
     padding: spacing(3)
   },
+  wideRoot: {
+    width: '40%',
+    minWidth: '20rem',
+    padding: spacing(3)
+  },
   drawerControls: {
     display: 'flex',
     justifyContent: 'flex-end'
@@ -28,6 +33,7 @@ export default withStyles(({ spacing }) => ({
   open,
   variant = 'persistent',
   noConfirm = false,
+  wide,
   ...props
 }) => {
   const [confirmClose, setConfirmClose] = useState(false);
@@ -59,10 +65,11 @@ export default withStyles(({ spacing }) => ({
     <>
       <Drawer
         variant={variant}
-        classes={{ paper: classes.root }}
+        classes={{ paper: wide ? classes.wideRoot : classes.root }}
         anchor={anchorPosition}
         open={open}
         onClose={handleClose}
+        style={{ width: wide ? '40%' : '30%' }}
         {...props}
       >
         <>

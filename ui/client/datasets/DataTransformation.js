@@ -59,7 +59,7 @@ export default withStyles(({ spacing }) => ({
     // TODO: extract this and the following useEffect into a shared mixmasta repeat call function
     console.log('this is saveDrawings', savedDrawings);
     let timeout;
-    const startProcessClippingsJob = async (drawings) => {
+    const startProcessClippingsJob = async () => {
       const args = {
         map_shapes: savedDrawings,
         geo_columns: [
@@ -284,6 +284,7 @@ export default withStyles(({ spacing }) => ({
         anchorPosition="right"
         noConfirm
         PaperProps={{ variant: 'outlined' }}
+        wide
       >
         {drawerInner()}
       </Drawer>
