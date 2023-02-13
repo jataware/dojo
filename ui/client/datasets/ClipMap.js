@@ -88,7 +88,7 @@ const Geoman = ({ setDrawings, mapBoundsLatLng }) => {
         drawPolyline: false,
         cutPolygon: false,
         rotateMode: false,
-        editMode: false,
+        // editMode: false,
         dragMode: false,
       });
 
@@ -131,6 +131,8 @@ export default withStyles((theme) => ({
   mapBounds, classes, saveDrawings, savedDrawings, closeDrawer
 }) => {
   const [drawings, setDrawings] = useState([]);
+  // TODO: geoman can't update loadedDrawings when it edits the polygons on the map
+  const [loadedDrawings, setLoadedDrawings] = useState(savedDrawings);
   const theme = useTheme();
   const [map, setMap] = useState(null);
   // use a ref for this so we don't recreate it on every render
@@ -181,14 +183,14 @@ export default withStyles((theme) => ({
   }, []);
 
   const onSaveClick = () => {
-    saveDrawings(drawings);
+    saveDrawings(() => ([drawings, ...loadedDrawings]));
     closeDrawer();
   };
 
   return (
     <div>
       <Typography align="center" variant="h5" className={classes.header}>
-        Clip Map Data
+        Select Geospatial Coverage
       </Typography>
       {mapBounds ? (
         <div>
@@ -219,6 +221,9 @@ export default withStyles((theme) => ({
                 ref={polygonCallbackRef}
               />
             )}
+            {loadedDrawings.map((drawing) => (
+              <Polygon key={drawing[0]} positions={drawing} />
+            ))}
             <TileLayer
               noWrap
               attribution='&copy; <a href="http://osm.org/copyright">OpenStreetMap</a> contributors'

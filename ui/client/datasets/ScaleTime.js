@@ -82,7 +82,7 @@ export default withStyles((theme) => ({
 
   return (
     <div>
-      <Typography align="center" variant="h5">Scale Temporal Data</Typography>
+      <Typography align="center" variant="h5">Adjust Temporal Coverage</Typography>
       <Chart type="bar" data={displayData} />
       <div className={classes.controls}>
         <FormControl variant="outlined" className={classes.formControl}>

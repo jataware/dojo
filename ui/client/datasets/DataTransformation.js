@@ -67,8 +67,10 @@ export default withStyles(({ spacing }) => ({
           'longitude',
         ],
       };
+        // `/api/dojo/job/${datasetInfo.id}/mixmasta_processors.clip_data`, args
       const jobQueueResp = await axios.post(
-        `/api/dojo/job/${datasetInfo.id}/mixmasta_processors.clip_data`, args
+
+        `/api/dojo/job/${datasetInfo.id}/mixmasta_processors.clip_geo`, args
       );
 
       if (jobQueueResp.status === 200) {
@@ -130,7 +132,7 @@ export default withStyles(({ spacing }) => ({
           if (response.status === 200) {
             if (response.data?.boundary_box) {
               const bObj = response.data?.boundary_box;
-              const bounds = [[bObj.xmin, bObj.xmax], [bObj.ymin, bObj.ymax]];
+              const bounds = [[bObj.xmin, bObj.ymin], [bObj.xmax, bObj.ymax]];
               setMapBounds(bounds);
               return;
             }
@@ -163,7 +165,7 @@ export default withStyles(({ spacing }) => ({
     switch (drawerName) {
       case 'regridMap':
         return (
-          <Typography align="center" variant="h5">Regrid Map Data</Typography>
+          <Typography align="center" variant="h5">Adjust Geospatial Resolution</Typography>
         );
       case 'clipMap':
         return (
@@ -215,7 +217,9 @@ export default withStyles(({ spacing }) => ({
               }}
             />
           </ListItemIcon>
-          <ListItemText primaryTypographyProps={{ variant: 'h6' }} onClick={() => handleDrawerOpen('regridMap')}>Regrid Map Data</ListItemText>
+          <ListItemText primaryTypographyProps={{ variant: 'h6' }} onClick={() => handleDrawerOpen('regridMap')}>
+            Adjust Geospatial Resolution
+          </ListItemText>
         </ListItem>
         <ListItem button>
           <ListItemIcon>
@@ -233,7 +237,7 @@ export default withStyles(({ spacing }) => ({
               color: savedDrawings.length ? theme.palette.grey[500] : theme.palette.text.primary
             }}
           >
-            Clip Map Data
+            Select Geospatial Coverage
           </ListItemText>
           {savedDrawings.length !== 0 && (
             <ListItemIcon>
@@ -250,7 +254,9 @@ export default withStyles(({ spacing }) => ({
               }}
             />
           </ListItemIcon>
-          <ListItemText primaryTypographyProps={{ variant: 'h6' }} onClick={() => handleDrawerOpen('scaleTime')}>Scale Temporal Data</ListItemText>
+          <ListItemText primaryTypographyProps={{ variant: 'h6' }} onClick={() => handleDrawerOpen('scaleTime')}>
+            Adjust Temporal Resolution
+          </ListItemText>
         </ListItem>
         <ListItem button>
           <ListItemIcon>
@@ -261,7 +267,9 @@ export default withStyles(({ spacing }) => ({
               }}
             />
           </ListItemIcon>
-          <ListItemText primaryTypographyProps={{ variant: 'h6' }} onClick={() => handleDrawerOpen('clipTime')}>Clip Temporal Data</ListItemText>
+          <ListItemText primaryTypographyProps={{ variant: 'h6' }} onClick={() => handleDrawerOpen('clipTime')}>
+            Select Temporal Coverage
+          </ListItemText>
         </ListItem>
       </List>
       <Navigation
