@@ -197,7 +197,7 @@ export default withStyles((theme) => ({
           <MapContainer
             center={[51.505, -0.09]}
             style={{
-              height: 340,
+              height: 400,
               margin: '0 auto',
               border: `1px solid ${theme.palette.grey[400]}`,
               borderRadius: theme.shape.borderRadius,
