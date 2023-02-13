@@ -1,4 +1,5 @@
 import logging
+import io
 import json
 import os
 import re
@@ -391,7 +392,7 @@ def clip_geo(context, filename=None, **kwargs):
 
     response = {
         "message": "Geography not clipped, some information was not provided (shape list or geography column names).",
-        "dataframe": json.loads(json.dumps(original_dataframe)),
+        "dataframe": original_dataframe.to_json(),
     }
     return response
 
@@ -544,7 +545,7 @@ def get_boundary_box(context, filename=None, **kwargs):
         )
 
         response = {
-            "messsage": "Boundary box generated successfully",
+            "message": "Boundary box generated successfully",
             "boundary_box": boundary_dict,
         }
         return response
