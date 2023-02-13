@@ -61,7 +61,7 @@ export default withStyles(({ spacing }) => ({
     let timeout;
     const startProcessClippingsJob = async (drawings) => {
       const args = {
-        'map-shapes': drawings,
+        map_shapes: savedDrawings,
         geo_columns: [
           'latitude',
           'longitude',
