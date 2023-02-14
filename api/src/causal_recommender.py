@@ -38,10 +38,11 @@ router = APIRouter()
 
 @router.post("/causal-recommender/causes")
 def get_causality_recommendation_causes(topic: str):
-
     logger.info("Calculating causes for topic")
 
-    return {"causes": recommender_engine.get_causes(topic)}
+    causes = recommender_engine.get_causes(topic)
+
+    return {"causes": causes}
 
 
 @router.post("/causal-recommender/effects")
