@@ -1,19 +1,31 @@
 from transformers import pipeline, set_seed, logging
 
+import os
+from os import listdir
+
 import re
 import torch
 from typing import List
 
-import os
 
-print(f"Transformers cache: {os.environ.get('TRANSFORMERS_CACHE')}")
+# gpt2_snapshot_path = "models--gpt2-xl/snapshots"
+# base_cache_dir = os.path.join(os.environ.get('TRANSFORMERS_CACHE', './'), gpt2_snapshot_path)
 
-cache_postfix = "models--gpt2-xl/snapshots/33cdb5c0db5423c1879b1b9f16c352988e8754a8"
+# cache_loc = ""
 
-try:
-    cache_loc = os.path.join(os.environ['TRANSFORMERS_CACHE'], cache_postfix)
-except KeyError:
-    cache_loc = False
+# # errors if no folder present..
+# try:
+#     ls = listdir(base_cache_dir)
+#     cache_loc = os.path.join(base_cache_dir, ls[0])
+# except FileNotFoundError:
+#     # Handled below anyways.
+#     pass
+
+
+# print(f"cache_location: {cache_loc}")
+
+print(f"Transformers top-level env var dir: {os.environ.get('TRANSFORMERS_CACHE')}")
+
 
 class CausalRecommender:
     """
@@ -27,9 +39,21 @@ class CausalRecommender:
 
         if device is None:
             device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')
-        self.generator = pipeline('text-generation', model=cache_loc or model_name, device=device)
 
-        # self.generator.save_pretrained(os.environ.get('TRANSFORMERS_CACHE', ''))
+        self.generator = pipeline('text-generation', model=model_name, device=device)
+
+        # TODO do cache top-level folder, use folder id within
+        # try:
+        #     print(f"trying to use model cache")
+        #     self.generator = pipeline('text-generation', model=cache_loc, device=device)
+        #     print(f"successfuly loaded model cache")
+        # except OSError:
+        #     print(f"No cache. Downloading model...")
+        #     self.generator = pipeline('text-generation', model=model_name, device=device)
+        #     print(f"No cache. Saving downloaded model...")
+        #     self.generator.save_pretrained(base_cache_dir)
+        #     print(f"Saved downloaded model.")
+        #     # self.generator.save_pretrained(cache_loc)
 
         set_seed(42)
         self.template = lambda topic, is_cause: f"""General knowledge test. Please answer the following questions with single words or short phrases:
@@ -74,7 +98,7 @@ what are 3 {'causes' if is_cause else 'effects'} of {topic}?
     def get_results(self, topic: str, is_cause: bool) -> List[str]:
         prompt = self.template(topic, is_cause)
 
-        print("generating recommeder results")
+        print("generating recommender results")
 
         outputs = self.generator(prompt, max_length=100, num_return_sequences=3, pad_token_id=50256)
 

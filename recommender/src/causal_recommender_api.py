@@ -35,9 +35,9 @@ class AllResponseSchema(BaseModel):
     effects: List[str]
 
 
-@app.get("/")
-async def root():
-    return {"message": "Hello World"}
+# @app.get("/")
+# async def root():
+#     return {"message": "Hello World"}
 
 
 @app.post("/causal-recommender/causes", response_model=CausesResponseSchema)

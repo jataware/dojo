@@ -20,5 +20,12 @@ baseConfig.devServer.proxy = {
     secure: false,
     changeOrigin: true,
   },
+  // TODO in case we run .. for dev. TODO
+  '/api/causal-recommender': {
+    target: (process.env.DOJO_URL ? process.env.DOJO_URL : 'http://localhost:8000'),
+    pathRewrite: { '^/api/dojo': '' },
+    secure: false,
+    changeOrigin: true,
+  },
 };
 module.exports = baseConfig;

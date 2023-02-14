@@ -10,8 +10,6 @@ services:
     container_name: dojo-recommender
     networks:
       - dojo
-    volumes:
-      - ./big_models_data_cache:/recommender/big_models_data_cache
 
 networks:
   dojo:
