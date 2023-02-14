@@ -1,0 +1,18 @@
+version: '2.2'
+services:
+  recommender:
+    build: .
+    image: recommender:dev
+    ports:
+      - 8084:8084
+    expose:
+      - "8084"
+    container_name: dojo-recommender
+    networks:
+      - dojo
+    volumes:
+      - ./big_models_data_cache:/recommender/big_models_data_cache
+
+networks:
+  dojo:
+    driver: bridge
