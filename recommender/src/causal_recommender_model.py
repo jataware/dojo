@@ -86,7 +86,7 @@ what are 3 {'causes' if is_cause else 'effects'} of {topic}?
         return self.get_results(topic, False)
 
 
-recommender_engine = CausalRecommender(device='cpu')  # also known as model
+recommender_engine = CausalRecommender()
 
 
 """
