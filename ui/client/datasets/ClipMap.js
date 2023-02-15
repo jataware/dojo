@@ -25,7 +25,6 @@ import L from 'leaflet';
 import {
   MapContainer,
   Polygon,
-  Rectangle,
   TileLayer,
 } from 'react-leaflet';
 
@@ -36,10 +35,11 @@ const Geoman = ({ setDrawings, mapBoundsLatLng }) => {
     const leafletContainer = context.layerContainer || context.map;
 
     const setNewDrawings = () => {
-      // just extract the lat/lng coords
-      const drawingsCoords = leafletContainer.pm.getGeomanDrawLayers()
+      // getGeomanLayers gets all layers, including those loaded in from previously saved state
+      const drawingsCoords = leafletContainer.pm.getGeomanLayers()
         .map((drawing) => drawing._latlngs[0]);
 
+      // just extract the lat/lng coords to save to the parent
       setDrawings(drawingsCoords);
     };
 
@@ -131,8 +131,6 @@ export default withStyles((theme) => ({
   mapBounds, classes, saveDrawings, savedDrawings, closeDrawer
 }) => {
   const [drawings, setDrawings] = useState([]);
-  // TODO: geoman can't update loadedDrawings when it edits the polygons on the map
-  const [loadedDrawings, setLoadedDrawings] = useState(savedDrawings);
   const theme = useTheme();
   const [map, setMap] = useState(null);
   // use a ref for this so we don't recreate it on every render
@@ -221,8 +219,8 @@ export default withStyles((theme) => ({
                 ref={polygonCallbackRef}
               />
             )}
-            {loadedDrawings.map((drawing) => (
-              <Polygon key={drawing[0]} positions={drawing} />
+            {savedDrawings.map((drawing) => (
+              <Polygon key={drawing[0] + drawing[1]} positions={drawing} />
             ))}
             <TileLayer
               noWrap
@@ -242,7 +240,7 @@ export default withStyles((theme) => ({
           <CircularProgress />
         </div>
       )}
-      <List className={classes.subtitleList} disablePadding dense>
+     {/* <List className={classes.subtitleList} disablePadding dense>
         {drawings.map((drawing, index) => (
           <ListItem key={`${drawing[0].lat}${drawing[0].lng}`}>
             <ListItemText>Drawing #{index + 1}</ListItemText>
@@ -251,7 +249,7 @@ export default withStyles((theme) => ({
             </ListItemIcon>
           </ListItem>
         ))}
-      </List>
+      </List>*/}
       <Button
         variant="contained"
         color="primary"
