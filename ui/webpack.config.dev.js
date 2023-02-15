@@ -21,8 +21,8 @@ baseConfig.devServer.proxy = {
     changeOrigin: true,
   },
   '/api/causal-recommender': {
-    target: 'http://localhost:8084/api/causal-recommender',
-    // pathRewrite: { '^/api/dojo': '' },
+    target: `http://${process.env.RECOMMENDER_HOST || 'localhost'}:${process.env.RECOMMENDER_PORT || '8084'}`,
+    pathRewrite: { '^/api': '' },
     secure: false,
     changeOrigin: true,
   },

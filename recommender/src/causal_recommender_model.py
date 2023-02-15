@@ -19,7 +19,7 @@ class CausalRecommender:
 
         print("Initializing Causal Recommender Engine")
 
-        logging.set_verbosity_info()
+        logging.set_verbosity_debug()
 
         if device is None:
             device = torch.device('cuda:0' if torch.cuda.is_available() else 'cpu')

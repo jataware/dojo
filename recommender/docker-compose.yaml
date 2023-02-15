@@ -9,8 +9,8 @@ services:
       - "8084"
     container_name: dojo-recommender
     networks:
-      - dojo
+      - rec
 
 networks:
-  dojo:
+  rec:
     driver: bridge

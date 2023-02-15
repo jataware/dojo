@@ -172,6 +172,7 @@ services:
       - 0.0.0.0
     networks:
       - dojo-stack
+      - recommender_rec
 
   rqworker:
     env_file:
@@ -194,6 +195,8 @@ networks:
   dojo-stack:
     driver: bridge
     name: dojo-stack
+  recommender_rec:
+    external: true
 
 volumes:
   dmc-data-results:
