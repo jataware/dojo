@@ -8,9 +8,5 @@ RUN pip install -r /api/requirements.txt
 COPY . /api
 WORKDIR /api
 
-ENV TRANSFORMERS_CACHE="/api/big_models_data_cache"
-
-# RUN python -c "from transformers import pipeline; import torch; pipeline('text-generation', model='gpt2-xl', device=torch.device('cpu'))"
-
 EXPOSE 80
 CMD ["uvicorn", "server:api", "--host", "0.0.0.0", "--port", "80", "--log-config", "logging.yaml"]
