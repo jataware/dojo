@@ -42,10 +42,9 @@ export default withStyles(({ spacing }) => ({
     if (noConfirm) {
       // if we don't want a confirm dialog, don't prevent clicking outside to close
       // and just call our onClose function right away
-      onClose(true);
+      onClose(true, event);
       return;
     }
-
     // disable clicking outside the drawer to close for variant=temporary
     // instead relying on the close or X buttons (or noConfirm prop, as above)
     if (event.target.className === 'MuiBackdrop-root') {

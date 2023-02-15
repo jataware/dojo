@@ -31,12 +31,21 @@ export default withStyles(({ spacing }) => ({
   },
 
 }))(({
-  classes, annotations, datasetInfo, stepTitle, handleNext, handleBack, useFilepath = false, rawFileName, ...props
+  classes,
+  annotations,
+  datasetInfo,
+  stepTitle,
+  handleNext,
+  handleBack,
+  useFilepath = false,
+  rawFileName,
+  ...props
 }) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerName, setDrawerName] = useState(null);
   const [mapBounds, setMapBounds] = useState(null);
   const [savedDrawings, setSavedDrawings] = useState([]);
+  const [disableDrawerClose, setDisableDrawerClose] = useState(false);
   const theme = useTheme();
 
   // useEffect(() => {
@@ -44,7 +53,12 @@ export default withStyles(({ spacing }) => ({
   //   setMapBounds([['12', '40'], ['-44', '-15']]);
   // }, []);
 
-  const handleDrawerClose = () => {
+  const handleDrawerClose = (bool, event) => {
+    // prevent clicking outside the drawer to close
+    if (event?.target.className === 'MuiBackdrop-root') return;
+    // if the contents of the drawer are telling us to disable closing, do nothing
+    if (disableDrawerClose) return;
+
     setDrawerOpen(false);
     // delay this slightly so we don't get a flicker as the drawer closes
     setTimeout(() => setDrawerName(null), 400);
@@ -174,6 +188,7 @@ export default withStyles(({ spacing }) => ({
             saveDrawings={setSavedDrawings}
             savedDrawings={savedDrawings}
             closeDrawer={handleDrawerClose}
+            setDisableDrawerClose={setDisableDrawerClose}
           />
         );
       case 'scaleTime':
@@ -285,6 +300,7 @@ export default withStyles(({ spacing }) => ({
         noConfirm
         PaperProps={{ variant: 'outlined' }}
         wide
+        variant="temporary"
       >
         {drawerInner()}
       </Drawer>

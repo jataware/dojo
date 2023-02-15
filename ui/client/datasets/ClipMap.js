@@ -13,6 +13,7 @@ import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
+import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
 import { withStyles, useTheme } from '@material-ui/core/styles';
 
@@ -28,7 +29,7 @@ import {
   TileLayer,
 } from 'react-leaflet';
 
-const Geoman = ({ setDrawings, mapBoundsLatLng }) => {
+const Geoman = ({ setDrawings, mapBoundsLatLng, setDisableClose }) => {
   const context = useLeafletContext();
 
   useEffect(() => {
@@ -64,14 +65,35 @@ const Geoman = ({ setDrawings, mapBoundsLatLng }) => {
         setNewDrawings();
       });
 
-      // every time we leave drag mode
-      leafletContainer.on('pm:globaldragmodetoggled', ({ enabled }) => {
-        if (!enabled) setNewDrawings();
+      // every time we toggle draw mode
+      leafletContainer.on('pm:globaldrawmodetoggled', ({ enabled }) => {
+        if (enabled) {
+          // disable closing the drawer, as if we close while in any of these states
+          // we risk losing all the drawings
+          setDisableClose(true);
+        } else {
+          setDisableClose(false);
+        }
       });
 
-      // every time we leave edit mode
+      // every time we toggle edit mode
       leafletContainer.on('pm:globaleditmodetoggled', ({ enabled }) => {
-        if (!enabled) setNewDrawings();
+        if (enabled) {
+          setDisableClose(true);
+        } else {
+          // when we disable edit mode, get the new state of the drawings
+          setNewDrawings();
+          setDisableClose(false);
+        }
+      });
+
+      // every time we toggle removal mode
+      leafletContainer.on('pm:globalremovalmodetoggled', ({ enabled }) => {
+        if (enabled) {
+          setDisableClose(true);
+        } else {
+          setDisableClose(false);
+        }
       });
 
       // every time a drawing is created
@@ -100,7 +122,7 @@ const Geoman = ({ setDrawings, mapBoundsLatLng }) => {
     return () => {
       leafletContainer.pm.removeControls();
     };
-  }, [context, setDrawings, mapBoundsLatLng]);
+  }, [context, setDrawings, mapBoundsLatLng, setDisableClose]);
 
   return null;
 };
@@ -122,13 +144,13 @@ export default withStyles((theme) => ({
     flexDirection: 'column',
     gap: theme.spacing(4),
   },
-  saveButton: {
+  saveButtonWrapper: {
     position: 'absolute',
     bottom: theme.spacing(8),
     right: theme.spacing(4),
   },
 }))(({
-  mapBounds, classes, saveDrawings, savedDrawings, closeDrawer
+  mapBounds, classes, saveDrawings, savedDrawings, closeDrawer, setDisableDrawerClose
 }) => {
   const [drawings, setDrawings] = useState([]);
   const theme = useTheme();
@@ -136,6 +158,7 @@ export default withStyles((theme) => ({
   // use a ref for this so we don't recreate it on every render
   const mapBoundsLatLng = useRef(null);
   const [outerBounds, setOuterBounds] = useState(null);
+  const [disableClose, setDisableClose] = useState(false);
 
   if (mapBoundsLatLng.current === null && mapBounds) {
     mapBoundsLatLng.current = L.latLngBounds(mapBounds);
@@ -165,7 +188,6 @@ export default withStyles((theme) => ({
         mapBoundsLatLng.current.getSouthEast(),
       ];
 
-      console.log('these are bounds', bounds, outerBoundsLatLngs)
       setOuterBounds([outerBoundsLatLngs, innerBoundsArray]);
     }
   }, [map, mapBounds]);
@@ -179,6 +201,15 @@ export default withStyles((theme) => ({
       node.pm._layer.options.pmIgnore = true;
     }
   }, []);
+
+  useEffect(() => {
+    // triggered by <Geoman> global draw/edit/removal mode events
+    if (disableClose) {
+      setDisableDrawerClose(true);
+    } else {
+      setDisableDrawerClose(false);
+    }
+  }, [disableClose, setDisableDrawerClose]);
 
   const onSaveClick = () => {
     saveDrawings(drawings);
@@ -204,7 +235,11 @@ export default withStyles((theme) => ({
             // maxBoundsViscosity={1}
             whenCreated={setMap}
           >
-            <Geoman setDrawings={setDrawings} mapBoundsLatLng={mapBoundsLatLng} />
+            <Geoman
+              setDrawings={setDrawings}
+              mapBoundsLatLng={mapBoundsLatLng}
+              setDisableClose={setDisableClose}
+            />
             {outerBounds && (
               <Polygon
                 positions={outerBounds}
@@ -250,15 +285,21 @@ export default withStyles((theme) => ({
           </ListItem>
         ))}
       </List>*/}
-      <Button
-        variant="contained"
-        color="primary"
-        onClick={onSaveClick}
-        disableElevation
-        className={classes.saveButton}
+      <Tooltip
+        title={disableClose ? 'Please finish or cancel your map changes before continuing' : ''}
       >
-        Save Clips
-      </Button>
+        <span className={classes.saveButtonWrapper}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={onSaveClick}
+            disableElevation
+            disabled={disableClose}
+          >
+            Save Clips
+          </Button>
+        </span>
+      </Tooltip>
     </div>
   );
 });
