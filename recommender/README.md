@@ -39,3 +39,17 @@ curl --request POST \
 ```bash
 docker-compose up
 ```
+
+If the image has not been built before, or the cache that downloads the model is busted and we're rebuilding the image, you'll have to wait for the huggingface transformers library to download the decently-sized `gpt2-xl` text-transform model (6.43 GB). This will also be the case when modifying requirements.txt
+
+# Integration With Other Dojo Services
+
+Integration setup has been completed for dojo docker-compose overrides. Ensure your .envfile contains:
+
+```
+RECOMMENDER_HOST=recommender
+RECOMMENDER_PORT=8084
+```
+
+and, if using outside of docker, ensure  the `TRANSFORMERS_CACHE` environment variable is set to yur preferred cache location. Else, it will default to `$HOME/.cache/huggingface`
+

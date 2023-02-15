@@ -1,7 +1,6 @@
 from transformers import pipeline, set_seed, logging
 
 import os
-from os import listdir
 
 import re
 import torch
