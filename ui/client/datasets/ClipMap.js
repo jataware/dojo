@@ -101,6 +101,9 @@ const Geoman = ({ setDrawings, mapBoundsLatLng, setDisableDrawerClose }) => {
         setNewDrawings();
       });
 
+      // get rid of the default 'finish' and 'removeLastVertex' buttons on Polygon
+      leafletContainer.pm.Toolbar.changeActionsOfControl('Polygon', ['cancel']);
+
       leafletContainer.pm.addControls({
         position: 'topleft',
         drawCircle: false,
@@ -160,7 +163,6 @@ export default withStyles((theme) => ({
   closeDrawer,
   disableDrawerClose,
   setDisableDrawerClose,
-  processClippings,
 }) => {
   const [drawings, setDrawings] = useState([]);
   const theme = useTheme();
@@ -213,7 +215,6 @@ export default withStyles((theme) => ({
 
   const onSaveClipsClick = () => {
     saveDrawings(drawings);
-    processClippings(drawings);
     closeDrawer();
   };
 

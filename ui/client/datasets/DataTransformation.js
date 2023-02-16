@@ -126,17 +126,22 @@ export default withStyles(({ spacing }) => ({
     setDrawerName(name);
   };
 
-  const processClippings = (drawings) => {
-    if (drawings.length > 0) {
+  const processClippings = () => {
+    if (savedDrawings.length > 0) {
       const args = {
-        map_shapes: drawings,
+        map_shapes: savedDrawings,
         geo_columns: [
           'latitude',
           'longitude',
         ],
       };
-      mixmastaJob(datasetInfo.id, args, 'mixmasta_processors.clip_geo', drawings, () => {});
+      mixmastaJob(datasetInfo.id, args, 'mixmasta_processors.clip_geo', savedDrawings, () => {});
     }
+  };
+
+  const handleNextStep = () => {
+    processClippings();
+    handleNext();
   };
 
   const drawerInner = () => {
@@ -150,7 +155,6 @@ export default withStyles(({ spacing }) => ({
           <ClipMap
             mapBounds={mapBounds}
             saveDrawings={setSavedDrawings}
-            processClippings={processClippings}
             savedDrawings={savedDrawings}
             closeDrawer={handleDrawerClose}
             disableDrawerClose={disableDrawerClose}
@@ -255,7 +259,7 @@ export default withStyles(({ spacing }) => ({
       </List>
       <Navigation
         label="Next"
-        handleNext={handleNext}
+        handleNext={handleNextStep}
         handleBack={handleBack}
       />
 
