@@ -287,6 +287,8 @@ export const FileDropSelector = withStyles((theme => ({
       // Any others?
       'application/pdf': ['.pdf'],
     }
+
+    // TODO on error, etc check API
   });
 
   // TODO lighter color for icon button color on default
@@ -526,12 +528,20 @@ const UploadDocumentForm = withStyles((theme) => ({
 
         filtered.forEach((file, idx) => {
 
-          return; // TODO remove return. used to skip side effects for now.
+          function formatDate(date) {
+            return date.toISOString().split('T')[0];
+          }
+
+          const metadataClone = {...formattedMetadata[idx]};
+
+          // TODO do a fn and verify this date load is correct with expected tz etc...
+          let creation_date = new Date(metadataClone.creation_date);
+          metadataClone.creation_date = formatDate(creation_date);
 
           const document = axios({
             method: 'post',
             url: `/api/dojo/documents`,
-            data: formattedMetadata[idx],
+            data: metadataClone,
             params: {}
           }).then(response => {
             const doc = response.data;

@@ -247,6 +247,47 @@ def format_document(doc):
 
 
 @router.get(
+    "/documents/latest", response_model=DocumentSchema.DocumentListResponse
+)
+def latest_documents(scroll_id: Optional[str]=None, size: int = 10):
+    """
+    """
+
+    q = {
+        "query": {
+            "match_all": {}
+        },
+        "sort": [
+            {
+                "uploaded_at": {
+                    "order": "desc"
+                }
+            }
+        ]
+    }
+
+    if not scroll_id:
+        results = es.search(index="documents", body=q, scroll="2m", size=size)
+    else:
+        results = es.scroll(scroll_id=scroll_id, scroll="2m")
+
+    totalDocsInPage = len(results["hits"]["hits"])
+
+    if totalDocsInPage < size:
+        scroll_id = None
+    else:
+        scroll_id = results.get("_scroll_id", None)
+
+    return {
+        "hits": results["hits"]["total"]["value"],
+        "items_in_page": totalDocsInPage,
+        "results": [format_document(i)
+                    for i in results["hits"]["hits"]],
+        "scroll_id": scroll_id
+    }
+
+
+@router.get(
     "/documents", response_model=DocumentSchema.DocumentListResponse
 )
 def list_documents(scroll_id: Optional[str]=None, size: int = 10):
@@ -338,46 +379,10 @@ def get_document(document_id: str) -> DocumentSchema.Model:
     return format_document(document)
 
 
-# TODO GET documents/latest properly implement (reindex/schema changes needed)
-# @router.get(
-#     "/documents/latest", response_model=DocumentSchema.DocumentListResponse
-# )
-# def latest_documents(scroll_id: Optional[str]=None, size: int = 10):
-#     """
-#     Same as list documents. Not Implemented.
-#     """
-
-#     q = {
-#         "query": {
-#             # TODO sort by most recently uploaded_at
-#             "match_all": {}
-#         }
-#     }
-
-#     if not scroll_id:
-#         results = es.search(index="documents", body=q, scroll="2m", size=size)
-#     else:
-#         results = es.scroll(scroll_id=scroll_id, scroll="2m")
-
-#     totalDocsInPage = len(results["hits"]["hits"])
-
-#     if totalDocsInPage < size:
-#         scroll_id = None
-#     else:
-#         scroll_id = results.get("_scroll_id", None)
-
-#     return {
-#         "hits": results["hits"]["total"]["value"],
-#         "items_in_page": totalDocsInPage,
-#         "results": [format_document(i)
-#                     for i in results["hits"]["hits"]],
-#         "scroll_id": scroll_id
-#     }
-
-
 @router.post("/documents")
 def create_document(payload: DocumentSchema.Model):
     """
+    Saves a document [metadata] into elasticsearch
     """
     document_id = str(uuid.uuid4())
 
@@ -427,12 +432,12 @@ def update_document(payload: DocumentSchema.Model, document_id: str):
             "location": f"/api/documents/{document_id}",
             "content-type": "application/json",
         },
-        content={result: f"Updated document with id = {document_id}"}
+        content={"result": f"Updated document with id = {document_id}"}
     )
 
 
 # TODO make proper call, use, and try it out
-def enqueue_document_paragraphs_processing(document_id, s3Url):
+def enqueue_document_paragraphs_processing(document_id, s3_url):
     """
     Adds document to queue to process by paragraph.
     Embedder creates and attaches LLM embeddings to its paragraphs
@@ -441,8 +446,8 @@ def enqueue_document_paragraphs_processing(document_id, s3Url):
     job_id = f"{document_id}_{job_string}"
 
     context = {
-        "document_id": indicator_id,
-        "s3_url": s3Url
+        "document_id": document_id,
+        "s3_url": s3_url
     }
 
     job = q.enqueue_call(
@@ -450,13 +455,11 @@ def enqueue_document_paragraphs_processing(document_id, s3Url):
     )
 
 
-# TODO should we only allow 1 file per document id?
+# TODO should we only allow 1 file per document id? replace? cancel/error?
 @router.post("/documents/{document_id}/upload")
 def upload_file(
     document_id: str,
     file: UploadFile = File(...),
-    filename: Optional[str] = None,
-    append: Optional[bool] = False,
 ):
     """
     Uploads a file that corresponds to an existing document resource.
@@ -464,22 +467,25 @@ def upload_file(
     original_filename = file.filename
     _, ext = os.path.splitext(original_filename)
 
-    if filename is None:
-        filename = f"raw_data{ext}"
+    logger.info(f"settings.DOCUMENT_STORAGE_BASE_URL: {settings.DOCUMENT_STORAGE_BASE_URL}")
 
-    # TODO settings.DOCUMENT_STORAGE_BASE_URL -> why isn't this working?
-
-    # Upload file, TODO test this
-    dest_path = os.path.join("s3://jataware-world-modelers-dev/documents/", f"{document_id}-{filename}")
-    logger.info(f"file upload dest_path: {dest_path}")
+    dest_path = os.path.join(settings.DOCUMENT_STORAGE_BASE_URL, f"{document_id}-{original_filename}")
     put_rawfile(path=dest_path, fileobj=file.file)
 
-    # TODO update document data id to include source_url pointing to new s3 url dest_path above.
-    # TODO update document metadata to include uploaded_at once upload is successful
-    # es will have flat structure, API will respond with nested `metadata` attributes
+    body_updates = {
+        "doc": {
+            "uploaded_at": current_milli_time(),
+            "source_url": dest_path,
+            "filename": original_filename
+        }
+    }
 
-    # TODO enqueue for rq worker to add paragraphs and embeddings to es
-    # enqueue_document_paragraphs_processing(document_id, dest_path)
+    es.update(index="documents", body=body_updates, id=document_id)
+
+    # enqueue for rq worker to add paragraphs and embeddings to es
+    enqueue_document_paragraphs_processing(document_id, dest_path)
+
+    final_document = es.get_source(index="documents", id=document_id)
 
     return Response(
         status_code=status.HTTP_200_OK,
@@ -487,6 +493,5 @@ def upload_file(
             "location": f"/api/documents/{document_id}",
             "content-type": "application/json",
         },
-        # TODO Actually, let's return the new document with the source_url in it
-        content=json.dumps({"id": document_id, "filename": filename}),
+        content=json.dumps({"id": document_id}|final_document),
     )

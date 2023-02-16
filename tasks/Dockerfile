@@ -21,7 +21,10 @@ RUN pip install numpy==1.22  # Numpy must be installed before GDAL (in requireme
 COPY ./tasks/requirements.txt /tasks/requirements.txt
 WORKDIR /tasks
 RUN pip install -r requirements.txt
-COPY ./tasks /tasks
 
+# TODO This did not exactly work:
+# RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-mpnet-base-v2')"
+
+COPY ./tasks /tasks
 
 ENV PYTHONPATH "${PYTHONPATH}:/api"
