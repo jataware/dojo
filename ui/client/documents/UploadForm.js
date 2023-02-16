@@ -7,7 +7,7 @@ import { useDropzone } from 'react-dropzone';
 import clsx from 'clsx';
 import { PDFDocument } from 'pdf-lib';
 
-import { Form, Formik } from 'formik';
+import { Formik, Field } from 'formik';
 
 import Grid from '@material-ui/core/Grid';
 import FormLabel from '@material-ui/core/FormLabel';
@@ -58,7 +58,6 @@ import { Select } from 'material-ui-formik-components/Select';
 import Typography from '@material-ui/core/Typography';
 
 import { withStyles } from '@material-ui/core/styles';
-import { Field, getIn, useField } from 'formik';
 import isFunction from 'lodash/isFunction';
 import get from 'lodash/get';
 
@@ -88,15 +87,58 @@ const defaultValues = {
   creation_date: ""
 };
 
-// NOTE Metadata format from PDF js lib:
-// Author: undefined,
-// CreationDate: "Tue Jan 24 2023 15:24:20 GMT-0500 (Eastern Standard Time)",
-// Creator: "TeX",
-// Keywords: undefined,
-// ModificationDate: "Fri Feb 03 2023 13:48:08 GMT-0500 (Eastern Standard Time)",
-// PageCount: "8",
-// Title: undefined
+/**
+ * Special-purpose TextField for this file. It calls onChange on blurring fields,
+ * optimizing re-renders. Does not use formik, as the parent controls the value
+ * for the selected file.
+ **/
+const ManagedTextField = ({label, InputProps, inputProps, placeholder, onChange, value, ...props}) => {
 
+  const [internalValue, setInternalValue] = useState("");
+
+  const displayValue = internalValue || value;
+
+  const handleChange = (e) => {
+    setInternalValue(event.target.value);
+  };
+
+  const handleBlur = () => {
+    onChange(internalValue || value);
+  };
+
+  return (
+    <TextField
+      label={label}
+      variant="outlined"
+      fullWidth
+      InputLabelProps={{ shrink: true }}
+      InputProps={{
+        style: { borderRadius: 0 },
+        ...InputProps
+      }}
+      inputProps={{
+        'aria-label': label,
+        ...inputProps
+      }}
+      placeholder={placeholder}
+      {...props}
+      onChange={handleChange}
+      onBlur={handleBlur}
+      value={displayValue}
+    />
+  );
+
+};
+
+/**
+ * Simple helper
+ **/
+const arrayToDOMOptions = (optionsArray) => optionsArray
+      .map(({value, label}) =>(
+        <option value={value} key={value}>
+          {label}
+        </option>
+      ));
 
 /**
  *
@@ -110,19 +152,21 @@ export const EditDocumentMetadata = withStyles((theme) => ({
   },
   datePickerContainer: {
   }
-}))(({ classes, metadata, filename, id, onSave=identity }) => {
+}))(({ classes, metadata, filename, onSave }) => {
 
   const sharedTextFieldProps = (fieldName) => ({
     name: fieldName,
     label: startCase(fieldName),
-    onBlur: (event) => onSave(fieldName, event.target.value)
+    onChange: (value) => onSave(fieldName, value),
+    value: metadata[fieldName]
   });
 
   const sharedSelectFieldProps = (fieldName) => ({
-    name: fieldName,
-    label: startCase(fieldName)
-    // TODO prob not use Formik
-    // onChange: (event) => onSave(fieldName, event.target.value)
+    ...sharedTextFieldProps(fieldName),
+    select: true,
+    SelectProps: {
+      native: true
+    }
   });
 
   return (
@@ -136,127 +180,136 @@ export const EditDocumentMetadata = withStyles((theme) => ({
         Metadata Fields for `{filename}`
       </Typography>
 
-      <Formik
-        key={id}
-        initialValues={metadata}
-      >
-        {(formik) => (
-          <Form>
-            <div className={classes.formfields}>
+      <List>
+        <ListItem>
+          <ManagedTextField
+            required
+            placeholder="Document Title"
+            {...sharedTextFieldProps("title")}
+          />
+        </ListItem>
 
-              <List>
-                <ListItem>
-                  <FormAwareTextField
-                    required
-                    placeholder="Document Title"
-                    {...sharedTextFieldProps("title")}
+        <ListItem>
+          <ManagedTextField
+            placeholder="Provide a description of the Document"
+            multiline
+            minRows="2"
+            {...sharedTextFieldProps("description")}
+          />
+        </ListItem>
+
+        <ListItem>
+          <Grid container spacing={2}>
+
+            <Grid item xs={12} sm={6}>
+              <ManagedTextField
+                {...sharedTextFieldProps("author")}
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <ManagedTextField
+                {...sharedTextFieldProps("publisher")}
+              />
+            </Grid>
+
+            <Grid item xs={12} sm={6}>
+              <ManagedTextField
+                {...sharedTextFieldProps("producer")}
+              />
+            </Grid>
+
+            <Formik>
+              <Grid item xs={12} sm={6}>
+                <MuiPickersUtilsProvider utils={DateFnsUtils}>
+                  <Field
+                    format="MM/dd/yyyy"
+                    component={KeyboardDatePicker}
+                    inputVariant="outlined"
+                    placeholder="mm/dd/yyyy"
+                    {...sharedTextFieldProps("creation_date")}
                   />
-                </ListItem>
+                </MuiPickersUtilsProvider>
+              </Grid>
+            </Formik>
 
-                <ListItem>
-                  <FormAwareTextField
-                    placeholder="Provide a description of the Document"
-                    multiline
-                    minRows="2"
-                    {...sharedTextFieldProps("description")}
-                  />
-                </ListItem>
+          </Grid>
+        </ListItem>
 
-                <ListItem>
-                  <Grid container spacing={2}>
+        <ListItem>
+          <fieldset style={{padding: "1rem", width: "100%", border: "1px solid #e9e9e9"}}>
 
-                    <Grid item xs={12} sm={6}>
-                      <FormAwareTextField
-                        {...sharedTextFieldProps("author")}
-                      />
-                    </Grid>
+            <legend>Attributes</legend>
 
-                    <Grid item xs={12} sm={6}>
-                      <FormAwareTextField
-                        {...sharedTextFieldProps("publisher")}
-                      />
-                    </Grid>
+            <Grid container spacing={2}>
 
-                    <Grid item xs={12} sm={6}>
-                      <FormAwareTextField
-                        {...sharedTextFieldProps("producer")}
-                      />
-                    </Grid>
+              <Grid
+                item
+                xs={12}
+                sm={6}
+              >
+                <ManagedTextField
+                  {...sharedSelectFieldProps("original_language")}
+                >
+                  {arrayToDOMOptions([
+                    { value: 'en', label: 'English' },
+                    { value: 'es', label: 'Spanish' }
+                  ])}
+                </ManagedTextField>
+              </Grid>
 
-                    <Grid item xs={12} sm={6}>
-                      <MuiPickersUtilsProvider utils={DateFnsUtils}>
-                        <Field
-                          format="MM/dd/yyyy"
-                          component={KeyboardDatePicker}
-                          TextFieldComponent={FormAwareTextField}
-                          inputVariant="outlined"
-                          placeholder="mm/dd/yyyy"
-                          {...sharedSelectFieldProps("creation_date")}
-                        />
-                      </MuiPickersUtilsProvider>
-                    </Grid>
+              <Grid
+                item
+                xs={12}
+                sm={6}
+              >
+                <ManagedTextField
+                  {...sharedSelectFieldProps("type")}
+                >
+                  {arrayToDOMOptions([
+                    { value: 'article', label: 'Article' },
+                    { value: 'paper', label: 'Paper' }
+                  ])}
+                </ManagedTextField>
+              </Grid>
 
-                  </Grid>
-                </ListItem>
+              <Grid
+                item
+                xs={12}
+                sm={6}
+              >
+                <ManagedTextField
+                  {...sharedSelectFieldProps("stated_genre")}
+                >
+                  {arrayToDOMOptions([{ value: 'news-article', label: 'News Article' }])}
+                </ManagedTextField>
+              </Grid>
 
-                <ListItem>
-                  <fieldset style={{padding: "1rem", width: "100%", border: "1px solid #e9e9e9"}}>
+              <Grid
+                item
+                xs={12}
+                sm={6}
+              >
+                <ManagedTextField
+                  {...sharedSelectFieldProps("classification")}
+                >
+                  {arrayToDOMOptions([{ value: 'unclassified', label: 'Unclassified' }])}
+                </ManagedTextField>
+              </Grid>
 
-                    <legend>Attributes</legend>
+            </Grid>
+          </fieldset>
+        </ListItem>
 
-                    <Grid container spacing={2}>
-                      <Grid item xs={12} sm={6}>
-                        <FormAwareSelect
-                          options={[
-                            { value: 'en', label: 'English' },
-                            { value: 'es', label: 'Spanish' }
-                          ]}
-                          {...sharedSelectFieldProps("original_language")}
-                        />
-                      </Grid>
+      </List>
 
-                      <Grid item xs={12} sm={6}>
-                        <FormAwareSelect
-                          {...sharedSelectFieldProps("type")}
-                          options={[
-                            { value: 'article', label: 'Article' },
-                            { value: 'paper', label: 'Paper' }
-                          ]}
-                        />
-                      </Grid>
-
-                      <Grid item xs={12} sm={6}>
-                        <FormAwareSelect
-                          {...sharedSelectFieldProps("stated_genre")}
-                          options={[
-                            { value: 'news-article', label: 'News Article' }
-                          ]}
-                        />
-                      </Grid>
-
-                      <Grid item xs={12} sm={6}>
-                        <FormAwareSelect
-                          {...sharedSelectFieldProps("classification")}
-                          options={[
-                            { value: 'unclassified', label: 'Unclassified' }
-                          ]}
-                        />
-                      </Grid>
-
-                    </Grid>
-                  </fieldset>
-                </ListItem>
-
-              </List>
-            </div>
-
-          </Form>
-        )}
-      </Formik>
     </div>
   );
 });
 
+/**
+ *
+ **/
 export const FileDropSelector = withStyles((theme => ({
   root: {
     margin: '2rem 0 1rem 0',
@@ -278,20 +331,15 @@ export const FileDropSelector = withStyles((theme => ({
     height: '7rem',
     padding: '0.5rem'
   }
-})))(({classes, onFileSelect}) => {
-  // NOTE other params: onDropAccepted/onDropRejected/validator
+})))(({classes, onFileSelect, onDropFilesRejected}) => {
   const {getRootProps, getInputProps, isDragActive} = useDropzone({
-    onDrop: onFileSelect,
+    onDropAccepted: onFileSelect,
+    multiple: true,
+    onDropRejected: onDropFilesRejected,
     accept: {
-      // NOTE only accepting PDFs for now.
-      // Any others?
       'application/pdf': ['.pdf'],
     }
-
-    // TODO on error, etc check API
   });
-
-  // TODO lighter color for icon button color on default
 
   return (
     <div
@@ -318,8 +366,6 @@ export const FileDropSelector = withStyles((theme => ({
   );
 });
 
-
-
 /**
  *
  **/
@@ -340,25 +386,18 @@ export const FileTile = withStyles((theme) => ({
   },
   loadingContainer: {
   }
-}))(({ classes, file, index, uploadStatus, onClick, selectedIndex }) => {
-
-  // TODO revisit probably. this is aware that onClick receives an index..
-  const handleClick = () => {
-    // TODO AHA! This is where we could potentially save the existing (previous)
-    // Formik values into state....... Think of something better.
-    onClick(index);
-  };
+}))(({ classes, file, value, uploadStatus, onClick, selected, onDelete }) => {
 
   return (
     <ListItem
-      selected={index === selectedIndex}
+      selected={selected}
       className={classes.root}
       button
-      onClick={handleClick}
+      onClick={onClick}
     >
 
       <ListItemIcon className={classes.selectedContainer}>
-        <Radio value={index+""} disableRipple />
+        <Radio value={value} disableRipple />
       </ListItemIcon>
 
       <ListItemText
@@ -366,11 +405,12 @@ export const FileTile = withStyles((theme) => ({
         secondary={`Size: ${formatBytes(file.size)}`}
       />
 
-      <ListItemSecondaryAction>
-        <IconButton edge="end" aria-label="delete">
-          <ClearIcon />
-        </IconButton>
-      </ListItemSecondaryAction>
+      {/* TODO Add delete icon when we need it, implement handler. */}
+      {/* <ListItemSecondaryAction> */}
+      {/*   <IconButton edge="end" aria-label="delete" onClick={onDelete}> */}
+      {/*     <ClearIcon /> */}
+      {/*   </IconButton> */}
+      {/* </ListItemSecondaryAction> */}
 
     </ListItem>
   );
@@ -387,7 +427,7 @@ export const SelectedFileList = withStyles((theme) => ({
     overflowY: 'auto',
     maxHeight: 650, // TODO rem, maybe px to rem util
   }
-}))(({ classes, files, onItemClick, selectedIndex }) => {
+}))(({ classes, files, onItemClick, onDelete, selectedIndex }) => {
 
   return (
     <Paper
@@ -398,15 +438,16 @@ export const SelectedFileList = withStyles((theme) => ({
       >
 
         <List className={classes.list}>
-          {files.map((file, index) =>
+          {files.map((file, index) => file && (
             <FileTile
-              onClick={onItemClick}
-              selectedIndex={selectedIndex}
-              index={index}
+              onDelete={() => onDelete(index)}
+              selected={index === selectedIndex}
+              onClick={() => onItemClick(index)}
+              value={index+""}
               file={file}
               key={file.path+file.size}
             />
-          )}
+          ))}
         </List>
       </RadioGroup>
     </Paper>
@@ -460,7 +501,7 @@ const UploadDocumentForm = withStyles((theme) => ({
   },
   navContainer: {
     display: 'flex',
-    justifyContent: 'flex-end'
+    justifyContent: 'space-between'
   }
 }))(({ title, children, classes }) => {
 
@@ -469,32 +510,13 @@ const UploadDocumentForm = withStyles((theme) => ({
   const [selectedFileIndex, setSelectedFileIndex] = useState(null);
 
   console.log('files', files);
-  console.log('allPDFMetadata', allPDFMetadata);
-  console.log('selectedFileIndex', selectedFileIndex);
 
   const handleFileSelect = useCallback(acceptedFiles => {
 
-    if (acceptedFiles.length === 0) {
-      // TODO
-      console.log("Something went wrong. files length is 0");
-      // return false;
-    }
-
-    const filtered = acceptedFiles
-          .filter(i => i.type === 'application/pdf');
-
-    if (filtered.length === 0) {
-      // TODO Display to user. Can/Should be handled by DropZone hook instead
-      throw new Error('Please select pdf files');
-    }
-
-    if (filtered.length !== acceptedFiles.length) {
-      // TODO Inform this to the user "set warnings"
-      console.log("some files were ignored, as they were not of PDF file type.");
-    }
+    // TODO add loading animation in case we're parsing many files
 
     // gather PDF data. TODO cleanup once e2e prototype is complete
-    const pdfData = filtered.map(pdfFile => {
+    const pdfData = acceptedFiles.map(pdfFile => {
       return readFile(pdfFile)
         .then(binary => {
 
@@ -526,7 +548,10 @@ const UploadDocumentForm = withStyles((theme) => ({
 
         const formattedMetadata = allPdfData.map(pdfMetadataToForm);
 
-        filtered.forEach((file, idx) => {
+        acceptedFiles.forEach((file, idx) => {
+
+          return; // TODO remove. returning to not have side effects
+          // TODO dont upload anything until Save / submitted
 
           function formatDate(date) {
             return date.toISOString().split('T')[0];
@@ -558,25 +583,38 @@ const UploadDocumentForm = withStyles((theme) => ({
         // It's hard to trust and coordinate batch updates when performing updates
         // both outside and inside async promise handler:
         setAllPDFMetadata(prevMetadata => [ ...prevMetadata, ...formattedMetadata ]);
-        setFiles(prevFiles => [ ...prevFiles, ...filtered ]);
+        setFiles(prevFiles => [ ...prevFiles, ...acceptedFiles ]);
         setSelectedFileIndex(selectedFileIndex => selectedFileIndex || 0);
       });
 
   }, []);
 
   /**
-   * Trying this experiment now.
+   *
    **/
   const handleDocFieldChange = (fieldName, value) => {
     const updatedPDFMetadata = {
       ...allPDFMetadata[selectedFileIndex],
       [fieldName]: value
     };
-
     const allPDFMetadataClone = [...allPDFMetadata];
     allPDFMetadataClone[selectedFileIndex] = updatedPDFMetadata;
 
     setAllPDFMetadata(allPDFMetadataClone);
+  };
+
+/**
+ * TODO: Either do tomfoolery around deleted indexes, not rendering deleted ones, etc,
+ * or change the collection/representation of data from arrays and selected index
+ * to an object with key=>properties.
+ **/
+  const handleFileDelete = (index) => {
+    // TODO Implement me
+    console.log("deleting file index:", index);
+  };
+
+  const handleDropFilesRejection = ({errors, file}, event) => {
+    console.log("some file types were rejected. They should be a pdf type.");
   };
 
   return (
@@ -602,7 +640,10 @@ const UploadDocumentForm = withStyles((theme) => ({
         Bulk Upload Documents
       </Typography>
 
-      <FileDropSelector onFileSelect={handleFileSelect}/>
+      <FileDropSelector
+        onFileSelect={handleFileSelect}
+        onDropFilesRejected={handleDropFilesRejection}
+      />
 
       {!isEmpty(files) && (
         <div>
@@ -623,6 +664,7 @@ const UploadDocumentForm = withStyles((theme) => ({
           <div className={classes.fileList}>
             <div style={{flex: '6 1 400px'}}>
               <SelectedFileList
+                onDelete={handleFileDelete}
                 files={files}
                 selectedIndex={selectedFileIndex}
                 onItemClick={setSelectedFileIndex}
@@ -633,29 +675,37 @@ const UploadDocumentForm = withStyles((theme) => ({
               <div
                 style={{flex: '3 2 600px'}}
               >
-                <EditDocumentMetadata
-                  onSave={handleDocFieldChange}
-                  id={files[selectedFileIndex].name+files[selectedFileIndex].size}
-                  filename={files[selectedFileIndex].name}
-                  metadata={allPDFMetadata[selectedFileIndex]} />
+                {/* NOTE key==selectedIndex renders a form per file, but only for the file in question; */}
+                {/*   shorthand for adding a form per file, only displaying selected file form */}
+                  <EditDocumentMetadata
+                    key={selectedFileIndex}
+                    onSave={handleDocFieldChange}
+                    filename={files[selectedFileIndex].name}
+                    metadata={allPDFMetadata[selectedFileIndex]} />
               </div>
             )}
           </div>
 
-          {/* <div className={classes.navContainer}> */}
-          {/*   <Button variant="contained"> */}
-          {/*     Cancel */}
-          {/*   </Button> */}
-          {/*   &nbsp; */}
-          {/*   &nbsp; */}
-          {/*   <Button */}
-          {/*     type="submit" */}
-          {/*     color="primary" */}
-          {/*     variant="contained" */}
-          {/*   > */}
-          {/*     Save All */}
-          {/*   </Button> */}
-          {/* </div> */}
+          <br />
+          <br />
+          <Divider />
+          <br />
+          <br />
+
+          <div className={classes.navContainer}>
+            <Button variant="contained" size="large">
+              Cancel
+            </Button>
+            &nbsp;
+            <Button
+              size="large"
+              type="submit"
+              color="primary"
+              variant="contained"
+            >
+              Save All
+            </Button>
+          </div>
 
         </div>
 
