@@ -131,7 +131,7 @@ class ParagraphProcessor(BaseProcessor):
                 "embeddings": model.embed([text])[0],
                 "document_id": document_id,
                 "length": len(text),
-                "page_no": p_no
+                "page_no": p_no + 1 # indexes at 0, pdf pages make more sense starting from 1
             }
 
             es.index(index="document_paragraphs", body=p_body, id=f"{document_id}-{i}")
