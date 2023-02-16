@@ -136,7 +136,6 @@ export default withStyles((theme) => ({
   },
   subtitleList: {
     width: '220px',
-
   },
   mapLoading: {
     display: 'flex',
@@ -144,10 +143,14 @@ export default withStyles((theme) => ({
     flexDirection: 'column',
     gap: theme.spacing(4),
   },
-  saveButtonWrapper: {
-    position: 'absolute',
-    bottom: theme.spacing(8),
-    right: theme.spacing(4),
+  saveButton: {
+    minWidth: '120px',
+  },
+  underMapContent: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    margin: [[theme.spacing(2), theme.spacing(1)]],
+    gap: theme.spacing(2),
   },
 }))(({
   mapBounds, classes, saveDrawings, savedDrawings, closeDrawer, setDisableDrawerClose
@@ -222,7 +225,7 @@ export default withStyles((theme) => ({
         Select Geospatial Coverage
       </Typography>
       {mapBounds ? (
-        <div>
+        <>
           <MapContainer
             center={[51.505, -0.09]}
             style={{
@@ -263,10 +266,29 @@ export default withStyles((theme) => ({
               url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
             />
           </MapContainer>
-          <Typography variant="subtitle2" style={{ margin: theme.spacing(1) }}>
-            Note: any areas clipped outside of the bounding box will not capture data
-          </Typography>
-        </div>
+          <div className={classes.underMapContent}>
+            <Typography variant="subtitle2">
+              Note: areas clipped outside of the bounding box will not capture data.
+              <br />Tip: hold down alt to avoid snapping to existing points.
+            </Typography>
+            <Tooltip
+              title={disableClose ? 'Please finish or cancel your map changes before continuing' : ''}
+            >
+              <span>
+                <Button
+                  className={classes.saveButton}
+                  variant="contained"
+                  color="primary"
+                  onClick={onSaveClick}
+                  disableElevation
+                  disabled={disableClose}
+                >
+                  Save Clips
+                </Button>
+              </span>
+            </Tooltip>
+          </div>
+        </>
       ) : (
         <div className={classes.mapLoading}>
           <Typography variant="subtitle1" align="center" className={classes.noMapData}>
@@ -285,21 +307,6 @@ export default withStyles((theme) => ({
           </ListItem>
         ))}
       </List>*/}
-      <Tooltip
-        title={disableClose ? 'Please finish or cancel your map changes before continuing' : ''}
-      >
-        <span className={classes.saveButtonWrapper}>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={onSaveClick}
-            disableElevation
-            disabled={disableClose}
-          >
-            Save Clips
-          </Button>
-        </span>
-      </Tooltip>
     </div>
   );
 });
