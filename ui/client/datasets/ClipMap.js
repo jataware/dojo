@@ -29,7 +29,7 @@ import {
   TileLayer,
 } from 'react-leaflet';
 
-const Geoman = ({ setDrawings, mapBoundsLatLng, setDisableClose }) => {
+const Geoman = ({ setDrawings, mapBoundsLatLng, setDisableDrawerClose }) => {
   const context = useLeafletContext();
 
   useEffect(() => {
@@ -70,29 +70,29 @@ const Geoman = ({ setDrawings, mapBoundsLatLng, setDisableClose }) => {
         if (enabled) {
           // disable closing the drawer, as if we close while in any of these states
           // we risk losing all the drawings
-          setDisableClose(true);
+          setDisableDrawerClose(true);
         } else {
-          setDisableClose(false);
+          setDisableDrawerClose(false);
         }
       });
 
       // every time we toggle edit mode
       leafletContainer.on('pm:globaleditmodetoggled', ({ enabled }) => {
         if (enabled) {
-          setDisableClose(true);
+          setDisableDrawerClose(true);
         } else {
           // when we disable edit mode, get the new state of the drawings
           setNewDrawings();
-          setDisableClose(false);
+          setDisableDrawerClose(false);
         }
       });
 
       // every time we toggle removal mode
       leafletContainer.on('pm:globalremovalmodetoggled', ({ enabled }) => {
         if (enabled) {
-          setDisableClose(true);
+          setDisableDrawerClose(true);
         } else {
-          setDisableClose(false);
+          setDisableDrawerClose(false);
         }
       });
 
@@ -122,7 +122,7 @@ const Geoman = ({ setDrawings, mapBoundsLatLng, setDisableClose }) => {
     return () => {
       leafletContainer.pm.removeControls();
     };
-  }, [context, setDrawings, mapBoundsLatLng, setDisableClose]);
+  }, [context, setDrawings, mapBoundsLatLng, setDisableDrawerClose]);
 
   return null;
 };
@@ -153,7 +153,14 @@ export default withStyles((theme) => ({
     gap: theme.spacing(2),
   },
 }))(({
-  mapBounds, classes, saveDrawings, savedDrawings, closeDrawer, setDisableDrawerClose
+  mapBounds,
+  classes,
+  saveDrawings,
+  savedDrawings,
+  closeDrawer,
+  disableDrawerClose,
+  setDisableDrawerClose,
+  processClippings,
 }) => {
   const [drawings, setDrawings] = useState([]);
   const theme = useTheme();
@@ -161,7 +168,6 @@ export default withStyles((theme) => ({
   // use a ref for this so we don't recreate it on every render
   const mapBoundsLatLng = useRef(null);
   const [outerBounds, setOuterBounds] = useState(null);
-  const [disableClose, setDisableClose] = useState(false);
 
   if (mapBoundsLatLng.current === null && mapBounds) {
     mapBoundsLatLng.current = L.latLngBounds(mapBounds);
@@ -205,17 +211,9 @@ export default withStyles((theme) => ({
     }
   }, []);
 
-  useEffect(() => {
-    // triggered by <Geoman> global draw/edit/removal mode events
-    if (disableClose) {
-      setDisableDrawerClose(true);
-    } else {
-      setDisableDrawerClose(false);
-    }
-  }, [disableClose, setDisableDrawerClose]);
-
-  const onSaveClick = () => {
+  const onSaveClipsClick = () => {
     saveDrawings(drawings);
+    processClippings(drawings);
     closeDrawer();
   };
 
@@ -241,7 +239,7 @@ export default withStyles((theme) => ({
             <Geoman
               setDrawings={setDrawings}
               mapBoundsLatLng={mapBoundsLatLng}
-              setDisableClose={setDisableClose}
+              setDisableDrawerClose={setDisableDrawerClose}
             />
             {outerBounds && (
               <Polygon
@@ -272,16 +270,19 @@ export default withStyles((theme) => ({
               <br />Tip: hold down alt to avoid snapping to existing points.
             </Typography>
             <Tooltip
-              title={disableClose ? 'Please finish or cancel your map changes before continuing' : ''}
+              title={
+                disableDrawerClose
+                  ? 'Please finish or cancel your map changes before continuing' : ''
+              }
             >
               <span>
                 <Button
                   className={classes.saveButton}
                   variant="contained"
                   color="primary"
-                  onClick={onSaveClick}
+                  onClick={onSaveClipsClick}
                   disableElevation
-                  disabled={disableClose}
+                  disabled={disableDrawerClose}
                 >
                   Save Clips
                 </Button>

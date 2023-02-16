@@ -22,6 +22,45 @@ import Drawer from '../components/Drawer';
 import { Navigation } from '.';
 import ScaleTime from './ScaleTime';
 
+const mixmastaJob = (datasetId, requestArgs, jobString, data, onSuccess) => {
+  const startJob = async () => {
+    const jobQueueResp = await axios.post(
+      `/api/dojo/job/${datasetId}/${jobString}`, requestArgs
+    );
+
+    if (jobQueueResp.status === 200) {
+      return jobQueueResp.data?.id;
+    }
+  };
+
+  const repeatFetch = (jobId) => {
+    setTimeout(() => {
+      axios.post(`/api/dojo/job/fetch/${jobId}`).then((response) => {
+        if (response.status === 200) {
+          console.log(`the response in mixmastaJob  with job string: ${jobString}:`, response);
+          if (response.data) {
+            console.log('success! no more calls?', response.data)
+            onSuccess(response.data);
+            return;
+          }
+          // if no data, try the fetch again
+          repeatFetch(jobId);
+        }
+      }).catch(() => {
+        // TODO: this is currently an endless loop - handle actual errors
+        console.log('repeating job call')
+        startJob().then((resp) => {
+          repeatFetch(resp);
+        });
+      });
+    }, 500);
+  };
+
+  if (datasetId) {
+    startJob().then((jobId) => repeatFetch(jobId));
+  }
+};
+
 export default withStyles(({ spacing }) => ({
   root: {
     padding: [[spacing(4), spacing(4), spacing(2), spacing(4)]],
@@ -32,14 +71,10 @@ export default withStyles(({ spacing }) => ({
 
 }))(({
   classes,
-  annotations,
   datasetInfo,
   stepTitle,
   handleNext,
   handleBack,
-  useFilepath = false,
-  rawFileName,
-  ...props
 }) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerName, setDrawerName] = useState(null);
@@ -48,10 +83,32 @@ export default withStyles(({ spacing }) => ({
   const [disableDrawerClose, setDisableDrawerClose] = useState(false);
   const theme = useTheme();
 
-  // useEffect(() => {
-  //   // TODO do this by getting from cartwright process, for now mock lat/lng
+// TODO remove this, just for development
+  // if (!mapBounds) {
   //   setMapBounds([['12', '40'], ['-44', '-15']]);
-  // }, []);
+  // }
+
+  // Fetches the mapBounds for the ClipMap component
+  useEffect(() => {
+    if (!mapBounds) {
+      const args = {
+        geo_columns: [
+          'latitude',
+          'longitude',
+        ],
+      };
+      const jobString = 'mixmasta_processors.get_boundary_box';
+
+      const onSuccess = (data) => {
+        if (data?.boundary_box) {
+          const bObj = data?.boundary_box;
+          const bounds = [[bObj.xmin, bObj.ymin], [bObj.xmax, bObj.ymax]];
+          setMapBounds(bounds);
+        }
+      };
+      mixmastaJob(datasetInfo.id, args, jobString, mapBounds, onSuccess);
+    }
+  }, [datasetInfo.id, mapBounds]);
 
   const handleDrawerClose = (bool, event) => {
     // prevent clicking outside the drawer to close
@@ -69,111 +126,18 @@ export default withStyles(({ spacing }) => ({
     setDrawerName(name);
   };
 
-  useEffect(() => {
-    // TODO: extract this and the following useEffect into a shared mixmasta repeat call function
-    console.log('this is saveDrawings', savedDrawings);
-    let timeout;
-    const startProcessClippingsJob = async () => {
+  const processClippings = (drawings) => {
+    if (drawings.length > 0) {
       const args = {
-        map_shapes: savedDrawings,
+        map_shapes: drawings,
         geo_columns: [
           'latitude',
           'longitude',
         ],
       };
-        // `/api/dojo/job/${datasetInfo.id}/mixmasta_processors.clip_data`, args
-      const jobQueueResp = await axios.post(
-
-        `/api/dojo/job/${datasetInfo.id}/mixmasta_processors.clip_geo`, args
-      );
-
-      if (jobQueueResp.status === 200) {
-        return jobQueueResp.data?.id;
-      }
-    };
-
-    const repeatFetch = (jobId) => {
-      timeout = setTimeout(() => {
-        axios.post(`/api/dojo/job/fetch/${jobId}`).then((response) => {
-          if (response.status === 200) {
-            console.log('this is the clippings response', response)
-            if (response.data) {
-              // TODO: do something with the response
-              return;
-            }
-            // if no data, try the fetch again
-            repeatFetch(jobId);
-          }
-        }).catch(() => {
-          // TODO: this is currently an endless loop - handle actual errors
-          console.log('repeating clippings job')
-          startProcessClippingsJob().then((resp) => {
-            repeatFetch(resp);
-          });
-        });
-      }, 500);
-    };
-
-    if (datasetInfo.id && savedDrawings.length > 0) {
-      startProcessClippingsJob().then((jobId) => repeatFetch(jobId));
+      mixmastaJob(datasetInfo.id, args, 'mixmasta_processors.clip_geo', drawings, () => {});
     }
-    return () => clearTimeout(timeout);
-  }, [savedDrawings, datasetInfo.id]);
-
-  useEffect(() => {
-    let timeout;
-    const startBoundingBoxJob = async () => {
-      const args = {
-        geo_columns: [
-          'latitude',
-          'longitude',
-        ],
-      };
-      const jobQueueResp = await axios.post(
-        `/api/dojo/job/${datasetInfo.id}/mixmasta_processors.get_boundary_box`, args
-      );
-
-      if (jobQueueResp.status === 200) {
-        return jobQueueResp.data?.id;
-      }
-    };
-
-    // We need to fetch from mixmasta multiple times to get the bounding box job result
-    const repeatFetch = (jobId) => {
-      timeout = setTimeout(() => {
-        axios.post(`/api/dojo/job/fetch/${jobId}`).then((response) => {
-          console.log('fetching bounding box data...', response);
-          if (response.status === 200) {
-            if (response.data?.boundary_box) {
-              const bObj = response.data?.boundary_box;
-              const bounds = [[bObj.xmin, bObj.ymin], [bObj.xmax, bObj.ymax]];
-              setMapBounds(bounds);
-              return;
-            }
-
-            // if no data, try the fetch again
-            repeatFetch(jobId);
-          }
-        }).catch(() => {
-          // TODO: this is currently an endless loop - handle actual errors
-          startBoundingBoxJob().then((resp) => {
-            repeatFetch(resp);
-          });
-        });
-      }, 500);
-    };
-
-    // only do this once we have the ID and if we don't already have bounds loaded
-    if (datasetInfo.id) {
-      if (!mapBounds) {
-        startBoundingBoxJob().then((jobId) => {
-          repeatFetch(jobId);
-        });
-      }
-    }
-
-    return () => clearTimeout(timeout);
-  }, [datasetInfo.id, mapBounds]);
+  };
 
   const drawerInner = () => {
     switch (drawerName) {
@@ -186,8 +150,10 @@ export default withStyles(({ spacing }) => ({
           <ClipMap
             mapBounds={mapBounds}
             saveDrawings={setSavedDrawings}
+            processClippings={processClippings}
             savedDrawings={savedDrawings}
             closeDrawer={handleDrawerClose}
+            disableDrawerClose={disableDrawerClose}
             setDisableDrawerClose={setDisableDrawerClose}
           />
         );
