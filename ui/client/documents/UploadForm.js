@@ -401,7 +401,7 @@ export const FileTile = withStyles((theme) => ({
       </ListItemIcon>
 
       <ListItemText
-        primary={file.path}
+        primary={file.name}
         secondary={`Size: ${formatBytes(file.size)}`}
       />
 
@@ -509,11 +509,14 @@ const UploadDocumentForm = withStyles((theme) => ({
   const [allPDFMetadata, setAllPDFMetadata] = useState([]);
   const [selectedFileIndex, setSelectedFileIndex] = useState(null);
 
+  const [loading, setLoading] = useState(false);
+
   console.log('files', files);
 
   const handleFileSelect = useCallback(acceptedFiles => {
 
     // TODO add loading animation in case we're parsing many files
+    setLoading(true);
 
     // gather PDF data. TODO cleanup once e2e prototype is complete
     const pdfData = acceptedFiles.map(pdfFile => {
@@ -553,6 +556,7 @@ const UploadDocumentForm = withStyles((theme) => ({
         setAllPDFMetadata(prevMetadata => [ ...prevMetadata, ...formattedMetadata ]);
         setFiles(prevFiles => [ ...prevFiles, ...acceptedFiles ]);
         setSelectedFileIndex(selectedFileIndex => selectedFileIndex || 0);
+        setLoading(false);
       });
 
   }, []);
@@ -594,7 +598,7 @@ const UploadDocumentForm = withStyles((theme) => ({
       }).then(response => {
         const doc = response.data;
 
-        return uploadFile(file, doc.id, {filename: file.name});
+        return uploadFile(file, doc.id, {});
 
       }).catch((e) => {
         console.log("Error uploading files", e);
@@ -648,6 +652,14 @@ const UploadDocumentForm = withStyles((theme) => ({
         onDropFilesRejected={handleDropFilesRejection}
       />
 
+      {loading && (
+        <div>
+          <br />
+          <LinearProgress />
+          <br />
+        </div>
+      )}
+
       {!isEmpty(files) && (
         <div>
 
@@ -658,8 +670,8 @@ const UploadDocumentForm = withStyles((theme) => ({
             paragraph
             variant="h6"
           >
-            The following files are being uploaded. Confirm or edit
-            document metadata fields for each file.
+            The following {files.length} files will be uploaded. Confirm or edit
+            document metadata fields before saving.
           </Typography>
 
           <br />
