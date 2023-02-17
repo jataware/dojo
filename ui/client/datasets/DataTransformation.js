@@ -20,7 +20,6 @@ import ClipMap from './ClipMap';
 import ClipTime from './ClipTime';
 import Drawer from '../components/Drawer';
 import { Navigation } from '.';
-import ScaleTime from './ScaleTime';
 import AdjustResolution from './AdjustResolution';
 
 const mixmastaJob = (datasetId, requestArgs, jobString, data, onSuccess) => {
