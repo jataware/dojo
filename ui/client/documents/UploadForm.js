@@ -545,39 +545,7 @@ const UploadDocumentForm = withStyles((theme) => ({
 
     Promise.all(pdfData)
       .then((allPdfData) => {
-
         const formattedMetadata = allPdfData.map(pdfMetadataToForm);
-
-        acceptedFiles.forEach((file, idx) => {
-
-          return; // TODO remove. returning to not have side effects
-          // TODO dont upload anything until Save / submitted
-
-          function formatDate(date) {
-            return date.toISOString().split('T')[0];
-          }
-
-          const metadataClone = {...formattedMetadata[idx]};
-
-          // TODO do a fn and verify this date load is correct with expected tz etc...
-          let creation_date = new Date(metadataClone.creation_date);
-          metadataClone.creation_date = formatDate(creation_date);
-
-          const document = axios({
-            method: 'post',
-            url: `/api/dojo/documents`,
-            data: metadataClone,
-            params: {}
-          }).then(response => {
-            const doc = response.data;
-
-            // TODO ? await promise to ensure docs uploaded before leaving
-            uploadFile(file, doc.id, {filename: file.name});
-
-          }).catch((e) => {
-            console.log('Error creating doc', e);
-          });
-        });
 
         // Let's update the state all together when we have everything available.
         // It's hard to trust and coordinate batch updates when performing updates
@@ -603,11 +571,46 @@ const UploadDocumentForm = withStyles((theme) => ({
     setAllPDFMetadata(allPDFMetadataClone);
   };
 
-/**
- * TODO: Either do tomfoolery around deleted indexes, not rendering deleted ones, etc,
- * or change the collection/representation of data from arrays and selected index
- * to an object with key=>properties.
- **/
+  const submitAndUploadDocuments = () => {
+    files.forEach((file, idx) => {
+
+      function formatDate(date) {
+        return date.toISOString().split('T')[0];
+      }
+
+      const metadataClone = {...allPDFMetadata[idx]};
+
+      // TODO do a fn and verify this date load is correct with expected tz etc...
+      let creation_date = new Date(metadataClone.creation_date);
+      metadataClone.creation_date = formatDate(creation_date);
+
+      const documentsPromise = axios({
+        method: 'post',
+        url: `/api/dojo/documents`,
+        data: metadataClone,
+        params: {}
+      }).catch((e) => {
+        console.log('Error creating doc', e);
+      }).then(response => {
+        const doc = response.data;
+
+        return uploadFile(file, doc.id, {filename: file.name});
+
+      }).catch((e) => {
+        console.log("Error uploading files", e);
+      });
+
+      // if we map files to promises to await all uploads:
+      // return documentsPromise;
+
+    });
+  };
+
+  /**
+   * TODO: In order to handle deletes- either do backflips around deleted indexes,
+   * not rendering deleted ones, etc, or change the collection/representation
+   * of data from arrays and selected index to an object with key=>properties.
+   **/
   const handleFileDelete = (index) => {
     // TODO Implement me
     console.log("deleting file index:", index);
@@ -698,6 +701,7 @@ const UploadDocumentForm = withStyles((theme) => ({
             </Button>
             &nbsp;
             <Button
+              onClick={submitAndUploadDocuments}
               size="large"
               type="submit"
               color="primary"
