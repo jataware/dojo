@@ -21,6 +21,7 @@ import ClipTime from './ClipTime';
 import Drawer from '../components/Drawer';
 import { Navigation } from '.';
 import ScaleTime from './ScaleTime';
+import AdjustResolution from './AdjustResolution';
 
 const mixmastaJob = (datasetId, requestArgs, jobString, data, onSuccess) => {
   const startJob = async () => {
@@ -79,14 +80,33 @@ export default withStyles(({ spacing }) => ({
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerName, setDrawerName] = useState(null);
   const [mapBounds, setMapBounds] = useState(null);
+  const [mapResolution, setMapResolution] = useState(null);
+  const [mapResolutionOptions, setMapResolutionOptions] = useState([]);
+  const [timeResolution, setTimeResolution] = useState(null);
+  const [timeResolutionOptions, setTimeResolutionOptions] = useState([]);
   const [savedDrawings, setSavedDrawings] = useState([]);
   const [disableDrawerClose, setDisableDrawerClose] = useState(false);
   const theme = useTheme();
 
-// TODO remove this, just for development
+// TODO remove the following, just for development
   // if (!mapBounds) {
   //   setMapBounds([['12', '40'], ['-44', '-15']]);
   // }
+  if (!mapResolution) {
+    setTimeout(() => {
+      setMapResolution('1m');
+
+      setMapResolutionOptions(['10m', '50m', '100m', '500m', '1km', '10km']);
+    }, 2000);
+  }
+  if (!mapResolution) {
+    setTimeout(() => {
+      setTimeResolution('day');
+
+      setTimeResolutionOptions(['week', 'fortnight', 'month', 'year', 'decade']);
+    }, 2000);
+  }
+// to here
 
   // Fetches the mapBounds for the ClipMap component
   useEffect(() => {
@@ -148,7 +168,12 @@ export default withStyles(({ spacing }) => ({
     switch (drawerName) {
       case 'regridMap':
         return (
-          <Typography align="center" variant="h5">Adjust Geospatial Resolution</Typography>
+          <AdjustResolution
+            closeDrawer={handleDrawerClose}
+            oldResolution={mapResolution}
+            resolutionOptions={mapResolutionOptions}
+            title="Adjust Geospatial Resolution"
+          />
         );
       case 'clipMap':
         return (
@@ -163,7 +188,12 @@ export default withStyles(({ spacing }) => ({
         );
       case 'scaleTime':
         return (
-          <ScaleTime />
+          <AdjustResolution
+            closeDrawer={handleDrawerClose}
+            oldResolution={timeResolution}
+            resolutionOptions={timeResolutionOptions}
+            title="Adjust Temporal Resolution"
+          />
         );
       case 'clipTime':
         return (
@@ -202,7 +232,10 @@ export default withStyles(({ spacing }) => ({
               }}
             />
           </ListItemIcon>
-          <ListItemText primaryTypographyProps={{ variant: 'h6' }} onClick={() => handleDrawerOpen('regridMap')}>
+          <ListItemText
+            primaryTypographyProps={{ variant: 'h6' }}
+            onClick={() => handleDrawerOpen('regridMap')}
+          >
             Adjust Geospatial Resolution
           </ListItemText>
         </ListItem>
@@ -239,7 +272,10 @@ export default withStyles(({ spacing }) => ({
               }}
             />
           </ListItemIcon>
-          <ListItemText primaryTypographyProps={{ variant: 'h6' }} onClick={() => handleDrawerOpen('scaleTime')}>
+          <ListItemText
+            primaryTypographyProps={{ variant: 'h6' }}
+            onClick={() => handleDrawerOpen('scaleTime')}
+          >
             Adjust Temporal Resolution
           </ListItemText>
         </ListItem>
@@ -252,7 +288,10 @@ export default withStyles(({ spacing }) => ({
               }}
             />
           </ListItemIcon>
-          <ListItemText primaryTypographyProps={{ variant: 'h6' }} onClick={() => handleDrawerOpen('clipTime')}>
+          <ListItemText
+            primaryTypographyProps={{ variant: 'h6' }}
+            onClick={() => handleDrawerOpen('clipTime')}
+          >
             Select Temporal Coverage
           </ListItemText>
         </ListItem>
