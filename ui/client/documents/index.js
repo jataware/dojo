@@ -76,10 +76,10 @@ const fetchDocument = async (docId) => {
 
 const fetchDocumentFullText = async (documentId) => {
   // paragraph id format: documentId-<paragraphIndex>
-  const url = `/api/dojo/documents/${documentId}/text?size=200`;
+  const url = `/api/dojo/documents/${documentId}/paragraphs?size=200`;
 
   const response = await axios.get(url);
-  return response.data.text;
+  return response.data.paragraphs;
 };
 
 
