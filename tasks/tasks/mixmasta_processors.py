@@ -10,7 +10,7 @@ from urllib.parse import urlparse
 import pandas as pd
 
 from utils import get_rawfile, put_rawfile
-from mixmasta import mixmasta as mix
+from elwood import elwood as mix
 from base_annotation import BaseProcessor
 from settings import settings
 
@@ -553,5 +553,42 @@ def get_boundary_box(context, filename=None, **kwargs):
     response = {
         "message": "Boundary box not generated, some information was not provided (geography column names).",
         "bounday_box": {},
+    }
+    return response
+
+
+def get_temporal_extent(context, filename=None, **kwargs):
+    # Setup
+    # If no filename is passed in, default to the converted raw_data file.
+    if filename is None:
+        filename = "raw_data.csv"
+
+    # Always analyze the csv version of the file
+    if not filename.endswith(".csv"):
+        filename = filename.split(".")[0] + ".csv"
+
+    rawfile_path = os.path.join(
+        settings.DATASET_STORAGE_BASE_URL, context["uuid"], filename
+    )
+    file = get_rawfile(rawfile_path)
+    original_dataframe = pd.read_csv(file, delimiter=",")
+
+    # Main call
+    time_column = kwargs.get("time_column", "")
+
+    if time_column:
+        temporal_extent = mix.get_temporal_boundary(
+            dataframe=original_dataframe, time_column=time_column
+        )
+
+        response = {
+            "message": "Temporal extent generated successfully",
+            "temporal_extent": temporal_extent,
+        }
+        return response
+
+    response = {
+        "message": "Temporal extent not generated, some information was not provided (time column name).",
+        "temporal_extent": {},
     }
     return response
