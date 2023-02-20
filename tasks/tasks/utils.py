@@ -68,3 +68,21 @@ def list_files(path):
         return final_file_list
     else:
         raise RuntimeError("File storage format is unknown")
+
+
+def job_setup(context, filename):
+    # Setup
+    # If no filename is passed in, default to the converted raw_data file.
+    if filename is None:
+        filename = "raw_data.csv"
+
+    # Always analyze the csv version of the file
+    if not filename.endswith(".csv"):
+        filename = filename.split(".")[0] + ".csv"
+
+    rawfile_path = os.path.join(
+        settings.DATASET_STORAGE_BASE_URL, context["uuid"], filename
+    )
+    file = get_rawfile(rawfile_path)
+
+    return file, rawfile_path
