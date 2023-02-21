@@ -83,14 +83,15 @@ export default withStyles(({ spacing }) => ({
   const [mapResolutionOptions, setMapResolutionOptions] = useState([]);
   const [timeResolution, setTimeResolution] = useState(null);
   const [timeResolutionOptions, setTimeResolutionOptions] = useState([]);
+  const [timeBounds, setTimeBounds] = useState([]);
   const [savedDrawings, setSavedDrawings] = useState([]);
   const [disableDrawerClose, setDisableDrawerClose] = useState(false);
   const theme = useTheme();
 
 // TODO remove the following, just for development
-  // if (!mapBounds) {
-  //   setMapBounds([['12', '40'], ['-44', '-15']]);
-  // }
+  if (!mapBounds) {
+    setMapBounds([['12', '40'], ['-44', '-15']]);
+  }
   if (!mapResolution) {
     setTimeout(() => {
       setMapResolution('1m');
@@ -104,6 +105,23 @@ export default withStyles(({ spacing }) => ({
 
       setTimeResolutionOptions(['week', 'fortnight', 'month', 'year', 'decade']);
     }, 2000);
+  }
+  if (!timeBounds.length) {
+    // setTimeout(() => {
+      setTimeBounds([
+        '2020-01-22',
+        '2020-03-01',
+        '2020-05-02',
+        '2020-07-03',
+        '2020-12-08',
+        '2021-01-12',
+        '2021-04-15',
+        '2021-06-03',
+        '2021-12-08',
+        '2022-01-12',
+        '2022-07-15',
+      ]);
+    // }, 3000);
   }
 // to here
 
@@ -196,7 +214,7 @@ export default withStyles(({ spacing }) => ({
         );
       case 'clipTime':
         return (
-          <ClipTime />
+          <ClipTime timeBounds={timeBounds} />
         );
       default:
         return (
