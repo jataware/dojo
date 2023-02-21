@@ -89,9 +89,9 @@ export default withStyles(({ spacing }) => ({
   const theme = useTheme();
 
 // TODO remove the following, just for development
-  if (!mapBounds) {
-    setMapBounds([['12', '40'], ['-44', '-15']]);
-  }
+  // if (!mapBounds) {
+  //   setMapBounds([['12', '40'], ['-44', '-15']]);
+  // }
   if (!mapResolution) {
     setTimeout(() => {
       setMapResolution('1m');
