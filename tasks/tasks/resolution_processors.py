@@ -1,3 +1,5 @@
+import json
+
 from cartwright.analysis.time_resolution import (
     convert_to_timestamps,
     detect_temporal_resolution,
@@ -25,8 +27,8 @@ def calculate_temporal_resolution(context, filename=None, **kwargs):
     response = {
         "messsage": "Resolution calculated successfully",
         "resolution_result": {
-            "uniformity": resolution.uniformity,
-            "unit": resolution.unit,
+            "uniformity": resolution.uniformity.name,
+            "unit": resolution.unit.name,
             "resolution": resolution.resolution,
             "error": resolution.error,
         },
@@ -50,9 +52,21 @@ def calculate_geographical_resolution(context, filename=None, **kwargs):
 
     resolution = detect_latlon_resolution(lat, lon)
 
+    if resolution is None:
+        response = {
+            "messsage": "Resolution not detectable",
+            "resolution_result": "None",
+        }
+        return response
+
     response = {
         "messsage": "Resolution calculated successfully",
-        "resolution_result": resolution,
+        "resolution_result": {
+            "uniformity": resolution.square.uniformity.name,
+            "unit": resolution.square.unit.name,
+            "resolution": resolution.square.resolution,
+            "error": resolution.square.error,
+        },
     }
 
     return response
