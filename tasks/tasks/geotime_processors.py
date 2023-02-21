@@ -8,11 +8,12 @@ import shutil
 
 import pandas as pd
 import numpy as np
-from geotime_classify import geotime_classify as gc
+
+from cartwright import categorize
 
 from base_annotation import BaseProcessor
 from data_processors import describe_df
-from utils import get_rawfile, put_rawfile
+from utils import get_rawfile
 from settings import settings
 
 logging.basicConfig()
@@ -29,31 +30,33 @@ class GeotimeProcessor(BaseProcessor):
 
         def convert_gc(classifications):
             ret = {}
-            for classification in classifications.classifications:
+            for classification in classifications:
                 col_name = classification.column
                 logging.warn(f"Inside converter: {classification}")
                 ret[col_name] = classification.dict()
                 del ret[col_name]["column"]
             return ret
 
-        GeoTimeClass = gc.GeoTimeClassify(100)
+        cartwright = categorize.CartwrightClassify()
         if not os.path.exists(output_path):
             os.makedirs(output_path)
 
         sample_size = min(len(df), 100)
-        df.sample(sample_size).to_csv(f"{output_path}/raw_data_geotime.csv", index=False)
-        c_classified = GeoTimeClass.columns_classified(
-            f"{output_path}/raw_data_geotime.csv"
+        df.sample(sample_size).to_csv(
+            f"{output_path}/raw_data_geotime.csv", index=False
         )
+        c_classified = cartwright.categorize(path=f"{output_path}/raw_data_geotime.csv")
+
         try:
             c_classifiedConverted = convert_gc(c_classified)
+            c_classified = c_classifiedConverted
         except Exception as e:
             logging.error(f"Error: {e}, Classified object: {c_classified}")
         json.dump(
-            c_classifiedConverted,
+            c_classified,
             open(f"{output_path}/geotime_classification.json", "w"),
         )
-        return c_classifiedConverted
+        return c_classified
 
 
 def classify(filepath, context):
@@ -96,7 +99,10 @@ def geotime_classify(context, filename=None):
     # Type inferencing
     inferred_types = infer_types(df)
     for key in inferred_types:
-        json_final[key]["type_inference"] = inferred_types[key]
+        try:
+            json_final[key]["type_inference"] = inferred_types[key]
+        except KeyError:
+            continue
 
     # Collect column statistics from dataframe
     statistics, histograms = describe_df(df)
@@ -107,7 +113,6 @@ def geotime_classify(context, filename=None):
             "column_statistics": statistics,
             "histograms": histograms,
         }
-
     }
     api_url = os.environ.get("DOJO_HOST")
     request_response = requests.patch(
@@ -142,7 +147,12 @@ def infer_types(dataframe):
 
 
 def model_output_geotime_classify(context, *args, **kwargs):
-    file_uuid = context['annotations']['metadata']['file_uuid']
-    sample_path = os.path.join(settings.DATASET_STORAGE_BASE_URL, 'model-output-samples', context['uuid'], f'{file_uuid}.csv')
+    file_uuid = context["annotations"]["metadata"]["file_uuid"]
+    sample_path = os.path.join(
+        settings.DATASET_STORAGE_BASE_URL,
+        "model-output-samples",
+        context["uuid"],
+        f"{file_uuid}.csv",
+    )
     filepath = get_rawfile(sample_path)
     return classify(filepath, context)
