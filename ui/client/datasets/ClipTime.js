@@ -175,7 +175,6 @@ export default withStyles((theme) => ({
 
   const handleChangeStart = (date) => {
     setStartValue(date);
-    const ind = timeBounds.indexOf(date)
     const tb = timeBounds;
     debugger
   };
@@ -186,7 +185,7 @@ export default withStyles((theme) => ({
 
   return (
     <div>
-      <Typography align="center" variant="h5">Scale Temporal Data</Typography>
+      <Typography align="center" variant="h5">Select Temporal Coverage</Typography>
       { startValue && endValue ? (
         <>
           <div className={classes.timelineWrapper}>

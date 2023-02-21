@@ -134,7 +134,7 @@ export default withStyles(({ spacing }) => ({
           'longitude',
         ],
       };
-      const jobString = 'mixmasta_processors.get_boundary_box';
+      const jobString = 'transformation_processors.get_boundary_box';
 
       const onSuccess = (data) => {
         if (data?.boundary_box) {
@@ -172,7 +172,7 @@ export default withStyles(({ spacing }) => ({
           'longitude',
         ],
       };
-      mixmastaJob(datasetInfo.id, args, 'mixmasta_processors.clip_geo', savedDrawings, () => {});
+      mixmastaJob(datasetInfo.id, args, 'transformation_processors.clip_geo', savedDrawings, () => {});
     }
   };
 
