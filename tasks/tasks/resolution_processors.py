@@ -14,17 +14,25 @@ def calculate_temporal_resolution(context, filename=None, **kwargs):
     dataframe = pd.read_csv(file, delimiter=",")
 
     datetime_column = kwargs.get("datetime_column")
+    time_format = kwargs.get("time_format")
 
     timestamps = convert_to_timestamps(
-        dataframe[datetime_column].to_list(), "%Y-%m-%d %H:%M:%S"
+        dataframe[datetime_column].to_list(), time_format
     )
 
     resolution = detect_temporal_resolution(timestamps)
 
     response = {
         "messsage": "Resolution calculated successfully",
-        "resolution_result": resolution,
+        "resolution_result": {
+            "uniformity": resolution.uniformity,
+            "unit": resolution.unit,
+            "resolution": resolution.resolution,
+            "error": resolution.error,
+        },
     }
+
+    print(response)
 
     return response
 
