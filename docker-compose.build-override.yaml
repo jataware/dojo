@@ -172,7 +172,20 @@ services:
       - 0.0.0.0
     networks:
       - dojo-stack
-
+  minio:
+    build:
+      context: ./
+      dockerfile: Dockerfile.minio
+    environment:
+      MINIO_ROOT_USER: miniouser
+      MINIO_ROOT_PASSWORD: miniopass
+    ports:
+      - 9000:9000
+      - 9001:9001
+    volumes:
+      - ${PWD}/data:/outputs
+    networks:
+      dojo-stack: {}
   rqworker:
     env_file:
       - envfile
