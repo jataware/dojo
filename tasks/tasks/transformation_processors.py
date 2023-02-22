@@ -257,3 +257,26 @@ def get_temporal_extent(context, filename=None, **kwargs):
         "temporal_extent": {},
     }
     return response
+
+
+def get_unique_dates(context, filename=None, **kwargs):
+    file, rawfile_path = job_setup(context=context, filename=filename)
+    original_dataframe = pd.read_csv(file, delimiter=",")
+
+    # Main call
+    time_column = kwargs.get("time_column", "")
+
+    if time_column:
+        unique_dates = original_dataframe[time_column].unique()
+
+        response = {
+            "message": "Unique dates list generated",
+            "unique_dates": unique_dates.tolist(),
+        }
+        return response
+
+    response = {
+        "message": "Unique dates list not generated, some information was not provided (time column name).",
+        "unique_dates": [],
+    }
+    return response

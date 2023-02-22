@@ -115,6 +115,7 @@ def run_mixmasta(context, filename=None):
     # Writing out the annotations because mixmasta needs a filepath to this data.
     # Should probably change mixmasta down the road to accept filepath AND annotations objects.
     mm_ready_annotations = context["annotations"]["annotations"]
+    print(f"ELWOOD ANNOTATIONS: {mm_ready_annotations}")
     mm_ready_annotations["meta"] = {"ftype": "csv"}
     with open(f"{datapath}/mixmasta_ready_annotations.json", "w") as f:
         f.write(json.dumps(mm_ready_annotations))
