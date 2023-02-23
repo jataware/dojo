@@ -84,14 +84,15 @@ export default withStyles(({ spacing }) => ({
   const [timeResolution, setTimeResolution] = useState(null);
   const [timeResolutionOptions, setTimeResolutionOptions] = useState([]);
   const [timeBounds, setTimeBounds] = useState([]);
+  const [savedTimeBounds, setSavedTimeBounds] = useState(null);
   const [savedDrawings, setSavedDrawings] = useState([]);
   const [disableDrawerClose, setDisableDrawerClose] = useState(false);
   const theme = useTheme();
 
 // TODO remove the following, just for development
-  // if (!mapBounds) {
-  //   setMapBounds([['12', '40'], ['-44', '-15']]);
-  // }
+  if (!mapBounds) {
+    setMapBounds([['12', '40'], ['-44', '-15']]);
+  }
   if (!mapResolution) {
     setTimeout(() => {
       setMapResolution('1m');
@@ -214,7 +215,12 @@ export default withStyles(({ spacing }) => ({
         );
       case 'clipTime':
         return (
-          <ClipTime timeBounds={timeBounds} />
+          <ClipTime
+            timeBounds={timeBounds}
+            savedTimeBounds={savedTimeBounds}
+            setSavedTimeBounds={setSavedTimeBounds}
+            closeDrawer={handleDrawerClose}
+          />
         );
       default:
         return (
