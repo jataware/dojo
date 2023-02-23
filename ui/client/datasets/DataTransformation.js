@@ -127,6 +127,7 @@ export default withStyles(({ spacing }) => ({
   }
 // to here
 
+  // fetch time bounds for ClipTime component
   useEffect(() => {
     if (annotations?.annotations?.date) {
       const args = {
@@ -182,7 +183,7 @@ export default withStyles(({ spacing }) => ({
     setDrawerName(name);
   };
 
-  const processClippings = () => {
+  const processMapClippings = () => {
     if (savedDrawings.length > 0) {
       const args = {
         map_shapes: savedDrawings,
@@ -191,12 +192,28 @@ export default withStyles(({ spacing }) => ({
           'longitude',
         ],
       };
-      runElwoodJob(datasetInfo.id, args, 'transformation_processors.clip_geo', savedDrawings, () => {});
+      runElwoodJob(datasetInfo.id, args, 'transformation_processors.clip_geo', () => {});
+    }
+  };
+
+  const processClipTime = () => {
+    if (savedTimeBounds) {
+      const args = {
+        time_column: annotations.annotations.date[0].name,
+        time_ranges: [{
+          start: savedTimeBounds[0], end: savedTimeBounds[savedTimeBounds.length -1]
+        }],
+      };
+
+      runElwoodJob(datasetInfo.id, args, 'transformation_processors.clip_time', (resp) => {
+        console.log('this is resp', resp)
+      });
     }
   };
 
   const handleNextStep = () => {
-    processClippings();
+    processMapClippings();
+    processClipTime();
     handleNext();
   };
 
