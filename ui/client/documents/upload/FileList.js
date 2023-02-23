@@ -32,6 +32,9 @@ export const FileTile = withStyles((theme) => ({
     alignItems: 'center'
   },
   loadingContainer: {
+  },
+  filenameText: {
+    wordBreak: 'break-all'
   }
 }))(({ classes, file, value, uploadStatus, onClick, selected, onDelete }) => {
 
@@ -48,6 +51,7 @@ export const FileTile = withStyles((theme) => ({
       </ListItemIcon>
 
       <ListItemText
+        classes={{primary: classes.filenameText}}
         primary={file.name}
         secondary={`Size: ${formatBytes(file.size)}`}
       />

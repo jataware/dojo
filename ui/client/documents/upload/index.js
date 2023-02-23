@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 import isEmpty from 'lodash/isEmpty';
+import snakeCase from 'lodash/snakeCase';
 
 import { PDFDocument } from 'pdf-lib';
 
@@ -15,7 +16,7 @@ import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 // import get from 'lodash/get';
 
-import { pdfMetadataToForm, readFile, uploadFile } from '../utils';
+import { readFile, uploadFile } from '../utils';
 import { FileDropSelector } from './DropArea';
 import { SelectedFileList } from './FileList';
 import EditMetadata from './EditMetadata';
@@ -23,15 +24,57 @@ import PDFViewer from './PDFViewer';
 
 
 const PDF_ATTR_GETTERS = [
-  'getTitle', 'getAuthor',
+  'getTitle',
+  'getAuthor',
   'getCreator',
-  // 'getKeywords',
-  // 'getSubject',
-  // 'getModificationDate',
-  // 'getProducer',
-  'getCreationDate', 'getPageCount'
+  'getCreationDate',
+  'getPageCount'
 ];
 
+const defaultValues = {
+  title: '',
+  author: '',
+  description: '',
+  publisher: '',
+  producer: '',
+  original_language: 'en',
+  stated_genre: 'news-article',
+  type: 'article',
+  classification: 'unclassified',
+  creation_date: ''
+};
+
+function formatDate(date) {
+  return date.toISOString().split('T')[0];
+}
+
+function getFormattedPDFMetadata(pdfDoc) {
+  return PDF_ATTR_GETTERS.reduce(
+    (acc, pdfLibAttr) => {
+      let propertyValue = pdfDoc[pdfLibAttr]();
+
+      if (propertyValue === undefined) {
+        return acc;
+      }
+
+      if (pdfLibAttr === 'getCreationDate') {
+        propertyValue = formatDate(propertyValue);
+      }
+
+      let key = pdfLibAttr.replace('get', '');
+      key = snakeCase(key);
+
+      if (key === 'page_count') {
+        key = 'pages';
+      }
+
+      acc[key] = propertyValue;
+
+      return acc;
+
+    },
+    {...defaultValues});
+}
 
 /**
  * Submit button is not type=submit for now, since pressing enter
@@ -71,13 +114,12 @@ const UploadDocumentForm = withStyles((theme) => ({
 
   const selectedFile = selectedFileIndex !== null ? files[selectedFileIndex] : {};
 
-  const handleFileSelect = useCallback(acceptedFiles => {
+  const handleFileSelect = (acceptedFiles) => {
 
     setLoading(true);
 
     const byteData = [];
 
-    // gather PDF data. TODO cleanup once e2e prototype is complete
     const pdfData = acceptedFiles.map((pdfFile) => {
       return readFile(pdfFile)
         .then(bytes => {
@@ -88,31 +130,12 @@ const UploadDocumentForm = withStyles((theme) => ({
           byteData.push(docUrl);
 
           return PDFDocument.load(bytes)
-            .then(pdf => {
-
-              // TODO this bit and pdfMetadataToForm formatting can be done in
-              // one go. One reduce, before we handle the promise and reformat
-              const acc = {};
-              PDF_ATTR_GETTERS.forEach(fun => {
-
-                let val = pdf[fun]();
-
-                if (val) {
-                  val = val.toString();
-                }
-
-                // Follow above TODO and get rid of this nonsense
-                acc[fun.replace('get', '')] = val;
-              });
-
-              return acc;
-            });
+            .then(pdf => getFormattedPDFMetadata(pdf));
         });
     });
 
     Promise.all(pdfData)
       .then((allPdfData) => {
-        const formattedMetadata = allPdfData.map(pdfMetadataToForm);
         const formattedFiles = acceptedFiles
               .map((file, idx) => {
                 file.blobUrl = byteData[idx];
@@ -122,13 +145,13 @@ const UploadDocumentForm = withStyles((theme) => ({
         // Let's update the state all together when we have everything available.
         // It's hard to trust and coordinate batch updates when performing updates
         // both outside and inside async promise handler:
-        setAllPDFMetadata(prevMetadata => [ ...prevMetadata, ...formattedMetadata ]);
+        setAllPDFMetadata(prevMetadata => [ ...prevMetadata, ...allPdfData ]);
         setFiles(prevFiles => [ ...prevFiles, ...formattedFiles ]);
         setSelectedFileIndex(selectedFileIndex => selectedFileIndex || 0);
         setLoading(false);
       });
 
-  }, []);
+  };
 
   /**
    *
@@ -150,20 +173,10 @@ const UploadDocumentForm = withStyles((theme) => ({
 
     files.forEach((file, idx) => {
 
-      function formatDate(date) {
-        return date.toISOString().split('T')[0];
-      }
-
-      const metadataClone = {...allPDFMetadata[idx]};
-
-      // TODO do a fn and verify this date load is correct with expected tz etc...
-      let creation_date = new Date(metadataClone.creation_date);
-      metadataClone.creation_date = formatDate(creation_date);
-
       const documentsPromise = axios({
         method: 'post',
         url: `/api/dojo/documents`,
-        data: metadataClone,
+        data: allPDFMetadata[idx],
         params: {}
       }).catch((e) => {
         console.log('Error creating doc', e);

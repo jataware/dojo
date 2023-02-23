@@ -146,7 +146,11 @@ export default withStyles((theme) => ({
           </Formik>
         </Grid>
 
-        <Grid item xs={12} spacing={0} style={{marginTop: 0, paddingTop: 0}}>
+        <Grid
+          item
+          xs={12}
+          style={{marginTop: 0, paddingTop: 0}}
+        >
           <fieldset style={{padding: "1rem", width: "100%", border: "1px solid #e9e9e9"}}>
 
             <legend>Additional Attributes</legend>

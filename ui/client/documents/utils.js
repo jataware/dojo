@@ -139,33 +139,6 @@ function formatKey(key) {
 }
 
 /**
- *
- **/
-export function pdfMetadataToForm(pdfExtractedMetadata) {
-
-  const reduced = reduce(pdfExtractedMetadata, (acc, value, key) => {
-
-    const formattedKey = formatKey(key);
-    const isInvalidProducer = formattedKey === 'producer' && Boolean(invalidProducers.includes(value));
-    const useDefault = isInvalidProducer || value === undefined;
-
-    // Don't override defaults with undefined nor add excluded keys
-    if (useDefault) {
-      return acc;
-    }
-
-    const useValue = transformValues(formattedKey, value);
-
-    acc[formattedKey] = useValue;
-    return acc;
-
-    // lodash/reduce's accumulator will be mutated in place (not auto-cloned)
-  }, {...defaultValues});
-
-  return reduced;
-}
-
-/**
  * Uploads a file to the backend service.
  * Receives a form dom reference, datasetId, and optional params.
  * TODO move to common project location, as datasets also uses this..?
@@ -174,6 +147,8 @@ export function pdfMetadataToForm(pdfExtractedMetadata) {
  * of a reference to the selected file as we do here.
  **/
 export const uploadFile = async (file, documentID, params={}) => {
+
+  console.log('upload file', file);
 
   const uploadData = new window.FormData();
 

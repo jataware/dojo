@@ -45,62 +45,6 @@ describe('calculateHighlightTargets', () => {
 });
 
 
-describe('pdfMetadataToForm', () => {
-  test('accepts pdf extracted metadata and returns our DB/form data format with defaults filled', () => {
-    // NOTE Metadata format from PDF js lib:
-    const extractedInput = {
-      Author: "Rossa",
-      CreationDate: "Fri Dec 02 2011 11:37:02 GMT-0500 (Eastern Standard Time)",
-      Creator: "Microsoft Word 2010",
-      PageCount: "41",
-      Producer: "pdf-lib (https://github.com/Hopding/pdf-lib)",
-      Title : "The Cost of Adaptation to Climate Change in Africa"
-    };
-
-    const out = pdfMetadataToForm(extractedInput);
-
-    expect(out).toEqual({
-      title: "The Cost of Adaptation to Climate Change in Africa",
-      description: "",
-      author: "Rossa",
-      publisher: "",
-      producer: "",
-      creator: "Microsoft Word 2010",
-      original_language: "en",
-      stated_genre: "news-article",
-      type: "article",
-      classification: "unclassified",
-      creation_date: "Fri Dec 02 2011 11:37:02 GMT-0500 (Eastern Standard Time)",
-      pages: 41
-    });
-
-  });
-
-  test('works with multiple items at a time while mapping array', () => {
-    const extractedInputs = [{
-      Author: "Rossa",
-      CreationDate: "Fri Dec 02 2011 11:37:02 GMT-0500 (Eastern Standard Time)",
-      Creator: "Microsoft Word 2010",
-      PageCount: "41",
-      Producer: "pdf-lib (https://github.com/Hopding/pdf-lib)",
-      Title : "The Cost of Adaptation to Climate Change in Africa"
-    }, {
-      Author: undefined,
-      CreationDate: "Tue Jan 24 2023 15:24:20 GMT-0500 (Eastern Standard Time)",
-      Creator: "TeX",
-      PageCount: "8",
-      Producer: "pdf-lib (https://github.com/Hopding/pdf-lib)",
-      Title: undefined
-    }];
-
-    const out = extractedInputs.map(pdfMetadataToForm);
-
-    const compare = out.map((val) => val.author);
-
-    expect(compare).toEqual(["Rossa", ""]);
-  });
-});
-
 // Sample format from DART sample extracted doc data
 
 // "CreationDate" : "2011-12-02",
