@@ -444,7 +444,6 @@ async def create_preview(
     Returns:
         JSON: Returns a json object containing the preview for the dataset.
     """
-    logger.info('sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss')
     try:
         if filename:
             file_suffix_match = re.search(r'raw_data(_\d+)?\.', filename)
@@ -467,7 +466,6 @@ async def create_preview(
                     indicator_id,
                     f"{indicator_id}{file_suffix}.parquet.gzip",
                 )
-            logger.info(f'raw file_path {rawfile_path}')
             file = get_rawfile(rawfile_path)
             df = pd.read_parquet(file)
             try:
