@@ -72,7 +72,7 @@ def clip_time(context, filename=None, **kwargs):
     if time_column and time_ranges:
         clipped_df = elwood.clip_dataframe_time(
             dataframe=original_dataframe,
-            time_collumn=time_column,
+            time_column=time_column,
             time_ranges=time_ranges,
         )
 
