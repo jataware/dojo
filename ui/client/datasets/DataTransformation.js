@@ -22,7 +22,7 @@ import Drawer from '../components/Drawer';
 import { Navigation } from '.';
 import AdjustResolution from './AdjustResolution';
 
-const mixmastaJob = (datasetId, requestArgs, jobString, data, onSuccess) => {
+const runElwoodJob = (datasetId, requestArgs, jobString, onSuccess) => {
   const startJob = async () => {
     const jobQueueResp = await axios.post(
       `/api/dojo/job/${datasetId}/${jobString}`, requestArgs
@@ -37,7 +37,7 @@ const mixmastaJob = (datasetId, requestArgs, jobString, data, onSuccess) => {
     setTimeout(() => {
       axios.post(`/api/dojo/job/fetch/${jobId}`).then((response) => {
         if (response.status === 200) {
-          console.log(`the response in mixmastaJob  with job string: ${jobString}:`, response);
+          console.log(`the response in startJob  with job string: ${jobString}:`, response);
           if (response.data) {
             console.log('success! no more calls?', response.data)
             onSuccess(response.data);
@@ -75,6 +75,7 @@ export default withStyles(({ spacing }) => ({
   stepTitle,
   handleNext,
   handleBack,
+  annotations,
 }) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerName, setDrawerName] = useState(null);
@@ -126,6 +127,23 @@ export default withStyles(({ spacing }) => ({
   }
 // to here
 
+  useEffect(() => {
+    if (annotations?.annotations?.date) {
+      const args = {
+        time_column: annotations.annotations.date[0].name,
+      };
+
+      const jobString = 'transformation_processors.get_unique_dates';
+      const onSuccess = (data) => {
+        if (data.unique_dates) {
+          setTimeBounds(data.unique_dates.reverse());
+        }
+      };
+
+      runElwoodJob(datasetInfo.id, args, jobString, onSuccess);
+    }
+  }, [datasetInfo.id, annotations]);
+
   // Fetches the mapBounds for the ClipMap component
   useEffect(() => {
     if (!mapBounds) {
@@ -144,7 +162,7 @@ export default withStyles(({ spacing }) => ({
           setMapBounds(bounds);
         }
       };
-      mixmastaJob(datasetInfo.id, args, jobString, mapBounds, onSuccess);
+      runElwoodJob(datasetInfo.id, args, jobString, onSuccess);
     }
   }, [datasetInfo.id, mapBounds]);
 
@@ -173,7 +191,7 @@ export default withStyles(({ spacing }) => ({
           'longitude',
         ],
       };
-      mixmastaJob(datasetInfo.id, args, 'transformation_processors.clip_geo', savedDrawings, () => {});
+      runElwoodJob(datasetInfo.id, args, 'transformation_processors.clip_geo', savedDrawings, () => {});
     }
   };
 
