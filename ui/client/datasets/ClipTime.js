@@ -4,17 +4,17 @@ import Button from '@material-ui/core/Button';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
-
-import DateFnsUtils from '@date-io/date-fns';
 import {
   MuiPickersUtilsProvider,
   KeyboardDatePicker,
 } from '@material-ui/pickers';
 
-import parse from 'date-fns/parse';
+import parseISO from 'date-fns/parseISO';
 import format from 'date-fns/format';
 import isValid from 'date-fns/isValid';
+import DateFnsUtils from '@date-io/date-fns';
 import { enUS } from 'date-fns/locale';
+
 import 'chartjs-adapter-date-fns';
 import {
   Chart as ChartJS,
@@ -54,7 +54,6 @@ const options = {
   responsive: true,
   maintainAspectRatio: false,
   elements: {
-    // TODO: Style this as less ugly
     point: {
       radius: 5,
       backgroundColor: '#1976d2',
@@ -88,7 +87,6 @@ const options = {
 const DEFAULT_DATE_FORMAT = 'yyyy-MM-dd';
 
 const transformIntoDataset = (dates) => {
-  console.log('this is dates', dates)
   const data = dates.map((date) => ({ x: date, y: 0 }));
   return { datasets: [{ data }] };
 };
@@ -105,9 +103,6 @@ export default withStyles((theme) => ({
     margin: theme.spacing(6),
     display: 'flex',
     justifyContent: 'space-around',
-  },
-  formControl: {
-    minWidth: 120,
   },
   timelineWrapper: {
     height: '80px',
@@ -135,7 +130,6 @@ export default withStyles((theme) => ({
     return null;
   });
   const [endValue, setEndValue] = useState(() => {
-    console.log('do we have savedTimeBounds???', savedTimeBounds)
     if (savedTimeBounds) return savedTimeBounds[savedTimeBounds.length - 1];
     return null;
   });
@@ -153,7 +147,6 @@ export default withStyles((theme) => ({
       }
 
       if (!displayData?.datasets) {
-        console.log('setting???', transformIntoDataset(timeBounds))
         setDisplayData(transformIntoDataset(timeBounds));
       }
     }
@@ -166,7 +159,6 @@ export default withStyles((theme) => ({
   };
 
   const handleChangeStart = (date) => {
-    console.log('this is value we saving', date)
     // check that the date is valid
     const validDate = isValid(date);
     if (!validDate) {
@@ -176,14 +168,13 @@ export default withStyles((theme) => ({
       setStartValue(date);
       return;
     }
-    console.log('are we getting back here???')
+
     // if endValue is also currently valid, make sure the buttons are enabled
-    const parsed = parse(endValue, DEFAULT_DATE_FORMAT, new Date());
+    const parsed = parseISO(endValue);
     if (isValid(parsed)) {
-      console.log('and in here???', parsed)
       setInvalidDates(false);
     }
-    console.log('what about here', isValid(endValue))
+
     // if everything is valid, format the date down to this instead of the full date string
     const formattedDate = format(date, DEFAULT_DATE_FORMAT);
     setStartValue(formattedDate);
@@ -197,7 +188,7 @@ export default withStyles((theme) => ({
       return;
     }
 
-    const parsed = parse(startValue, DEFAULT_DATE_FORMAT, new Date());
+    const parsed = parseISO(startValue);
     if (isValid(parsed)) {
       setInvalidDates(false);
     }
@@ -207,6 +198,7 @@ export default withStyles((theme) => ({
   };
 
   const handleSelectDates = () => {
+    // remove all the dates that are before or after the selected dates
     const filteredDates = timeBounds.filter((savedDate) => {
       const date = new Date(savedDate);
       if (new Date(startValue) > date || new Date(endValue) < date) {
@@ -215,6 +207,7 @@ export default withStyles((theme) => ({
       return true;
     });
 
+    // and add our two new dates to the front and back of the array
     filteredDates.unshift(startValue);
     filteredDates.push(endValue);
     setDisplayData(transformIntoDataset(filteredDates));
@@ -243,12 +236,13 @@ export default withStyles((theme) => ({
                 format="MM/dd/yyyy"
                 margin="normal"
                 label="Select a start date"
-                value={startValue}
+                /* We need to parse the value to keep it from jumping back one day */
+                value={parseISO(startValue)}
                 onChange={handleChangeStart}
                 KeyboardButtonProps={{
                   'aria-label': 'change date',
                 }}
-                minDate={timeBounds[0]}
+                minDate={parseISO(timeBounds[0])}
               />
               <KeyboardDatePicker
                 disableToolbar
@@ -256,12 +250,12 @@ export default withStyles((theme) => ({
                 format="MM/dd/yyyy"
                 margin="normal"
                 label="Select an end date"
-                value={endValue}
+                value={parseISO(endValue)}
                 onChange={handleChangeEnd}
                 KeyboardButtonProps={{
                   'aria-label': 'change date',
                 }}
-                maxDate={timeBounds[timeBounds.length - 1]}
+                maxDate={parseISO(timeBounds[timeBounds.length - 1])}
               />
             </MuiPickersUtilsProvider>
           </div>
@@ -272,7 +266,6 @@ export default withStyles((theme) => ({
               color="primary"
               disableElevation
               onClick={handleSave}
-              // only allow these to be set once before resetting
               disabled={!displayData || invalidDates}
             >
               Save & Close
