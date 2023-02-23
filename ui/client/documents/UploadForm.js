@@ -26,9 +26,11 @@ import AccordionSummary from '@material-ui/core/AccordionSummary';
 
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import ClearIcon from '@material-ui/icons/Clear';
+// import InfoIcon from '@material-ui/icons/InfoOutlined';
 import Alert from '@material-ui/lab/Alert';
 
 import Container from '@material-ui/core/Container';
+import Drawer from '@material-ui/core/Drawer';
 
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
@@ -140,6 +142,97 @@ const arrayToDOMOptions = (optionsArray) => optionsArray
         </option>
       ));
 
+const DRAWER_WIDTH = "30rem";
+
+/**
+ *
+ **/
+export const PDFPreviewDrawer = withStyles((theme) => ({
+  root: {
+    padding: "1rem",
+    height: "100%"
+  },
+  previewTab: {
+    borderRight: '1px solid gray', // TODO tweak subtle border color
+
+    '& > div': {
+      marginTop: '5rem',
+      height: '10rem',
+      width: 0,
+      paddingRight: '3rem',
+      background: theme.palette.common.white,
+      marginRight: -1, // Overlap and hide left border of panel itself
+      display: 'flex',
+      alignItems: 'center',
+      border: '1px solid gray', // TODO tweak color
+      borderRadius: '6px 0 0 6px',
+      borderRight: 'lightgray', // theme color
+    }
+  },
+  // pdfButton: {
+  //   transform: 'rotate(270deg)',
+  //   marginLeft: -6,
+
+  //   // '&:hover': {
+  //   //   backgroundColor: 'transparent',
+  //   //   boxShadow: 'none',
+  //   // }
+  // },
+  drawer: {
+    // width: DRAWER_WIDTH,
+    flexShrink: 0,
+    whiteSpace: 'nowrap',
+  },
+  drawerOpen: {
+    // width: DRAWER_WIDTH,
+    transition: theme.transitions.create('width', {
+      easing: theme.transitions.easing.sharp,
+      duration: theme.transitions.duration.enteringScreen,
+    }),
+  },
+  drawerClose: {
+    transition: theme.transitions.create('width', {
+      easing: theme.transitions.easing.sharp,
+      duration: theme.transitions.duration.leavingScreen,
+    }),
+    overflowX: 'hidden',
+    // width: theme.spacing(7) + 1,
+    // [theme.breakpoints.up('sm')]: {
+    //   width: theme.spacing(9) + 1,
+    // },
+  },
+}))(({ classes, file }) => {
+
+  return (
+    <Paper
+      elevation={0}
+      className={
+        clsx({
+          [classes.root]: true,
+          [classes.drawer]: true,
+          [classes.drawerOpen]: open,
+          [classes.drawerClose]: !open
+        })
+
+      }
+    >
+      <Typography
+        variant="h6"
+        gutterBottom
+      >
+        Preview: {file.name}
+      </Typography>
+
+      <embed
+        src={file.blobUrl}
+        type="application/pdf"
+        height="95%"
+        width="100%" />
+
+    </Paper>
+  );
+});
+
 /**
  *
  **/
@@ -169,6 +262,12 @@ export const EditDocumentMetadata = withStyles((theme) => ({
     }
   });
 
+  const gridItemProps = {
+    item: true,
+    xs: 12,
+    md: 6
+  };
+
   return (
     <div className={classes.root}>
       <Typography
@@ -177,7 +276,7 @@ export const EditDocumentMetadata = withStyles((theme) => ({
         style={{paddingLeft: "1rem"}}
         gutterBottom
       >
-        Metadata Fields for `{filename}`
+        Metadata for `{filename}`
       </Typography>
 
       <List>
@@ -201,28 +300,43 @@ export const EditDocumentMetadata = withStyles((theme) => ({
         <ListItem>
           <Grid container spacing={2}>
 
-            <Grid item xs={12} sm={6}>
+            <Grid
+              {...gridItemProps}
+            >
               <ManagedTextField
                 {...sharedTextFieldProps("author")}
               />
             </Grid>
 
-            <Grid item xs={12} sm={6}>
+            <Grid
+              {...gridItemProps}
+            >
               <ManagedTextField
                 {...sharedTextFieldProps("publisher")}
               />
             </Grid>
 
-            <Grid item xs={12} sm={6}>
+            <Grid
+              {...gridItemProps}
+            >
               <ManagedTextField
                 {...sharedTextFieldProps("producer")}
               />
             </Grid>
 
+            <Grid
+              {...gridItemProps}
+            >
             <Formik>
-              <Grid item xs={12} sm={6}>
                 <MuiPickersUtilsProvider utils={DateFnsUtils}>
                   <Field
+                    style={{
+                      marginTop: 0
+                    }}
+                    InputLabelProps={{ shrink: true }}
+                    InputProps={{
+                      style: { borderRadius: 0 },
+                    }}
                     format="MM/dd/yyyy"
                     component={KeyboardDatePicker}
                     inputVariant="outlined"
@@ -230,23 +344,25 @@ export const EditDocumentMetadata = withStyles((theme) => ({
                     {...sharedTextFieldProps("creation_date")}
                   />
                 </MuiPickersUtilsProvider>
-              </Grid>
             </Formik>
+            </Grid>
 
           </Grid>
         </ListItem>
 
-        <ListItem>
+        <ListItem style={{paddingTop: 0}}>
           <fieldset style={{padding: "1rem", width: "100%", border: "1px solid #e9e9e9"}}>
 
-            <legend>Attributes</legend>
+            <legend>Additional Attributes</legend>
 
-            <Grid container spacing={2}>
+            <Grid
+              justifyContent="center"
+              container
+              spacing={2}
+            >
 
               <Grid
-                item
-                xs={12}
-                sm={6}
+                {...gridItemProps}
               >
                 <ManagedTextField
                   {...sharedSelectFieldProps("original_language")}
@@ -259,9 +375,7 @@ export const EditDocumentMetadata = withStyles((theme) => ({
               </Grid>
 
               <Grid
-                item
-                xs={12}
-                sm={6}
+                {...gridItemProps}
               >
                 <ManagedTextField
                   {...sharedSelectFieldProps("type")}
@@ -274,9 +388,7 @@ export const EditDocumentMetadata = withStyles((theme) => ({
               </Grid>
 
               <Grid
-                item
-                xs={12}
-                sm={6}
+                {...gridItemProps}
               >
                 <ManagedTextField
                   {...sharedSelectFieldProps("stated_genre")}
@@ -286,9 +398,7 @@ export const EditDocumentMetadata = withStyles((theme) => ({
               </Grid>
 
               <Grid
-                item
-                xs={12}
-                sm={6}
+                {...gridItemProps}
               >
                 <ManagedTextField
                   {...sharedSelectFieldProps("classification")}
@@ -312,7 +422,7 @@ export const EditDocumentMetadata = withStyles((theme) => ({
  **/
 export const FileDropSelector = withStyles((theme => ({
   root: {
-    margin: '2rem 0 1rem 0',
+    margin: '1rem 0 1rem 0',
     padding: '2rem',
     borderRadius: '1rem',
     width: '100%',
@@ -422,10 +532,12 @@ export const FileTile = withStyles((theme) => ({
 export const SelectedFileList = withStyles((theme) => ({
   root: {
     border: '1px solid #eaeaea',
+    borderRadius: 0,
+    height: '100%'
   },
   list: {
     overflowY: 'auto',
-    maxHeight: 650, // TODO rem, maybe px to rem util
+    height: '100%', // TODO rem, maybe px to rem util
   }
 }))(({ classes, files, onItemClick, onDelete, selectedIndex }) => {
 
@@ -437,7 +549,14 @@ export const SelectedFileList = withStyles((theme) => ({
         value={selectedIndex+""}
       >
 
-        <List className={classes.list}>
+        <List
+          subheader={
+            <ListSubheader component="div">
+              Files
+            </ListSubheader>
+          }
+          className={classes.list}
+        >
           {files.map((file, index) => file && (
             <FileTile
               onDelete={() => onDelete(index)}
@@ -494,14 +613,26 @@ export const uploadFile = async (file, documentID, params={}) => {
  **/
 const UploadDocumentForm = withStyles((theme) => ({
   root: {
-    padding: '4rem',
+    padding: '3rem',
+    height: '100%',
+    display: 'flex',
+    flexDirection: 'column'
+  },
+  mainContent: {
+    width: "100%",
+    flex: "1 1 auto",
+    margin: "auto",
+    display: 'flex',
+    flexDirection: 'column'
   },
   fileList: {
     display: 'flex',
+    height: '100%'
   },
   navContainer: {
     display: 'flex',
-    justifyContent: 'space-between'
+    justifyContent: 'space-between',
+    padding: '1rem'
   }
 }))(({ title, children, classes }) => {
 
@@ -510,20 +641,27 @@ const UploadDocumentForm = withStyles((theme) => ({
   const [selectedFileIndex, setSelectedFileIndex] = useState(null);
 
   const [loading, setLoading] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
-  console.log('files', files);
+  const selectedFile = selectedFileIndex !== null ? files[selectedFileIndex] : {};
 
   const handleFileSelect = useCallback(acceptedFiles => {
 
-    // TODO add loading animation in case we're parsing many files
     setLoading(true);
 
-    // gather PDF data. TODO cleanup once e2e prototype is complete
-    const pdfData = acceptedFiles.map(pdfFile => {
-      return readFile(pdfFile)
-        .then(binary => {
+    const byteData = [];
 
-          return PDFDocument.load(binary)
+    // gather PDF data. TODO cleanup once e2e prototype is complete
+    const pdfData = acceptedFiles.map((pdfFile) => {
+      return readFile(pdfFile)
+        .then(bytes => {
+
+          // Some side-effects on a map fn...
+          const blob = new Blob([ bytes ], {type: "application/pdf"});
+          const docUrl = URL.createObjectURL(blob);
+          byteData.push(docUrl);
+
+          return PDFDocument.load(bytes)
             .then(pdf => {
 
               // TODO this bit and pdfMetadataToForm formatting can be done in
@@ -549,12 +687,17 @@ const UploadDocumentForm = withStyles((theme) => ({
     Promise.all(pdfData)
       .then((allPdfData) => {
         const formattedMetadata = allPdfData.map(pdfMetadataToForm);
+        const formattedFiles = acceptedFiles
+              .map((file, idx) => {
+                file.blobUrl = byteData[idx];
+                return file;
+              });
 
         // Let's update the state all together when we have everything available.
         // It's hard to trust and coordinate batch updates when performing updates
         // both outside and inside async promise handler:
         setAllPDFMetadata(prevMetadata => [ ...prevMetadata, ...formattedMetadata ]);
-        setFiles(prevFiles => [ ...prevFiles, ...acceptedFiles ]);
+        setFiles(prevFiles => [ ...prevFiles, ...formattedFiles ]);
         setSelectedFileIndex(selectedFileIndex => selectedFileIndex || 0);
         setLoading(false);
       });
@@ -576,6 +719,9 @@ const UploadDocumentForm = withStyles((theme) => ({
   };
 
   const submitAndUploadDocuments = () => {
+
+    setUploading(true);
+
     files.forEach((file, idx) => {
 
       function formatDate(date) {
@@ -628,13 +774,12 @@ const UploadDocumentForm = withStyles((theme) => ({
     <Container
       className={classes.root}
       component="main"
-      maxWidth="lg"
+      maxWidth={selectedFileIndex === null ? "md" : false}
     >
       <Typography
         variant="h3"
         align="center"
         gutterBottom
-        style={{paddingBottom: "2rem"}}
       >
         Document Explorer
       </Typography>
@@ -644,88 +789,106 @@ const UploadDocumentForm = withStyles((theme) => ({
         color="textSecondary"
         gutterBottom
       >
-        Bulk Upload Documents
+        Bulk Document Upload
       </Typography>
 
-      <FileDropSelector
-        onFileSelect={handleFileSelect}
-        onDropFilesRejected={handleDropFilesRejection}
-      />
+      <div className={classes.mainContent}>
+        <Alert
+          style={{border: "none"}}
+          severity="info"
+          variant="outlined"
+        >
+          Drag and Drop files and folders on the drop zone below. Nested directories are supported.
+        </Alert>
 
-      {loading && (
-        <div>
-          <br />
-          <LinearProgress />
-          <br />
-        </div>
-      )}
+        <FileDropSelector
+          onFileSelect={handleFileSelect}
+          onDropFilesRejected={handleDropFilesRejection}
+        />
 
-      {!isEmpty(files) && (
-        <div>
+        {loading && (
+          <div>
+            <br />
+            <LinearProgress />
+            <br />
+          </div>
+        )}
 
-          <br />
+        {!isEmpty(files) && (
+          <div style={{
+            flex: '3 0 auto'
+          }}>
 
-          <Typography
-            color="textSecondary"
-            paragraph
-            variant="h6"
-          >
-            The following {files.length} files will be uploaded. Confirm or edit
-            document metadata fields before saving.
-          </Typography>
+            <br />
 
-          <br />
+            <Typography
+              color="textSecondary"
+              paragraph
+              variant="body1"
+            >
+              The following {files.length > 1 ? `${files.length} files` : "file"} will be uploaded. Confirm or edit
+              document metadata fields before proceeding.
+            </Typography>
 
-          <div className={classes.fileList}>
-            <div style={{flex: '6 1 400px'}}>
-              <SelectedFileList
-                onDelete={handleFileDelete}
-                files={files}
-                selectedIndex={selectedFileIndex}
-                onItemClick={setSelectedFileIndex}
-              />
-            </div>
+            <div className={classes.fileList}>
 
-            {selectedFileIndex !== null && (
-              <div
-                style={{flex: '3 2 600px'}}
-              >
-                {/* NOTE key==selectedIndex renders a form per file, but only for the file in question; */}
-                {/*   shorthand for adding a form per file, only displaying selected file form */}
+              <section style={{flex: '4 2 200px', padding: '1rem'}}>
+                <SelectedFileList
+                  onDelete={handleFileDelete}
+                  files={files}
+                  selectedIndex={selectedFileIndex}
+                  onItemClick={setSelectedFileIndex}
+                />
+              </section>
+
+              {selectedFileIndex !== null && (
+                <section style={{flex: '6 2 400px'}}>
+                  <PDFPreviewDrawer
+                    file={selectedFile}
+                  />
+                </section>
+              )}
+
+              {selectedFileIndex !== null && (
+                <section
+                  style={{flex: '4 1 500px'}}
+                >
+                  {/* NOTE key==selectedIndex renders a form per file, but only for the file in question; */}
+                  {/*   shorthand for adding a form per file, only displaying selected file form */}
                   <EditDocumentMetadata
                     key={selectedFileIndex}
                     onSave={handleDocFieldChange}
-                    filename={files[selectedFileIndex].name}
+                    filename={selectedFile.name}
                     metadata={allPDFMetadata[selectedFileIndex]} />
-              </div>
-            )}
+                </section>
+              )}
+
+            </div>
+
+            <div className={classes.navContainer}>
+              <Button
+                variant="contained"
+                size="large"
+              >
+                Cancel
+              </Button>
+              &nbsp;
+              <Button
+                onClick={submitAndUploadDocuments}
+                size="large"
+                type="submit"
+                color="primary"
+                variant="contained"
+                disabled={uploading}
+              >
+                Upload All
+              </Button>
+            </div>
+
           </div>
 
-          <br />
-          <br />
-          <Divider />
-          <br />
-          <br />
-
-          <div className={classes.navContainer}>
-            <Button variant="contained" size="large">
-              Cancel
-            </Button>
-            &nbsp;
-            <Button
-              onClick={submitAndUploadDocuments}
-              size="large"
-              type="submit"
-              color="primary"
-              variant="contained"
-            >
-              Save All
-            </Button>
-          </div>
-
-        </div>
-
-      )}
+        )}
+      </div>
 
     </Container>
   );
