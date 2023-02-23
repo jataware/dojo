@@ -1,4 +1,5 @@
 import React from 'react';
+import axios from 'axios';
 import snakeCase from 'lodash/snakeCase';
 import mapKeys from 'lodash/mapKeys';
 import reduce from 'lodash/reduce';
@@ -163,3 +164,26 @@ export function pdfMetadataToForm(pdfExtractedMetadata) {
 
   return reduced;
 }
+
+/**
+ * Uploads a file to the backend service.
+ * Receives a form dom reference, datasetId, and optional params.
+ * TODO move to common project location, as datasets also uses this..?
+ * will need to receive url or so.
+ * TODO check why the datasets version needs a ref to the form, instead
+ * of a reference to the selected file as we do here.
+ **/
+export const uploadFile = async (file, documentID, params={}) => {
+
+  const uploadData = new window.FormData();
+
+  uploadData.append('file', file);
+
+  const response = await axios({
+    method: 'post',
+    url: `/api/dojo/documents/${documentID}/upload`,
+    data: uploadData,
+    params: params
+  });
+  return response;
+};
