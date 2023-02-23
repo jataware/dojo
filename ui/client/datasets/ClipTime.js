@@ -248,6 +248,7 @@ export default withStyles((theme) => ({
                 KeyboardButtonProps={{
                   'aria-label': 'change date',
                 }}
+                minDate={timeBounds[0]}
               />
               <KeyboardDatePicker
                 disableToolbar
@@ -260,6 +261,7 @@ export default withStyles((theme) => ({
                 KeyboardButtonProps={{
                   'aria-label': 'change date',
                 }}
+                maxDate={timeBounds[timeBounds.length - 1]}
               />
             </MuiPickersUtilsProvider>
           </div>
@@ -279,6 +281,7 @@ export default withStyles((theme) => ({
               <Button
                 variant="outlined"
                 onClick={handleReset}
+                style={{ marginRight: '16px' }}
               >
                 Reset
               </Button>
