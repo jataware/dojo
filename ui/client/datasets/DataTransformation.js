@@ -94,106 +94,127 @@ export default withStyles(({ spacing }) => ({
   // if (!mapBounds) {
   //   setMapBounds([['12', '40'], ['-44', '-15']]);
   // }
-  if (!mapResolution) {
-    setTimeout(() => {
-      setMapResolution('1m');
+  if (!mapResolutionOptions) {
+    // setTimeout(() => {
+      // setMapResolution('1m');
 
       setMapResolutionOptions(['10m', '50m', '100m', '500m', '1km', '10km']);
-    }, 2000);
+    // }, 2000);
   }
-  if (!mapResolution) {
+  if (!timeResolutionOptions) {
     setTimeout(() => {
-      setTimeResolution('day');
+      // setTimeResolution('day');
 
       setTimeResolutionOptions(['week', 'fortnight', 'month', 'year', 'decade']);
     }, 2000);
   }
-  if (!timeBounds.length) {
-    // setTimeout(() => {
-      setTimeBounds([
-        '2020-01-22',
-        '2020-03-01',
-        '2020-05-02',
-        '2020-07-03',
-        '2020-12-08',
-        '2021-01-12',
-        '2021-04-15',
-        '2021-06-03',
-        '2021-12-08',
-        '2022-01-12',
-        '2022-07-15',
-      ]);
-    // }, 3000);
-  }
+  // if (!timeBounds.length) {
+  //   // setTimeout(() => {
+  //     setTimeBounds([
+  //       '2020-01-22',
+  //       '2020-03-01',
+  //       '2020-05-02',
+  //       '2020-07-03',
+  //       '2020-12-08',
+  //       '2021-01-12',
+  //       '2021-04-15',
+  //       '2021-06-03',
+  //       '2021-12-08',
+  //       '2022-01-12',
+  //       '2022-07-15',
+  //     ]);
+  //   // }, 3000);
+  // }
 // to here
 
-  // Fetches the mapBounds for the ClipMap component
+  // fetch resolution for AdjustResolution (geographic) component
+  useEffect(() => {
+    if (!mapResolution) {
+      if (annotations?.annotations?.geo) {
+        const args = {};
+        annotations.annotations.geo.forEach((geo) => {
+          if (geo.geo_type === 'latitude') {
+            args.lat_column = geo.name;
+          } else {
+            args.lon_column = geo.name;
+          }
+        });
+
+        const geoResolutionString = 'resolution_processors.calculate_geographical_resolution';
+        const onGeoResolutionSuccess = (data) => {
+          console.log('this is the calculate_geographical_resolution response:', data)
+          if (data.resolution_result) {
+            setMapResolution(data.resolution_result);
+          }
+        };
+
+        runElwoodJob(datasetInfo.id, args, geoResolutionString, onGeoResolutionSuccess);
+      }
+    }
+  }, [datasetInfo.id, annotations, mapResolution]);
+
+  // fetch boundary for ClipMap component
   useEffect(() => {
     if (!mapBounds) {
-      const args = {
-        geo_columns: [
-          'latitude',
-          'longitude',
-        ],
-      };
-      const jobString = 'transformation_processors.get_boundary_box';
+      if (annotations?.annotations?.geo) {
+        const args = { geo_columns: [] };
+        annotations.annotations.geo.forEach((geo) => args.geo_columns.push(geo.name));
 
-      const onSuccess = (data) => {
-        if (data?.boundary_box) {
-          const bObj = data?.boundary_box;
-          const bounds = [[bObj.xmin, bObj.ymin], [bObj.xmax, bObj.ymax]];
-          setMapBounds(bounds);
-        }
-      };
-      runElwoodJob(datasetInfo.id, args, jobString, onSuccess);
+        const geoBoundaryString = 'transformation_processors.get_boundary_box';
+        const onGeoBoundarySuccess = (data) => {
+          if (data?.boundary_box) {
+            const bObj = data?.boundary_box;
+            const bounds = [[bObj.xmin, bObj.ymin], [bObj.xmax, bObj.ymax]];
+            setMapBounds(bounds);
+          }
+        };
+
+        runElwoodJob(datasetInfo.id, args, geoBoundaryString, onGeoBoundarySuccess);
+      }
     }
-  }, [datasetInfo.id, mapBounds]);
+  }, [datasetInfo.id, annotations, mapBounds]);
 
-  // fetch geographic resolution
+  // fetch resolution for AdjustResolution (temporal) component
   useEffect(() => {
-    console.log('this is annotations', annotations)
-    if (annotations?.annotations?.geo) {
-      const args = {};
-      annotations.annotations.geo.forEach((geo) => {
-        if (geo.geo_type === 'latitude') {
-          args.lat_column = geo.name;
-        } else {
-          args.lon_column = geo.name;
-        }
-      });
+    if (!timeResolution) {
+      if (annotations?.annotations?.date) {
+        const args = {
+          datetime_column: annotations.annotations.date[0].name,
+          time_format: annotations.annotations.date[0].time_format,
+        };
 
-      const jobString = 'resolution_processors.calculate_geographical_resolution';
-      const onSuccess = (data) => {
-        console.log('this is the calculate_geographical_resolution response:', data)
-      };
+        const temporalResolutionString = 'resolution_processors.calculate_temporal_resolution';
+        const onTemporalResolutionSuccess = (data) => {
+          if (data.resolution_result) {
+            setTimeResolution(data.resolution_result);
+          }
+        };
 
-      runElwoodJob(datasetInfo.id, args, jobString, onSuccess);
+        runElwoodJob(datasetInfo.id, args, temporalResolutionString, onTemporalResolutionSuccess);
+      }
     }
-  }, [datasetInfo.id, annotations]);
+  }, [datasetInfo.id, annotations, timeResolution]);
 
-  // fetch time bounds for ClipTime & AdjustResolution (temporal) components
+  // fetch time bounds for ClipTime component
   useEffect(() => {
-    if (annotations?.annotations?.date) {
-      const args = {
-        datetime_column: annotations.annotations.date[0].name,
-        time_format: annotations.annotations.date[0].time_format,
-      };
+    if (!timeBounds.length) {
+      if (annotations?.annotations?.date) {
+        const args = {
+          datetime_column: annotations.annotations.date[0].name,
+          time_format: annotations.annotations.date[0].time_format,
+        };
 
-      const clipTimeString = 'transformation_processors.get_unique_dates';
-      const scaleTimeString = 'resolution_processors.calculate_temporal_resolution';
-      const onClipSuccess = (data) => {
-        if (data.unique_dates) {
-          setTimeBounds(data.unique_dates.reverse());
-        }
-      };
-      const onScaleSuccess = (data) => {
-        console.log('this is the calculate_temporal_resolution response', data);
-      };
+        const getDatesString = 'transformation_processors.get_unique_dates';
+        const onGetDatesSuccess = (data) => {
+          if (data.unique_dates) {
+            setTimeBounds(data.unique_dates.reverse());
+          }
+        };
 
-      runElwoodJob(datasetInfo.id, args, scaleTimeString, onScaleSuccess);
-      runElwoodJob(datasetInfo.id, args, clipTimeString, onClipSuccess);
+        runElwoodJob(datasetInfo.id, args, getDatesString, onGetDatesSuccess);
+      }
     }
-  }, [datasetInfo.id, annotations]);
+  }, [datasetInfo.id, annotations, timeBounds]);
 
   const handleDrawerClose = (bool, event) => {
     // prevent clicking outside the drawer to close
@@ -253,7 +274,7 @@ export default withStyles(({ spacing }) => ({
             closeDrawer={handleDrawerClose}
             oldResolution={mapResolution}
             resolutionOptions={mapResolutionOptions}
-            title="Adjust Geospatial Resolution"
+            title="Geospatial"
           />
         );
       case 'clipMap':
@@ -273,7 +294,7 @@ export default withStyles(({ spacing }) => ({
             closeDrawer={handleDrawerClose}
             oldResolution={timeResolution}
             resolutionOptions={timeResolutionOptions}
-            title="Adjust Temporal Resolution"
+            title="Temporal"
           />
         );
       case 'clipTime':

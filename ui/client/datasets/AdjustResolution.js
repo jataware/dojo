@@ -62,9 +62,22 @@ export default withStyles((theme) => ({
     setSelectedResolution(event.target.value);
   };
 
+  // TODO: figure out what are successful resolutions instead of unsuccessful
+  // un-duplicate title etc
+  if (oldResolution === 'None' || oldResolution.uniformity === 'NOT_UNIFORM') {
+    return (
+      <>
+        <Typography align="center" variant="h5">Adjust {title} Resolution</Typography>
+        <Typography align="center" variant="h6" style={{ marginTop: '64px' }}>
+          This dataset does not have a useable {title} resolution
+        </Typography>
+      </>
+    );
+  }
+
   return (
     <div>
-      <Typography align="center" variant="h5">{title}</Typography>
+      <Typography align="center" variant="h5">Adjust {title} Resolution</Typography>
       {oldResolution && resolutionOptions.length ? (
         <>
           <div className={classes.oldToNew}>
