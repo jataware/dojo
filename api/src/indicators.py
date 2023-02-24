@@ -9,6 +9,7 @@ import uuid
 from datetime import datetime
 from typing import Any, Dict, Generator, List, Optional
 from urllib.parse import urlparse
+import logging
 
 import json
 import pandas as pd
@@ -44,8 +45,21 @@ from validation.IndicatorSchema import (
     Period,
     Geography,
 )
-
 import os
+
+from rq import Worker, Queue
+from rq.job import Job
+from redis import Redis
+
+
+# REDIS CONNECTION AND QUEUE OBJECTS
+redis = Redis(
+    os.environ.get("REDIS_HOST", "redis.dojo-stack"),
+    os.environ.get("REDIS_PORT", "6379"),
+)
+q = Queue(connection=redis, default_timeout=-1)
+
+
 
 router = APIRouter()
 
@@ -507,3 +521,109 @@ async def create_preview(
             headers={"msg": f"Error: {e}"},
             content=f"Queue could not be deleted.",
         )
+
+
+    
+import pandas
+import numpy as np
+def scale_dataframe(dataframe):
+    """
+    This function accepts a dataframe in the canonical format
+    and min/max scales each feature to between 0 to 1
+    """
+    dfs = []
+    features = dataframe.feature.unique()
+
+    for f in features:
+        feat = dataframe[dataframe["feature"] == f].copy()
+        feat["value"] = scale_data(feat["value"])
+        dfs.append(feat)
+    return pandas.concat(dfs)
+
+
+def scale_data(data):
+    """
+    This function takes in an array and performs 0 to 1 normalization on it.
+    It is robust to NaN values and ignores them (leaves as NaN).
+    """
+    return (data - np.min(data)) / (np.max(data) - np.min(data))
+
+def get_context(uuid):
+    try:
+        annotations = get_annotations(uuid)
+    except:
+        annotations = {}
+    try:
+        dataset = get_indicators(uuid)
+    except:
+        dataset = {}
+
+    context = {"uuid": uuid, "dataset": dataset, "annotations": annotations}
+
+    return context
+
+def runjob(uuid: str, job_string: str, options: Optional[Dict[Any, Any]] = None):
+
+    if options is None:
+        options = {}
+
+    force_restart = options.pop("force_restart", False)
+    synchronous = options.pop("synchronous", False)
+    timeout = options.pop("timeout", 60)
+    recheck_delay = 0.5
+
+    job_id = f"{uuid}_{job_string}"
+    print(job_id)
+    job = q.fetch_job(job_id)
+    print(f'job {job}')
+    context = options.pop("context", None)
+    if job and force_restart:
+        job.cleanup(ttl=0)  # Cleanup/remove data immediately
+
+    if not job or force_restart:
+        try:
+            if not context:
+                context = get_context(uuid=uuid)
+        except Exception as e:
+            logging.error(e)
+        job = q.enqueue_call(
+            func=job_string, args=[context], kwargs=options, job_id=job_id
+        )
+        print(f'job w {job}')
+        if synchronous:
+            timer = 0.0
+            while (
+                job.get_status(refresh=True) not in ("finished", "failed")
+                and timer < timeout
+            ):
+                time.sleep(recheck_delay)
+                timer += recheck_delay
+
+    status = job.get_status()
+    if status in ("finished", "failed"):
+        job_result = job.result
+        job_error = job.exc_info
+        job.cleanup(ttl=0)  # Cleanup/remove data immediately
+    else:
+        job_result = None
+        job_error = None
+
+    response = {
+        "id": job_id,
+        "created_at": job.created_at,
+        "enqueued_at": job.enqueued_at,
+        "started_at": job.started_at,
+        "status": status,
+        "job_error": job_error,
+        "result": job_result,
+    }
+    return response
+
+@router.get("/indicators/{indicator_id}/rescale")
+def get_all_indicator_info(indicator_id: str):
+    job_string="scale_indicator.scale_indicator"
+    
+
+    resp=runjob(uuid=indicator_id, job_string=job_string)
+
+    return resp
