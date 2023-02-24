@@ -127,24 +127,6 @@ export default withStyles(({ spacing }) => ({
   }
 // to here
 
-  // fetch time bounds for ClipTime component
-  useEffect(() => {
-    if (annotations?.annotations?.date) {
-      const args = {
-        time_column: annotations.annotations.date[0].name,
-      };
-
-      const jobString = 'transformation_processors.get_unique_dates';
-      const onSuccess = (data) => {
-        if (data.unique_dates) {
-          setTimeBounds(data.unique_dates.reverse());
-        }
-      };
-
-      runElwoodJob(datasetInfo.id, args, jobString, onSuccess);
-    }
-  }, [datasetInfo.id, annotations]);
-
   // Fetches the mapBounds for the ClipMap component
   useEffect(() => {
     if (!mapBounds) {
@@ -166,6 +148,52 @@ export default withStyles(({ spacing }) => ({
       runElwoodJob(datasetInfo.id, args, jobString, onSuccess);
     }
   }, [datasetInfo.id, mapBounds]);
+
+  // fetch geographic resolution
+  useEffect(() => {
+    console.log('this is annotations', annotations)
+    if (annotations?.annotations?.geo) {
+      const args = {};
+      annotations.annotations.geo.forEach((geo) => {
+        if (geo.geo_type === 'latitude') {
+          args.lat_column = geo.name;
+        } else {
+          args.lon_column = geo.name;
+        }
+      });
+
+      const jobString = 'resolution_processors.calculate_geographical_resolution';
+      const onSuccess = (data) => {
+        console.log('this is the calculate_geographical_resolution response:', data)
+      };
+
+      runElwoodJob(datasetInfo.id, args, jobString, onSuccess);
+    }
+  }, [datasetInfo.id, annotations]);
+
+  // fetch time bounds for ClipTime & AdjustResolution (temporal) components
+  useEffect(() => {
+    if (annotations?.annotations?.date) {
+      const args = {
+        datetime_column: annotations.annotations.date[0].name,
+        time_format: annotations.annotations.date[0].time_format,
+      };
+
+      const clipTimeString = 'transformation_processors.get_unique_dates';
+      const scaleTimeString = 'resolution_processors.calculate_temporal_resolution';
+      const onClipSuccess = (data) => {
+        if (data.unique_dates) {
+          setTimeBounds(data.unique_dates.reverse());
+        }
+      };
+      const onScaleSuccess = (data) => {
+        console.log('this is the calculate_temporal_resolution response', data);
+      };
+
+      runElwoodJob(datasetInfo.id, args, scaleTimeString, onScaleSuccess);
+      runElwoodJob(datasetInfo.id, args, clipTimeString, onClipSuccess);
+    }
+  }, [datasetInfo.id, annotations]);
 
   const handleDrawerClose = (bool, event) => {
     // prevent clicking outside the drawer to close
@@ -199,9 +227,9 @@ export default withStyles(({ spacing }) => ({
   const processClipTime = () => {
     if (savedTimeBounds) {
       const args = {
-        time_column: annotations.annotations.date[0].name,
+        datetime_column: annotations.annotations.date[0].name,
         time_ranges: [{
-          start: savedTimeBounds[0], end: savedTimeBounds[savedTimeBounds.length -1]
+          start: savedTimeBounds[0], end: savedTimeBounds[savedTimeBounds.length - 1]
         }],
       };
 
