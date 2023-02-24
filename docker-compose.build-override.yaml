@@ -172,7 +172,24 @@ services:
       - 0.0.0.0
     networks:
       - dojo-stack
-
+  minio:
+    image: "minio/minio:RELEASE.2021-07-27T02-40-15Z"
+    environment:
+      MINIO_ROOT_USER: miniouser
+      MINIO_ROOT_PASSWORD: miniopass
+    ports:
+      - 9000:9000
+      - 9001:9001
+    command:
+      - minio
+      - server
+      - -console-address
+      - :9001
+      - /data
+    volumes:
+      - ${PWD}/data:/data
+    networks:
+      dojo-stack: {}
   rqworker:
     env_file:
       - envfile
