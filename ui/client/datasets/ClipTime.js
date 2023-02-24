@@ -294,7 +294,7 @@ export default withStyles((theme) => ({
       ) : (
         <div className={classes.loading}>
           <Typography variant="subtitle1" align="center">
-            Resolution Data Loading
+            Temporal Bounds Loading
           </Typography>
           <CircularProgress />
         </div>

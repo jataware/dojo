@@ -61,14 +61,22 @@ const runElwoodJob = (datasetId, requestArgs, jobString, onSuccess) => {
   }
 };
 
-export default withStyles(({ spacing }) => ({
+export default withStyles(({ spacing, palette }) => ({
   root: {
     padding: [[spacing(4), spacing(4), spacing(2), spacing(4)]],
   },
   header: {
     marginBottom: spacing(6),
   },
-
+  complete: {
+    color: palette.grey[500],
+  },
+  incomplete: {
+    color: palette.text.primary,
+  },
+  check: {
+    color: palette.success.light,
+  },
 }))(({
   classes,
   datasetInfo,
@@ -79,34 +87,49 @@ export default withStyles(({ spacing }) => ({
 }) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerName, setDrawerName] = useState(null);
+  const [disableDrawerClose, setDisableDrawerClose] = useState(false);
+
   const [mapBounds, setMapBounds] = useState(null);
+  const [savedDrawings, setSavedDrawings] = useState([]);
+
   const [mapResolution, setMapResolution] = useState(null);
   const [mapResolutionOptions, setMapResolutionOptions] = useState([]);
+  const [savedMapResolution, setSavedMapResolution] = useState(null);
+
   const [timeResolution, setTimeResolution] = useState(null);
   const [timeResolutionOptions, setTimeResolutionOptions] = useState([]);
+  const [savedTimeResolution, setSavedTimeResolution] = useState(null);
+
   const [timeBounds, setTimeBounds] = useState([]);
   const [savedTimeBounds, setSavedTimeBounds] = useState(null);
-  const [savedDrawings, setSavedDrawings] = useState([]);
-  const [disableDrawerClose, setDisableDrawerClose] = useState(false);
-  const theme = useTheme();
 
 // TODO remove the following, just for development
   // if (!mapBounds) {
   //   setMapBounds([['12', '40'], ['-44', '-15']]);
   // }
-  if (!mapResolutionOptions) {
+  if (!mapResolutionOptions.length) {
     // setTimeout(() => {
       // setMapResolution('1m');
 
       setMapResolutionOptions(['10m', '50m', '100m', '500m', '1km', '10km']);
     // }, 2000);
   }
-  if (!timeResolutionOptions) {
-    setTimeout(() => {
-      // setTimeResolution('day');
-
-      setTimeResolutionOptions(['week', 'fortnight', 'month', 'year', 'decade']);
-    }, 2000);
+  if (!timeResolutionOptions.length) {
+    // setTimeout(() => {
+    setTimeResolution({
+      uniformity: 'PERFECT',
+      unit: 'month',
+      resolution: 1,
+      error: 1.7832238693938827
+    });
+    setTimeResolutionOptions([
+      { alias: 'D', description: 'day' },
+      { alias: 'W', description: 'week' },
+      { alias: 'SM', description: 'semi-month' },
+      { alias: 'M', description: 'month-end' },
+      { alias: 'Y', description: 'year-end' },
+    ]);
+    // }, 2000);
   }
   // if (!timeBounds.length) {
   //   // setTimeout(() => {
@@ -142,7 +165,7 @@ export default withStyles(({ spacing }) => ({
 
         const geoResolutionString = 'resolution_processors.calculate_geographical_resolution';
         const onGeoResolutionSuccess = (data) => {
-          console.log('this is the calculate_geographical_resolution response:', data)
+          console.log('this is the calculate_geographical_resolution response:', data);
           if (data.resolution_result) {
             setMapResolution(data.resolution_result);
           }
@@ -274,6 +297,7 @@ export default withStyles(({ spacing }) => ({
             closeDrawer={handleDrawerClose}
             oldResolution={mapResolution}
             resolutionOptions={mapResolutionOptions}
+            saveResolution={setSavedMapResolution}
             title="Geospatial"
           />
         );
@@ -294,6 +318,7 @@ export default withStyles(({ spacing }) => ({
             closeDrawer={handleDrawerClose}
             oldResolution={timeResolution}
             resolutionOptions={timeResolutionOptions}
+            saveResolution={setSavedTimeResolution}
             title="Temporal"
           />
         );
@@ -334,73 +359,84 @@ export default withStyles(({ spacing }) => ({
           <ListItemIcon>
             <GridOnIcon
               fontSize="large"
-              style={{
-                color: theme.palette.text.primary
-              }}
+              className={savedMapResolution ? classes.complete : classes.incomplete}
             />
           </ListItemIcon>
           <ListItemText
             primaryTypographyProps={{ variant: 'h6' }}
             onClick={() => handleDrawerOpen('regridMap')}
+            className={savedMapResolution ? classes.complete : classes.incomplete}
           >
             Adjust Geospatial Resolution
           </ListItemText>
+          {savedMapResolution && (
+            <ListItemIcon>
+              <CheckIcon className={classes.check} fontSize="large" />
+            </ListItemIcon>
+          )}
         </ListItem>
+
         <ListItem button>
           <ListItemIcon>
             <MapIcon
               fontSize="large"
-              style={{
-                color: savedDrawings.length ? theme.palette.grey[500] : theme.palette.text.primary
-              }}
+              className={savedDrawings.length ? classes.complete : classes.incomplete}
             />
           </ListItemIcon>
           <ListItemText
             primaryTypographyProps={{ variant: 'h6' }}
             onClick={() => handleDrawerOpen('clipMap')}
-            style={{
-              color: savedDrawings.length ? theme.palette.grey[500] : theme.palette.text.primary
-            }}
+            className={savedDrawings.length ? classes.complete : classes.incomplete}
           >
             Select Geospatial Coverage
           </ListItemText>
           {savedDrawings.length !== 0 && (
             <ListItemIcon>
-              <CheckIcon style={{ color: theme.palette.success.light }} fontSize="large" />
+              <CheckIcon className={classes.check} fontSize="large" />
             </ListItemIcon>
           )}
         </ListItem>
+
         <ListItem button>
           <ListItemIcon>
             <AspectRatioIcon
               fontSize="large"
-              style={{
-                color: theme.palette.text.primary
-              }}
+              className={savedTimeResolution ? classes.complete : classes.incomplete}
             />
           </ListItemIcon>
           <ListItemText
             primaryTypographyProps={{ variant: 'h6' }}
             onClick={() => handleDrawerOpen('scaleTime')}
+            className={savedTimeResolution ? classes.complete : classes.incomplete}
           >
             Adjust Temporal Resolution
           </ListItemText>
+          {savedTimeResolution && (
+            <ListItemIcon>
+              <CheckIcon className={classes.check} fontSize="large" />
+            </ListItemIcon>
+          )}
         </ListItem>
+
         <ListItem button>
           <ListItemIcon>
             <TodayIcon
               fontSize="large"
-              style={{
-                color: theme.palette.text.primary
-              }}
+              className={savedTimeBounds ? classes.complete : classes.incomplete}
             />
           </ListItemIcon>
           <ListItemText
             primaryTypographyProps={{ variant: 'h6' }}
             onClick={() => handleDrawerOpen('clipTime')}
+            className={savedTimeBounds ? classes.complete : classes.incomplete}
           >
             Select Temporal Coverage
           </ListItemText>
+          {savedTimeBounds && (
+            <ListItemIcon>
+              <CheckIcon className={classes.check} fontSize="large" />
+            </ListItemIcon>
+          )}
         </ListItem>
       </List>
       <Navigation

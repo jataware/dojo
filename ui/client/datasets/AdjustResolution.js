@@ -50,11 +50,13 @@ export default withStyles((theme) => ({
   closeDrawer,
   oldResolution,
   resolutionOptions,
+  saveResolution,
   title,
 }) => {
-  const [selectedResolution, setSelectedResolution] = useState('');
+  const [selectedResolution, setSelectedResolution] = useState({});
   const handleSaveClick = () => {
-    console.log('saved');
+    if (selectedResolution !== '') saveResolution(selectedResolution);
+
     closeDrawer();
   };
 
@@ -62,62 +64,69 @@ export default withStyles((theme) => ({
     setSelectedResolution(event.target.value);
   };
 
-  // TODO: figure out what are successful resolutions instead of unsuccessful
-  // un-duplicate title etc
-  if (oldResolution === 'None' || oldResolution.uniformity === 'NOT_UNIFORM') {
-    return (
-      <>
-        <Typography align="center" variant="h5">Adjust {title} Resolution</Typography>
+  const mainContent = () => {
+    // TODO: figure out more failure conditions (or figure out success conditions)
+    // TODO: come back to geo - block everything that isn't a string for now
+    // oldResolution === 'None' ||
+    if (oldResolution.uniformity !== 'PERFECT' || typeof oldResolution !== 'object') {
+      return (
         <Typography align="center" variant="h6" style={{ marginTop: '64px' }}>
           This dataset does not have a useable {title} resolution
         </Typography>
+      );
+    }
+
+    // otherwise return the content
+    return (
+      <>
+        <div className={classes.oldToNew}>
+          <div className={classes.textWrapper}>
+            <Typography variant="h6" align="center">current resolution</Typography>
+            <Typography variant="h4" align="center">{oldResolution.unit.toUpperCase()}</Typography>
+          </div>
+          <div className={classes.arrowIcon}>
+            <ArrowForwardIcon fontSize="large" />
+          </div>
+          <div className={classes.textWrapper}>
+            <Typography variant="h6" align="center">new resolution</Typography>
+            <Typography variant="h4" align="center">
+              {
+                selectedResolution.description ? selectedResolution.description.toUpperCase() : ''
+              }
+            </Typography>
+          </div>
+        </div>
+        <div className={classes.bottomWrapper}>
+          <FormControl variant="outlined" className={classes.selectWrapper}>
+            <InputLabel>Resolution</InputLabel>
+            <Select
+              value={selectedResolution}
+              onChange={handleChangeResolution}
+              label="Resolution"
+            >
+              {resolutionOptions.map((option) => (
+                <MenuItem key={option.description} value={option}>{option.description}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <Button
+            color="primary"
+            variant="contained"
+            disableElevation
+            onClick={handleSaveClick}
+            className={classes.button}
+          >
+            Save Resolution
+          </Button>
+        </div>
       </>
     );
-  }
+  };
 
   return (
     <div>
       <Typography align="center" variant="h5">Adjust {title} Resolution</Typography>
-      {oldResolution && resolutionOptions.length ? (
-        <>
-          <div className={classes.oldToNew}>
-            <div className={classes.textWrapper}>
-              <Typography variant="h6" align="center">current resolution</Typography>
-              <Typography variant="h4" align="center">{oldResolution.toUpperCase()}</Typography>
-            </div>
-            <div className={classes.arrowIcon}>
-              <ArrowForwardIcon fontSize="large" />
-            </div>
-            <div className={classes.textWrapper}>
-              <Typography variant="h6" align="center">new resolution</Typography>
-              <Typography variant="h4" align="center">{selectedResolution.toUpperCase()}</Typography>
-            </div>
-          </div>
-          <div className={classes.bottomWrapper}>
-            <FormControl variant="outlined" className={classes.selectWrapper}>
-              <InputLabel>Resolution</InputLabel>
-              <Select
-                value={selectedResolution}
-                onChange={handleChangeResolution}
-                label="Resolution"
-              >
-                {resolutionOptions.map((option) => (
-                  <MenuItem key={option} value={option}>{option}</MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-            <Button
-              color="primary"
-              variant="contained"
-              disableElevation
-              onClick={handleSaveClick}
-              className={classes.button}
-            >
-              Save Resolution
-            </Button>
-          </div>
-        </>
-      ) : (
+      {oldResolution && resolutionOptions.length ? mainContent() : (
         <div className={classes.loading}>
           <Typography variant="subtitle1" align="center">
             Resolution Data Loading
