@@ -66,7 +66,7 @@ def clip_time(context, filename=None, **kwargs):
     original_dataframe = pd.read_csv(file, delimiter=",")
 
     # Main Call
-    time_column = kwargs.get("time_column", "")
+    time_column = kwargs.get("datetime_column", "")
     time_ranges = kwargs.get("time_ranges", [])
 
     if time_column and time_ranges:
@@ -116,8 +116,8 @@ def scale_time(context, filename=None, **kwargs):
     original_dataframe = pd.read_csv(file, delimiter=",")
 
     # Main call
-    time_column = kwargs.get("time_column", "")
-    time_bucket = kwargs.get("time_bucket", "")
+    time_column = kwargs.get("datetime_column", "")
+    time_bucket = kwargs.get("datetime_bucket", "")
     aggregation_list = kwargs.get("aggregation_function_list", [])
 
     if time_column and time_bucket and aggregation_list:
@@ -239,7 +239,7 @@ def get_temporal_extent(context, filename=None, **kwargs):
     original_dataframe = pd.read_csv(file, delimiter=",")
 
     # Main call
-    time_column = kwargs.get("time_column", "")
+    time_column = kwargs.get("datetime_column", "")
 
     if time_column:
         temporal_extent = elwood.get_temporal_boundary(
@@ -264,7 +264,7 @@ def get_unique_dates(context, filename=None, **kwargs):
     original_dataframe = pd.read_csv(file, delimiter=",")
 
     # Main call
-    time_column = kwargs.get("time_column", "")
+    time_column = kwargs.get("datetime_column", "")
 
     if time_column:
         unique_dates = original_dataframe[time_column].unique()
