@@ -12,7 +12,7 @@ from utils import job_setup
 
 def calculate_temporal_resolution(context, filename=None, **kwargs):
     # Setup
-    file, rawfile_path = job_setup(context=context, filename=filename)
+    file, filename, rawfile_path = job_setup(context=context, filename=filename)
     dataframe = pd.read_csv(file, delimiter=",")
 
     datetime_column = kwargs.get("datetime_column")
@@ -25,7 +25,7 @@ def calculate_temporal_resolution(context, filename=None, **kwargs):
     resolution = detect_temporal_resolution(timestamps)
 
     response = {
-        "messsage": "Resolution calculated successfully",
+        "message": "Resolution calculated successfully",
         "resolution_result": {
             "uniformity": resolution.uniformity.name,
             "unit": resolution.unit.name,
@@ -41,7 +41,7 @@ def calculate_temporal_resolution(context, filename=None, **kwargs):
 
 def calculate_geographical_resolution(context, filename=None, **kwargs):
     # Setup
-    file, rawfile_path = job_setup(context=context, filename=filename)
+    file, filename, rawfile_path = job_setup(context=context, filename=filename)
     dataframe = pd.read_csv(file, delimiter=",")
 
     latitude = kwargs.get("lat_column")
@@ -52,18 +52,20 @@ def calculate_geographical_resolution(context, filename=None, **kwargs):
 
     resolution = detect_latlon_resolution(lat, lon)
 
-    if resolution is None:
+    print(f"RESOLUTION: {resolution}")
+
+    if resolution is None or resolution.square is None:
         response = {
-            "messsage": "Resolution not detectable",
+            "message": "Resolution not detectable",
             "resolution_result": "None",
         }
         return response
 
     response = {
-        "messsage": "Resolution calculated successfully",
+        "message": "Resolution calculated successfully",
         "resolution_result": {
             "uniformity": resolution.square.uniformity.name,
-            "unit": resolution.square.unit.name,
+            "unit": resolution.unit.square.name,
             "resolution": resolution.square.resolution,
             "error": resolution.square.error,
         },

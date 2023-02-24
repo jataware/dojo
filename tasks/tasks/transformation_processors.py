@@ -3,6 +3,7 @@ import json
 import os
 
 import pandas as pd
+import numpy as np
 
 from utils import job_setup, put_rawfile
 from elwood import elwood
@@ -12,7 +13,7 @@ from settings import settings
 # Geo clipping transformation job
 def clip_geo(context, filename=None, **kwargs):
     # Setup
-    file, rawfile_path = job_setup(context=context, filename=filename)
+    file, filename, rawfile_path = job_setup(context=context, filename=filename)
     original_dataframe = pd.read_csv(file, delimiter=",")
 
     # Main Call
@@ -62,7 +63,7 @@ def clip_geo(context, filename=None, **kwargs):
 # Time clipping transformation job
 def clip_time(context, filename=None, **kwargs):
     # Setup
-    file, rawfile_path = job_setup(context=context, filename=filename)
+    file, filename, rawfile_path = job_setup(context=context, filename=filename)
     original_dataframe = pd.read_csv(file, delimiter=",")
 
     # Main Call
@@ -112,7 +113,7 @@ def clip_time(context, filename=None, **kwargs):
 # Time rescaling transformation job
 def scale_time(context, filename=None, **kwargs):
     # Setup
-    file, rawfile_path = job_setup(context=context, filename=filename)
+    file, filename, rawfile_path = job_setup(context=context, filename=filename)
     original_dataframe = pd.read_csv(file, delimiter=",")
 
     # Main call
@@ -161,7 +162,7 @@ def scale_time(context, filename=None, **kwargs):
 
 def regrid_geo(context, filename=None, **kwargs):
     # Setup
-    file, rawfile_path = job_setup(context=context, filename=filename)
+    file, filename, rawfile_path = job_setup(context=context, filename=filename)
     original_dataframe = pd.read_csv(file, delimiter=",")
 
     # Main Call
@@ -208,7 +209,7 @@ def regrid_geo(context, filename=None, **kwargs):
 
 def get_boundary_box(context, filename=None, **kwargs):
     # Setup
-    file, rawfile_path = job_setup(context=context, filename=filename)
+    file, filename, rawfile_path = job_setup(context=context, filename=filename)
     original_dataframe = pd.read_csv(file, delimiter=",")
 
     # Main Call
@@ -235,7 +236,7 @@ def get_boundary_box(context, filename=None, **kwargs):
 
 def get_temporal_extent(context, filename=None, **kwargs):
     # Setup
-    file, rawfile_path = job_setup(context=context, filename=filename)
+    file, filename, rawfile_path = job_setup(context=context, filename=filename)
     original_dataframe = pd.read_csv(file, delimiter=",")
 
     # Main call
@@ -260,7 +261,7 @@ def get_temporal_extent(context, filename=None, **kwargs):
 
 
 def get_unique_dates(context, filename=None, **kwargs):
-    file, rawfile_path = job_setup(context=context, filename=filename)
+    file, filename, rawfile_path = job_setup(context=context, filename=filename)
     original_dataframe = pd.read_csv(file, delimiter=",")
 
     # Main call
@@ -268,6 +269,7 @@ def get_unique_dates(context, filename=None, **kwargs):
 
     if time_column:
         unique_dates = original_dataframe[time_column].unique()
+        unique_dates = np.sort(unique_dates)
 
         response = {
             "message": "Unique dates list generated",

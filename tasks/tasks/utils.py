@@ -85,4 +85,4 @@ def job_setup(context, filename):
     )
     file = get_rawfile(rawfile_path)
 
-    return file, rawfile_path
+    return file, filename, rawfile_path

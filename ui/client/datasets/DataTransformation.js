@@ -230,7 +230,7 @@ export default withStyles(({ spacing, palette }) => ({
         const getDatesString = 'transformation_processors.get_unique_dates';
         const onGetDatesSuccess = (data) => {
           if (data.unique_dates) {
-            setTimeBounds(data.unique_dates.reverse());
+            setTimeBounds(data.unique_dates);
           }
         };
 
