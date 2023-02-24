@@ -74,11 +74,18 @@ export const SelectedFileList = withStyles((theme) => ({
   root: {
     border: '1px solid #eaeaea',
     borderRadius: 0,
-    height: '100%'
+    height: '100%',
+    position: 'relative'
   },
   list: {
     overflowY: 'auto',
-    height: '100%'
+    height: '100%',
+    position: 'absolute',
+    top: 0,
+    bottom: 0,
+    left: 0,
+    right: 0,
+    backgroundColor: 'white'
   }
 }))(({ classes, files, onItemClick, onDelete, selectedIndex }) => {
 

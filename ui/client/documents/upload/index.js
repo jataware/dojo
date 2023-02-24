@@ -57,10 +57,6 @@ function getFormattedPDFMetadata(pdfDoc) {
         return acc;
       }
 
-      if (pdfLibAttr === 'getCreationDate') {
-        propertyValue = formatDate(propertyValue);
-      }
-
       let key = pdfLibAttr.replace('get', '');
       key = snakeCase(key);
 
@@ -75,6 +71,48 @@ function getFormattedPDFMetadata(pdfDoc) {
     },
     {...defaultValues});
 }
+
+const CustomLoading = withStyles((theme) => ({
+  root: {
+    position: 'relative',
+    display: 'inline'
+  },
+  bottom: {
+    color: theme.palette.grey[theme.palette.type === 'light' ? 200 : 700],
+  },
+  top: {
+    color: '#1a90ff',
+    animationDuration: '550ms',
+    position: 'absolute',
+    left: 0,
+  },
+  circle: {
+    strokeLinecap: 'round',
+  }
+}))(({classes, ...props}) => {
+  return (
+    <div className={classes.root}>
+      <CircularProgress
+        variant="determinate"
+        className={classes.bottom}
+        size={30}
+        thickness={4}
+        {...props}
+        value={100}
+      />
+      <CircularProgress
+        variant="indeterminate"
+        className={classes.top}
+        classes={{
+          circle: classes.circle,
+        }}
+        size={30}
+        thickness={4}
+        {...props}
+      />
+    </div>
+  );
+});
 
 /**
  * Submit button is not type=submit for now, since pressing enter
@@ -112,24 +150,31 @@ const UploadDocumentForm = withStyles((theme) => ({
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
 
+  const [acceptedFilesCount, setAcceptedFilesCount] = useState(0);
+  const [acceptedFilesParsed, setAcceptedFilesParsed] = useState(0);
+
   const selectedFile = selectedFileIndex !== null ? files[selectedFileIndex] : {};
 
   const handleFileSelect = (acceptedFiles) => {
 
     setLoading(true);
+    setAcceptedFilesCount(current => acceptedFiles.length + current);
 
     const byteData = [];
 
     const pdfData = acceptedFiles.map((pdfFile) => {
       return readFile(pdfFile)
         .then(bytes => {
-
           // Some side-effects on a map fn...
           const blob = new Blob([ bytes ], {type: "application/pdf"});
           const docUrl = URL.createObjectURL(blob);
           byteData.push(docUrl);
 
           return PDFDocument.load(bytes)
+            .then(pdf => {
+              setAcceptedFilesParsed(current => current + 1);
+              return pdf;
+            })
             .then(pdf => getFormattedPDFMetadata(pdf));
         });
     });
@@ -148,7 +193,11 @@ const UploadDocumentForm = withStyles((theme) => ({
         setAllPDFMetadata(prevMetadata => [ ...prevMetadata, ...allPdfData ]);
         setFiles(prevFiles => [ ...prevFiles, ...formattedFiles ]);
         setSelectedFileIndex(selectedFileIndex => selectedFileIndex || 0);
+
         setLoading(false);
+
+        setAcceptedFilesCount(0);
+        setAcceptedFilesParsed(0);
       });
 
   };
@@ -173,16 +222,21 @@ const UploadDocumentForm = withStyles((theme) => ({
 
     files.forEach((file, idx) => {
 
+      // We use the parsed doc Date object type until the very last minute
+      // so that the UI calendar widget can work properly, and then we
+      // format for the server before submitting.
+      const metadataClone = {...allPDFMetadata[idx]};
+      metadataClone.creation_date = formatDate(metadataClone.creation_date);
+
       const documentsPromise = axios({
         method: 'post',
         url: `/api/dojo/documents`,
-        data: allPDFMetadata[idx],
+        data: metadataClone,
         params: {}
       }).catch((e) => {
         console.log('Error creating doc', e);
       }).then(response => {
         const doc = response.data;
-
         return uploadFile(file, doc.id, {});
 
       }).catch((e) => {
@@ -248,7 +302,16 @@ const UploadDocumentForm = withStyles((theme) => ({
         {loading && (
           <div>
             <br />
-            <LinearProgress />
+            <div style={{display: 'flex', alignItems: 'center'}}>
+              <CustomLoading
+                variant="determinate"
+                value={(acceptedFilesParsed / acceptedFilesCount) * 100}
+              />
+              &nbsp;
+              <span>
+                Processing: {acceptedFilesParsed} / {acceptedFilesCount} files.
+              </span>
+            </div>
             <br />
           </div>
         )}
@@ -269,7 +332,7 @@ const UploadDocumentForm = withStyles((theme) => ({
 
             <div className={classes.fileList}>
 
-              <section style={{flex: '4 2 200px', padding: '1rem'}}>
+              <section style={{flex: '4 2 400px', padding: '1rem'}}>
                 <SelectedFileList
                   onDelete={handleFileDelete}
                   files={files}
@@ -306,6 +369,7 @@ const UploadDocumentForm = withStyles((theme) => ({
               <Button
                 variant="contained"
                 size="large"
+                disabled={uploading}
               >
                 Cancel
               </Button>
