@@ -168,12 +168,14 @@ def regrid_geo(context, filename=None, **kwargs):
     # Main Call
     geo_column = kwargs.get("geo_columns")
     scale_multiplier = kwargs.get("scale_multi")
+    scale = kwargs.get("scale", None)
 
     if geo_column and scale_multiplier:
         regridded_df = elwood.regrid_dataframe_geo(
             dataframe=original_dataframe,
             geo_columns=geo_column,
             scale_multi=scale_multiplier,
+            scale=scale,
         )
 
         json_dataframe_preview = regridded_df.head(100).to_json(default_handler=str)

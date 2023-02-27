@@ -80,6 +80,7 @@ def calculate_geographical_resolution(context, filename=None, **kwargs):
                 "resolution": resolution_res.square.resolution,
                 "error": resolution_res.square.error,
             },
+            "scale_km": scale,
             "multiplier_samples": sample_geo_scale,
         }
 
