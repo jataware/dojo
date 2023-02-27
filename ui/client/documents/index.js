@@ -13,12 +13,10 @@ import Alert from '@material-ui/lab/Alert';
 import LinearProgress from '@material-ui/core/LinearProgress';
 import CircularProgress from '@material-ui/core/CircularProgress';
 import CancelIcon from '@material-ui/icons/Cancel';
-import OpenInNewIcon from '@material-ui/icons/OpenInNew';
 import IconButton from '@material-ui/core/IconButton';
 import InputAdornment from '@material-ui/core/InputAdornment';
 import TextField from '@material-ui/core/TextField';
 import Chip from '@material-ui/core/Chip';
-import identity from 'lodash/identity';
 import isEmpty from 'lodash/isEmpty';
 import startCase from 'lodash/startCase';
 

@@ -212,7 +212,5 @@ export function useDocuments(scrollId) {
     documents: data,
     documentsLoading: !error && !data,
     documentsError: error,
-    // scrollId: data.scroll_id
-    // mutateDocument: mutate,
   };
 }

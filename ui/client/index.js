@@ -32,7 +32,6 @@ import ViewDocuments, { ParagraphListings } from './documents';
 import UploadDocument from './documents/upload';
 import ViewModels from './components/ViewModels';
 import ViewRuns from './components/ViewRuns';
-// import DatasetRegistration from './datasets/Register';
 import DatasetRegistrationStepper from './datasets/RegistrationStepper';
 import DatasetPreview from './datasets/Preview';
 import DatasetAnnotate from './datasets/Annotate';

@@ -33,16 +33,9 @@ export const FormAwareTextField = withStyles((theme) => ({
     }
   },
 }))(({
-  classes, name, label, requiredFn, placeholder, inputProps={}, InputProps={}, onBlur, required, ...props
+  classes, name, label, requiredFn, placeholder, inputProps={}, InputProps={}, required, ...props
 }) => {
   const [field, meta] = useField({ ...props, name });
-
-  const handleBlur = (...args) => {
-    if(onBlur) {
-      onBlur.apply(this, args);
-    }
-    field.onBlur.apply(this, args);
-  };
 
   return (
     <TextField
@@ -65,7 +58,6 @@ export const FormAwareTextField = withStyles((theme) => ({
       error={get(meta, 'error') && get(meta, 'touched')}
       required={required || (isFunction(requiredFn) ? requiredFn(name) : false)}
       {...props}
-      onBlur={handleBlur}
     />
   );
 });
@@ -141,7 +133,7 @@ export const FormAwareCheckBox = (props) => (
 
 /**
  *
- **/
+ * */
 export const FormAwareSelect = ({ InputProps = {}, InputLabelProps = {}, inputProps={}, ...props }) => (
   <Field
     {...props}

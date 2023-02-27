@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { useHistory } from 'react-router-dom';
 import axios from 'axios';
 import isEmpty from 'lodash/isEmpty';
 import snakeCase from 'lodash/snakeCase';
@@ -155,6 +156,8 @@ const UploadDocumentForm = withStyles((theme) => ({
 
   const selectedFile = selectedFileIndex !== null ? files[selectedFileIndex] : {};
 
+  const history = useHistory();
+
   const handleFileSelect = (acceptedFiles) => {
 
     setLoading(true);
@@ -241,6 +244,8 @@ const UploadDocumentForm = withStyles((theme) => ({
 
       }).catch((e) => {
         console.log("Error uploading files", e);
+      }).then(() => {
+        history.push('/documents');
       });
 
       // if we map files to promises to await all uploads:
@@ -374,16 +379,30 @@ const UploadDocumentForm = withStyles((theme) => ({
                 Cancel
               </Button>
               &nbsp;
-              <Button
-                onClick={submitAndUploadDocuments}
-                size="large"
-                type="submit"
-                color="primary"
-                variant="contained"
-                disabled={uploading}
-              >
-                Upload All
-              </Button>
+              {uploading ? (
+                <div>
+                  <div style={{display: 'flex', alignItems: 'center'}}>
+                    <CustomLoading
+                      variant="indeterminate"
+                    />
+                    &nbsp;
+                    <span>
+                      Uploading All
+                    </span>
+                  </div>
+                </div>
+              ) : (
+                <Button
+                  onClick={submitAndUploadDocuments}
+                  size="large"
+                  type="submit"
+                  color="primary"
+                  variant="contained"
+                >
+                  Upload All
+                </Button>
+
+              )}
             </div>
 
           </div>

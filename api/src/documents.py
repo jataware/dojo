@@ -24,7 +24,7 @@ import json
 from validation import DocumentSchema
 from src.settings import settings
 
-from src.utils import put_rawfile  # , get_rawfile, list_files
+from src.utils import put_rawfile
 
 from rq import Queue
 from redis import Redis
@@ -197,8 +197,9 @@ def get_paragraph(paragraph_id: str) -> DocumentSchema.Paragraph:
 
     return {**p, "id": paragraph_id}
 
-# NOTE Dart Paper data contains PascaCase attributes. We strive to use
-# snake_case both in DB and API. Converting functions follow.
+# NOTE Dart Paper data may contain PascalCase attributes. We strive to use
+# snake_case both in DB and API. Converting functions follow. No harm  if
+# already as snake_case.
 
 def camel_to_snake(str):
     """Receives a lowercase, snake_case, camelCase, or PascalCase input string
@@ -211,15 +212,6 @@ def camel_to_snake(str):
 def dict_keys_to_snake_case(a_dict):
     return {camel_to_snake(k): v for k, v in a_dict.items()}
 
-# NOTE decided against the following functions on document create:
-# New documents will always be stored to snake_case, and DART documents
-# potentially uploaded as snake_case if need be, in the future.
-# def snake_to_pascal(str):
-#     x = str.split("_")
-#     return "".join([i.title() for i in x])
-
-# def dict_keys_to_pascal(a_dict):
-#     return {snake_to_pascal(k): v for k, v in a_dict.items()}
 
 DEFAULT_DOC = {
     "creation_date": None,
@@ -436,7 +428,6 @@ def update_document(payload: DocumentSchema.Model, document_id: str):
     )
 
 
-# TODO make proper call, use, and try it out
 def enqueue_document_paragraphs_processing(document_id, s3_url):
     """
     Adds document to queue to process by paragraph.
