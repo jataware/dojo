@@ -5,6 +5,7 @@ import glob
 import numpy as np
 import os
 import logging
+
 def scale_indicator(context):
     logging.info(f"Scaling indicator {context.get('uuid')}")
     data_paths=context.get('dataset').get('data_paths')
