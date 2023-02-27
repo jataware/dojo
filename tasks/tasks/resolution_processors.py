@@ -9,6 +9,8 @@ import pandas as pd
 
 from utils import job_setup
 
+temporal_resolutions = ["L", "S", "T", "H", "D", "W" "M", "Y", "Q"]
+
 
 def calculate_temporal_resolution(context, filename=None, **kwargs):
     # Setup
@@ -50,25 +52,48 @@ def calculate_geographical_resolution(context, filename=None, **kwargs):
     lat = dataframe[latitude].to_numpy()
     lon = dataframe[longitude].to_numpy()
 
-    resolution = detect_latlon_resolution(lat, lon)
+    resolution_res = detect_latlon_resolution(lat, lon)
 
-    print(f"RESOLUTION: {resolution}")
-
-    if resolution is None or resolution.square is None:
+    if resolution_res is None or resolution_res.square is None:
         response = {
             "message": "Resolution not detectable",
             "resolution_result": "None",
         }
         return response
 
-    response = {
-        "message": "Resolution calculated successfully",
-        "resolution_result": {
-            "uniformity": resolution.square.uniformity.name,
-            "unit": resolution.unit.square.name,
-            "resolution": resolution.square.resolution,
-            "error": resolution.square.error,
-        },
-    }
+    try:
 
-    return response
+        scale = degrees_to_km(
+            resolution_res.square.unit.name, resolution_res.square.resolution
+        )
+        sample_geo_scale = [scale * multiplier for multiplier in range(2, 21)]
+        response = {
+            "message": "Resolution calculated successfully",
+            "resolution_result": {
+                "uniformity": resolution_res.square.uniformity.name,
+                "unit": resolution_res.square.unit.name,
+                "resolution": resolution_res.square.resolution,
+                "error": resolution_res.square.error,
+            },
+            "multiplier_samples": sample_geo_scale,
+        }
+
+        return response
+    except TypeError as error:
+        response = {
+            "message": f"Error calculating geographical resolution: {error}",
+            "resolution_result": "None",
+        }
+        return response
+
+
+def degrees_to_km(degree_unit, value):
+
+    value = float(value)
+
+    if degree_unit == "degrees":
+        return value * float(111)
+    if degree_unit == "minutes":
+        return value * float(111 / 60)
+    if degree_unit == "seconds":
+        return value * ((111 / 60) / 60)
