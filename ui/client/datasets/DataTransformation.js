@@ -105,24 +105,7 @@ export default withStyles(({ spacing, palette }) => ({
   const [savedTimeBounds, setSavedTimeBounds] = useState(null);
 
 // TODO remove the following, just for development
-  // if (!mapBounds) {
-  //   setMapBounds([['12', '40'], ['-44', '-15']]);
-  // }
-  if (!mapResolutionOptions.length) {
-    // setTimeout(() => {
-      // setMapResolution('1m');
-
-      setMapResolutionOptions(['10m', '50m', '100m', '500m', '1km', '10km']);
-    // }, 2000);
-  }
   if (!timeResolutionOptions.length) {
-    // setTimeout(() => {
-    setTimeResolution({
-      uniformity: 'PERFECT',
-      unit: 'month',
-      resolution: 1,
-      error: 1.7832238693938827
-    });
     setTimeResolutionOptions([
       { alias: 'D', description: 'day' },
       { alias: 'W', description: 'week' },
@@ -130,8 +113,27 @@ export default withStyles(({ spacing, palette }) => ({
       { alias: 'M', description: 'month-end' },
       { alias: 'Y', description: 'year-end' },
     ]);
-    // }, 2000);
   }
+  // if (!mapBounds) {
+  //   setMapBounds([['12', '40'], ['-44', '-15']]);
+  // }
+  // if (!mapResolutionOptions.length) {
+  //   // setTimeout(() => {
+  //     // setMapResolution('1m');
+
+  //     setMapResolutionOptions(['10m', '50m', '100m', '500m', '1km', '10km']);
+  //   // }, 2000);
+  // }
+
+  //   // setTimeout(() => {
+  //   setTimeResolution({
+  //     uniformity: 'PERFECT',
+  //     unit: 'month',
+  //     resolution: 1,
+  //     error: 1.7832238693938827
+  //   });
+
+  //   // }, 2000);
   // if (!timeBounds.length) {
   //   // setTimeout(() => {
   //     setTimeBounds([
@@ -151,7 +153,7 @@ export default withStyles(({ spacing, palette }) => ({
   // }
 // to here
 
-  // fetch resolution for AdjustResolution (geographic) component
+  // fetch resolution for AdjustGeoResolution component
   useEffect(() => {
     if (!mapResolution) {
       if (annotations?.annotations?.geo) {
@@ -169,6 +171,9 @@ export default withStyles(({ spacing, palette }) => ({
           console.log('this is the calculate_geographical_resolution response:', data);
           if (data.resolution_result) {
             setMapResolution(data.resolution_result);
+          }
+          if (data.multiplier_samples) {
+            setMapResolutionOptions(data.multiplier_samples);
           }
         };
 
@@ -198,7 +203,7 @@ export default withStyles(({ spacing, palette }) => ({
     }
   }, [datasetInfo.id, annotations, mapBounds]);
 
-  // fetch resolution for AdjustResolution (temporal) component
+  // fetch resolution for AdjustTemporalResolution component
   useEffect(() => {
     if (!timeResolution) {
       if (annotations?.annotations?.date) {
@@ -313,10 +318,11 @@ export default withStyles(({ spacing, palette }) => ({
   };
 
   const handleNextStep = () => {
-    // processMapClippings();
-    // processClipTime();
+    processAdjustGeo();
+    processMapClippings();
     processAdjustTime();
-    // handleNext();
+    processClipTime();
+    handleNext();
   };
 
   const drawerInner = () => {
