@@ -28,12 +28,18 @@ def calcOutputEmbeddings(output):
     # so we retrieve the one entry on the output array
     return embedder.embed([description])[0]
 
+
 def saveAllOutputEmbeddings(indicatorDictionary, indicator_id):
     """
     Saves all outputs within an indicator to elasticsearch,
     including the LLM embeddings to use in search.
     """
+
+    logging.info("Save all output embeddings called")
+    logging.info(f"Input dictionary: {indicatorDictionary}")
+
     for index, output in enumerate(indicatorDictionary["outputs"]):
+
         feature = {
             **output,
             "embeddings": calcOutputEmbeddings(output),
@@ -44,7 +50,10 @@ def saveAllOutputEmbeddings(indicatorDictionary, indicator_id):
         }
 
         feature_id = str(uuid.uuid4())
-        return es.index(index="features", body=feature, id=feature_id)
+
+        es.index(index="features", body=feature, id=feature_id)
+
+    return True
 
 
 class EmbeddingsProcessor(BaseProcessor):
@@ -56,22 +65,22 @@ class EmbeddingsProcessor(BaseProcessor):
         """
         result = saveAllOutputEmbeddings(indicator_data["body"], indicator_data["id"])
 
-        return result["result"]
-
+        return result
 
 def calculate_store_embeddings(context):
     """
     Context should include a full_indicator indicator dictionary (see
     elasticsearch for examples) and an indicator_id (uuid).
     """
+
+    logging.info(f"Starting embeddings job for indicator. All context: {context}\n")
+
     indicator_id = context["indicator_id"]
     full_indicator = context["full_indicator"]
-
-    print(f"Starting embeddings job for indicator: {indicator_id}\n")
 
     embedder = EmbeddingsProcessor()
     result = embedder.run(indicator_data={"body": full_indicator, "id": indicator_id})
 
-    print(f"Job result for indicator {indicator_id}: {result}\n")
+    logging.info(f"Job result for indicator {indicator_id}: {result}\n")
 
     return result

@@ -578,7 +578,7 @@ const ViewDocumentsGrid = withStyles((theme) => ({
               All Documents
             </Typography>
             <Button
-              to="documents/upload"
+              to="/documents/upload"
               component={RouteLink}
               variant="contained"
               color="primary">

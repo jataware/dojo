@@ -6,6 +6,8 @@
 
 # Data directories
 **/.minio.sys/*
+data/documents/*
+data/datasets/*
 final/*
 json/*
 meta/*

@@ -105,6 +105,7 @@ def create_indicator(payload: IndicatorSchema.IndicatorMetadataSchema):
     plugin_action("post_create", data=body, type="annotation")
 
     # Saves all outputs, as features in a new index, with LLM embeddings
+    # TODO ask if outputs will ever be populated on create, or find out when it is to add features
     if payload.outputs:
         enqueue_indicator_feature(indicator_id, json.loads(payload.json()))
 
@@ -146,14 +147,16 @@ def patch_indicator(
     body = json.loads(payload.json(exclude_unset=True))
     es.update(index="indicators", body={"doc": body}, id=indicator_id)
 
-    if payload.outputs:
-        enqueue_indicator_feature(indicator_id, json.loads(payload.json()))
+    updated = es.get_source(index="indicators", id=indicator_id, params={"_source": "name,outputs"})
+    if updated["outputs"]:
+        enqueue_indicator_feature(indicator_id, updated)
 
     return Response(
         status_code=status.HTTP_200_OK,
         headers={"location": f"/api/indicators/{indicator_id}"},
         content=f"Updated indicator with id = {indicator_id}",
     )
+
 
 @router.get(
 "/features/search", response_model=IndicatorSchema.FeaturesSemanticSearchSchema

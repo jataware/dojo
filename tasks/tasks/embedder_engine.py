@@ -1,5 +1,6 @@
 import torch
 from sentence_transformers import SentenceTransformer
+from typing import List
 
 
 class __Embedder__:
@@ -22,7 +23,7 @@ class __Embedder__:
             if cuda:
                 self.model = self.model.cuda()
 
-    def embed(self, sentences: list[str]):
+    def embed(self, sentences: List[str]):
         """
         Embed a list of sentences. Pass a list of one item to effectively
         embedd only one sentence.
