@@ -5,7 +5,7 @@
 **/logs/*
 
 # Data directories
-data/*
+**/.minio.sys/*
 final/*
 json/*
 meta/*

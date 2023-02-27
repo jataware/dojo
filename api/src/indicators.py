@@ -644,7 +644,6 @@ async def create_preview(
                     indicator_id,
                     f"{indicator_id}{file_suffix}.parquet.gzip",
                 )
-
             file = get_rawfile(rawfile_path)
             df = pd.read_parquet(file)
             try:
