@@ -3,9 +3,7 @@ from base_annotation import BaseProcessor
 from elasticsearch import Elasticsearch
 import os
 import uuid
-
-from datasearch.corpora import Corpus
-from search.bert_search import BertSentenceSearch
+from embedder_engine import embedder
 
 logging.basicConfig()
 logging.getLogger().setLevel(logging.DEBUG)
@@ -13,11 +11,6 @@ logging.getLogger().setLevel(logging.DEBUG)
 es_url = os.environ.get("ELASTICSEARCH_URL", "http://localhost:9200")
 es = Elasticsearch(es_url)
 
-print("Starting Embedder Engine")
-
-# Ignore this first input corpus while we start engine. Discarded.
-corpus = Corpus.from_list(["I"])
-engine = BertSentenceSearch(corpus, cuda=False)
 
 def calcOutputEmbeddings(output):
     """
@@ -31,7 +24,9 @@ def calcOutputEmbeddings(output):
         unit: {output['unit']};
         unit description: {output['unit_description']};"""
 
-    return engine.embed_query(description).tolist()
+    # Embedder can embed list of strings. We only pass one,
+    # so we retrieve the one entry on the output array
+    return embedder.embed([description])[0]
 
 def saveAllOutputEmbeddings(indicatorDictionary, indicator_id):
     """

@@ -1,18 +1,13 @@
-from operator import length_hint
 from base_annotation import BaseProcessor
 from elasticsearch import Elasticsearch
-
 import os
-from glob import glob
 import time
 from pypdf import PdfReader
 import ocrmypdf
-from typing import Generator, List, Tuple
+from typing import List, Tuple
 import numpy as np
-import torch
-from utils import get_rawfile, put_rawfile
-from sentence_transformers import SentenceTransformer
-from transformers import logging
+from utils import get_rawfile
+from embedder_engine import embedder
 
 
 es_url = os.environ.get("ELASTICSEARCH_URL", "http://localhost:9200")
@@ -64,39 +59,6 @@ def extract_text(path: str) -> List[Tuple[str, int]]:
     return paragraphs
 
 
-class Embedder:
-    """
-    Convert a list of strings to embeddings
-    Example:
-    ```
-    model = Embedder(cuda=True)
-    sentences = ['this is a sentence', 'this is another sentence', 'this is a third sentence']
-    embeddings = model.embed(sentences)
-    ```
-    """
-    def __init__(self, *, model='all-mpnet-base-v2', cuda=False, batch_size=32):
-
-        self.batch_size = batch_size
-        #create an instance of the model, and optionally move it to GPU
-        with torch.no_grad():
-            logging.set_verbosity_debug()
-            self.model = SentenceTransformer(model)
-            if cuda:
-                self.model = self.model.cuda()
-
-    def embed(self, sentences: List[str]) -> List[np.ndarray]:
-        """
-        embed a list of sentences
-        """
-        with torch.no_grad():
-            embeddings = self.model.encode(sentences, batch_size=self.batch_size, show_progress_bar=False)
-        embeddings = [e for e in embeddings] # convert to list
-        return embeddings
-
-
-model = Embedder()
-
-
 def current_milli_time():
     return round(time.time() * 1000)
 
@@ -128,7 +90,7 @@ class ParagraphProcessor(BaseProcessor):
         for text, p_no in paragraphs:
             p_body = {
                 "text": text,
-                "embeddings": model.embed([text])[0],
+                "embeddings": embedder.embed([text])[0],
                 "document_id": document_id,
                 "length": len(text),
                 "page_no": p_no + 1 # indexes at 0, pdf pages make more sense starting from 1

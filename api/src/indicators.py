@@ -44,7 +44,6 @@ from validation.IndicatorSchema import (
     Period,
     Geography
 )
-from functools import reduce
 import os
 
 from rq import Queue
