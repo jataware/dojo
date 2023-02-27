@@ -53,7 +53,7 @@ export default withStyles((theme) => ({
   saveResolution,
   title,
 }) => {
-  const [selectedResolution, setSelectedResolution] = useState({});
+  const [selectedResolution, setSelectedResolution] = useState('');
   const handleSaveClick = () => {
     if (selectedResolution !== '') saveResolution(selectedResolution);
 
@@ -82,18 +82,14 @@ export default withStyles((theme) => ({
         <div className={classes.oldToNew}>
           <div className={classes.textWrapper}>
             <Typography variant="h6" align="center">current resolution</Typography>
-            <Typography variant="h4" align="center">{oldResolution.unit.toUpperCase()}</Typography>
+            <Typography variant="h4" align="center">{oldResolution.resolution} km</Typography>
           </div>
           <div className={classes.arrowIcon}>
             <ArrowForwardIcon fontSize="large" />
           </div>
           <div className={classes.textWrapper}>
             <Typography variant="h6" align="center">new resolution</Typography>
-            <Typography variant="h4" align="center">
-              {
-                selectedResolution.description ? selectedResolution.description.toUpperCase() : ''
-              }
-            </Typography>
+            <Typography variant="h4" align="center">{selectedResolution} km</Typography>
           </div>
         </div>
         <div className={classes.bottomWrapper}>
@@ -105,7 +101,7 @@ export default withStyles((theme) => ({
               label="Resolution"
             >
               {resolutionOptions.map((option) => (
-                <MenuItem key={option.description} value={option}>{option.description}</MenuItem>
+                <MenuItem key={option} value={option}>{option} km</MenuItem>
               ))}
             </Select>
           </FormControl>
@@ -126,7 +122,7 @@ export default withStyles((theme) => ({
   return (
     <div>
       <Typography align="center" variant="h5">Adjust {title} Resolution</Typography>
-      {oldResolution && resolutionOptions.length ? mainContent() : (
+      {oldResolution ? mainContent() : (
         <div className={classes.loading}>
           <Typography variant="subtitle1" align="center">
             Resolution Data Loading

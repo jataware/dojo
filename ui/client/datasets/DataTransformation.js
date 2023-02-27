@@ -256,6 +256,20 @@ export default withStyles(({ spacing, palette }) => ({
     setDrawerName(name);
   };
 
+  const processAdjustGeo = () => {
+    if (savedMapResolution) {
+      const args = {
+        geo_columns: [],
+        scale_multi: savedMapResolution,
+      };
+      annotations.annotations.geo.forEach((geo) => args.geo_columns.push(geo.name));
+
+      runElwoodJob(datasetInfo.id, args, 'transformation_processors.regrid_geo', (resp) => {
+        console.log('this is the adjust geo response', resp);
+      });
+    }
+  };
+
   const processMapClippings = () => {
     if (savedDrawings.length > 0) {
       const args = {
