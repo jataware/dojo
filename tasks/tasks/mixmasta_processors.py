@@ -350,7 +350,6 @@ def scale_features(context, filename=None):
             "_source": False,
         }
         es_response = es.search(index="indicators", body=query)
-        print(f"es response in scale: {es_response}")
         data_paths = es_response["hits"]["hits"][0]["fields"]["data_paths"]
     paths_to_process = [
         path for path in data_paths if "_str" not in path and "_normed" not in path
