@@ -1,18 +1,13 @@
 from __future__ import annotations
 
-import csv
-import io
 import re
 import time
-import zlib
 import uuid
 from datetime import datetime
-from typing import Any, Dict, Generator, List, Optional
-from urllib.parse import urlparse
-import logging
+from typing import List, Optional
 import json
 import pandas as pd
-from rq import Worker, Queue
+from rq import Queue
 
 from elasticsearch import Elasticsearch
 import pandas as pd
@@ -24,10 +19,8 @@ from fastapi import (
     status,
     UploadFile,
     File,
-    Request,
 )
 from fastapi.logger import logger
-from fastapi.responses import StreamingResponse
 
 from validation import IndicatorSchema, DojoSchema, MetadataSchema
 from src.settings import settings
@@ -38,13 +31,7 @@ from src.causemos import notify_causemos
 from src.causemos import deprecate_dataset
 from src.utils import put_rawfile, get_rawfile, list_files
 from src.plugins import plugin_action
-from validation.IndicatorSchema import (
-    IndicatorMetadataSchema,
-    QualifierOutput,
-    Output,
-    Period,
-    Geography,
-)
+
 from redis import Redis
 
 import os
@@ -534,7 +521,6 @@ def get_all_indicator_info(indicator_id: str):
 
     job_string="scale_indicator.scale_indicator"
     
-
     resp=runjob(uuid=indicator_id, job_string=job_string)
 
     return resp

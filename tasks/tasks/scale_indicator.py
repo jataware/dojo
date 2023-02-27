@@ -1,7 +1,5 @@
 from utils import download_rawfile, put_rawfile
 import pandas as pd
-from io import BytesIO
-import glob
 import numpy as np
 import os
 import logging
@@ -53,6 +51,7 @@ def scale_indicator(context):
         os.remove(f"processing/{norm_filename}")
     return True
         
+
 def scale_dataframe(dataframe, mapper):
     """
     This function accepts a dataframe in the canonical format
