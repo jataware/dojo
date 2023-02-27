@@ -9,9 +9,10 @@ import uuid
 from datetime import datetime
 from typing import Any, Dict, Generator, List, Optional
 from urllib.parse import urlparse
-
+import logging
 import json
 import pandas as pd
+from rq import Worker, Queue
 
 from elasticsearch import Elasticsearch
 import pandas as pd
@@ -44,8 +45,14 @@ from validation.IndicatorSchema import (
     Period,
     Geography,
 )
+from redis import Redis
 
 import os
+redis = Redis(
+    os.environ.get("REDIS_HOST", "redis.dojo-stack"),
+    os.environ.get("REDIS_PORT", "6379"),
+)
+q = Queue(connection=redis, default_timeout=-1)
 
 router = APIRouter()
 
@@ -197,12 +204,25 @@ def search_indicators(
     "/indicators/{indicator_id}", response_model=IndicatorSchema.IndicatorMetadataSchema
 )
 def get_indicators(indicator_id: str) -> IndicatorSchema.IndicatorMetadataSchema:
+    """Get Indicator
+
+    Args:
+        indicator_id (str): The UUID of the dataset to retrieve from elasticsearch.
+
+    Raises:
+        HTTPException: This is raised if the dataset is not found in elasticsearch.
+
+    Returns:
+        IndicatorSchema.IndicatorMetadataSchema: Returns the ydantic schema for the dataset that contains a metadata dictionary.
+    """
     try:
         indicator = es.get(index="indicators", id=indicator_id)["_source"]
     except Exception as e:
         logger.exception(e)
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     return indicator
+
+
 
 
 @router.put("/indicators/{indicator_id}/publish")
@@ -271,7 +291,6 @@ def get_annotations(indicator_id: str) -> MetadataSchema.MetaModel:
     except Exception as e:
         logger.exception(e)
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-        return None
 
 
 @router.post("/indicators/{indicator_id}/annotations")
@@ -507,3 +526,15 @@ async def create_preview(
             headers={"msg": f"Error: {e}"},
             content=f"Queue could not be deleted.",
         )
+
+
+@router.get("/indicators/{indicator_id}/rescale")
+def get_all_indicator_info(indicator_id: str):
+    from src.data import runjob 
+
+    job_string="scale_indicator.scale_indicator"
+    
+
+    resp=runjob(uuid=indicator_id, job_string=job_string)
+
+    return resp

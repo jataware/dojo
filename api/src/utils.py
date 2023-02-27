@@ -13,7 +13,8 @@ import boto3
 import botocore
 
 from src.settings import settings
-from validation import ModelSchema
+from validation import ModelSchema, IndicatorSchema, MetadataSchema
+from fastapi import (HTTPException, status)
 
 es = Elasticsearch([settings.ELASTICSEARCH_URL], port=settings.ELASTICSEARCH_PORT)
 s3 = boto3.client("s3",

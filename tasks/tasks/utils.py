@@ -80,3 +80,32 @@ def list_files(path):
         final_file_list.append(f"{location_info.path}/{filename}")
 
     return final_file_list
+
+
+def download_rawfile(path, filename):
+    """Downloads a file from a filepath
+
+    Args:
+        path (str): URI to file
+
+    Raises:
+        FileNotFoundError: If the file cannnot be found on S3.
+        RuntimeError: If the path URI does not begin with 'file' or 's3'
+        there is no handler for it yet.
+
+    Returns:
+        file: a file-like object
+    """
+    location_info = urlparse(path)
+
+    if location_info.scheme.lower() in ["s3", "minio"]:
+        try:
+            file_path = location_info.path.lstrip("/")
+            s3.download_file(location_info.netloc, file_path, filename)
+        except botocore.exceptions.ClientError as error:
+            print(error)
+            raise FileNotFoundError() from error
+    else:
+        raise RuntimeError("File storage format is unknown")
+
+    return True
