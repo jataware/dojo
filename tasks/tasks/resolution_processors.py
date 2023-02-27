@@ -9,7 +9,7 @@ import pandas as pd
 
 from utils import job_setup
 
-temporal_resolutions = ["L", "S", "T", "H", "D", "W" "M", "Y", "Q"]
+temporal_resolutions = ["L", "S", "T", "H", "D", "W" "M", "Q", "Y"]
 
 
 def calculate_temporal_resolution(context, filename=None, **kwargs):
@@ -26,6 +26,13 @@ def calculate_temporal_resolution(context, filename=None, **kwargs):
 
     resolution = detect_temporal_resolution(timestamps)
 
+    if resolution is None:
+        response = {
+            "message": "Resolution not detectable",
+            "resolution_result": "None",
+        }
+        return response
+
     response = {
         "message": "Resolution calculated successfully",
         "resolution_result": {
@@ -35,8 +42,6 @@ def calculate_temporal_resolution(context, filename=None, **kwargs):
             "error": resolution.error,
         },
     }
-
-    print(response)
 
     return response
 
