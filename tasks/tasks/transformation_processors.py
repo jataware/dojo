@@ -172,7 +172,7 @@ def regrid_geo(context, filename=None, **kwargs):
     if geo_column and scale_multiplier:
         regridded_df = elwood.regrid_dataframe_geo(
             dataframe=original_dataframe,
-            geo_column=geo_column,
+            geo_columns=geo_column,
             scale_multi=scale_multiplier,
         )
 
