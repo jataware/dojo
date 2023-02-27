@@ -20,7 +20,8 @@ import ClipMap from './ClipMap';
 import ClipTime from './ClipTime';
 import Drawer from '../components/Drawer';
 import { Navigation } from '.';
-import AdjustResolution from './AdjustResolution';
+import AdjustTemporalResolution from './AdjustTemporalResolution';
+import AdjustGeoResolution from './AdjustGeoResolution';
 
 const runElwoodJob = (datasetId, requestArgs, jobString, onSuccess) => {
   const startJob = async () => {
@@ -283,17 +284,32 @@ export default withStyles(({ spacing, palette }) => ({
     }
   };
 
+  const processAdjustTime = () => {
+    if (savedTimeResolution) {
+      const args = {
+        datetime_column: annotations.annotations.date[0].name,
+        datetime_bucket: savedTimeResolution.alias,
+        aggregation_function_list: ['sum']
+      };
+
+      runElwoodJob(datasetInfo.id, args, 'transformation_processors.scale_time', (resp) => {
+        console.log('this is resp', resp);
+      });
+    }
+  };
+
   const handleNextStep = () => {
-    processMapClippings();
-    processClipTime();
-    handleNext();
+    // processMapClippings();
+    // processClipTime();
+    processAdjustTime();
+    // handleNext();
   };
 
   const drawerInner = () => {
     switch (drawerName) {
       case 'regridMap':
         return (
-          <AdjustResolution
+          <AdjustGeoResolution
             closeDrawer={handleDrawerClose}
             oldResolution={mapResolution}
             resolutionOptions={mapResolutionOptions}
@@ -314,7 +330,7 @@ export default withStyles(({ spacing, palette }) => ({
         );
       case 'scaleTime':
         return (
-          <AdjustResolution
+          <AdjustTemporalResolution
             closeDrawer={handleDrawerClose}
             oldResolution={timeResolution}
             resolutionOptions={timeResolutionOptions}
