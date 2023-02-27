@@ -306,9 +306,9 @@ export const ColumnAnnotation = withStyles((theme) => ({
 }))(({
   classes, editingColumnName, columns,
   values, setFieldValue, validateDateFormat,
-  annotatedColumns, fieldsConfig=()=>({})
+  annotatedColumns, fieldsConfig = () => ({}),
+  focusRef
 }) => {
-
   const displayNamePlaceholder = editingColumnName.includes('+') ? '' : editingColumnName;
   const setQualifiesValues = useCallback(
     (val) => {
@@ -327,6 +327,7 @@ export const ColumnAnnotation = withStyles((theme) => ({
         name="display_name"
         label="Display Name"
         placeholder={displayNamePlaceholder}
+        inputRef={focusRef}
         {...fieldsConfig('display_name')}
       />
 
