@@ -11,7 +11,8 @@ import pandas as pd
 from elasticsearch import Elasticsearch
 
 from utils import get_rawfile, put_rawfile
-from mixmasta import mixmasta as mix
+from elwood import elwood as mix
+from elwood import feature_scaling as scaler
 from base_annotation import BaseProcessor
 from settings import settings
 
@@ -349,6 +350,7 @@ def scale_features(context, filename=None):
             "_source": False,
         }
         es_response = es.search(index="indicators", body=query)
+        print(f"es response in scale: {es_response}")
         data_paths = es_response["hits"]["hits"][0]["fields"]["data_paths"]
     paths_to_process = [
         path for path in data_paths if "_str" not in path and "_normed" not in path
@@ -360,7 +362,7 @@ def scale_features(context, filename=None):
         file_name = path.split("/")[-1].split(".parquet")[0]
         file_out_name = f"{file_name}_normalized.parquet.gzip"
         dataframe = pd.read_parquet(path)
-        dataframe_scaled = mix.scale_features(dataframe)
+        dataframe_scaled = scaler.scale_dataframe(dataframe)
 
         s3_filepath = os.path.join(
             settings.DATASET_STORAGE_BASE_URL, "normalized", uuid, file_out_name
