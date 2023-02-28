@@ -68,7 +68,7 @@ export default withStyles((theme) => ({
     // TODO: figure out more failure conditions (or figure out success conditions)
     // TODO: come back to geo - block everything that isn't a string for now
     // oldResolution === 'None' ||
-    if (oldResolution.uniformity !== 'PERFECT' || typeof oldResolution !== 'object') {
+    if (oldResolution === 'None') {
       return (
         <Typography align="center" variant="h6" style={{ marginTop: '64px' }}>
           This dataset does not have a useable {title} resolution
@@ -82,7 +82,7 @@ export default withStyles((theme) => ({
         <div className={classes.oldToNew}>
           <div className={classes.textWrapper}>
             <Typography variant="h6" align="center">current resolution</Typography>
-            <Typography variant="h4" align="center">{oldResolution.resolution} km</Typography>
+            <Typography variant="h4" align="center">{oldResolution} km</Typography>
           </div>
           <div className={classes.arrowIcon}>
             <ArrowForwardIcon fontSize="large" />

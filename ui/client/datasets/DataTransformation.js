@@ -169,8 +169,12 @@ export default withStyles(({ spacing, palette }) => ({
         const geoResolutionString = 'resolution_processors.calculate_geographical_resolution';
         const onGeoResolutionSuccess = (data) => {
           console.log('this is the calculate_geographical_resolution response:', data);
-          if (data.resolution_result) {
-            setMapResolution(data.resolution_result);
+            console.log('uniformity in success??', data.resolution_result?.uniformity)
+          if (data.resolution_result?.uniformity === 'PERFECT') {
+            console.log('are we getting in here?', data.scale_km);
+            setMapResolution(data.scale_km);
+          } else {
+            setMapResolution('None');
           }
           if (data.multiplier_samples) {
             setMapResolutionOptions(data.multiplier_samples);
@@ -266,6 +270,7 @@ export default withStyles(({ spacing, palette }) => ({
       const args = {
         geo_columns: [],
         scale_multi: savedMapResolution,
+        scale: mapResolution,
       };
       annotations.annotations.geo.forEach((geo) => args.geo_columns.push(geo.name));
 
