@@ -5,11 +5,14 @@ import re
 import requests
 import shutil
 from urllib.parse import urlparse
-
+import io
 import pandas as pd
+import numpy as np
+from elasticsearch import Elasticsearch
 
-from utils import get_rawfile, put_rawfile
-from mixmasta import mixmasta as mix
+from utils import get_rawfile, put_rawfile, download_rawfile
+from elwood import elwood as mix
+from elwood import feature_scaling as scaler
 from base_annotation import BaseProcessor
 from settings import settings
 
@@ -323,3 +326,127 @@ def run_model_mixmasta(context, *args, **kwargs):
         "mixmaster_annotations": mm_ready_annotations
     }
     return response
+
+
+def generate_min_max_mapping(array_of_paths):
+    mapper={}
+    for path in array_of_paths:
+        filename=path.split('/')[-1]
+        try:        
+            logging.info(f'downloading for s3 {path}')
+            download_rawfile(path, f"processing/{filename}")
+        except FileNotFoundError as e:
+            return {"success":False,'message':"File not found"}
+    
+        current_df=pd.read_parquet(f"processing/{filename}")
+
+        features = current_df.feature.unique()
+        for f in features:
+            feat = current_df[current_df["feature"] == f]
+            current_min=np.min(feat["value"])
+            current_max=np.max(feat["value"])
+            mapper[f] = {
+                "min": min(
+                    current_min, 
+                    mapper.get(f,{}).get("min", current_min)
+                ),
+                "max": max(
+                    current_max,
+                    mapper.get(f,{}).get("max", current_max)
+                )
+            }
+    return mapper
+
+
+def new_min_max_values_found(old_mapping, new_mapping):
+    for f in new_mapping:
+        if new_mapping[f].get('min') < old_mapping[f].get('min'):
+            return True
+        if new_mapping[f].get('max') > old_mapping[f].get('max'):
+            return True
+    return False
+
+
+def scale_features(context):
+    # 0 to 1 scaled dataframe
+    print('starting scale feature from mixmasta_process')
+    es = Elasticsearch(settings.ELASTICSEARCH_URL)
+    uuid = context["uuid"]
+    data_paths = context["dataset"]["data_paths"]
+    data_paths_normalized= context["dataset"].get("data_paths_normalized",[])
+    if not data_paths:
+        query = {
+            "query": {"match": {"id": uuid}},
+            "fields": ["data_paths"],
+            "_source": False,
+        }
+        es_response = es.search(index="indicators", body=query)
+        data_paths = es_response["hits"]["hits"][0]["fields"]["data_paths"]
+    
+    print(f'found these data_paths {data_paths}')
+
+    # determine which files have a normalized equivalent 
+    data_paths_not_str = [path for path in data_paths if "_str" not in path]
+
+    new_files_not_normed=[path for path in data_paths_not_str if str(path.split(".parquet")[0]+"_normalized.parquet.gzip") not in data_paths_normalized]
+    old_files_normed=[path for path in data_paths_not_str if str(path.split(".parquet")[0]+"_normalized.parquet.gzip") in data_paths_normalized]
+
+    print(new_files_not_normed)
+    print('hhksdjfk')
+    print(old_files_normed)
+
+    # need to download all files to determine min and max values
+    old_mapping=generate_min_max_mapping(old_files_normed)
+    
+    print(f' found old min maxes old {old_mapping}')
+    new_mapping=generate_min_max_mapping(new_files_not_normed)
+    
+    print(f' found new min maxes {new_mapping}')
+
+
+    # if new values are more extreme process all files again
+    # else only process new files
+    if new_min_max_values_found(old_mapping=old_mapping,new_mapping=new_mapping):
+        files_to_process=new_files_not_normed+old_files_normed
+    else:
+        files_to_process=new_files_not_normed
+    
+    for path in files_to_process:
+        file_name = path.split("/")[-1].split(".parquet")[0]
+        file_out_name = f"{file_name}_normalized.parquet.gzip"
+        dataframe=pd.read_parquet(f"processing/{filename}")
+
+        dataframe_scaled = scaler.scale_dataframe(dataframe)
+
+        s3_filepath = os.path.join(
+            settings.DATASET_STORAGE_BASE_URL, "normalized", uuid, file_out_name
+        )
+        print(f"filepath: {s3_filepath}")
+
+        file_buffer = io.BytesIO()
+
+        dataframe_scaled.to_parquet(file_buffer)
+        file_buffer.seek(0)
+
+        put_rawfile(path=s3_filepath, fileobj=file_buffer)
+    
+    # save new data_paths_normalized values to es
+    data_paths_normalized =[] 
+    for path in new_files_not_normed + old_files_normed:
+        file_out_name = f"{file_name}_normalized.parquet.gzip"
+        s3_filepath = os.path.join(
+            settings.DATASET_STORAGE_BASE_URL, "normalized", uuid, file_out_name
+        )
+        data_paths_normalized.append(s3_filepath)
+    response = update_indicator(
+        uuid=uuid, data_paths_normalized=data_paths_normalized, elasticsearch=es
+    )
+    print(f"Indicator update response: {response}")
+
+    return
+
+
+def update_indicator(uuid, data_paths_normalized, elasticsearch):
+    update_body = {"doc": {"data_paths_normalized": data_paths_normalized}}
+    resp = elasticsearch.update(index="indicators", id=uuid, body=update_body)
+    return resp

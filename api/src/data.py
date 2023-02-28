@@ -19,7 +19,7 @@ from rq import Worker, Queue
 from rq.job import Job
 from redis import Redis
 from rq.exceptions import NoSuchJobError
-from rq import job
+# from rq import job as rq_job
 import boto3
 
 from src.utils import get_rawfile, put_rawfile
@@ -54,7 +54,7 @@ def get_context(uuid):
         dataset = {}
 
     context = {"uuid": uuid, "dataset": dataset, "annotations": annotations}
-
+    print(context)
     return context
 
 
@@ -126,8 +126,8 @@ def cancel_job(job_id):
 
 # Last to not interfere with other routes
 @router.post("/job/{uuid}/{job_string}")
-def runjob(uuid: str, job_string: str, options: Optional[Dict[Any, Any]] = None):
-
+def job(uuid: str, job_string: str, options: Optional[Dict[Any, Any]] = None):
+    print('started')
     if options is None:
         options = {}
 
@@ -149,6 +149,9 @@ def runjob(uuid: str, job_string: str, options: Optional[Dict[Any, Any]] = None)
                 context = get_context(uuid=uuid)
         except Exception as e:
             logging.error(e)
+        print('made it here')
+        print(job_string)
+        print(context)
         job = q.enqueue_call(
             func=job_string, args=[context], kwargs=options, job_id=job_id
         )

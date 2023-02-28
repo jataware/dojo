@@ -515,12 +515,12 @@ async def create_preview(
         )
 
 
-@router.get("/indicators/{indicator_id}/rescale")
-def get_all_indicator_info(indicator_id: str):
-    from src.data import runjob 
+@router.put("/indicators/{indicator_id}/rescale")
+def rescale_indicator(indicator_id: str):
+    from src.data import job 
 
-    job_string="scale_indicator.scale_indicator"
+    job_string="mixmasta_processors.scale_features"
     
-    resp=runjob(uuid=indicator_id, job_string=job_string)
+    resp=job(uuid=indicator_id, job_string=job_string)
 
     return resp

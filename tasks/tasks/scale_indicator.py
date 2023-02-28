@@ -7,6 +7,7 @@ import logging
 def scale_indicator(context):
     logging.info(f"Scaling indicator {context.get('uuid')}")
     data_paths=context.get('dataset').get('data_paths')
+    data_paths_normalized=context.get('dataset').get('data_paths_normalized')
     min_max_mapping={}
     for path in data_paths:
         # current_df=pd.read_parquet(path)
@@ -21,16 +22,20 @@ def scale_indicator(context):
 
         features = current_df.feature.unique()
         for f in features:
-            feat = current_df[current_df["feature"] == f].copy()
+            feat = current_df[current_df["feature"] == f]
             current_min=np.min(feat["value"])
             current_max=np.max(feat["value"])
-            if f not in min_max_mapping:
-                min_max_mapping[f]={"min":current_min, "max":current_max}
-            else:
-                if min_max_mapping[f]["min"] > current_min:
-                    min_max_mapping[f]["min"]=current_min
-                if min_max_mapping[f]["max"]<current_max:
-                    min_max_mapping[f]["max"]=current_max
+            min_max_mapping[f] = {
+                "min": min(
+                    current_min, 
+                    min_max_mapping.get(f,{}).get("min", current_min)
+                ),
+                "max": max(
+                    current_max,
+                    min_max_mapping.get(f,{}).get("max", current_max)
+                )
+            }
+
     
     logging.info(f'min max values for all files: {min_max_mapping}')
 
@@ -62,7 +67,7 @@ def scale_dataframe(dataframe, mapper):
     print(features)
 
     for f in features:
-        feat = dataframe[dataframe["feature"] == f].copy()
+        feat = dataframe[dataframe["feature"] == f]
         feat["value"] = scale_data(feat["value"], mapper[f])
         dfs.append(feat)
     return pd.concat(dfs)
