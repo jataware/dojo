@@ -19,41 +19,39 @@ from settings import settings
 
 def build_mixmasta_meta_from_context(context, filename=None):
     metadata = context["annotations"]["metadata"]
-    if 'files' in metadata:
-        metadata = metadata['files'][filename]
+    if "files" in metadata:
+        metadata = metadata["files"][filename]
 
     ftype = metadata.get("filetype", "csv")
-    mapping  = {
+    mapping = {
         # Geotiff
-        'band': 'geotiff_band_count',
-        'band_name': 'geotiff_value',
-        'bands': 'geotiff_bands',
-        'date': 'geotiff_date_value',
-        'feature_name': 'geotiff_value',
-        'null_val': 'geotiff_null_value',
-
+        "band": "geotiff_band_count",
+        "band_name": "geotiff_value",
+        "bands": "geotiff_bands",
+        "date": "geotiff_date_value",
+        "feature_name": "geotiff_value",
+        "null_val": "geotiff_null_value",
         # Excel
-        'sheet': 'excel_sheet',
+        "sheet": "excel_sheet",
     }
     mixmasta_meta = {}
     mixmasta_meta["ftype"] = ftype
-    if ftype == 'geotiff':
+    if ftype == "geotiff":
         band_type = metadata.get("geotiff_band_type", "category")
-        if band_type == 'temporal':
-            band_type = 'datetime'
+        if band_type == "temporal":
+            band_type = "datetime"
             date_value = None
         else:
             date_value = context.get("geotiff_date_value", "2001-01-01")
-        mixmasta_meta['band_type'] = band_type
-        mixmasta_meta['date'] = date_value
-
+        mixmasta_meta["band_type"] = band_type
+        mixmasta_meta["date"] = date_value
 
     for key, value in mapping.items():
         if value in metadata:
             mixmasta_meta[key] = metadata[value]
 
-    if 'geotiff_null_value' not in mixmasta_meta:
-        mixmasta_meta['null_val'] = -9999
+    if "geotiff_null_value" not in mixmasta_meta:
+        mixmasta_meta["null_val"] = -9999
 
     return mixmasta_meta
 
@@ -101,15 +99,14 @@ def run_mixmasta(context, filename=None):
     # To save processing time, always re-use the converted CSV file
     if filename is None:
         filename = "raw_data.csv"
-        file_suffix = ''
+        file_suffix = ""
     else:
-        file_suffix_match = re.search(r'raw_data(_\d+)?\.', filename)
+        file_suffix_match = re.search(r"raw_data(_\d+)?\.", filename)
         if file_suffix_match:
-            file_suffix = file_suffix_match.group(1) or ''
+            file_suffix = file_suffix_match.group(1) or ""
         else:
-            file_suffix = ''
+            file_suffix = ""
         filename = f"raw_data{file_suffix}.csv"
-
 
     rawfile_path = os.path.join(settings.DATASET_STORAGE_BASE_URL, uuid, filename)
 
@@ -120,9 +117,7 @@ def run_mixmasta(context, filename=None):
     # Writing out the annotations because mixmasta needs a filepath to this data.
     # Should probably change mixmasta down the road to accept filepath AND annotations objects.
     mm_ready_annotations = context["annotations"]["annotations"]
-    mm_ready_annotations['meta'] = {
-        "ftype": "csv"
-    }
+    mm_ready_annotations["meta"] = {"ftype": "csv"}
     with open(f"{datapath}/mixmasta_ready_annotations.json", "w") as f:
         f.write(json.dumps(mm_ready_annotations))
     f.close()
@@ -130,27 +125,31 @@ def run_mixmasta(context, filename=None):
     # Main Call
     mixmasta_result_df = processor.run(context, datapath, filename)
 
-    file_suffix_match = re.search(r'raw_data(_\d+)?\.', filename)
+    file_suffix_match = re.search(r"raw_data(_\d+)?\.", filename)
     if file_suffix_match:
-        file_suffix = file_suffix_match.group(1) or ''
+        file_suffix = file_suffix_match.group(1) or ""
     else:
-        file_suffix = ''
+        file_suffix = ""
 
     data_files = []
     # Takes all parquet files and puts them into the DATASET_STORAGE_BASE_URL which will be S3 in Production
     dest_path = os.path.join(settings.DATASET_STORAGE_BASE_URL, uuid)
     for local_file in os.listdir(datapath):
         if local_file.endswith(".parquet.gzip"):
-            local_file_match = re.search(rf'({uuid}(_str)?).parquet.gzip', local_file)
+            local_file_match = re.search(rf"({uuid}(_str)?).parquet.gzip", local_file)
             if local_file_match:
                 file_root = local_file_match.group(1)
-            dest_file_path = os.path.join(dest_path, f"{file_root}{file_suffix}.parquet.gzip")
+            dest_file_path = os.path.join(
+                dest_path, f"{file_root}{file_suffix}.parquet.gzip"
+            )
             with open(os.path.join(datapath, local_file), "rb") as fileobj:
                 put_rawfile(path=dest_file_path, fileobj=fileobj)
             if dest_file_path.startswith("s3:"):
                 # "https://jataware-world-modelers.s3.amazonaws.com/dev/indicators/6c9c996b-a175-4fa6-803c-e39b24e38b6e/6c9c996b-a175-4fa6-803c-e39b24e38b6e.parquet.gzip"
                 location_info = urlparse(dest_file_path)
-                data_files.append(f"https://{location_info.netloc}.s3.amazonaws.com{location_info.path}")
+                data_files.append(
+                    f"https://{location_info.netloc}.s3.amazonaws.com{location_info.path}"
+                )
             else:
                 data_files.append(dest_file_path)
 
@@ -160,13 +159,19 @@ def run_mixmasta(context, filename=None):
     dataset = context.get("dataset")
     if dataset.get("period", None):
         period = {
-            "gte": max(int(mixmasta_result_df['timestamp'].max()), dataset.get("period", {}).get("gte", None)),
-            "lte": min(int(mixmasta_result_df['timestamp'].min()), dataset.get("period", {}).get("lte", None)),
+            "gte": max(
+                int(mixmasta_result_df["timestamp"].max()),
+                dataset.get("period", {}).get("gte", None),
+            ),
+            "lte": min(
+                int(mixmasta_result_df["timestamp"].min()),
+                dataset.get("period", {}).get("lte", None),
+            ),
         }
     else:
         period = {
-            "gte": int(mixmasta_result_df['timestamp'].max()),
-            "lte": int(mixmasta_result_df['timestamp'].min()),
+            "gte": int(mixmasta_result_df["timestamp"].max()),
+            "lte": int(mixmasta_result_df["timestamp"].min()),
         }
 
     if dataset.get("geography", None):
@@ -176,7 +181,9 @@ def run_mixmasta(context, filename=None):
     for geog_type in ["admin1", "admin2", "admin3", "country"]:
         if geog_type not in geography_dict:
             geography_dict[geog_type] = []
-        for value in mixmasta_result_df[mixmasta_result_df[geog_type].notna()][geog_type].unique():
+        for value in mixmasta_result_df[mixmasta_result_df[geog_type].notna()][
+            geog_type
+        ].unique():
             if value == "nan" or value in geography_dict[geog_type]:
                 continue
             geography_dict[geog_type].append(value)
@@ -198,8 +205,12 @@ def run_mixmasta(context, filename=None):
             ontologies={},
             is_primary=True,
             data_resolution={
-                "temporal_resolution": context.get("dataset", {}).get("temporal_resolution", None),
-                "spatial_resolution": context.get("dataset", {}).get("spatial_resolution", None),
+                "temporal_resolution": context.get("dataset", {}).get(
+                    "temporal_resolution", None
+                ),
+                "spatial_resolution": context.get("dataset", {}).get(
+                    "spatial_resolution", None
+                ),
             },
             alias=feature["aliases"],
         )
@@ -277,10 +288,12 @@ def run_mixmasta(context, filename=None):
 
 
 def run_model_mixmasta(context, *args, **kwargs):
-    metadata = context['annotations']['metadata']
+    metadata = context["annotations"]["metadata"]
     processor = MixmastaProcessor()
     filename = f"{metadata['file_uuid']}.csv"
-    datapath = os.path.join(settings.DATASET_STORAGE_BASE_URL, 'model-output-samples', context['uuid'])
+    datapath = os.path.join(
+        settings.DATASET_STORAGE_BASE_URL, "model-output-samples", context["uuid"]
+    )
     sample_path = os.path.join(datapath, filename)
     # Creating folder for temp file storage on the rq worker since following functions are dependent on file paths
     localpath = f"/datasets/processing/{context['uuid']}"
@@ -297,10 +310,9 @@ def run_model_mixmasta(context, *args, **kwargs):
     # Writing out the annotations because mixmasta needs a filepath to this data.
     # Should probably change mixmasta down the road to accept filepath AND annotations objects.
     mm_ready_annotations = context["annotations"]["annotations"]
-    mm_ready_annotations['meta'] = {
-        "ftype": "csv"
-    }
+    mm_ready_annotations["meta"] = {"ftype": "csv"}
     import pprint
+
     logging.warn(pprint.pformat(mm_ready_annotations))
 
     # annotation_file = get_rawfile(os.path.join(datapath), )
@@ -322,58 +334,59 @@ def run_model_mixmasta(context, *args, **kwargs):
     # Final cleanup of temp directory
     shutil.rmtree(localpath)
 
-    response = {
-        "mixmaster_annotations": mm_ready_annotations
-    }
+    response = {"mixmaster_annotations": mm_ready_annotations}
     return response
 
 
 def generate_min_max_mapping(array_of_paths):
-    mapper={}
+    current_min = None
+    current_max = None
+    mapper = {}
     for path in array_of_paths:
-        filename=path.split('/')[-1]
-        try:        
-            logging.info(f'downloading for s3 {path}')
+        filename = path.split("/")[-1]
+        try:
+            logging.info(f"downloading for s3 {path}")
             download_rawfile(path, f"processing/{filename}")
         except FileNotFoundError as e:
-            return {"success":False,'message':"File not found"}
-    
-        current_df=pd.read_parquet(f"processing/{filename}")
+            return {"success": False, "message": "File not found"}
+
+        current_df = pd.read_parquet(f"processing/{filename}")
 
         features = current_df.feature.unique()
         for f in features:
             feat = current_df[current_df["feature"] == f]
-            current_min=np.min(feat["value"])
-            current_max=np.max(feat["value"])
+            current_min = np.min(feat["value"])
+            current_max = np.max(feat["value"])
             mapper[f] = {
-                "min": min(
-                    current_min, 
-                    mapper.get(f,{}).get("min", current_min)
-                ),
-                "max": max(
-                    current_max,
-                    mapper.get(f,{}).get("max", current_max)
-                )
+                "min": min(current_min, mapper.get(f, {}).get("min", current_min)),
+                "max": max(current_max, mapper.get(f, {}).get("max", current_max)),
             }
     return mapper
 
 
 def new_min_max_values_found(old_mapping, new_mapping):
+    logging.error(f"new_mapping {new_mapping}")
+    if new_mapping is None or new_mapping == {}:
+        return False
     for f in new_mapping:
-        if new_mapping[f].get('min') < old_mapping[f].get('min'):
+        if new_mapping[f].get("min") < old_mapping[f].get("min"):
             return True
-        if new_mapping[f].get('max') > old_mapping[f].get('max'):
+        if new_mapping[f].get("max") > old_mapping[f].get("max"):
             return True
     return False
 
 
 def scale_features(context):
     # 0 to 1 scaled dataframe
-    print('starting scale feature from mixmasta_process')
+    logging.error(context)
+    logging.info("starting scale feature from mixmasta_process")
+
     es = Elasticsearch(settings.ELASTICSEARCH_URL)
     uuid = context["uuid"]
     data_paths = context["dataset"]["data_paths"]
-    data_paths_normalized= context["dataset"].get("data_paths_normalized",[])
+    data_paths_normalized = context["dataset"].get("data_paths_normalized", [])
+    if data_paths_normalized is None:
+        data_paths_normalized = []
     if not data_paths:
         query = {
             "query": {"match": {"id": uuid}},
@@ -382,46 +395,48 @@ def scale_features(context):
         }
         es_response = es.search(index="indicators", body=query)
         data_paths = es_response["hits"]["hits"][0]["fields"]["data_paths"]
-    
-    print(f'found these data_paths {data_paths}')
 
-    # determine which files have a normalized equivalent 
+    logging.error(f"found these data_paths {data_paths}")
+
+    # determine which files have a normalized equivalent
     data_paths_not_str = [path for path in data_paths if "_str" not in path]
 
-    new_files_not_normed=[path for path in data_paths_not_str if str(path.split(".parquet")[0]+"_normalized.parquet.gzip") not in data_paths_normalized]
-    old_files_normed=[path for path in data_paths_not_str if str(path.split(".parquet")[0]+"_normalized.parquet.gzip") in data_paths_normalized]
-
-    print(new_files_not_normed)
-    print('hhksdjfk')
-    print(old_files_normed)
+    old_files_normed = [
+        path
+        for path in data_paths_not_str
+        for norm_path in data_paths_normalized
+        if str(path.split("/")[-1].split(".parquet")[0] + "_normalized.parquet.gzip")
+        == norm_path.split("/")[-1]
+    ]
+    new_files_not_normed = [
+        path for path in data_paths_not_str if path not in old_files_normed
+    ]
 
     # need to download all files to determine min and max values
-    old_mapping=generate_min_max_mapping(old_files_normed)
-    
-    print(f' found old min maxes old {old_mapping}')
-    new_mapping=generate_min_max_mapping(new_files_not_normed)
-    
-    print(f' found new min maxes {new_mapping}')
+    old_mapping = generate_min_max_mapping(old_files_normed)
 
+    new_mapping = generate_min_max_mapping(new_files_not_normed)
 
     # if new values are more extreme process all files again
     # else only process new files
-    if new_min_max_values_found(old_mapping=old_mapping,new_mapping=new_mapping):
-        files_to_process=new_files_not_normed+old_files_normed
+
+    if new_min_max_values_found(old_mapping=old_mapping, new_mapping=new_mapping):
+        files_to_process = new_files_not_normed + old_files_normed
     else:
-        files_to_process=new_files_not_normed
-    
+        files_to_process = new_files_not_normed
+
     for path in files_to_process:
+        filename = path.split("/")[-1]
         file_name = path.split("/")[-1].split(".parquet")[0]
         file_out_name = f"{file_name}_normalized.parquet.gzip"
-        dataframe=pd.read_parquet(f"processing/{filename}")
+
+        dataframe = pd.read_parquet(f"processing/{filename}")
 
         dataframe_scaled = scaler.scale_dataframe(dataframe)
 
         s3_filepath = os.path.join(
             settings.DATASET_STORAGE_BASE_URL, "normalized", uuid, file_out_name
         )
-        print(f"filepath: {s3_filepath}")
 
         file_buffer = io.BytesIO()
 
@@ -429,10 +444,11 @@ def scale_features(context):
         file_buffer.seek(0)
 
         put_rawfile(path=s3_filepath, fileobj=file_buffer)
-    
+
     # save new data_paths_normalized values to es
-    data_paths_normalized =[] 
+    data_paths_normalized = []
     for path in new_files_not_normed + old_files_normed:
+        file_name = path.split("/")[-1].split(".parquet")[0]
         file_out_name = f"{file_name}_normalized.parquet.gzip"
         s3_filepath = os.path.join(
             settings.DATASET_STORAGE_BASE_URL, "normalized", uuid, file_out_name
