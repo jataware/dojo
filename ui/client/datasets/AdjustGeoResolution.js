@@ -55,6 +55,7 @@ export default withStyles((theme) => ({
   title,
 }) => {
   const [selectedResolution, setSelectedResolution] = useState(savedResolution || '');
+
   const handleSaveClick = () => {
     if (selectedResolution !== '') setSavedResolution(selectedResolution);
 
@@ -83,14 +84,16 @@ export default withStyles((theme) => ({
         <div className={classes.oldToNew}>
           <div className={classes.textWrapper}>
             <Typography variant="h6" align="center">current resolution</Typography>
-            <Typography variant="h4" align="center">{oldResolution} km</Typography>
+            <Typography variant="h6" align="center">{oldResolution} km</Typography>
           </div>
           <div className={classes.arrowIcon}>
             <ArrowForwardIcon fontSize="large" />
           </div>
           <div className={classes.textWrapper}>
             <Typography variant="h6" align="center">new resolution</Typography>
-            <Typography variant="h4" align="center">{selectedResolution} km</Typography>
+            <Typography variant="h6" align="center">
+              {selectedResolution} {selectedResolution && 'km'}
+            </Typography>
           </div>
         </div>
         <div className={classes.bottomWrapper}>

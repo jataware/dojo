@@ -10,6 +10,23 @@ import Select from '@material-ui/core/Select';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 
+const aggregationFunctions = [
+  'count',
+  'size',
+  'sum',
+  'mean',
+  'average',
+  'std',
+  'var',
+  'sem',
+  'describe',
+  'min',
+  'max',
+  'first',
+  'last',
+  'nth',
+];
+
 export default withStyles((theme) => ({
   loading: {
     display: 'flex',
@@ -52,17 +69,30 @@ export default withStyles((theme) => ({
   resolutionOptions,
   setSavedResolution,
   savedResolution,
+  savedAggregation,
+  setSavedAggregation,
   title,
 }) => {
   const [selectedResolution, setSelectedResolution] = useState(savedResolution || '');
-  const handleSaveClick = () => {
-    if (selectedResolution !== '') setSavedResolution(selectedResolution);
+  const [selectedAggregation, setSelectedAggregation] = useState(savedAggregation || '');
 
-    closeDrawer();
+  const handleSaveClick = () => {
+    if (selectedResolution !== '' && selectedAggregation !== '') {
+      setSavedResolution(selectedResolution);
+      setSavedAggregation(selectedAggregation);
+      closeDrawer();
+    }
+
+    // todo: open alert saying must make a selection before saving
+    // todo: make this into a form where both selects are required fields
   };
 
   const handleChangeResolution = (event) => {
     setSelectedResolution(event.target.value);
+  };
+
+  const handleChangeAggregation = (event) => {
+    setSelectedAggregation(event.target.value);
   };
 
   const mainContent = () => {
@@ -100,6 +130,19 @@ export default withStyles((theme) => ({
           </div>
         </div>
         <div className={classes.bottomWrapper}>
+          {/* TODO: make this into a form with both selects as required before save/submit */}
+          <FormControl variant="outlined" className={classes.selectWrapper}>
+            <InputLabel>Aggregation Function</InputLabel>
+            <Select
+              value={selectedAggregation}
+              onChange={handleChangeAggregation}
+              label="Aggregation Function"
+            >
+              {aggregationFunctions.map((funct) => (
+                <MenuItem key={funct} value={funct}>{funct}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
           <FormControl variant="outlined" className={classes.selectWrapper}>
             <InputLabel>Resolution</InputLabel>
             <Select

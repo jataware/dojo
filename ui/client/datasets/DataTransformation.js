@@ -103,6 +103,7 @@ export default withStyles(({ spacing, palette }) => ({
   const [timeResolution, setTimeResolution] = useState(null);
   const [timeResolutionOptions, setTimeResolutionOptions] = useState([]);
   const [savedTimeResolution, setSavedTimeResolution] = useState(null);
+  const [savedAggregation, setSavedAggregation] = useState(null);
 
   const [timeBounds, setTimeBounds] = useState([]);
   const [savedTimeBounds, setSavedTimeBounds] = useState(null);
@@ -134,6 +135,19 @@ export default withStyles(({ spacing, palette }) => ({
   //     resolution: 1,
   //     error: 1.7832238693938827
   //   });
+  // }
+
+  // if (!mapResolutionOptions.length) {
+  //   setMapResolutionOptions([
+  //     222.00000000000028,
+  //     333.00000000000045,
+  //     444.00000000000057,
+  //     555.0000000000007,
+  //     666.0000000000009,
+  //   ]);
+  // }
+  // if (!mapResolution) {
+  //   setMapResolution(111.00000000000014);
   // }
 
   // if (!timeBounds.length) {
@@ -284,11 +298,10 @@ export default withStyles(({ spacing, palette }) => ({
     if (savedDrawings.length > 0) {
       const args = {
         map_shapes: savedDrawings,
-        geo_columns: [
-          'latitude',
-          'longitude',
-        ],
+        geo_columns: [],
       };
+      annotations.annotations.geo.forEach((geo) => args.geo_columns.push(geo.name));
+
       runElwoodJob(datasetInfo.id, args, 'transformation_processors.clip_geo', () => {});
     }
   };
@@ -313,7 +326,7 @@ export default withStyles(({ spacing, palette }) => ({
       const args = {
         datetime_column: annotations.annotations.date[0].name,
         datetime_bucket: savedTimeResolution.alias,
-        aggregation_function_list: ['sum']
+        aggregation_function_list: [savedAggregation],
       };
 
       runElwoodJob(datasetInfo.id, args, 'transformation_processors.scale_time', (resp) => {
@@ -362,6 +375,8 @@ export default withStyles(({ spacing, palette }) => ({
             resolutionOptions={timeResolutionOptions}
             setSavedResolution={setSavedTimeResolution}
             savedResolution={savedTimeResolution}
+            savedAggregation={savedAggregation}
+            setSavedAggregation={setSavedAggregation}
             title="Temporal"
           />
         );
