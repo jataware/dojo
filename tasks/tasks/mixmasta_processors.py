@@ -366,8 +366,11 @@ def generate_min_max_mapping(array_of_paths):
 
 def new_min_max_values_found(old_mapping, new_mapping):
     logging.error(f"new_mapping {new_mapping}")
-    if new_mapping is None or new_mapping == {}:
+    if new_mapping == {}:
         return False
+    if old_mapping=={}:
+        return True
+    
     for f in new_mapping:
         if new_mapping[f].get("min") < old_mapping[f].get("min"):
             return True
