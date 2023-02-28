@@ -21,7 +21,7 @@ def clip_geo(context, filename=None, **kwargs):
     geo_columns = kwargs.get("geo_columns", [])
 
     if shape_list and geo_columns:
-        clipped_df = elwood.clip_data(
+        clipped_df = elwood.clip_geo(
             dataframe=original_dataframe,
             geo_columns=geo_columns,
             polygons_list=shape_list,
