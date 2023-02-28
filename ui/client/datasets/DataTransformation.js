@@ -24,6 +24,7 @@ import AdjustTemporalResolution from './AdjustTemporalResolution';
 import AdjustGeoResolution from './AdjustGeoResolution';
 
 const runElwoodJob = (datasetId, requestArgs, jobString, onSuccess) => {
+  let count = 0;
   const startJob = async () => {
     const jobQueueResp = await axios.post(
       `/api/dojo/job/${datasetId}/${jobString}`, requestArgs
@@ -38,9 +39,11 @@ const runElwoodJob = (datasetId, requestArgs, jobString, onSuccess) => {
     setTimeout(() => {
       axios.post(`/api/dojo/job/fetch/${jobId}`).then((response) => {
         if (response.status === 200) {
-          console.log(`the response in startJob  with job string: ${jobString}:`, response);
+          // keep track of how long it takes (for dev purposes)
+          count += 1;
+          console.log(`${count}: the response in startJob  with job string: ${jobString}:`, response);
           if (response.data) {
-            console.log('success! no more calls?', response.data)
+            console.log(`success! it took ${count * 500}ms`, response.data)
             onSuccess(response.data);
             return;
           }
@@ -107,11 +110,15 @@ export default withStyles(({ spacing, palette }) => ({
 // TODO remove the following, just for development
   if (!timeResolutionOptions.length) {
     setTimeResolutionOptions([
+      { alias: 'L', description: 'milliseconds' },
+      { alias: 'S', description: 'secondly' },
+      { alias: 'T', description: 'minutely' },
+      { alias: 'H', description: 'hourly' },
       { alias: 'D', description: 'day' },
-      { alias: 'W', description: 'week' },
-      { alias: 'SM', description: 'semi-month' },
-      { alias: 'M', description: 'month-end' },
-      { alias: 'Y', description: 'year-end' },
+      { alias: 'W', description: 'weekly' },
+      { alias: 'M', description: 'month end' },
+      { alias: 'Q', description: 'quarter end' },
+      { alias: 'Y', description: 'year end' },
     ]);
   }
   // if (!mapBounds) {
@@ -126,12 +133,14 @@ export default withStyles(({ spacing, palette }) => ({
   // }
 
   //   // setTimeout(() => {
+  // if (!timeResolution) {
   //   setTimeResolution({
   //     uniformity: 'PERFECT',
   //     unit: 'month',
   //     resolution: 1,
   //     error: 1.7832238693938827
   //   });
+  // }
 
   //   // }, 2000);
   // if (!timeBounds.length) {

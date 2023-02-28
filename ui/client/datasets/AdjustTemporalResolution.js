@@ -53,7 +53,7 @@ export default withStyles((theme) => ({
   saveResolution,
   title,
 }) => {
-  const [selectedResolution, setSelectedResolution] = useState({});
+  const [selectedResolution, setSelectedResolution] = useState('');
   const handleSaveClick = () => {
     if (selectedResolution !== '') saveResolution(selectedResolution);
 
@@ -107,7 +107,9 @@ export default withStyles((theme) => ({
               label="Resolution"
             >
               {resolutionOptions.map((option) => (
-                <MenuItem key={option.description} value={option}>{option.description}</MenuItem>
+                <MenuItem key={option.description} value={option}>
+                  {option.description}
+                </MenuItem>
               ))}
             </Select>
           </FormControl>
