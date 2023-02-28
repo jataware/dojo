@@ -50,12 +50,13 @@ export default withStyles((theme) => ({
   closeDrawer,
   oldResolution,
   resolutionOptions,
-  saveResolution,
+  setSavedResolution,
+  savedResolution,
   title,
 }) => {
-  const [selectedResolution, setSelectedResolution] = useState('');
+  const [selectedResolution, setSelectedResolution] = useState(savedResolution || '');
   const handleSaveClick = () => {
-    if (selectedResolution !== '') saveResolution(selectedResolution);
+    if (selectedResolution !== '') setSavedResolution(selectedResolution);
 
     closeDrawer();
   };

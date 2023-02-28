@@ -107,7 +107,7 @@ export default withStyles(({ spacing, palette }) => ({
   const [timeBounds, setTimeBounds] = useState([]);
   const [savedTimeBounds, setSavedTimeBounds] = useState(null);
 
-// TODO remove the following, just for development
+  // until we get the list of timeresoptions from the backend:
   if (!timeResolutionOptions.length) {
     setTimeResolutionOptions([
       { alias: 'L', description: 'milliseconds' },
@@ -121,18 +121,12 @@ export default withStyles(({ spacing, palette }) => ({
       { alias: 'Y', description: 'year end' },
     ]);
   }
+
+// TODO the following are just for speeding up development
   // if (!mapBounds) {
   //   setMapBounds([['12', '40'], ['-44', '-15']]);
   // }
-  // if (!mapResolutionOptions.length) {
-  //   // setTimeout(() => {
-  //     // setMapResolution('1m');
 
-  //     setMapResolutionOptions(['10m', '50m', '100m', '500m', '1km', '10km']);
-  //   // }, 2000);
-  // }
-
-  //   // setTimeout(() => {
   // if (!timeResolution) {
   //   setTimeResolution({
   //     uniformity: 'PERFECT',
@@ -142,7 +136,6 @@ export default withStyles(({ spacing, palette }) => ({
   //   });
   // }
 
-  //   // }, 2000);
   // if (!timeBounds.length) {
   //   // setTimeout(() => {
   //     setTimeBounds([
@@ -178,9 +171,7 @@ export default withStyles(({ spacing, palette }) => ({
         const geoResolutionString = 'resolution_processors.calculate_geographical_resolution';
         const onGeoResolutionSuccess = (data) => {
           console.log('this is the calculate_geographical_resolution response:', data);
-            console.log('uniformity in success??', data.resolution_result?.uniformity)
           if (data.resolution_result?.uniformity === 'PERFECT') {
-            console.log('are we getting in here?', data.scale_km);
             setMapResolution(data.scale_km);
           } else {
             setMapResolution('None');
@@ -312,7 +303,7 @@ export default withStyles(({ spacing, palette }) => ({
       };
 
       runElwoodJob(datasetInfo.id, args, 'transformation_processors.clip_time', (resp) => {
-        console.log('this is resp', resp)
+        console.log('this is resp', resp);
       });
     }
   };
@@ -347,7 +338,8 @@ export default withStyles(({ spacing, palette }) => ({
             closeDrawer={handleDrawerClose}
             oldResolution={mapResolution}
             resolutionOptions={mapResolutionOptions}
-            saveResolution={setSavedMapResolution}
+            setSavedResolution={setSavedMapResolution}
+            savedResolution={savedMapResolution}
             title="Geospatial"
           />
         );
@@ -368,7 +360,8 @@ export default withStyles(({ spacing, palette }) => ({
             closeDrawer={handleDrawerClose}
             oldResolution={timeResolution}
             resolutionOptions={timeResolutionOptions}
-            saveResolution={setSavedTimeResolution}
+            setSavedResolution={setSavedTimeResolution}
+            savedResolution={savedTimeResolution}
             title="Temporal"
           />
         );
