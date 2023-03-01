@@ -8,7 +8,7 @@ import pandas as pd
 import xarray as xr
 from raster2xyz.raster2xyz import Raster2xyz
 
-from mixmasta import mixmasta as mix
+from elwood import file_processor as mix
 from base_annotation import BaseProcessor
 from utils import DATASET_STORAGE_BASE_URL, get_rawfile, put_rawfile
 
@@ -88,20 +88,16 @@ class GeotiffLoadProcessor(BaseProcessor):
         def multiband_run():
             # time
             band_type = context.get("geotiff_band_type", "category")
-            if band_type == 'temporal':
-                band_type = 'datetime'
+            if band_type == "temporal":
+                band_type = "datetime"
                 date_value = None
             else:
                 date_value = context.get("geotiff_value", "01/01/2001")
-            
+
             df = mix.raster2df(
                 fp,
-                feature_name=context.get(
-                    "geotiff_value", "feature"
-                ),
-                band_name=context.get(
-                    "geotiff_value", "feature"
-                ),
+                feature_name=context.get("geotiff_value", "feature"),
+                band_name=context.get("geotiff_value", "feature"),
                 date=date_value,
                 bands=context.get("geotiff_bands", {}),
                 band_type=band_type,
@@ -130,7 +126,7 @@ def file_conversion(context, filename=None):
 
     with tempfile.TemporaryDirectory() as tmpdirname:
         local_file_fp = os.path.join(tmpdirname, filename)
-        with open(local_file_fp, 'wb') as local_file:
+        with open(local_file_fp, "wb") as local_file:
             for chunk in raw_file:
                 local_file.write(chunk)
 
@@ -138,18 +134,18 @@ def file_conversion(context, filename=None):
 
         basename, _ = os.path.splitext(filename)
         temp_output_file = os.path.join(tmpdirname, "output.csv")
-        csv_file_path = os.path.join(DATASET_STORAGE_BASE_URL, uuid, f'{basename}.csv')
+        csv_file_path = os.path.join(DATASET_STORAGE_BASE_URL, uuid, f"{basename}.csv")
         df.to_csv(temp_output_file, index=False)
-        with open(temp_output_file, 'rb') as csv_file:
+        with open(temp_output_file, "rb") as csv_file:
             put_rawfile(csv_file_path, csv_file)
 
     return csv_file_path
 
 
 def model_output_preview(context, *args, **kwargs):
-    fileurl = context['annotations']['metadata']['fileurl']
-    filepath = context['annotations']['metadata']['filepath']
-    file_uuid = context['annotations']['metadata']['file_uuid']
+    fileurl = context["annotations"]["metadata"]["fileurl"]
+    filepath = context["annotations"]["metadata"]["filepath"]
+    file_uuid = context["annotations"]["metadata"]["file_uuid"]
 
     url = f"{os.environ['TERMINAL_ENDPOINT']}{fileurl}"
 
@@ -161,20 +157,22 @@ def model_output_preview(context, *args, **kwargs):
 
     with tempfile.TemporaryDirectory() as tmpdirname:
         local_file_fp = os.path.join(tmpdirname, filename)
-        with open(local_file_fp, 'wb') as local_file:
+        with open(local_file_fp, "wb") as local_file:
             for chunk in stream:
                 local_file.write(chunk)
 
         file_metadata = context["annotations"]["metadata"]
         df = processor.run(context=file_metadata, fp=local_file_fp)
-        
+
         sample = df.head(100)
         sample_fp = os.path.join(tmpdirname, "sample.csv")
         sample.to_csv(sample_fp, index=False)
 
-        file_path = os.path.join('model-output-samples', context['uuid'], f'{file_uuid}.csv')
+        file_path = os.path.join(
+            "model-output-samples", context["uuid"], f"{file_uuid}.csv"
+        )
         sample_output_path = os.path.join(DATASET_STORAGE_BASE_URL, file_path)
-        with open(sample_fp, 'rb') as sample_file:
+        with open(sample_fp, "rb") as sample_file:
             put_rawfile(sample_output_path, sample_file)
 
     return file_path

@@ -1,6 +1,7 @@
 import logging
 import json
 import os
+import io
 import re
 import requests
 import shutil
@@ -366,9 +367,9 @@ def generate_min_max_mapping(array_of_paths):
 def new_min_max_values_found(old_mapping, new_mapping):
     if new_mapping == {}:
         return False
-    if old_mapping=={}:
+    if old_mapping == {}:
         return True
-    
+
     for f in new_mapping:
         if new_mapping[f].get("min") < old_mapping[f].get("min"):
             return True
@@ -384,10 +385,10 @@ def scale_features(context):
     uuid = context["uuid"]
     data_paths = context["dataset"]["data_paths"]
     data_paths_normalized = context["dataset"].get("data_paths_normalized", [])
-    
+
     if not data_paths_normalized:
         data_paths_normalized = []
-    
+
     if not data_paths:
         query = {
             "query": {"match": {"id": uuid}},
@@ -400,7 +401,7 @@ def scale_features(context):
     # determine which files have a normalized equivalent
     data_paths_not_str = [path for path in data_paths if "_str" not in path]
 
-    # figure out which files paths are have been normalized 
+    # figure out which files paths are have been normalized
     # and which are new files that are not yet normalized
     old_files_normed = [
         path
@@ -417,7 +418,6 @@ def scale_features(context):
     old_mapping = generate_min_max_mapping(old_files_normed)
 
     new_mapping = generate_min_max_mapping(new_files_not_normed)
-
 
     if new_min_max_values_found(old_mapping=old_mapping, new_mapping=new_mapping):
         files_to_process = new_files_not_normed + old_files_normed
