@@ -145,7 +145,7 @@ def run_mixmasta(context, filename=None):
             )
             with open(os.path.join(datapath, local_file), "rb") as fileobj:
                 put_rawfile(path=dest_file_path, fileobj=fileobj)
-            if dest_file_path.startswith("s3:"):
+            if dest_file_path.startswith("s3:") and not os.environ.get("STORAGE_HOST"):
                 # "https://jataware-world-modelers.s3.amazonaws.com/dev/indicators/6c9c996b-a175-4fa6-803c-e39b24e38b6e/6c9c996b-a175-4fa6-803c-e39b24e38b6e.parquet.gzip"
                 location_info = urlparse(dest_file_path)
                 data_files.append(
@@ -339,46 +339,7 @@ def run_model_mixmasta(context, *args, **kwargs):
     return response
 
 
-def generate_min_max_mapping(array_of_paths):
-    current_min = None
-    current_max = None
-    mapper = {}
-    for path in array_of_paths:
-        filename = path.split("/")[-1]
-        try:
-            download_rawfile(path, f"processing/{filename}")
-        except FileNotFoundError as e:
-            return {"success": False, "message": "File not found"}
-
-        current_df = pd.read_parquet(f"processing/{filename}")
-
-        features = current_df.feature.unique()
-        for f in features:
-            feat = current_df[current_df["feature"] == f]
-            current_min = np.min(feat["value"])
-            current_max = np.max(feat["value"])
-            mapper[f] = {
-                "min": min(current_min, mapper.get(f, {}).get("min", current_min)),
-                "max": max(current_max, mapper.get(f, {}).get("max", current_max)),
-            }
-    return mapper
-
-
-def new_min_max_values_found(old_mapping, new_mapping):
-    if new_mapping == {}:
-        return False
-    if old_mapping == {}:
-        return True
-
-    for f in new_mapping:
-        if new_mapping[f].get("min") < old_mapping[f].get("min"):
-            return True
-        if new_mapping[f].get("max") > old_mapping[f].get("max"):
-            return True
-    return False
-
-
-def scale_features(context):
+def scale_features(context, filename=None):
     # 0 to 1 scaled dataframe
 
     es = Elasticsearch(settings.ELASTICSEARCH_URL)
@@ -460,6 +421,46 @@ def scale_features(context):
     print(f"Indicator update response: {response}")
 
     return
+
+
+def generate_min_max_mapping(array_of_paths):
+    current_min = None
+    current_max = None
+    mapper = {}
+    for path in array_of_paths:
+        filename = path.split("/")[-1]
+        try:
+            print(path)
+            download_rawfile(path, f"processing/{filename}")
+        except FileNotFoundError as e:
+            return {"success": False, "message": "File not found"}
+
+        current_df = pd.read_parquet(f"processing/{filename}")
+
+        features = current_df.feature.unique()
+        for f in features:
+            feat = current_df[current_df["feature"] == f]
+            current_min = np.min(feat["value"])
+            current_max = np.max(feat["value"])
+            mapper[f] = {
+                "min": min(current_min, mapper.get(f, {}).get("min", current_min)),
+                "max": max(current_max, mapper.get(f, {}).get("max", current_max)),
+            }
+    return mapper
+
+
+def new_min_max_values_found(old_mapping, new_mapping):
+    if new_mapping == {}:
+        return False
+    if old_mapping == {}:
+        return True
+
+    for f in new_mapping:
+        if new_mapping[f].get("min") < old_mapping[f].get("min"):
+            return True
+        if new_mapping[f].get("max") > old_mapping[f].get("max"):
+            return True
+    return False
 
 
 def update_indicator(uuid, data_paths_normalized, elasticsearch):
