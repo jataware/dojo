@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, {
+  useCallback, useEffect, useRef, useState
+} from 'react';
 
 import axios from 'axios';
 
@@ -14,7 +16,7 @@ import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
 import Typography from '@material-ui/core/Typography';
-import { withStyles, useTheme } from '@material-ui/core/styles';
+import { withStyles } from '@material-ui/core/styles';
 
 import ClipMap from './ClipMap';
 import ClipTime from './ClipTime';
@@ -22,48 +24,6 @@ import Drawer from '../components/Drawer';
 import { Navigation } from '.';
 import AdjustTemporalResolution from './AdjustTemporalResolution';
 import AdjustGeoResolution from './AdjustGeoResolution';
-
-const runElwoodJob = (datasetId, requestArgs, jobString, onSuccess) => {
-  let count = 0;
-  const startJob = async () => {
-    const jobQueueResp = await axios.post(
-      `/api/dojo/job/${datasetId}/${jobString}`, requestArgs
-    );
-
-    if (jobQueueResp.status === 200) {
-      return jobQueueResp.data?.id;
-    }
-  };
-
-  const repeatFetch = (jobId) => {
-    setTimeout(() => {
-      axios.post(`/api/dojo/job/fetch/${jobId}`).then((response) => {
-        if (response.status === 200) {
-          // keep track of how long it takes (for dev purposes)
-          count += 1;
-          console.log(`${count}: the response in startJob  with job string: ${jobString}:`, response);
-          if (response.data) {
-            console.log(`success! it took ${count * 500}ms`, response.data)
-            onSuccess(response.data);
-            return;
-          }
-          // if no data, try the fetch again
-          repeatFetch(jobId);
-        }
-      }).catch(() => {
-        // TODO: this is currently an endless loop - handle actual errors
-        console.log('repeating job call')
-        startJob().then((resp) => {
-          repeatFetch(resp);
-        });
-      });
-    }, 500);
-  };
-
-  if (datasetId) {
-    startJob().then((jobId) => repeatFetch(jobId));
-  }
-};
 
 export default withStyles(({ spacing, palette }) => ({
   root: {
@@ -94,19 +54,24 @@ export default withStyles(({ spacing, palette }) => ({
   const [disableDrawerClose, setDisableDrawerClose] = useState(false);
 
   const [mapBounds, setMapBounds] = useState(null);
+  const [mapBoundsLoading, setMapBoundsLoading] = useState(false);
   const [savedDrawings, setSavedDrawings] = useState([]);
 
   const [mapResolution, setMapResolution] = useState(null);
+  const [mapResolutionLoading, setMapResolutionLoading] = useState(false);
   const [mapResolutionOptions, setMapResolutionOptions] = useState([]);
   const [savedMapResolution, setSavedMapResolution] = useState(null);
 
   const [timeResolution, setTimeResolution] = useState(null);
+  const [timeResolutionLoading, setTimeResolutionLoading] = useState(false);
   const [timeResolutionOptions, setTimeResolutionOptions] = useState([]);
   const [savedTimeResolution, setSavedTimeResolution] = useState(null);
   const [savedAggregation, setSavedAggregation] = useState(null);
 
   const [timeBounds, setTimeBounds] = useState([]);
+  const [timeBoundsLoading, setTimeBoundsLoading] = useState(false);
   const [savedTimeBounds, setSavedTimeBounds] = useState(null);
+  const cleanupRef = useRef(null);
 
   // until we get the list of timeresoptions from the backend:
   if (!timeResolutionOptions.length) {
@@ -169,10 +134,60 @@ export default withStyles(({ spacing, palette }) => ({
   // }
 // to here
 
+  const startElwoodJob = useCallback(async (datasetId, requestArgs, jobString) => {
+    const jobQueueResp = await axios.post(
+      `/api/dojo/job/${datasetId}/${jobString}`, requestArgs
+    );
+
+    if (jobQueueResp.status === 200) {
+      return jobQueueResp.data?.id;
+    }
+  }, []);
+
+  const runElwoodJob = useCallback((datasetId, requestArgs, jobString, onSuccess) => {
+    console.log('runElwoodJob has been called at the top level');
+    let count = 0;
+
+    const repeatFetch = (jobId) => {
+      setTimeout(() => {
+        axios.post(`/api/dojo/job/fetch/${jobId}`).then((response) => {
+          if (response.status === 200) {
+            // keep track of how long it takes (for dev purposes)
+            count += 1;
+            console.log(`${count}: response from job string: ${jobString}:`, response);
+            if (response.data) {
+              console.log(`success! it took ${count * 500}ms`, response.data);
+              onSuccess(response.data);
+              return;
+            }
+            if (cleanupRef.current) {
+              // if no data and the component is mounted, try the fetch again
+              repeatFetch(jobId);
+            }
+          }
+        }).catch(() => {
+          // we get a 404 immediately - there is some sort of bug, this accounts for that
+          if (count < 2 && cleanupRef.current) {
+            // and the component is mounted
+            console.log('repeating job call');
+            startElwoodJob(datasetId, requestArgs, jobString).then((resp) => {
+              repeatFetch(resp);
+            });
+          }
+        });
+      }, 500);
+    };
+
+    if (datasetId) {
+      startElwoodJob(datasetId, requestArgs, jobString).then((jobId) => repeatFetch(jobId));
+    }
+  }, [startElwoodJob]);
+
   // fetch resolution for AdjustGeoResolution component
   useEffect(() => {
-    if (!mapResolution) {
+    if (!mapResolution && !mapResolutionLoading) {
       if (annotations?.annotations?.geo) {
+        setMapResolutionLoading(true);
         const args = {};
         annotations.annotations.geo.forEach((geo) => {
           if (geo.geo_type === 'latitude') {
@@ -193,17 +208,19 @@ export default withStyles(({ spacing, palette }) => ({
           if (data.multiplier_samples) {
             setMapResolutionOptions(data.multiplier_samples);
           }
+          setMapResolutionLoading(false);
         };
 
         runElwoodJob(datasetInfo.id, args, geoResolutionString, onGeoResolutionSuccess);
       }
     }
-  }, [datasetInfo.id, annotations, mapResolution]);
+  }, [datasetInfo.id, annotations, mapResolution, mapResolutionLoading, runElwoodJob]);
 
   // fetch boundary for ClipMap component
   useEffect(() => {
-    if (!mapBounds) {
+    if (!mapBounds && !mapBoundsLoading) {
       if (annotations?.annotations?.geo) {
+        setMapBoundsLoading(true);
         const args = { geo_columns: [] };
         annotations.annotations.geo.forEach((geo) => args.geo_columns.push(geo.name));
 
@@ -214,17 +231,19 @@ export default withStyles(({ spacing, palette }) => ({
             const bounds = [[bObj.xmin, bObj.ymin], [bObj.xmax, bObj.ymax]];
             setMapBounds(bounds);
           }
+          setMapBoundsLoading(false);
         };
 
         runElwoodJob(datasetInfo.id, args, geoBoundaryString, onGeoBoundarySuccess);
       }
     }
-  }, [datasetInfo.id, annotations, mapBounds]);
+  }, [datasetInfo.id, annotations, mapBounds, mapBoundsLoading, runElwoodJob]);
 
   // fetch resolution for AdjustTemporalResolution component
   useEffect(() => {
-    if (!timeResolution) {
+    if (!timeResolution && !timeResolutionLoading) {
       if (annotations?.annotations?.date) {
+        setTimeResolutionLoading(true);
         const args = {
           datetime_column: annotations.annotations.date[0].name,
           time_format: annotations.annotations.date[0].time_format,
@@ -235,17 +254,21 @@ export default withStyles(({ spacing, palette }) => ({
           if (data.resolution_result) {
             setTimeResolution(data.resolution_result);
           }
+          setTimeResolutionLoading(true);
         };
 
-        runElwoodJob(datasetInfo.id, args, temporalResolutionString, onTemporalResolutionSuccess);
+        runElwoodJob(
+          datasetInfo.id, args, temporalResolutionString, onTemporalResolutionSuccess
+        );
       }
     }
-  }, [datasetInfo.id, annotations, timeResolution]);
+  }, [datasetInfo.id, annotations, timeResolution, timeResolutionLoading, runElwoodJob]);
 
   // fetch time bounds for ClipTime component
   useEffect(() => {
-    if (!timeBounds.length) {
+    if (!timeBounds.length && !timeBoundsLoading) {
       if (annotations?.annotations?.date) {
+        setTimeBoundsLoading(true);
         const args = {
           datetime_column: annotations.annotations.date[0].name,
           time_format: annotations.annotations.date[0].time_format,
@@ -256,12 +279,13 @@ export default withStyles(({ spacing, palette }) => ({
           if (data.unique_dates) {
             setTimeBounds(data.unique_dates);
           }
+          setTimeBoundsLoading(false);
         };
 
         runElwoodJob(datasetInfo.id, args, getDatesString, onGetDatesSuccess);
       }
     }
-  }, [datasetInfo.id, annotations, timeBounds]);
+  }, [datasetInfo.id, annotations, timeBounds, timeBoundsLoading, runElwoodJob]);
 
   const handleDrawerClose = (bool, event) => {
     // prevent clicking outside the drawer to close
@@ -288,9 +312,7 @@ export default withStyles(({ spacing, palette }) => ({
       };
       annotations.annotations.geo.forEach((geo) => args.geo_columns.push(geo.name));
 
-      runElwoodJob(datasetInfo.id, args, 'transformation_processors.regrid_geo', (resp) => {
-        console.log('this is the adjust geo response', resp);
-      });
+      startElwoodJob(datasetInfo.id, args, 'transformation_processors.regrid_geo');
     }
   };
 
@@ -302,7 +324,7 @@ export default withStyles(({ spacing, palette }) => ({
       };
       annotations.annotations.geo.forEach((geo) => args.geo_columns.push(geo.name));
 
-      runElwoodJob(datasetInfo.id, args, 'transformation_processors.clip_geo', () => {});
+      startElwoodJob(datasetInfo.id, args, 'transformation_processors.clip_geo');
     }
   };
 
@@ -315,9 +337,7 @@ export default withStyles(({ spacing, palette }) => ({
         }],
       };
 
-      runElwoodJob(datasetInfo.id, args, 'transformation_processors.clip_time', (resp) => {
-        console.log('this is resp', resp);
-      });
+      startElwoodJob(datasetInfo.id, args, 'transformation_processors.clip_time');
     }
   };
 
@@ -329,9 +349,7 @@ export default withStyles(({ spacing, palette }) => ({
         aggregation_function_list: [savedAggregation],
       };
 
-      runElwoodJob(datasetInfo.id, args, 'transformation_processors.scale_time', (resp) => {
-        console.log('this is resp', resp);
-      });
+      startElwoodJob(datasetInfo.id, args, 'transformation_processors.scale_time');
     }
   };
 
@@ -403,6 +421,7 @@ export default withStyles(({ spacing, palette }) => ({
       className={classes.root}
       component="main"
       maxWidth="sm"
+      ref={cleanupRef}
     >
       <Typography
         className={classes.header}
