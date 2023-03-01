@@ -54,7 +54,7 @@ def get_context(uuid):
         dataset = {}
 
     context = {"uuid": uuid, "dataset": dataset, "annotations": annotations}
-    print(context)
+    
     return context
 
 
