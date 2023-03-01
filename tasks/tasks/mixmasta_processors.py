@@ -384,8 +384,10 @@ def scale_features(context):
     uuid = context["uuid"]
     data_paths = context["dataset"]["data_paths"]
     data_paths_normalized = context["dataset"].get("data_paths_normalized", [])
-    if data_paths_normalized is None:
+    
+    if not data_paths_normalized:
         data_paths_normalized = []
+    
     if not data_paths:
         query = {
             "query": {"match": {"id": uuid}},
@@ -398,6 +400,8 @@ def scale_features(context):
     # determine which files have a normalized equivalent
     data_paths_not_str = [path for path in data_paths if "_str" not in path]
 
+    # figure out which files paths are have been normalized 
+    # and which are new files that are not yet normalized
     old_files_normed = [
         path
         for path in data_paths_not_str
@@ -409,19 +413,18 @@ def scale_features(context):
         path for path in data_paths_not_str if path not in old_files_normed
     ]
 
-    # need to download all files to determine min and max values
+    # generate mapping from the old and new files
     old_mapping = generate_min_max_mapping(old_files_normed)
 
     new_mapping = generate_min_max_mapping(new_files_not_normed)
 
-    # if new values are more extreme process all files again
-    # else only process new files
 
     if new_min_max_values_found(old_mapping=old_mapping, new_mapping=new_mapping):
         files_to_process = new_files_not_normed + old_files_normed
     else:
         files_to_process = new_files_not_normed
 
+    # rescale files that need processing
     for path in files_to_process:
         filename = path.split("/")[-1]
         file_name = path.split("/")[-1].split(".parquet")[0]
