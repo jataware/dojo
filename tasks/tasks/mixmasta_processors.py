@@ -345,7 +345,6 @@ def generate_min_max_mapping(array_of_paths):
     for path in array_of_paths:
         filename = path.split("/")[-1]
         try:
-            logging.info(f"downloading for s3 {path}")
             download_rawfile(path, f"processing/{filename}")
         except FileNotFoundError as e:
             return {"success": False, "message": "File not found"}
@@ -365,7 +364,6 @@ def generate_min_max_mapping(array_of_paths):
 
 
 def new_min_max_values_found(old_mapping, new_mapping):
-    logging.error(f"new_mapping {new_mapping}")
     if new_mapping == {}:
         return False
     if old_mapping=={}:
@@ -381,8 +379,6 @@ def new_min_max_values_found(old_mapping, new_mapping):
 
 def scale_features(context):
     # 0 to 1 scaled dataframe
-    logging.error(context)
-    logging.info("starting scale feature from mixmasta_process")
 
     es = Elasticsearch(settings.ELASTICSEARCH_URL)
     uuid = context["uuid"]
@@ -398,8 +394,6 @@ def scale_features(context):
         }
         es_response = es.search(index="indicators", body=query)
         data_paths = es_response["hits"]["hits"][0]["fields"]["data_paths"]
-
-    logging.error(f"found these data_paths {data_paths}")
 
     # determine which files have a normalized equivalent
     data_paths_not_str = [path for path in data_paths if "_str" not in path]
