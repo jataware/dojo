@@ -3,10 +3,8 @@ import json
 import os
 import io
 import re
-import requests
 import shutil
 from urllib.parse import urlparse
-import io
 import pandas as pd
 import numpy as np
 from elasticsearch import Elasticsearch

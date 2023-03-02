@@ -240,7 +240,11 @@ const AppendFlow = {
             };
             await axios.put(`/api/dojo/indicators`, updatedDataset);
           }
-        }
+        },
+        {
+          id: 'mixmasta_processors.scale_features',
+          send_context: true,
+        },
       ]
     }
   },

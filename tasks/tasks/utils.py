@@ -1,23 +1,20 @@
-import time
 import os
-from io import BytesIO
 import tempfile
 from urllib.parse import urlparse
-import logging
 
 import botocore
 import boto3
-from settings import settings
 
 # S3 OBJECT
 
-s3 = boto3.client("s3",
-    endpoint_url=os.getenv("STORAGE_HOST") or None,
-    aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
-    aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
-    aws_session_token=None,
-    config=boto3.session.Config(signature_version="s3v4"),
-    verify=False,
+s3 = boto3.client(
+        "s3",
+        endpoint_url=os.getenv("STORAGE_HOST") or None,
+        aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+        aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+        aws_session_token=None,
+        config=boto3.session.Config(signature_version="s3v4"),
+        verify=False,
 )
 DATASET_STORAGE_BASE_URL = os.environ.get("DATASET_STORAGE_BASE_URL")
 
@@ -96,16 +93,12 @@ def download_rawfile(path, filename):
     Returns:
         file: a file-like object
     """
-    location_info = urlparse(path)
+    location_info = urlparse(path.replace("file:///", "s3://"))
 
-    if location_info.scheme.lower() in ["s3", "minio"]:
-        try:
-            file_path = location_info.path.lstrip("/")
-            s3.download_file(location_info.netloc, file_path, filename)
-        except botocore.exceptions.ClientError as error:
-            print(error)
-            raise FileNotFoundError() from error
-    else:
-        raise RuntimeError("File storage format is unknown")
+    try:
+        file_path = location_info.path.lstrip("/")
+        s3.download_file(location_info.netloc, file_path, filename)
+    except botocore.exceptions.ClientError as error:
+        raise FileNotFoundError() from error
 
     return True

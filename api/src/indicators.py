@@ -10,7 +10,6 @@ import pandas as pd
 from rq import Queue
 
 from elasticsearch import Elasticsearch
-import pandas as pd
 from fastapi import (
     APIRouter,
     HTTPException,
@@ -70,7 +69,7 @@ def create_indicator(payload: IndicatorSchema.IndicatorMetadataSchema):
     es.index(index="annotations", body=empty_annotations_payload, id=indicator_id)
     plugin_action("post_create", data=body, type="annotation")
 
- 
+
 
     return Response(
         status_code=status.HTTP_201_CREATED,
@@ -208,8 +207,6 @@ def get_indicators(indicator_id: str) -> IndicatorSchema.IndicatorMetadataSchema
         logger.exception(e)
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
     return indicator
-
-
 
 
 @router.put("/indicators/{indicator_id}/publish")
@@ -517,10 +514,10 @@ async def create_preview(
 
 @router.put("/indicators/{indicator_id}/rescale")
 def rescale_indicator(indicator_id: str):
-    from src.data import job 
+    from src.data import job
 
-    job_string="mixmasta_processors.scale_features"
-    
-    resp=job(uuid=indicator_id, job_string=job_string)
+    job_string = "mixmasta_processors.scale_features"
+
+    resp = job(uuid=indicator_id, job_string=job_string)
 
     return resp

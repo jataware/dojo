@@ -1,25 +1,17 @@
 from __future__ import annotations
 import logging
-import re
 import time
-import tempfile
 import os
-import json
-from io import BytesIO
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 
 import pandas as pd
-from sqlite3 import connect
 
-from requests import put
 from fastapi import APIRouter, Response, File, UploadFile, status
-from elasticsearch import Elasticsearch
-from rq import Worker, Queue
+from rq import Queue
 from rq.job import Job
 from redis import Redis
 from rq.exceptions import NoSuchJobError
-# from rq import job as rq_job
 import boto3
 
 from src.utils import get_rawfile, put_rawfile
@@ -54,7 +46,7 @@ def get_context(uuid):
         dataset = {}
 
     context = {"uuid": uuid, "dataset": dataset, "annotations": annotations}
-    
+
     return context
 
 

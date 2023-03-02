@@ -14,7 +14,10 @@ maintainer_info/*
 settings.json
 .DS_Store
 *.sqlite3
-data/
+# Allow empty directories to be added in data dir with inclusion of .empty file
+data/**/*
+!data/**/
+!data/**/.empty
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
