@@ -384,7 +384,7 @@ def upload_file(
                 [
                     f
                     for f in list_files(dir_path)
-                    if f.startswith("raw_data") and f.endswith(ext)
+                    if os.path.basename(f).startswith("raw_data") and f.endswith(ext)
                 ]
             )
             filename = f"raw_data_{filenum}{ext}"
