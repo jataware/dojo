@@ -54,19 +54,16 @@ const Summary = () => {
         });
     }
 
-    // save an empty variable so we can clear the timeout later on
-    let clearLock;
-    if (terminal === 'true' && !lock) {
-      // if we arrive with the terminal param but no lock
-      // set a timeout to get rid of it in 30 seconds (enough time to fetch a lock)
-      clearLock = setTimeout(() => history.replace(`/summary/${modelId}`), 30000);
-    }
+    const timeout = setTimeout(() => {
+      // if we do have the terminal param set but we haven't yet loaded a lock
+      // after the timeout has finished, then get rid of the terminal param
+      if (terminal === 'true' && !lock) {
+        history.replace(`/summary/${modelId}`);
+      }
+    }, 10000);
 
-    if (terminal === 'true' && lock) {
-      // if we fetch a lock in the meantime, clear the timeout
-      // if there was never a timeout, calling this will do nothing
-      clearTimeout(clearLock);
-    }
+    // clear the timeout when we cleanup the useEffect
+    return () => clearTimeout(timeout);
   }, [modelId, terminal, history, lock]);
 
   // if the model is loading or returns an error, don't show the page yet
