@@ -233,7 +233,7 @@ export default withStyles(({ spacing, palette }) => ({
         const onGeoBoundarySuccess = (data) => {
           if (data?.boundary_box) {
             const bObj = data?.boundary_box;
-            const bounds = [[bObj.xmin, bObj.ymin], [bObj.xmax, bObj.ymax]];
+            const bounds = [[bObj.ymin, bObj.xmin], [bObj.ymax, bObj.xmax]];
             setMapBounds(bounds);
           }
           setMapBoundsLoading(false);
