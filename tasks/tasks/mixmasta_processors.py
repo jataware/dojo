@@ -3,11 +3,11 @@ import json
 import os
 import io
 import re
+import requests
 import shutil
 from urllib.parse import urlparse
 import pandas as pd
 import numpy as np
-from elasticsearch import Elasticsearch
 
 from utils import get_rawfile, put_rawfile, download_rawfile
 from elwood import elwood as mix
@@ -340,22 +340,17 @@ def run_model_mixmasta(context, *args, **kwargs):
 def scale_features(context, filename=None):
     # 0 to 1 scaled dataframe
 
-    es = Elasticsearch(settings.ELASTICSEARCH_URL)
     uuid = context["uuid"]
     data_paths = context["dataset"]["data_paths"]
     data_paths_normalized = context["dataset"].get("data_paths_normalized", [])
+    api_url = os.environ.get("DOJO_HOST")
 
     if not data_paths_normalized:
         data_paths_normalized = []
 
     if not data_paths:
-        query = {
-            "query": {"match": {"id": uuid}},
-            "fields": ["data_paths"],
-            "_source": False,
-        }
-        es_response = es.search(index="indicators", body=query)
-        data_paths = es_response["hits"]["hits"][0]["fields"]["data_paths"]
+        request_response = requests.get(f"{api_url}/indicators/{context['uuid']}")
+        data_paths = request_response.json().get('data_paths')
 
     # determine which files have a normalized equivalent
     data_paths_not_str = [path for path in data_paths if "_str" not in path]
@@ -404,7 +399,6 @@ def scale_features(context, filename=None):
 
         put_rawfile(path=s3_filepath, fileobj=file_buffer)
 
-    # save new data_paths_normalized values to es
     data_paths_normalized = []
     for path in new_files_not_normed + old_files_normed:
         file_name = path.split("/")[-1].split(".parquet")[0]
@@ -413,12 +407,8 @@ def scale_features(context, filename=None):
             settings.DATASET_STORAGE_BASE_URL, "normalized", uuid, file_out_name
         )
         data_paths_normalized.append(s3_filepath)
-    response = update_indicator(
-        uuid=uuid, data_paths_normalized=data_paths_normalized, elasticsearch=es
-    )
-    print(f"Indicator update response: {response}")
 
-    return
+    return data_paths_normalized
 
 
 def generate_min_max_mapping(array_of_paths):
@@ -459,9 +449,3 @@ def new_min_max_values_found(old_mapping, new_mapping):
         if new_mapping[f].get("max") > old_mapping[f].get("max"):
             return True
     return False
-
-
-def update_indicator(uuid, data_paths_normalized, elasticsearch):
-    update_body = {"doc": {"data_paths_normalized": data_paths_normalized}}
-    resp = elasticsearch.update(index="indicators", id=uuid, body=update_body)
-    return resp
