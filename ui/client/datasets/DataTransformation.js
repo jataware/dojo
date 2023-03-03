@@ -15,6 +15,7 @@ import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
+import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 
@@ -40,6 +41,9 @@ export default withStyles(({ spacing, palette }) => ({
   },
   check: {
     color: palette.success.light,
+  },
+  disabled: {
+    color: palette.text.disabled,
   },
 }))(({
   classes,
@@ -183,38 +187,39 @@ export default withStyles(({ spacing, palette }) => ({
     }
   }, [startElwoodJob]);
 
-  // fetch resolution for AdjustGeoResolution component
-  useEffect(() => {
-    if (!mapResolution && !mapResolutionLoading) {
-      if (annotations?.annotations?.geo) {
-        setMapResolutionLoading(true);
-        const args = {};
-        annotations.annotations.geo.forEach((geo) => {
-          if (geo.geo_type === 'latitude') {
-            args.lat_column = geo.name;
-          } else {
-            args.lon_column = geo.name;
-          }
-        });
+  // TODO: Disabled until the transformation_processors.regrid_geo job is working properly
+  // // fetch resolution for AdjustGeoResolution component
+  // useEffect(() => {
+  //   if (!mapResolution && !mapResolutionLoading) {
+  //     if (annotations?.annotations?.geo) {
+  //       setMapResolutionLoading(true);
+  //       const args = {};
+  //       annotations.annotations.geo.forEach((geo) => {
+  //         if (geo.geo_type === 'latitude') {
+  //           args.lat_column = geo.name;
+  //         } else {
+  //           args.lon_column = geo.name;
+  //         }
+  //       });
 
-        const geoResolutionString = 'resolution_processors.calculate_geographical_resolution';
-        const onGeoResolutionSuccess = (data) => {
-          console.log('this is the calculate_geographical_resolution response:', data);
-          if (data.resolution_result?.uniformity === 'PERFECT') {
-            setMapResolution(data.scale_km);
-          } else {
-            setMapResolution('None');
-          }
-          if (data.multiplier_samples) {
-            setMapResolutionOptions(data.multiplier_samples);
-          }
-          setMapResolutionLoading(false);
-        };
+  //       const geoResolutionString = 'resolution_processors.calculate_geographical_resolution';
+  //       const onGeoResolutionSuccess = (data) => {
+  //         console.log('this is the calculate_geographical_resolution response:', data);
+  //         if (data.resolution_result?.uniformity === 'PERFECT') {
+  //           setMapResolution(data.scale_km);
+  //         } else {
+  //           setMapResolution('None');
+  //         }
+  //         if (data.multiplier_samples) {
+  //           setMapResolutionOptions(data.multiplier_samples);
+  //         }
+  //         setMapResolutionLoading(false);
+  //       };
 
-        runElwoodJob(datasetInfo.id, args, geoResolutionString, onGeoResolutionSuccess);
-      }
-    }
-  }, [datasetInfo.id, annotations, mapResolution, mapResolutionLoading, runElwoodJob]);
+  //       runElwoodJob(datasetInfo.id, args, geoResolutionString, onGeoResolutionSuccess);
+  //     }
+  //   }
+  // }, [datasetInfo.id, annotations, mapResolution, mapResolutionLoading, runElwoodJob]);
 
   // fetch boundary for ClipMap component
   useEffect(() => {
@@ -354,7 +359,7 @@ export default withStyles(({ spacing, palette }) => ({
   };
 
   const handleNextStep = () => {
-    processAdjustGeo();
+    // processAdjustGeo();
     processMapClippings();
     processAdjustTime();
     processClipTime();
@@ -432,26 +437,34 @@ export default withStyles(({ spacing, palette }) => ({
       </Typography>
 
       <List>
-        <ListItem button>
-          <ListItemIcon>
-            <GridOnIcon
-              fontSize="large"
-              className={savedMapResolution ? classes.complete : classes.incomplete}
-            />
-          </ListItemIcon>
-          <ListItemText
-            primaryTypographyProps={{ variant: 'h6' }}
-            onClick={() => handleDrawerOpen('regridMap')}
-            className={savedMapResolution ? classes.complete : classes.incomplete}
-          >
-            Adjust Geospatial Resolution
-          </ListItemText>
-          {savedMapResolution && (
+        <Tooltip
+          title="This feature is a work in progress and is not yet available"
+          arrow
+          placement="top"
+        >
+          <ListItem button>
             <ListItemIcon>
-              <CheckIcon className={classes.check} fontSize="large" />
+              <GridOnIcon
+                fontSize="large"
+                // className={savedMapResolution ? classes.complete : classes.incomplete}
+                className={classes.disabled}
+              />
             </ListItemIcon>
-          )}
-        </ListItem>
+            <ListItemText
+              primaryTypographyProps={{ variant: 'h6' }}
+              // onClick={() => handleDrawerOpen('regridMap')}
+              // className={savedMapResolution ? classes.complete : classes.incomplete}
+              className={classes.disabled}
+            >
+              Adjust Geospatial Resolution
+            </ListItemText>
+            {savedMapResolution && (
+              <ListItemIcon>
+                <CheckIcon className={classes.check} fontSize="large" />
+              </ListItemIcon>
+            )}
+          </ListItem>
+        </Tooltip>
 
         <ListItem button>
           <ListItemIcon>

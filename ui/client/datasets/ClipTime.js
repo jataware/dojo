@@ -220,9 +220,25 @@ export default withStyles((theme) => ({
     closeDrawer();
   };
 
+  const header = <Typography align="center" variant="h5">Select Temporal Coverage</Typography>;
+
+  if (timeBounds.length === 1) {
+    return (
+      <>
+        {header}
+        <Typography align="center" variant="subtitle1" className={classes.loading}>
+          Temporal coverage can only be modified on datasets with multiple dates.
+        </Typography>
+        <Typography align="center" variant="subtitle1">
+          This dataset only has a single date: <b>{timeBounds[0]}</b>.
+        </Typography>
+      </>
+    );
+  }
+
   return (
     <div>
-      <Typography align="center" variant="h5">Select Temporal Coverage</Typography>
+      {header}
       { displayData ? (
         <>
           <div className={classes.timelineWrapper}>
