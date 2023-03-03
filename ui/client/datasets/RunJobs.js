@@ -88,6 +88,11 @@ const RunJobs = withStyles(({ spacing }) => ({
   };
 
   useEffect(() => {
+    setJobIndex(0);
+    setJobData(null);
+  }, [jobs]);
+
+  useEffect(() => {
 
     let timeoutHandle;
 

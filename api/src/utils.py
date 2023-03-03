@@ -141,7 +141,7 @@ def get_rawfile(path):
         raise FileNotFoundError() from error
     # else:
         # raise RuntimeError("File storage format is unknown")
-    
+
     return raw_file
 
 
@@ -165,7 +165,7 @@ def list_files(path):
     location_info = urlparse(path.replace("file:///", "s3://"))
 
     s3_list = s3.list_objects(
-        Bucket=location_info.netloc, Marker=location_info.path
+        Bucket=location_info.netloc, Prefix=location_info.path
     )
     s3_contents = s3_list["Contents"]
     final_file_list = []

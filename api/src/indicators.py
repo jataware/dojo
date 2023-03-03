@@ -1,20 +1,15 @@
 from __future__ import annotations
 
-import csv
-import io
 import re
 import time
-import zlib
 import uuid
 from datetime import datetime
-from typing import Any, Dict, Generator, List, Optional
-from urllib.parse import urlparse
-
+from typing import List, Optional
 import json
 import pandas as pd
+from rq import Queue
 
 from elasticsearch import Elasticsearch
-import pandas as pd
 from fastapi import (
     APIRouter,
     HTTPException,
@@ -23,10 +18,8 @@ from fastapi import (
     status,
     UploadFile,
     File,
-    Request,
 )
 from fastapi.logger import logger
-from fastapi.responses import StreamingResponse
 
 from validation import IndicatorSchema, DojoSchema, MetadataSchema
 from src.settings import settings
@@ -37,15 +30,15 @@ from src.causemos import notify_causemos
 from src.causemos import deprecate_dataset
 from src.utils import put_rawfile, get_rawfile, list_files
 from src.plugins import plugin_action
-from validation.IndicatorSchema import (
-    IndicatorMetadataSchema,
-    QualifierOutput,
-    Output,
-    Period,
-    Geography,
-)
+
+from redis import Redis
 
 import os
+redis = Redis(
+    os.environ.get("REDIS_HOST", "redis.dojo-stack"),
+    os.environ.get("REDIS_PORT", "6379"),
+)
+q = Queue(connection=redis, default_timeout=-1)
 
 router = APIRouter()
 
@@ -76,7 +69,7 @@ def create_indicator(payload: IndicatorSchema.IndicatorMetadataSchema):
     es.index(index="annotations", body=empty_annotations_payload, id=indicator_id)
     plugin_action("post_create", data=body, type="annotation")
 
- 
+
 
     return Response(
         status_code=status.HTTP_201_CREATED,
@@ -197,6 +190,17 @@ def search_indicators(
     "/indicators/{indicator_id}", response_model=IndicatorSchema.IndicatorMetadataSchema
 )
 def get_indicators(indicator_id: str) -> IndicatorSchema.IndicatorMetadataSchema:
+    """Get Indicator
+
+    Args:
+        indicator_id (str): The UUID of the dataset to retrieve from elasticsearch.
+
+    Raises:
+        HTTPException: This is raised if the dataset is not found in elasticsearch.
+
+    Returns:
+        IndicatorSchema.IndicatorMetadataSchema: Returns the ydantic schema for the dataset that contains a metadata dictionary.
+    """
     try:
         indicator = es.get(index="indicators", id=indicator_id)["_source"]
     except Exception as e:
@@ -271,7 +275,6 @@ def get_annotations(indicator_id: str) -> MetadataSchema.MetaModel:
     except Exception as e:
         logger.exception(e)
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-        return None
 
 
 @router.post("/indicators/{indicator_id}/annotations")
@@ -381,7 +384,7 @@ def upload_file(
                 [
                     f
                     for f in list_files(dir_path)
-                    if f.startswith("raw_data") and f.endswith(ext)
+                    if os.path.basename(f).startswith("raw_data") and f.endswith(ext)
                 ]
             )
             filename = f"raw_data_{filenum}{ext}"
@@ -507,3 +510,14 @@ async def create_preview(
             headers={"msg": f"Error: {e}"},
             content=f"Queue could not be deleted.",
         )
+
+
+@router.put("/indicators/{indicator_id}/rescale")
+def rescale_indicator(indicator_id: str):
+    from src.data import job
+
+    job_string = "mixmasta_processors.scale_features"
+
+    resp = job(uuid=indicator_id, job_string=job_string)
+
+    return resp
