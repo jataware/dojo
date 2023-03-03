@@ -65,7 +65,6 @@ const useStyles = makeStyles((theme) => ({
     fontWeight: 'bold'
   },
   headerWrapper: {
-    cursor: 'pointer',
     width: '100%',
   },
   headerText: {
@@ -83,11 +82,23 @@ const useStyles = makeStyles((theme) => ({
     position: 'absolute',
     height: '14px',
     top: '33px',
+  },
+  highlightedButton: {
+    backgroundColor: theme.palette.grey[100],
+    animation: '$pulse 1.5s infinite alternate',
+  },
+  '@keyframes pulse': {
+    from: {
+      outline: `1px solid ${theme.palette.primary.light}`,
+    },
+    to: {
+      outline: '1px solid white',
+    }
   }
 }));
 
 const MultiPartHeader = ({
-  status, colSpan, TypeIcon, qualifies, showMarkers
+  status, colSpan, TypeIcon, qualifies, showMarkers, buttonClick, column
 }) => {
   const classes = useStyles();
   const shouldDisplayStatus = ((['inferred', 'primary'].includes(status) || qualifies));
@@ -109,6 +120,7 @@ const MultiPartHeader = ({
         <Button
           variant="outlined"
           size="small"
+          onClick={() => buttonClick(column)}
         >
           Edit
         </Button>
@@ -130,7 +142,10 @@ const Header = ({
   category, // type
   qualifies,
   showMarkers,
-  addingAnnotationsAllowed
+  addingAnnotationsAllowed,
+  column,
+  buttonClick,
+  drawerOpen = false,
 }) => {
   const classes = useStyles();
   const isAnnotated = ['annotated', 'primary'].includes(status);
@@ -162,6 +177,8 @@ const Header = ({
           qualifies={qualifies}
           TypeIcon={TypeIcon}
           showMarkers={showMarkers}
+          column={column}
+          buttonClick={buttonClick}
         />
       )}
 
@@ -176,6 +193,12 @@ const Header = ({
             disabled={isMultiPartMember}
             style={{ visibility: isMultiPartMember ? 'hidden' : 'visible' }}
             size="small"
+            onClick={() => buttonClick(column)}
+            /* Disable the pulse animation when the drawer is open or once it's annotated */
+            className={
+              isHighlighted && !isAnnotated && !drawerOpen
+                ? classes.highlightedButton : null
+            }
           >
             {isAnnotated ? 'Edit' : 'Annotate'}
           </Button>

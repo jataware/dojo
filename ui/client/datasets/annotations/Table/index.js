@@ -29,20 +29,12 @@ const Cell = withStyles(({ palette, spacing }) => ({
     width: '115%',
     marginRight: -6,
     // NOTE How much to space cell content left. We can also use flex + center items
-    paddingLeft: spacing(2)
-  },
-  hoveredCell: {
-    backgroundColor: palette.grey[50],
+    paddingLeft: spacing(2),
     cursor: 'pointer',
   },
-  // NOTE these Cell styles are in case we wish to explore highlighting all cells within the columns
-  // as anotated, similar to spacetag.
-  // annotated: {
-  //   backgroundColor: '#23b26b33'
-  // },
-  // requiresAction: {
-  //   backgroundColor: '#33728833'
-  // }
+  hoveredCell: {
+    backgroundColor: palette.grey[100],
+  },
 }))(({
   isHighlighted, classes, value
 }) => (
@@ -50,8 +42,6 @@ const Cell = withStyles(({ palette, spacing }) => ({
     className={clsx({
       [classes.root]: true,
       [classes.hoveredCell]: isHighlighted,
-      /* [classes.requiresAction]: requiresAction, */
-      /* [classes.annotated]: isAnnotated, */
     })}
   >
     {value}
@@ -85,7 +75,20 @@ export default withStyles(({ palette }) => ({
     pointerEvents: 'none'
   },
   columnHeaderTitle: {
-    padding: '0 4px !important'
+    padding: '0 4px !important',
+  },
+  hideHeaderBorder: {
+    // hide the blue outline on the datagrid header when focused
+    '& .MuiDataGrid-columnHeader': {
+      '&:focus-within': {
+        outline: 'none',
+      }
+    },
+    '& .MuiDataGrid-cell': {
+      '&:focus-within': {
+        outline: 'none',
+      }
+    }
   },
   gridScroll: {
     '& *::-webkit-scrollbar': {
@@ -137,9 +140,8 @@ export default withStyles(({ palette }) => ({
     find(multiPartData, (mp) => mp.members.includes(columnFieldName))
   );
 
-  const handleCellClick = (cell) => {
+  const openAnnotationPanel = (cell) => {
     const isColumnAnnotated = !isEmpty(annotations[cell.field]);
-
     if (!isColumnAnnotated && !addingAnnotationsAllowed) {
       return;
     }
@@ -157,13 +159,9 @@ export default withStyles(({ palette }) => ({
     } else {
       setEditingColumn({
         name: cell.field,
-        headerName: cell.colDef?.headerName
+        headerName: cell.field,
       });
     }
-  };
-
-  const handleCellOver = (cell) => {
-    setHighlightedColumn(cell.field);
   };
 
   function calcColumnAttrs(columnFieldName) {
@@ -222,6 +220,10 @@ export default withStyles(({ palette }) => ({
           showMarkers={isShowMarkers}
           {...calcColumnAttrs(colDef.field)}
           heading={colDef.headerName}
+          column={column}
+          buttonClick={openAnnotationPanel}
+          isHighlighted={(colDef.field === highlightedColumn)}
+          drawerOpen={Boolean(editingColumn)}
         />
       ),
 
@@ -241,6 +243,32 @@ export default withStyles(({ palette }) => ({
       message: `Your annotation of ${columnName} was successfully added`, severity: 'success'
     });
   }
+
+  const highlightColumn = (cell, event) => {
+    // Get the next column to highlight from relatedTarget - this works for arrow key navigation
+    const clicked = event.relatedTarget;
+    if (clicked?.getAttribute('role') !== 'cell') {
+      // only continue if the user has clicked on a 'cell'
+      return;
+    }
+
+    // Fetch the column name out of the element's data-field attribute
+    const nextHighlight = clicked.getAttribute('data-field');
+
+    // and set our state to the column name, if it existed
+    if (nextHighlight) setHighlightedColumn(nextHighlight);
+  };
+
+  const handleCellKeyDown = (cell, event) => {
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      // DataGrid's vertical scroll is only disabled with both stopPropagation and preventDefault
+      event.stopPropagation();
+      event.preventDefault();
+    }
+    if (event.key === 'Enter') {
+      openAnnotationPanel(cell);
+    }
+  };
 
   return (
     <div className={classes.root}>
@@ -270,12 +298,12 @@ export default withStyles(({ palette }) => ({
         disableSelectionOnClick
         getRowId={(row) => row.__id}
         classes={{
-          root: clsx([classes.grid, classes.gridScroll]),
+          root: clsx([classes.grid, classes.gridScroll, classes.hideHeaderBorder]),
           row: classes.row,
           cell: clsx({ [classes.disabledEvents]: isEditing }),
           columnHeader: clsx({
             [classes.disabledEvents]: isEditing,
-            [classes.columnHeaderTitle]: true
+            [classes.columnHeaderTitle]: true,
           }),
         }}
         columns={formattedColumns}
@@ -284,11 +312,12 @@ export default withStyles(({ palette }) => ({
         headerHeight={HEADER_HEIGHT}
         rowsPerPageOptions={rowsPerPageOptions}
         rows={rows}
-        onCellClick={handleCellClick}
-        onColumnHeaderClick={handleCellClick}
-        onColumnHeaderOver={handleCellOver}
-        onCellOver={handleCellOver}
+        onCellDoubleClick={openAnnotationPanel}
+        onColumnHeaderDoubleClick={openAnnotationPanel}
         GridSortModel={null}
+        onCellKeyDown={handleCellKeyDown}
+        onCellBlur={highlightColumn}
+        onCellClick={(cell) => setHighlightedColumn(cell.field)}
       />
 
       <ColumnPanel

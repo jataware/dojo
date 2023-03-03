@@ -19,7 +19,7 @@ import Slide from '@material-ui/core/Slide';
 import TextField from '@material-ui/core/TextField';
 import Typography from '@material-ui/core/Typography';
 
-import { makeStyles, useTheme } from '@material-ui/core/styles';
+import { makeStyles, useTheme, withStyles } from '@material-ui/core/styles';
 
 const useStyles = makeStyles((theme) => ({
   versionButtonWrapper: {
@@ -43,22 +43,26 @@ const useStyles = makeStyles((theme) => ({
     textTransform: 'none',
   },
   pageLoadDialog: {
-    minHeight: '360px',
-    minWidth: '600px',
+    height: 'fit-content',
+    width: 'fit-content',
   },
   slideWrapper: {
     // there's a bug in the MUI slide component that causes it to overflow in certain directions
     // https://github.com/mui-org/material-ui/issues/13701
-    overflow: 'hidden',
-  },
-  confirmContent: {
-    overflowY: 'hidden',
+    overflowX: 'hidden',
   },
   confirmInput: {
     width: '100%',
     marginTop: theme.spacing(1),
   },
 }));
+
+// This prevents an ugly interior (second) scrollbar from appearing on smaller screens
+const DialogContentNoOverflow = withStyles({
+  root: {
+    overflow: 'hidden',
+  }
+})(DialogContent);
 
 const SummaryIntroDialog = ({
   open, setOpen, model, summaryLoading, setSummaryLoading
@@ -164,7 +168,7 @@ const SummaryIntroDialog = ({
             <DialogTitle align="center">
               Would you like to create a new model version?
             </DialogTitle>
-            <DialogContent>
+            <DialogContentNoOverflow>
               <DialogContentText component="div">
                 <Typography gutterBottom>
                   Any edits to the existing model&apos;s details, annotations,
@@ -207,7 +211,7 @@ const SummaryIntroDialog = ({
                   Create new version
                 </Button>
               </DialogActions>
-            </DialogContent>
+            </DialogContentNoOverflow>
           </div>
         );
       case 'continue':
@@ -216,7 +220,7 @@ const SummaryIntroDialog = ({
             <DialogTitle align="center">
               Would you like to edit your model?
             </DialogTitle>
-            <DialogContent>
+            <DialogContentNoOverflow>
               <DialogContentText component="div">
                 <Typography gutterBottom>
                   You will be able to launch the terminal and make changes where you left off
@@ -259,7 +263,7 @@ const SummaryIntroDialog = ({
                   Edit model
                 </Button>
               </DialogActions>
-            </DialogContent>
+            </DialogContentNoOverflow>
           </div>
         );
       case 'container':
@@ -270,7 +274,7 @@ const SummaryIntroDialog = ({
                 <DialogTitle align="center">
                   How would you like to run your model?
                 </DialogTitle>
-                <DialogContent>
+                <DialogContentNoOverflow>
                   <DialogContentText component="div">
                     <Typography gutterBottom>
                       Choose whether to:
@@ -349,18 +353,18 @@ const SummaryIntroDialog = ({
                       </Grid>
                     </Button>
                   </DialogActions>
-                </DialogContent>
+                </DialogContentNoOverflow>
               </div>
             </Slide>
           </span>
         );
       case 'confirm':
         return (
-          <>
+          <div>
             <DialogTitle align="center">
               Are you sure you want to start over from a base image?
             </DialogTitle>
-            <DialogContent classes={{ root: classes.confirmContent }}>
+            <DialogContentNoOverflow>
               <DialogContentText component="div">
                 <Typography>
                   Starting over from a base image will remove your existing output, accessory,
@@ -405,16 +409,16 @@ const SummaryIntroDialog = ({
                   </Button>
                 </DialogActions>
               </form>
-            </DialogContent>
-          </>
+            </DialogContentNoOverflow>
+          </div>
         );
       default:
         return (
           <>
             <DialogTitle align="center">There was an error</DialogTitle>
-            <DialogContent>
+            <DialogContentNoOverflow>
               <DialogContentText>Please reload the page</DialogContentText>
-            </DialogContent>
+            </DialogContentNoOverflow>
           </>
         );
     }

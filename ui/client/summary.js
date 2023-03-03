@@ -53,10 +53,17 @@ const Summary = () => {
           console.log('Container auto-shutdown sequence initiated');
         });
     }
-    // if we arrive with the terminal param but no lock, get rid of the terminal param
-    if (terminal === 'true' && !lock) {
-      history.replace(`/summary/${modelId}`);
-    }
+
+    const timeout = setTimeout(() => {
+      // if we do have the terminal param set but we haven't yet loaded a lock
+      // after the timeout has finished, then get rid of the terminal param
+      if (terminal === 'true' && !lock) {
+        history.replace(`/summary/${modelId}`);
+      }
+    }, 10000);
+
+    // clear the timeout when we cleanup the useEffect
+    return () => clearTimeout(timeout);
   }, [modelId, terminal, history, lock]);
 
   // if the model is loading or returns an error, don't show the page yet

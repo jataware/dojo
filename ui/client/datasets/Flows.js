@@ -84,7 +84,7 @@ const BasicRegistrationFlow = {
       jobs: [
         {
           id: 'mixmasta_processors.run_mixmasta',
-          handler: async ({result, annotations, setAnnotations, datasetInfo, ...extra}) => {
+          handler: async ({result, annotations, setAnnotations, datasetInfo, setDatasetInfo, ...extra}) => {
             const updatedDataset = {
               ...datasetInfo,
               data_paths: result.data_files,
@@ -93,6 +93,19 @@ const BasicRegistrationFlow = {
               outputs: result.outputs,
               qualifier_outputs: result.qualifier_outputs,
             };
+            setDatasetInfo(updatedDataset);
+            await axios.put(`/api/dojo/indicators`, updatedDataset);
+          }
+        },
+        {
+          id: 'mixmasta_processors.scale_features',
+          send_context: true,
+          handler: async ({result, annotations, setAnnotations, datasetInfo, setDatasetInfo, ...extra}) => {
+            const updatedDataset = {
+              ...datasetInfo,
+              data_paths_normalized: result,
+            };
+            setDatasetInfo(updatedDataset);
             await axios.put(`/api/dojo/indicators`, updatedDataset);
           }
         },
@@ -227,16 +240,29 @@ const AppendFlow = {
         },
         {
           id: 'mixmasta_processors.run_mixmasta',
-          handler: async ({result, annotations, setAnnotations, datasetInfo, ...extra}) => {
+          handler: async ({result, annotations, setAnnotations, datasetInfo, setDatasetInfo, ...extra}) => {
             const updatedDataset = {
               ...datasetInfo,
               data_paths: Array.concat(datasetInfo.data_paths, result.data_files),
               geography: result.geography,
               period: result.period,
             };
+            setDatasetInfo(updatedDataset);
             await axios.put(`/api/dojo/indicators`, updatedDataset);
           }
-        }
+        },
+        {
+          id: 'mixmasta_processors.scale_features',
+          send_context: true,
+          handler: async ({result, annotations, setAnnotations, datasetInfo, setDatasetInfo, ...extra}) => {
+            const updatedDataset = {
+              ...datasetInfo,
+              data_paths_normalized: result,
+            };
+            setDatasetInfo(updatedDataset);
+            await axios.put(`/api/dojo/indicators`, updatedDataset);
+          }
+        },
       ]
     }
   },
