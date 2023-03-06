@@ -363,7 +363,8 @@ export default withStyles(({ spacing, palette }) => ({
     processMapClippings();
     processAdjustTime();
     processClipTime();
-    handleNext();
+    // todo: wait until the above are all done?
+    setTimeout(() => handleNext(), 100);
   };
 
   const drawerInner = () => {
