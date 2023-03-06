@@ -27,6 +27,7 @@ import {
   PointElement,
   TimeScale,
   LineElement,
+  LineController,
 } from 'chart.js';
 import {
   Chart
@@ -42,6 +43,7 @@ ChartJS.register(
   Tooltip,
   PointElement,
   LineElement,
+  LineController,
 );
 
 const options = {
