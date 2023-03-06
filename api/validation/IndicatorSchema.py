@@ -260,6 +260,34 @@ class Output(BaseModel):
     )
 
 
+class OwnerDataset(BaseModel):
+    id: str = Field(
+        ...,
+        description="A unique dataset id",
+        examples=["123e4567-e89b-12d3-a456-426614174000"],
+        title="Dataset ID",
+    )
+    name: str = Field(
+        ..., description="The dataset name that owns an object.", examples=["WDI"], title="Dataset Name"
+    )
+
+class Feature(Output):
+    class Config:
+        extra = Extra.allow
+
+    owner_dataset: OwnerDataset = Field(
+        ...,
+        description="Information for Owner, or parent, Dataset where the feature exists.",
+        title="Owner Dataset",
+    )
+    id: str = Field(
+        ...,
+        description="A unique feature id",
+        examples=["123e4567-e89b-12d3-a456-426614174000"],
+        title="Feature ID",
+    )
+
+
 class QualifierOutput(BaseModel):
     class Config:
         extra = Extra.allow
@@ -451,7 +479,7 @@ class IndicatorsSearchSchema(BaseModel):
         description="Information about the dataset maintainer.",
         title="Dataset Maintainer",
     )
-   
+
 
 class DateValidationRequestSchema(BaseModel):
     format: str = Field(
@@ -480,4 +508,32 @@ class DateValidationResponseSchema(BaseModel):
         ...,
         description="Indicates if format provided (and returned) matches the values sent in",
         examples=[True, False],
+    )
+
+class FeaturesSearchSchema(BaseModel):
+    hits: int = Field(
+        ...,
+        description="Total feature count matching your request.",
+        examples=[10, 15, 45]
+    )
+    items_in_page: int = Field(
+        ...,
+        description="Feature item count in current page/scroll response.",
+        examples=[10, 15, 45]
+    )
+    scroll_id: Optional[str] = Field(
+        title="Scroll ID",
+        description= "Scroll id to use as query param, in order to navigate to the next page of feature results. Will return None|null when there are no pages left."
+    )
+    results: List[Feature] = Field(
+        ...,
+        description="Features data in current page for a given list or search."
+    )
+
+
+class FeaturesSemanticSearchSchema(FeaturesSearchSchema):
+    max_score: float = Field(
+        ...,
+        description="Max search engine score from all matches. This will match the first result's score within the first scroll page.",
+        examples=[0.72]
     )

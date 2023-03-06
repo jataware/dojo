@@ -17,3 +17,7 @@ torchvision==0.9.1
 tqdm==4.64.0
 xarray==0.16.1
 h5py==2.10.0
+sentence-transformers==2.2.2
+transformers==4.24.0
+ocrmypdf==14.0.2
+pypdf==3.3.0

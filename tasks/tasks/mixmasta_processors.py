@@ -1,3 +1,4 @@
+import io
 import logging
 import io
 import json
@@ -6,11 +7,12 @@ import re
 import requests
 import shutil
 from urllib.parse import urlparse
-
 import pandas as pd
+import numpy as np
 
-from utils import get_rawfile, put_rawfile
+from utils import get_rawfile, put_rawfile, download_rawfile
 from elwood import elwood as mix
+from elwood import feature_scaling as scaler
 from base_annotation import BaseProcessor
 from settings import settings
 
@@ -143,7 +145,7 @@ def run_mixmasta(context, filename=None):
             )
             with open(os.path.join(datapath, local_file), "rb") as fileobj:
                 put_rawfile(path=dest_file_path, fileobj=fileobj)
-            if dest_file_path.startswith("s3:"):
+            if dest_file_path.startswith("s3:") and not os.environ.get("STORAGE_HOST"):
                 # "https://jataware-world-modelers.s3.amazonaws.com/dev/indicators/6c9c996b-a175-4fa6-803c-e39b24e38b6e/6c9c996b-a175-4fa6-803c-e39b24e38b6e.parquet.gzip"
                 location_info = urlparse(dest_file_path)
                 data_files.append(
@@ -335,3 +337,117 @@ def run_model_mixmasta(context, *args, **kwargs):
 
     response = {"mixmaster_annotations": mm_ready_annotations}
     return response
+
+
+def scale_features(context, filename=None):
+    # 0 to 1 scaled dataframe
+
+    uuid = context["uuid"]
+    data_paths = context["dataset"]["data_paths"]
+    data_paths_normalized = context["dataset"].get("data_paths_normalized", [])
+    api_url = os.environ.get("DOJO_HOST")
+
+    if not data_paths_normalized:
+        data_paths_normalized = []
+
+    if not data_paths:
+        request_response = requests.get(f"{api_url}/indicators/{context['uuid']}")
+        data_paths = request_response.json().get("data_paths")
+
+    # determine which files have a normalized equivalent
+    data_paths_not_str = [path for path in data_paths if "_str" not in path]
+
+    # figure out which files paths are have been normalized
+    # and which are new files that are not yet normalized
+    old_files_normed = [
+        path
+        for path in data_paths_not_str
+        for norm_path in data_paths_normalized
+        if str(path.split("/")[-1].split(".parquet")[0] + "_normalized.parquet.gzip")
+        == norm_path.split("/")[-1]
+    ]
+    new_files_not_normed = [
+        path for path in data_paths_not_str if path not in old_files_normed
+    ]
+
+    # generate mapping from the old and new files
+    old_mapping = generate_min_max_mapping(old_files_normed)
+
+    new_mapping = generate_min_max_mapping(new_files_not_normed)
+
+    if new_min_max_values_found(old_mapping=old_mapping, new_mapping=new_mapping):
+        files_to_process = new_files_not_normed + old_files_normed
+    else:
+        files_to_process = new_files_not_normed
+
+    # rescale files that need processing
+    for path in files_to_process:
+        filename = path.split("/")[-1]
+        file_name = path.split("/")[-1].split(".parquet")[0]
+        file_out_name = f"{file_name}_normalized.parquet.gzip"
+
+        dataframe = pd.read_parquet(f"processing/{filename}")
+
+        dataframe_scaled = scaler.scale_dataframe(dataframe)
+
+        s3_filepath = os.path.join(
+            settings.DATASET_STORAGE_BASE_URL, "normalized", uuid, file_out_name
+        )
+
+        file_buffer = io.BytesIO()
+
+        dataframe_scaled.to_parquet(file_buffer)
+        file_buffer.seek(0)
+
+        put_rawfile(path=s3_filepath, fileobj=file_buffer)
+
+    data_paths_normalized = []
+    for path in new_files_not_normed + old_files_normed:
+        file_name = path.split("/")[-1].split(".parquet")[0]
+        file_out_name = f"{file_name}_normalized.parquet.gzip"
+        s3_filepath = os.path.join(
+            settings.DATASET_STORAGE_BASE_URL, "normalized", uuid, file_out_name
+        )
+        data_paths_normalized.append(s3_filepath)
+
+    return data_paths_normalized
+
+
+def generate_min_max_mapping(array_of_paths):
+    current_min = None
+    current_max = None
+    mapper = {}
+    for path in array_of_paths:
+        filename = path.split("/")[-1]
+        try:
+            print(path)
+            download_rawfile(path, f"processing/{filename}")
+        except FileNotFoundError as e:
+            return {"success": False, "message": "File not found"}
+
+        current_df = pd.read_parquet(f"processing/{filename}")
+
+        features = current_df.feature.unique()
+        for f in features:
+            feat = current_df[current_df["feature"] == f]
+            current_min = np.min(feat["value"])
+            current_max = np.max(feat["value"])
+            mapper[f] = {
+                "min": min(current_min, mapper.get(f, {}).get("min", current_min)),
+                "max": max(current_max, mapper.get(f, {}).get("max", current_max)),
+            }
+    return mapper
+
+
+def new_min_max_values_found(old_mapping, new_mapping):
+    if new_mapping == {}:
+        return False
+    if old_mapping == {}:
+        return True
+
+    for f in new_mapping:
+        if new_mapping[f].get("min") < old_mapping[f].get("min"):
+            return True
+        if new_mapping[f].get("max") > old_mapping[f].get("max"):
+            return True
+    return False

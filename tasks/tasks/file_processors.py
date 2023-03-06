@@ -1,14 +1,11 @@
-from fileinput import filename
 import logging
 import os
 import requests
 import tempfile
 
 import pandas as pd
-import xarray as xr
-from raster2xyz.raster2xyz import Raster2xyz
 
-from elwood import elwood as mix
+from elwood import file_processor
 from base_annotation import BaseProcessor
 from utils import DATASET_STORAGE_BASE_URL, get_rawfile, put_rawfile
 
@@ -51,7 +48,7 @@ class NetcdfLoadProcessor(BaseProcessor):
     @staticmethod
     def run(context, fp):
         """load netcdf"""
-        df = mix.netcdf2df(fp)
+        df = file_processor.netcdf2df_processor(fp)
         return df
 
 
@@ -60,7 +57,7 @@ class ExcelLoadProcessor(BaseProcessor):
     def run(context, fp):
         """load excel"""
         sheet = context.get("excel_sheet", None)
-        if sheet == None:
+        if sheet is None:
             df = pd.read_excel(fp)
         else:
             df = pd.read_excel(fp, sheet_name=sheet)
@@ -80,7 +77,7 @@ class GeotiffLoadProcessor(BaseProcessor):
                 context.get("geotiff_null_value", None),
             )
 
-            df = mix.raster2df(
+            df = file_processor.raster2df_processor(
                 fp, feature_name=feature_name, band=band, date=date, nodataval=nodataval
             )
             return df
@@ -94,7 +91,7 @@ class GeotiffLoadProcessor(BaseProcessor):
             else:
                 date_value = context.get("geotiff_value", "01/01/2001")
 
-            df = mix.raster2df(
+            df = file_processor.raster2df(
                 fp,
                 feature_name=context.get("geotiff_value", "feature"),
                 band_name=context.get("geotiff_value", "feature"),
