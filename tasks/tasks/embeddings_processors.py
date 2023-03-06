@@ -48,7 +48,7 @@ def saveAllOutputEmbeddings(indicatorDictionary, indicator_id):
             }
         }
 
-        feature_id = f"{indicator_id}-{output.name}";
+        feature_id = f"{indicator_id}-{output['name']}";
 
         es.index(index="features", body=feature, id=feature_id)
 
