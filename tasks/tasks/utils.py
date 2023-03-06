@@ -8,13 +8,13 @@ import boto3
 # S3 OBJECT
 
 s3 = boto3.client(
-        "s3",
-        endpoint_url=os.getenv("STORAGE_HOST") or None,
-        aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
-        aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
-        aws_session_token=None,
-        config=boto3.session.Config(signature_version="s3v4"),
-        verify=False,
+    "s3",
+    endpoint_url=os.getenv("STORAGE_HOST") or None,
+    aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+    aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+    aws_session_token=None,
+    config=boto3.session.Config(signature_version="s3v4"),
+    verify=False,
 )
 DATASET_STORAGE_BASE_URL = os.environ.get("DATASET_STORAGE_BASE_URL")
 
@@ -67,9 +67,7 @@ def put_rawfile(path, fileobj):
 def list_files(path):
     location_info = urlparse(path.replace("file:///", "s3://"))
 
-    s3_list = s3.list_objects(
-        Bucket=location_info.netloc, Prefix=location_info.path
-    )
+    s3_list = s3.list_objects(Bucket=location_info.netloc, Prefix=location_info.path)
     s3_contents = s3_list["Contents"]
     final_file_list = []
     for x in s3_contents:
@@ -77,6 +75,22 @@ def list_files(path):
         final_file_list.append(f"{location_info.path}/{filename}")
 
     return final_file_list
+
+
+def job_setup(context, filename):
+    # Setup
+    # If no filename is passed in, default to the converted raw_data file.
+    if filename is None:
+        filename = "raw_data.csv"
+
+    # Always analyze the csv version of the file
+    if not filename.endswith(".csv"):
+        filename = filename.split(".")[0] + ".csv"
+
+    rawfile_path = os.path.join(DATASET_STORAGE_BASE_URL, context["uuid"], filename)
+    file = get_rawfile(rawfile_path)
+
+    return file, filename, rawfile_path
 
 
 def download_rawfile(path, filename):

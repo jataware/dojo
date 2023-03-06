@@ -48,7 +48,7 @@ class NetcdfLoadProcessor(BaseProcessor):
     @staticmethod
     def run(context, fp):
         """load netcdf"""
-        df = file_processor.netcdf2df(fp)
+        df = file_processor.netcdf2df_processor(fp)
         return df
 
 
@@ -77,7 +77,7 @@ class GeotiffLoadProcessor(BaseProcessor):
                 context.get("geotiff_null_value", None),
             )
 
-            df = file_processor.raster2df(
+            df = file_processor.raster2df_processor(
                 fp, feature_name=feature_name, band=band, date=date, nodataval=nodataval
             )
             return df

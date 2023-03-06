@@ -3,6 +3,7 @@ import Register from './Register';
 import Annotate from './Annotate';
 import AnomalyDetection from './AnomalyDetection';
 import Append from './Append';
+import DataTransformation from './DataTransformation';
 import UpdateMetadata from './UpdateMetadata';
 import ModelOutput from './ModelOutput';
 import Preview from './Preview';
@@ -73,6 +74,13 @@ const BasicRegistrationFlow = {
     title: 'Annotate Dataset',
     label: 'Annotation',
     component: Annotate,
+    options: {}
+  },
+  {
+    slug: 'transform',
+    title: 'Transform Data',
+    label: 'Transformation',
+    component: DataTransformation,
     options: {}
   },
   {
