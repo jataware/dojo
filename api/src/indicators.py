@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import os
 import re
 import time
 import uuid
@@ -7,7 +8,6 @@ from datetime import datetime
 from typing import List, Optional
 import json
 import pandas as pd
-from rq import Queue
 
 from elasticsearch import Elasticsearch
 from fastapi import (
@@ -20,6 +20,9 @@ from fastapi import (
     File,
 )
 from fastapi.logger import logger
+from redis import Redis
+from rq import Queue
+from rq.exceptions import NoSuchJobError # TODO handle
 
 from validation import IndicatorSchema, DojoSchema, MetadataSchema
 from src.settings import settings
@@ -31,23 +34,40 @@ from src.causemos import deprecate_dataset
 from src.utils import put_rawfile, get_rawfile, list_files
 from src.plugins import plugin_action
 
-from redis import Redis
 
-import os
-redis = Redis(
-    os.environ.get("REDIS_HOST", "redis.dojo-stack"),
-    os.environ.get("REDIS_PORT", "6379"),
-)
-q = Queue(connection=redis, default_timeout=-1)
+from src.embedder_engine import embedder
 
 router = APIRouter()
-
 es = Elasticsearch([settings.ELASTICSEARCH_URL], port=settings.ELASTICSEARCH_PORT)
 
+# REDIS CONNECTION AND QUEUE OBJECTS
+redis = Redis(
+    os.environ.get("REDIS_HOST", "redis.dojo-stack"),
+    int(os.environ.get("REDIS_PORT", 6379))
+)
+q = Queue(connection=redis, default_timeout=-1)
 
 # For created_at times in epoch milliseconds
 def current_milli_time():
     return round(time.time() * 1000)
+
+
+def enqueue_indicator_feature(indicator_id, indicator_dict):
+    """
+    Adds indicator (dataset!) to queue to process by embeddings_process, which
+    at this time creates and attaches LLM embeddings to its features (outputs)
+    """
+    job_string = "embeddings_processors.calculate_store_embeddings"
+    job_id = f"{indicator_id}_{job_string}"
+
+    context = {
+        "indicator_id": indicator_id,
+        "full_indicator": indicator_dict
+    }
+
+    job = q.enqueue_call(
+        func=job_string, args=[context], kwargs={}, job_id=job_id
+    )
 
 
 @router.post("/indicators")
@@ -62,14 +82,16 @@ def create_indicator(payload: IndicatorSchema.IndicatorMetadataSchema):
     es.index(index="indicators", body=body, id=indicator_id)
     plugin_action("post_create", data=body, type="indicator")
 
-
     empty_annotations_payload = MetadataSchema.MetaModel(metadata={}).json()
     # (?): SHOULD WE HAVE PLUGINS AROUND THE ANNOTATION CREATION?
     plugin_action("before_create", data=body, type="annotation")
     es.index(index="annotations", body=empty_annotations_payload, id=indicator_id)
     plugin_action("post_create", data=body, type="annotation")
 
-
+    # Saves all outputs, as features in a new index, with LLM embeddings
+    # TODO ask if outputs will ever be populated on create, or find out when it is to add features
+    if payload.outputs:
+        enqueue_indicator_feature(indicator_id, json.loads(payload.json()))
 
     return Response(
         status_code=status.HTTP_201_CREATED,
@@ -91,6 +113,9 @@ def update_indicator(payload: IndicatorSchema.IndicatorMetadataSchema):
     es.index(index="indicators", body=body, id=indicator_id)
     plugin_action("post_update", data=body, type="indicator")
 
+    if payload.outputs:
+        enqueue_indicator_feature(indicator_id, json.loads(payload.json()))
+
     return Response(
         status_code=status.HTTP_200_OK,
         headers={"location": f"/api/indicators/{indicator_id}"},
@@ -105,11 +130,159 @@ def patch_indicator(
     payload.created_at = current_milli_time()
     body = json.loads(payload.json(exclude_unset=True))
     es.update(index="indicators", body={"doc": body}, id=indicator_id)
+
+    updated = es.get_source(index="indicators", id=indicator_id, params={"_source": "name,outputs"})
+    if updated["outputs"]:
+        enqueue_indicator_feature(indicator_id, updated)
+
     return Response(
         status_code=status.HTTP_200_OK,
         headers={"location": f"/api/indicators/{indicator_id}"},
         content=f"Updated indicator with id = {indicator_id}",
     )
+
+
+@router.get(
+"/features/search", response_model=IndicatorSchema.FeaturesSemanticSearchSchema
+)
+def semantic_search_features(query: Optional[str], size=10, scroll_id: Optional[str]=None):
+    """
+    Given a text query, uses semantic search engine to search for features that
+    match the query semantically. Query is a sentence that can be interpreted to
+    be related to a concept, such as:
+    'number of people who have been vaccinated'
+    """
+
+    if scroll_id:
+        results = es.scroll(scroll_id=scroll_id, scroll="2m")
+    else:
+        # Retrieve first item in output, since it returns an array output
+        # that matches its input, and we provide only one- query.
+        query_embedding = embedder.embed([query])[0]
+
+        features_query = {
+            "query": {
+                "script_score": {
+                    "query": {"match_all": {}},
+                    "script": {
+                        "source": "Math.max(cosineSimilarity(params.query_vector, 'embeddings'), 0)",
+                        "params": {
+                            "query_vector": query_embedding
+                        }
+                    }
+                }
+            },
+            "_source": {
+                "excludes": ["embeddings"]
+            }
+        }
+        results = es.search(index="features", body=features_query, scroll="2m", size=size)
+
+    items_in_page = len(results["hits"]["hits"])
+
+    if items_in_page < int(size):
+        scroll_id = None
+    else:
+        scroll_id = results.get("_scroll_id", None)
+
+    max_score = results["hits"]["max_score"]
+
+    def formatOneResult(r):
+        r["_source"]["metadata"]={}
+        r["_source"]["metadata"]["match_score"] = r["_score"]
+        r["_source"]["id"] = r["_id"]
+        return r["_source"]
+
+    return {
+        "hits": results["hits"]["total"]["value"],
+        "items_in_page": items_in_page,
+        "max_score": max_score,
+        "results": [formatOneResult(i) for i in results["hits"]["hits"]],
+        "scroll_id": scroll_id
+    }
+
+
+def formatHitWithId(hit):
+    return {
+        "id": hit["_id"],
+        **hit["_source"]
+    }
+
+
+def getWildcardsForAllProperties(t):
+            return [{"wildcard": {"name": f"*{t}*"}},
+                    {"wildcard": {"display_name": f"*{t}*"}},
+                    {"wildcard": {"description": f"*{t}*"}}]
+
+
+@router.get(
+    "/features", response_model=IndicatorSchema.FeaturesSearchSchema
+)
+def list_features(term: Optional[str]=None,
+                  size: int = 10,
+                  scroll_id: Optional[str]=None):
+    """
+    Lists all features, with pagination, or results from searching
+    through them by keywords (within input `term`).
+    Will match `term` with wildcard to feature `name`,
+    `display_name`, or `description`.
+    """
+
+    if term:
+        q = {
+            "query": {
+                "bool": {
+                    "should": [
+                        # NOTE End result format, 3 properties matched for each
+                        #      word in text (split by whitespace)
+                        # Note: This is a slow search. Use es token indexing features
+                        #       in the future
+                        # { "wildcard": { "name": wildcardTerm }},
+                        # { "wildcard": { "display_name": wildcardTerm }},
+                        # { "wildcard": { "description": wildcardTerm }}
+                    ]
+                }
+            },
+            "_source": {
+                "excludes": "embeddings"
+            }
+        }
+
+        for item in term.split():
+            q["query"]["bool"]["should"] += getWildcardsForAllProperties(item)
+
+    else:
+        q = {
+            "query": {
+                "match_all": {}
+            },
+            "_source": {
+                "excludes": "embeddings"
+            }
+        }
+
+    if not scroll_id:
+        results = es.search(index="features", body=q, scroll="2m", size=size)
+    else:
+        results = es.scroll(scroll_id=scroll_id, scroll="2m")
+
+    totalHitsInPage = len(results["hits"]["hits"])
+
+    # if results are less than the page size (10) don't return a scroll_id
+    if totalHitsInPage < size:
+        scroll_id = None
+    else:
+        scroll_id = results.get("_scroll_id", None)
+
+    # Groups features as array list from `results`, into `response`
+    response = results["hits"]["hits"]
+
+    return {
+        "hits": results["hits"]["total"]["value"],
+        "items_in_page": len(response),
+        "results": [formatHitWithId(i) for i in response],
+        "scroll_id": scroll_id
+    }
 
 
 @router.get(
@@ -336,7 +509,6 @@ def put_annotation(payload: MetadataSchema.MetaModel, indicator_id: str):
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             content=f"Could not create annotation with id = {indicator_id}",
         )
-
 
 @router.patch("/indicators/{indicator_id}/annotations")
 def patch_annotation(payload: MetadataSchema.MetaModel, indicator_id: str):

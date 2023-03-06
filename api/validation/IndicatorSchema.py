@@ -58,7 +58,6 @@ class PreviewType(Enum):
 #         title="Final Alias Name",
 #     )
 
-
 class Maintainer(BaseModel):
     class Config:
         extra = Extra.allow
@@ -254,8 +253,38 @@ class Output(BaseModel):
         description="Spatial and temporal resolution of the data",
         title="Data Resolution",
     )
-    alias: Optional[Dict[Any, Any]] = Field(
-        None, description="alias dictionary", title="Alias"
+    alias: Optional[Dict[Any,Any]] = Field(
+        None,
+        description="alias dictionary",
+        title="Alias"
+    )
+
+
+class OwnerDataset(BaseModel):
+    id: str = Field(
+        ...,
+        description="A unique dataset id",
+        examples=["123e4567-e89b-12d3-a456-426614174000"],
+        title="Dataset ID",
+    )
+    name: str = Field(
+        ..., description="The dataset name that owns an object.", examples=["WDI"], title="Dataset Name"
+    )
+
+class Feature(Output):
+    class Config:
+        extra = Extra.allow
+
+    owner_dataset: OwnerDataset = Field(
+        ...,
+        description="Information for Owner, or parent, Dataset where the feature exists.",
+        title="Owner Dataset",
+    )
+    id: str = Field(
+        ...,
+        description="A unique feature id",
+        examples=["123e4567-e89b-12d3-a456-426614174000"],
+        title="Feature ID",
     )
 
 
@@ -366,16 +395,10 @@ class IndicatorMetadataSchema(BaseModel):
         examples=[["https://jataware-world-modelers.s3.amazonaws.com/WDI/data.csv"]],
         title="Data Path URLs",
     )
-    data_paths_normalized: Optional[List[str]] = Field(
-        [],
-        description="URL paths to normalized data",
-        examples=[
-            ["https://jataware-world-modelers.s3.amazonaws.com/WDI/data_normalized.csv"]
-        ],
-        title="Normalized Data Path URLs",
-    )
     outputs: Optional[List[Output]] = Field(
-        [], description="An array of dataset variables", title="Dataset Outputs"
+        [],
+        description="An array of dataset variables",
+        title="Dataset Outputs"
     )
     qualifier_outputs: Optional[List[QualifierOutput]] = Field(
         None,
@@ -403,13 +426,17 @@ class IndicatorMetadataSchema(BaseModel):
     data_sensitivity: Optional[str] = Field(
         None,
         description="Specifies any restrictions on data use.",
-        examples=["..."],
+        examples=[
+            "..."
+        ],
         title="Dataset Sensitivity",
     )
     data_quality: Optional[str] = Field(
         None,
         description="Specify if the data is measured, derived, or estimated data and what was the methodology associated with each of these.",
-        examples=["measured"],
+        examples=[
+            "measured"
+        ],
         title="Dataset Quality",
     )
     published: Boolean = Field(
@@ -467,7 +494,7 @@ class DateValidationRequestSchema(BaseModel):
             ["2001-01-01", "2022-07-11", "2011-03-27"],
             ["2002", "2005", "1998"],
             ["Nov 11, 1911", "Dec 25, 2020", "Feb 9, 1999"],
-        ],
+        ]
     )
 
 
@@ -481,4 +508,32 @@ class DateValidationResponseSchema(BaseModel):
         ...,
         description="Indicates if format provided (and returned) matches the values sent in",
         examples=[True, False],
+    )
+
+class FeaturesSearchSchema(BaseModel):
+    hits: int = Field(
+        ...,
+        description="Total feature count matching your request.",
+        examples=[10, 15, 45]
+    )
+    items_in_page: int = Field(
+        ...,
+        description="Feature item count in current page/scroll response.",
+        examples=[10, 15, 45]
+    )
+    scroll_id: Optional[str] = Field(
+        title="Scroll ID",
+        description= "Scroll id to use as query param, in order to navigate to the next page of feature results. Will return None|null when there are no pages left."
+    )
+    results: List[Feature] = Field(
+        ...,
+        description="Features data in current page for a given list or search."
+    )
+
+
+class FeaturesSemanticSearchSchema(FeaturesSearchSchema):
+    max_score: float = Field(
+        ...,
+        description="Max search engine score from all matches. This will match the first result's score within the first scroll page.",
+        examples=[0.72]
     )
