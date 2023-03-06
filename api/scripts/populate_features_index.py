@@ -11,8 +11,6 @@ import sys
 from pathlib import Path
 import argparse
 
-import uuid
-
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 from src.embedder_engine import embedder
@@ -66,7 +64,7 @@ def saveAllOutputEmbeddings(indicatorDictionary, indicator_id):
                 "name": indicatorDictionary["name"]
             }
         }
-        feature_id = str(uuid.uuid4())
+        feature_id = f"{indicator_id}-{output.name}";
         es.index(index="features", body=feature, id=feature_id)
 
 

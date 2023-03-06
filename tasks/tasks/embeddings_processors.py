@@ -2,7 +2,6 @@ import logging
 from base_annotation import BaseProcessor
 from elasticsearch import Elasticsearch
 import os
-import uuid
 from embedder_engine import embedder
 
 logging.basicConfig()
@@ -35,7 +34,7 @@ def saveAllOutputEmbeddings(indicatorDictionary, indicator_id):
     including the LLM embeddings to use in search.
     """
 
-    logging.info("Save all output embeddings called")
+    logging.info("Save all output embeddings called.")
     logging.info(f"Input dictionary: {indicatorDictionary}")
 
     for index, output in enumerate(indicatorDictionary["outputs"]):
@@ -49,7 +48,7 @@ def saveAllOutputEmbeddings(indicatorDictionary, indicator_id):
             }
         }
 
-        feature_id = str(uuid.uuid4())
+        feature_id = f"{indicator_id}-{output.name}";
 
         es.index(index="features", body=feature, id=feature_id)
 
