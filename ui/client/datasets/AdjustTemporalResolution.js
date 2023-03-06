@@ -19,12 +19,10 @@ const aggregationFunctions = [
   'std',
   'var',
   'sem',
-  'describe',
   'min',
   'max',
   'first',
   'last',
-  'nth',
 ];
 
 export default withStyles((theme) => ({
