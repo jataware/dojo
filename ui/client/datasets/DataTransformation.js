@@ -5,11 +5,13 @@ import React, {
 import axios from 'axios';
 
 import AspectRatioIcon from '@material-ui/icons/AspectRatio';
+import InfoIcon from '@material-ui/icons/Info';
 import TodayIcon from '@material-ui/icons/Today';
 import CheckIcon from '@material-ui/icons/Check';
 import GridOnIcon from '@material-ui/icons/GridOn';
 import MapIcon from '@material-ui/icons/Map';
 
+import CircularProgress from '@material-ui/core/CircularProgress';
 import Container from '@material-ui/core/Container';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
@@ -25,6 +27,75 @@ import Drawer from '../components/Drawer';
 import { Navigation } from '.';
 import AdjustTemporalResolution from './AdjustTemporalResolution';
 import AdjustGeoResolution from './AdjustGeoResolution';
+
+const TransformationButton = withStyles(({ palette }) => ({
+  complete: {
+    color: palette.grey[500],
+  },
+  incomplete: {
+    color: palette.text.primary,
+  },
+  check: {
+    color: palette.success.light,
+  },
+  close: {
+    color: palette.info.light,
+  },
+  disabled: {
+    color: palette.text.disabled,
+  },
+  listItemIcon: {
+    display: 'flex',
+    justifyContent: 'center',
+  },
+}))(({
+  classes,
+  isComplete,
+  Icon,
+  title,
+  onClick,
+  loading,
+  failed,
+}) => {
+  const displayIcon = () => {
+    if (isComplete) {
+      return <CheckIcon className={classes.check} fontSize="large" />;
+    }
+
+    if (loading) {
+      return <CircularProgress thickness={4.5} size={25} />;
+    }
+
+    // TODO: change name from failed to something else?
+    if (failed) {
+      return <InfoIcon className={classes.close} fontSize="large" />;
+    }
+  };
+
+  return (
+    <div style={{ position: 'relative' }}>
+      <ListItem button disabled={loading || failed}>
+        <ListItemIcon>
+          <Icon
+            fontSize="large"
+            className={isComplete ? classes.complete : classes.incomplete}
+          />
+        </ListItemIcon>
+        <ListItemText
+          primaryTypographyProps={{ variant: 'h6' }}
+          onClick={onClick}
+          className={isComplete ? classes.complete : classes.incomplete}
+        >
+          {title}
+        </ListItemText>
+        <ListItemIcon className={classes.listItemIcon}>
+          {displayIcon()}
+        </ListItemIcon>
+      </ListItem>
+
+    </div>
+  );
+});
 
 export default withStyles(({ spacing, palette }) => ({
   root: {
@@ -59,6 +130,7 @@ export default withStyles(({ spacing, palette }) => ({
 
   const [mapBounds, setMapBounds] = useState(null);
   const [mapBoundsLoading, setMapBoundsLoading] = useState(false);
+  const [mapBoundsError, setMapBoundsError] = useState(false);
   const [savedDrawings, setSavedDrawings] = useState([]);
 
   const [mapResolution, setMapResolution] = useState(null);
@@ -68,12 +140,14 @@ export default withStyles(({ spacing, palette }) => ({
 
   const [timeResolution, setTimeResolution] = useState(null);
   const [timeResolutionLoading, setTimeResolutionLoading] = useState(false);
+  const [timeResolutionError, setTimeResolutionError] = useState(false);
   const [timeResolutionOptions, setTimeResolutionOptions] = useState([]);
   const [savedTimeResolution, setSavedTimeResolution] = useState(null);
   const [savedAggregation, setSavedAggregation] = useState(null);
 
   const [timeBounds, setTimeBounds] = useState([]);
   const [timeBoundsLoading, setTimeBoundsLoading] = useState(false);
+  const [timeBoundsError, setTimeBoundsError] = useState(false);
   const [savedTimeBounds, setSavedTimeBounds] = useState(null);
   const cleanupRef = useRef(null);
 
@@ -120,7 +194,6 @@ export default withStyles(({ spacing, palette }) => ({
   // }
 
   // if (!timeBounds.length) {
-  //   // setTimeout(() => {
   //     setTimeBounds([
   //       '2020-01-22',
   //       '2020-03-01',
@@ -134,7 +207,6 @@ export default withStyles(({ spacing, palette }) => ({
   //       '2022-01-12',
   //       '2022-07-15',
   //     ]);
-  //   // }, 3000);
   // }
 // to here
 
@@ -148,7 +220,7 @@ export default withStyles(({ spacing, palette }) => ({
     }
   }, []);
 
-  const runElwoodJob = useCallback((datasetId, requestArgs, jobString, onSuccess) => {
+  const runElwoodJob = useCallback((datasetId, requestArgs, jobString, onSuccess, onFailure) => {
     console.log('runElwoodJob has been called at the top level');
     let count = 0;
 
@@ -177,6 +249,10 @@ export default withStyles(({ spacing, palette }) => ({
             startElwoodJob(datasetId, requestArgs, jobString).then((resp) => {
               repeatFetch(resp);
             });
+          } else {
+            if (onFailure) {
+              onFailure();
+            }
           }
         });
       }, 500);
@@ -223,7 +299,7 @@ export default withStyles(({ spacing, palette }) => ({
 
   // fetch boundary for ClipMap component
   useEffect(() => {
-    if (!mapBounds && !mapBoundsLoading) {
+    if (!mapBounds && !mapBoundsError && !mapBoundsLoading) {
       if (annotations?.annotations?.geo) {
         setMapBoundsLoading(true);
         const args = { geo_columns: [] };
@@ -233,20 +309,37 @@ export default withStyles(({ spacing, palette }) => ({
         const onGeoBoundarySuccess = (data) => {
           if (data?.boundary_box) {
             const bObj = data?.boundary_box;
-            const bounds = [[bObj.ymin, bObj.xmin], [bObj.ymax, bObj.xmax]];
-            setMapBounds(bounds);
+            // only do this if we have the lat/lon, otherwise it is returning a failure
+            if (bObj.ymin && bObj.xmin) {
+              const bounds = [[bObj.ymin, bObj.xmin], [bObj.ymax, bObj.xmax]];
+              setMapBounds(bounds);
+            }
+            if (Object.keys(data.boundary_box).length === 0) {
+              setMapBoundsError(true);
+            }
+            setMapBoundsLoading(false);
           }
+        };
+
+        const onGeoBoundaryFailure = () => {
+          setMapBoundsError(true);
           setMapBoundsLoading(false);
         };
 
-        runElwoodJob(datasetInfo.id, args, geoBoundaryString, onGeoBoundarySuccess);
+        runElwoodJob(
+          datasetInfo.id,
+          args,
+          geoBoundaryString,
+          onGeoBoundarySuccess,
+          onGeoBoundaryFailure
+        );
       }
     }
-  }, [datasetInfo.id, annotations, mapBounds, mapBoundsLoading, runElwoodJob]);
+  }, [datasetInfo.id, annotations, mapBounds, mapBoundsLoading, runElwoodJob, mapBoundsError]);
 
   // fetch resolution for AdjustTemporalResolution component
   useEffect(() => {
-    if (!timeResolution && !timeResolutionLoading) {
+    if (!timeResolution && !timeResolutionLoading && !timeResolutionError) {
       if (annotations?.annotations?.date) {
         setTimeResolutionLoading(true);
         const args = {
@@ -256,22 +349,40 @@ export default withStyles(({ spacing, palette }) => ({
 
         const temporalResolutionString = 'resolution_processors.calculate_temporal_resolution';
         const onTemporalResolutionSuccess = (data) => {
-          if (data.resolution_result) {
+          if (data.resolution_result?.uniformity !== 'PERFECT') {
+            setTimeResolutionError(true);
+          } else {
             setTimeResolution(data.resolution_result);
           }
-          setTimeResolutionLoading(true);
+          setTimeResolutionLoading(false);
+        };
+
+        const onTemporalResolutionFailure = () => {
+          setTimeResolutionError(true);
+          setTimeResolutionLoading(false);
         };
 
         runElwoodJob(
-          datasetInfo.id, args, temporalResolutionString, onTemporalResolutionSuccess
+          datasetInfo.id,
+          args,
+          temporalResolutionString,
+          onTemporalResolutionSuccess,
+          onTemporalResolutionFailure,
         );
       }
     }
-  }, [datasetInfo.id, annotations, timeResolution, timeResolutionLoading, runElwoodJob]);
+  }, [
+    datasetInfo.id,
+    annotations,
+    timeResolution,
+    timeResolutionLoading,
+    runElwoodJob,
+    timeResolutionError
+  ]);
 
   // fetch time bounds for ClipTime component
   useEffect(() => {
-    if (!timeBounds.length && !timeBoundsLoading) {
+    if (!timeBounds.length && !timeBoundsLoading && !timeBoundsError) {
       if (annotations?.annotations?.date) {
         setTimeBoundsLoading(true);
         const args = {
@@ -281,16 +392,31 @@ export default withStyles(({ spacing, palette }) => ({
 
         const getDatesString = 'transformation_processors.get_unique_dates';
         const onGetDatesSuccess = (data) => {
-          if (data.unique_dates) {
+          if (data.unique_dates.length) {
             setTimeBounds(data.unique_dates);
+          } else {
+          // TODO: also handle single length arrays as an error/un-transformable?
+            setTimeBoundsError(true);
           }
           setTimeBoundsLoading(false);
         };
 
-        runElwoodJob(datasetInfo.id, args, getDatesString, onGetDatesSuccess);
+        const onGetDatesFailure = () => {
+          setTimeBoundsError(true);
+          setTimeBoundsLoading(false);
+        };
+
+        runElwoodJob(datasetInfo.id, args, getDatesString, onGetDatesSuccess, onGetDatesFailure);
       }
     }
-  }, [datasetInfo.id, annotations, timeBounds, timeBoundsLoading, runElwoodJob]);
+  }, [
+    datasetInfo.id,
+    annotations,
+    timeBounds,
+    timeBoundsLoading,
+    runElwoodJob,
+    timeBoundsError
+  ]);
 
   const handleDrawerClose = (bool, event) => {
     // prevent clicking outside the drawer to close
@@ -446,6 +572,12 @@ export default withStyles(({ spacing, palette }) => ({
           arrow
           placement="top"
         >
+          {/*<TransformationButton
+            isComplete={!!savedMapResolution}
+            Icon={GridOnIcon}
+            title="Adjust Geospatial Resolution"
+            onClick={() => handleDrawerOpen('regridMap')}
+          />*/}
           <ListItem button>
             <ListItemIcon>
               <GridOnIcon
@@ -470,68 +602,32 @@ export default withStyles(({ spacing, palette }) => ({
           </ListItem>
         </Tooltip>
 
-        <ListItem button>
-          <ListItemIcon>
-            <MapIcon
-              fontSize="large"
-              className={savedDrawings.length ? classes.complete : classes.incomplete}
-            />
-          </ListItemIcon>
-          <ListItemText
-            primaryTypographyProps={{ variant: 'h6' }}
-            onClick={() => handleDrawerOpen('clipMap')}
-            className={savedDrawings.length ? classes.complete : classes.incomplete}
-          >
-            Select Geospatial Coverage
-          </ListItemText>
-          {savedDrawings.length !== 0 && (
-            <ListItemIcon>
-              <CheckIcon className={classes.check} fontSize="large" />
-            </ListItemIcon>
-          )}
-        </ListItem>
+        <TransformationButton
+          isComplete={!!savedDrawings.length}
+          Icon={MapIcon}
+          title="Select Geospatial Coverage"
+          onClick={() => handleDrawerOpen('clipMap')}
+          loading={mapBoundsLoading}
+          failed={mapBoundsError}
+        />
 
-        <ListItem button>
-          <ListItemIcon>
-            <AspectRatioIcon
-              fontSize="large"
-              className={savedTimeResolution ? classes.complete : classes.incomplete}
-            />
-          </ListItemIcon>
-          <ListItemText
-            primaryTypographyProps={{ variant: 'h6' }}
-            onClick={() => handleDrawerOpen('scaleTime')}
-            className={savedTimeResolution ? classes.complete : classes.incomplete}
-          >
-            Adjust Temporal Resolution
-          </ListItemText>
-          {savedTimeResolution && (
-            <ListItemIcon>
-              <CheckIcon className={classes.check} fontSize="large" />
-            </ListItemIcon>
-          )}
-        </ListItem>
+        <TransformationButton
+          isComplete={!!savedTimeResolution}
+          Icon={AspectRatioIcon}
+          title="Adjust Temporal Resolution"
+          onClick={() => handleDrawerOpen('scaleTime')}
+          loading={timeResolutionLoading}
+          failed={timeResolutionError}
+        />
 
-        <ListItem button>
-          <ListItemIcon>
-            <TodayIcon
-              fontSize="large"
-              className={savedTimeBounds ? classes.complete : classes.incomplete}
-            />
-          </ListItemIcon>
-          <ListItemText
-            primaryTypographyProps={{ variant: 'h6' }}
-            onClick={() => handleDrawerOpen('clipTime')}
-            className={savedTimeBounds ? classes.complete : classes.incomplete}
-          >
-            Select Temporal Coverage
-          </ListItemText>
-          {savedTimeBounds && (
-            <ListItemIcon>
-              <CheckIcon className={classes.check} fontSize="large" />
-            </ListItemIcon>
-          )}
-        </ListItem>
+        <TransformationButton
+          isComplete={!!savedTimeBounds}
+          Icon={TodayIcon}
+          title="Select Temporal Coverage"
+          onClick={() => handleDrawerOpen('clipTime')}
+          loading={timeBoundsLoading}
+          failed={timeBoundsError}
+        />
       </List>
       <Navigation
         label="Next"

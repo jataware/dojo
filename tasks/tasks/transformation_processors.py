@@ -231,7 +231,7 @@ def get_boundary_box(context, filename=None, **kwargs):
 
     response = {
         "message": "Boundary box not generated, some information was not provided (geography column names).",
-        "bounday_box": {},
+        "boundary_box": {},
     }
     return response
 
