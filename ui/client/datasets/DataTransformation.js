@@ -317,7 +317,7 @@ export default withStyles(({ spacing, palette }) => ({
       };
       annotations.annotations.geo.forEach((geo) => args.geo_columns.push(geo.name));
 
-      startElwoodJob(datasetInfo.id, args, 'transformation_processors.regrid_geo');
+      return startElwoodJob(datasetInfo.id, args, 'transformation_processors.regrid_geo');
     }
   };
 
@@ -329,7 +329,7 @@ export default withStyles(({ spacing, palette }) => ({
       };
       annotations.annotations.geo.forEach((geo) => args.geo_columns.push(geo.name));
 
-      startElwoodJob(datasetInfo.id, args, 'transformation_processors.clip_geo');
+      return startElwoodJob(datasetInfo.id, args, 'transformation_processors.clip_geo');
     }
   };
 
@@ -342,7 +342,7 @@ export default withStyles(({ spacing, palette }) => ({
         }],
       };
 
-      startElwoodJob(datasetInfo.id, args, 'transformation_processors.clip_time');
+      return startElwoodJob(datasetInfo.id, args, 'transformation_processors.clip_time');
     }
   };
 
@@ -354,17 +354,20 @@ export default withStyles(({ spacing, palette }) => ({
         aggregation_function_list: [savedAggregation],
       };
 
-      startElwoodJob(datasetInfo.id, args, 'transformation_processors.scale_time');
+      return startElwoodJob(datasetInfo.id, args, 'transformation_processors.scale_time');
     }
   };
 
   const handleNextStep = () => {
-    // processAdjustGeo();
-    processMapClippings();
-    processAdjustTime();
-    processClipTime();
-    // todo: wait until the above are all done?
-    setTimeout(() => handleNext(), 100);
+    // const adjustGeo = processAdjustGeo();
+    const clipMap = processMapClippings();
+    const adjustTime = processAdjustTime();
+    const clipTime = processClipTime();
+    Promise.all([clipMap, adjustTime, clipTime]).then(() => {
+      // only do the next step after we've kicked off the jobs
+      // and heard back that they have started
+      handleNext();
+    });
   };
 
   const drawerInner = () => {
