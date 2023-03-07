@@ -171,7 +171,7 @@ export default withStyles((theme) => ({
   const mapBoundsLatLng = useRef(null);
   const [outerBounds, setOuterBounds] = useState(null);
 
-  if (mapBoundsLatLng.current === null && mapBounds) {
+  if (mapBoundsLatLng.current === null && mapBounds[0][0] !== undefined) {
     mapBoundsLatLng.current = L.latLngBounds(mapBounds);
   }
 
@@ -299,16 +299,6 @@ export default withStyles((theme) => ({
           <CircularProgress />
         </div>
       )}
-     {/* <List className={classes.subtitleList} disablePadding dense>
-        {drawings.map((drawing, index) => (
-          <ListItem key={`${drawing[0].lat}${drawing[0].lng}`}>
-            <ListItemText>Drawing #{index + 1}</ListItemText>
-            <ListItemIcon>
-              <IconButton color="secondary"><DeleteIcon /></IconButton>
-            </ListItemIcon>
-          </ListItem>
-        ))}
-      </List>*/}
     </div>
   );
 });

@@ -22,26 +22,24 @@ import {
   LinearScale,
   Title,
   Tooltip,
-  BarController,
-  BarElement,
   PointElement,
   TimeScale,
   LineElement,
+  LineController,
 } from 'chart.js';
 import {
   Chart
 } from 'react-chartjs-2';
 
 ChartJS.register(
-  BarElement,
   CategoryScale,
   TimeScale,
-  BarController,
   LinearScale,
   Title,
   Tooltip,
   PointElement,
   LineElement,
+  LineController,
 );
 
 const options = {
