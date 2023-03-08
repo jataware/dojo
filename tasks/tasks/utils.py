@@ -18,7 +18,7 @@ s3 = boto3.client(
 )
 DATASET_STORAGE_BASE_URL = os.environ.get("DATASET_STORAGE_BASE_URL")
 
-
+# FILE I/O UTILS
 def get_rawfile(path):
     """Gets a file from a filepath
 
@@ -77,22 +77,6 @@ def list_files(path):
     return final_file_list
 
 
-def job_setup(context, filename):
-    # Setup
-    # If no filename is passed in, default to the converted raw_data file.
-    if filename is None:
-        filename = "raw_data.csv"
-
-    # Always analyze the csv version of the file
-    if not filename.endswith(".csv"):
-        filename = filename.split(".")[0] + ".csv"
-
-    rawfile_path = os.path.join(DATASET_STORAGE_BASE_URL, context["uuid"], filename)
-    file = get_rawfile(rawfile_path)
-
-    return file, filename, rawfile_path
-
-
 def download_rawfile(path, filename):
     """Downloads a file from a filepath
 
@@ -116,3 +100,44 @@ def download_rawfile(path, filename):
         raise FileNotFoundError() from error
 
     return True
+
+
+def persist_untransformed_file(uuid, filename, file):
+    # Check if file has already been persisted
+    file_list = list_files(os.path.join(DATASET_STORAGE_BASE_URL, uuid))
+    for path in file_list:
+        if "_untransformed" in path.split("/")[-1]:
+            return
+
+    # Make a filepath to persist the original file
+    original_file_path = os.path.join(
+        DATASET_STORAGE_BASE_URL,
+        uuid,
+        filename.split(".")[0] + "_untransformed.csv",
+    )
+
+    # Put original file
+    put_rawfile(original_file_path, file)
+
+
+def rewrite_file(origin_file_path, target_file_path):
+    file = get_rawfile(origin_file_path)
+
+    put_rawfile(target_file_path, file)
+
+
+# RQ JOB UTILS
+def job_setup(context, filename):
+    # Setup
+    # If no filename is passed in, default to the converted raw_data file.
+    if filename is None:
+        filename = "raw_data.csv"
+
+    # Always analyze the csv version of the file
+    if not filename.endswith(".csv"):
+        filename = filename.split(".")[0] + ".csv"
+
+    rawfile_path = os.path.join(DATASET_STORAGE_BASE_URL, context["uuid"], filename)
+    file = get_rawfile(rawfile_path)
+
+    return file, filename, rawfile_path

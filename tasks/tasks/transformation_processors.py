@@ -5,7 +5,7 @@ import os
 import pandas as pd
 import numpy as np
 
-from utils import job_setup, put_rawfile
+from utils import job_setup, put_rawfile, persist_untransformed_file, rewrite_file
 from elwood import elwood
 from settings import settings
 
@@ -27,16 +27,13 @@ def clip_geo(context, filename=None, **kwargs):
             polygons_list=shape_list,
         )
 
+        print(f"CLIPPED GEO: {clipped_df}")
+
         json_dataframe_preview = clipped_df.head(100).to_json(default_handler=str)
         rows_post_clip = len(clipped_df.index)
 
-        # Make a filepath to persist the original file.
-        original_file_path = os.path.join(
-            settings.DATASET_STORAGE_BASE_URL,
-            context["uuid"],
-            filename.split(".")[0] + "_untransformed.csv",
-        )
-        put_rawfile(original_file_path, file)
+        file.seek(0)
+        persist_untransformed_file(context["uuid"], filename, file)
 
         # Put the new clipped file to overwrite the old one.
         file_buffer = io.BytesIO()
@@ -80,13 +77,8 @@ def clip_time(context, filename=None, **kwargs):
         json_dataframe_preview = clipped_df.head(100).to_json(default_handler=str)
         rows_post_clip = len(clipped_df.index)
 
-        # Make a filepath to persist the original file.
-        original_file_path = os.path.join(
-            settings.DATASET_STORAGE_BASE_URL,
-            context["uuid"],
-            filename.split(".")[0] + "_untransformed.csv",
-        )
-        put_rawfile(original_file_path, file)
+        file.seek(0)
+        persist_untransformed_file(context["uuid"], filename, file)
 
         # Put the new clipped file to overwrite the old one.
         file_buffer = io.BytesIO()
@@ -129,15 +121,12 @@ def scale_time(context, filename=None, **kwargs):
             aggregation_function_list=aggregation_list,
         )
 
+        print(f"RESCALED TIME: {clipped_df}")
+
         json_dataframe_preview = clipped_df.head(100).to_json(default_handler=str)
 
-        # Make a filepath to persist the original file.
-        original_file_path = os.path.join(
-            settings.DATASET_STORAGE_BASE_URL,
-            context["uuid"],
-            filename.split(".")[0] + "_untransformed.csv",
-        )
-        put_rawfile(original_file_path, file)
+        file.seek(0)
+        persist_untransformed_file(context["uuid"], filename, file)
 
         # Put the new clipped file to overwrite the old one.
         file_buffer = io.BytesIO()
@@ -180,13 +169,8 @@ def regrid_geo(context, filename=None, **kwargs):
 
         json_dataframe_preview = regridded_df.head(100).to_json(default_handler=str)
 
-        # Make a filepath to persist the original file.
-        original_file_path = os.path.join(
-            settings.DATASET_STORAGE_BASE_URL,
-            context["uuid"],
-            filename.split(".")[0] + "_untransformed.csv",
-        )
-        put_rawfile(original_file_path, file)
+        file.seek(0)
+        persist_untransformed_file(context["uuid"], filename, file)
 
         # Put the new clipped file to overwrite the old one.
         file_buffer = io.BytesIO()
@@ -284,3 +268,18 @@ def get_unique_dates(context, filename=None, **kwargs):
         "unique_dates": [],
     }
     return response
+
+
+def restore_raw_file(context, filename=None, **kwargs):
+    if filename is None:
+        filename = "raw_data_untransformed.csv"
+        target_filename = "raw_data.csv"
+
+    rawfile_path = os.path.join(
+        settings.DATASET_STORAGE_BASE_URL, context["uuid"], filename
+    )
+    restore_path = os.path.join(
+        settings.DATASET_STORAGE_BASE_URL, context["uuid"], target_filename
+    )
+
+    rewrite_file(rawfile_path, restore_path)
