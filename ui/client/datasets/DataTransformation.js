@@ -158,7 +158,7 @@ const useElwoodData = ({
       };
 
       if (datasetId) {
-        startElwoodJob(datasetId, requestArgs, jobString).then((jobId) => repeatFetch(jobId));
+        startElwoodJob({ requestArgs }).then((jobId) => repeatFetch(jobId));
       }
     };
 
@@ -171,11 +171,12 @@ const useElwoodData = ({
           setDataError(true);
           setDataLoading(false);
         };
-
-        runElwoodJob({
-          requestArgs: args,
-          onFailure,
-        });
+        if (Object.keys(args).length) {
+          runElwoodJob({
+            requestArgs: args,
+            onFailure,
+          });
+        }
       }
     }
     // The linter is complaining about cleanupRef missing here because it doesn't understand
