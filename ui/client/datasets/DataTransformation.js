@@ -97,6 +97,103 @@ const TransformationButton = withStyles(({ palette }) => ({
   );
 });
 
+// Hook that handles all the data fetching from Elwood
+const useElwoodData = ({
+  datasetId,
+  annotations,
+  onSuccess,
+  generateArgs,
+  jobString,
+  cleanupRef,
+}) => {
+  const [data, setData] = useState(null);
+  const [dataLoading, setDataLoading] = useState(false);
+  const [dataError, setDataError] = useState(false);
+
+  useEffect(() => {
+    const startElwoodJob = async ({ requestArgs }) => {
+      const jobQueueResp = await axios.post(
+        `/api/dojo/job/${datasetId}/${jobString}`, requestArgs
+      );
+
+      if (jobQueueResp.status === 200) {
+        return jobQueueResp.data?.id;
+      }
+    };
+
+    const runElwoodJob = ({ requestArgs, onFailure }) => {
+      console.log('runElwoodJob has been called at the top level');
+      let count = 0;
+
+      const repeatFetch = (jobId) => {
+        setTimeout(() => {
+          axios.post(`/api/dojo/job/fetch/${jobId}`).then((response) => {
+            if (response.status === 200) {
+              // keep track of how long it takes (for dev purposes)
+              count += 1;
+              console.log(`${count}: response from job string: ${jobString}:`, response);
+              if (response.data) {
+                console.log(`success! it took ${count * 500}ms`, response.data);
+                onSuccess(response.data, setData, setDataError, setDataLoading);
+                return;
+              }
+              if (cleanupRef.current) {
+                // if no data and the component is mounted, try the fetch again
+                repeatFetch(jobId);
+              }
+            }
+          }).catch(() => {
+            // we get a 404 immediately - there is some sort of bug, this accounts for that
+            if (count < 2 && cleanupRef.current) {
+              // and the component is mounted
+              console.log('repeating job call');
+              startElwoodJob({ requestArgs }).then((resp) => {
+                repeatFetch(resp);
+              });
+            } else {
+              onFailure();
+            }
+          });
+        }, 500);
+      };
+
+      if (datasetId) {
+        startElwoodJob(datasetId, requestArgs, jobString).then((jobId) => repeatFetch(jobId));
+      }
+    };
+
+    if (!data && !dataError && !dataLoading) {
+      if (Object.keys(annotations?.annotations).length) {
+        // don't do any of the below until annotations has been populated
+        setDataLoading(true);
+        const args = generateArgs(annotations);
+        const onFailure = () => {
+          setDataError(true);
+          setDataLoading(false);
+        };
+
+        runElwoodJob({
+          requestArgs: args,
+          onFailure,
+        });
+      }
+    }
+    // The linter is complaining about cleanupRef missing here because it doesn't understand
+    // that this is a reference to a ref, which both won't and shouldn't trigger a rerender
+  }, [
+    datasetId,
+    annotations,
+    jobString,
+    data,
+    dataError,
+    dataLoading,
+    generateArgs,
+    onSuccess,
+  ]);
+
+  return { data, error: dataError };
+};
+
 export default withStyles(({ spacing, palette }) => ({
   root: {
     padding: [[spacing(4), spacing(4), spacing(2), spacing(4)]],
@@ -128,9 +225,6 @@ export default withStyles(({ spacing, palette }) => ({
   const [drawerName, setDrawerName] = useState(null);
   const [disableDrawerClose, setDisableDrawerClose] = useState(false);
 
-  const [mapBounds, setMapBounds] = useState(null);
-  const [mapBoundsLoading, setMapBoundsLoading] = useState(false);
-  const [mapBoundsError, setMapBoundsError] = useState(false);
   const [savedDrawings, setSavedDrawings] = useState([]);
 
   const [mapResolution, setMapResolution] = useState(null);
@@ -138,16 +232,10 @@ export default withStyles(({ spacing, palette }) => ({
   const [mapResolutionOptions, setMapResolutionOptions] = useState([]);
   const [savedMapResolution, setSavedMapResolution] = useState(null);
 
-  const [timeResolution, setTimeResolution] = useState(null);
-  const [timeResolutionLoading, setTimeResolutionLoading] = useState(false);
-  const [timeResolutionError, setTimeResolutionError] = useState(false);
   const [timeResolutionOptions, setTimeResolutionOptions] = useState([]);
   const [savedTimeResolution, setSavedTimeResolution] = useState(null);
   const [savedAggregation, setSavedAggregation] = useState(null);
 
-  const [timeBounds, setTimeBounds] = useState([]);
-  const [timeBoundsLoading, setTimeBoundsLoading] = useState(false);
-  const [timeBoundsError, setTimeBoundsError] = useState(false);
   const [savedTimeBounds, setSavedTimeBounds] = useState(null);
   const cleanupRef = useRef(null);
 
@@ -166,51 +254,7 @@ export default withStyles(({ spacing, palette }) => ({
     ]);
   }
 
-// TODO the following are just for speeding up development
-  // if (!mapBounds) {
-  //   setMapBounds([['12', '40'], ['-44', '-15']]);
-  // }
-
-  // if (!timeResolution) {
-  //   setTimeResolution({
-  //     uniformity: 'PERFECT',
-  //     unit: 'month',
-  //     resolution: 1,
-  //     error: 1.7832238693938827
-  //   });
-  // }
-
-  // if (!mapResolutionOptions.length) {
-  //   setMapResolutionOptions([
-  //     222.00000000000028,
-  //     333.00000000000045,
-  //     444.00000000000057,
-  //     555.0000000000007,
-  //     666.0000000000009,
-  //   ]);
-  // }
-  // if (!mapResolution) {
-  //   setMapResolution(111.00000000000014);
-  // }
-
-  // if (!timeBounds.length) {
-  //     setTimeBounds([
-  //       '2020-01-22',
-  //       '2020-03-01',
-  //       '2020-05-02',
-  //       '2020-07-03',
-  //       '2020-12-08',
-  //       '2021-01-12',
-  //       '2021-04-15',
-  //       '2021-06-03',
-  //       '2021-12-08',
-  //       '2022-01-12',
-  //       '2022-07-15',
-  //     ]);
-  // }
-// to here
-
-  const startElwoodJob = useCallback(async (datasetId, requestArgs, jobString) => {
+  const startElwoodJob = async (datasetId, requestArgs, jobString) => {
     const jobQueueResp = await axios.post(
       `/api/dojo/job/${datasetId}/${jobString}`, requestArgs
     );
@@ -218,50 +262,38 @@ export default withStyles(({ spacing, palette }) => ({
     if (jobQueueResp.status === 200) {
       return jobQueueResp.data?.id;
     }
+  };
+
+  const onGeoBoundarySuccess = useCallback((resp, setData, setDataError, setDataLoading) => {
+    if (resp?.boundary_box) {
+      const bObj = resp?.boundary_box;
+      // only do this if we have the lat/lon, otherwise it is returning a failure
+      if (bObj.ymin && bObj.xmin) {
+        const bounds = [[bObj.ymin, bObj.xmin], [bObj.ymax, bObj.xmax]];
+        setData(bounds);
+      }
+      if (Object.keys(resp.boundary_box).length === 0) {
+        setDataError(true);
+      }
+      setDataLoading(false);
+    }
   }, []);
 
-  const runElwoodJob = useCallback((datasetId, requestArgs, jobString, onSuccess, onFailure) => {
-    console.log('runElwoodJob has been called at the top level');
-    let count = 0;
+  const generateGeoBoundaryArgs = useCallback((argsAnnotations) => {
+    const args = { geo_columns: [] };
+    argsAnnotations.annotations.geo.forEach((geo) => args.geo_columns.push(geo.name));
+    return args;
+  }, []);
 
-    const repeatFetch = (jobId) => {
-      setTimeout(() => {
-        axios.post(`/api/dojo/job/fetch/${jobId}`).then((response) => {
-          if (response.status === 200) {
-            // keep track of how long it takes (for dev purposes)
-            count += 1;
-            console.log(`${count}: response from job string: ${jobString}:`, response);
-            if (response.data) {
-              console.log(`success! it took ${count * 500}ms`, response.data);
-              onSuccess(response.data);
-              return;
-            }
-            if (cleanupRef.current) {
-              // if no data and the component is mounted, try the fetch again
-              repeatFetch(jobId);
-            }
-          }
-        }).catch(() => {
-          // we get a 404 immediately - there is some sort of bug, this accounts for that
-          if (count < 2 && cleanupRef.current) {
-            // and the component is mounted
-            console.log('repeating job call');
-            startElwoodJob(datasetId, requestArgs, jobString).then((resp) => {
-              repeatFetch(resp);
-            });
-          } else {
-            if (onFailure) {
-              onFailure();
-            }
-          }
-        });
-      }, 500);
-    };
-
-    if (datasetId) {
-      startElwoodJob(datasetId, requestArgs, jobString).then((jobId) => repeatFetch(jobId));
-    }
-  }, [startElwoodJob]);
+  // fetch boundary for ClipMap component
+  const { data: mapBounds, error: mapBoundsError } = useElwoodData({
+    datasetId: datasetInfo.id,
+    annotations,
+    jobString: 'transformation_processors.get_boundary_box',
+    generateArgs: generateGeoBoundaryArgs,
+    cleanupRef,
+    onSuccess: onGeoBoundarySuccess,
+  });
 
   // TODO: Disabled until the transformation_processors.regrid_geo job is working properly
   // // fetch resolution for AdjustGeoResolution component
@@ -297,126 +329,49 @@ export default withStyles(({ spacing, palette }) => ({
   //   }
   // }, [datasetInfo.id, annotations, mapResolution, mapResolutionLoading, runElwoodJob]);
 
-  // fetch boundary for ClipMap component
-  useEffect(() => {
-    if (!mapBounds && !mapBoundsError && !mapBoundsLoading) {
-      if (annotations?.annotations?.geo) {
-        setMapBoundsLoading(true);
-        const args = { geo_columns: [] };
-        annotations.annotations.geo.forEach((geo) => args.geo_columns.push(geo.name));
+  const generateTemporalArgs = useCallback((argsAnnotations) => ({
+    datetime_column: argsAnnotations.annotations.date[0].name,
+    time_format: argsAnnotations.annotations.date[0].time_format,
+  }), []);
 
-        const geoBoundaryString = 'transformation_processors.get_boundary_box';
-        const onGeoBoundarySuccess = (data) => {
-          if (data?.boundary_box) {
-            const bObj = data?.boundary_box;
-            // only do this if we have the lat/lon, otherwise it is returning a failure
-            if (bObj.ymin && bObj.xmin) {
-              const bounds = [[bObj.ymin, bObj.xmin], [bObj.ymax, bObj.xmax]];
-              setMapBounds(bounds);
-            }
-            if (Object.keys(data.boundary_box).length === 0) {
-              setMapBoundsError(true);
-            }
-            setMapBoundsLoading(false);
-          }
-        };
-
-        const onGeoBoundaryFailure = () => {
-          setMapBoundsError(true);
-          setMapBoundsLoading(false);
-        };
-
-        runElwoodJob(
-          datasetInfo.id,
-          args,
-          geoBoundaryString,
-          onGeoBoundarySuccess,
-          onGeoBoundaryFailure
-        );
-      }
+  const onTemporalResSuccess = useCallback((resp, setData, setDataError, setDataLoading) => {
+    if (resp.resolution_result?.uniformity !== 'PERFECT') {
+      setDataError(true);
+    } else {
+      setData(resp.resolution_result);
     }
-  }, [datasetInfo.id, annotations, mapBounds, mapBoundsLoading, runElwoodJob, mapBoundsError]);
+    setDataLoading(false);
+  }, []);
 
   // fetch resolution for AdjustTemporalResolution component
-  useEffect(() => {
-    if (!timeResolution && !timeResolutionLoading && !timeResolutionError) {
-      if (annotations?.annotations?.date) {
-        setTimeResolutionLoading(true);
-        const args = {
-          datetime_column: annotations.annotations.date[0].name,
-          time_format: annotations.annotations.date[0].time_format,
-        };
-
-        const temporalResolutionString = 'resolution_processors.calculate_temporal_resolution';
-        const onTemporalResolutionSuccess = (data) => {
-          if (data.resolution_result?.uniformity !== 'PERFECT') {
-            setTimeResolutionError(true);
-          } else {
-            setTimeResolution(data.resolution_result);
-          }
-          setTimeResolutionLoading(false);
-        };
-
-        const onTemporalResolutionFailure = () => {
-          setTimeResolutionError(true);
-          setTimeResolutionLoading(false);
-        };
-
-        runElwoodJob(
-          datasetInfo.id,
-          args,
-          temporalResolutionString,
-          onTemporalResolutionSuccess,
-          onTemporalResolutionFailure,
-        );
-      }
-    }
-  }, [
-    datasetInfo.id,
+  const { data: timeResolution, error: timeResolutionError } = useElwoodData({
+    datasetId: datasetInfo.id,
     annotations,
-    timeResolution,
-    timeResolutionLoading,
-    runElwoodJob,
-    timeResolutionError
-  ]);
+    jobString: 'resolution_processors.calculate_temporal_resolution',
+    generateArgs: generateTemporalArgs,
+    cleanupRef,
+    onSuccess: onTemporalResSuccess,
+  });
+
+  const onGetDatesSuccess = useCallback((resp, setData, setDataError, setDataLoading) => {
+    if (resp.unique_dates.length) {
+      setData(resp.unique_dates);
+    } else {
+    // TODO: also handle single length arrays as an error/un-transformable?
+      setDataError(true);
+    }
+    setDataLoading(false);
+  }, []);
 
   // fetch time bounds for ClipTime component
-  useEffect(() => {
-    if (!timeBounds.length && !timeBoundsLoading && !timeBoundsError) {
-      if (annotations?.annotations?.date) {
-        setTimeBoundsLoading(true);
-        const args = {
-          datetime_column: annotations.annotations.date[0].name,
-          time_format: annotations.annotations.date[0].time_format,
-        };
-
-        const getDatesString = 'transformation_processors.get_unique_dates';
-        const onGetDatesSuccess = (data) => {
-          if (data.unique_dates.length) {
-            setTimeBounds(data.unique_dates);
-          } else {
-          // TODO: also handle single length arrays as an error/un-transformable?
-            setTimeBoundsError(true);
-          }
-          setTimeBoundsLoading(false);
-        };
-
-        const onGetDatesFailure = () => {
-          setTimeBoundsError(true);
-          setTimeBoundsLoading(false);
-        };
-
-        runElwoodJob(datasetInfo.id, args, getDatesString, onGetDatesSuccess, onGetDatesFailure);
-      }
-    }
-  }, [
-    datasetInfo.id,
+  const { data: timeBounds, error: timeBoundsError } = useElwoodData({
+    datasetId: datasetInfo.id,
     annotations,
-    timeBounds,
-    timeBoundsLoading,
-    runElwoodJob,
-    timeBoundsError
-  ]);
+    jobString: 'transformation_processors.get_unique_dates',
+    generateArgs: generateTemporalArgs,
+    cleanupRef,
+    onSuccess: onGetDatesSuccess,
+  });
 
   const handleDrawerClose = (bool, event) => {
     // prevent clicking outside the drawer to close
@@ -607,7 +562,7 @@ export default withStyles(({ spacing, palette }) => ({
           Icon={MapIcon}
           title="Select Geospatial Coverage"
           onClick={() => handleDrawerOpen('clipMap')}
-          loading={mapBoundsLoading}
+          loading={!mapBounds && !mapBoundsError}
           failed={mapBoundsError}
         />
 
@@ -616,7 +571,7 @@ export default withStyles(({ spacing, palette }) => ({
           Icon={AspectRatioIcon}
           title="Adjust Temporal Resolution"
           onClick={() => handleDrawerOpen('scaleTime')}
-          loading={timeResolutionLoading}
+          loading={!timeResolution && !timeResolutionError}
           failed={timeResolutionError}
         />
 
@@ -625,7 +580,7 @@ export default withStyles(({ spacing, palette }) => ({
           Icon={TodayIcon}
           title="Select Temporal Coverage"
           onClick={() => handleDrawerOpen('clipTime')}
-          loading={timeBoundsLoading}
+          loading={!timeBounds && !timeBoundsError}
           failed={timeBoundsError}
         />
       </List>
