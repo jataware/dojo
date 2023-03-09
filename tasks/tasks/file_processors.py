@@ -91,7 +91,7 @@ class GeotiffLoadProcessor(BaseProcessor):
             else:
                 date_value = context.get("geotiff_value", "01/01/2001")
 
-            df = file_processor.raster2df(
+            df = file_processor.raster2df_processor(
                 fp,
                 feature_name=context.get("geotiff_value", "feature"),
                 band_name=context.get("geotiff_value", "feature"),
