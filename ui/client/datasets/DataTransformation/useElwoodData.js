@@ -70,9 +70,9 @@ const useElwoodData = ({
       }
     };
 
-    if (!data && !dataError && !dataLoading) {
+    if (!data && !dataError && !dataLoading && annotations?.annotations !== null) {
+      // annotations.annotations is populated with empty objects before it is fully populated
       if (Object.keys(annotations?.annotations).length) {
-        // don't do any of the below until annotations has been populated
         setDataLoading(true);
         const args = generateArgs(annotations);
         const onFailure = () => {
