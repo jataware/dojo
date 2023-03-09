@@ -11,7 +11,6 @@ import MapIcon from '@material-ui/icons/Map';
 
 import Container from '@material-ui/core/Container';
 import List from '@material-ui/core/List';
-import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 
