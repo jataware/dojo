@@ -11,6 +11,7 @@ const useElwoodData = ({
   cleanupRef,
 }) => {
   const [data, setData] = useState(null);
+  const [options, setOptions] = useState(null);
   const [dataLoading, setDataLoading] = useState(false);
   const [dataError, setDataError] = useState(false);
 
@@ -40,7 +41,8 @@ const useElwoodData = ({
               console.log(`${count}: response from job string: ${jobString}:`, response);
               if (response.data) {
                 console.log(`success! it took ${count * 500}ms`, response.data);
-                onSuccess(response.data, setData, setDataError, setDataLoading);
+                // setOptions currently just used for onGeoResSuccess
+                onSuccess(response.data, setData, setDataError, setDataLoading, setOptions);
                 return;
               }
               if (cleanupRef.current) {
@@ -98,7 +100,7 @@ const useElwoodData = ({
     onSuccess,
   ]);
 
-  return { data, error: dataError };
+  return { data, options, error: dataError };
 };
 
 export default useElwoodData;

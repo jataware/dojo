@@ -57,12 +57,6 @@ export default withStyles(({ spacing, palette }) => ({
 
   const [savedDrawings, setSavedDrawings] = useState([]);
 
-// TODO: leaving this in so we don't get an error with missing state until the hook is enabled
-  const [mapResolution, setMapResolution] = useState(null);
-  // TODO: update useElwoodData to optionally save and return another state (options)
-  // once we get this & timeResOpts back from the elwood jobs
-  const [mapResolutionOptions, setMapResolutionOptions] = useState([]);
-
   const [savedMapResolution, setSavedMapResolution] = useState(null);
 
   const [timeResolutionOptions, setTimeResolutionOptions] = useState([]);
@@ -97,17 +91,19 @@ export default withStyles(({ spacing, palette }) => ({
     }
   };
 
-  const onGeoResSuccess = useCallback((resp, setData, setDataError, setDataLoading) => {
+  const onGeoResSuccess = useCallback((
+    resp, setData, setDataError, setDataLoading, setOptions
+  ) => {
     if (resp.resolution_result?.uniformity === 'PERFECT') {
       setData(resp.scale_km);
     } else {
       // TODO: handle error case in geo res component & data transformation
       setDataError(true);
     }
-    // TODO: handle options in useElwoodData
-    // if (data.multiplier_samples) {
-    //   setMapResolutionOptions(resp.multiplier_samples);
-    // }
+
+    if (resp.multiplier_samples) {
+      setOptions(resp.multiplier_samples);
+    }
     setDataLoading(false);
   }, []);
 
@@ -123,15 +119,18 @@ export default withStyles(({ spacing, palette }) => ({
     return args;
   }, []);
 
-  // TODO: enable once this job is working on the backend
-  // const { data: setMapResolution, error: setMapResolutionError } = useElwoodData({
-  //   datasetId: datasetInfo.id,
-  //   annotations,
-  //   jobString: 'resolution_processors.calculate_geographical_resolution',
-  //   generateArgs: generateGeoResArgs,
-  //   cleanupRef,
-  //   onSuccess: onGeoResSuccess,
-  // });
+  const {
+    data: mapResolution,
+    options: mapResolutionOptions,
+    error: mapResolutionError
+  } = useElwoodData({
+    datasetId: datasetInfo.id,
+    annotations,
+    jobString: 'resolution_processors.calculate_geographical_resolution',
+    generateArgs: generateGeoResArgs,
+    cleanupRef,
+    onSuccess: onGeoResSuccess,
+  });
 
   const onGeoBoundarySuccess = useCallback((resp, setData, setDataError, setDataLoading) => {
     if (resp?.boundary_box) {
@@ -275,11 +274,11 @@ export default withStyles(({ spacing, palette }) => ({
   };
 
   const handleNextStep = () => {
-    // const adjustGeo = processAdjustGeo();
+    const adjustGeo = processAdjustGeo();
     const clipMap = processMapClippings();
     const adjustTime = processAdjustTime();
     const clipTime = processClipTime();
-    Promise.all([clipMap, adjustTime, clipTime]).then(() => {
+    Promise.all([adjustGeo, clipMap, adjustTime, clipTime]).then(() => {
       // only do the next step after we've kicked off the jobs
       // and heard back that they have started
       handleNext();
@@ -357,22 +356,14 @@ export default withStyles(({ spacing, palette }) => ({
       </Typography>
 
       <List>
-        <Tooltip
-          title="This feature is a work in progress and is not yet available"
-          arrow
-          placement="top"
-        >
-          <span>
-            <TransformationButton
-              isComplete={false}// !!savedMapResolution}
-              Icon={GridOnIcon}
-              title="Adjust Geospatial Resolution"
-              onClick={() => handleDrawerOpen('regridMap')}
-              // loading={!mapResolution && !mapResolutionError}
-              failed // ={mapResolutionError}
-            />
-          </span>
-        </Tooltip>
+        <TransformationButton
+          isComplete={!!savedMapResolution}
+          Icon={GridOnIcon}
+          title="Adjust Geospatial Resolution"
+          onClick={() => handleDrawerOpen('regridMap')}
+          loading={!mapResolution && !mapResolutionError}
+          failed={mapResolutionError}
+        />
 
         <TransformationButton
           isComplete={!!savedDrawings.length}
