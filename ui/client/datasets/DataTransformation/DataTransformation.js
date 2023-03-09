@@ -1,199 +1,28 @@
 import React, {
-  useCallback, useEffect, useRef, useState
+  useCallback, useRef, useState
 } from 'react';
 
 import axios from 'axios';
 
 import AspectRatioIcon from '@material-ui/icons/AspectRatio';
-import InfoIcon from '@material-ui/icons/Info';
 import TodayIcon from '@material-ui/icons/Today';
-import CheckIcon from '@material-ui/icons/Check';
 import GridOnIcon from '@material-ui/icons/GridOn';
 import MapIcon from '@material-ui/icons/Map';
 
-import CircularProgress from '@material-ui/core/CircularProgress';
 import Container from '@material-ui/core/Container';
 import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemIcon from '@material-ui/core/ListItemIcon';
-import ListItemText from '@material-ui/core/ListItemText';
 import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 
 import ClipMap from './ClipMap';
 import ClipTime from './ClipTime';
-import Drawer from '../components/Drawer';
-import { Navigation } from '.';
+import Drawer from '../../components/Drawer';
+import { Navigation } from '..';
 import AdjustTemporalResolution from './AdjustTemporalResolution';
 import AdjustGeoResolution from './AdjustGeoResolution';
-
-const TransformationButton = withStyles(({ palette }) => ({
-  complete: {
-    color: palette.grey[500],
-  },
-  incomplete: {
-    color: palette.text.primary,
-  },
-  check: {
-    color: palette.success.light,
-  },
-  close: {
-    color: palette.info.light,
-  },
-  disabled: {
-    color: palette.text.disabled,
-  },
-  listItemIcon: {
-    display: 'flex',
-    justifyContent: 'center',
-  },
-}))(({
-  classes,
-  isComplete,
-  Icon,
-  title,
-  onClick,
-  loading,
-  failed,
-}) => {
-  const displayIcon = () => {
-    if (isComplete) {
-      return <CheckIcon className={classes.check} fontSize="large" />;
-    }
-
-    if (loading) {
-      return <CircularProgress thickness={4.5} size={25} />;
-    }
-
-    // TODO: change name from failed to something else?
-    if (failed) {
-      return <InfoIcon className={classes.close} fontSize="large" />;
-    }
-  };
-
-  return (
-    <div style={{ position: 'relative' }}>
-      <ListItem button disabled={loading || failed}>
-        <ListItemIcon>
-          <Icon
-            fontSize="large"
-            className={isComplete ? classes.complete : classes.incomplete}
-          />
-        </ListItemIcon>
-        <ListItemText
-          primaryTypographyProps={{ variant: 'h6' }}
-          onClick={onClick}
-          className={isComplete ? classes.complete : classes.incomplete}
-        >
-          {title}
-        </ListItemText>
-        <ListItemIcon className={classes.listItemIcon}>
-          {displayIcon()}
-        </ListItemIcon>
-      </ListItem>
-
-    </div>
-  );
-});
-
-// Hook that handles all the data fetching from Elwood
-const useElwoodData = ({
-  datasetId,
-  annotations,
-  onSuccess,
-  generateArgs,
-  jobString,
-  cleanupRef,
-}) => {
-  const [data, setData] = useState(null);
-  const [dataLoading, setDataLoading] = useState(false);
-  const [dataError, setDataError] = useState(false);
-
-  useEffect(() => {
-    const startElwoodJob = async ({ requestArgs }) => {
-      const jobQueueResp = await axios.post(
-        `/api/dojo/job/${datasetId}/${jobString}`, requestArgs
-      );
-
-      if (jobQueueResp.status === 200) {
-        return jobQueueResp.data?.id;
-      }
-    };
-
-    const runElwoodJob = ({ requestArgs, onFailure }) => {
-      console.log('runElwoodJob has been called at the top level');
-      let count = 0;
-
-      const repeatFetch = (jobId) => {
-        setTimeout(() => {
-          axios.post(`/api/dojo/job/fetch/${jobId}`).then((response) => {
-            if (response.status === 200) {
-              // keep track of how long it takes (for dev purposes)
-              count += 1;
-              console.log(`${count}: response from job string: ${jobString}:`, response);
-              if (response.data) {
-                console.log(`success! it took ${count * 500}ms`, response.data);
-                onSuccess(response.data, setData, setDataError, setDataLoading);
-                return;
-              }
-              if (cleanupRef.current) {
-                // if no data and the component is mounted, try the fetch again
-                repeatFetch(jobId);
-              }
-            }
-          }).catch(() => {
-            // we get a 404 immediately - there is some sort of bug, this accounts for that
-            if (count < 2 && cleanupRef.current) {
-              // and the component is mounted
-              console.log('repeating job call');
-              startElwoodJob({ requestArgs }).then((resp) => {
-                repeatFetch(resp);
-              });
-            } else {
-              onFailure();
-            }
-          });
-        }, 500);
-      };
-
-      if (datasetId) {
-        startElwoodJob({ requestArgs }).then((jobId) => repeatFetch(jobId));
-      }
-    };
-
-    if (!data && !dataError && !dataLoading) {
-      if (Object.keys(annotations?.annotations).length) {
-        // don't do any of the below until annotations has been populated
-        setDataLoading(true);
-        const args = generateArgs(annotations);
-        const onFailure = () => {
-          setDataError(true);
-          setDataLoading(false);
-        };
-        if (Object.keys(args).length) {
-          runElwoodJob({
-            requestArgs: args,
-            onFailure,
-          });
-        }
-      }
-    }
-    // The linter is complaining about cleanupRef missing here because it doesn't understand
-    // that this is a reference to a ref, which both won't and shouldn't trigger a rerender
-  }, [
-    datasetId,
-    annotations,
-    jobString,
-    data,
-    dataError,
-    dataLoading,
-    generateArgs,
-    onSuccess,
-  ]);
-
-  return { data, error: dataError };
-};
+import TransformationButton from './TransformationButton';
+import useElwoodData from './useElwoodData';
 
 export default withStyles(({ spacing, palette }) => ({
   root: {
@@ -228,9 +57,12 @@ export default withStyles(({ spacing, palette }) => ({
 
   const [savedDrawings, setSavedDrawings] = useState([]);
 
+// TODO: leaving this in so we don't get an error with missing state until the hook is enabled
   const [mapResolution, setMapResolution] = useState(null);
-  const [mapResolutionLoading, setMapResolutionLoading] = useState(false);
+  // TODO: update useElwoodData to optionally save and return another state (options)
+  // once we get this & timeResOpts back from the elwood jobs
   const [mapResolutionOptions, setMapResolutionOptions] = useState([]);
+
   const [savedMapResolution, setSavedMapResolution] = useState(null);
 
   const [timeResolutionOptions, setTimeResolutionOptions] = useState([]);
@@ -265,6 +97,42 @@ export default withStyles(({ spacing, palette }) => ({
     }
   };
 
+  const onGeoResSuccess = useCallback((resp, setData, setDataError, setDataLoading) => {
+    if (resp.resolution_result?.uniformity === 'PERFECT') {
+      setData(resp.scale_km);
+    } else {
+      // TODO: handle error case in geo res component & data transformation
+      setDataError(true);
+    }
+    // TODO: handle options in useElwoodData
+    // if (data.multiplier_samples) {
+    //   setMapResolutionOptions(resp.multiplier_samples);
+    // }
+    setDataLoading(false);
+  }, []);
+
+  const generateGeoResArgs = useCallback((argsAnnotations) => {
+    const args = {};
+    argsAnnotations.annotations.geo.forEach((geo) => {
+      if (geo.geo_type === 'latitude') {
+        args.lat_column = geo.name;
+      } else {
+        args.lon_column = geo.name;
+      }
+    });
+    return args;
+  }, []);
+
+  // TODO: enable once this job is working on the backend
+  // const { data: setMapResolution, error: setMapResolutionError } = useElwoodData({
+  //   datasetId: datasetInfo.id,
+  //   annotations,
+  //   jobString: 'resolution_processors.calculate_geographical_resolution',
+  //   generateArgs: generateGeoResArgs,
+  //   cleanupRef,
+  //   onSuccess: onGeoResSuccess,
+  // });
+
   const onGeoBoundarySuccess = useCallback((resp, setData, setDataError, setDataLoading) => {
     if (resp?.boundary_box) {
       const bObj = resp?.boundary_box;
@@ -295,40 +163,6 @@ export default withStyles(({ spacing, palette }) => ({
     cleanupRef,
     onSuccess: onGeoBoundarySuccess,
   });
-
-  // TODO: Disabled until the transformation_processors.regrid_geo job is working properly
-  // // fetch resolution for AdjustGeoResolution component
-  // useEffect(() => {
-  //   if (!mapResolution && !mapResolutionLoading) {
-  //     if (annotations?.annotations?.geo) {
-  //       setMapResolutionLoading(true);
-  //       const args = {};
-  //       annotations.annotations.geo.forEach((geo) => {
-  //         if (geo.geo_type === 'latitude') {
-  //           args.lat_column = geo.name;
-  //         } else {
-  //           args.lon_column = geo.name;
-  //         }
-  //       });
-
-  //       const geoResolutionString = 'resolution_processors.calculate_geographical_resolution';
-  //       const onGeoResolutionSuccess = (data) => {
-  //         console.log('this is the calculate_geographical_resolution response:', data);
-  //         if (data.resolution_result?.uniformity === 'PERFECT') {
-  //           setMapResolution(data.scale_km);
-  //         } else {
-  //           setMapResolution('None');
-  //         }
-  //         if (data.multiplier_samples) {
-  //           setMapResolutionOptions(data.multiplier_samples);
-  //         }
-  //         setMapResolutionLoading(false);
-  //       };
-
-  //       runElwoodJob(datasetInfo.id, args, geoResolutionString, onGeoResolutionSuccess);
-  //     }
-  //   }
-  // }, [datasetInfo.id, annotations, mapResolution, mapResolutionLoading, runElwoodJob]);
 
   const generateTemporalArgs = useCallback((argsAnnotations) => ({
     datetime_column: argsAnnotations.annotations.date[0].name,
@@ -528,34 +362,16 @@ export default withStyles(({ spacing, palette }) => ({
           arrow
           placement="top"
         >
-          {/*<TransformationButton
-            isComplete={!!savedMapResolution}
-            Icon={GridOnIcon}
-            title="Adjust Geospatial Resolution"
-            onClick={() => handleDrawerOpen('regridMap')}
-          />*/}
-          <ListItem button>
-            <ListItemIcon>
-              <GridOnIcon
-                fontSize="large"
-                // className={savedMapResolution ? classes.complete : classes.incomplete}
-                className={classes.disabled}
-              />
-            </ListItemIcon>
-            <ListItemText
-              primaryTypographyProps={{ variant: 'h6' }}
-              // onClick={() => handleDrawerOpen('regridMap')}
-              // className={savedMapResolution ? classes.complete : classes.incomplete}
-              className={classes.disabled}
-            >
-              Adjust Geospatial Resolution
-            </ListItemText>
-            {savedMapResolution && (
-              <ListItemIcon>
-                <CheckIcon className={classes.check} fontSize="large" />
-              </ListItemIcon>
-            )}
-          </ListItem>
+          <span>
+            <TransformationButton
+              isComplete={false}// !!savedMapResolution}
+              Icon={GridOnIcon}
+              title="Adjust Geospatial Resolution"
+              onClick={() => handleDrawerOpen('regridMap')}
+              // loading={!mapResolution && !mapResolutionError}
+              failed // ={mapResolutionError}
+            />
+          </span>
         </Tooltip>
 
         <TransformationButton

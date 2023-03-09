@@ -3,7 +3,7 @@ import Register from './Register';
 import Annotate from './Annotate';
 import AnomalyDetection from './AnomalyDetection';
 import Append from './Append';
-import DataTransformation from './DataTransformation';
+import DataTransformation from './DataTransformation/DataTransformation';
 import UpdateMetadata from './UpdateMetadata';
 import ModelOutput from './ModelOutput';
 import Preview from './Preview';
