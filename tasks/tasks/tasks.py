@@ -12,7 +12,6 @@ from rename import rename as rename_function
 from anomaly_detection import AnomalyDetector, sheet_tensor_to_img
 from utils import get_rawfile, put_rawfile
 import pandas as pd
-import mixmasta as mx
 import rasterio
 import requests
 

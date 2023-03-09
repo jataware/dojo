@@ -21,3 +21,4 @@ sentence-transformers==2.2.2
 transformers==4.24.0
 ocrmypdf==14.0.2
 pypdf==3.3.0
+rasterio==1.2.10
