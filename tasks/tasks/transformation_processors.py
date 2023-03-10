@@ -282,4 +282,8 @@ def restore_raw_file(context, filename=None, **kwargs):
         settings.DATASET_STORAGE_BASE_URL, context["uuid"], target_filename
     )
 
-    rewrite_file(rawfile_path, restore_path)
+    message, transformed_bool = rewrite_file(rawfile_path, restore_path)
+
+    response = {"message": message, "transformed": transformed_bool}
+
+    return response
