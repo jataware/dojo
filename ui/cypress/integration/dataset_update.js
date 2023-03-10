@@ -46,7 +46,7 @@ function mockHttpRequests() {
     url: '/api/dojo/indicators/*/preview/processed*'
   }, {fixture: 'indicators_preview_processed_post.json'});
 
-  // This is done to add mixmasta/jobs results to datasetInfo
+  // This is done to add elwood/jobs results to datasetInfo
   // TODO, should we change to PATCH, to simplify available stepper/flows?
   // PUT will reset some values.
   cy.intercept(

@@ -103,7 +103,7 @@ def available_job_strings():
     # TODO - get this from the rq worker dynamically?
     job_string_dict = {
         "Geotime Classify Job": "geotime_processors.geotime_classify",
-        "Mixmasta Job": "mixmasta_processors.run_mixmasta",
+        "Elwood Job": "elwood_processors.run_elwood",
         "Anomaly Detection": "tasks.anomaly_detection",
     }
     return job_string_dict

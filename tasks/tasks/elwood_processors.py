@@ -17,7 +17,7 @@ from base_annotation import BaseProcessor
 from settings import settings
 
 
-def build_mixmasta_meta_from_context(context, filename=None):
+def build_elwood_meta_from_context(context, filename=None):
     metadata = context["annotations"]["metadata"]
     if "files" in metadata:
         metadata = metadata["files"][filename]
@@ -34,8 +34,8 @@ def build_mixmasta_meta_from_context(context, filename=None):
         # Excel
         "sheet": "excel_sheet",
     }
-    mixmasta_meta = {}
-    mixmasta_meta["ftype"] = ftype
+    elwood_meta = {}
+    elwood_meta["ftype"] = ftype
     if ftype == "geotiff":
         band_type = metadata.get("geotiff_band_type", "category")
         if band_type == "temporal":
@@ -43,28 +43,28 @@ def build_mixmasta_meta_from_context(context, filename=None):
             date_value = None
         else:
             date_value = context.get("geotiff_date_value", "2001-01-01")
-        mixmasta_meta["band_type"] = band_type
-        mixmasta_meta["date"] = date_value
+        elwood_meta["band_type"] = band_type
+        elwood_meta["date"] = date_value
 
     for key, value in mapping.items():
         if value in metadata:
-            mixmasta_meta[key] = metadata[value]
+            elwood_meta[key] = metadata[value]
 
-    if "geotiff_null_value" not in mixmasta_meta:
-        mixmasta_meta["null_val"] = -9999
+    if "geotiff_null_value" not in elwood_meta:
+        elwood_meta["null_val"] = -9999
 
-    return mixmasta_meta
+    return elwood_meta
 
 
-class MixmastaProcessor(BaseProcessor):
+class ElwoodProcessor(BaseProcessor):
     @staticmethod
     def run(context, datapath, filename) -> pd.DataFrame:
-        """final full mixmasta implementation"""
+        """final full elwood implementation"""
         logging.info(
-            f"{context.get('logging_preface', '')} - Running mixmasta processor"
+            f"{context.get('logging_preface', '')} - Running elwood processor"
         )
         output_path = datapath
-        mapper_fp = f"{output_path}/mixmasta_ready_annotations.json"  # Filename for json info, will eventually be in Elasticsearch, needs to be written to disk until mixmasta is updated
+        mapper_fp = f"{output_path}/elwood_ready_annotations.json"  # Filename for json info, will eventually be in Elasticsearch, needs to be written to disk until elwood is updated
         raw_data_fp = f"{output_path}/{filename}"  # Raw data
         # Getting admin level to resolve to from annotations
         admin_level = None  # Default to admin1
@@ -76,18 +76,18 @@ class MixmastaProcessor(BaseProcessor):
         uuid = context["uuid"]
         context["mapper_fp"] = mapper_fp
 
-        # Mixmasta output path (it needs the filename attached to write parquets, and the file name is the uuid)
+        # Elwood output path (it needs the filename attached to write parquets, and the file name is the uuid)
         mix_output_path = f"{output_path}/{uuid}"
-        # Main mixmasta processing call
+        # Main elwood processing call
         ret, rename = mix.process(raw_data_fp, mapper_fp, admin_level, mix_output_path)
 
-        ret.to_csv(f"{output_path}/mixmasta_processed_df.csv", index=False)
+        ret.to_csv(f"{output_path}/elwood_processed_df.csv", index=False)
 
         return ret
 
 
-def run_mixmasta(context, filename=None):
-    processor = MixmastaProcessor()
+def run_elwood(context, filename=None):
+    processor = ElwoodProcessor()
     uuid = context["uuid"]
     # Creating folder for temp file storage on the rq worker since following functions are dependent on file paths
     datapath = f"./{uuid}"
@@ -95,7 +95,7 @@ def run_mixmasta(context, filename=None):
         os.makedirs(datapath)
 
     # Copy raw data file into rq-worker
-    # Could change mixmasta to accept file-like objects as well as filepaths.
+    # Could change elwood to accept file-like objects as well as filepaths.
     # To save processing time, always re-use the converted CSV file
     if filename is None:
         filename = "raw_data.csv"
@@ -114,17 +114,17 @@ def run_mixmasta(context, filename=None):
     with open(f"{datapath}/{filename}", "wb") as f:
         f.write(raw_file_obj.read())
 
-    # Writing out the annotations because mixmasta needs a filepath to this data.
-    # Should probably change mixmasta down the road to accept filepath AND annotations objects.
+    # Writing out the annotations because elwood needs a filepath to this data.
+    # Should probably change elwood down the road to accept filepath AND annotations objects.
     mm_ready_annotations = context["annotations"]["annotations"]
     print(f"ELWOOD ANNOTATIONS: {mm_ready_annotations}")
     mm_ready_annotations["meta"] = {"ftype": "csv"}
-    with open(f"{datapath}/mixmasta_ready_annotations.json", "w") as f:
+    with open(f"{datapath}/elwood_ready_annotations.json", "w") as f:
         f.write(json.dumps(mm_ready_annotations))
     f.close()
 
     # Main Call
-    mixmasta_result_df = processor.run(context, datapath, filename)
+    elwood_result_df = processor.run(context, datapath, filename)
 
     file_suffix_match = re.search(r"raw_data(_\d+)?\.", filename)
     if file_suffix_match:
@@ -161,18 +161,18 @@ def run_mixmasta(context, filename=None):
     if dataset.get("period", None):
         period = {
             "gte": max(
-                int(mixmasta_result_df["timestamp"].max()),
+                int(elwood_result_df["timestamp"].max()),
                 dataset.get("period", {}).get("gte", None),
             ),
             "lte": min(
-                int(mixmasta_result_df["timestamp"].min()),
+                int(elwood_result_df["timestamp"].min()),
                 dataset.get("period", {}).get("lte", None),
             ),
         }
     else:
         period = {
-            "gte": int(mixmasta_result_df["timestamp"].max()),
-            "lte": int(mixmasta_result_df["timestamp"].min()),
+            "gte": int(elwood_result_df["timestamp"].max()),
+            "lte": int(elwood_result_df["timestamp"].min()),
         }
 
     if dataset.get("geography", None):
@@ -182,7 +182,7 @@ def run_mixmasta(context, filename=None):
     for geog_type in ["admin1", "admin2", "admin3", "country"]:
         if geog_type not in geography_dict:
             geography_dict[geog_type] = []
-        for value in mixmasta_result_df[mixmasta_result_df[geog_type].notna()][
+        for value in elwood_result_df[elwood_result_df[geog_type].notna()][
             geog_type
         ].unique():
             if value == "nan" or value in geography_dict[geog_type]:
@@ -277,7 +277,7 @@ def run_mixmasta(context, filename=None):
         qualifier_outputs.append(qualifier_output)
 
     response = {
-        "preview": mixmasta_result_df.head(100).to_json(),
+        "preview": elwood_result_df.head(100).to_json(),
         "data_files": data_files,
         "period": period,
         "geography": geography_dict,
@@ -288,9 +288,9 @@ def run_mixmasta(context, filename=None):
     return response
 
 
-def run_model_mixmasta(context, *args, **kwargs):
+def run_model_elwood(context, *args, **kwargs):
     metadata = context["annotations"]["metadata"]
-    processor = MixmastaProcessor()
+    processor = ElwoodProcessor()
     filename = f"{metadata['file_uuid']}.csv"
     datapath = os.path.join(
         settings.DATASET_STORAGE_BASE_URL, "model-output-samples", context["uuid"]
@@ -302,14 +302,14 @@ def run_model_mixmasta(context, *args, **kwargs):
         os.makedirs(localpath)
 
     # Copy raw data file into rq-worker
-    # Could change mixmasta to accept file-like objects as well as filepaths.
+    # Could change elwood to accept file-like objects as well as filepaths.
     # rawfile_path = os.path.join(settings.DATASET_STORAGE_BASE_URL, filename)
     raw_file_obj = get_rawfile(sample_path)
     with open(f"{localpath}/raw_data.csv", "wb") as f:
         f.write(raw_file_obj.read())
 
-    # Writing out the annotations because mixmasta needs a filepath to this data.
-    # Should probably change mixmasta down the road to accept filepath AND annotations objects.
+    # Writing out the annotations because elwood needs a filepath to this data.
+    # Should probably change elwood down the road to accept filepath AND annotations objects.
     mm_ready_annotations = context["annotations"]["annotations"]
     mm_ready_annotations["meta"] = {"ftype": "csv"}
     import pprint
@@ -317,12 +317,12 @@ def run_model_mixmasta(context, *args, **kwargs):
     logging.warn(pprint.pformat(mm_ready_annotations))
 
     # annotation_file = get_rawfile(os.path.join(datapath), )
-    with open(f"{localpath}/mixmasta_ready_annotations.json", "w") as f:
+    with open(f"{localpath}/elwood_ready_annotations.json", "w") as f:
         f.write(json.dumps(mm_ready_annotations))
     f.close()
 
     # Main Call
-    mixmasta_result_df = processor.run(context, localpath, "raw_data.csv")
+    elwood_result_df = processor.run(context, localpath, "raw_data.csv")
 
     # Takes all parquet files and puts them into the DATASET_STORAGE_BASE_URL which will be S3 in Production
     for file in os.listdir(localpath):

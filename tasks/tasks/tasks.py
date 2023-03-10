@@ -56,13 +56,13 @@ def build_mapper(uuid, annotations):
     Description
     -----------
     Performs two functions:
-    (1) Build and return the mixmasta mapper.json from annotations.json.
+    (1) Build and return the elwood mapper.json from annotations.json.
     (2) Return geo_select if "Geo_Select_Form" is annotated.
 
     Returns
     -------
         ret: dictionary
-            geo, date, and feature keys for mixmasta process.
+            geo, date, and feature keys for elwood process.
         geo_select: string, default None
             admin_level if set during annotation: country, admin1, admin2, admin3
 
@@ -104,7 +104,7 @@ def build_mapper(uuid, annotations):
             # Set geo_select if annotated.
             if str(x).lower() == "geo_select_form":
                 geo_select = sub_ann[x]
-                # Mixmasta expects "admin0" not "country".
+                # Elwood expects "admin0" not "country".
                 if geo_select.lower() == "country":
                     geo_select = "admin0"
 

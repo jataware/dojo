@@ -3,7 +3,7 @@ services:
     environment:
       DOCKER_URL: "docker.dojo-stack:8375"
       DMC_LOCAL_DIR:
-      MIXMASTA_VERSION:
+      ELWOOD_VERSION:
     networks:
       - dojo-stack
     volumes:
@@ -14,21 +14,21 @@ services:
     environment:
       DOCKER_URL: "docker.dojo-stack:8375"
       DMC_LOCAL_DIR:
-      MIXMASTA_VERSION:
+      ELWOOD_VERSION:
     networks:
       - dojo-stack
   airflow-postgres:
     environment:
       DOCKER_URL: "docker.dojo-stack:8375"
       DMC_LOCAL_DIR:
-      MIXMASTA_VERSION:
+      ELWOOD_VERSION:
     networks:
       - dojo-stack
   airflow-scheduler:
     environment:
       DOCKER_URL: "docker.dojo-stack:8375"
       DMC_LOCAL_DIR:
-      MIXMASTA_VERSION:
+      ELWOOD_VERSION:
     networks:
       - dojo-stack
     volumes:
@@ -39,7 +39,7 @@ services:
     environment:
       DOCKER_URL: "docker.dojo-stack:8375"
       DMC_LOCAL_DIR:
-      MIXMASTA_VERSION:
+      ELWOOD_VERSION:
     networks:
       - dojo-stack
     volumes:
@@ -52,7 +52,7 @@ services:
       BUCKET: ${DMC_BUCKET}
       DOCKER_URL: "docker.dojo-stack:8375"
       DMC_LOCAL_DIR:
-      MIXMASTA_VERSION:
+      ELWOOD_VERSION:
     networks:
       - dojo-stack
     volumes:
@@ -63,7 +63,7 @@ services:
     environment:
       DOCKER_URL: "docker.dojo-stack:8375"
       DMC_LOCAL_DIR:
-      MIXMASTA_VERSION:
+      ELWOOD_VERSION:
     networks:
       - dojo-stack
   api:
