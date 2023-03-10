@@ -29,7 +29,6 @@ const useElwoodData = ({
 
     const runElwoodJob = ({ requestArgs, onFailure }) => {
       console.log('runElwoodJob has been called at the top level');
-      console.log('this is requestArgs in ', jobString, requestArgs)
       let count = 0;
 
       const repeatFetch = (jobId) => {

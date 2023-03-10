@@ -118,19 +118,6 @@ export default withStyles(({ spacing, palette }) => ({
     return args;
   }, []);
 
-  const {
-    data: mapResolution,
-    options: mapResolutionOptions,
-    error: mapResolutionError
-  } = useElwoodData({
-    datasetId: datasetInfo.id,
-    annotations,
-    jobString: 'resolution_processors.calculate_geographical_resolution',
-    generateArgs: generateGeoResArgs,
-    cleanupRef,
-    onSuccess: onGeoResSuccess,
-  });
-
   const onGeoBoundarySuccess = useCallback((resp, setData, setDataError, setDataLoading) => {
     if (resp?.boundary_box) {
       const bObj = resp?.boundary_box;
@@ -152,16 +139,6 @@ export default withStyles(({ spacing, palette }) => ({
     return args;
   }, []);
 
-  // fetch boundary for ClipMap component
-  const { data: mapBounds, error: mapBoundsError } = useElwoodData({
-    datasetId: datasetInfo.id,
-    annotations,
-    jobString: 'transformation_processors.get_boundary_box',
-    generateArgs: generateGeoBoundaryArgs,
-    cleanupRef,
-    onSuccess: onGeoBoundarySuccess,
-  });
-
   const generateTemporalArgs = useCallback((argsAnnotations) => ({
     datetime_column: argsAnnotations.annotations.date[0].name,
     time_format: argsAnnotations.annotations.date[0].time_format,
@@ -176,16 +153,6 @@ export default withStyles(({ spacing, palette }) => ({
     setDataLoading(false);
   }, []);
 
-  // fetch resolution for AdjustTemporalResolution component
-  const { data: timeResolution, error: timeResolutionError } = useElwoodData({
-    datasetId: datasetInfo.id,
-    annotations,
-    jobString: 'resolution_processors.calculate_temporal_resolution',
-    generateArgs: generateTemporalArgs,
-    cleanupRef,
-    onSuccess: onTemporalResSuccess,
-  });
-
   const onGetDatesSuccess = useCallback((resp, setData, setDataError, setDataLoading) => {
     if (resp.unique_dates.length) {
       setData(resp.unique_dates);
@@ -195,6 +162,53 @@ export default withStyles(({ spacing, palette }) => ({
     }
     setDataLoading(false);
   }, []);
+
+  // for testing purposes (if disabling loading of all transformations)
+  // const [
+  //   mapResolution,
+  //   mapResolutionError,
+  //   mapResolutionOptions,
+  //   mapBounds,
+  //   mapBoundsError,
+  //   timeResolution,
+  //   timeResolutionError,
+  //   timeBounds,
+  //   timeBoundsError
+  // ] = [false, false, false, false, false, false, false, false, false];
+
+  // fetch resolution for AdjustGeoResolution
+  const {
+    data: mapResolution,
+    options: mapResolutionOptions,
+    error: mapResolutionError
+  } = useElwoodData({
+    datasetId: datasetInfo.id,
+    annotations,
+    jobString: 'resolution_processors.calculate_geographical_resolution',
+    generateArgs: generateGeoResArgs,
+    cleanupRef,
+    onSuccess: onGeoResSuccess,
+  });
+
+  // fetch boundary for ClipMap component
+  const { data: mapBounds, error: mapBoundsError } = useElwoodData({
+    datasetId: datasetInfo.id,
+    annotations,
+    jobString: 'transformation_processors.get_boundary_box',
+    generateArgs: generateGeoBoundaryArgs,
+    cleanupRef,
+    onSuccess: onGeoBoundarySuccess,
+  });
+
+  // fetch resolution for AdjustTemporalResolution component
+  const { data: timeResolution, error: timeResolutionError } = useElwoodData({
+    datasetId: datasetInfo.id,
+    annotations,
+    jobString: 'resolution_processors.calculate_temporal_resolution',
+    generateArgs: generateTemporalArgs,
+    cleanupRef,
+    onSuccess: onTemporalResSuccess,
+  });
 
   // fetch time bounds for ClipTime component
   const { data: timeBounds, error: timeBoundsError } = useElwoodData({
