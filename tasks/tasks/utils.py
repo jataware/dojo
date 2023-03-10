@@ -121,9 +121,13 @@ def persist_untransformed_file(uuid, filename, file):
 
 
 def rewrite_file(origin_file_path, target_file_path):
-    file = get_rawfile(origin_file_path)
+    try:
+        file = get_rawfile(origin_file_path)
 
-    put_rawfile(target_file_path, file)
+        put_rawfile(target_file_path, file)
+        return "File rewritten", True
+    except FileNotFoundError as error:
+        return "File not found, nothing was changed", False
 
 
 # RQ JOB UTILS
