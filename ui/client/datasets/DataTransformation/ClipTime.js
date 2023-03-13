@@ -234,6 +234,9 @@ export default withStyles((theme) => ({
     );
   }
 
+  const minDate = parseISO(timeBounds[0]);
+  const maxDate = parseISO(timeBounds[timeBounds.length - 1]);
+
   return (
     <div>
       {header}
@@ -256,7 +259,8 @@ export default withStyles((theme) => ({
                 KeyboardButtonProps={{
                   'aria-label': 'change date',
                 }}
-                minDate={parseISO(timeBounds[0])}
+                minDate={minDate}
+                maxDate={maxDate}
               />
               <KeyboardDatePicker
                 disableToolbar
@@ -269,7 +273,8 @@ export default withStyles((theme) => ({
                 KeyboardButtonProps={{
                   'aria-label': 'change date',
                 }}
-                maxDate={parseISO(timeBounds[timeBounds.length - 1])}
+                minDate={minDate}
+                maxDate={maxDate}
               />
             </MuiPickersUtilsProvider>
           </div>
