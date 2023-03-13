@@ -78,12 +78,10 @@ const useElwoodData = ({
           setDataError(true);
           setDataLoading(false);
         };
-        if (Object.keys(args).length) {
-          runElwoodJob({
-            requestArgs: args,
-            onFailure,
-          });
-        }
+        runElwoodJob({
+          requestArgs: args,
+          onFailure,
+        });
       }
     }
     // The linter is complaining about cleanupRef missing here because it doesn't understand
