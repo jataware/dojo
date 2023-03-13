@@ -26,7 +26,7 @@ DOJO_HOST=http://api.dojo-stack
 DOJO_URL=http://api.dojo-stack
 ELASTICSEARCH_URL=http://elasticsearch:9200
 ELASTICSEARCH_PORT=9200
-ELWOOD_VERSION=latest
+ELWOOD_VERSION=stable
 REDIS_HOST=redis.dojo-stack
 REDIS_PORT=6379
 # Comment out or remove the STORAGE_HOST setting to use S3
