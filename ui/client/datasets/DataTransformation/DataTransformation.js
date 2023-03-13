@@ -1,5 +1,5 @@
 import React, {
-  useCallback, useRef, useState
+  useCallback, useEffect, useRef, useState
 } from 'react';
 
 import axios from 'axios';
@@ -9,6 +9,7 @@ import TodayIcon from '@material-ui/icons/Today';
 import GridOnIcon from '@material-ui/icons/GridOn';
 import MapIcon from '@material-ui/icons/Map';
 
+import CircularProgress from '@material-ui/core/CircularProgress'
 import Container from '@material-ui/core/Container';
 import List from '@material-ui/core/List';
 import Typography from '@material-ui/core/Typography';
@@ -23,32 +24,17 @@ import AdjustGeoResolution from './AdjustGeoResolution';
 import TransformationButton from './TransformationButton';
 import useElwoodData from './useElwoodData';
 
-export default withStyles(({ spacing, palette }) => ({
+const DataTransformation = withStyles(({ spacing }) => ({
   root: {
     padding: [[spacing(4), spacing(4), spacing(2), spacing(4)]],
-  },
-  header: {
-    marginBottom: spacing(6),
-  },
-  complete: {
-    color: palette.grey[500],
-  },
-  incomplete: {
-    color: palette.text.primary,
-  },
-  check: {
-    color: palette.success.light,
-  },
-  disabled: {
-    color: palette.text.disabled,
   },
 }))(({
   classes,
   datasetInfo,
-  stepTitle,
   handleNext,
   handleBack,
   annotations,
+  cleanupRef,
 }) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerName, setDrawerName] = useState(null);
@@ -63,7 +49,6 @@ export default withStyles(({ spacing, palette }) => ({
   const [savedAggregation, setSavedAggregation] = useState(null);
 
   const [savedTimeBounds, setSavedTimeBounds] = useState(null);
-  const cleanupRef = useRef(null);
 
   // until we get the list of timeresoptions from the backend:
   if (!timeResolutionOptions.length) {
@@ -291,7 +276,15 @@ export default withStyles(({ spacing, palette }) => ({
     const clipMap = processMapClippings();
     const adjustTime = processAdjustTime();
     const clipTime = processClipTime();
-    Promise.all([adjustGeo, clipMap, adjustTime, clipTime]).then(() => {
+    Promise.all([adjustGeo, clipMap, adjustTime, clipTime]).then((responses) => {
+      let modified;
+      responses.forEach((resp) => {
+        // if any are truthy (an untouched transformation will be undefined)
+        if (resp) modified = true;
+      });
+      if (modified) {
+        localStorage.setItem(`dataTransformation-${datasetInfo.id}`, true);
+      }
       // only do the next step after we've kicked off the jobs
       // and heard back that they have started
       handleNext();
@@ -360,14 +353,6 @@ export default withStyles(({ spacing, palette }) => ({
       maxWidth="sm"
       ref={cleanupRef}
     >
-      <Typography
-        className={classes.header}
-        variant="h4"
-        align="center"
-      >
-        {stepTitle}
-      </Typography>
-
       <List>
         <TransformationButton
           isComplete={!!savedMapResolution}
@@ -422,6 +407,88 @@ export default withStyles(({ spacing, palette }) => ({
       >
         {drawerInner()}
       </Drawer>
+    </Container>
+  );
+});
+
+export default withStyles(({ spacing }) => ({
+  root: {
+    padding: [[spacing(4), spacing(4), spacing(2), spacing(4)]],
+  },
+  header: {
+    marginBottom: spacing(6),
+  },
+  restoreFileWrapper: {
+    margin: spacing(8),
+  },
+  restoreFileSpinner: {
+    margin: [[0, 'auto', spacing(3)]],
+    display: 'block',
+  },
+}))(({
+  classes,
+  datasetInfo,
+  stepTitle,
+  handleNext,
+  handleBack,
+  annotations,
+}) => {
+  const cleanupRef = useRef(null);
+  const [showSpinner, setShowSpinner] = useState(true);
+
+  const onSuccess = useCallback(() => {
+    // once we confirm that we've restored the file, clear the localstorage and hide the spinner
+    localStorage.removeItem(`dataTransformation-${datasetInfo.id}`);
+    setShowSpinner(false);
+  }, [datasetInfo.id]);
+
+  const { data: fileRestored, error: fileRestoredError } = useElwoodData({
+    datasetId: datasetInfo.id,
+    annotations,
+    jobString: 'transformation_processors.restore_raw_file',
+    generateArgs: () => ({}),
+    cleanupRef,
+    onSuccess,
+  });
+
+  useEffect(() => {
+    const modified = localStorage.getItem(`dataTransformation-${datasetInfo.id}`);
+    if (!modified) {
+      // if we haven't previously modified any of the data transformations, don't wait here
+      setShowSpinner(false);
+    }
+  }, [datasetInfo.id]);
+
+  return (
+    <Container
+      className={classes.root}
+      component="main"
+      maxWidth="sm"
+      ref={cleanupRef}
+    >
+      <Typography
+        className={classes.header}
+        variant="h4"
+        align="center"
+      >
+        {stepTitle}
+      </Typography>
+      {showSpinner ? (
+        <div className={classes.restoreFileWrapper}>
+          <CircularProgress className={classes.restoreFileSpinner} />
+          <Typography variant="h6" align="center">
+            Restoring data...
+          </Typography>
+        </div>
+      ) : (
+        <DataTransformation
+          datasetInfo={datasetInfo}
+          handleNext={handleNext}
+          handleBack={handleBack}
+          annotations={annotations}
+          cleanupRef={cleanupRef}
+        />
+      )}
     </Container>
   );
 });
