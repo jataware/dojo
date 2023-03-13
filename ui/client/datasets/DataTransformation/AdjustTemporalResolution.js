@@ -74,6 +74,15 @@ export default withStyles((theme) => ({
   const [selectedResolution, setSelectedResolution] = useState(savedResolution || '');
   const [selectedAggregation, setSelectedAggregation] = useState(savedAggregation || '');
 
+  // TODO: remove this once we get a list from the backend
+  // this is to remove all options below the current time bucket
+  let firstOption;
+  if (resolutionOptions && oldResolution?.unit) {
+    firstOption = resolutionOptions.findIndex((opt) => (
+      opt.description.includes(oldResolution.unit)
+    ));
+  }
+
   const handleSaveClick = () => {
     if (selectedResolution !== '' && selectedAggregation !== '') {
       setSavedResolution(selectedResolution);
@@ -148,7 +157,7 @@ export default withStyles((theme) => ({
               onChange={handleChangeResolution}
               label="Resolution"
             >
-              {resolutionOptions.map((option) => (
+              {resolutionOptions.slice(firstOption).map((option) => (
                 <MenuItem key={option.description} value={option}>
                   {option.description}
                 </MenuItem>
