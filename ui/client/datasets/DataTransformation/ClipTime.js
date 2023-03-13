@@ -47,7 +47,22 @@ const options = {
     legend: {
       display: false
     },
-
+    tooltip: {
+      callbacks: {
+        title: (context) => {
+          //  chartjs will use its default if nothing is returned
+          if (context[0].raw) {
+            let title = '';
+            const date = parseISO(context[0].raw.x);
+            if (isValid(date)) {
+              title = format(date, 'MM/dd/yyyy');
+            }
+            return title;
+          }
+        },
+        label: () => '',
+      }
+    },
   },
   responsive: true,
   maintainAspectRatio: false,
