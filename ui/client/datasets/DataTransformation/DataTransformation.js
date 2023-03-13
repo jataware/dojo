@@ -24,9 +24,12 @@ import AdjustGeoResolution from './AdjustGeoResolution';
 import TransformationButton from './TransformationButton';
 import useElwoodData from './useElwoodData';
 
-const DataTransformation = withStyles(({ spacing }) => ({
-  root: {
-    padding: [[spacing(4), spacing(4), spacing(2), spacing(4)]],
+const DataTransformation = withStyles(() => ({
+  transformationRoot: {
+    display: 'flex',
+    flexDirection: 'column',
+    justifyContent: 'space-between',
+    height: 'calc(100% - 128px)',
   },
 }))(({
   classes,
@@ -347,12 +350,7 @@ const DataTransformation = withStyles(({ spacing }) => ({
   };
 
   return (
-    <Container
-      className={classes.root}
-      component="main"
-      maxWidth="sm"
-      ref={cleanupRef}
-    >
+    <div className={classes.transformationRoot}>
       <List>
         <TransformationButton
           isComplete={!!savedMapResolution}
@@ -407,13 +405,16 @@ const DataTransformation = withStyles(({ spacing }) => ({
       >
         {drawerInner()}
       </Drawer>
-    </Container>
+    </div>
   );
 });
 
 export default withStyles(({ spacing }) => ({
   root: {
     padding: [[spacing(4), spacing(4), spacing(2), spacing(4)]],
+
+    height: '100%',
+
   },
   header: {
     marginBottom: spacing(6),
@@ -466,18 +467,27 @@ export default withStyles(({ spacing }) => ({
       maxWidth="sm"
       ref={cleanupRef}
     >
-      <Typography
-        className={classes.header}
-        variant="h4"
-        align="center"
-      >
-        {stepTitle}
-      </Typography>
+      <div className={classes.header}>
+        <Typography
+          variant="h4"
+          align="center"
+          gutterBottom
+        >
+          {stepTitle}
+        </Typography>
+        <Typography
+          variant="subtitle2"
+          align="center"
+          color="textSecondary"
+        >
+          Note: large datasets may take a long time to load
+        </Typography>
+      </div>
       {showSpinner ? (
         <div className={classes.restoreFileWrapper}>
           <CircularProgress className={classes.restoreFileSpinner} />
           <Typography variant="h6" align="center">
-            Restoring data...
+            Undoing data transformations...
           </Typography>
         </div>
       ) : (
