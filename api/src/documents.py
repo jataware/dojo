@@ -107,17 +107,14 @@ class HighlightData(BaseModel):
     query: str
     matches: list[str]
 
-
 class HighlightResponseModel(BaseModel):
     highlights: List[List[Dict[str,Any]]]
-
 
 @router.post(
     "/paragraphs/highlight", response_model=HighlightResponseModel
 )
 def semantic_highlight_paragraphs(payload: HighlightData):
 
-    logger.info("\n\n >>>>>>> semantic search highlight P start!")
     data = payload.dict()
 
     highlights = highlighter.highlight_multiple(data["query"], data["matches"])
@@ -208,100 +205,6 @@ def semantic_search_paragraphs(query: str,
         "max_score": max_score,
         "results": [formatOneResult(i) for i in results["hits"]["hits"]],
         "scroll_id": scroll_id
-    }
-
-
-@router.get(
-    "/paragraphs/search-and-highlight", response_model=DocumentSchema.ParagraphSearchResponse
-)
-def semantic_search_highlight_paragraphs(query: str,
-                               scroll_id: Optional[str]=None,
-                               size: int = 10):
-    """
-    Uses query to perform a Semantic Search on paragraphs; where LLM embeddings
-    are used to compare a text query to items stored.
-    """
-    if scroll_id:
-        results = es.scroll(scroll_id=scroll_id, scroll="2m")
-    else:
-        # Retrieve first item in output, since it accepts an array and returns
-        # an array, and we provided only one item (query)
-        query_embedding = embedder.embed([query])[0]
-
-        MIN_TEXT_LENGTH_THRESHOLD = 100
-
-        p_query = {
-            "query": {
-                "bool": {
-                    "must": [
-                        {
-                            "script_score": {
-                                "query": {"match_all": {}},
-                                "script": {
-                                    # ES doesnt allow negative numbers. We can either:
-                                    # - a) clamp at 0, and not allow negatives, or
-                                    # - b) Add 1 to the result to compare score
-                                    # We use option (a): it has better score % for top results
-                                    "source": "Math.max(cosineSimilarity(params.query_vector, 'embeddings'), 0)",
-                                    "params": {
-                                        "query_vector": query_embedding
-                                    }
-                                }
-                            }
-                        }
-                    ],
-                    "filter": [
-                        {
-                            "range": {
-                                "length": {
-                                    "gte": MIN_TEXT_LENGTH_THRESHOLD
-                                }
-                            }
-                        }
-                    ]
-                }
-            },
-            "_source": {
-                "excludes": ["embeddings"]
-            }
-        }
-
-        results = es.search(index="document_paragraphs",
-                            body=p_query,
-                            scroll="2m",
-                            size=size)
-
-
-    result_len = len(results["hits"]["hits"])
-
-    if result_len < size:
-        scroll_id = None
-    else:
-        scroll_id = results.get("_scroll_id", None)
-
-    max_score = results["hits"]["max_score"]
-
-    logger.info(f"\n\n >>>>>>>> Max score in es results: {max_score}")
-    logger.info("\n\n >>>>>>>> Performing highlights calc")
-
-    highlights = highlighter.highlight_multiple(query, [r["_source"]["text"] for r in results["hits"]["hits"]])
-
-    logger.info("\n\n >>>>>>>> Finished calculating highlights...")
-
-    def formatOneResult(r):
-        r["_source"]["metadata"] = {}
-        r["_source"]["metadata"]["match_score"] = r["_score"]
-        r["_source"]["id"] = r["_id"]
-        # del r["_source"]["embeddings"] # TODO verify this (is the ref immutable?)
-        return r["_source"]
-
-    return {
-        "hits": results["hits"]["total"]["value"],
-        "items_in_page": result_len,
-        "max_score": max_score,
-        "results": [formatOneResult(i) for i in results["hits"]["hits"]],
-        "scroll_id": scroll_id,
-        "highlights": highlights
     }
 
 

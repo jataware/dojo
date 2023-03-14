@@ -19,6 +19,8 @@ import TextField from '@material-ui/core/TextField';
 import Chip from '@material-ui/core/Chip';
 import isEmpty from 'lodash/isEmpty';
 import startCase from 'lodash/startCase';
+import map from 'lodash/map';
+import get from 'lodash/get';
 
 import Container from '@material-ui/core/Container';
 import Dialog from '@material-ui/core/Dialog';
@@ -57,7 +59,7 @@ export const ConfidenceBar = withStyles((theme) => ({
 }))(LinearProgress);
 
 const semanticSearchParagraphs = async(query) => {
-  let url = `/api/dojo/paragraphs/search?query=${query}&size=50`;
+  let url = `/api/dojo/paragraphs/search?query=${query}&size=40`;
   const response = await axios.get(url);
   return response.data;
 };
@@ -339,7 +341,7 @@ export const ParagraphTile = withStyles((theme) => ({
     display: "flex",
     justifyContent: "center"
   }
-}))(({classes, paragraph, highlights, onClick}) => {
+}))(({classes, paragraph, highlights=null, onClick}) => {
 
   const handleClick = () => onClick(paragraph);
 
@@ -380,7 +382,18 @@ export const ParagraphTile = withStyles((theme) => ({
             <dt>
               <Chip classes={{root: classes.squareChip, label: classes.chipLabel}} label="text" />
             </dt>
-            <dd>{highlightText(paragraph.text, highlights)}</dd>
+            <dd>{highlights ?
+                 highlights.map((partInfo, idx) => (
+                   <span
+                     key={idx}
+                     style={partInfo.highlight ?
+                            {fontWeight: 'bold', background: 'yellow'} :
+                            {}}
+                   >
+                     {partInfo.text}
+                   </span>
+                 ))
+                 : paragraph.text}</dd>
           </div>
         </dl>
 
@@ -427,6 +440,7 @@ const ViewDocumentsGrid = withStyles((theme) => ({
 
   const [searchLoading, setSearchLoading] = useState(false);
   const [docParagraphResults, setDocParagraphResults] = useState(null);
+  const [highlights, setHighlights] = useState(null);
 
   const [openedDocument, setOpenedDocument] = useState(null);
 
@@ -465,6 +479,22 @@ const ViewDocumentsGrid = withStyles((theme) => ({
 
         Promise.all(allDocPromises).then(() => {
           setDocParagraphResults(allParagraphs);
+
+          // fetch all highlights for results
+          const matches = map(allParagraphs, 'text');
+          const query = searchTerm;
+
+          let url = `/api/dojo/paragraphs/highlight`;
+
+          axios.post(url, {
+            query,
+            matches
+          })
+            .then((response) => {
+              console.log('hihglights fetched:', response.data.highlights);
+              setHighlights(response.data.highlights)
+            })
+
         });
 
       })
@@ -560,12 +590,12 @@ const ViewDocumentsGrid = withStyles((theme) => ({
               <LinearProgress style={{width: "90%"}} />
           )}
 
-          {docParagraphResults.map(p => (
+          {docParagraphResults.map((p, index) => (
             <ParagraphTile
               onClick={onParagraphResultClick}
               key={p.id}
               paragraph={p}
-              highlights={searchTerm}
+              highlights={get(highlights, `[${index}]`, null)}
             />
           ))}
         </div>
