@@ -34,8 +34,6 @@ from rq import job
 from src.embedder_engine import embedder
 from src.semantic_highlighter import highlighter
 
-
-# TODO temp to set up post data before moving elsewhere?
 from pydantic import BaseModel
 
 

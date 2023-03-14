@@ -1,5 +1,5 @@
 from __future__ import annotations
-from transformers import BertTokenizerFast, BertModel, BatchEncoding, logging # type: ignore[import]
+from transformers import BertTokenizerFast, BertModel, BatchEncoding, logging
 import torch
 from typing import TypedDict, Any, Dict, Generator, List, Optional, Tuple
 import re
@@ -173,10 +173,6 @@ class Highlighter:
         highlight_list = Highlighter.spans_to_highlight_list(target, spans)
         return highlight_list
 
-    # receives query string, which it embeds, and a list of result strings, which is embeds as well
-    # TODO we dont need to embed results, as they are already embedded in elasticsearch
-    # ie we'll need to fetch the P matching + embeddings this time around. in order to compare.
-    # TODO pass in the embedding as a param here
     def highlight_multiple(self, query: str, targets: List[str], *, threshold=0.5) -> List[List[Highlight]]:
         """highlight multiple target strings given a query"""
         _, embedding_q = self.embed(query)
