@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 
 import ArrowForwardIcon from '@material-ui/icons/ArrowForward';
 import Button from '@material-ui/core/Button';
-import CircularProgress from '@material-ui/core/CircularProgress';
 import FormControl from '@material-ui/core/FormControl';
+import FormHelperText from '@material-ui/core/FormHelperText';
 import InputLabel from '@material-ui/core/InputLabel';
 import MenuItem from '@material-ui/core/MenuItem';
 import Select from '@material-ui/core/Select';
@@ -55,6 +55,7 @@ export default withStyles((theme) => ({
   },
   button: {
     minWidth: '160px',
+    height: '56px',
   },
   arrowIcon: {
     display: 'flex',
@@ -74,6 +75,7 @@ export default withStyles((theme) => ({
 }) => {
   const [selectedResolution, setSelectedResolution] = useState(savedResolution || '');
   const [selectedAggregation, setSelectedAggregation] = useState(savedAggregation || '');
+  const [saveAttempt, setSaveAttempt] = useState(false);
 
   // TODO: remove this once we get a list from the backend
   // this is to remove all options below the current time bucket
@@ -85,14 +87,13 @@ export default withStyles((theme) => ({
   }
 
   const handleSaveClick = () => {
+    // toggle saveAttempt to show our errors if either select hasn't been chosen
+    setSaveAttempt(true);
     if (selectedResolution !== '' && selectedAggregation !== '') {
       setSavedResolution(selectedResolution);
       setSavedAggregation(selectedAggregation);
       closeDrawer();
     }
-
-    // todo: open alert saying must make a selection before saving
-    // todo: make this into a form where both selects are required fields
   };
 
   const handleChangeResolution = (event) => {
@@ -126,25 +127,35 @@ export default withStyles((theme) => ({
         </div>
       </div>
       <div className={classes.bottomWrapper}>
-        {/* TODO: make this into a form with both selects as required before save/submit */}
         <FormControl variant="outlined" className={classes.selectWrapper}>
-          <InputLabel>Aggregation Function</InputLabel>
+          <InputLabel error={saveAttempt && !selectedAggregation}>
+            Aggregation Function
+          </InputLabel>
           <Select
             value={selectedAggregation}
             onChange={handleChangeAggregation}
             label="Aggregation Function"
+            error={saveAttempt && !selectedAggregation}
           >
             {aggregationFunctions.map((funct) => (
               <MenuItem key={funct} value={funct}>{funct}</MenuItem>
             ))}
           </Select>
+          {saveAttempt && !selectedAggregation && (
+            <FormHelperText error={saveAttempt && !selectedAggregation}>
+              Please select an aggregation function
+            </FormHelperText>
+          )}
         </FormControl>
         <FormControl variant="outlined" className={classes.selectWrapper}>
-          <InputLabel>Resolution</InputLabel>
+          <InputLabel error={saveAttempt && !selectedResolution}>
+            Resolution
+          </InputLabel>
           <Select
             value={selectedResolution}
             onChange={handleChangeResolution}
             label="Resolution"
+            error={saveAttempt && !selectedResolution}
           >
             {resolutionOptions.slice(firstOption).map((option) => (
               <MenuItem key={option.description} value={option}>
@@ -152,6 +163,11 @@ export default withStyles((theme) => ({
               </MenuItem>
             ))}
           </Select>
+          {saveAttempt && !selectedResolution && (
+            <FormHelperText error={saveAttempt && !selectedResolution}>
+              Please select a resolution
+            </FormHelperText>
+          )}
         </FormControl>
         <Button
           color="primary"
