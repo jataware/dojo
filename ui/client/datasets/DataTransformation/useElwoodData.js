@@ -17,7 +17,7 @@ const useElwoodData = ({
 
   useEffect(() => {
     const startElwoodJob = async ({ requestArgs }) => {
-      console.log('these are the requestArgs when starting ', jobString, requestArgs)
+      console.log('these are the requestArgs when starting ', jobString, requestArgs);
       const jobQueueResp = await axios.post(
         `/api/dojo/job/${datasetId}/${jobString}`, requestArgs
       );
@@ -37,9 +37,9 @@ const useElwoodData = ({
             if (response.status === 200) {
               // keep track of how long it takes (for dev purposes)
               count += 1;
-              console.log(`${count}: response from job string: ${jobString}:`, response);
+              // console.log(`${count}: response from job string: ${jobString}:`, response);
               if (response.data) {
-                console.log(`success! it took ${count * 500}ms`, response.data);
+                console.log(`success! ${jobString} took ${count * 500}ms`, response.data);
                 // setOptions currently just used for onGeoResSuccess
                 onSuccess(response.data, setData, setDataError, setDataLoading, setOptions);
                 return;
@@ -49,7 +49,7 @@ const useElwoodData = ({
                 repeatFetch(jobId);
               }
             }
-          }).catch(() => {
+          }).catch((err) => {
             // we get a 404 immediately - there is some sort of bug, this accounts for that
             if (count < 2 && cleanupRef.current) {
               // and the component is mounted
@@ -58,6 +58,7 @@ const useElwoodData = ({
                 repeatFetch(resp);
               });
             } else {
+              console.log(`failure! ${jobString} took ${count * 500}ms`, err);
               onFailure();
             }
           });
