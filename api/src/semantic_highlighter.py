@@ -1,10 +1,8 @@
 from __future__ import annotations
 from transformers import BertTokenizerFast, BertModel, BatchEncoding, logging # type: ignore[import]
 import torch
-from typing import TypedDict
+from typing import TypedDict, Any, Dict, Generator, List, Optional, Tuple
 import re
-
-
 
 
 class Highlight(TypedDict):
@@ -41,10 +39,10 @@ class Highlighter:
         return word not in Highlighter.ignore_words and len(re.sub('[^a-zA-Z]', '', word)) > 0
 
     @staticmethod
-    def spans_to_highlight_list(text: str, spans: list[tuple[int,int]]) -> list[Highlight]:
+    def spans_to_highlight_list(text: str, spans: List[Tuple[int,int]]) -> List[Highlight]:
         """Convert a list of character spans into a list of Highlight objects"""
         spans = sorted(spans, key=lambda x: x[0])
-        highlight_list: list[Highlight] = []
+        highlight_list: List[Highlight] = []
         last_end = 0
         for start, end in spans:
             if start > last_end:
@@ -53,21 +51,21 @@ class Highlighter:
                     "highlight": False
                 })
             highlight_list.append({
-                "text": text[start:end], 
+                "text": text[start:end],
                 "highlight": True
             })
             last_end = end
-        
+
         if last_end < len(text):
             highlight_list.append({
-                "text": text[last_end:], 
+                "text": text[last_end:],
                 "highlight": False
             })
 
         return highlight_list
-    
+
     @staticmethod
-    def merge_char_spans(spans: list[tuple[int,int]]) -> list[tuple[int,int]]:
+    def merge_char_spans(spans: List[Tuple[int,int]]) -> List[Tuple[int,int]]:
         """Merge adjacent and overlapping character spans into a single span"""
         spans = sorted(spans, key=lambda x: x[0])
         merged_spans = []
@@ -75,24 +73,24 @@ class Highlighter:
             if len(merged_spans) == 0:
                 merged_spans.append(span)
                 continue
-            
+
             if span[0] <= merged_spans[-1][1] + 1:
                 merged_spans[-1] = (merged_spans[-1][0], max(span[1], merged_spans[-1][1]))
             else:
                 merged_spans.append(span)
         return merged_spans
-    
+
 
     def embed(self, s: str) -> tuple[BatchEncoding, torch.Tensor]:
         with torch.no_grad():
             tokens = self.tokenizer(s, return_tensors='pt', padding=True, truncation=True)
             tokens.to(device=self.device)
             embedding = self.model(**tokens).last_hidden_state[0]
-            
+
             return tokens, embedding
-        
-    
-    def highlight_exact(self, query: str, target: str) -> list[tuple[int,int]]:
+
+
+    def highlight_exact(self, query: str, target: str) -> List[Tuple[int,int]]:
         """returns spans for highlighting exact matching words in the target string"""
 
         #split the query into words, and filter out empty words and stopwords
@@ -103,15 +101,16 @@ class Highlighter:
         for word in words:
             for match in re.finditer(word, target.lower()):
                 spans.append(match.span())
-        
+
         spans = sorted(spans, key=lambda x: x[0])
 
         #combine adjacent spans that are separated by a single space
         spans = Highlighter.merge_char_spans(spans)
 
         return spans
-    
-    def highlight_llm(self, query: str, target: str, *, threshold=0.5, embedding_q=torch.Tensor|None) -> list[tuple[int,int]]:# -> list[Highlight]:
+
+
+    def highlight_llm(self, query: str, target: str, *, threshold=0.5, embedding_q=torch.Tensor) -> List[Tuple[int,int]]:# -> List[Highlight]:
         """Highlight a single target string given a query"""
 
         # embed the query if it is not already embedded
@@ -129,7 +128,7 @@ class Highlighter:
         matched_tokens = (matchings > threshold).any(dim=0)
         matched_indices = [(i,token) for i,(token,match) in enumerate(zip(token_t,matched_tokens)) if match and self.good_match(token)]
 
-        # determine the spans that will be highlighted: 
+        # determine the spans that will be highlighted:
         # 1. combine together tokens that make up larger words via the "##" prefix (which may be missing from the matched_indices list)
         highlight_token_indices = []
         for i, _ in matched_indices:
@@ -165,7 +164,7 @@ class Highlighter:
         return highlight_char_spans
 
 
-    def highlight(self, query: str, target: str, *, threshold=0.5, embedding_q=torch.Tensor|None) -> list[Highlight]:
+    def highlight(self, query: str, target: str, *, threshold=0.5, embedding_q=torch.Tensor) -> List[Highlight]:
         """Highlight a single target string given a query"""
         llm_spans = self.highlight_llm(query, target, threshold=threshold, embedding_q=embedding_q)
         exact_spans = self.highlight_exact(query, target)
@@ -178,7 +177,7 @@ class Highlighter:
     # TODO we dont need to embed results, as they are already embedded in elasticsearch
     # ie we'll need to fetch the P matching + embeddings this time around. in order to compare.
     # TODO pass in the embedding as a param here
-    def highlight_multiple(self, query: str, targets: list[str], *, threshold=0.5) -> list[list[Highlight]]:
+    def highlight_multiple(self, query: str, targets: List[str], *, threshold=0.5) -> List[List[Highlight]]:
         """highlight multiple target strings given a query"""
         _, embedding_q = self.embed(query)
         highlight_lists = [self.highlight(query, target, threshold=threshold, embedding_q=embedding_q) for target in targets]
@@ -223,7 +222,7 @@ ansi_background_codes = {
     'bright_white': 107,
 }
 
-def terminal_highlight_print(highlight_list:list[Highlight], background='bright_white', color='black'):
+def terminal_highlight_print(highlight_list:List[Highlight], background='bright_white', color='black'):
     """print the text to the terminal, highlighting at the given spans"""
 
     # convert the color/background strings to ANSI codes
@@ -241,12 +240,13 @@ def terminal_highlight_print(highlight_list:list[Highlight], background='bright_
     print()
 
 
-# TODO export this initialized for use in Dojo API:
-# highlighter = Highlighter()
+# This is slow to init, exporting singleton once:
+highlighter = Highlighter()
 
-# TODO it woudl be used in Dojo API as such, using top N results displayed on the page:
+
+
+# TODO it would be used in Dojo API as such, using top N results displayed on the page:
 # highlight_lists = highlighter.highlight_multiple(query, raw_texts, threshold=threshold)
-
 
 # def main():
 #     from data.dart_papers import DartPapers
