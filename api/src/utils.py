@@ -6,8 +6,6 @@ from urllib.parse import urlparse
 from io import BytesIO, StringIO
 from zlib import compressobj
 from fastapi.logger import logger
-import logging
-
 import pandas as pd
 from elasticsearch import Elasticsearch
 import boto3
@@ -15,8 +13,6 @@ import botocore
 
 from src.settings import settings
 from validation import ModelSchema
-
-logger.setLevel(logging.DEBUG)
 
 es = Elasticsearch([settings.ELASTICSEARCH_URL], port=settings.ELASTICSEARCH_PORT)
 s3 = boto3.client(
