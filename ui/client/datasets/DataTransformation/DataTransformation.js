@@ -133,11 +133,11 @@ const DataTransformation = withStyles(() => ({
   }), []);
 
   const onTemporalResSuccess = useCallback((resp, setData, setDataError, setDataLoading) => {
-    // if (resp.resolution_result?.uniformity !== 'PERFECT') {
-    //   setDataError(true);
-    // } else {
+    if (resp.resolution_result?.unit) {
       setData(resp.resolution_result);
-    // }
+    } else {
+      setDataError(true);
+    }
     setDataLoading(false);
   }, []);
 
