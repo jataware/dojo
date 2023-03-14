@@ -486,13 +486,13 @@ const ViewDocumentsGrid = withStyles((theme) => ({
 
           let url = `/api/dojo/paragraphs/highlight`;
 
-          axios.post(url, {
+          return axios.post(url, {
             query,
             matches
           })
             .then((response) => {
-              console.log('hihglights fetched:', response.data.highlights);
               setHighlights(response.data.highlights)
+              return;
             })
 
         });
