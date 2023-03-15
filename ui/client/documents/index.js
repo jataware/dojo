@@ -431,6 +431,7 @@ const ViewDocumentsGrid = withStyles((theme) => ({
     }
 
     setSearchLoading(true);
+    setHighlights(null);
 
     semanticSearchParagraphs(searchTerm)
       .then((results) => {
