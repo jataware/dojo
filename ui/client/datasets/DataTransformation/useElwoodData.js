@@ -79,10 +79,17 @@ const useElwoodData = ({
           setDataError(true);
           setDataLoading(false);
         };
-        runElwoodJob({
-          requestArgs: args,
-          onFailure,
-        });
+        if (typeof args === 'string') {
+          // if we are missing something from the args and have sent back an error message
+          // use that and don't continue loading
+          setDataError(args);
+          setDataLoading(false);
+        } else {
+          runElwoodJob({
+            requestArgs: args,
+            onFailure,
+          });
+        }
       }
     }
     // The linter is complaining about cleanupRef missing here because it doesn't understand

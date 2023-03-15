@@ -103,7 +103,10 @@ const DataTransformation = withStyles(() => ({
         args.lon_column = geo.name;
       }
     });
-    return args;
+    if (args.lat_column && args.lon_column) {
+      return args;
+    }
+    return 'Geospatial resolution cannot be transformed without annotated lat/lon columns';
   }, []);
 
   const onGeoBoundarySuccess = useCallback((resp, setData, setDataError, setDataLoading) => {
@@ -124,6 +127,9 @@ const DataTransformation = withStyles(() => ({
   const generateGeoBoundaryArgs = useCallback((argsAnnotations) => {
     const args = { geo_columns: [] };
     argsAnnotations.annotations.geo.forEach((geo) => args.geo_columns.push(geo.name));
+    if (args.geo_columns.length < 2) {
+      return 'Geospatial coverage cannot be transformed without annotated lat/lon columns';
+    }
     return args;
   }, []);
 

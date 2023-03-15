@@ -54,7 +54,7 @@ const TransformationButton = withStyles(({ palette }) => ({
   };
 
   return (
-    <Tooltip arrow title={error || ''}>
+    <Tooltip arrow placement="right" title={error || ''}>
       <span style={{ position: 'relative' }}>
         <ListItem button disabled={loading || error !== false}>
           <ListItemIcon>
