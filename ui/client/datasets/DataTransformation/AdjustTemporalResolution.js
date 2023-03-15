@@ -26,13 +26,6 @@ const aggregationFunctions = [
 ];
 
 export default withStyles((theme) => ({
-  loading: {
-    display: 'flex',
-    alignItems: 'center',
-    flexDirection: 'column',
-    gap: theme.spacing(4),
-    marginTop: theme.spacing(8),
-  },
   selectWrapper: {
     width: '200px',
   },
