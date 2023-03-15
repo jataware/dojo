@@ -7,7 +7,7 @@ BASEDIR = $(shell pwd)
 TERMINAL_DIR = terminal
 DOJO_API_DIR = api
 DOJO_DMC_DIR = dmc
-MIXMASTA_DIR = mixmasta
+ELWOOD_DIR = elwood
 UI_DIR = ui
 RQ_DIR = tasks
 WORKERS_DIR = workers
@@ -40,7 +40,7 @@ init:
 .PHONY:rebuild-all
 rebuild-all:
 	docker-compose build --no-cache; \
-	cd $(MIXMASTA_DIR) && docker build . -t mixmasta:dev;
+	cd $(ELWOOD_DIR) && docker build . -t elwood:dev;
 
 envfile:
 ifeq ($(wildcard envfile),)

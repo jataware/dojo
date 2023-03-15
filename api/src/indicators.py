@@ -688,7 +688,7 @@ async def create_preview(
 def rescale_indicator(indicator_id: str):
     from src.data import job
 
-    job_string = "mixmasta_processors.scale_features"
+    job_string = "elwood_processors.scale_features"
 
     resp = job(uuid=indicator_id, job_string=job_string)
 
