@@ -7,6 +7,7 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
 import ListItemText from '@material-ui/core/ListItemText';
+import Tooltip from '@material-ui/core/Tooltip';
 import { withStyles } from '@material-ui/core/styles';
 
 const TransformationButton = withStyles(({ palette }) => ({
@@ -36,7 +37,7 @@ const TransformationButton = withStyles(({ palette }) => ({
   title,
   onClick,
   loading,
-  failed,
+  error,
 }) => {
   const displayIcon = () => {
     if (isComplete) {
@@ -47,34 +48,34 @@ const TransformationButton = withStyles(({ palette }) => ({
       return <CircularProgress thickness={4.5} size={25} />;
     }
 
-    // TODO: change name from failed to something else?
-    if (failed) {
+    if (error !== false) {
       return <InfoIcon className={classes.close} fontSize="large" />;
     }
   };
 
   return (
-    <div style={{ position: 'relative' }}>
-      <ListItem button disabled={loading || failed}>
-        <ListItemIcon>
-          <Icon
-            fontSize="large"
+    <Tooltip arrow title={error || ''}>
+      <span style={{ position: 'relative' }}>
+        <ListItem button disabled={loading || error !== false}>
+          <ListItemIcon>
+            <Icon
+              fontSize="large"
+              className={isComplete ? classes.complete : classes.incomplete}
+            />
+          </ListItemIcon>
+          <ListItemText
+            primaryTypographyProps={{ variant: 'h6' }}
+            onClick={onClick}
             className={isComplete ? classes.complete : classes.incomplete}
-          />
-        </ListItemIcon>
-        <ListItemText
-          primaryTypographyProps={{ variant: 'h6' }}
-          onClick={onClick}
-          className={isComplete ? classes.complete : classes.incomplete}
-        >
-          {title}
-        </ListItemText>
-        <ListItemIcon className={classes.listItemIcon}>
-          {displayIcon()}
-        </ListItemIcon>
-      </ListItem>
-
-    </div>
+          >
+            {title}
+          </ListItemText>
+          <ListItemIcon className={classes.listItemIcon}>
+            {displayIcon()}
+          </ListItemIcon>
+        </ListItem>
+      </span>
+    </Tooltip>
   );
 });
 
