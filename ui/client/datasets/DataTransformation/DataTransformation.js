@@ -9,7 +9,7 @@ import TodayIcon from '@material-ui/icons/Today';
 import GridOnIcon from '@material-ui/icons/GridOn';
 import MapIcon from '@material-ui/icons/Map';
 
-import CircularProgress from '@material-ui/core/CircularProgress'
+import CircularProgress from '@material-ui/core/CircularProgress';
 import Container from '@material-ui/core/Container';
 import List from '@material-ui/core/List';
 import Typography from '@material-ui/core/Typography';
@@ -85,7 +85,7 @@ const DataTransformation = withStyles(() => ({
       setData(resp.scale_km);
     } else {
       // TODO: handle error case in geo res component & data transformation
-      setDataError(true);
+      setDataError(resp.message ? resp.message : true);
     }
 
     if (resp.multiplier_samples) {
@@ -115,7 +115,7 @@ const DataTransformation = withStyles(() => ({
         setData(bounds);
       }
       if (Object.keys(resp.boundary_box).length === 0) {
-        setDataError(true);
+        setDataError(resp.message ? resp.message : true);
       }
       setDataLoading(false);
     }
@@ -136,7 +136,7 @@ const DataTransformation = withStyles(() => ({
     if (resp.resolution_result?.unit) {
       setData(resp.resolution_result);
     } else {
-      setDataError(true);
+      setDataError(resp.message ? resp.message : true);
     }
     setDataLoading(false);
   }, []);
@@ -146,12 +146,19 @@ const DataTransformation = withStyles(() => ({
       setData(resp.unique_dates);
     } else {
     // TODO: also handle single length arrays as an error/un-transformable?
-      setDataError(true);
+      setDataError(resp.message ? resp.message : true);
     }
     setDataLoading(false);
   }, []);
 
-  // for testing purposes (if disabling loading of all transformations)
+  // for testing purposes
+  // const timeResolution = {
+  //   "uniformity": "PERFECT",
+  //   "unit": "day",
+  //   "resolution": 1,
+  //   "error": 0
+  // };
+  // (if disabling loading of all transformations)
   // const [
   //   mapResolution,
   //   mapResolutionError,
@@ -358,34 +365,31 @@ const DataTransformation = withStyles(() => ({
           title="Adjust Geospatial Resolution"
           onClick={() => handleDrawerOpen('regridMap')}
           loading={!mapResolution && !mapResolutionError}
-          failed={mapResolutionError}
+          error={mapResolutionError}
         />
-
         <TransformationButton
           isComplete={!!savedDrawings.length}
           Icon={MapIcon}
           title="Select Geospatial Coverage"
           onClick={() => handleDrawerOpen('clipMap')}
           loading={!mapBounds && !mapBoundsError}
-          failed={mapBoundsError}
+          error={mapBoundsError}
         />
-
         <TransformationButton
           isComplete={!!savedTimeResolution}
           Icon={AspectRatioIcon}
           title="Adjust Temporal Resolution"
           onClick={() => handleDrawerOpen('scaleTime')}
           loading={!timeResolution && !timeResolutionError}
-          failed={timeResolutionError}
+          error={timeResolutionError}
         />
-
         <TransformationButton
           isComplete={!!savedTimeBounds}
           Icon={TodayIcon}
           title="Select Temporal Coverage"
           onClick={() => handleDrawerOpen('clipTime')}
           loading={!timeBounds && !timeBoundsError}
-          failed={timeBoundsError}
+          error={timeBoundsError}
         />
       </List>
       <Navigation
