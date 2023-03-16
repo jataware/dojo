@@ -10,6 +10,8 @@ import Select from '@material-ui/core/Select';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 
+import PreviewTransformation from './PreviewTransformation';
+
 const aggregationFunctions = [
   'count',
   'size',
@@ -33,7 +35,7 @@ export default withStyles((theme) => ({
     display: 'flex',
     justifyContent: 'center',
     gap: theme.spacing(6),
-    marginTop: theme.spacing(6),
+    margin: [[theme.spacing(6), 0, theme.spacing(10)]],
     flexWrap: 'wrap',
   },
   textWrapper: {
@@ -162,6 +164,7 @@ export default withStyles((theme) => ({
             </FormHelperText>
           )}
         </FormControl>
+
         <Button
           color="primary"
           variant="contained"
@@ -172,7 +175,9 @@ export default withStyles((theme) => ({
         >
           Save Resolution
         </Button>
+
       </div>
+      <PreviewTransformation rows={200} />
     </div>
   );
 });

@@ -9,6 +9,8 @@ import Select from '@material-ui/core/Select';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 
+import PreviewTransformation from './PreviewTransformation';
+
 export default withStyles((theme) => ({
   selectWrapper: {
     width: '180px',
