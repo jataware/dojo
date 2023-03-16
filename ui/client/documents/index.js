@@ -19,6 +19,8 @@ import TextField from '@material-ui/core/TextField';
 import Chip from '@material-ui/core/Chip';
 import isEmpty from 'lodash/isEmpty';
 import startCase from 'lodash/startCase';
+import map from 'lodash/map';
+import get from 'lodash/get';
 
 import Container from '@material-ui/core/Container';
 import Dialog from '@material-ui/core/Dialog';
@@ -31,7 +33,7 @@ import Divider from '@material-ui/core/Divider';
 import { Link as RouteLink } from 'react-router-dom';
 
 import { useDocuments } from "../components/SWRHooks";
-import { highlightText } from "./utils";
+import { calculateHighlightTargets } from "./utils";
 
 import ExpandableDataGridCell from "../components/ExpandableDataGridCell";
 
@@ -57,7 +59,7 @@ export const ConfidenceBar = withStyles((theme) => ({
 }))(LinearProgress);
 
 const semanticSearchParagraphs = async(query) => {
-  let url = `/api/dojo/paragraphs/search?query=${query}&size=50`;
+  let url = `/api/dojo/paragraphs/search?query=${query}&size=40`;
   const response = await axios.get(url);
   return response.data;
 };
@@ -180,33 +182,6 @@ function CustomLoadingOverlay() {
     </GridOverlay>
   );
 }
-
-const SEARCH_MODE = {
-  KEYWORD: 'KEYWORD',
-  SEMANTIC: 'SEMANTIC'
-};
-
-const paragraphColumns = [
-    {
-      field: 'id',
-      headerName: 'ID',
-      flex: 1
-    },
-    {
-      field: 'text',
-      headerName: 'Content Text',
-      renderCell: expandableCell,
-      minWidth: 200,
-      flex: 3
-    },
-    {
-      field: 'document_id',
-      headerName: 'Document ID',
-      renderCell: expandableCell,
-      minWidth: 200,
-      flex: 1
-    },
-  ];
 
 /**
  *
@@ -339,7 +314,7 @@ export const ParagraphTile = withStyles((theme) => ({
     display: "flex",
     justifyContent: "center"
   }
-}))(({classes, paragraph, highlights, onClick}) => {
+}))(({classes, paragraph, highlights=null, query, onClick}) => {
 
   const handleClick = () => onClick(paragraph);
 
@@ -380,7 +355,17 @@ export const ParagraphTile = withStyles((theme) => ({
             <dt>
               <Chip classes={{root: classes.squareChip, label: classes.chipLabel}} label="text" />
             </dt>
-            <dd>{highlightText(paragraph.text, highlights)}</dd>
+            <dd>{(highlights || calculateHighlightTargets(paragraph.text, query))
+                 .map((partInfo, idx) => (
+                   <span
+                     key={idx}
+                     style={partInfo.highlight ?
+                            {fontWeight: 'bold', background: 'yellow'} :
+                            {}}
+                   >
+                     {partInfo.text}
+                   </span>
+                 ))}</dd>
           </div>
         </dl>
 
@@ -427,10 +412,10 @@ const ViewDocumentsGrid = withStyles((theme) => ({
 
   const [searchLoading, setSearchLoading] = useState(false);
   const [docParagraphResults, setDocParagraphResults] = useState(null);
+  const [highlights, setHighlights] = useState(null);
 
   const [openedDocument, setOpenedDocument] = useState(null);
 
-  // TODO unalias this and use scrollId... also create a placeholder to catch results
   const { documents: documentsData, documentsLoading, documentsError } = useDocuments();
 
   const documents = documentsData?.results;
@@ -446,6 +431,7 @@ const ViewDocumentsGrid = withStyles((theme) => ({
     }
 
     setSearchLoading(true);
+    setHighlights(null);
 
     semanticSearchParagraphs(searchTerm)
       .then((results) => {
@@ -465,6 +451,22 @@ const ViewDocumentsGrid = withStyles((theme) => ({
 
         Promise.all(allDocPromises).then(() => {
           setDocParagraphResults(allParagraphs);
+
+          // fetch all highlights for results
+          const matches = map(allParagraphs, 'text');
+          const query = searchTerm;
+
+          let url = `/api/dojo/paragraphs/highlight`;
+
+          return axios.post(url, {
+            query,
+            matches
+          })
+            .then((response) => {
+              setHighlights(response.data.highlights)
+              return;
+            })
+
         });
 
       })
@@ -560,12 +562,13 @@ const ViewDocumentsGrid = withStyles((theme) => ({
               <LinearProgress style={{width: "90%"}} />
           )}
 
-          {docParagraphResults.map(p => (
+          {docParagraphResults.map((p, index) => (
             <ParagraphTile
               onClick={onParagraphResultClick}
               key={p.id}
               paragraph={p}
-              highlights={searchTerm}
+              highlights={get(highlights, `[${index}]`, null)}
+              query={searchTerm}
             />
           ))}
         </div>
@@ -610,115 +613,5 @@ const ViewDocumentsGrid = withStyles((theme) => ({
     </Container>
   );
 });
-
-/**
- *
- */
-export const ParagraphListings = withStyles((theme) => ({
-  root: {
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'column',
-    padding: "2rem",
-    marginTop: "1rem"
-  },
-  aboveTableWrapper: {
-    display: 'flex',
-    maxWidth: "100vw",
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    marginBottom: '1rem',
-  }
-}))(({classes}) => {
-
-  const [searchTerm, setSearchTerm] = useState('');
-  const [searchTermValue, setSearchTermValue] = useState('');
-  const updateSearchTerm = useCallback(debounce(setSearchTerm, 500), []);
-
-  const [paragraphs, setParagraphs] = useState([]);
-  const [paragraphsError, setParagraphsError] = useState(false);
-  const [searchLoading, setSearchLoading] = useState(false);
-
-  const { documents, documentsLoading, documentsError } = useDocuments();
-
-  useEffect(() => {
-    updateSearchTerm(searchTermValue);
-  }, [searchTermValue]);
-
-  const performSearch = () => {
-      fetchParagraphs(setParagraphs, setSearchLoading, setParagraphsError, searchTerm);
-  };
-
-  useEffect(() => {
-    performSearch();
-  }, [searchTerm]);
-
-  const clearSearch = () => {
-    setSearchTerm('');
-    setSearchTermValue('');
-  };
-
-  const handleSearchChange = ({ target: { value } }) => {
-    // if we have no search term, clear everything
-    if (value.length === 0) {
-      clearSearch();
-      return;
-    }
-    setSearchTermValue(value);
-  };
-
-  const displayableColumns = paragraphColumns;
-
-  return paragraphsError ? (
-    <Typography>
-      Error loading paragraphs.
-    </Typography>
-  ) : (
-    <Container
-      className={classes.root}
-      component="main"
-      maxWidth="xl"
-    >
-      <Typography
-        variant="h4"
-        align="center"
-      >
-        All Paragraphs
-      </Typography>
-      <div className={classes.aboveTableWrapper}>
-        <div>
-          <TextField
-            label="Search Paragraphs"
-            variant="outlined"
-            value={searchTermValue}
-            onChange={handleSearchChange}
-            role="searchbox"
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton onClick={clearSearch}><CancelIcon /></IconButton>
-                </InputAdornment>
-              )
-            }}
-          />
-        </div>
-      </div>
-
-      <DataGrid
-        autoHeight
-        components={{
-          LoadingOverlay: CustomLoadingOverlay,
-          Pagination: CustomTablePagination
-        }}
-        loading={searchLoading}
-        columns={displayableColumns}
-        rows={paragraphs || []}
-      />
-
-    </Container>
-  );
-});
-
 
 export default ViewDocumentsGrid;

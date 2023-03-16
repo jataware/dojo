@@ -54,13 +54,14 @@ class Paragraph(BaseModel):
     )
 
     # TODO These are optional but were missing...
+    # Try adding them back and re-testing.
 
     # length: Optional[int] = Field(
     #     ...,
     #     title="Length of text string property."
     # )
 
-    # page_number: Optional[int] = Field(
+    # page_no: Optional[int] = Field(
     #     ...,
     #     description="Page number of source document where the paragraph was found."
     # )

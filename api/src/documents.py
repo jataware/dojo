@@ -32,6 +32,10 @@ from rq.exceptions import NoSuchJobError
 from rq import job
 
 from src.embedder_engine import embedder
+from src.semantic_highlighter import highlighter
+
+from pydantic import BaseModel
+
 
 router = APIRouter()
 
@@ -94,6 +98,27 @@ def list_paragraphs(scroll_id: Optional[str]=None, size: int = 10):
         "items_in_page": totalDocsInPage,
         "scroll_id": scroll_id,
         "results": [{"id": i["_id"]}|i["_source"] for i in results["hits"]["hits"]]
+    }
+
+
+class HighlightData(BaseModel):
+    query: str
+    matches: list[str]
+
+class HighlightResponseModel(BaseModel):
+    highlights: List[List[Dict[str,Any]]]
+
+@router.post(
+    "/paragraphs/highlight", response_model=HighlightResponseModel
+)
+def semantic_highlight_paragraphs(payload: HighlightData):
+
+    data = payload.dict()
+
+    highlights = highlighter.highlight_multiple(data["query"], data["matches"])
+
+    return {
+        "highlights": highlights
     }
 
 

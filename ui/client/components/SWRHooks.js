@@ -205,7 +205,11 @@ export function useDocuments(scrollId) {
   }
 
   const { data, error, mutate } = useSWR(
-    url, fetcher
+    url, fetcher, {
+      revalidateIfStale: false,
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false
+    }
   );
 
   return {
