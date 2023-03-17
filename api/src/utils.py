@@ -6,7 +6,6 @@ from urllib.parse import urlparse
 from io import BytesIO, StringIO
 from zlib import compressobj
 from fastapi.logger import logger
-
 import pandas as pd
 from elasticsearch import Elasticsearch
 import boto3
@@ -16,7 +15,8 @@ from src.settings import settings
 from validation import ModelSchema
 
 es = Elasticsearch([settings.ELASTICSEARCH_URL], port=settings.ELASTICSEARCH_PORT)
-s3 = boto3.client("s3",
+s3 = boto3.client(
+    "s3",
     endpoint_url=os.getenv("STORAGE_HOST") or None,
     aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
     aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
@@ -140,7 +140,7 @@ def get_rawfile(path):
     except botocore.exceptions.ClientError as error:
         raise FileNotFoundError() from error
     # else:
-        # raise RuntimeError("File storage format is unknown")
+    # raise RuntimeError("File storage format is unknown")
 
     return raw_file
 
@@ -164,9 +164,7 @@ def put_rawfile(path, fileobj):
 def list_files(path):
     location_info = urlparse(path.replace("file:///", "s3://"))
 
-    s3_list = s3.list_objects(
-        Bucket=location_info.netloc, Prefix=location_info.path
-    )
+    s3_list = s3.list_objects(Bucket=location_info.netloc, Prefix=location_info.path)
     s3_contents = s3_list["Contents"]
     final_file_list = []
     for x in s3_contents:
@@ -176,19 +174,35 @@ def list_files(path):
     return final_file_list
 
 
-async def stream_csv_from_data_paths(data_paths, wide_format='false'):
+async def stream_csv_from_data_paths(data_paths, wide_format="false"):
     # Build single dataframe
-    df = pd.concat(pd.read_parquet(file) for file in data_paths)
+    df = pd.concat(
+        pd.read_parquet(
+            file,
+            storage_options={
+                "key": os.getenv("AWS_ACCESS_KEY_ID"),
+                "secret": os.getenv("AWS_SECRET_ACCESS_KEY"),
+                "token": None,
+                "client_kwargs": {"endpoint_url": os.getenv("STORAGE_HOST") or None},
+            },
+        )
+        for file in data_paths
+    )
 
     # Ensure pandas floats are used because vanilla python ones are problematic
-    df = df.fillna('').astype(
-        {col: 'str' for col in df.select_dtypes(include=['float32', 'float64']).columns},
+    df = df.fillna("").astype(
+        {
+            col: "str"
+            for col in df.select_dtypes(include=["float32", "float64"]).columns
+        },
         # Note: This links it to the previous `df` so not a full copy
-        copy=False
+        copy=False,
     )
     if wide_format == "true":
-        df_wide = pd.pivot(df, index=None, columns='feature', values='value')  # Reshape from long to wide
-        df = df.drop(['feature', 'value'], axis=1)
+        df_wide = pd.pivot(
+            df, index=None, columns="feature", values="value"
+        )  # Reshape from long to wide
+        df = df.drop(["feature", "value"], axis=1)
         df = pd.merge(df, df_wide, left_index=True, right_index=True)
 
     # Prepare for writing CSV to a temporary buffer
@@ -215,4 +229,3 @@ async def compress_stream(content):
     async for buff in content:
         yield compressor.compress(buff.encode())
     yield compressor.flush()
-
