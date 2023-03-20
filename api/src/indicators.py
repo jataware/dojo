@@ -5,8 +5,9 @@ import re
 import time
 import uuid
 from datetime import datetime
-from typing import List, Optional
+from typing import List, Type, Union, Any, Dict, Tuple, TypedDict, Optional
 import json
+from functools import partial
 import pandas as pd
 
 from elasticsearch import Elasticsearch
@@ -18,13 +19,20 @@ from fastapi import (
     status,
     UploadFile,
     File,
+    Depends,
+    Form
 )
 from fastapi.logger import logger
 from redis import Redis
 from rq import Queue
 from rq.exceptions import NoSuchJobError # TODO handle
 
+from pydantic import BaseModel
+from pydantic import ValidationError
+
 from validation import IndicatorSchema, DojoSchema, MetadataSchema
+from src.data import get_context
+
 from src.settings import settings
 
 from src.dojo import search_and_scroll
@@ -72,6 +80,9 @@ def enqueue_indicator_feature(indicator_id, indicator_dict):
 
 @router.post("/indicators")
 def create_indicator(payload: IndicatorSchema.IndicatorMetadataSchema):
+
+    logger.info(f"what is the input payload format: {payload} type: {type(payload)}")
+
     indicator_id = str(uuid.uuid4())
     payload.id = indicator_id
     payload.created_at = current_milli_time()
@@ -384,6 +395,9 @@ def get_indicators(indicator_id: str) -> IndicatorSchema.IndicatorMetadataSchema
 
 @router.put("/indicators/{indicator_id}/publish")
 def publish_indicator(indicator_id: str):
+
+    logger.info("called publish indicator as handler!!!!!")
+
     try:
         # Update indicator model with ontologies from UAZ
         indicator = es.get(index="indicators", id=indicator_id)["_source"]
@@ -693,3 +707,73 @@ def rescale_indicator(indicator_id: str):
     resp = job(uuid=indicator_id, job_string=job_string)
 
     return resp
+
+
+# TODO rename params as data_file and metadata_file ?
+@router.post("/indicators/definition")
+def one_stop_register(file: UploadFile = File(...), metadata: UploadFile = File(...)):
+    """
+    Fields (not columns). Define fields (not annotations?)
+    See what we'll do with filename
+    """
+    json_data = json.load(metadata.file)
+
+    # TODO Error handling; Use pydantic "one-of" when multiple options some required?
+
+    # Step 0: Tranform data to what endpoints/elwood expects. If we change annotations format.
+    # Also use a pydantic file schema to validate input file
+
+    indicator_error=[]
+    annotations_error=[]
+
+    # Step 1: Create indicator
+    try:
+        indicator = IndicatorSchema.IndicatorMetadataSchema.parse_obj(json_data)
+    except ValidationError as e:
+        indicator_error = json.loads(e.json())
+
+    # annotations = MetadataSchema.AnnotationSchema.parse_obj(json_data)
+
+    try:
+        annotations = MetadataSchema.MetaModel.parse_obj(json_data)
+    except ValidationError as e:
+        annotations_error = json.loads(e.json())
+
+    merged_possible_errors = indicator_error + annotations_error
+
+    if len(merged_possible_errors):
+        raise HTTPException(status_code=422, detail=merged_possible_errors)
+    
+
+    create_response = create_indicator(indicator)
+    response = json.loads(create_response.body)
+
+    indicator_id=response["id"]
+
+    # Step 2: Upload file to S3
+    upload_file(indicator_id=indicator_id, file=file)
+
+    # Step 3: POST annotations
+    post_annotation(payload=annotations, indicator_id=indicator_id)
+
+    # TODO Step 4.alpha Transform raw File to csv. Later.
+    # NOTE Q: what's the filename of real raw .xls vs converted .csv?
+    # file_processors.file_conversion
+
+    # Step 4: Call job for mixmasta to normalize. It should then call step 5.
+
+    job_string = "elwood_processors.run_elwood"
+    job_id = f"{indicator_id}_{job_string}"
+
+    context = get_context(indicator_id)
+
+    job = q.enqueue_call(
+        func=job_string, args=[context], kwargs={
+            "on_success_endpoint": {
+                "verb": "PUT",
+                "url": f"{settings.DOJO_URL}/indicators/{indicator_id}/publish"
+            }
+        }, job_id=job_id
+    )
+
+    return create_response

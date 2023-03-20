@@ -86,7 +86,7 @@ class ElwoodProcessor(BaseProcessor):
         return ret
 
 
-def run_elwood(context, filename=None):
+def run_elwood(context, filename=None, on_success_endpoint=None):
     processor = ElwoodProcessor()
     uuid = context["uuid"]
     # Creating folder for temp file storage on the rq worker since following functions are dependent on file paths
@@ -217,29 +217,30 @@ def run_elwood(context, filename=None):
         )
         # Append
         # TODO: Hackish way to determine that the feature is not a qualifier
-        if len(feature["qualifies"]) == 0:
-            outputs.append(output)
-        # Qualifier output for qualifying features
-        elif len(feature["qualifies"]) > 0:
-            qualifier_output = dict(
-                name=feature["name"],
-                display_name=feature["display_name"],
-                description=feature["description"],
-                # Gross conversion between the two output types.
-                type=(
-                    "str"
-                    if feature["feature_type"] == "string"
-                    else "binary"
-                    if feature["feature_type"] == "boolean"
-                    else feature["feature_type"]
-                ),
-                unit=feature["units"],
-                unit_description=feature["units_description"],
-                ontologies={},
-                related_features=feature["qualifies"],
-            )
-            # Append to qualifier outputs
-            qualifier_outputs.append(qualifier_output)
+        if feature["qualifies"]:
+            if len(feature["qualifies"]) == 0:
+                outputs.append(output)
+                # Qualifier output for qualifying features
+            elif len(feature["qualifies"]) > 0:
+                qualifier_output = dict(
+                    name=feature["name"],
+                    display_name=feature["display_name"],
+                    description=feature["description"],
+                    # Gross conversion between the two output types.
+                    type=(
+                        "str"
+                        if feature["feature_type"] == "string"
+                        else "binary"
+                        if feature["feature_type"] == "boolean"
+                        else feature["feature_type"]
+                    ),
+                    unit=feature["units"],
+                    unit_description=feature["units_description"],
+                    ontologies={},
+                    related_features=feature["qualifies"],
+                )
+                # Append to qualifier outputs
+                qualifier_outputs.append(qualifier_output)
 
     # Qualifier_outputs
     for date in context["annotations"]["annotations"]["date"]:
@@ -285,6 +286,10 @@ def run_elwood(context, filename=None):
         "qualifier_outputs": qualifier_outputs,
         "feature_names": feature_names,
     }
+
+    if on_success_endpoint:
+        requests.request(on_success_endpoint.get('verb', 'GET'), on_success_endpoint.get('url'))
+
     return response
 
 

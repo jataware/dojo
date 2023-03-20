@@ -144,6 +144,7 @@ class FeatureAnnotation(BaseModel):
 
 
 
+# NOTE Shouldn't some of these annotations be required, when present?
 class AnnotationSchema(BaseModel):
     class Config:
         extra = Extra.allow
