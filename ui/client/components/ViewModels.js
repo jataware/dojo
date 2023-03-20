@@ -28,7 +28,7 @@ const useStyles = makeStyles((theme) => ({
   },
   gridContainer: {
     height: '400px',
-    width: '1800px',
+    maxWidth: '1800px',
     margin: '0 auto',
   },
   header: {
@@ -247,7 +247,7 @@ const ViewModels = ({
           },
         )
       ),
-      width: 170,
+      width: 165,
     },
     {
       field: 'description',
@@ -256,12 +256,6 @@ const ViewModels = ({
       width: 280,
     },
     { field: 'id', headerName: 'ID', width: 300 },
-    {
-      field: 'commit_message',
-      headerName: 'Commit Message',
-      renderCell: expandableCell,
-      width: 270,
-    },
     lastRunStatus,
     {
       field: 'is_published',
