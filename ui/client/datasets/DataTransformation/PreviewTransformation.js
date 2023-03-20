@@ -7,6 +7,7 @@ import Card from '@material-ui/core/Card';
 import CardActions from '@material-ui/core/CardActions';
 import CardContent from '@material-ui/core/CardContent';
 import CircularProgress from '@material-ui/core/CircularProgress';
+import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
 
 import { withStyles } from '@material-ui/core/styles';
@@ -25,6 +26,15 @@ export default withStyles((theme) => ({
   previewRows: {
     height: '42px',
   },
+  loadingWrapper: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: 'white',
+    opacity: '0.8',
+    position: 'absolute',
+    top: 0,
+    left: 0,
+  },
   loading: {
     display: 'block',
     margin: [[theme.spacing(1), 'auto']],
@@ -35,41 +45,16 @@ export default withStyles((theme) => ({
 }) => {
   const [showPreview, setShowPreview] = useState(false);
   const [showPreviewLoading, setShowPreviewLoading] = useState(false);
+  const [after, setAfter] = useState('___');
 
   const startPreview = () => {
     console.log('kicking off preview');
     setShowPreviewLoading(true);
     setTimeout(() => {
       setShowPreview(!showPreview);
+      setAfter(after === '___' ? '47' : '___');
       setShowPreviewLoading(false);
     }, 1000);
-  };
-
-  const previewSection = () => {
-    if (showPreviewLoading) {
-      return (
-        <div className={classes.previewRows}>
-          <CircularProgress size={30} className={classes.loading} />
-          <Typography variant="body2" align="center">
-            Loading...
-          </Typography>
-        </div>
-      );
-    }
-
-    if (showPreview) {
-      return (
-        <Typography className={classes.previewRows} variant="h5">
-          47 rows
-        </Typography>
-      );
-    }
-
-    return (
-      <Typography className={classes.previewRows} variant="body2">
-        Click <b>Preview</b> to estimate the number of rows after transformation
-      </Typography>
-    );
   };
 
   return (
@@ -93,13 +78,28 @@ export default withStyles((theme) => ({
         >
           after transformation:
         </Typography>
+        <div style={{ position: 'relative' }}>
+          <Typography className={classes.previewRows} variant="h5">
+            {after} rows
+          </Typography>
+          {showPreviewLoading && (
+            <div className={classes.loadingWrapper}>
+              <CircularProgress size={30} className={classes.loading} />
+            </div>
+          )}
+        </div>
 
-        {previewSection()}
       </CardContent>
       <CardActions>
-        <Button onClick={startPreview} disabled={showPreviewLoading}>
-          Preview
-        </Button>
+        <Tooltip
+          placement="bottom-start"
+          title="Click to estimate the number of rows after transformation"
+          arrow
+        >
+          <Button onClick={startPreview} disabled={showPreviewLoading}>
+            Preview
+          </Button>
+        </Tooltip>
       </CardActions>
     </Card>
   );
