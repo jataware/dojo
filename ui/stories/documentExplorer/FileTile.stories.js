@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { FileTile } from '../../client/documents/UploadForm';
+import { FileTile } from '../../client/documents/upload/index';
 
 export default {
   title: 'Document Explorer/Upload New Document/FileTile',
