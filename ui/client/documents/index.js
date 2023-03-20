@@ -452,21 +452,23 @@ const ViewDocumentsGrid = withStyles((theme) => ({
         Promise.all(allDocPromises).then(() => {
           setDocParagraphResults(allParagraphs);
 
-          // fetch all highlights for results
-          const matches = map(allParagraphs, 'text');
-          const query = searchTerm;
+          if (process.env.DISABLE_SEMANTIC_HIGHLIGHT !== "true") {
+            // fetch all highlights for results
+            const matches = map(allParagraphs, 'text');
+            const query = searchTerm;
 
-          let url = `/api/dojo/paragraphs/highlight`;
+            let url = `/api/dojo/paragraphs/highlight`;
 
-          return axios.post(url, {
-            query,
-            matches
-          })
-            .then((response) => {
-              setHighlights(response.data.highlights)
+            return axios.post(url, {
+              query,
+              matches
+            }).then((response) => {
+              setHighlights(response.data.highlights);
               return;
-            })
-
+            });
+          } else {
+            console.info("Semantic Highlighter disabled.");
+          }
         });
 
       })
