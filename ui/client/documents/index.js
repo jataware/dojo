@@ -452,7 +452,7 @@ const ViewDocumentsGrid = withStyles((theme) => ({
         Promise.all(allDocPromises).then(() => {
           setDocParagraphResults(allParagraphs);
 
-          if (!process.env.DISABLE_SEMANTIC_HIGHLIGHT) {
+          if (process.env.DISABLE_SEMANTIC_HIGHLIGHT !== "true") {
             // fetch all highlights for results
             const matches = map(allParagraphs, 'text');
             const query = searchTerm;
