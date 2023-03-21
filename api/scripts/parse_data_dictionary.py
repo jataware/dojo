@@ -4,14 +4,12 @@ from pathlib import Path
 import argparse
 import csv
 import pprint
-import functools
+from functools import reduce
 
 # In case we wish to share/use any code within api/src:
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-# from src.sample import magic
 from validation.MetadataSchema import GeoAnnotation, DateAnnotation, FeatureAnnotation
-
 
 parser = argparse.ArgumentParser("Parse csv filename and other options.")
 
@@ -21,11 +19,13 @@ parser.add_argument("--file",
 
 args = parser.parse_args()
 
+pp = pprint.PrettyPrinter(indent=2)
 
 type_buckets = {
-    "feature": ["int", "float", "string", "binary"],
+    "feature": ["int", "float", "string", "binary", "boolean", "str", "integer", "bool"],
 
     "geo": ["latitude", "longitude", "coordinates", "country", "iso2", "iso3",
+            "state", "territory", "county", "district", "municipality", "town",
             "state/territory", "county/district", "municipality/town", "admin0", "admin1", "admin2", "admin3"],
 
     "date": ["month", "day", "year", "epoch", "date"]
@@ -42,9 +42,7 @@ def reverse_mapping(my_dict):
 
 reverse_bucket_map = reverse_mapping(type_buckets)
 
-
-# print(reverse_bucket_map)
-
+# NOTE print(reverse_bucket_map)
 
 def read_csv(filename):
     with open(filename) as f:
@@ -53,29 +51,22 @@ def read_csv(filename):
         return [dict(zip(headers,i)) for i in file_data]
 
 
-def group_by(list_of_dicts, prop):
-    buckets = {"feature": [],
-               "geo": [],
-               "date": []}
-
-    for item in list_of_dicts:
-        rtype = reverse_bucket_map[item[prop]]
-        buckets[rtype].append(item)
-
-    return buckets
-
-
 all_key_mappings = {
-    "field_name": "name"
+    "field_name": "name",
+    "qualifier_role": "qualifierrole"
 }
 
 geo_key_mappings = {
     "data_type": "geo_type",
     "primary": "primary_geo",
+    "coords_format": "coord_format",
+    "coordinates_format": "coord_format",
+    "coordinate_format": "coord_format"
 }|all_key_mappings
 
 # Allows users to enter any of these, which would confuse Mr. Elwood
 # but can be corrected beforehand
+# Implement as data conformer in pydantic model itself?
 geo_value_mappings = {
     "geo_type": {
         "admin0": "country",
@@ -111,80 +102,62 @@ feature_value_mappings = {
     }
 }
 
-# TODO Merge everything to use by input:
-key_mappings = {}
-value_mappings = {}
+mappings = {
+    "feature": {
+        "keys": feature_key_mappings,
+        "values": feature_value_mappings,
+        "parser": FeatureAnnotation
+    },
+    "geo": {
+        "keys": geo_key_mappings,
+        "values": geo_value_mappings,
+        "parser": GeoAnnotation
+    },
+    "date": {
+        "keys": date_key_mappings,
+        "parser": DateAnnotation
+    }
+}
 
 # NOTE helpful to print key|value_mappings
+# print(f"\n\n>>> Using the following mappings:\n\n\n")
+# pp.pprint(mappings)
 
 
-def format_geos(acc, geo_dict):
+def format_annotations(acc, item_dict):
+    # remove empty keys, lowercase all values
+    out_dict = {k: v.lower() for k, v in item_dict.items() if v}
 
-    # remove empty keys
-    geo_dict = {k: v for k, v in geo_dict.items() if v}
+    column_type = reverse_bucket_map[out_dict.get("data_type", out_dict.get("type", "str"))]
 
-    # replace equiv keys
-    d = dict((geo_key_mappings.get(k, k), v) for (k, v) in geo_dict.items())
+    km = mappings[column_type]["keys"]
+    vm = mappings[column_type].get("values")
 
-    # replace equiv values
-    d = dict((k, geo_value_mappings.get(k, {}).get(v,v)) for (k, v) in d.items())
+    if km:
+        out_dict = {km.get(k, k): v for k, v in out_dict.items()}
+    if vm:
+        out_dict = {k: vm.get(k, {}).get(v,v) for k, v in out_dict.items()}
 
-    # Cast/ values with pydantic
-    parsed = GeoAnnotation.parse_obj(d)
+    if out_dict.get("qualifies"):
+        out_dict["qualifies"] = out_dict["qualifies"].split(",")
 
-    # print(f"pydantic parsed: {parsed}")
+    parsed = mappings[column_type]["parser"].parse_obj(out_dict)
 
-    acc.append(parsed.dict()) # might not be needed when integrated to API
-    return acc
-
-
-def format_dates(acc, date_dict):
-
-    # remove empty keys
-    date_dict = {k: v for k, v in date_dict.items() if v}
-
-    # replace equiv keys
-    d = dict((date_key_mappings.get(k, k), v) for (k, v) in date_dict.items())
-
-    # Cast/ values with pydantic
-    parsed = DateAnnotation.parse_obj(d)
-
-    acc.append(parsed.dict())
-    return acc
-
-def format_features(acc, feat_dict):
-    # remove empty keys
-    feat_dict = {k: v for k, v in feat_dict.items() if v}
-
-    # replace equiv keys
-    d = dict((feature_key_mappings.get(k, k), v) for (k, v) in feat_dict.items())
-
-    # replace equiv values
-    d = dict((k, feature_value_mappings.get(k, {}).get(v,v)) for (k, v) in d.items())
-
-    # Cast/ values with pydantic
-    parsed = FeatureAnnotation.parse_obj(d)
-
-    acc.append(parsed.dict())
+    # Might not need dict() on integration.
+    acc[column_type].append(parsed.dict(exclude_none=True))
     return acc
 
 
 def format_to_elwood(dict_csv):
-    # group list of dictionaries by feature|geo|dateo
-    # first group since data_type will be renamed later on
-    grouped = group_by(dict_csv, "data_type")
-
-    # reformat each object to elwood schema
-    return {
-        "geo": functools.reduce(format_geos, grouped["geo"], []),
-        "date": functools.reduce(format_dates, grouped["date"], []),
-        "feature": functools.reduce(format_features, grouped["feature"], []),
-    }
+    return reduce(
+        format_annotations,
+        dict_csv,
+        {"feature": [], "geo": [], "date": []}
+    )
 
 
 csv_data = read_csv(args.file)
 
-pp = pprint.PrettyPrinter(indent=2)
 # pp.pprint(csv_data)
 
 out = format_to_elwood(csv_data)
