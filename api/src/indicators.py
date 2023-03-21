@@ -7,6 +7,8 @@ import uuid
 from datetime import datetime
 from typing import List, Type, Union, Any, Dict, Tuple, TypedDict, Optional
 import json
+import csv
+import codecs
 from functools import partial
 import pandas as pd
 
@@ -42,6 +44,7 @@ from src.causemos import deprecate_dataset
 from src.utils import put_rawfile, get_rawfile, list_files
 from src.plugins import plugin_action
 
+from src.csv_annotation_parser import format_annotations
 
 from src.embedder_engine import embedder
 
@@ -743,7 +746,6 @@ def one_stop_register(file: UploadFile = File(...), metadata: UploadFile = File(
 
     if len(merged_possible_errors):
         raise HTTPException(status_code=422, detail=merged_possible_errors)
-    
 
     create_response = create_indicator(indicator)
     response = json.loads(create_response.body)
@@ -777,3 +779,22 @@ def one_stop_register(file: UploadFile = File(...), metadata: UploadFile = File(
     )
 
     return create_response
+
+
+def bytes_to_csv(file):
+    csv_reader = csv.DictReader(codecs.iterdecode(file, 'utf-8'))
+    return list(csv_reader)
+
+# TODO xls -> csv
+@router.post("/indicators/{indicator_id}/annotations/dictionary-file")
+def csv_annotations(indicator_id: str, file: UploadFile = File(...)):
+
+    # logger.info(f"file content type: {file.content_type}")
+
+    csv_dictionary_list = bytes_to_csv(file.file)
+
+    formatted = format_annotations(csv_dictionary_list)
+    annotation_payload=MetadataSchema.MetaModel(annotations=formatted)
+
+    return post_annotation(payload=annotation_payload, indicator_id=indicator_id)
+
