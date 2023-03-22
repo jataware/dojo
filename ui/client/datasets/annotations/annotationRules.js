@@ -182,10 +182,8 @@ export function verifyConditionalRequiredFields(annotation) {
     });
   }
 
-  // TODO which fields are required on multi-column-admin geos?
-
   if (annotation.category === CATEGORIES.time) {
-    if (!annotation.time_format && !annotation['date.multi-column']) {
+    if (!annotation.time_format && !annotation['date.multi-column'] && annotation.date_type !== 'epoch') {
       errors.time_format = 'Required';
     }
   }

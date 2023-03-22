@@ -1,5 +1,5 @@
 /* eslint-disable no-undef */
-import { previousPrimaryColumn, verifyQualifierPrimaryRules } from './annotationRules';
+import { previousPrimaryColumn, verifyQualifierPrimaryRules, verifyConditionalRequiredFields } from './annotationRules';
 
 describe('verifyQualifierPrimaryRules', () => {
   test('Cant qualify other qualifier columns', () => {
@@ -136,5 +136,22 @@ describe('previousPrimaryColumn', () => {
     const result = previousPrimaryColumn(allAnnotations, editingValues, editingColumnName);
 
     expect(result).toBeNull();
+  });
+
+});
+
+describe('verifyConditionalRequiredFields', () => {
+  test('Epoch date type doesn\' require a time_format', () => {
+
+    const currentColumnValues = {
+      category: 'time',
+      date_type: 'epoch',
+      description: 'hello'
+    };
+
+    const result = verifyConditionalRequiredFields(currentColumnValues);
+
+    expect(result).toEqual({});
+
   });
 });
