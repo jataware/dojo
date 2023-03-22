@@ -33,16 +33,20 @@ def clip_geo(context, filename=None, **kwargs):
         json_dataframe_preview = clipped_df.head(100).to_json(default_handler=str)
         rows_post_clip = len(clipped_df.index)
 
-        file.seek(0)
-        persist_untransformed_file(context["uuid"], filename, file)
+        preview = kwargs.get("preview_run", False)
 
-        # Put the new clipped file to overwrite the old one.
-        file_buffer = io.BytesIO()
+        if not preview:
+            # If the run is not a preview run, persist the transformation.
+            file.seek(0)
+            persist_untransformed_file(context["uuid"], filename, file)
 
-        clipped_df.to_csv(file_buffer)
-        file_buffer.seek(0)
+            # Put the new clipped file to overwrite the old one.
+            file_buffer = io.BytesIO()
 
-        put_rawfile(path=rawfile_path, fileobj=file_buffer)
+            clipped_df.to_csv(file_buffer)
+            file_buffer.seek(0)
+
+            put_rawfile(path=rawfile_path, fileobj=file_buffer)
 
         response = {
             "messsage": "Geography clipped successfully",
@@ -80,16 +84,20 @@ def clip_time(context, filename=None, **kwargs):
         json_dataframe_preview = clipped_df.head(100).to_json(default_handler=str)
         rows_post_clip = len(clipped_df.index)
 
-        file.seek(0)
-        persist_untransformed_file(context["uuid"], filename, file)
+        preview = kwargs.get("preview_run", False)
 
-        # Put the new clipped file to overwrite the old one.
-        file_buffer = io.BytesIO()
+        if not preview:
+            # If the run is not a preview run, persist the transformation.
+            file.seek(0)
+            persist_untransformed_file(context["uuid"], filename, file)
 
-        clipped_df.to_csv(file_buffer)
-        file_buffer.seek(0)
+            # Put the new clipped file to overwrite the old one.
+            file_buffer = io.BytesIO()
 
-        put_rawfile(path=rawfile_path, fileobj=file_buffer)
+            clipped_df.to_csv(file_buffer)
+            file_buffer.seek(0)
+
+            put_rawfile(path=rawfile_path, fileobj=file_buffer)
 
         response = {
             "messsage": "Time clipped successfully",
