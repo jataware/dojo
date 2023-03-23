@@ -7,6 +7,24 @@ import IconButton from '@material-ui/core/IconButton';
 import InboxIcon from '@material-ui/icons/MoveToInbox';
 import Typography from '@material-ui/core/Typography';
 
+const extensionMap = {
+  'pdf':{
+    'application/pdf': ['.pdf'],
+  },
+  'csv':{
+    'text/csv': ['.csv'],
+  }
+}
+
+export function formatExtensionForDropZone(extensionsArray) {
+  return extensionsArray.reduce((acc, extension) => {
+    // Optional preceding dot . for extension removed
+    let buff = extension.replace(/^\./g, '');
+
+    return {...acc, ...extensionMap[buff]};
+  }, {});
+}
+
 /**
  *
  **/
@@ -30,38 +48,57 @@ export const FileDropSelector = withStyles((theme => ({
     width: '7rem',
     height: '7rem',
     padding: '0.5rem'
+  },
+  mini: {
+    flex: '0',
+    borderWidth: '1px',
+    borderColor: 'gray',
+    borderRadius: 1,
+    padding: 1,
+    margin: 1,
+    flexDirection: 'row'
   }
-})))(({classes, onFileSelect, onDropFilesRejected}) => {
+})))(({classes, onFileSelect, onDropFilesRejected, acceptExtensions, mini, CTA}) => {
+
   const {getRootProps, getInputProps, isDragActive} = useDropzone({
     onDropAccepted: onFileSelect,
     multiple: true,
     onDropRejected: onDropFilesRejected,
-    accept: {
-      'application/pdf': ['.pdf'],
-    }
+    accept: formatExtensionForDropZone(acceptExtensions)
   });
 
   return (
     <div
       className={clsx({
         [classes.root]: true,
-        [classes.dropActive]: isDragActive
+        [classes.dropActive]: isDragActive,
+        [classes.mini]: mini
       })}
       {...getRootProps()}
     >
-      <IconButton size="medium" color={isDragActive ? "primary" : "default"}>
-        <InboxIcon className={classes.dropIcon}  />
+      <IconButton
+        size={mini ? 'medium' : 'small'}
+        color={isDragActive ? "primary" : "default"}
+      >
+        <InboxIcon className={mini ? '' : classes.dropIcon}  />
       </IconButton>
 
       <input {...getInputProps()} /> {/*is hidden*/}
 
-      <Typography variant="h6" color="textSecondary">
+      <Typography
+        variant={mini ? "caption" : "h6"}
+        color="textSecondary"
+        style={{whiteSpace: 'nowrap', paddingRight: 10}}
+      >
         {
           isDragActive ?
             'Drop the files here' :
-            'Drag PDFs here. Click to select files.'
+            CTA || `Drag ${acceptExtensions.map(i => i.toUpperCase()+'s').join(',')} here. Click to select files.`
         }
       </Typography>
     </div>
   );
 });
+FileDropSelector.defaultProps = {
+  acceptExtensions: ['pdf']
+};

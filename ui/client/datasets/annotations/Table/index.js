@@ -18,6 +18,9 @@ import ColumnPanel from '../ColumnPanel';
 import { calcPointerLocation, groupColumns } from './helpers';
 import Header from './Header';
 
+import { FileDropSelector } from '../../../documents/upload/DropArea'
+
+
 const rowsPerPageOptions = [25, 50, 100];
 
 /**
@@ -50,10 +53,6 @@ const Cell = withStyles(({ palette, spacing }) => ({
 
 const ROW_HEIGHT = 52;
 const HEADER_HEIGHT = 80;
-
-// TODO add Show Inferred button
-// TODO add show Stats button
-// TODO change Instructions once colors finalized
 
 /**
  *
@@ -117,7 +116,7 @@ export default withStyles(({ palette }) => ({
   columns, annotations, inferredData,
   loading, multiPartData, setMultiPartData,
   validateDateFormat, columnStats,
-  fieldsConfig, addingAnnotationsAllowed
+  fieldsConfig, addingAnnotationsAllowed, onUploadAnnotations
 }) => {
   const [pageSize, setPageSize] = useState(rowsPerPageOptions[0]);
   const [highlightedColumn, setHighlightedColumn] = useState(null);
@@ -270,25 +269,42 @@ export default withStyles(({ palette }) => ({
     }
   };
 
+  const handleFileSelect = (acceptedFiles) => {
+    onUploadAnnotations(acceptedFiles[0]);
+  };
+
+  const handleDropFilesRejection = (...args) => {
+    console.log('drop files rejected: ', args);
+  }
+
   return (
     <div className={classes.root}>
 
-      <div>
-        <Tooltip
-          classes={{ tooltip: classes.tooltip }}
-          title="Display context icons for columns with inferred data, annotated as primary, or as qualifier."
-        >
-          <FormControlLabel
-            control={(
-              <Checkbox
-                checked={isShowMarkers}
-                onChange={(e) => setShowMarkers(e.target.checked)}
-                color="primary"
-              />
-            )}
-            label="Show Additional Markers"
-          />
-        </Tooltip>
+      <div style={{display: 'flex'}}>
+        <div style={{flex: 1}}>
+          <Tooltip
+            classes={{ tooltip: classes.tooltip }}
+            title="Display context icons for columns with inferred data, annotated as primary, or as qualifier."
+          >
+            <FormControlLabel
+              control={(
+                <Checkbox
+                  checked={isShowMarkers}
+                  onChange={(e) => setShowMarkers(e.target.checked)}
+                  color="primary"
+                />
+              )}
+              label="Show Additional Markers"
+            />
+          </Tooltip>
+        </div>
+        <FileDropSelector
+          onFileSelect={handleFileSelect}
+          onDropFilesRejected={handleDropFilesRejection}
+          acceptExtensions={['csv']}
+          CTA="Upload Annotations CSV"
+          mini
+        />
       </div>
 
       <DataGrid

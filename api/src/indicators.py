@@ -785,16 +785,13 @@ def bytes_to_csv(file):
     csv_reader = csv.DictReader(codecs.iterdecode(file, 'utf-8'))
     return list(csv_reader)
 
-# TODO xls -> csv
-@router.post("/indicators/{indicator_id}/annotations/dictionary-file")
+@router.post("/indicators/{indicator_id}/annotations/file")
 def csv_annotations(indicator_id: str, file: UploadFile = File(...)):
-
-    # logger.info(f"file content type: {file.content_type}")
-
+    """
+    Accepts a CSV dictionary file describing a dataset in order to register it. Similar to using the API directly with JSON, or using the Dataset Registration flow on Dojo user interface to annotate a dataset.
+    """
     csv_dictionary_list = bytes_to_csv(file.file)
-
     formatted = format_annotations(csv_dictionary_list)
     annotation_payload=MetadataSchema.MetaModel(annotations=formatted)
 
-    return post_annotation(payload=annotation_payload, indicator_id=indicator_id)
-
+    return patch_annotation(payload=annotation_payload, indicator_id=indicator_id)

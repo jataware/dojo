@@ -18,6 +18,22 @@ import { formatAnnotationsOUT } from './annotations/dataOUT';
 import { validateRequirements } from './annotations/annotationRules';
 import Prompt from './PromptDialog';
 
+// TODO finally create and reuse uploadFile fn form here, documents, and annotations form.file
+// TODO pass in method, url
+export const uploadFile = async (file, datasetID, params={}) => {
+  const uploadData = new window.FormData();
+
+  uploadData.append('file', file);
+
+  const response = await axios({
+    method: 'post',
+    url: `/api/dojo/indicators/${datasetID}/annotations/file`,
+    data: uploadData,
+    params: params
+  });
+  return response;
+};
+
 /**
  * Receives geoclassify data and formats column information for our Data Grid
  * */
@@ -66,11 +82,21 @@ export default withStyles(({ spacing }) => ({
 
   const [promptMessage, setPromptMessage] = useState('');
 
+  // If UI or server modify saved annotations in DB, refresh and set them on UI here
+  const refreshAnnotations = async () => {
+    const serverAnnotationData = await axios.get(`/api/dojo/indicators/${datasetInfo.id}/annotations`);
+    const { annotations: serverAnnotations } = serverAnnotationData.data;
+    if (serverAnnotations) {
+      const formattedIn = formatAnnotationsIN(serverAnnotations);
+      setInternalAnnotations(formattedIn.annotations);
+      setMultiPartData(formattedIn.multiPartData);
+    }
+  };
+
   useEffect(() => {
     if (!isLoading || (isLoading && !datasetInfo?.id)) {
       return;
     }
-
 
     const fileArg = (useFilepath ? "filepath" : "filename");
     const previewUrl = `/api/dojo/indicators/${datasetInfo.id}/preview/raw${rawFileName ? `?${fileArg}=${rawFileName}` : ''}`;
@@ -83,7 +109,7 @@ export default withStyles(({ spacing }) => ({
         return {data: annotations};
       }
       else {
-        // Load annotations from API, which also include other data unavailable if we don't call this
+        // Load annotations from API, which also includes other data unavailable if we don't call this
         return axios.get(`/api/dojo/indicators/${datasetInfo.id}/annotations`);
       }
     };
@@ -178,6 +204,11 @@ export default withStyles(({ spacing }) => ({
     }
   }
 
+  const handleUploadAnnotations = (file) => {
+    uploadFile(file, datasetInfo.id)
+      .then(refreshAnnotations);
+  };
+
   return (
     <Container
       className={classes.root}
@@ -206,6 +237,7 @@ export default withStyles(({ spacing }) => ({
         validateDateFormat={validateDateFormat}
         fieldsConfig={fieldsConfig}
         addingAnnotationsAllowed={addingAnnotationsAllowed}
+        onUploadAnnotations={handleUploadAnnotations}
       />
 
       <Navigation

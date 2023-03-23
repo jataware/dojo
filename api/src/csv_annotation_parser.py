@@ -1,4 +1,21 @@
 from functools import reduce
+from collections import defaultdict
+
+"""
+  Ignoring the __main__ file runner, this file deals with conversion of csv->dict output to
+  the expected schema for elwood to process a dataset annotation.
+"""
+
+if __name__ == "__main__":
+    import sys
+    from pathlib import Path
+    import csv
+    import pprint
+    pp = pprint.PrettyPrinter(indent=2)
+    sys.path.append(str(Path(__file__).resolve().parent.parent))
+
+
+
 from validation.MetadataSchema import GeoAnnotation, DateAnnotation, FeatureAnnotation
 
 type_buckets = {
@@ -25,7 +42,9 @@ reverse_bucket_map = reverse_mapping(type_buckets)
 
 all_key_mappings = {
     "field_name": "name",
-    "qualifier_role": "qualifierrole"
+    "qualifier_role": "qualifierrole",
+    "unit": "units",
+    "unit_description": "units_description",
 }
 
 geo_key_mappings = {
@@ -87,31 +106,49 @@ mappings = {
     },
     "date": {
         "keys": date_key_mappings,
+        "values": {},
         "parser": DateAnnotation
     }
 }
 
-def format_to_schema(acc, item_dict):
-    # remove empty keys, lowercase all values
-    out_dict = {k: v.lower() for k, v in item_dict.items() if v}
+
+def dict_val_lower(my_dict, key):
+    my_dict[key] = my_dict.get(key, "").lower()
+
+
+def format_schema_helper(item_dict):
+    # Remove potential typos that don't affect data
+    dict_val_lower(item_dict, "data_type")
+    dict_val_lower(item_dict, "gadm_level")
+
+    # Remove all empty keys first
+    out_dict = {k: v for k, v in item_dict.items() if v}
+
+    # Re-add required attributes:
+    out_dict = {"display_name": ""}|out_dict
 
     column_type = reverse_bucket_map[out_dict.get("data_type", out_dict.get("type", "str"))]
 
-    # TODO cleanup km,vm conditionals
-    km = mappings[column_type]["keys"]
-    vm = mappings[column_type].get("values")
+    key_mappings = mappings[column_type]["keys"]
+    value_mappings = mappings[column_type].get("values")
+    out_dict = {key_mappings.get(k, k): v for k, v in out_dict.items()}
+    out_dict = {k: value_mappings.get(k, {}).get(v,v) for k, v in out_dict.items()}
 
-    if km:
-        out_dict = {km.get(k, k): v for k, v in out_dict.items()}
-    if vm:
-        out_dict = {k: vm.get(k, {}).get(v,v) for k, v in out_dict.items()}
-
+    # Exceptions. Fn formatters
     if out_dict.get("qualifies"):
         out_dict["qualifies"] = out_dict["qualifies"].split(",")
 
-    parsed = mappings[column_type]["parser"].parse_obj(out_dict)
+    if out_dict.get("date_type") == "epoch":
+        dict_val_lower(out_dict, "time_format")
 
-    # TODO Might not need dict() on integration.
+    return (out_dict, column_type)
+
+
+def format_to_schema(acc, item_dict):
+    """
+    """
+    out_dict, column_type = format_schema_helper(item_dict)
+    parsed = mappings[column_type]["parser"].parse_obj(out_dict)
     acc[column_type].append(parsed.dict(exclude_none=True))
     return acc
 
@@ -122,3 +159,31 @@ def format_annotations(dict_csv):
         dict_csv,
         {"feature": [], "geo": [], "date": []}
     )
+
+
+
+
+
+
+if __name__ == "__main__":
+    import argparse
+
+    parser = argparse.ArgumentParser("Parse csv filename and other options.")
+
+    parser.add_argument("--file",
+                        help="filename that contains data dictionary",
+                        type=str, default="./data_dictionary.csv")
+
+    args = parser.parse_args()
+
+    def read_csv(filename):
+        with open(filename) as f:
+            file_data=csv.reader(f)
+            headers=next(file_data)
+            return [dict(zip(headers,i)) for i in file_data]
+    csv_data = read_csv(args.file)
+
+    # pp.pprint(csv_data)
+
+    out = format_annotations(csv_data)
+    pp.pprint(out)
