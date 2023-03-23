@@ -712,9 +712,9 @@ def rescale_indicator(indicator_id: str):
     return resp
 
 
-# TODO rename params as data_file and metadata_file ?
+# TODO Add/use csv data dictionary file
 @router.post("/indicators/definition")
-def one_stop_register(file: UploadFile = File(...), metadata: UploadFile = File(...)):
+def dataset_register_files(data: UploadFile = File(...), metadata: UploadFile = File(...)):
     """
     Fields (not columns). Define fields (not annotations?)
     See what we'll do with filename
@@ -786,7 +786,7 @@ def bytes_to_csv(file):
     return list(csv_reader)
 
 @router.post("/indicators/{indicator_id}/annotations/file")
-def csv_annotations(indicator_id: str, file: UploadFile = File(...)):
+def upload_csv_data_dictionary_file(indicator_id: str, file: UploadFile = File(...)):
     """
     Accepts a CSV dictionary file describing a dataset in order to register it. Similar to using the API directly with JSON, or using the Dataset Registration flow on Dojo user interface to annotate a dataset.
     """

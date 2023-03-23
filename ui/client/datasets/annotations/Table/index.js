@@ -5,11 +5,13 @@ import get from 'lodash/get';
 import find from 'lodash/find';
 import isEmpty from 'lodash/isEmpty';
 
-import { DataGrid } from '@material-ui/data-grid';
 import { withStyles } from '@material-ui/core/styles';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Checkbox from '@material-ui/core/Checkbox';
 import Tooltip from '@material-ui/core/Tooltip';
+
+import { GridOverlay, DataGrid } from '@material-ui/data-grid';
+import LinearProgress from '@material-ui/core/LinearProgress';
 
 import BasicAlert from '../../../components/BasicAlert';
 
@@ -53,6 +55,20 @@ const Cell = withStyles(({ palette, spacing }) => ({
 
 const ROW_HEIGHT = 52;
 const HEADER_HEIGHT = 80;
+
+/**
+ * Blue linear loading animation displayed when table loading/searching of
+ * features is still in progress.
+ */
+function CustomLoadingOverlay() {
+  return (
+    <GridOverlay>
+      <div style={{ position: 'absolute', top: 0, width: '100%', zIndex: 15 }}>
+        <LinearProgress style={{height: 3}}/>
+      </div>
+    </GridOverlay>
+  );
+}
 
 /**
  *
@@ -313,6 +329,9 @@ export default withStyles(({ palette }) => ({
         disableColumnMenu
         disableSelectionOnClick
         getRowId={(row) => row.__id}
+        components={{
+          LoadingOverlay: CustomLoadingOverlay
+        }}
         classes={{
           root: clsx([classes.grid, classes.gridScroll, classes.hideHeaderBorder]),
           row: classes.row,

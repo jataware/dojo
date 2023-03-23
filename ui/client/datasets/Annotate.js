@@ -91,6 +91,7 @@ export default withStyles(({ spacing }) => ({
       setInternalAnnotations(formattedIn.annotations);
       setMultiPartData(formattedIn.multiPartData);
     }
+    return true;
   };
 
   useEffect(() => {
@@ -205,8 +206,10 @@ export default withStyles(({ spacing }) => ({
   }
 
   const handleUploadAnnotations = (file) => {
+    setLoading(true);
     uploadFile(file, datasetInfo.id)
-      .then(refreshAnnotations);
+      .then(refreshAnnotations)
+      .finally(() => setLoading(false));
   };
 
   return (
