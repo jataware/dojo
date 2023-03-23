@@ -125,6 +125,7 @@ def scale_time(context, filename=None, **kwargs):
     time_column = kwargs.get("datetime_column", "")
     time_bucket = kwargs.get("datetime_bucket", "")
     aggregation_list = kwargs.get("aggregation_function_list", [])
+    geo_columns = kwargs.get("geo_columns", None)
 
     if time_column and time_bucket and aggregation_list:
         clipped_df = elwood.rescale_dataframe_time(
@@ -132,6 +133,7 @@ def scale_time(context, filename=None, **kwargs):
             time_column=time_column,
             time_bucket=time_bucket,
             aggregation_function_list=aggregation_list,
+            geo_columns=geo_columns,
         )
 
         print(f"RESCALED TIME: {clipped_df}")
@@ -313,9 +315,12 @@ def get_dataframe_rows(context, filename=None):
     file, filename, rawfile_path = job_setup(context=context, filename=filename)
     original_dataframe = pd.read_csv(file, delimiter=",")
 
+    file_size = os.fstat(file.fileno()).st_size
+
     rows_pre_clip = len(original_dataframe.index)
 
     return {
         "message": "Current rows in the dataset calculated.",
+        "dataset_size": file_size,
         "dataset_row": rows_pre_clip,
     }
