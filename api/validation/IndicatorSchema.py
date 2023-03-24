@@ -537,13 +537,3 @@ class FeaturesSemanticSearchSchema(FeaturesSearchSchema):
         description="Max search engine score from all matches. This will match the first result's score within the first scroll page.",
         examples=[0.72]
     )
-
-
-class OmniData(BaseModel):
-    name: str
-    description: str
-    filename: str
-
-class DatasetRegisterOmniData(BaseModel):
-    dat: bytes
-    file: bytes

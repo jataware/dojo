@@ -143,12 +143,10 @@ class FeatureAnnotation(BaseModel):
     aliases: Dict[str, str] = {}
 
 
-
-# NOTE Shouldn't some of these annotations be required, when present?
 class AnnotationSchema(BaseModel):
     class Config:
         extra = Extra.allow
-    
+
     geo: Optional[List[GeoAnnotation]]
     date: Optional[List[DateAnnotation]]
     feature: Optional[List[FeatureAnnotation]]
