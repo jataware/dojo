@@ -2,7 +2,7 @@ import logging
 
 import uvicorn
 from elasticsearch import Elasticsearch
-# from fastapi import FastAPI
+from fastapi import FastAPI
 
 from src import (
     terminal,
@@ -18,11 +18,6 @@ from src import (
 from src.settings import settings
 
 logger = logging.getLogger(__name__)
-
-from fastapi import FastAPI, Request, status
-from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
-
 
 api = FastAPI(docs_url="/")
 api.include_router(healthcheck.router, tags=["Health Check"])
@@ -225,16 +220,6 @@ def print_debug_routes() -> None:
         f"{method:7} {path:{max_len}} {name}" for method, path, name in routes
     )
     logger.debug(f"Route Table:\n{route_table}")
-
-
-@api.exception_handler(RequestValidationError)
-async def validation_exception_handler(request: Request, exc: RequestValidationError):
-    logger.info("custom exception caught on fastapi api req..")
-    exc_str = f'{exc}'.replace('\n', ' ').replace('   ', ' ')
-    # or logger.error(f'{exc}')
-    logger.error(request, exc_str)
-    content = {'status_code': 422, 'message': exc_str, 'data': None}
-    return JSONResponse(content=content, status_code=status.HTTP_422_UNPROCESSABLE_ENTITY)
 
 
 @api.on_event("startup")

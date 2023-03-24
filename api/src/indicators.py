@@ -5,7 +5,7 @@ import re
 import time
 import uuid
 from datetime import datetime
-from typing import List, Type, Union, Any, Dict, Tuple, TypedDict, Optional
+from typing import List, Optional
 import json
 import csv
 import codecs
@@ -20,16 +20,13 @@ from fastapi import (
     Response,
     status,
     UploadFile,
-    File,
-    Depends,
-    Form
+    File
 )
 from fastapi.logger import logger
 from redis import Redis
 from rq import Queue
 from rq.exceptions import NoSuchJobError # TODO handle
 
-from pydantic import BaseModel
 from pydantic import ValidationError
 
 from validation import IndicatorSchema, DojoSchema, MetadataSchema
@@ -83,9 +80,6 @@ def enqueue_indicator_feature(indicator_id, indicator_dict):
 
 @router.post("/indicators")
 def create_indicator(payload: IndicatorSchema.IndicatorMetadataSchema):
-
-    logger.info(f"what is the input payload format: {payload} type: {type(payload)}")
-
     indicator_id = str(uuid.uuid4())
     payload.id = indicator_id
     payload.created_at = current_milli_time()
@@ -398,9 +392,6 @@ def get_indicators(indicator_id: str) -> IndicatorSchema.IndicatorMetadataSchema
 
 @router.put("/indicators/{indicator_id}/publish")
 def publish_indicator(indicator_id: str):
-
-    logger.info("called publish indicator as handler!!!!!")
-
     try:
         # Update indicator model with ontologies from UAZ
         indicator = es.get(index="indicators", id=indicator_id)["_source"]
@@ -755,7 +746,7 @@ def dataset_register_files(data: UploadFile = File(...), metadata: UploadFile = 
     # NOTE Q: what's the filename of real raw .xls vs converted .csv?
     # file_processors.file_conversion
 
-    # Step 4: Call job for mixmasta to normalize. It should then call step 5.
+    # Step 4: Call job for mixmasta to normalize. It should then call step 5 (publish)
 
     job_string = "elwood_processors.run_elwood"
     job_id = f"{indicator_id}_{job_string}"
