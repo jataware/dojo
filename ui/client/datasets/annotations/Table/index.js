@@ -36,17 +36,24 @@ const Cell = withStyles(({ palette, spacing }) => ({
     backgroundColor: palette.grey[100],
   },
 }))(({
-  isHighlighted, classes, value
-}) => (
-  <span
-    className={clsx({
-      [classes.root]: true,
-      [classes.hoveredCell]: isHighlighted,
-    })}
-  >
-    {value}
-  </span>
-));
+  isHighlighted, classes, value, ...props
+}) => {
+  // TODO remove this: props for when the cell hasFocus (experimenting with adding hasFocus here)
+  // doesn't do anything
+  if (props.hasFocus) {
+    console.log('these are the props in cell', props, value)
+  }
+  return (
+    <span
+      className={clsx({
+        [classes.root]: true,
+        [classes.hoveredCell]: isHighlighted,
+      })}
+    >
+      {value}
+    </span>
+  );
+});
 
 const ROW_HEIGHT = 52;
 const HEADER_HEIGHT = 80;
@@ -129,6 +136,7 @@ export default withStyles(({ palette }) => ({
   });
   const editedColumnIndex = useRef(null);
   const gridRef = useRef(null);
+  const [moveHighlight, setMoveHighlight] = useState(false);
 
   const [isShowMarkers, setShowMarkers] = useState(true);
 
@@ -198,6 +206,7 @@ export default withStyles(({ palette }) => ({
 
     return {
       isHighlighted,
+      hasFocus: isHighlighted,
       status,
       isMultiPartMember,
       isMultiPartBase,
@@ -247,30 +256,24 @@ export default withStyles(({ palette }) => ({
     setAnnotationAlertMessage({
       message: `Your annotation of ${columnName} was successfully added`, severity: 'success'
     });
+    setMoveHighlight(true);
   }
 
   React.useEffect(() => {
-    if (annotationSuccessAlert === true && !highlightedColumn === sortedColumns[editedColumnIndex.current]?.field) {
+    // only do this when we've set moveHighlight (ie after saving an annotation)
+    // and the highlightedColumn doesn't equal the savedIndex (so we need to highlight a new column)
+    if (moveHighlight && highlightedColumn !== sortedColumns[editedColumnIndex.current]?.field) {
       if (typeof editedColumnIndex.current === 'number' && editedColumnIndex.current !== -1) {
         const col = sortedColumns[editedColumnIndex.current].field;
         console.log('THIS IS COL AFTER SAVING', col)
         setHighlightedColumn(col);
-        // gridRef.current.focus();
-        // document.querySelector('.MuiDataGrid-main').click();
-        // setTimeout(() => {
-
-        // }, 100);
+        // toggle this to false so we don't come back in here
+        setMoveHighlight(false);
       }
     }
-  }, [annotationSuccessAlert, sortedColumns, highlightedColumn])
+  }, [moveHighlight, sortedColumns, highlightedColumn]);
 
-  // React.useEffect(() => {
-  //   console.log('this is highligthedColumn', highlightedColumn)
-  //   const highlighted = document.querySelector('[class*=hoveredCell]');
-  //   console.log('this is the highlighted', highlighted)
-  //   if (highlighted) highlighted.focus();
-  // }, [highlightedColumn])
-
+  // WE don't need this anymore, now that it all happens in handleCellKeyDown
   // const highlightColumn = (cell, event) => {
   //   // Get the next column to highlight from relatedTarget - this works for arrow key navigation
   //   const clicked = event.relatedTarget;
