@@ -721,11 +721,6 @@ def dataset_register_files(data: UploadFile = File(...), metadata: UploadFile = 
     """
     json_data = json.load(metadata.file)
 
-    # TODO Error handling; Use pydantic "one-of" when multiple options some required?
-
-    # Step 0: Tranform data to what endpoints/elwood expects. If we change annotations format.
-    # Also use a pydantic file schema to validate input file
-
     indicator_error=[]
     annotations_error=[]
 
@@ -734,8 +729,6 @@ def dataset_register_files(data: UploadFile = File(...), metadata: UploadFile = 
         indicator = IndicatorSchema.IndicatorMetadataSchema.parse_obj(json_data)
     except ValidationError as e:
         indicator_error = json.loads(e.json())
-
-    # annotations = MetadataSchema.AnnotationSchema.parse_obj(json_data)
 
     try:
         annotations = MetadataSchema.MetaModel.parse_obj(json_data)
@@ -791,7 +784,15 @@ def upload_csv_data_dictionary_file(indicator_id: str, file: UploadFile = File(.
     Accepts a CSV dictionary file describing a dataset in order to register it. Similar to using the API directly with JSON, or using the Dataset Registration flow on Dojo user interface to annotate a dataset.
     """
     csv_dictionary_list = bytes_to_csv(file.file)
-    formatted = format_annotations(csv_dictionary_list)
+
+    try:
+        formatted = format_annotations(csv_dictionary_list)
+    except ValidationError as e:
+        full_data = json.loads(e.json())
+        full_data[0]["input_value"] = e.values
+        full_data[0]["message"] = str(e)
+        raise HTTPException(status_code=422, detail=full_data)
+
     annotation_payload=MetadataSchema.MetaModel(annotations=formatted)
 
     return patch_annotation(payload=annotation_payload, indicator_id=indicator_id)

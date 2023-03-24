@@ -1,5 +1,7 @@
 from functools import reduce
 from collections import defaultdict
+from pydantic import BaseModel, Extra, ValidationError
+
 
 """
   Ignoring the __main__ file runner, this file deals with conversion of csv->dict output to
@@ -116,6 +118,13 @@ def dict_val_lower(my_dict, key):
     my_dict[key] = my_dict.get(key, "").lower()
 
 
+class RequiredField(BaseModel):
+    class Config:
+        extra = Extra.allow
+
+    data_type: str
+
+
 def format_schema_helper(item_dict):
     # Remove potential typos that don't affect data
     dict_val_lower(item_dict, "data_type")
@@ -127,7 +136,10 @@ def format_schema_helper(item_dict):
     # Re-add required attributes:
     out_dict = {"display_name": ""}|out_dict
 
-    column_type = reverse_bucket_map[out_dict.get("data_type", out_dict.get("type", "str"))]
+    # Ensure required fields are present
+    RequiredField.parse_obj(out_dict)
+
+    column_type = reverse_bucket_map[out_dict.get("data_type", "str")]
 
     key_mappings = mappings[column_type]["keys"]
     value_mappings = mappings[column_type].get("values")
@@ -147,8 +159,14 @@ def format_schema_helper(item_dict):
 def format_to_schema(acc, item_dict):
     """
     """
-    out_dict, column_type = format_schema_helper(item_dict)
-    parsed = mappings[column_type]["parser"].parse_obj(out_dict)
+
+    try:
+        out_dict, column_type = format_schema_helper(item_dict)
+        parsed = mappings[column_type]["parser"].parse_obj(out_dict)
+    except ValidationError as e:
+        e.values = item_dict # TODO create custom Error
+        raise
+
     acc[column_type].append(parsed.dict(exclude_none=True))
     return acc
 
@@ -159,9 +177,6 @@ def format_annotations(dict_csv):
         dict_csv,
         {"feature": [], "geo": [], "date": []}
     )
-
-
-
 
 
 

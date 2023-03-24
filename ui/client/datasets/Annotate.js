@@ -3,6 +3,7 @@ import React, { useEffect, useState, SetStateAction } from 'react';
 import axios from 'axios';
 import isEmpty from 'lodash/isEmpty';
 import map from 'lodash/map';
+import reduce from 'lodash/reduce';
 
 import Container from '@material-ui/core/Container';
 import Typography from '@material-ui/core/Typography';
@@ -18,6 +19,7 @@ import { formatAnnotationsOUT } from './annotations/dataOUT';
 import { validateRequirements } from './annotations/annotationRules';
 import Prompt from './PromptDialog';
 
+
 // TODO finally create and reuse uploadFile fn form here, documents, and annotations form.file
 // TODO pass in method, url
 export const uploadFile = async (file, datasetID, params={}) => {
@@ -31,8 +33,25 @@ export const uploadFile = async (file, datasetID, params={}) => {
     data: uploadData,
     params: params
   });
+
   return response;
 };
+
+/**
+ * Given server annotation (and its shape), returns annotations for fields that
+ * exist in the data itself (which we gather as columns, from previewData).
+ */
+const knownFieldAnnotations = (serverAnnotations, columns) => reduce(
+  serverAnnotations,
+  (acc, annotations, property) => {
+    const valid = annotations.filter((annotation) =>
+      columns.find(col => col.field === annotation.name)
+    );
+    acc[property] = valid;
+    return acc;
+  },
+  {}
+);
 
 /**
  * Receives geoclassify data and formats column information for our Data Grid
@@ -82,16 +101,22 @@ export default withStyles(({ spacing }) => ({
 
   const [promptMessage, setPromptMessage] = useState('');
 
-  // If UI or server modify saved annotations in DB, refresh and set them on UI here
-  const refreshAnnotations = async () => {
-    const serverAnnotationData = await axios.get(`/api/dojo/indicators/${datasetInfo.id}/annotations`);
-    const { annotations: serverAnnotations } = serverAnnotationData.data;
+  function formatAndSetAnnotations(serverAnnotations, knownColumns) {
     if (serverAnnotations) {
-      const formattedIn = formatAnnotationsIN(serverAnnotations);
+      const annotationsToLoad = knownFieldAnnotations(serverAnnotations, knownColumns)
+      const formattedIn = formatAnnotationsIN(annotationsToLoad);
+
       setInternalAnnotations(formattedIn.annotations);
       setMultiPartData(formattedIn.multiPartData);
     }
     return true;
+  }
+
+  // If UI or server modify saved annotations in DB, refresh and set them on UI here
+  const refreshAnnotations = async () => {
+    const serverAnnotationData = await axios.get(`/api/dojo/indicators/${datasetInfo.id}/annotations`);
+    const { annotations: serverAnnotations } = serverAnnotationData.data;
+    return formatAndSetAnnotations(serverAnnotations, columns);
   };
 
   useEffect(() => {
@@ -134,11 +159,7 @@ export default withStyles(({ spacing }) => ({
         setInferredData(inferred);
         setColumnStats(stats);
 
-        if (serverAnnotations) {
-          const formattedIn = formatAnnotationsIN(serverAnnotations);
-          setInternalAnnotations(formattedIn.annotations);
-          setMultiPartData(formattedIn.multiPartData);
-        }
+        return formatAndSetAnnotations(serverAnnotations, parsedColumns);
       })
       .catch((e) => {
         setPromptMessage('Error loading annotation data.');
@@ -208,8 +229,12 @@ export default withStyles(({ spacing }) => ({
   const handleUploadAnnotations = (file) => {
     setLoading(true);
     uploadFile(file, datasetInfo.id)
+      .catch((e) => {
+        const json = e.response?.data?.detail;
+        setPromptMessage(json);
+      })
       .then(refreshAnnotations)
-      .finally(() => setLoading(false));
+      .finally(() => setLoading(false))
   };
 
   return (
