@@ -8,7 +8,10 @@ import isEmpty from 'lodash/isEmpty';
 import { withStyles } from '@material-ui/core/styles';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Checkbox from '@material-ui/core/Checkbox';
+import IconButton from '@material-ui/core/IconButton';
+import Button from '@material-ui/core/Button';
 import Tooltip from '@material-ui/core/Tooltip';
+import GetAppIcon from '@material-ui/icons/GetApp';
 
 import { GridOverlay, DataGrid } from '@material-ui/data-grid';
 import LinearProgress from '@material-ui/core/LinearProgress';
@@ -68,6 +71,24 @@ function CustomLoadingOverlay() {
       </div>
     </GridOverlay>
   );
+}
+
+const downloadCSV = function (data) {
+  const blob = new Blob([data], { type: 'text/csv' });
+  const url = window.URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.setAttribute('href', url);
+  a.setAttribute('download', 'data_dictionary_template.csv');
+  a.click();
+}
+
+const downloadTemplate = async function () {
+  const headers = [
+    'field_name', 'group', 'display_name', 'description', 'data_type', 'units',
+    'units_description',	'primary', 'date_format',	'gadm_level',
+	  'resolve_to_gadm', 'coord_format', 'qualifies', 'qualifier_role'];
+  const csvdata = headers.join(',');
+  downloadCSV(csvdata);
 }
 
 /**
@@ -289,8 +310,21 @@ export default withStyles(({ palette }) => ({
     onUploadAnnotations(acceptedFiles[0]);
   };
 
-  const handleDropFilesRejection = (...args) => {
-    console.log('drop files rejected: ', args);
+  const handleDropFilesRejection = (error) => {
+    let errorMessage = `The data dictionary file was rejected. `;
+
+    try {
+      errorMessage += error[0].errors.map(item => item.message).join('\n');
+    } catch(e) {
+      errorMessage += 'Only one CSV file allowed at a time.';
+    }
+
+    setAnnotationSuccessAlert(true);
+
+    setAnnotationAlertMessage({
+      message: errorMessage,
+      severity: 'error'
+    });
   }
 
   return (
@@ -314,13 +348,26 @@ export default withStyles(({ palette }) => ({
             />
           </Tooltip>
         </div>
-        <FileDropSelector
-          onFileSelect={handleFileSelect}
-          onDropFilesRejected={handleDropFilesRejection}
-          acceptExtensions={['csv']}
-          CTA="Upload Annotations CSV"
-          mini
-        />
+        <div style={{display: 'flex', alignItems: 'center'}}>
+          <Button size="small">
+            <FileDropSelector
+              onFileSelect={handleFileSelect}
+              onDropFilesRejected={handleDropFilesRejection}
+              acceptExtensions={['csv']}
+              CTA="Upload Annotations CSV"
+              mini
+            />
+          </Button>
+          <Tooltip title="Download CSV template">
+            <div>
+              <IconButton
+                onClick={downloadTemplate}
+              >
+                <GetAppIcon />
+              </IconButton>
+            </div>
+          </Tooltip>
+        </div>
       </div>
 
       <DataGrid
