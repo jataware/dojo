@@ -109,6 +109,25 @@ const DataTransformation = withStyles(() => ({
     return 'Geospatial resolution cannot be transformed without annotated lat/lon columns';
   }, []);
 
+  const generateGeoBoundaryArgs = useCallback((argsAnnotations) => {
+    const args = { geo_columns: [] };
+    argsAnnotations.annotations.geo.forEach((geo) => args.geo_columns.push(geo.name));
+    if (args.geo_columns.length < 2) {
+      return 'Geospatial coverage cannot be transformed without annotated lat/lon columns';
+    }
+    return args;
+  }, []);
+
+  const generateTemporalArgs = useCallback((argsAnnotations) => {
+    if (!argsAnnotations.annotations.date[0]) {
+      return 'Temporal data cannot be transformed without a primary annotated date column';
+    }
+    return {
+      datetime_column: argsAnnotations.annotations.date[0]?.name,
+      time_format: argsAnnotations.annotations.date[0]?.time_format,
+    };
+  }, []);
+
   const onGeoBoundarySuccess = useCallback((resp, setData, setDataError, setDataLoading) => {
     if (resp?.boundary_box) {
       const bObj = resp?.boundary_box;
@@ -123,20 +142,6 @@ const DataTransformation = withStyles(() => ({
       setDataLoading(false);
     }
   }, []);
-
-  const generateGeoBoundaryArgs = useCallback((argsAnnotations) => {
-    const args = { geo_columns: [] };
-    argsAnnotations.annotations.geo.forEach((geo) => args.geo_columns.push(geo.name));
-    if (args.geo_columns.length < 2) {
-      return 'Geospatial coverage cannot be transformed without annotated lat/lon columns';
-    }
-    return args;
-  }, []);
-
-  const generateTemporalArgs = useCallback((argsAnnotations) => ({
-    datetime_column: argsAnnotations.annotations.date[0]?.name,
-    time_format: argsAnnotations.annotations.date[0]?.time_format,
-  }), []);
 
   const onTemporalResSuccess = useCallback((resp, setData, setDataError, setDataLoading) => {
     if (resp.resolution_result?.unit) {
