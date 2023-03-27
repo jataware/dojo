@@ -134,8 +134,8 @@ const DataTransformation = withStyles(() => ({
   }, []);
 
   const generateTemporalArgs = useCallback((argsAnnotations) => ({
-    datetime_column: argsAnnotations.annotations.date[0].name,
-    time_format: argsAnnotations.annotations.date[0].time_format,
+    datetime_column: argsAnnotations.annotations.date[0]?.name,
+    time_format: argsAnnotations.annotations.date[0]?.time_format,
   }), []);
 
   const onTemporalResSuccess = useCallback((resp, setData, setDataError, setDataLoading) => {
