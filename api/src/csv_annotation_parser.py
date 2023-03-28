@@ -167,16 +167,49 @@ def format_to_schema(acc, item_dict):
         e.values = item_dict # TODO create custom Error
         raise
 
-    acc[column_type].append(parsed.dict(exclude_none=True))
+    parsed = parsed.dict(exclude_none=True)
+
+    if group := item_dict.get("group"):
+        if stored_group := acc["groups"].get(group):
+            stored_type = stored_group["data_type"]
+            stored_fields = stored_group["fields"]
+
+            # geo coordinate pair:
+            if item_dict["data_type"] in ["latitude", "longitude"]:
+                parsed["is_geo_pair"] = stored_fields[0]
+                del acc["groups"][group]
+            # multi-date annotation:
+            if item_dict["data_type"] in ["year", "date", "month"]:
+                if len(stored_fields) == 2:
+                    # The date group fields are ready to be parsed, contains 2 cols:
+                    add_assoc_property = set(["year", "day", "month"]).difference(
+                        set([item_dict["data_type"], stored_type])
+                    )
+                    parsed["associated_columns"] = {
+                        next(iter(add_assoc_property)).capitalize(): stored_fields[1],
+                        stored_type.capitalize(): stored_fields[0]
+                    }
+                    del acc["groups"][group]
+                else:
+                    acc["groups"][group]["fields"].append(item_dict["field_name"])
+        else:
+            acc["groups"][group] = {
+                "data_type": item_dict["data_type"],
+                "fields": [item_dict["field_name"]]
+            }
+
+    acc[column_type].append(parsed)
     return acc
 
 
 def format_annotations(dict_csv):
-    return reduce(
+    formatted = reduce(
         format_to_schema,
         dict_csv,
-        {"feature": [], "geo": [], "date": []}
+        {"feature": [], "geo": [], "date": [], "groups": {}}
     )
+    del formatted["groups"]
+    return formatted
 
 
 

@@ -230,3 +230,114 @@ def test_format_schema_helper_feature():
     }, 'feature')
 
 
+
+def test_format_annotations_multidate():
+    output = format_annotations([{
+        'coord_format': '',
+        'data_type': 'day',
+        'date_format': '%d',
+        'description': 'sample date',
+        'display_name': '',
+        'field_name': 'day',
+        'gadm_level': '',
+        'group': 'date1',
+        'primary': 'y',
+        'qualifier_role': '',
+        'qualifies': '',
+        'resolve_to_gadm': '',
+        'units': '',
+        'units_description': ''
+    }, {
+        'coord_format': '',
+        'data_type': 'month',
+        'date_format': '%m',
+        'description': 'sample date',
+        'display_name': '',
+        'field_name': 'month',
+        'gadm_level': '',
+        'group': 'date1',
+        'primary': 'y',
+        'qualifier_role': '',
+        'qualifies': '',
+        'resolve_to_gadm': '',
+        'units': '',
+        'units_description': ''
+    }, {
+        'coord_format': '',
+        'data_type': 'year',
+        'date_format': '%Y',
+        'description': 'sample date',
+        'display_name': '',
+        'field_name': 'year',
+        'gadm_level': '',
+        'group': 'date1',
+        'primary': 'y',
+        'qualifier_role': '',
+        'qualifies': '',
+        'resolve_to_gadm': '',
+        'units': '',
+        'units_description': ''
+    }])
+
+    assert output["date"][2]["associated_columns"] == {'Day': 'day', 'Month': 'month'}
+
+
+def test_format_annotations_geo_pair():
+
+    output = format_annotations([{
+        'coord_format': '',
+        'data_type': 'latitude',
+        'date_format': '',
+        'description': 'coordinate pair',
+        'display_name': 'latlon',
+        'field_name': 'latitude',
+        'gadm_level': '',
+        'group': 'latlonpair',
+        'primary': '',
+        'qualifier_role': '',
+        'qualifies': '',
+        'resolve_to_gadm': '',
+        'units': '',
+        'units_description': ''
+    }, {
+        'coord_format': '',
+        'data_type': 'longitude',
+        'date_format': '',
+        'description': 'coordinate pair 2',
+        'display_name': 'latlon',
+        'field_name': 'longitude',
+        'gadm_level': '',
+        'group': 'latlonpair',
+        'primary': '',
+        'qualifier_role': '',
+        'qualifies': '',
+        'resolve_to_gadm': '',
+        'units': '',
+        'units_description': ''
+    }])
+
+    assert output["geo"] == [{
+        'aliases': {},
+        'description': 'coordinate pair',
+        'display_name': 'latlon',
+        'geo_type': 'latitude',
+        'name': 'latitude',
+        'type': 'geo'
+    }, {
+        'aliases': {},
+        'description': 'coordinate pair 2',
+        'display_name': 'latlon',
+        'geo_type': 'longitude',
+        'is_geo_pair': 'latitude',
+        'name': 'longitude',
+        'type': 'geo'
+    }]
+
+
+
+
+    # print("\n\n")
+    # import pprint
+    # pp = pprint.PrettyPrinter(indent=2)
+    # pp.pprint(output["geo"])
+
