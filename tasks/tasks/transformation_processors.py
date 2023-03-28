@@ -132,7 +132,7 @@ def scale_time(context, filename=None, **kwargs):
             dataframe=original_dataframe,
             time_column=time_column,
             time_bucket=time_bucket,
-            aggregation_function_list=aggregation_list,
+            aggregation_functions=aggregation_list,
             geo_columns=geo_columns,
         )
 

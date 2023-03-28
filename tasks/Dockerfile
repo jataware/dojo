@@ -5,10 +5,10 @@ RUN apt-get update &&\
 
 RUN wget https://jataware-world-modelers.s3.amazonaws.com/gadm/gadm36_2.feather.zip
 RUN wget https://jataware-world-modelers.s3.amazonaws.com/gadm/gadm36_3.feather.zip
-RUN mkdir ~/mixmasta_data && \
-      unzip gadm36_2.feather.zip -d ~/mixmasta_data/ && \
-      unzip gadm36_3.feather.zip -d ~/mixmasta_data/ && \
-      rm gadm36_?.feather.zip
+RUN mkdir ~/elwood_data && \
+    unzip gadm36_2.feather.zip -d ~/elwood_data/ && \
+    unzip gadm36_3.feather.zip -d ~/elwood_data/ && \
+    rm gadm36_?.feather.zip
 
 ENV CPLUS_INCLUDE_PATH=/usr/include/gdal
 ENV C_INCLUDE_PATH=/usr/include/gdal
