@@ -334,6 +334,11 @@ const DataTransformation = withStyles(() => ({
             closeDrawer={handleDrawerClose}
             disableDrawerClose={disableDrawerClose}
             setDisableDrawerClose={setDisableDrawerClose}
+            jobString="transformation_processors.clip_geo"
+            // TODO: maybe replace with elwoodArgs?
+            datasetId={datasetInfo.id}
+            annotations={annotations}
+            cleanupRef={cleanupRef}
           />
         );
       case 'scaleTime':
@@ -356,6 +361,9 @@ const DataTransformation = withStyles(() => ({
             savedTimeBounds={savedTimeBounds}
             setSavedTimeBounds={setSavedTimeBounds}
             closeDrawer={handleDrawerClose}
+            datasetId={datasetInfo.id}
+            jobString={'transformation_processors.clip_time'}
+
           />
         );
       default:

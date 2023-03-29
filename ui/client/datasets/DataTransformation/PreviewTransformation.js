@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import clsx from 'clsx';
 
@@ -10,9 +10,11 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
 
-import { withStyles } from '@material-ui/core/styles';
+import { makeStyles } from '@material-ui/core/styles';
 
-export default withStyles((theme) => ({
+import useElwoodData from './useElwoodData';
+
+const useStyles = makeStyles((theme) => ({
   root: {
     width: '275px',
     margin: '0 auto',
@@ -27,6 +29,9 @@ export default withStyles((theme) => ({
     height: '42px',
   },
   loadingWrapper: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
     width: '100%',
     height: '100%',
     backgroundColor: 'white',
@@ -35,31 +40,94 @@ export default withStyles((theme) => ({
     top: 0,
     left: 0,
   },
-  loading: {
-    display: 'block',
-    margin: [[theme.spacing(1), 'auto']],
+  cardContent: {
+    position: 'relative',
   },
-}))(({
-  classes,
-  rows,
+}));
+
+// Do all of this in a separate component so we can toggle when we start the hook
+const Previewed = ({
+  datasetId,
+  jobString,
+  onPreviewSuccess,
+  createPreviewArgs,
+  annotations,
+  cleanupRef,
+  setBefore,
+  setAfter,
+  setLoading,
+}) => {
+  const { data: preview, error: previewError } = useElwoodData({
+    datasetId,
+    annotations,
+    jobString,
+    generateArgs: createPreviewArgs,
+    cleanupRef,
+    onSuccess: onPreviewSuccess,
+  });
+  // TODO: handle previewError
+  useEffect(() => {
+    console.log('this is previewError', previewError)
+    if (
+      preview
+      && Object.hasOwn(preview, 'rows_pre_clip')
+      && Object.hasOwn(preview, 'rows_post_clip')
+    ) {
+      setBefore(preview.rows_pre_clip);
+      setAfter(preview.rows_post_clip);
+      setLoading(false);
+    }
+  }, [preview, previewError, setAfter, setBefore, setLoading]);
+
+  return null;
+};
+
+export default ({
+  datasetId,
+  jobString,
+  onPreviewSuccess,
+  createPreviewArgs,
+  annotations,
+  cleanupRef,
+  disabled,
 }) => {
   const [showPreview, setShowPreview] = useState(false);
-  const [showPreviewLoading, setShowPreviewLoading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [after, setAfter] = useState('___');
+  const [before, setBefore] = useState('___');
+  const classes = useStyles();
 
   const startPreview = () => {
     console.log('kicking off preview');
-    setShowPreviewLoading(true);
-    setTimeout(() => {
-      setShowPreview(!showPreview);
-      setAfter(after === '___' ? '47' : '___');
-      setShowPreviewLoading(false);
-    }, 1000);
+
+    setShowPreview(true);
+    setLoading(true);
   };
+
+  useEffect(() => {
+    // don't render <Previewed> when we aren't in loading mode
+    // so that we can fetch new content every time the user clicks the button
+    if (showPreview && !loading) {
+      setShowPreview(false);
+    }
+  }, [showPreview, loading]);
 
   return (
     <Card variant="outlined" className={classes.root}>
-      <CardContent>
+      <CardContent className={classes.cardContent}>
+        {showPreview && (
+          <Previewed
+            datasetId={datasetId}
+            jobString={jobString}
+            onPreviewSuccess={onPreviewSuccess}
+            createPreviewArgs={createPreviewArgs}
+            annotations={annotations}
+            cleanupRef={cleanupRef}
+            setBefore={setBefore}
+            setAfter={setAfter}
+            setLoading={setLoading}
+          />
+        )}
         <Typography
           variant="subtitle1"
           className={classes.titleWeight}
@@ -69,7 +137,7 @@ export default withStyles((theme) => ({
           before transformation:
         </Typography>
         <Typography variant="h5">
-          {rows} rows
+          {before} rows
         </Typography>
         <Typography
           variant="subtitle1"
@@ -78,16 +146,15 @@ export default withStyles((theme) => ({
         >
           after transformation:
         </Typography>
-        <div style={{ position: 'relative' }}>
-          <Typography className={classes.previewRows} variant="h5">
-            {after} rows
-          </Typography>
-          {showPreviewLoading && (
-            <div className={classes.loadingWrapper}>
-              <CircularProgress size={30} className={classes.loading} />
-            </div>
-          )}
-        </div>
+        <Typography variant="h5">
+          {after} rows
+        </Typography>
+
+        {loading && (
+          <div className={classes.loadingWrapper}>
+            <CircularProgress size={60} />
+          </div>
+        )}
 
       </CardContent>
       <CardActions>
@@ -96,11 +163,13 @@ export default withStyles((theme) => ({
           title="Click to estimate the number of rows after transformation"
           arrow
         >
-          <Button onClick={startPreview} disabled={showPreviewLoading}>
-            Preview
-          </Button>
+          <span>
+            <Button onClick={startPreview} disabled={loading || disabled}>
+              Preview
+            </Button>
+          </span>
         </Tooltip>
       </CardActions>
     </Card>
   );
-});
+};

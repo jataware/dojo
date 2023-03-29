@@ -22,6 +22,8 @@ import {
   TileLayer,
 } from 'react-leaflet';
 
+import PreviewTransformation from './PreviewTransformation';
+
 const Geoman = ({ setDrawings, mapBoundsLatLng, setDisableDrawerClose }) => {
   const context = useLeafletContext();
 
@@ -155,6 +157,10 @@ export default withStyles((theme) => ({
   closeDrawer,
   disableDrawerClose,
   setDisableDrawerClose,
+  datasetId,
+  jobString,
+  annotations,
+  cleanupRef,
 }) => {
   const [drawings, setDrawings] = useState([]);
   const theme = useTheme();
@@ -203,6 +209,25 @@ export default withStyles((theme) => ({
       node.pm._layer.options.pmIgnore = true;
     }
   }, []);
+
+  const onPreviewSuccess = useCallback((resp, setData, setDataError, setDataLoading) => {
+    if (Object.hasOwn(resp, 'rows_pre_clip')) {
+      setData(resp);
+    } else {
+      setDataError(true);
+    }
+    setDataLoading(false);
+  }, []);
+
+  const createPreviewArgs = useCallback((argsAnnotations) => {
+    const args = {
+      map_shapes: drawings,
+      geo_columns: [],
+      preview_run: true,
+    };
+    argsAnnotations.annotations.geo.forEach((geo) => args.geo_columns.push(geo.name));
+    return args;
+  }, [drawings]);
 
   const onSaveClipsClick = () => {
     saveDrawings(drawings);
@@ -281,6 +306,15 @@ export default withStyles((theme) => ({
               </span>
             </Tooltip>
           </div>
+          <PreviewTransformation
+            datasetId={datasetId}
+            jobString={jobString}
+            onPreviewSuccess={onPreviewSuccess}
+            createPreviewArgs={createPreviewArgs}
+            annotations={annotations}
+            cleanupRef={cleanupRef}
+            disabled={!drawings.length}
+          />
         </>
       ) : (
         <div className={classes.problem}>

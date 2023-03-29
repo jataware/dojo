@@ -31,6 +31,8 @@ import {
   Chart
 } from 'react-chartjs-2';
 
+import PreviewTransformation from './PreviewTransformation';
+
 ChartJS.register(
   CategoryScale,
   TimeScale,
@@ -324,6 +326,7 @@ export default withStyles((theme) => ({
               </Button>
             </div>
           </div>
+          <PreviewTransformation rows={400} />
         </>
       ) : (
         <div className={classes.loading}>
