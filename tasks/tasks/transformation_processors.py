@@ -5,7 +5,7 @@ import os
 import pandas as pd
 import numpy as np
 
-from utils import job_setup, put_rawfile
+from utils import job_setup, put_rawfile, persist_untransformed_file, rewrite_file
 from elwood import elwood
 from settings import settings
 
@@ -15,6 +15,7 @@ def clip_geo(context, filename=None, **kwargs):
     # Setup
     file, filename, rawfile_path = job_setup(context=context, filename=filename)
     original_dataframe = pd.read_csv(file, delimiter=",")
+    rows_pre_clip = len(original_dataframe.index)
 
     # Main Call
     shape_list = kwargs.get("map_shapes", [])
@@ -27,16 +28,13 @@ def clip_geo(context, filename=None, **kwargs):
             polygons_list=shape_list,
         )
 
+        print(f"CLIPPED GEO: {clipped_df}")
+
         json_dataframe_preview = clipped_df.head(100).to_json(default_handler=str)
         rows_post_clip = len(clipped_df.index)
 
-        # Make a filepath to persist the original file.
-        original_file_path = os.path.join(
-            settings.DATASET_STORAGE_BASE_URL,
-            context["uuid"],
-            filename.split(".")[0] + "_untransformed.csv",
-        )
-        put_rawfile(original_file_path, file)
+        file.seek(0)
+        persist_untransformed_file(context["uuid"], filename, file)
 
         # Put the new clipped file to overwrite the old one.
         file_buffer = io.BytesIO()
@@ -49,6 +47,7 @@ def clip_geo(context, filename=None, **kwargs):
         response = {
             "messsage": "Geography clipped successfully",
             "preview": json_dataframe_preview,
+            "rows_pre_clip": rows_pre_clip,
             "rows_post_clip": rows_post_clip,
         }
         return response
@@ -65,6 +64,7 @@ def clip_time(context, filename=None, **kwargs):
     # Setup
     file, filename, rawfile_path = job_setup(context=context, filename=filename)
     original_dataframe = pd.read_csv(file, delimiter=",")
+    rows_pre_clip = len(original_dataframe.index)
 
     # Main Call
     time_column = kwargs.get("datetime_column", "")
@@ -80,13 +80,8 @@ def clip_time(context, filename=None, **kwargs):
         json_dataframe_preview = clipped_df.head(100).to_json(default_handler=str)
         rows_post_clip = len(clipped_df.index)
 
-        # Make a filepath to persist the original file.
-        original_file_path = os.path.join(
-            settings.DATASET_STORAGE_BASE_URL,
-            context["uuid"],
-            filename.split(".")[0] + "_untransformed.csv",
-        )
-        put_rawfile(original_file_path, file)
+        file.seek(0)
+        persist_untransformed_file(context["uuid"], filename, file)
 
         # Put the new clipped file to overwrite the old one.
         file_buffer = io.BytesIO()
@@ -99,6 +94,7 @@ def clip_time(context, filename=None, **kwargs):
         response = {
             "messsage": "Time clipped successfully",
             "preview": json_dataframe_preview,
+            "rows_pre_clip": rows_pre_clip,
             "rows_post_clip": rows_post_clip,
         }
         return response
@@ -115,6 +111,7 @@ def scale_time(context, filename=None, **kwargs):
     # Setup
     file, filename, rawfile_path = job_setup(context=context, filename=filename)
     original_dataframe = pd.read_csv(file, delimiter=",")
+    rows_pre_clip = len(original_dataframe.index)
 
     # Main call
     time_column = kwargs.get("datetime_column", "")
@@ -129,15 +126,13 @@ def scale_time(context, filename=None, **kwargs):
             aggregation_function_list=aggregation_list,
         )
 
-        json_dataframe_preview = clipped_df.head(100).to_json(default_handler=str)
+        print(f"RESCALED TIME: {clipped_df}")
 
-        # Make a filepath to persist the original file.
-        original_file_path = os.path.join(
-            settings.DATASET_STORAGE_BASE_URL,
-            context["uuid"],
-            filename.split(".")[0] + "_untransformed.csv",
-        )
-        put_rawfile(original_file_path, file)
+        json_dataframe_preview = clipped_df.head(100).to_json(default_handler=str)
+        rows_post_clip = len(clipped_df.index)
+
+        file.seek(0)
+        persist_untransformed_file(context["uuid"], filename, file)
 
         # Put the new clipped file to overwrite the old one.
         file_buffer = io.BytesIO()
@@ -150,6 +145,8 @@ def scale_time(context, filename=None, **kwargs):
         response = {
             "messsage": "Time rescaled successfully",
             "preview": json_dataframe_preview,
+            "rows_pre_clip": rows_pre_clip,
+            "rows_post_clip": rows_post_clip,
         }
         return response
 
@@ -164,6 +161,7 @@ def regrid_geo(context, filename=None, **kwargs):
     # Setup
     file, filename, rawfile_path = job_setup(context=context, filename=filename)
     original_dataframe = pd.read_csv(file, delimiter=",")
+    rows_pre_clip = len(original_dataframe.index)
 
     # Main Call
     geo_column = kwargs.get("geo_columns")
@@ -179,14 +177,10 @@ def regrid_geo(context, filename=None, **kwargs):
         )
 
         json_dataframe_preview = regridded_df.head(100).to_json(default_handler=str)
+        rows_post_clip = len(regridded_df.index)
 
-        # Make a filepath to persist the original file.
-        original_file_path = os.path.join(
-            settings.DATASET_STORAGE_BASE_URL,
-            context["uuid"],
-            filename.split(".")[0] + "_untransformed.csv",
-        )
-        put_rawfile(original_file_path, file)
+        file.seek(0)
+        persist_untransformed_file(context["uuid"], filename, file)
 
         # Put the new clipped file to overwrite the old one.
         file_buffer = io.BytesIO()
@@ -199,6 +193,8 @@ def regrid_geo(context, filename=None, **kwargs):
         response = {
             "messsage": "Geography rescaled successfully",
             "preview": json_dataframe_preview,
+            "rows_pre_clip": rows_pre_clip,
+            "rows_post_clip": rows_post_clip,
         }
         return response
 
@@ -231,7 +227,7 @@ def get_boundary_box(context, filename=None, **kwargs):
 
     response = {
         "message": "Boundary box not generated, some information was not provided (geography column names).",
-        "bounday_box": {},
+        "boundary_box": {},
     }
     return response
 
@@ -284,3 +280,34 @@ def get_unique_dates(context, filename=None, **kwargs):
         "unique_dates": [],
     }
     return response
+
+
+def restore_raw_file(context, filename=None, **kwargs):
+    if filename is None:
+        filename = "raw_data_untransformed.csv"
+        target_filename = "raw_data.csv"
+
+    rawfile_path = os.path.join(
+        settings.DATASET_STORAGE_BASE_URL, context["uuid"], filename
+    )
+    restore_path = os.path.join(
+        settings.DATASET_STORAGE_BASE_URL, context["uuid"], target_filename
+    )
+
+    message, transformed_bool = rewrite_file(rawfile_path, restore_path)
+
+    response = {"message": message, "transformed": transformed_bool}
+
+    return response
+
+
+def get_dataframe_rows(context, filename=None):
+    file, filename, rawfile_path = job_setup(context=context, filename=filename)
+    original_dataframe = pd.read_csv(file, delimiter=",")
+
+    rows_pre_clip = len(original_dataframe.index)
+
+    return {
+        "message": "Current rows in the dataset calculated.",
+        "dataset_row": rows_pre_clip,
+    }

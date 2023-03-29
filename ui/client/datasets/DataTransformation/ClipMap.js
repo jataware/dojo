@@ -6,13 +6,6 @@ import React, {
 } from 'react';
 
 import Button from '@material-ui/core/Button';
-import CircularProgress from '@material-ui/core/CircularProgress';
-import DeleteIcon from '@material-ui/icons/Delete';
-import IconButton from '@material-ui/core/IconButton';
-import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemIcon from '@material-ui/core/ListItemIcon';
-import ListItemText from '@material-ui/core/ListItemText';
 import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
 import { withStyles, useTheme } from '@material-ui/core/styles';
@@ -140,11 +133,10 @@ export default withStyles((theme) => ({
   subtitleList: {
     width: '220px',
   },
-  mapLoading: {
+  problem: {
     display: 'flex',
     alignItems: 'center',
     flexDirection: 'column',
-    gap: theme.spacing(4),
   },
   saveButton: {
     minWidth: '120px',
@@ -170,8 +162,7 @@ export default withStyles((theme) => ({
   // use a ref for this so we don't recreate it on every render
   const mapBoundsLatLng = useRef(null);
   const [outerBounds, setOuterBounds] = useState(null);
-
-  if (mapBoundsLatLng.current === null && mapBounds) {
+  if (mapBounds && mapBoundsLatLng.current === null && mapBounds[0][0] !== undefined) {
     mapBoundsLatLng.current = L.latLngBounds(mapBounds);
   }
 
@@ -292,23 +283,12 @@ export default withStyles((theme) => ({
           </div>
         </>
       ) : (
-        <div className={classes.mapLoading}>
+        <div className={classes.problem}>
           <Typography variant="subtitle1" align="center" className={classes.noMapData}>
-            Map Data Loading
+            There was a problem loading the map data
           </Typography>
-          <CircularProgress />
         </div>
       )}
-     {/* <List className={classes.subtitleList} disablePadding dense>
-        {drawings.map((drawing, index) => (
-          <ListItem key={`${drawing[0].lat}${drawing[0].lng}`}>
-            <ListItemText>Drawing #{index + 1}</ListItemText>
-            <ListItemIcon>
-              <IconButton color="secondary"><DeleteIcon /></IconButton>
-            </ListItemIcon>
-          </ListItem>
-        ))}
-      </List>*/}
     </div>
   );
 });

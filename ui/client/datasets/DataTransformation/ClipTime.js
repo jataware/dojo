@@ -22,8 +22,6 @@ import {
   LinearScale,
   Title,
   Tooltip,
-  BarController,
-  BarElement,
   PointElement,
   TimeScale,
   LineElement,
@@ -34,10 +32,8 @@ import {
 } from 'react-chartjs-2';
 
 ChartJS.register(
-  BarElement,
   CategoryScale,
   TimeScale,
-  BarController,
   LinearScale,
   Title,
   Tooltip,
@@ -51,7 +47,22 @@ const options = {
     legend: {
       display: false
     },
-
+    tooltip: {
+      callbacks: {
+        title: (context) => {
+          //  chartjs will use its default if nothing is returned
+          if (context[0].raw) {
+            let title = '';
+            const date = parseISO(context[0].raw.x);
+            if (isValid(date)) {
+              title = format(date, 'MM/dd/yyyy');
+            }
+            return title;
+          }
+        },
+        label: () => '',
+      }
+    },
   },
   responsive: true,
   maintainAspectRatio: false,
@@ -238,6 +249,9 @@ export default withStyles((theme) => ({
     );
   }
 
+  const minDate = parseISO(timeBounds[0]);
+  const maxDate = parseISO(timeBounds[timeBounds.length - 1]);
+
   return (
     <div>
       {header}
@@ -260,7 +274,8 @@ export default withStyles((theme) => ({
                 KeyboardButtonProps={{
                   'aria-label': 'change date',
                 }}
-                minDate={parseISO(timeBounds[0])}
+                minDate={minDate}
+                maxDate={maxDate}
               />
               <KeyboardDatePicker
                 disableToolbar
@@ -273,7 +288,8 @@ export default withStyles((theme) => ({
                 KeyboardButtonProps={{
                   'aria-label': 'change date',
                 }}
-                maxDate={parseISO(timeBounds[timeBounds.length - 1])}
+                minDate={minDate}
+                maxDate={maxDate}
               />
             </MuiPickersUtilsProvider>
           </div>
