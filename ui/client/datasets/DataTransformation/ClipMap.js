@@ -309,10 +309,10 @@ export default withStyles((theme) => ({
           <PreviewTransformation
             datasetId={datasetId}
             jobString={jobString}
-            onPreviewSuccess={onPreviewSuccess}
-            createPreviewArgs={createPreviewArgs}
             annotations={annotations}
             cleanupRef={cleanupRef}
+            onPreviewSuccess={onPreviewSuccess}
+            createPreviewArgs={createPreviewArgs}
             disabled={!drawings.length}
           />
         </>

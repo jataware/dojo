@@ -361,9 +361,10 @@ const DataTransformation = withStyles(() => ({
             savedTimeBounds={savedTimeBounds}
             setSavedTimeBounds={setSavedTimeBounds}
             closeDrawer={handleDrawerClose}
+            jobString="transformation_processors.clip_time"
             datasetId={datasetInfo.id}
-            jobString={'transformation_processors.clip_time'}
-
+            annotations={annotations}
+            cleanupRef={cleanupRef}
           />
         );
       default:

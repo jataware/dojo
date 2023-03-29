@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import Button from '@material-ui/core/Button';
 import CircularProgress from '@material-ui/core/CircularProgress';
@@ -132,13 +132,17 @@ export default withStyles((theme) => ({
     display: 'flex',
     justifyContent: 'flex-end',
     margin: [[theme.spacing(8), theme.spacing(4)]],
-  }
+  },
 }))(({
   classes,
   timeBounds,
   setSavedTimeBounds,
   savedTimeBounds,
   closeDrawer,
+  jobString,
+  datasetId,
+  annotations,
+  cleanupRef,
 }) => {
   const [startValue, setStartValue] = useState(() => {
     if (savedTimeBounds) return savedTimeBounds[0];
@@ -235,6 +239,25 @@ export default withStyles((theme) => ({
     closeDrawer();
   };
 
+  const createPreviewArgs = useCallback((argsAnnotations) => {
+    const args = {
+      datetime_column: argsAnnotations?.annotations.date[0].name,
+      time_ranges: [{
+        start: startValue, end: endValue
+      }],
+    };
+    return args;
+  }, [startValue, endValue]);
+
+  const onPreviewSuccess = useCallback((resp, setData, setDataError, setDataLoading) => {
+    if (Object.hasOwn(resp, 'rows_pre_clip')) {
+      setData(resp);
+    } else {
+      setDataError(true);
+    }
+    setDataLoading(false);
+  }, []);
+
   const header = <Typography align="center" variant="h5">Select Temporal Coverage</Typography>;
 
   if (timeBounds.length === 1) {
@@ -326,7 +349,15 @@ export default withStyles((theme) => ({
               </Button>
             </div>
           </div>
-          <PreviewTransformation rows={400} />
+          <PreviewTransformation
+            jobString={jobString}
+            datasetId={datasetId}
+            annotations={annotations}
+            cleanupRef={cleanupRef}
+            onPreviewSuccess={onPreviewSuccess}
+            createPreviewArgs={createPreviewArgs}
+            disabled={!startValue && !endValue}
+          />
         </>
       ) : (
         <div className={classes.loading}>
