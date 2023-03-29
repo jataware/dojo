@@ -78,22 +78,6 @@ const DataTransformation = withStyles(() => ({
     }
   };
 
-  const onGeoResSuccess = useCallback((
-    resp, setData, setDataError, setDataLoading, setOptions
-  ) => {
-    if (resp.resolution_result?.uniformity === 'PERFECT') {
-      setData(resp.scale_km);
-    } else {
-      // TODO: handle error case in geo res component & data transformation
-      setDataError(resp.message ? resp.message : true);
-    }
-
-    if (resp.multiplier_samples) {
-      setOptions(resp.multiplier_samples);
-    }
-    setDataLoading(false);
-  }, []);
-
   const generateGeoResArgs = useCallback((argsAnnotations) => {
     const args = {};
     argsAnnotations.annotations.geo.forEach((geo) => {
@@ -126,6 +110,22 @@ const DataTransformation = withStyles(() => ({
       datetime_column: argsAnnotations.annotations.date[0]?.name,
       time_format: argsAnnotations.annotations.date[0]?.time_format,
     };
+  }, []);
+
+  const onGeoResSuccess = useCallback((
+    resp, setData, setDataError, setDataLoading, setOptions
+  ) => {
+    if (resp.resolution_result?.uniformity === 'PERFECT') {
+      setData(resp.scale_km);
+    } else {
+      // TODO: handle error case in geo res component & data transformation
+      setDataError(resp.message ? resp.message : true);
+    }
+
+    if (resp.multiplier_samples) {
+      setOptions(resp.multiplier_samples);
+    }
+    setDataLoading(false);
   }, []);
 
   const onGeoBoundarySuccess = useCallback((resp, setData, setDataError, setDataLoading) => {

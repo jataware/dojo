@@ -10,11 +10,53 @@ import CircularProgress from '@material-ui/core/CircularProgress';
 import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
 
-import { makeStyles } from '@material-ui/core/styles';
+import { withStyles } from '@material-ui/core/styles';
 
 import useElwoodData from './useElwoodData';
+import BasicAlert from '../../components/BasicAlert';
 
-const useStyles = makeStyles((theme) => ({
+// Do all of this in a separate component so we can toggle when we start the hook
+const Previewed = ({
+  datasetId,
+  jobString,
+  onPreviewSuccess,
+  createPreviewArgs,
+  annotations,
+  cleanupRef,
+  setBefore,
+  setAfter,
+  setLoading,
+  setError,
+}) => {
+  const { data: preview, error: previewError } = useElwoodData({
+    datasetId,
+    annotations,
+    jobString,
+    generateArgs: createPreviewArgs,
+    cleanupRef,
+    onSuccess: onPreviewSuccess,
+  });
+
+  useEffect(() => {
+    if (previewError) {
+      setLoading(false);
+      setError(true);
+    }
+    if (
+      preview
+      && Object.hasOwn(preview, 'rows_pre_clip')
+      && Object.hasOwn(preview, 'rows_post_clip')
+    ) {
+      setBefore(preview.rows_pre_clip);
+      setAfter(preview.rows_post_clip);
+      setLoading(false);
+    }
+  }, [preview, previewError, setAfter, setBefore, setLoading, setError]);
+
+  return null;
+};
+
+export default withStyles(() => ({
   root: {
     width: '275px',
     margin: '0 auto',
@@ -43,46 +85,8 @@ const useStyles = makeStyles((theme) => ({
   cardContent: {
     position: 'relative',
   },
-}));
-
-// Do all of this in a separate component so we can toggle when we start the hook
-const Previewed = ({
-  datasetId,
-  jobString,
-  onPreviewSuccess,
-  createPreviewArgs,
-  annotations,
-  cleanupRef,
-  setBefore,
-  setAfter,
-  setLoading,
-}) => {
-  const { data: preview, error: previewError } = useElwoodData({
-    datasetId,
-    annotations,
-    jobString,
-    generateArgs: createPreviewArgs,
-    cleanupRef,
-    onSuccess: onPreviewSuccess,
-  });
-  // TODO: handle previewError
-  useEffect(() => {
-    console.log('this is previewError', previewError)
-    if (
-      preview
-      && Object.hasOwn(preview, 'rows_pre_clip')
-      && Object.hasOwn(preview, 'rows_post_clip')
-    ) {
-      setBefore(preview.rows_pre_clip);
-      setAfter(preview.rows_post_clip);
-      setLoading(false);
-    }
-  }, [preview, previewError, setAfter, setBefore, setLoading]);
-
-  return null;
-};
-
-export default ({
+}))(({
+  classes,
   datasetId,
   jobString,
   onPreviewSuccess,
@@ -95,7 +99,7 @@ export default ({
   const [loading, setLoading] = useState(false);
   const [after, setAfter] = useState('___');
   const [before, setBefore] = useState('___');
-  const classes = useStyles();
+  const [error, setError] = useState(false);
 
   const startPreview = () => {
     console.log('kicking off preview');
@@ -113,63 +117,75 @@ export default ({
   }, [showPreview, loading]);
 
   return (
-    <Card variant="outlined" className={classes.root}>
-      <CardContent className={classes.cardContent}>
-        {showPreview && (
-          <Previewed
-            datasetId={datasetId}
-            jobString={jobString}
-            onPreviewSuccess={onPreviewSuccess}
-            createPreviewArgs={createPreviewArgs}
-            annotations={annotations}
-            cleanupRef={cleanupRef}
-            setBefore={setBefore}
-            setAfter={setAfter}
-            setLoading={setLoading}
-          />
-        )}
-        <Typography
-          variant="subtitle1"
-          className={classes.titleWeight}
-          color="textSecondary"
-          gutterBottom
-        >
-          before transformation:
-        </Typography>
-        <Typography variant="h5">
-          {before} rows
-        </Typography>
-        <Typography
-          variant="subtitle1"
-          className={clsx(classes.extraGutter, classes.titleWeight)}
-          color="textSecondary"
-        >
-          after transformation:
-        </Typography>
-        <Typography variant="h5">
-          {after} rows
-        </Typography>
+    <>
+      <Card variant="outlined" className={classes.root}>
+        <CardContent className={classes.cardContent}>
+          {showPreview && (
+            <Previewed
+              datasetId={datasetId}
+              jobString={jobString}
+              onPreviewSuccess={onPreviewSuccess}
+              createPreviewArgs={createPreviewArgs}
+              annotations={annotations}
+              cleanupRef={cleanupRef}
+              setBefore={setBefore}
+              setAfter={setAfter}
+              setLoading={setLoading}
+              setError={setError}
+            />
+          )}
+          <Typography
+            variant="subtitle1"
+            className={classes.titleWeight}
+            color="textSecondary"
+            gutterBottom
+          >
+            before transformation:
+          </Typography>
+          <Typography variant="h5">
+            {before} rows
+          </Typography>
+          <Typography
+            variant="subtitle1"
+            className={clsx(classes.extraGutter, classes.titleWeight)}
+            color="textSecondary"
+          >
+            after transformation:
+          </Typography>
+          <Typography variant="h5">
+            {after} rows
+          </Typography>
 
-        {loading && (
-          <div className={classes.loadingWrapper}>
-            <CircularProgress size={60} />
-          </div>
-        )}
+          {loading && (
+            <div className={classes.loadingWrapper}>
+              <CircularProgress size={60} />
+            </div>
+          )}
 
-      </CardContent>
-      <CardActions>
-        <Tooltip
-          placement="bottom-start"
-          title="Click to estimate the number of rows after transformation"
-          arrow
-        >
-          <span>
-            <Button onClick={startPreview} disabled={loading || disabled}>
-              Preview
-            </Button>
-          </span>
-        </Tooltip>
-      </CardActions>
-    </Card>
+        </CardContent>
+        <CardActions>
+          <Tooltip
+            placement="bottom-start"
+            title="Click to estimate the number of rows after transformation"
+            arrow
+          >
+            <span>
+              <Button onClick={startPreview} disabled={loading || disabled}>
+                Preview
+              </Button>
+            </span>
+          </Tooltip>
+        </CardActions>
+      </Card>
+      <BasicAlert
+        alert={{
+          message: 'There was an issue previewing the data transformation. Please try again.',
+          severity: 'warning'
+        }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+        visible={error}
+        setVisible={setError}
+      />
+    </>
   );
-};
+});
