@@ -245,7 +245,7 @@ describe('knownFieldAnnotations', () => {
       "date_type": "year",
       "primary_date": true,
       "time_format": "%Y",
-      "associated_columns": {},
+      "associated_columns": null,
       "qualifies": null,
       "aliases": {}
     }]);

@@ -44,7 +44,13 @@ class Paragraph(BaseModel):
         examples=["123e4567-e89b-12d3-a456-426614174000-1"],
         title="Paragraph ID"
     )
-    document_id = str
+
+    document_id: str = Field(
+        ...,
+        description="Document ID where this paragraph was found on",
+        examples=["123e4567-e89b-12d3-a456-426614174000"],
+        title="Parent Document ID"
+    )
 
     text: str = Field(
         ...,

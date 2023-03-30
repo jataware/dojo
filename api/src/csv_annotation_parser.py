@@ -4,7 +4,7 @@ from pydantic import BaseModel, Extra, ValidationError
 
 
 """
-  Ignoring the __main__ file runner, this file deals with conversion of csv->dict output to
+  This file deals with conversion of csv->dict output to
   the expected schema for elwood to process a dataset annotation.
 """
 
@@ -17,8 +17,8 @@ if __name__ == "__main__":
     sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 
-
 from validation.MetadataSchema import GeoAnnotation, DateAnnotation, FeatureAnnotation
+
 
 type_buckets = {
     "feature": ["int", "float", "string", "binary", "boolean", "str", "integer", "bool"],
@@ -133,7 +133,7 @@ def format_schema_helper(item_dict):
     # Remove all empty keys first
     out_dict = {k: v for k, v in item_dict.items() if v}
 
-    # Re-add required attributes:
+    # Re-add required attribute defaults
     out_dict = {"display_name": ""}|out_dict
 
     # Ensure required fields are present
@@ -146,10 +146,9 @@ def format_schema_helper(item_dict):
     out_dict = {key_mappings.get(k, k): v for k, v in out_dict.items()}
     out_dict = {k: value_mappings.get(k, {}).get(v,v) for k, v in out_dict.items()}
 
-    # Exceptions. Fn formatters
+    # Special Cases formatters
     if out_dict.get("qualifies"):
         out_dict["qualifies"] = out_dict["qualifies"].split(",")
-
     if out_dict.get("date_type") == "epoch":
         dict_val_lower(out_dict, "time_format")
 
@@ -164,10 +163,10 @@ def format_to_schema(acc, item_dict):
         out_dict, column_type = format_schema_helper(item_dict)
         parsed = mappings[column_type]["parser"].parse_obj(out_dict)
     except ValidationError as e:
-        e.values = item_dict # TODO create custom Error
+        e.values = item_dict
         raise
 
-    parsed = parsed.dict(exclude_none=True)
+    parsed = parsed.dict()
 
     if group := item_dict.get("group"):
         if stored_group := acc["groups"].get(group):

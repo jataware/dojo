@@ -221,7 +221,7 @@ export const knownFieldAnnotations = (serverAnnotations, columns) => reduce(
 
           if (foreignAssociations.length !== associated.length) {
             // For now reset foreign associated_columns
-            annotation.associated_columns = {};
+            annotation.associated_columns = null;
           }
         }
         return annotation;

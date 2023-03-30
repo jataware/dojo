@@ -144,6 +144,8 @@ def test_format_annotations():
         'display_name': '',
         'description': 'sample date',
         'type': 'date',
+        'associated_columns': None,
+        'qualifies': None,
         'date_type': 'year',
         'primary_date': True,
         'time_format': '%Y',
@@ -151,52 +153,66 @@ def test_format_annotations():
     }, {
         'name': 'timestamp',
         'display_name': 'Epoch',
+        'associated_columns': None,
         'description': 'timestamp of pronounced death',
         'type': 'date',
         'date_type': 'epoch',
+        'primary_date': None,
+        'qualifies': None,
         'time_format': '',
         'aliases': {},
     }]
 
     geos = output["geo"]
 
-    assert geos == [{
-        'name': 'country',
-        'display_name': '',
-        'description': 'all_gadm_levels',
-        'type': 'geo',
-        'geo_type': 'country',
-        'primary_geo': True,
-        'aliases': {},
-        'gadm_level': 'admin0'
-    }, {
-        'name': 'admin1',
-        'display_name': '',
-        'description': 'all_gadm_levels',
-        'type': 'geo',
-        'geo_type': 'state/territory',
-        'primary_geo': True,
-        'aliases': {},
-        'gadm_level': 'admin1'
-    }, {
-        'name': 'admin2',
-        'display_name': '',
-        'description': 'all_gadm_levels',
-        'type': 'geo',
-        'geo_type': 'county/district',
-        'primary_geo': True,
-        'aliases': {},
-        'gadm_level': 'admin2'
-    }, {
-        'name': 'admin3',
-        'display_name': '',
-        'description': 'all_gadm_levels',
-        'type': 'geo',
-        'geo_type': 'municipality/town',
-        'primary_geo': True,
-        'aliases': {},
-        'gadm_level': 'admin3'
-    }]
+    assert geos == [ { 'aliases': {},
+    'coord_format': None,
+    'description': 'all_gadm_levels',
+    'display_name': '',
+    'gadm_level': 'admin0',
+    'geo_type': 'country',
+    'is_geo_pair': None,
+    'name': 'country',
+    'primary_geo': True,
+    'qualifies': None,
+    'resolve_to_gadm': None,
+    'type': 'geo'},
+  { 'aliases': {},
+    'coord_format': None,
+    'description': 'all_gadm_levels',
+    'display_name': '',
+    'gadm_level': 'admin1',
+    'geo_type': 'state/territory',
+    'is_geo_pair': None,
+    'name': 'admin1',
+    'primary_geo': True,
+    'qualifies': None,
+    'resolve_to_gadm': None,
+    'type': 'geo'},
+  { 'aliases': {},
+    'coord_format': None,
+    'description': 'all_gadm_levels',
+    'display_name': '',
+    'gadm_level': 'admin2',
+    'geo_type': 'county/district',
+    'is_geo_pair': None,
+    'name': 'admin2',
+    'primary_geo': True,
+    'qualifies': None,
+    'resolve_to_gadm': None,
+    'type': 'geo'},
+  { 'aliases': {},
+    'coord_format': None,
+    'description': 'all_gadm_levels',
+    'display_name': '',
+    'gadm_level': 'admin3',
+    'geo_type': 'municipality/town',
+    'is_geo_pair': None,
+    'name': 'admin3',
+    'primary_geo': True,
+    'qualifies': None,
+    'resolve_to_gadm': None,
+    'type': 'geo'}]
 
 
 def test_format_schema_helper_feature():
@@ -318,6 +334,12 @@ def test_format_annotations_geo_pair():
 
     assert output["geo"] == [{
         'aliases': {},
+        'coord_format': None,
+        'gadm_level': None,
+        'is_geo_pair': None,
+        'primary_geo': None,
+        'qualifies': None,
+        'resolve_to_gadm': None,
         'description': 'coordinate pair',
         'display_name': 'latlon',
         'geo_type': 'latitude',
@@ -325,6 +347,11 @@ def test_format_annotations_geo_pair():
         'type': 'geo'
     }, {
         'aliases': {},
+        'coord_format': None,
+        'gadm_level': None,
+        'primary_geo': None,
+        'qualifies': None,
+        'resolve_to_gadm': None,
         'description': 'coordinate pair 2',
         'display_name': 'latlon',
         'geo_type': 'longitude',
@@ -332,12 +359,3 @@ def test_format_annotations_geo_pair():
         'name': 'longitude',
         'type': 'geo'
     }]
-
-
-
-
-    # print("\n\n")
-    # import pprint
-    # pp = pprint.PrettyPrinter(indent=2)
-    # pp.pprint(output["geo"])
-

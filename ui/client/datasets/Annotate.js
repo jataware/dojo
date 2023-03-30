@@ -36,6 +36,17 @@ export const uploadFile = async (file, datasetID, params={}) => {
   return response;
 };
 
+export function formatFileUploadValidationError(json) {
+  try {
+    const property = json[0].loc[0];
+    const field = json[0].input_value.field_name;
+    const value = json[0].input_value[property];
+
+    return `A validation error has occured on your uploaded file. The field \`${field}\` has no valid \`${property}\` value. Value provided: \`${value}\``;
+  } catch(e) {
+    return json;
+  }
+}
 
 /**
  * Receives geoclassify data and formats column information for our Data Grid
@@ -92,8 +103,11 @@ export default withStyles(({ spacing }) => ({
 
       setInternalAnnotations(formattedIn.annotations);
       setMultiPartData(formattedIn.multiPartData);
+
+      return true;
     }
-    return true;
+
+    return false;
   }
 
   // If UI or server modify saved annotations in DB, refresh and set them on UI here
@@ -212,12 +226,15 @@ export default withStyles(({ spacing }) => ({
 
   const handleUploadAnnotations = (file) => {
     setLoading(true);
-    uploadFile(file, datasetInfo.id)
+
+    return uploadFile(file, datasetInfo.id)
+      .then(refreshAnnotations)
       .catch((e) => {
         const json = e.response?.data?.detail;
-        setPromptMessage(json);
+        const message = formatFileUploadValidationError(json);
+        setPromptMessage(message || 'Your file contains an incorrect format and our application has not accepted it. Please verify and correct your CSV file annotations.');
+        return false;
       })
-      .then(refreshAnnotations)
       .finally(() => setLoading(false))
   };
 

@@ -6,25 +6,22 @@ import find from 'lodash/find';
 import isEmpty from 'lodash/isEmpty';
 
 import { withStyles } from '@material-ui/core/styles';
+import { GridOverlay, DataGrid } from '@material-ui/data-grid';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Checkbox from '@material-ui/core/Checkbox';
 import IconButton from '@material-ui/core/IconButton';
 import Button from '@material-ui/core/Button';
 import Tooltip from '@material-ui/core/Tooltip';
-import GetAppIcon from '@material-ui/icons/GetApp';
-
-import { GridOverlay, DataGrid } from '@material-ui/data-grid';
 import LinearProgress from '@material-ui/core/LinearProgress';
-
-import BasicAlert from '../../../components/BasicAlert';
-
-import ColumnPanel from '../ColumnPanel';
+import InboxIcon from '@material-ui/icons/MoveToInbox';
 
 import { calcPointerLocation, groupColumns } from './helpers';
+import BasicAlert from '../../../components/BasicAlert';
+import ColumnPanel from '../ColumnPanel';
 import Header from './Header';
 
+import AnnotationDialog from './UploadAnnotationFileDialog';
 import { FileDropSelector } from '../../../documents/upload/DropArea';
-
 
 const rowsPerPageOptions = [25, 50, 100];
 
@@ -163,6 +160,8 @@ export default withStyles(({ palette }) => ({
     message: '',
     severity: 'success',
   });
+
+  const [isUploadingAnnotations, setUploadingAnnotations] = useState(false);
 
   const [isShowMarkers, setShowMarkers] = useState(true);
 
@@ -307,7 +306,19 @@ export default withStyles(({ palette }) => ({
   };
 
   const handleFileSelect = (acceptedFiles) => {
-    onUploadAnnotations(acceptedFiles[0]);
+
+    setUploadingAnnotations(false);
+
+    onUploadAnnotations(acceptedFiles[0])
+      .then((success) => {
+        if (success) {
+          setAnnotationSuccessAlert(true);
+          setAnnotationAlertMessage({
+            message: `Your annotations were successfully applied`,
+            severity: 'success'
+          });
+        }
+      });
   };
 
   const handleDropFilesRejection = (error) => {
@@ -325,7 +336,7 @@ export default withStyles(({ palette }) => ({
       message: errorMessage,
       severity: 'error'
     });
-  }
+  };
 
   return (
     <div className={classes.root}>
@@ -349,24 +360,13 @@ export default withStyles(({ palette }) => ({
           </Tooltip>
         </div>
         <div style={{display: 'flex', alignItems: 'center'}}>
-          <Button size="small">
-            <FileDropSelector
-              onFileSelect={handleFileSelect}
-              onDropFilesRejected={handleDropFilesRejection}
-              acceptExtensions={['csv']}
-              CTA="Upload Annotations CSV"
-              mini
-            />
+          <Button
+            size="large"
+            startIcon={<InboxIcon />}
+            onClick={() => setUploadingAnnotations(true)}
+          >
+            Upload File
           </Button>
-          <Tooltip title="Download CSV template">
-            <div>
-              <IconButton
-                onClick={downloadTemplate}
-              >
-                <GetAppIcon />
-              </IconButton>
-            </div>
-          </Tooltip>
         </div>
       </div>
 
@@ -421,11 +421,20 @@ export default withStyles(({ palette }) => ({
 
         fieldsConfig={fieldsConfig}
       />
+
       <BasicAlert
         alert={annotationAlertMessage}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         visible={annotationSuccessAlert}
         setVisible={setAnnotationSuccessAlert}
+      />
+
+      <AnnotationDialog
+        open={isUploadingAnnotations}
+        handleClose={() => setUploadingAnnotations(false)}
+        handleFileSelect={handleFileSelect}
+        handleDropFilesRejection={handleDropFilesRejection}
+        onDownload={downloadTemplate}
       />
     </div>
   );

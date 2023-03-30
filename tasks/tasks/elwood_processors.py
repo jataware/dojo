@@ -70,7 +70,7 @@ class ElwoodProcessor(BaseProcessor):
         admin_level = None  # Default to admin1
         geo_annotations = context["annotations"]["annotations"]["geo"]
         for annotation in geo_annotations:
-            if annotation["primary_geo"] and "gadm_level" in annotation:
+            if annotation.get("primary_geo") and "gadm_level" in annotation:
                 admin_level = annotation["gadm_level"]
                 break
         uuid = context["uuid"]
