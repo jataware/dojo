@@ -366,16 +366,19 @@ export default withStyles(({ palette }) => ({
             />
           </Tooltip>
         </div>
-        <div style={{display: 'flex', alignItems: 'center'}}>
-          <Button
-            color="primary"
-            size="large"
-            startIcon={<InboxIcon />}
-            onClick={() => setUploadingAnnotations(true)}
-          >
-            Upload File
-          </Button>
-        </div>
+
+        {addingAnnotationsAllowed && (
+          <div style={{display: 'flex', alignItems: 'center'}}>
+            <Button
+              color="primary"
+              size="large"
+              startIcon={<InboxIcon />}
+              onClick={() => setUploadingAnnotations(true)}
+            >
+              Upload File
+            </Button>
+          </div>
+        )}
       </div>
 
       <DataGrid
