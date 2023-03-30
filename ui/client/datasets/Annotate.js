@@ -42,7 +42,7 @@ export function formatFileUploadValidationError(json) {
     const field = json[0].input_value.field_name;
     const value = json[0].input_value[property];
 
-    return `A validation error has occured on your uploaded file. The field \`${field}\` has no valid \`${property}\` value. Value provided: \`${value}\``;
+    return `A validation error has occured on your uploaded file. The field \`${field}\` has no valid \`${property}\` value. Value provided: \`${value}\`.`;
   } catch(e) {
     return json;
   }

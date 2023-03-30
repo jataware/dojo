@@ -703,8 +703,8 @@ def rescale_indicator(indicator_id: str):
     return resp
 
 
-# TODO Add/use csv data dictionary file
-@router.post("/indicators/definition")
+# TODO Add/use csv data dictionary file, Finish after UI-dictionary-file work.
+# @router.post("/indicators/definition")
 def dataset_register_files(data: UploadFile = File(...), metadata: UploadFile = File(...)):
     """
     Fields (not columns). Define fields (not annotations?)
