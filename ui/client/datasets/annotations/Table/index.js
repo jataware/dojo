@@ -23,7 +23,7 @@ import ColumnPanel from '../ColumnPanel';
 import { calcPointerLocation, groupColumns } from './helpers';
 import Header from './Header';
 
-import { FileDropSelector } from '../../../documents/upload/DropArea'
+import { FileDropSelector } from '../../../documents/upload/DropArea';
 
 
 const rowsPerPageOptions = [25, 50, 100];

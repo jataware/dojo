@@ -780,7 +780,14 @@ def upload_csv_data_dictionary_file(indicator_id: str, file: UploadFile = File(.
         formatted = format_annotations(csv_dictionary_list)
     except ValidationError as e:
         full_data = json.loads(e.json())
-        full_data[0]["input_value"] = e.values
+
+        try:
+            full_data[0]["input_value"] = e.values
+        # We are attaching e.values on our `format_to_schema` fn but handle
+        # `values` not present in case we caught another ValidationError
+        except AttributeError:
+            pass
+
         full_data[0]["message"] = str(e)
         raise HTTPException(status_code=422, detail=full_data)
 

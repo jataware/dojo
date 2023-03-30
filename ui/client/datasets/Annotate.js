@@ -3,7 +3,6 @@ import React, { useEffect, useState, SetStateAction } from 'react';
 import axios from 'axios';
 import isEmpty from 'lodash/isEmpty';
 import map from 'lodash/map';
-import reduce from 'lodash/reduce';
 
 import Container from '@material-ui/core/Container';
 import Typography from '@material-ui/core/Typography';
@@ -16,7 +15,7 @@ import Progress from './Progress';
 import TableAnnotation from './annotations/Table';
 import { formatAnnotationsIN } from './annotations/dataIN';
 import { formatAnnotationsOUT } from './annotations/dataOUT';
-import { validateRequirements } from './annotations/annotationRules';
+import { validateRequirements, knownFieldAnnotations } from './annotations/annotationRules';
 import Prompt from './PromptDialog';
 
 
@@ -37,21 +36,6 @@ export const uploadFile = async (file, datasetID, params={}) => {
   return response;
 };
 
-/**
- * Given server annotation (and its shape), returns annotations for fields that
- * exist in the data itself (which we gather as columns, from previewData).
- */
-const knownFieldAnnotations = (serverAnnotations, columns) => reduce(
-  serverAnnotations,
-  (acc, annotations, property) => {
-    const valid = annotations.filter((annotation) =>
-      columns.find(col => col.field === annotation.name)
-    );
-    acc[property] = valid;
-    return acc;
-  },
-  {}
-);
 
 /**
  * Receives geoclassify data and formats column information for our Data Grid

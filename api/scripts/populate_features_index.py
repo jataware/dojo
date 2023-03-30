@@ -31,7 +31,6 @@ es = Elasticsearch(f"http://{args.es_host}")
 
 print(es.info())
 
-# engine = BertSentenceSearch(corpus, cuda=args.use_gpu)
 
 def calcOutputEmbeddings(output):
     """
