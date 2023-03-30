@@ -88,6 +88,7 @@ export const Base = {
     annotations,
     inferredData: inferredData,
     multiPartData:{},
-    setMultiPartData: identity
+    setMultiPartData: identity,
+    addingAnnotationsAllowed: true,
   }
 };

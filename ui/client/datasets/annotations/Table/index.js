@@ -38,11 +38,6 @@ const Cell = withStyles(({ palette, spacing }) => ({
 }))(({
   isHighlighted, classes, value, ...props
 }) => {
-  // TODO remove this: props for when the cell hasFocus (experimenting with adding hasFocus here)
-  // doesn't do anything
-  if (props.hasFocus) {
-    console.log('these are the props in cell', props, value)
-  }
   return (
     <span
       className={clsx({
@@ -127,7 +122,6 @@ export default withStyles(({ palette }) => ({
   fieldsConfig, addingAnnotationsAllowed
 }) => {
   const [pageSize, setPageSize] = useState(rowsPerPageOptions[0]);
-  const [highlightedColumn, setHighlightedColumn] = useState(null);
   const [editingColumn, setEditingColumn] = useState(null);
   const [annotationSuccessAlert, setAnnotationSuccessAlert] = useState();
   const [annotationAlertMessage, setAnnotationAlertMessage] = useState({
@@ -136,7 +130,10 @@ export default withStyles(({ palette }) => ({
   });
   const editedColumnIndex = useRef(null);
   const gridRef = useRef(null);
+
   const [moveHighlight, setMoveHighlight] = useState(false);
+
+  const [selectedColumn, setSelectedColumn] = useState(0);
 
   const [isShowMarkers, setShowMarkers] = useState(true);
 
@@ -152,8 +149,8 @@ export default withStyles(({ palette }) => ({
     find(multiPartData, (mp) => mp.members.includes(columnFieldName))
   );
 
-  const openAnnotationPanel = (cell) => {
-    const colIndex = sortedColumns.findIndex((col) => col.field === cell.field);
+  const openAnnotationPanel = (cell, colIndexHint) => {
+    const colIndex = colIndexHint || sortedColumns.findIndex((col) => col.field === cell.field);
     // save the current editing column index into our ref so that we can use it
     // to highlight the next column in the same position after this one jumps to the front
     if (colIndex !== -1) editedColumnIndex.current = colIndex;
@@ -181,13 +178,12 @@ export default withStyles(({ palette }) => ({
     }
   };
 
-  function calcColumnAttrs(columnFieldName) {
+  function calcColumnAttrs(columnFieldName, idx) {
     const mpData = findMultipartMember(columnFieldName);
     const isMultiPartBase = get(mpData, 'baseColumn') === columnFieldName;
     const isMultiPartMember = Boolean(mpData);
 
-    const isHighlighted = isMultiPartMember ? mpData.members.includes(highlightedColumn)
-      : highlightedColumn === columnFieldName;
+    const isHighlighted = idx === selectedColumn;
 
     const targetColumn = isMultiPartMember ? mpData.name : columnFieldName;
     const columnAnnotation = annotations[targetColumn];
@@ -206,7 +202,6 @@ export default withStyles(({ palette }) => ({
 
     return {
       isHighlighted,
-      hasFocus: isHighlighted,
       status,
       isMultiPartMember,
       isMultiPartBase,
@@ -217,7 +212,7 @@ export default withStyles(({ palette }) => ({
   }
 
   const formattedColumns = sortedColumns
-    .map((column) => ({
+        .map((column, idx) => ({
       ...column,
 
       flex: 1,
@@ -234,18 +229,17 @@ export default withStyles(({ palette }) => ({
         <Header
           addingAnnotationsAllowed={addingAnnotationsAllowed}
           showMarkers={isShowMarkers}
-          {...calcColumnAttrs(colDef.field)}
+          {...calcColumnAttrs(colDef.field, idx)}
           heading={colDef.headerName}
           column={column}
           buttonClick={(cell) => openAnnotationPanel(cell)}
-          isHighlighted={(colDef.field === highlightedColumn)}
           drawerOpen={Boolean(editingColumn)}
         />
       ),
 
       renderCell: ({ colDef, value }) => (
         <Cell
-          {...calcColumnAttrs(colDef.field)}
+          {...calcColumnAttrs(colDef.field, idx)}
           value={value}
         />
       )
@@ -260,61 +254,27 @@ export default withStyles(({ palette }) => ({
   }
 
   React.useEffect(() => {
-    // only do this when we've set moveHighlight (ie after saving an annotation)
-    // and the highlightedColumn doesn't equal the savedIndex (so we need to highlight a new column)
-    if (moveHighlight && highlightedColumn !== sortedColumns[editedColumnIndex.current]?.field) {
-      if (typeof editedColumnIndex.current === 'number' && editedColumnIndex.current !== -1) {
-        const col = sortedColumns[editedColumnIndex.current].field;
-        console.log('THIS IS COL AFTER SAVING', col)
-        setHighlightedColumn(col);
-        // toggle this to false so we don't come back in here
-        setMoveHighlight(false);
+    const handleKeyDown = (event) => {
+      if (Boolean(editingColumn)) {
+        return;
       }
-    }
-  }, [moveHighlight, sortedColumns, highlightedColumn]);
 
-  // WE don't need this anymore, now that it all happens in handleCellKeyDown
-  // const highlightColumn = (cell, event) => {
-  //   // Get the next column to highlight from relatedTarget - this works for arrow key navigation
-  //   const clicked = event.relatedTarget;
-  //   if (clicked?.getAttribute('role') !== 'cell') {
-  //     // only continue if the user has clicked on a 'cell'
-  //     return;
-  //   }
-
-  //   // Fetch the column name out of the element's data-field attribute
-  //   // const nextHighlight = clicked.getAttribute('data-field');
-  //   const colIndex = sortedColumns.findIndex((col) => col.field === cell.field);
-  //   debugger
-
-  //   // and set our state to the column name, if it existed
-  //   if (nextHighlight) setHighlightedColumn(nextHighlight);
-  // };
-
-  const handleCellKeyDown = (cell, event) => {
-    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
-      // DataGrid's vertical scroll is only disabled with both stopPropagation and preventDefault
-      event.stopPropagation();
-      event.preventDefault();
-    }
-    if (event.key === 'Enter') {
-      openAnnotationPanel(cell, event);
-    }
-
-    if (event.key === 'ArrowRight' || event.key === 'ArrowLeft') {
-      let colIndex = sortedColumns.findIndex((col) => col.field === cell.field);
-      if (event.key === 'ArrowRight') {
-        colIndex += 1;
+      if (event.key === 'Enter') {
+        const fieldColumn = formattedColumns.find((elem, index) => index === selectedColumn);
+        openAnnotationPanel(fieldColumn);
       }
-      if (event.key === 'ArrowLeft') {
-        colIndex -= 1;
+
+      if (event.keyCode === 37) { // left arrow
+        setSelectedColumn(prev => Math.max(prev - 1, 0));
+      } else if (event.keyCode === 39) { // right arrow
+        setSelectedColumn(prev => Math.min(prev + 1, columns.length - 1));
       }
-      // get the next column out of the sortedColumns
-      const newColumn = sortedColumns[colIndex]?.field;
-      // and if it exists (isn't off either end of the array), set it
-      if (newColumn) setHighlightedColumn(sortedColumns[colIndex].field);
-    }
-  };
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [selectedColumn, editingColumn, formattedColumns]);
 
   return (
     <div className={classes.root}>
@@ -341,7 +301,6 @@ export default withStyles(({ palette }) => ({
         ref={gridRef}
         loading={loading}
         disableColumnMenu
-        disableSelectionOnClick
         getRowId={(row) => row.__id}
         classes={{
           root: clsx([classes.grid, classes.gridScroll, classes.hideHeaderBorder]),
@@ -361,9 +320,6 @@ export default withStyles(({ palette }) => ({
         onCellDoubleClick={openAnnotationPanel}
         onColumnHeaderDoubleClick={openAnnotationPanel}
         GridSortModel={null}
-        onCellKeyDown={handleCellKeyDown}
-        // onCellBlur={highlightColumn}
-        onCellClick={(cell) => setHighlightedColumn(cell.field)}
       />
 
       <ColumnPanel
