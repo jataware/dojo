@@ -162,6 +162,13 @@ export default withStyles(({ palette }) => ({
   });
 
   const [isUploadingAnnotations, setUploadingAnnotations] = useState(false);
+  const [fileDictionaryError, setfileDictionaryError] = useState(null);
+  const [dictionaryUploadLoading, setDictionaryUploadLoading] = useState(false);
+
+  function cancelUploadAnnotations() {
+    setUploadingAnnotations(false);
+    setfileDictionaryError(null);
+  }
 
   const [isShowMarkers, setShowMarkers] = useState(true);
 
@@ -307,10 +314,11 @@ export default withStyles(({ palette }) => ({
 
   const handleFileSelect = (acceptedFiles) => {
 
-    setUploadingAnnotations(false);
-
+    setDictionaryUploadLoading(true);
     onUploadAnnotations(acceptedFiles[0])
       .then((success) => {
+        cancelUploadAnnotations();
+
         if (success) {
           setAnnotationSuccessAlert(true);
           setAnnotationAlertMessage({
@@ -318,7 +326,11 @@ export default withStyles(({ palette }) => ({
             severity: 'success'
           });
         }
-      });
+      })
+      .catch((e) => {
+        setfileDictionaryError(e.message);
+      })
+      .finally(() => { setDictionaryUploadLoading(false); });
   };
 
   const handleDropFilesRejection = (error) => {
@@ -330,12 +342,7 @@ export default withStyles(({ palette }) => ({
       errorMessage += 'Only one CSV file allowed at a time.';
     }
 
-    setAnnotationSuccessAlert(true);
-
-    setAnnotationAlertMessage({
-      message: errorMessage,
-      severity: 'error'
-    });
+    setfileDictionaryError(errorMessage);
   };
 
   return (
@@ -361,6 +368,7 @@ export default withStyles(({ palette }) => ({
         </div>
         <div style={{display: 'flex', alignItems: 'center'}}>
           <Button
+            color="primary"
             size="large"
             startIcon={<InboxIcon />}
             onClick={() => setUploadingAnnotations(true)}
@@ -431,10 +439,13 @@ export default withStyles(({ palette }) => ({
 
       <AnnotationDialog
         open={isUploadingAnnotations}
-        handleClose={() => setUploadingAnnotations(false)}
+        handleClose={cancelUploadAnnotations}
         handleFileSelect={handleFileSelect}
         handleDropFilesRejection={handleDropFilesRejection}
         onDownload={downloadTemplate}
+        errorMessage={fileDictionaryError}
+        clearErrorMessage={()=>{setfileDictionaryError(null);}}
+        loading={dictionaryUploadLoading}
       />
     </div>
   );

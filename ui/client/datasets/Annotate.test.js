@@ -33,7 +33,7 @@ describe('formatfileuploadvalidationerror', () => {
 
     const output = formatFileUploadValidationError(input);
 
-    expect(output).toBe('A validation error has occured on your uploaded file. The field `region` has no valid `data_type` value. Value provided: ``.');
+    expect(output).toBe('A validation error has occured on the file provided: The field `region` has no valid `data_type` value. Value provided: ``.');
 
   });
 });

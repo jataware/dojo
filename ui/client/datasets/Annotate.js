@@ -17,24 +17,7 @@ import { formatAnnotationsIN } from './annotations/dataIN';
 import { formatAnnotationsOUT } from './annotations/dataOUT';
 import { validateRequirements, knownFieldAnnotations } from './annotations/annotationRules';
 import Prompt from './PromptDialog';
-
-
-// TODO finally create and reuse uploadFile fn form here, documents, and annotations form.file
-// TODO pass in method, url
-export const uploadFile = async (file, datasetID, params={}) => {
-  const uploadData = new window.FormData();
-
-  uploadData.append('file', file);
-
-  const response = await axios({
-    method: 'post',
-    url: `/api/dojo/indicators/${datasetID}/annotations/file`,
-    data: uploadData,
-    params: params
-  });
-
-  return response;
-};
+import { uploadFile } from '../utils';
 
 export function formatFileUploadValidationError(json) {
   try {
@@ -42,7 +25,7 @@ export function formatFileUploadValidationError(json) {
     const field = json[0].input_value.field_name;
     const value = json[0].input_value[property];
 
-    return `A validation error has occured on your uploaded file. The field \`${field}\` has no valid \`${property}\` value. Value provided: \`${value}\`.`;
+    return `A validation error has occured on the file provided: The field \`${field}\` has no valid \`${property}\` value. Value provided: \`${value}\`.`;
   } catch(e) {
     return json;
   }
@@ -225,17 +208,15 @@ export default withStyles(({ spacing }) => ({
   }
 
   const handleUploadAnnotations = (file) => {
-    setLoading(true);
 
-    return uploadFile(file, datasetInfo.id)
+    return uploadFile(file, `/api/dojo/indicators/${datasetInfo.id}/annotations/file`)
       .then(refreshAnnotations)
       .catch((e) => {
         const json = e.response?.data?.detail;
         const message = formatFileUploadValidationError(json);
-        setPromptMessage(message || 'Your file contains an incorrect format and our application has not accepted it. Please verify and correct your CSV file annotations.');
-        return false;
-      })
-      .finally(() => setLoading(false))
+
+        throw new Error(message || 'Your file contains an incorrect format and our application has not accepted it. Please verify and correct your CSV file annotations.');
+      });
   };
 
   return (

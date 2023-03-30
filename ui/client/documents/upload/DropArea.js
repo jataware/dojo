@@ -56,11 +56,11 @@ export const FileDropSelector = withStyles((theme => ({
     margin: 1,
     flexDirection: 'row'
   }
-})))(({classes, onFileSelect, onDropFilesRejected, acceptExtensions, mini, CTA}) => {
+})))(({classes, onFileSelect, onDropFilesRejected, acceptExtensions, mini, CTA, multiple=true}) => {
 
   const {getRootProps, getInputProps, isDragActive} = useDropzone({
     onDropAccepted: onFileSelect,
-    multiple: !mini,
+    multiple,
     onDropRejected: onDropFilesRejected,
     accept: formatExtensionForDropZone(acceptExtensions)
   });
@@ -75,7 +75,6 @@ export const FileDropSelector = withStyles((theme => ({
       {...getRootProps()}
     >
       <IconButton
-        disableFocusRipple={Boolean(mini)}
         style={{pointerEvents: mini ? 'none' : 'unset'}}
         size={mini ? 'medium' : 'small'}
         color={isDragActive ? "primary" : "default"}
