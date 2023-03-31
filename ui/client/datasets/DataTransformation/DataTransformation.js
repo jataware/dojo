@@ -352,6 +352,10 @@ const DataTransformation = withStyles(() => ({
             savedAggregation={savedAggregation}
             setSavedAggregation={setSavedAggregation}
             title="Temporal"
+            jobString="transformation_processors.scale_time"
+            datasetId={datasetInfo.id}
+            annotations={annotations}
+            cleanupRef={cleanupRef}
           />
         );
       case 'clipTime':

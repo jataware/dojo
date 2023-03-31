@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import ArrowForwardIcon from '@material-ui/icons/ArrowForward';
 import Button from '@material-ui/core/Button';
@@ -67,6 +67,10 @@ export default withStyles((theme) => ({
   savedAggregation,
   setSavedAggregation,
   title,
+  jobString,
+  datasetId,
+  annotations,
+  cleanupRef,
 }) => {
   const [selectedResolution, setSelectedResolution] = useState(savedResolution || '');
   const [selectedAggregation, setSelectedAggregation] = useState(savedAggregation || '');
@@ -98,6 +102,24 @@ export default withStyles((theme) => ({
   const handleChangeAggregation = (event) => {
     setSelectedAggregation(event.target.value);
   };
+
+  const onPreviewSuccess = useCallback((resp, setData, setDataError, setDataLoading) => {
+    if (Object.hasOwn(resp, 'rows_pre_clip')) {
+      setData(resp);
+    } else {
+      setDataError(true);
+    }
+    setDataLoading(false);
+  }, []);
+
+  const createPreviewArgs = useCallback((argsAnnotations) => {
+    const args = {
+      datetime_column: argsAnnotations.annotations.date[0].name,
+      datetime_bucket: selectedResolution.alias,
+      aggregation_function_list: [selectedAggregation],
+    };
+    return args;
+  }, [selectedResolution, selectedAggregation]);
 
   return (
     <div>
@@ -177,7 +199,15 @@ export default withStyles((theme) => ({
         </Button>
 
       </div>
-      <PreviewTransformation rows={200} />
+      <PreviewTransformation
+        jobString={jobString}
+        datasetId={datasetId}
+        annotations={annotations}
+        cleanupRef={cleanupRef}
+        onPreviewSuccess={onPreviewSuccess}
+        createPreviewArgs={createPreviewArgs}
+        disabled={!selectedAggregation || !selectedResolution.alias}
+      />
     </div>
   );
 });
