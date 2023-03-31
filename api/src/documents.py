@@ -351,7 +351,7 @@ def list_documents(scroll_id: Optional[str]=None, size: int = 10):
 
 
 @router.get(
-    "/documents/{document_id}/paragraphs", response_model=DocumentSchema.ParagraphListResponse
+    "/documents/{document_id}/paragraphs", response_model=DocumentSchema.DocumentTextResponse
 )
 def get_document_text(document_id: str,
                       scroll_id: Optional[str] = None,
@@ -408,7 +408,7 @@ def get_document(document_id: str) -> DocumentSchema.Model:
 
 
 @router.post("/documents")
-def create_document(payload: DocumentSchema.Model):
+def create_document(payload: DocumentSchema.CreateModel):
     """
     Saves a document [metadata] into elasticsearch
     """
@@ -421,7 +421,6 @@ def create_document(payload: DocumentSchema.Model):
     except KeyError:
         pass
 
-    # TODO verify if necessary to use dictionary or to_json
     body = json.dumps(payload_dict)
 
     es.index(index="documents", body=body, id=document_id)
@@ -438,21 +437,24 @@ def create_document(payload: DocumentSchema.Model):
 
 
 @router.patch("/documents/{document_id}")
-def update_document(payload: DocumentSchema.Model, document_id: str):
+def update_document(payload: DocumentSchema.CreateModel, document_id: str):
     """
     Partially updates a document. Accepts a full object as well.
     """
 
     payload_dict = payload.dict(exclude_unset=True)
 
-    logger.info(f"update payload: {payload_dict}")
-
-    try:  # Delete id if present, else ignore.
-        del payload_dict["id"]
-    except KeyError:
-        pass
-
-    es.update(index="documents", body={"doc": payload_dict}, id=document_id)
+    if payload_dict:
+        es.update(index="documents", body={"doc": payload_dict}, id=document_id)
+    else:
+        return Response(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            headers={
+                "location": f"/api/documents/{document_id}",
+                "content-type": "application/json",
+            },
+            content=json.dumps({"error": f"Could not update Document with id={document_id}, invalid or unknown update attributes were provided"})
+        )
 
     return Response(
         status_code=status.HTTP_200_OK,
@@ -460,7 +462,7 @@ def update_document(payload: DocumentSchema.Model, document_id: str):
             "location": f"/api/documents/{document_id}",
             "content-type": "application/json",
         },
-        content={"result": f"Updated document with id = {document_id}"}
+        content=json.dumps({"result": f"Updated document with id = {document_id}"})
     )
 
 
@@ -493,8 +495,6 @@ def upload_file(
     """
     original_filename = file.filename
     _, ext = os.path.splitext(original_filename)
-
-    logger.info(f"settings.DOCUMENT_STORAGE_BASE_URL: {settings.DOCUMENT_STORAGE_BASE_URL}")
 
     dest_path = os.path.join(settings.DOCUMENT_STORAGE_BASE_URL, f"{document_id}-{original_filename}")
     put_rawfile(path=dest_path, fileobj=file.file)

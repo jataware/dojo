@@ -4,15 +4,7 @@ from typing import List, Optional, Any, Dict
 from pydantic import BaseModel, Extra, Field
 
 
-class Model(BaseModel):
-    """
-    Model for a single Document
-    """
-
-    class Config:
-        extra = Extra.allow
-
-    id: Optional[str]
+class CreateModel(BaseModel):
     creation_date: Optional[str]
     mod_date: Optional[str]
     type: Optional[str]
@@ -26,6 +18,13 @@ class Model(BaseModel):
     uploaded_at: Optional[int]
     source_url: Optional[str]
     filename: Optional[str]
+
+
+class Model(CreateModel):
+    """
+    Model for a single Document
+    """
+    id: str
 
 
 class DocumentListResponse(BaseModel):
@@ -45,8 +44,7 @@ class Paragraph(BaseModel):
     page_no: Optional[int]
     length: Optional[int]
 
-
-class ParagraphListResponse(BaseModel):
+class ParagraphBaseListResponse(BaseModel):
     hits: int = Field(
         ...,
         title="Total count of paragraphs matching request."
@@ -60,8 +58,12 @@ class ParagraphListResponse(BaseModel):
         title="Scroll ID",
         description= "Used to navigate to the next page of feature results. Will return null when there are no pages left. Similar to cursor-based pagination."
     )
+
+class ParagraphListResponse(ParagraphBaseListResponse):
     results: List[Paragraph]
 
+class DocumentTextResponse(ParagraphBaseListResponse):
+  paragraphs: List[Paragraph]
 
 class MetadataOpts(BaseModel):
     match_score: float
