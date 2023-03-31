@@ -106,7 +106,7 @@ class HighlightData(BaseModel):
     matches: list[str]
 
 class HighlightResponseModel(BaseModel):
-    highlights: List[List[Dict[str,Any]]]
+    highlights: List[List[DocumentSchema.Highlight]]
 
 @router.post(
     "/paragraphs/highlight", response_model=HighlightResponseModel
@@ -127,6 +127,7 @@ def semantic_highlight_paragraphs(payload: HighlightData):
 )
 def semantic_search_paragraphs(query: str,
                                scroll_id: Optional[str]=None,
+                               highlight: Optional[bool]=False,
                                size: int = 10):
     """
     Uses query to perform a Semantic Search on paragraphs; where LLM embeddings
@@ -182,7 +183,13 @@ def semantic_search_paragraphs(query: str,
                             scroll="2m",
                             size=size)
 
-    result_len = len(results["hits"]["hits"])
+    hits = results["hits"]["hits"]
+
+    if highlight:
+        text_vec = list(map(lambda x: x.get('_source').get('text'), hits))
+        highlights = highlighter.highlight_multiple(query, text_vec)
+
+    result_len = len(hits)
 
     if result_len < size:
         scroll_id = None
@@ -191,25 +198,29 @@ def semantic_search_paragraphs(query: str,
 
     max_score = results["hits"]["max_score"]
 
-    def formatOneResult(r):
+    def formatOneResult(r, index):
         r["_source"]["metadata"] = {}
         r["_source"]["metadata"]["match_score"] = r["_score"]
         r["_source"]["id"] = r["_id"]
+
+        if highlight:
+            r["_source"]["highlights"] = highlights[index]
+
         return r["_source"]
 
     return {
         "hits": results["hits"]["total"]["value"],
         "items_in_page": result_len,
         "max_score": max_score,
-        "results": [formatOneResult(i) for i in results["hits"]["hits"]],
+        "results": [formatOneResult(item, index) for index, item in enumerate(hits)],
         "scroll_id": scroll_id
     }
 
 
 @router.get(
-    "/paragraphs/{paragraph_id}"
+    "/paragraphs/{paragraph_id}", response_model=DocumentSchema.Paragraph
 )
-def get_paragraph(paragraph_id: str) -> DocumentSchema.Paragraph:
+def get_paragraph(paragraph_id: str):
     """
     """
     try:
@@ -340,7 +351,7 @@ def list_documents(scroll_id: Optional[str]=None, size: int = 10):
 
 
 @router.get(
-    "/documents/{document_id}/paragraphs"
+    "/documents/{document_id}/paragraphs", response_model=DocumentSchema.ParagraphListResponse
 )
 def get_document_text(document_id: str,
                       scroll_id: Optional[str] = None,
@@ -382,7 +393,7 @@ def get_document_text(document_id: str,
 
 
 @router.get(
-    "/documents/{document_id}"
+    "/documents/{document_id}", response_model=DocumentSchema.Model
 )
 def get_document(document_id: str) -> DocumentSchema.Model:
     """
