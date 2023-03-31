@@ -179,6 +179,7 @@ def regrid_geo(context, filename=None, **kwargs):
 
     # Main Call
     geo_column = kwargs.get("geo_columns")
+    time_column = kwargs.get("time_column")
     scale_multiplier = kwargs.get("scale_multi")
     scale = kwargs.get("scale", None)
 
@@ -186,6 +187,7 @@ def regrid_geo(context, filename=None, **kwargs):
         regridded_df = elwood.regrid_dataframe_geo(
             dataframe=original_dataframe,
             geo_columns=geo_column,
+            time_column=time_column,
             scale_multi=scale_multiplier,
             scale=scale,
         )
