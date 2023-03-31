@@ -249,15 +249,6 @@ export default withStyles((theme) => ({
     return args;
   }, [startValue, endValue]);
 
-  const onPreviewSuccess = useCallback((resp, setData, setDataError, setDataLoading) => {
-    if (Object.hasOwn(resp, 'rows_pre_clip')) {
-      setData(resp);
-    } else {
-      setDataError(true);
-    }
-    setDataLoading(false);
-  }, []);
-
   const header = <Typography align="center" variant="h5">Select Temporal Coverage</Typography>;
 
   if (timeBounds.length === 1) {
@@ -354,7 +345,6 @@ export default withStyles((theme) => ({
             datasetId={datasetId}
             annotations={annotations}
             cleanupRef={cleanupRef}
-            onPreviewSuccess={onPreviewSuccess}
             createPreviewArgs={createPreviewArgs}
             disabled={!startValue && !endValue}
           />

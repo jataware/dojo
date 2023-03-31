@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import clsx from 'clsx';
 
@@ -19,7 +19,6 @@ import BasicAlert from '../../components/BasicAlert';
 const Previewed = ({
   datasetId,
   jobString,
-  onPreviewSuccess,
   createPreviewArgs,
   annotations,
   cleanupRef,
@@ -28,13 +27,22 @@ const Previewed = ({
   setLoading,
   setError,
 }) => {
+  const onSuccess = useCallback((resp, setData, setDataError, setDataLoading) => {
+    if (Object.hasOwn(resp, 'rows_pre_clip')) {
+      setData(resp);
+    } else {
+      setDataError(true);
+    }
+    setDataLoading(false);
+  }, []);
+
   const { data: preview, error: previewError } = useElwoodData({
     datasetId,
     annotations,
     jobString,
     generateArgs: createPreviewArgs,
     cleanupRef,
-    onSuccess: onPreviewSuccess,
+    onSuccess,
   });
 
   useEffect(() => {
@@ -89,7 +97,6 @@ export default withStyles(() => ({
   classes,
   datasetId,
   jobString,
-  onPreviewSuccess,
   createPreviewArgs,
   annotations,
   cleanupRef,
@@ -124,7 +131,6 @@ export default withStyles(() => ({
             <Previewed
               datasetId={datasetId}
               jobString={jobString}
-              onPreviewSuccess={onPreviewSuccess}
               createPreviewArgs={createPreviewArgs}
               annotations={annotations}
               cleanupRef={cleanupRef}

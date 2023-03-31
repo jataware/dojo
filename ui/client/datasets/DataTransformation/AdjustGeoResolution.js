@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import ArrowForwardIcon from '@material-ui/icons/ArrowForward';
 import Button from '@material-ui/core/Button';
@@ -19,7 +19,7 @@ export default withStyles((theme) => ({
     display: 'flex',
     justifyContent: 'center',
     gap: theme.spacing(6),
-    marginTop: theme.spacing(6),
+    margin: [[theme.spacing(6), 0]],
   },
   textWrapper: {
     backgroundColor: theme.palette.grey[200],
@@ -47,6 +47,10 @@ export default withStyles((theme) => ({
   setSavedResolution,
   savedResolution,
   title,
+  jobString,
+  datasetId,
+  annotations,
+  cleanupRef,
 }) => {
   const [selectedResolution, setSelectedResolution] = useState(savedResolution || '');
 
@@ -59,6 +63,17 @@ export default withStyles((theme) => ({
   const handleChangeResolution = (event) => {
     setSelectedResolution(event.target.value);
   };
+
+  const createPreviewArgs = useCallback((argsAnnotations) => {
+    const args = {
+      datetime_column: [argsAnnotations?.annotations.date[0].name],
+      geo_columns: [],
+      scale_multi: selectedResolution,
+      scale: oldResolution,
+    };
+    argsAnnotations.annotations.geo.forEach((geo) => args.geo_columns.push(geo.name));
+    return args;
+  }, [selectedResolution, oldResolution]);
 
   return (
     <div>
@@ -103,6 +118,14 @@ export default withStyles((theme) => ({
               Save Resolution
             </Button>
           </div>
+          <PreviewTransformation
+            jobString={jobString}
+            datasetId={datasetId}
+            annotations={annotations}
+            cleanupRef={cleanupRef}
+            createPreviewArgs={createPreviewArgs}
+            disabled={!selectedResolution}
+          />
         </>
       ) : (
         <Typography align="center" variant="h6" style={{ marginTop: '64px' }}>

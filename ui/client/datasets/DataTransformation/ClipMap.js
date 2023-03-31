@@ -210,24 +210,16 @@ export default withStyles((theme) => ({
     }
   }, []);
 
-  const onPreviewSuccess = useCallback((resp, setData, setDataError, setDataLoading) => {
-    if (Object.hasOwn(resp, 'rows_pre_clip')) {
-      setData(resp);
-    } else {
-      setDataError(true);
-    }
-    setDataLoading(false);
-  }, []);
-
   const createPreviewArgs = useCallback((argsAnnotations) => {
+    // merge drawings and savedDrawings, in case the user previews savedDrawings
     const args = {
-      map_shapes: drawings,
+      map_shapes: [...drawings, ...savedDrawings],
       geo_columns: [],
       preview_run: true,
     };
     argsAnnotations.annotations.geo.forEach((geo) => args.geo_columns.push(geo.name));
     return args;
-  }, [drawings]);
+  }, [drawings, savedDrawings]);
 
   const onSaveClipsClick = () => {
     saveDrawings(drawings);
@@ -311,9 +303,8 @@ export default withStyles((theme) => ({
             jobString={jobString}
             annotations={annotations}
             cleanupRef={cleanupRef}
-            onPreviewSuccess={onPreviewSuccess}
             createPreviewArgs={createPreviewArgs}
-            disabled={!drawings.length}
+            disabled={!drawings.length && !savedDrawings.length}
           />
         </>
       ) : (

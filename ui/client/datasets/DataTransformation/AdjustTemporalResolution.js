@@ -103,15 +103,6 @@ export default withStyles((theme) => ({
     setSelectedAggregation(event.target.value);
   };
 
-  const onPreviewSuccess = useCallback((resp, setData, setDataError, setDataLoading) => {
-    if (Object.hasOwn(resp, 'rows_pre_clip')) {
-      setData(resp);
-    } else {
-      setDataError(true);
-    }
-    setDataLoading(false);
-  }, []);
-
   const createPreviewArgs = useCallback((argsAnnotations) => {
     const args = {
       datetime_column: argsAnnotations.annotations.date[0].name,
@@ -204,7 +195,6 @@ export default withStyles((theme) => ({
         datasetId={datasetId}
         annotations={annotations}
         cleanupRef={cleanupRef}
-        onPreviewSuccess={onPreviewSuccess}
         createPreviewArgs={createPreviewArgs}
         disabled={!selectedAggregation || !selectedResolution.alias}
       />

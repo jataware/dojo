@@ -24,6 +24,72 @@ import AdjustGeoResolution from './AdjustGeoResolution';
 import TransformationButton from './TransformationButton';
 import useElwoodData from './useElwoodData';
 
+// for testing purposes
+// const mapBounds = [[10.5619, 42.0864], [12.595, 43.2906]];
+// const timeResolution = {
+//   "uniformity": "PERFECT",
+//   "unit": "day",
+//   "resolution": 1,
+//   "error": 0
+// };
+
+// const mapResolution = 111.00000000000014;
+// const mapResolutionOptions = [
+//   222.00000000000028,
+//   333.00000000000045,
+//   444.00000000000057,
+//   555.0000000000007,
+//   666.0000000000009,
+//   777.000000000001,
+//   888.0000000000011,
+//   999.0000000000013,
+//   1110.0000000000014,
+//   1221.0000000000016,
+//   1332.0000000000018,
+//   1443.0000000000018,
+//   1554.000000000002,
+//   1665.000000000002,
+//   1776.0000000000023,
+//   1887.0000000000025,
+//   1998.0000000000025,
+//   2109.0000000000027,
+//   2220.0000000000027
+// ];
+// const unique_dates = [
+//   '1997-09-01',
+//   '1998-03-22',
+//   '1998-03-23',
+//   '1999-03-28',
+//   '1999-04-13',
+//   '1999-04-15',
+//   '1999-04-27',
+//   '2009-06-06',
+//   '2009-06-07',
+//   '2009-08-31',
+//   '2013-01-17',
+//   '2013-02-25',
+//   '2013-02-26',
+//   '2020-07-03',
+//   '2020-07-05',
+//   '2020-07-06',
+//   '2020-07-10',
+//   '2021-01-23',
+//   '2021-01-31',
+//   '2021-02-09',
+//   '2021-02-18',
+//   '2021-02-25',
+//   '2021-03-03',
+//   '2021-03-26'
+// ];
+// const timeBounds = unique_dates;
+
+// const [
+//   mapResolutionError,
+//   mapBoundsError,
+//   timeResolutionError,
+//   timeBoundsError
+// ] = [false, false, false, false,];
+
 const DataTransformation = withStyles(() => ({
   transformationRoot: {
     display: 'flex',
@@ -162,25 +228,12 @@ const DataTransformation = withStyles(() => ({
     setDataLoading(false);
   }, []);
 
-  // for testing purposes
-  // const timeResolution = {
-  //   "uniformity": "PERFECT",
-  //   "unit": "day",
-  //   "resolution": 1,
-  //   "error": 0
-  // };
-  // (if disabling loading of all transformations)
-  // const [
-  //   mapResolution,
-  //   mapResolutionError,
-  //   mapResolutionOptions,
-  //   mapBounds,
-  //   mapBoundsError,
-  //   timeResolution,
-  //   timeResolutionError,
-  //   timeBounds,
-  //   timeBoundsError
-  // ] = [false, false, false, false, false, false, false, false, false];
+// TODO: maybe do this???
+// const elwoodArgs = {
+//   datasetId: datasetInfo.id,
+//   annotations,
+//   cleanupRef,
+// };
 
   // fetch resolution for AdjustGeoResolution
   const {
@@ -245,6 +298,7 @@ const DataTransformation = withStyles(() => ({
   const processAdjustGeo = () => {
     if (savedMapResolution) {
       const args = {
+        datetime_column: [annotations?.annotations.date[0].name],
         geo_columns: [],
         scale_multi: savedMapResolution,
         scale: mapResolution,
@@ -323,6 +377,10 @@ const DataTransformation = withStyles(() => ({
             setSavedResolution={setSavedMapResolution}
             savedResolution={savedMapResolution}
             title="Geospatial"
+            jobString="transformation_processors.regrid_geo"
+            datasetId={datasetInfo.id}
+            annotations={annotations}
+            cleanupRef={cleanupRef}
           />
         );
       case 'clipMap':
