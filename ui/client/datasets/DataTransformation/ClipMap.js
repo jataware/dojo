@@ -23,6 +23,7 @@ import {
 } from 'react-leaflet';
 
 import PreviewTransformation from './PreviewTransformation';
+import { generateProcessGeoCovArgs } from './dataTransformationHelpers';
 
 const Geoman = ({ setDrawings, mapBoundsLatLng, setDisableDrawerClose }) => {
   const context = useLeafletContext();
@@ -211,13 +212,9 @@ export default withStyles((theme) => ({
   }, []);
 
   const createPreviewArgs = useCallback((argsAnnotations) => {
-    // merge drawings and savedDrawings, in case the user previews savedDrawings
-    const args = {
-      map_shapes: [...drawings, ...savedDrawings],
-      geo_columns: [],
-      preview_run: true,
-    };
-    argsAnnotations.annotations.geo.forEach((geo) => args.geo_columns.push(geo.name));
+    // merge drawings and savedDrawings, in case the user previews drawings from previous open
+    const args = generateProcessGeoCovArgs(argsAnnotations, [...drawings, ...savedDrawings]);
+    args.preview_run = true;
     return args;
   }, [drawings, savedDrawings]);
 

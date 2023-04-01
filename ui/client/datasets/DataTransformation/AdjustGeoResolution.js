@@ -10,6 +10,7 @@ import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 
 import PreviewTransformation from './PreviewTransformation';
+import { generateProcessGeoResArgs } from './dataTransformationHelpers';
 
 export default withStyles((theme) => ({
   selectWrapper: {
@@ -46,7 +47,6 @@ export default withStyles((theme) => ({
   resolutionOptions,
   setSavedResolution,
   savedResolution,
-  title,
   jobString,
   datasetId,
   annotations,
@@ -65,19 +65,14 @@ export default withStyles((theme) => ({
   };
 
   const createPreviewArgs = useCallback((argsAnnotations) => {
-    const args = {
-      datetime_column: [argsAnnotations?.annotations.date[0].name],
-      geo_columns: [],
-      scale_multi: selectedResolution,
-      scale: oldResolution,
-    };
-    argsAnnotations.annotations.geo.forEach((geo) => args.geo_columns.push(geo.name));
+    const args = generateProcessGeoResArgs(argsAnnotations, selectedResolution, oldResolution);
+    args.preview_run = true;
     return args;
   }, [selectedResolution, oldResolution]);
 
   return (
     <div>
-      <Typography align="center" variant="h5">Adjust {title} Resolution</Typography>
+      <Typography align="center" variant="h5">Adjust Geospatial Resolution</Typography>
       {oldResolution ? (
         <>
           <div className={classes.oldToNew}>
@@ -129,7 +124,7 @@ export default withStyles((theme) => ({
         </>
       ) : (
         <Typography align="center" variant="h6" style={{ marginTop: '64px' }}>
-          This dataset does not have a useable {title} resolution
+          This dataset does not have a useable geospatial resolution
         </Typography>
       )}
     </div>

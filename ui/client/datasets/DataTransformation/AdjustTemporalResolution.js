@@ -11,6 +11,7 @@ import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 
 import PreviewTransformation from './PreviewTransformation';
+import { generateProcessTempResArgs } from './dataTransformationHelpers';
 
 const aggregationFunctions = [
   'count',
@@ -66,7 +67,6 @@ export default withStyles((theme) => ({
   savedResolution,
   savedAggregation,
   setSavedAggregation,
-  title,
   jobString,
   datasetId,
   annotations,
@@ -104,17 +104,16 @@ export default withStyles((theme) => ({
   };
 
   const createPreviewArgs = useCallback((argsAnnotations) => {
-    const args = {
-      datetime_column: argsAnnotations.annotations.date[0].name,
-      datetime_bucket: selectedResolution.alias,
-      aggregation_function_list: [selectedAggregation],
-    };
+    const args = generateProcessTempResArgs(
+      argsAnnotations, selectedResolution, selectedAggregation
+    );
+    args.preview_run = true;
     return args;
   }, [selectedResolution, selectedAggregation]);
 
   return (
     <div>
-      <Typography align="center" variant="h5">Adjust {title} Resolution</Typography>
+      <Typography align="center" variant="h5">Adjust Temporal Resolution</Typography>
       <div className={classes.oldToNew}>
         <div className={classes.textWrapper}>
           <Typography variant="h6" align="center">current resolution</Typography>

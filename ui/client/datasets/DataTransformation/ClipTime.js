@@ -32,6 +32,7 @@ import {
 } from 'react-chartjs-2';
 
 import PreviewTransformation from './PreviewTransformation';
+import { generateProcessTempCovArgs } from './dataTransformationHelpers';
 
 ChartJS.register(
   CategoryScale,
@@ -240,12 +241,12 @@ export default withStyles((theme) => ({
   };
 
   const createPreviewArgs = useCallback((argsAnnotations) => {
-    const args = {
-      datetime_column: argsAnnotations?.annotations.date[0].name,
-      time_ranges: [{
-        start: startValue, end: endValue
-      }],
-    };
+    const args = generateProcessTempCovArgs({
+      annotations: argsAnnotations,
+      start: startValue,
+      end: endValue,
+    });
+    args.preview_run = true;
     return args;
   }, [startValue, endValue]);
 
