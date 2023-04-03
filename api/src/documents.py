@@ -16,6 +16,7 @@ from fastapi import (
     File,
     Request,
 )
+from fastapi.responses import FileResponse
 from fastapi.logger import logger
 
 import os
@@ -24,7 +25,7 @@ import json
 from validation import DocumentSchema
 from src.settings import settings
 
-from src.utils import put_rawfile
+from src.utils import put_rawfile, get_rawfile
 
 from rq import Queue
 from redis import Redis
@@ -233,7 +234,7 @@ def get_paragraph(paragraph_id: str):
 
     return {**p, "id": paragraph_id}
 
-# NOTE Dart Paper data may contain PascalCase attributes. We strive to use
+# NOTE Dart Paper metadata may contain PascalCase attributes. We strive to use
 # snake_case both in DB and API. Converting functions follow. No harm  if
 # already as snake_case.
 
@@ -522,3 +523,31 @@ def upload_file(
         },
         content=json.dumps({"id": document_id}|final_document),
     )
+
+
+@router.get("/documents/{document_id}/file")
+def get_document_uploaded_file(document_id: str):
+
+    document = es.get_source(index="documents", id=document_id)
+
+    try:
+        s3_url = document["source_url"]
+        file_name = document["filename"]
+    except KeyError as e:
+        logger.error(e)
+        return Response(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            headers={"msg": f"Error: {e}"},
+            content=json.dumps({"error": "Document has no uploaded source file."})
+        )
+
+    file = get_rawfile(path=s3_url)
+    headers = {'Content-Disposition': f'attachment; filename="{file_name}"'}
+    file_obj = file.detach()
+    location = f"tmp/{file_name}"
+    with open(location, "wb") as new_file:
+        new_file.write(file_obj.read())
+
+    file_obj.close()
+
+    return FileResponse(location, media_type="application/octet-stream", filename=file_name)
