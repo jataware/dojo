@@ -527,7 +527,9 @@ def upload_file(
 
 @router.get("/documents/{document_id}/file")
 def get_document_uploaded_file(document_id: str):
-
+    """
+    Downloads the original file (PDF) of an uploaded document.
+    """
     document = es.get_source(index="documents", id=document_id)
 
     try:
@@ -542,19 +544,5 @@ def get_document_uploaded_file(document_id: str):
         )
 
     file = get_rawfile(path=s3_url)
-    headers = {'Content-Disposition': f'attachment; filename="{file_name}"'}
-    file_obj = file.detach()
 
-    storage_folder = "tmp"
-
-    if not os.path.exists(storage_folder):
-        os.makedirs(storage_folder)
-
-
-    location = f"{storage_folder}/{file_name}"
-    with open(location, "wb") as new_file:
-        new_file.write(file_obj.read())
-
-    file_obj.close()
-
-    return FileResponse(location, media_type="application/octet-stream", filename=file_name)
+    return Response(content=file.read(), media_type="application/pdf")
