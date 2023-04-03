@@ -545,4 +545,6 @@ def get_document_uploaded_file(document_id: str):
 
     file = get_rawfile(path=s3_url)
 
-    return Response(content=file.read(), media_type="application/pdf")
+    headers = {'Content-Disposition': f'inline; filename="{file_name}"'}
+
+    return Response(content=file.read(), media_type="application/pdf", headers=headers)
