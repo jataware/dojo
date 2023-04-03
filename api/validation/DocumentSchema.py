@@ -25,6 +25,7 @@ class Model(CreateModel):
     Model for a single Document
     """
     id: str
+    processed_at: Optional[int]
 
 
 class DocumentListResponse(BaseModel):
