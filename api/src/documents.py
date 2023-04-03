@@ -544,7 +544,14 @@ def get_document_uploaded_file(document_id: str):
     file = get_rawfile(path=s3_url)
     headers = {'Content-Disposition': f'attachment; filename="{file_name}"'}
     file_obj = file.detach()
-    location = f"tmp/{file_name}"
+
+    storage_folder = "tmp"
+
+    if not os.path.exists(storage_folder):
+        os.makedirs(storage_folder)
+
+
+    location = f"{storage_folder}/{file_name}"
     with open(location, "wb") as new_file:
         new_file.write(file_obj.read())
 

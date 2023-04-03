@@ -171,3 +171,5 @@ dojo/**/tasks/venv_tasks/
 
 api/upload-semantic-search/data/*
 api/upload-semantic-search/weights/*
+
+api/tmp/*
