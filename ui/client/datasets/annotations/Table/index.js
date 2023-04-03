@@ -4,6 +4,7 @@ import clsx from 'clsx';
 import get from 'lodash/get';
 import find from 'lodash/find';
 import isEmpty from 'lodash/isEmpty';
+import axios from 'axios';
 
 import { withStyles } from '@material-ui/core/styles';
 import { GridOverlay, DataGrid } from '@material-ui/data-grid';
@@ -70,23 +71,33 @@ function CustomLoadingOverlay() {
   );
 }
 
-const downloadCSV = function (data) {
-  const blob = new Blob([data], { type: 'text/csv' });
+const downloadDataAsFile = function (data, filename, type) {
+  const blob = new Blob([data], { type });
   const url = window.URL.createObjectURL(blob);
   const a = document.createElement('a');
   a.setAttribute('href', url);
-  a.setAttribute('download', 'data_dictionary_template.csv');
+  a.setAttribute('download', filename);
   a.click();
 }
 
 const downloadTemplate = async function () {
-  const headers = [
-    'field_name', 'group', 'display_name', 'description', 'data_type', 'units',
-    'units_description',	'primary', 'date_format',	'gadm_level',
-	  'resolve_to_gadm', 'coord_format', 'qualifies', 'qualifier_role'];
-  const csvdata = headers.join(',');
-  downloadCSV(csvdata);
-}
+  return axios.get('/api/dojo/indicators/annotations/file-template')
+   .then((response) => {
+
+     const data = response.data;
+
+     let filename = 'template.xlsx';
+     const type = response.headers['content-type'];
+
+     try {
+       filename = response.headers['content-disposition'].match(/filename\=(.+)$/)[1];
+     } catch(e) {
+       //
+     }
+
+     downloadDataAsFile(data, filename, type);
+   });
+};
 
 /**
  *
