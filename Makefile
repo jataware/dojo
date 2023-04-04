@@ -17,7 +17,7 @@ COMPOSE_FILES := $(TERMINAL_DIR)/docker-compose.yaml $(DOJO_API_DIR)/docker-comp
 				 $(DOJO_DMC_DIR)/docker-compose.yaml $(WORKERS_DIR)/docker-compose.yaml \
 				 $(RQ_DIR)/docker-compose.yaml
 
-AUTH_ENABLED = $(shell export $$(cat envfile | xargs) && echo $${AUTH_ENABLED})
+AUTH_ENABLED = $(shell export $$(grep 'AUTH_ENABLED' envfile | xargs) && echo $${AUTH_ENABLED})
 ifeq ($(AUTH_ENABLED), true)
 COMPOSE_FILES := $(COMPOSE_FILES) $(AUTH_DIR)/docker-compose.yml
 endif
