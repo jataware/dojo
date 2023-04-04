@@ -12,7 +12,7 @@ import numpy as np
 
 from utils import get_rawfile, put_rawfile, download_rawfile
 from elwood import elwood as mix
-from elwood import feature_scaling as scaler
+from elwood import feature_normalization as scaler
 from base_annotation import BaseProcessor
 from settings import settings
 
@@ -60,9 +60,7 @@ class ElwoodProcessor(BaseProcessor):
     @staticmethod
     def run(context, datapath, filename) -> pd.DataFrame:
         """final full elwood implementation"""
-        logging.info(
-            f"{context.get('logging_preface', '')} - Running elwood processor"
-        )
+        logging.info(f"{context.get('logging_preface', '')} - Running elwood processor")
         output_path = datapath
         mapper_fp = f"{output_path}/elwood_ready_annotations.json"  # Filename for json info, will eventually be in Elasticsearch, needs to be written to disk until elwood is updated
         raw_data_fp = f"{output_path}/{filename}"  # Raw data
@@ -339,12 +337,18 @@ def run_model_elwood(context, *args, **kwargs):
     return response
 
 
+# TODO Clean this up
 def scale_features(context, filename=None):
     # 0 to 1 scaled dataframe
 
     uuid = context["uuid"]
+    # All datapaths need to be collapsed into one key-dict pair, but doing it this
+    # way preserves backwards compatibility for downstream tools.
     data_paths = context["dataset"]["data_paths"]
     data_paths_normalized = context["dataset"].get("data_paths_normalized", [])
+    data_paths_normalized_robust = context["dataset"].get(
+        "data_paths_normalized_robust", []
+    )
     api_url = os.environ.get("DOJO_HOST")
 
     if not data_paths_normalized:
@@ -370,6 +374,50 @@ def scale_features(context, filename=None):
         path for path in data_paths_not_str if path not in old_files_normed
     ]
 
+    data_paths_normalized = scaling_core(
+        uuid=uuid,
+        new_files_not_normed=new_files_not_normed,
+        old_files_normed=old_files_normed,
+        scaling_method=scaler.zero_to_one_normalization,
+    )
+
+    # figure out which files paths are have been normalized_robust
+    # and which are new files that are not yet normalized_robust
+    old_files_normed = [
+        path
+        for path in data_paths_not_str
+        for norm_path in data_paths_normalized_robust
+        if str(
+            path.split("/")[-1].split(".parquet")[0] + "_normalized_robust.parquet.gzip"
+        )
+        == norm_path.split("/")[-1]
+    ]
+    new_files_not_normed = [
+        path for path in data_paths_not_str if path not in old_files_normed
+    ]
+
+    data_paths_normalized_robust = scaling_core(
+        uuid=uuid,
+        new_files_not_normed=new_files_not_normed,
+        old_files_normed=old_files_normed,
+        scaling_method=scaler.robust_normalization,
+        file_ending="_normalized_robust.parquet.gzip",
+    )
+
+    return {
+        "data_paths_normalized": data_paths_normalized,
+        "data_paths_normalized_robust": data_paths_normalized_robust,
+    }
+
+
+def scaling_core(
+    uuid,
+    new_files_not_normed,
+    old_files_normed,
+    scaling_method,
+    scaling_method_options=None,
+    file_ending="_normalized.parquet.gzip",
+):
     # generate mapping from the old and new files
     old_mapping = generate_min_max_mapping(old_files_normed)
 
@@ -385,10 +433,10 @@ def scale_features(context, filename=None):
         logging.warn(path)
         filename = path.split("/")[-1]
         file_name = path.split("/")[-1].split(".parquet")[0]
-        file_out_name = f"{file_name}_normalized.parquet.gzip"
+        file_out_name = file_name + file_ending
 
         # Creating folder for temp file storage on the rq worker since following functions are dependent on file paths
-        localpath = f"/datasets/processing/{context['uuid']}"
+        localpath = f"/datasets/processing/{uuid}"
         localfile = os.path.join(localpath, filename)
         local_outfile = os.path.join(localpath, file_out_name)
 
@@ -397,14 +445,11 @@ def scale_features(context, filename=None):
 
         # Copy raw data file into rq-worker
         # Could change elwood to accept file-like objects as well as filepaths.
-        # rawfile_path = os.path.join(settings.DATASET_STORAGE_BASE_URL, filename)
         raw_file_obj = get_rawfile(path)
-        # with open(localfile, "wb") as f:
-            # f.write(raw_file_obj.read())
 
         dataframe = pd.read_parquet(raw_file_obj)
 
-        dataframe_scaled = scaler.scale_dataframe(dataframe)
+        dataframe_scaled = scaling_method(dataframe, **scaling_method_options)
 
         s3_filepath = os.path.join(
             settings.DATASET_STORAGE_BASE_URL, "normalized", uuid, file_out_name
@@ -420,7 +465,7 @@ def scale_features(context, filename=None):
     data_paths_normalized = []
     for path in new_files_not_normed + old_files_normed:
         file_name = path.split("/")[-1].split(".parquet")[0]
-        file_out_name = f"{file_name}_normalized.parquet.gzip"
+        file_out_name = file_name + file_ending
         s3_filepath = os.path.join(
             settings.DATASET_STORAGE_BASE_URL, "normalized", uuid, file_out_name
         )
