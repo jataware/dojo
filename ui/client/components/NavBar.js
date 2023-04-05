@@ -240,7 +240,7 @@ const NavBar = () => {
             </>
           )}
           <span className={classes.spacer} />
-          {(auth.isAuthenticated && auth.admin_roles?.length) && <ToggleRole />}
+          {(auth.isAuthenticated && !!auth.admin_roles?.length) && <ToggleRole />}
           <Button href="https://www.dojo-modeling.com" target="_blank">Documentation</Button>
           <Button href="https://github.com/dojo-modeling/dojo" target="_blank">GitHub</Button>
           {(auth.isAuthenticated && auth.user) && userMenu()}

@@ -44,7 +44,9 @@ export function AuthWrapper({ children }) {
   // Fetch the admin role from sessionStorage
   useEffect(() => {
     const savedRole = sessionStorage.getItem('adminRole');
-    setDojoAdmin(savedRole);
+    if (savedRole) {
+      setDojoAdmin(savedRole);
+    }
   }, [setDojoAdmin]);
 
   function getAuth() {
@@ -61,7 +63,7 @@ export function AuthWrapper({ children }) {
             // conditionally add admin_roles so it doesn't show up at all if users don't have it
             // admin_roles is a list of all the roles in the keycloak realm
             // not just the ones the user has
-            if (userData.data.admin_roles) newAuth.admin_roles = userData.data.admin_roles;
+            if (userData.data.admin_roles?.length) newAuth.admin_roles = userData.data.admin_roles;
             return newAuth;
           });
         }
