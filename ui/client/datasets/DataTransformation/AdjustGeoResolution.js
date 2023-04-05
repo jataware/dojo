@@ -78,7 +78,9 @@ export default withStyles((theme) => ({
           <div className={classes.oldToNew}>
             <div className={classes.textWrapper}>
               <Typography variant="h6" align="center">current resolution</Typography>
-              <Typography variant="h6" align="center">{oldResolution} km</Typography>
+              <Typography variant="h6" align="center">
+                {oldResolution.toFixed(2)} km
+              </Typography>
             </div>
             <div className={classes.arrowIcon}>
               <ArrowForwardIcon fontSize="large" />
@@ -86,7 +88,7 @@ export default withStyles((theme) => ({
             <div className={classes.textWrapper}>
               <Typography variant="h6" align="center">new resolution</Typography>
               <Typography variant="h6" align="center">
-                {selectedResolution} {selectedResolution && 'km'}
+                {selectedResolution !== '' && `${selectedResolution.toFixed(2)} km`}
               </Typography>
             </div>
           </div>
@@ -99,7 +101,7 @@ export default withStyles((theme) => ({
                 label="Resolution"
               >
                 {resolutionOptions.map((option) => (
-                  <MenuItem key={option} value={option}>{option} km</MenuItem>
+                  <MenuItem key={option} value={option}>{option.toFixed(2)} km</MenuItem>
                 ))}
               </Select>
             </FormControl>
