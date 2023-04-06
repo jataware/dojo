@@ -63,7 +63,11 @@ const TransformationButton = withStyles(({ palette }) => ({
       title={error ? tooltipText : ''}
     >
       <span style={{ position: 'relative' }}>
-        <ListItem button disabled={loading || error !== false}>
+        <ListItem
+          button
+          disabled={loading || error !== false}
+          onClick={onClick}
+        >
           <ListItemIcon>
             <Icon
               fontSize="large"
@@ -72,7 +76,6 @@ const TransformationButton = withStyles(({ palette }) => ({
           </ListItemIcon>
           <ListItemText
             primaryTypographyProps={{ variant: 'h6' }}
-            onClick={onClick}
             className={isComplete ? classes.complete : classes.incomplete}
           >
             {title}
