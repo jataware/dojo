@@ -75,9 +75,6 @@ export default withStyles(() => ({
   extraGutter: {
     marginBottom: '12px',
   },
-  previewRows: {
-    height: '42px',
-  },
   loadingWrapper: {
     display: 'flex',
     alignItems: 'center',
@@ -149,7 +146,7 @@ export default withStyles(() => ({
             before transformation:
           </Typography>
           <Typography variant="h5">
-            {before} rows
+            {before} records
           </Typography>
           <Typography
             variant="subtitle1"
@@ -159,7 +156,7 @@ export default withStyles(() => ({
             after transformation:
           </Typography>
           <Typography variant="h5">
-            {after} rows
+            {after} records
           </Typography>
 
           {loading && (
@@ -172,7 +169,7 @@ export default withStyles(() => ({
         <CardActions>
           <Tooltip
             placement="bottom-start"
-            title="Click to estimate the number of rows after transformation"
+            title="Click to estimate the number of records after transformation"
             arrow
           >
             <span>
