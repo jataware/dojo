@@ -30,15 +30,7 @@ import {
   generateProcessTempCovArgs,
 } from './dataTransformationHelpers';
 
-// for testing purposes
-// const mapBounds = [[10.5619, 42.0864], [12.595, 43.2906]];
-// const timeResolution = {
-//   uniformity: 'PERFECT',
-//   unit: 'day',
-//   resolution: 1,
-//   error: 0
-// };
-
+// for development purposes
 // const mapResolution = 111.00000000000014;
 // const mapResolutionOptions = [
 //   222.00000000000028,
@@ -61,6 +53,14 @@ import {
 //   2109.0000000000027,
 //   2220.0000000000027
 // ];
+// const mapBounds = [[10.5619, 42.0864], [12.595, 43.2906]];
+// const timeResolution = {
+//   uniformity: 'PERFECT',
+//   unit: 'day',
+//   resolution: 1,
+//   error: 0
+// };
+
 // const unique_dates = [
 //   '1997-09-01',
 //   '1998-03-22',
@@ -93,7 +93,7 @@ import {
 //   mapResolutionError,
 //   mapBoundsError,
 //   timeResolutionError,
-//   timeBoundsError
+//   // timeBoundsError
 // ] = [false, false, false, false,];
 
 const DataTransformation = withStyles(() => ({
@@ -187,11 +187,15 @@ const DataTransformation = withStyles(() => ({
   const onGeoResSuccess = useCallback((
     resp, setData, setDataError, setDataLoading, setOptions
   ) => {
-    if (resp.resolution_result?.uniformity === 'PERFECT') {
+    if (resp.resolution_result?.uniformity === 'PERFECT'
+      || resp.resolution_result?.uniformity === 'UNIFORM') {
       setData(resp.scale_km);
     } else {
       // TODO: handle error case in geo res component & data transformation
-      setDataError(resp.message ? resp.message : true);
+      let message = 'Resolution not detectable';
+      // if we have a uniformity that is not handled above, change the message to:
+      if (resp.resolution_result?.uniformity) message = 'Resolution not uniform';
+      setDataError(message);
     }
 
     if (resp.multiplier_samples) {
