@@ -36,3 +36,4 @@ s3fs==2022.8.2
 torch==1.13.0
 sentence-transformers==2.2.2
 aiofiles==22.1.0
+openpyxl==3.0.7
