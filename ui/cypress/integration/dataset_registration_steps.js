@@ -54,9 +54,9 @@ function mockHttpRequests() {
   }, {fixture: 'indicators_preview_raw_post.json'});
 
   cy.intercept({
-    url: 'api/dojo/job/*/mixmasta_processors.run_mixmasta*',
+    url: 'api/dojo/job/*/elwood_processors.run_elwood*',
     method: 'POST'
-  }, {fixture: 'mixmasta_processors.run_mixmasta_post.json'});
+  }, {fixture: 'elwood_processors.run_elwood_post.json'});
 
   cy.intercept({
     method: 'POST',

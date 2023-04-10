@@ -28,7 +28,7 @@ import Summary from './summary';
 import Terminal from './terminal';
 import theme from './theme';
 import ViewDatasets from './components/ViewDatasets';
-import ViewDocuments, { ParagraphListings } from './documents';
+import ViewDocuments from './documents';
 import UploadDocument from './documents/upload';
 import ViewModels from './components/ViewModels';
 import ViewRuns from './components/ViewRuns';
@@ -47,7 +47,6 @@ export default function Main() {
         <Route component={ViewDatasets} exact path="/datasets" />
         <Route component={ViewDocuments} exact path="/documents" />
         <Route component={UploadDocument} exact path="/documents/upload" />
-        <Route component={ParagraphListings} exact path="/paragraphs" />
         <Route component={DatasetAnnotate} exact path="/datasets/annotate" />
         <Route component={DatasetPreview} exact path="/datasets/preview" />
         <Route component={DatasetRegistrationStepper} path="/datasets/:flowslug/:step?/:datasetId?" />

@@ -26,7 +26,7 @@ DOJO_HOST=http://api.dojo-stack
 DOJO_URL=http://api.dojo-stack
 ELASTICSEARCH_URL=http://elasticsearch:9200
 ELASTICSEARCH_PORT=9200
-MIXMASTA_VERSION=latest
+ELWOOD_VERSION=stable
 REDIS_HOST=redis.dojo-stack
 REDIS_PORT=6379
 # Comment out or remove the STORAGE_HOST setting to use S3
@@ -40,3 +40,4 @@ UVICORN_RELOAD=True
 #DATASET_STORAGE_BASE_URL=s3://jataware-world-modelers-dev/datasets/
 #DOCUMENT_STORAGE_BASE_URL=s3://jataware-world-modelers-dev/documents/
 DOCUMENT_STORAGE_BASE_URL=file:///documents/
+DISABLE_SEMANTIC_HIGHLIGHT=false

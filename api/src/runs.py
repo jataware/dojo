@@ -170,12 +170,12 @@ def create_run(run: RunSchema.ModelRunSchema):
 
     outputfiles = get_outputfiles(run.model_id) # call dojo.py API method directly.
     output_dirs = {}
-    mixmasta_inputs = []
+    elwood_inputs = []
     volumeArray = ["/var/run/docker.sock:/var/run/docker.sock"]
     for output in outputfiles:
         try:
             # rehydrate file path in
-            mixmasta_input_file = Template(output["path"]).render(params)
+            elwood_input_file = Template(output["path"]).render(params)
 
             # get name of the mapper (will be based on output ID)
             mapper_name = f"mapper_{output['id']}.json"
@@ -186,7 +186,7 @@ def create_run(run: RunSchema.ModelRunSchema):
 
             # we have to be careful since we cannot mount the same directory (within the model container) more than once
             # so if multiple output files reside in the same directory (which is common), we need to re-use that volume mount
-            # and therefore need to ensure mixmasta knows where to fetch the files
+            # and therefore need to ensure elwood knows where to fetch the files
             if output_dir not in output_dirs:
                 output_dirs[output_dir] = output_id
 
@@ -197,14 +197,14 @@ def create_run(run: RunSchema.ModelRunSchema):
             # add it to the volumeArray
             volumeArray.append(output_dir_volume)
 
-            # build mixmasta input object
-            mixmasta_input = {"input_file": f"/tmp/{output_dirs[output_dir]}/{mixmasta_input_file}",
+            # build elwood input object
+            elwood_input = {"input_file": f"/tmp/{output_dirs[output_dir]}/{elwood_input_file}",
                               "mapper": f"/mappers/{mapper_name}"}
 
-            mixmasta_inputs.append(mixmasta_input)
+            elwood_inputs.append(elwood_input)
         except Exception as e:
             logging.exception(e)
-        logging.info(f"Mixmasta input file (model output file) is: {mixmasta_input_file}")
+        logging.info(f"Elwood input file (model output file) is: {elwood_input_file}")
 
     ### Handle accessory files.
     accessoryFiles = get_accessory_files(run.model_id) # call dojo.py API method directly.
@@ -219,7 +219,7 @@ def create_run(run: RunSchema.ModelRunSchema):
 
             # we have to be careful since we cannot mount the same directory (within the model container) more than once
             # so if multiple output files reside in the same directory (which is common), we need to re-use that volume mount
-            # and therefore need to ensure mixmasta knows where to fetch the files
+            # and therefore need to ensure elwood knows where to fetch the files
             if accessory_dir not in accessory_dirs:
                 accessory_dirs[accessory_dir] = accessory_id
 
@@ -281,7 +281,7 @@ def create_run(run: RunSchema.ModelRunSchema):
         "params": params,
         "config_files": model_config_objects,
         "volumes": json.dumps(volumeArray),
-        "mixmasta_cmd": f"causemosify-multi --inputs='{json.dumps(mixmasta_inputs)}' --output-file=/tmp/{run.id}_{run.model_id}",
+        "elwood_cmd": f"causemosify-multi --inputs='{json.dumps(elwood_inputs)}' --output-file=/tmp/{run.id}_{run.model_id}",
     }
 
     logging.debug(f"run_conf: {run_conf}")
@@ -334,7 +334,7 @@ def get_run_logs(run_id: str) -> RunSchema.RunLogsSchema:
         "rehydrate-task": "Parameter expansion",
         "model-task": "Model run",
         "mapper-task": "Determine variable annotations",
-        "mixmasta-task": "Transform for Causemos",
+        "elwood-task": "Transform for Causemos",
         "accessory-task": "Upload accessory files",
         "s3push-task": "Upload model output files",
         "exit-task": "Run complete",

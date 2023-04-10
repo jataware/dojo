@@ -91,7 +91,7 @@ const BasicRegistrationFlow = {
     options: {
       jobs: [
         {
-          id: 'mixmasta_processors.run_mixmasta',
+          id: 'elwood_processors.run_elwood',
           handler: async ({result, annotations, setAnnotations, datasetInfo, setDatasetInfo, ...extra}) => {
             const updatedDataset = {
               ...datasetInfo,
@@ -106,7 +106,7 @@ const BasicRegistrationFlow = {
           }
         },
         {
-          id: 'mixmasta_processors.scale_features',
+          id: 'elwood_processors.scale_features',
           send_context: true,
           handler: async ({result, annotations, setAnnotations, datasetInfo, setDatasetInfo, ...extra}) => {
             const updatedDataset = {
@@ -195,7 +195,7 @@ const ModelOutputFlow = {
     options: {
       jobs: [
         {
-          id: 'mixmasta_processors.run_model_mixmasta',
+          id: 'elwood_processors.run_model_elwood',
           send_context: true,
           handler: async ({result, annotations, setAnnotations, datasetInfo, setDatasetInfo, ...extra}) => {
             annotations.metadata["mixmasterAnnotations"] = result.mixmaster_annotations;
@@ -247,7 +247,7 @@ const AppendFlow = {
           args: {},
         },
         {
-          id: 'mixmasta_processors.run_mixmasta',
+          id: 'elwood_processors.run_elwood',
           handler: async ({result, annotations, setAnnotations, datasetInfo, setDatasetInfo, ...extra}) => {
             const updatedDataset = {
               ...datasetInfo,
@@ -260,7 +260,7 @@ const AppendFlow = {
           }
         },
         {
-          id: 'mixmasta_processors.scale_features',
+          id: 'elwood_processors.scale_features',
           send_context: true,
           handler: async ({result, annotations, setAnnotations, datasetInfo, setDatasetInfo, ...extra}) => {
             const updatedDataset = {
