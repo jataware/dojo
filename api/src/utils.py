@@ -196,16 +196,19 @@ def list_files(path):
 
 
 async def stream_csv_from_data_paths(data_paths, wide_format="false"):
+
+    storage_options = {
+        "key": os.getenv("AWS_ACCESS_KEY_ID"),
+        "secret": os.getenv("AWS_SECRET_ACCESS_KEY"),
+        "token": None,
+        "client_kwargs": {"endpoint_url": None},
+    }
+
     # Build single dataframe
     df = pd.concat(
         pd.read_parquet(
             file,
-            storage_options={
-                "key": os.getenv("AWS_ACCESS_KEY_ID"),
-                "secret": os.getenv("AWS_SECRET_ACCESS_KEY"),
-                "token": None,
-                "client_kwargs": {"endpoint_url": os.getenv("STORAGE_HOST") or None},
-            },
+            storage_options=None if file.startswith('http') else storage_options
         )
         for file in data_paths
     )
