@@ -6,11 +6,6 @@ import DialogContent from '@material-ui/core/DialogContent';
 import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 
-function formatCode(text) {
-  // TODO send better formatted message from parent, or relevant keys
-  // so that we may pretty print this message without json
-  return JSON.stringify(text, null, 2);
-}
 
 export default ({
   open, title, message, handleClose
@@ -22,15 +17,13 @@ export default ({
     <DialogTitle>
       {title}
     </DialogTitle>
+
     <DialogContent>
-      {typeof message === 'object' ?
-       (<pre>{formatCode(message)}</pre>)
-       :
-       <DialogContentText>
-         {message}
-       </DialogContentText>
-      }
+      <DialogContentText>
+        {message}
+      </DialogContentText>
     </DialogContent>
+
     <DialogActions>
       <Button onClick={handleClose} color="primary">
         Ok
