@@ -387,11 +387,27 @@ def scale_features(context, filename=None):
 
     # rescale files that need processing
     for path in files_to_process:
+        logging.warn(path)
         filename = path.split("/")[-1]
         file_name = path.split("/")[-1].split(".parquet")[0]
         file_out_name = f"{file_name}_normalized.parquet.gzip"
 
-        dataframe = pd.read_parquet(f"processing/{filename}")
+        # Creating folder for temp file storage on the rq worker since following functions are dependent on file paths
+        localpath = f"/datasets/processing/{context['uuid']}"
+        localfile = os.path.join(localpath, filename)
+        local_outfile = os.path.join(localpath, file_out_name)
+
+        if not os.path.isdir(localpath):
+            os.makedirs(localpath)
+
+        # Copy raw data file into rq-worker
+        # Could change elwood to accept file-like objects as well as filepaths.
+        # rawfile_path = os.path.join(settings.DATASET_STORAGE_BASE_URL, filename)
+        raw_file_obj = get_rawfile(path)
+        # with open(localfile, "wb") as f:
+            # f.write(raw_file_obj.read())
+
+        dataframe = pd.read_parquet(raw_file_obj)
 
         dataframe_scaled = scaler.scale_dataframe(dataframe)
 

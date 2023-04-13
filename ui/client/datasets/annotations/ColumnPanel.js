@@ -448,6 +448,8 @@ export default withStyles(({ palette, spacing, breakpoints }) => ({
                       ...individualPartsOverrides,
                       [targetColumnName]: {
                         ...cleanValues,
+                        display_name: cleanValues.display_name
+                          ? cleanValues.display_name : columnName,
                         annotated: true
                       }
                     };

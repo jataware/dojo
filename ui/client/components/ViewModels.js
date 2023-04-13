@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 
 import axios from 'axios';
 
-
 import AutorenewIcon from '@material-ui/icons/Autorenew';
 import Button from '@material-ui/core/Button';
 import CheckOutlinedIcon from '@material-ui/icons/CheckOutlined';
@@ -11,12 +10,12 @@ import Container from '@material-ui/core/Container';
 import { DataGrid } from '@material-ui/data-grid';
 import ErrorOutlineOutlinedIcon from '@material-ui/icons/ErrorOutlineOutlined';
 import HelpIcon from '@material-ui/icons/Help';
-import { Link } from 'react-router-dom';
 import Typography from '@material-ui/core/Typography';
+import useMediaQuery from '@material-ui/core/useMediaQuery';
 
 import { makeStyles } from '@material-ui/core/styles';
 
-import { useHistory } from 'react-router-dom';
+import { useHistory, Link } from 'react-router-dom';
 
 import ExpandableDataGridCell from './ExpandableDataGridCell';
 import LoadingOverlay from './LoadingOverlay';
@@ -28,7 +27,7 @@ const useStyles = makeStyles((theme) => ({
   },
   gridContainer: {
     height: '400px',
-    width: '1800px',
+    maxWidth: '1800px',
     margin: '0 auto',
   },
   header: {
@@ -65,6 +64,7 @@ const useStyles = makeStyles((theme) => ({
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
+    flexWrap: 'wrap',
   },
 }));
 
@@ -161,6 +161,8 @@ const ViewModels = ({
   const [displayUnpublished, setDisplayUnpublished] = useState(true);
 
   const [searchedModels, setSearchedModels] = useState(null);
+  // if on a large screen, we want certain column widths set
+  const largeScreen = useMediaQuery('(min-width:1250px)');
 
   useEffect(() => {
     fetchModels(includeStatuses, setModels, setModelsLoading, setModelsError);
@@ -209,7 +211,8 @@ const ViewModels = ({
   const lastRunStatus = !includeStatuses ? {} : {
     field: 'last_run_status',
     headerName: 'Status',
-    width: 120,
+    disableColumnMenu: true,
+    width: 100,
     renderCell: ({ value }) => (
       <div className={classes.published}>
         {value === 'success' ? <CheckOutlinedIcon className={classes.check} />
@@ -225,17 +228,17 @@ const ViewModels = ({
       field: 'name',
       headerName: 'Name',
       renderCell: expandableCell,
-      width: 150,
+      width: largeScreen ? 140 : 120,
     },
     {
       field: 'family_name',
       headerName: 'Family Name',
       renderCell: expandableCell,
-      width: 170,
+      width: largeScreen ? 170 : 130,
     },
     {
       field: 'created_at',
-      headerName: 'Last Updated',
+      headerName: 'Updated',
       valueFormatter: (params) => (
         new Date(params.value).toLocaleDateString(
           'en-US',
@@ -247,26 +250,29 @@ const ViewModels = ({
           },
         )
       ),
-      width: 170,
+      width: 130,
     },
     {
       field: 'description',
       headerName: 'Description',
       renderCell: expandableCell,
-      width: 280,
+      sortable: false,
+      // use flexible sizing so description will fill the space for > 1250
+      flex: largeScreen ? 1 : 0,
+      width: 200,
     },
-    { field: 'id', headerName: 'ID', width: 300 },
     {
-      field: 'commit_message',
-      headerName: 'Commit Message',
+      field: 'id',
+      headerName: 'ID',
       renderCell: expandableCell,
-      width: 270,
+      width: 300,
     },
     lastRunStatus,
     {
       field: 'is_published',
       headerName: 'Published',
-      width: 140,
+      disableColumnMenu: true,
+      width: 120,
       renderCell: ({ value }) => (
         <div className={classes.published}>
           {value === true && <CloudDoneOutlinedIcon className={classes.check} />}
