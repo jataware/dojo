@@ -404,10 +404,13 @@ def scale_features(context, filename=None):
         file_ending="_normalized_robust.parquet.gzip",
     )
 
-    return {
+    results_dictionary = {
         "data_paths_normalized": data_paths_normalized,
         "data_paths_normalized_robust": data_paths_normalized_robust,
     }
+    print(results_dictionary)
+
+    return results_dictionary
 
 
 def scaling_core(
@@ -449,7 +452,10 @@ def scaling_core(
 
         dataframe = pd.read_parquet(raw_file_obj)
 
-        dataframe_scaled = scaling_method(dataframe, **scaling_method_options)
+        if scaling_method_options:
+            dataframe_scaled = scaling_method(dataframe, **scaling_method_options)
+        else:
+            dataframe_scaled = scaling_method(dataframe)
 
         s3_filepath = os.path.join(
             settings.DATASET_STORAGE_BASE_URL, "normalized", uuid, file_out_name

@@ -109,9 +109,10 @@ const BasicRegistrationFlow = {
           id: 'elwood_processors.scale_features',
           send_context: true,
           handler: async ({result, annotations, setAnnotations, datasetInfo, setDatasetInfo, ...extra}) => {
+            console.log("RESULT FROM SCALE: ", result);
             const updatedDataset = {
               ...datasetInfo,
-              data_paths_normalized: result,
+              ...result,
             };
             setDatasetInfo(updatedDataset);
             await axios.put(`/api/dojo/indicators`, updatedDataset);
@@ -265,7 +266,7 @@ const AppendFlow = {
           handler: async ({result, annotations, setAnnotations, datasetInfo, setDatasetInfo, ...extra}) => {
             const updatedDataset = {
               ...datasetInfo,
-              data_paths_normalized: result,
+              ...result,
             };
             setDatasetInfo(updatedDataset);
             await axios.put(`/api/dojo/indicators`, updatedDataset);
