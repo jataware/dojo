@@ -11,6 +11,10 @@ import csv
 import codecs
 from functools import partial
 import pandas as pd
+import openpyxl
+from openpyxl.styles import Font
+from openpyxl.workbook import Workbook
+from openpyxl.worksheet.datavalidation import DataValidation
 
 from elasticsearch import Elasticsearch
 from fastapi import (
@@ -798,8 +802,169 @@ def upload_csv_data_dictionary_file(indicator_id: str, file: UploadFile = File(.
 
 
 @router.get("/indicators/annotations/file-template", response_class=FileResponse)
-def download_csv_data_dictionary_template_file():
-    file_name = "dataset_annotate_template.template_xlsx"
-    headers = {"Content-Disposition": f"attachment; filename={file_name.replace('template_', '')}"}
+def download_csv_data_dictionary_template_file(indicator_id=None):
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Dojo Annotation Template"
 
-    return FileResponse(file_name, headers=headers)
+    bold_font = Font(bold=True)
+
+    columns = [
+        {
+            "name": "field_name",
+            "help_text": """The name of the field as it exists in the source document.
+This is usually the topmost cell in a column of a spreadsheet.""",
+            "validation": None,
+        },
+        {
+            "name": "group",
+            "help_text": """Setting this allows you to group related fields such as multi-part dates, or multipart geos.
+If the field is not part of a group, then this should be left blank.""",
+            "validation": None,
+        },
+        {
+            "name": "display_name",
+            "help_text": """""",
+            "validation": None,
+        },
+        {
+            "name": "description",
+            "help_text": """Describes the field to provide better context during usage.""",
+            "validation": None,
+        },
+        {
+            "name": "data_type",
+            "help_text": """Describes the type of data contained in the column.
+Some options include:
+Integer - a numerical value that does not contain a decimal point/place
+String - a word or text value that is not meant to be processed nor interpreted as a any of the other values available to describe the data.
+Float: a numerical value with no decimal place
+Binary: binary data in the dataset (TODO maybe provide an example here?)
+Boolean: data that represents yes/no values (true or false, enabled or disabled, etc)
+""",
+            "validation": DataValidation(
+                type="list", 
+                formula1='"integer,string,float,binary,boolean,latitude,longitude,coordinates,country,iso2,iso3,state,territory,county,district,municipality,town,month,day,year,epoch,date"',
+                allow_blank=False,
+            ),
+        },
+        {
+            "name": "units",
+            "help_text": """
+""",
+            "validation": None,
+        },
+        {
+            "name": "units_description",
+            "help_text": """
+""",
+            "validation": None,
+        },
+        {
+            "name": "primary",
+            "help_text": """
+""",
+            "validation": None,
+            "validation": DataValidation(
+                type="list", 
+                formula1='"Y,N"',
+                allow_blank=True,
+            ),
+        },
+        {
+            "name": "date_format",
+            "help_text": """
+""",
+            "validation": None,
+        },
+        {
+            "name": "gadm_level",
+            "help_text": """
+""",
+            "validation": None,
+            "validation": DataValidation(
+                type="list", 
+                formula1='"country,admin0,admin1,admin2,admin3"',
+                allow_blank=True,
+            ),
+        },
+        {
+            "name": "resolve_to_gadm",
+            "help_text": """
+""",
+            "validation": DataValidation(
+                type="list", 
+                formula1='"Y,N"',
+                allow_blank=True,
+            ),
+        },
+        {
+            "name": "coord_format",
+            "help_text": """
+""",
+            "validation": None,
+            "validation": DataValidation(
+                type="list", 
+                formula1='"lonlat,latlon"',
+                allow_blank=False,
+            ),
+        },
+        {
+            "name": "qualifies",
+            "help_text": """
+""",
+            "validation": None,
+        },
+        {
+            "name": "qualifier_role",
+            "help_text": """
+""",
+            "validation": DataValidation(
+                type="list", 
+                formula1='"breakdown,weight,minimum,maximum,coefficient"',
+                allow_blank=False,
+            ),
+        },
+    ]
+
+    for index, col in enumerate(columns, start=1):
+        col_name = col["name"]
+        col_letter = openpyxl.utils.cell.get_column_letter(index)
+        cell = ws.cell(row=1, column=index, value=col_name)
+        cell.font = bold_font
+        help_text = col.get("help_text", "").strip()
+        help_prompt = DataValidation(type="custom", formula1="1", promptTitle=col_name, prompt=help_text, allow_blank=False, showInputMessage=True)
+        help_prompt.add(f"{col_letter}1")
+        ws.add_data_validation(help_prompt)
+
+        validation = col.get("validation", None)
+        if validation:
+            logger.warn(f"{col_name}: {validation}")
+            validation.add(f'{col_letter}2:{col_letter}1048576')
+            ws.add_data_validation(validation)
+
+    if indicator_id:
+        annotations = get_annotations(indicator_id)
+        logger.warn(annotations)
+        for index, row in enumerate(annotations.get("metadata", {}).get("column_statistics", {}).keys(), start=2):
+            ws.cell(row=index, column=1, value=row)
+    
+    # Freeze the top and left-most row/column
+    ws.freeze_panes = 'B2'
+
+    # for col in ws.column_dimensions:
+        # logger.warn(col) 
+        
+
+    file_name = "dataset_annotation_template.xlsx"
+    headers = {
+        "Content-Disposition": f"attachment; filename={file_name}",
+        "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    }
+
+    from tempfile import NamedTemporaryFile
+    with NamedTemporaryFile() as tmp:
+        wb.save(tmp.name)
+        tmp.seek(0)
+        content = tmp.read()
+    return Response(content=content, headers=headers)
