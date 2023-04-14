@@ -13,6 +13,10 @@ import numpy as np
 from utils import get_rawfile, put_rawfile, download_rawfile
 from elwood import elwood as mix
 from elwood import feature_scaling as scaler
+from resolution_processors import (
+    calculate_geographical_resolution,
+    calculate_temporal_resolution,
+)
 from base_annotation import BaseProcessor
 from settings import settings
 
@@ -60,9 +64,7 @@ class ElwoodProcessor(BaseProcessor):
     @staticmethod
     def run(context, datapath, filename) -> pd.DataFrame:
         """final full elwood implementation"""
-        logging.info(
-            f"{context.get('logging_preface', '')} - Running elwood processor"
-        )
+        logging.info(f"{context.get('logging_preface', '')} - Running elwood processor")
         output_path = datapath
         mapper_fp = f"{output_path}/elwood_ready_annotations.json"  # Filename for json info, will eventually be in Elasticsearch, needs to be written to disk until elwood is updated
         raw_data_fp = f"{output_path}/{filename}"  # Raw data
@@ -189,6 +191,45 @@ def run_elwood(context, filename=None):
                 continue
             geography_dict[geog_type].append(value)
 
+    # Resolution Detection
+
+    datetime_column = ""
+    time_format = ""
+    lat_col = ""
+    lon_col = ""
+    temporal_resolution = None
+    geographical_resolution = None
+    for date in mm_ready_annotations.date:
+        if date.get("primary_date", None):
+            datetime_column = date.name
+            time_format = date.time_format
+            break
+
+    for geo in mm_ready_annotations.geo:
+        if geo.get("primary_geo", None) and geo.get("is_geo_pair", None):
+            if geo.geo_type == "latitude":
+                lat_col = geo.name
+                lon_col = geo.is_geo_pair
+                break
+            lat_col = geo.is_geo_pair
+            lon_col = geo.name
+
+    kwargs = {
+        "datetime_column": datetime_column,
+        "time_format": time_format,
+        "lat_column": lat_col,
+        "lon_column": lon_col,
+    }
+
+    if datetime_column and time_format:
+        temporal_resolution = calculate_temporal_resolution(
+            context=context, filename=filename, kwargs=kwargs
+        )
+        response["outputs"][""]
+    if lat_col and lon_col:
+        geographical_resolution = calculate_geographical_resolution(
+            context=context, filename=filename, kwargs=kwargs
+        )
     # Outputs
     qualifier_outputs = []
     outputs = []
@@ -206,12 +247,14 @@ def run_elwood(context, filename=None):
             ontologies={},
             is_primary=True,
             data_resolution={
-                "temporal_resolution": context.get("dataset", {}).get(
-                    "temporal_resolution", None
-                ),
-                "spatial_resolution": context.get("dataset", {}).get(
-                    "spatial_resolution", None
-                ),
+                "temporal_resolution": temporal_resolution["resolution_result"]["unit"]
+                if temporal_resolution
+                else context.get("dataset", {}).get("temporal_resolution", None),
+                "spatial_resolution": geographical_resolution["resolution_result"][
+                    "resolution"
+                ]
+                if geographical_resolution
+                else context.get("dataset", {}).get("spatial_resolution", None),
             },
             alias=feature["aliases"],
         )
@@ -285,6 +328,7 @@ def run_elwood(context, filename=None):
         "qualifier_outputs": qualifier_outputs,
         "feature_names": feature_names,
     }
+
     return response
 
 
@@ -400,7 +444,7 @@ def scale_features(context, filename=None):
         # rawfile_path = os.path.join(settings.DATASET_STORAGE_BASE_URL, filename)
         raw_file_obj = get_rawfile(path)
         # with open(localfile, "wb") as f:
-            # f.write(raw_file_obj.read())
+        # f.write(raw_file_obj.read())
 
         dataframe = pd.read_parquet(raw_file_obj)
 
