@@ -26,19 +26,9 @@ es = Elasticsearch(f"http://{args.es_host}")
 print(es.info())
 
 
-total_processed = 0 # indicators
-# For outputs:
-total_missing = 0
-total_dups = 0
-
-
-def compareOutputsToFeatures(indicatorDictionary, indicator_id):
-    global total_missing
-    global total_dups
+def compareOutputsToFeatures(indicatorDictionary, indicator_id, totals):
 
     for index, output in enumerate(indicatorDictionary["outputs"]):
-
-        print(f"Processing output#{index}")
 
         feature_id = f"{indicator_id}-{output['name']}";
         body = {
@@ -51,34 +41,36 @@ def compareOutputsToFeatures(indicatorDictionary, indicator_id):
         total_found = res["hits"]["total"]["value"]
 
         if total_found == 0:
-            total_missing += 1
+            totals["missing"] += 1
         elif total_found > 1:
-            total_dups += 1
+            totals["duplicates"] += 1
+
+    return totals
 
 
-
-def parse_indicators(hits):
-    global total_processed
-
+def process_indicator_page(hits, totals):
     print(f"This page found {len(hits)} indicator hits.")
 
-    for idx, indicator in enumerate(hits):
+    for _, indicator in enumerate(hits):
         one_match = indicator["_source"]
         indicator_id = one_match["id"]
-        print(f"Indicators parsed: {total_processed}.\nProcessing indicator id: {indicator_id}\n")
-        compareOutputsToFeatures(one_match, indicator_id)
-        total_processed += 1
+
+        print(f"\nProcessing indicator with id: {indicator_id}\n")
+
+        compareOutputsToFeatures(one_match, indicator_id, totals)
+        totals["processed"] += 1
+
+    return totals
 
 
 SIZE = 10
 
-def process_indicators():
-    """
-    """
-    global total_missing
-    global total_dups
-
-    print("Called process_upload_indicators\n")
+def lookup_all_indicators():
+    totals = {
+        "processed": 0,
+        "missing": 0,
+        "duplicates": 0
+    }
 
     all_indicators = {
         "query": {
@@ -91,7 +83,7 @@ def process_indicators():
     hits = results["hits"]["hits"]
 
     if len(hits):
-        parse_indicators(hits)
+        totals = process_indicator_page(hits, totals)
 
     scroll_id = results["_scroll_id"]
 
@@ -100,16 +92,16 @@ def process_indicators():
     while bool(scroll_id) and len(hits) >= SIZE:
         print("There are more results\n")
 
-        # new results
         results = es.scroll(scroll_id=scroll_id, scroll="2m")
         hits = results["hits"]["hits"]
         scroll_id = results["_scroll_id"]
 
         if len(hits):
-            parse_indicators(hits)
+            totals = process_indicator_page(hits, totals)
 
-    print(f"Done...\n\nTotal missing: {total_missing}.\nTotal Duplicates: {total_dups}.")
+    print(f"Done.\n\nTotal missing: {totals['missing']}.\nTotal Duplicates: {totals['duplicates']}.\n")
+
 
 if __name__ == "__main__":
-    process_indicators()
+    lookup_all_indicators()
     exit(0)

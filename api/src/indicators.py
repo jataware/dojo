@@ -271,9 +271,8 @@ def list_features(term: Optional[str]=None,
                   scroll_id: Optional[str]=None):
     """
     Lists all features, with pagination, or results from searching
-    through them by keywords (within input `term`).
-    Will match `term` to feature `name`,
-    `display_name`, or `description`.
+    through them (using input sentence `term`). Will match `term`
+    to feature `name`, `display_name`, or `description`.
     """
 
     if term:
@@ -294,16 +293,14 @@ def list_features(term: Optional[str]=None,
     else:
         results = es.scroll(scroll_id=scroll_id, scroll="2m")
 
-    totalHitsInPage = len(results["hits"]["hits"])
+    es_hits = results["hits"]["hits"]
+    hits_count = len(es_hits)
 
-    # if results are less than the page size (10) don't return a scroll_id
-    if totalHitsInPage < size:
+    # if hits are less than the page size (10) don't return a scroll_id
+    if hits_count < size:
         scroll_id = None
     else:
         scroll_id = results.get("_scroll_id", None)
-
-    # Groups features as array list from `results`, into `response`
-    response = results["hits"]["hits"]
 
     max_score = results["hits"]["max_score"]
 
@@ -316,8 +313,8 @@ def list_features(term: Optional[str]=None,
 
     response = {
         "hits": results["hits"]["total"]["value"],
-        "items_in_page": len(response),
-        "results": [formatOneResult(i) for i in response],
+        "items_in_page": hits_count,
+        "results": [formatOneResult(i) for i in es_hits],
         "scroll_id": scroll_id
     }
 
