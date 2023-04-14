@@ -510,6 +510,12 @@ class DateValidationResponseSchema(BaseModel):
         examples=[True, False],
     )
 
+class MetadataOpts(BaseModel):
+    match_score: float
+
+class FeatureResult(Feature):
+    metadata: Optional[MetadataOpts]
+
 class FeaturesSearchSchema(BaseModel):
     hits: int = Field(
         ...,
@@ -525,14 +531,15 @@ class FeaturesSearchSchema(BaseModel):
         title="Scroll ID",
         description= "Scroll id to use as query param, in order to navigate to the next page of feature results. Will return None|null when there are no pages left."
     )
-    results: List[Feature] = Field(
+    results: List[FeatureResult] = Field(
         ...,
         description="Features data in current page for a given list or search."
     )
+    max_score: Optional[float]
 
 
 class FeaturesSemanticSearchSchema(FeaturesSearchSchema):
-    max_score: float = Field(
+    max_score: Optional[float] = Field(
         ...,
         description="Max search engine score from all matches. This will match the first result's score within the first scroll page.",
         examples=[0.72]
