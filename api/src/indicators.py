@@ -27,7 +27,6 @@ from fastapi import (
     UploadFile,
     File
 )
-from fastapi.responses import FileResponse
 from fastapi.logger import logger
 from redis import Redis
 from rq import Queue
@@ -802,15 +801,7 @@ def upload_csv_data_dictionary_file(indicator_id: str, file: UploadFile = File(.
     return patch_annotation(payload=annotation_payload, indicator_id=indicator_id)
 
 
-# @router.get("/indicators/annotations/file-template", response_class=FileResponse)
-# def download_csv_data_dictionary_template_file():
-#     file_name = "dataset_annotate_template.template_csv"
-#     headers = {"Content-Disposition": f"attachment; filename={file_name.replace('template_', '')}"}
-
-#     return FileResponse(file_name, headers=headers)
-
-
-@router.get("/indicators/annotations/file-template", response_class=FileResponse)
+@router.get("/indicators/annotations/file-template")
 def download_csv_data_dictionary_template_file(indicator_id=None):
     wb = Workbook()
     ws = wb.active
