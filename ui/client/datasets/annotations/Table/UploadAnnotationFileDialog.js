@@ -19,7 +19,7 @@ import { FileDropSelector } from '../../../documents/upload/DropArea';
 
 export default ({
   open, handleClose, handleFileSelect, handleDropFilesRejection,
-  onDownload, errorMessage, clearErrorMessage, loading
+  errorMessage, clearErrorMessage, loading, datasetID
 }) => (
   <Dialog
     open={open}
@@ -52,7 +52,10 @@ export default ({
         )}
       </div>
 
-      <Button onClick={onDownload} color="primary">
+      <Button
+        component="a"
+        href={`/api/dojo/indicators/annotations/file-template${datasetID ? '?indicator_id='+datasetID : ''}`}
+        color="primary">
         Download template
       </Button>
 

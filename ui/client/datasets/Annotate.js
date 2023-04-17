@@ -248,6 +248,7 @@ export default withStyles(({ spacing }) => ({
         fieldsConfig={fieldsConfig}
         addingAnnotationsAllowed={addingAnnotationsAllowed}
         onUploadAnnotations={handleUploadAnnotations}
+        datasetID={datasetInfo?.id}
       />
 
       <Navigation

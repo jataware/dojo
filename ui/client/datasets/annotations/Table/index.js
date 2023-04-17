@@ -71,33 +71,6 @@ function CustomLoadingOverlay() {
   );
 }
 
-const downloadDataAsFile = function (data, filename, type) {
-  const blob = new Blob([data], { type });
-  const url = window.URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.setAttribute('href', url);
-  a.setAttribute('download', filename);
-  a.click();
-}
-
-const downloadTemplate = async function () {
-  return axios.get('/api/dojo/indicators/annotations/file-template')
-   .then((response) => {
-
-     const data = response.data;
-
-     let filename = 'template.xlsx';
-     const type = response.headers['content-type'];
-
-     try {
-       filename = response.headers['content-disposition'].match(/filename\=(.+)$/)[1];
-     } catch(e) {
-       //
-     }
-
-     downloadDataAsFile(data, filename, type);
-   });
-};
 
 /**
  *
@@ -161,7 +134,7 @@ export default withStyles(({ palette }) => ({
   columns, annotations, inferredData,
   loading, multiPartData, setMultiPartData,
   validateDateFormat, columnStats,
-  fieldsConfig, addingAnnotationsAllowed, onUploadAnnotations
+  fieldsConfig, addingAnnotationsAllowed, onUploadAnnotations, datasetID
 }) => {
   const [pageSize, setPageSize] = useState(rowsPerPageOptions[0]);
   const [highlightedColumn, setHighlightedColumn] = useState(null);
@@ -456,10 +429,10 @@ export default withStyles(({ palette }) => ({
         handleClose={cancelUploadAnnotations}
         handleFileSelect={handleFileSelect}
         handleDropFilesRejection={handleDropFilesRejection}
-        onDownload={downloadTemplate}
         errorMessage={fileDictionaryError}
         clearErrorMessage={()=>{setfileDictionaryError(null);}}
         loading={dictionaryUploadLoading}
+        datasetID={datasetID}
       />
     </div>
   );
