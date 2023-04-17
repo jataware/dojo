@@ -10,6 +10,8 @@ from urllib.parse import urlparse
 import pandas as pd
 import numpy as np
 
+import sys
+
 from utils import get_rawfile, put_rawfile, download_rawfile
 from elwood import elwood as mix
 from elwood import feature_scaling as scaler
@@ -191,45 +193,6 @@ def run_elwood(context, filename=None):
                 continue
             geography_dict[geog_type].append(value)
 
-    # Resolution Detection
-
-    datetime_column = ""
-    time_format = ""
-    lat_col = ""
-    lon_col = ""
-    temporal_resolution = None
-    geographical_resolution = None
-    for date in mm_ready_annotations.date:
-        if date.get("primary_date", None):
-            datetime_column = date.name
-            time_format = date.time_format
-            break
-
-    for geo in mm_ready_annotations.geo:
-        if geo.get("primary_geo", None) and geo.get("is_geo_pair", None):
-            if geo.geo_type == "latitude":
-                lat_col = geo.name
-                lon_col = geo.is_geo_pair
-                break
-            lat_col = geo.is_geo_pair
-            lon_col = geo.name
-
-    kwargs = {
-        "datetime_column": datetime_column,
-        "time_format": time_format,
-        "lat_column": lat_col,
-        "lon_column": lon_col,
-    }
-
-    if datetime_column and time_format:
-        temporal_resolution = calculate_temporal_resolution(
-            context=context, filename=filename, kwargs=kwargs
-        )
-        response["outputs"][""]
-    if lat_col and lon_col:
-        geographical_resolution = calculate_geographical_resolution(
-            context=context, filename=filename, kwargs=kwargs
-        )
     # Outputs
     qualifier_outputs = []
     outputs = []
@@ -247,14 +210,12 @@ def run_elwood(context, filename=None):
             ontologies={},
             is_primary=True,
             data_resolution={
-                "temporal_resolution": temporal_resolution["resolution_result"]["unit"]
-                if temporal_resolution
-                else context.get("dataset", {}).get("temporal_resolution", None),
-                "spatial_resolution": geographical_resolution["resolution_result"][
-                    "resolution"
-                ]
-                if geographical_resolution
-                else context.get("dataset", {}).get("spatial_resolution", None),
+                "temporal_resolution": context.get("dataset", {}).get(
+                    "temporal_resolution", None
+                ),
+                "spatial_resolution": context.get("dataset", {}).get(
+                    "spatial_resolution", None
+                ),
             },
             alias=feature["aliases"],
         )
@@ -319,6 +280,62 @@ def run_elwood(context, filename=None):
         # Append
         qualifier_outputs.append(qualifier_output)
 
+    # Resolution Detection
+
+    datetime_column = ""
+    time_format = ""
+    lat_col = ""
+    lon_col = ""
+    temporal_resolution_value = None
+    geographical_resolution_value = None
+    for date in mm_ready_annotations["date"]:
+        if date.get("primary_date", None):
+            datetime_column = date["name"]
+            time_format = date["time_format"]
+            print(f"date res: {datetime_column}, {time_format}")
+            break
+
+    for geo in mm_ready_annotations["geo"]:
+        if geo.get("primary_geo", None) and geo.get("is_geo_pair", None):
+            if geo["geo_type"] == "latitude":
+                lat_col = geo["name"]
+                lon_col = geo["is_geo_pair"]
+                break
+            lat_col = geo["is_geo_pair"]
+            lon_col = geo["name"]
+            print(f"geo res: {lat_col}, {lon_col}")
+
+    kwargs = {
+        "datetime_column": datetime_column,
+        "time_format": time_format,
+        "lat_column": lat_col,
+        "lon_column": lon_col,
+    }
+    print(f"KWARGS: {kwargs}")
+
+    if datetime_column and time_format:
+        temporal_resolution = calculate_temporal_resolution(
+            context=context, filename=filename, **kwargs
+        )
+        if temporal_resolution:
+            temporal_resolution_value = (
+                temporal_resolution["resolution_result"]["unit"] + "ly"
+            )
+    if lat_col and lon_col:
+        geographical_resolution = calculate_geographical_resolution(
+            context=context, filename=filename, **kwargs
+        )
+        if (
+            geographical_resolution
+            and geographical_resolution["resolution_result"] != "None"
+        ):
+            geographical_resolution_value = geographical_resolution[
+                "resolution_result"
+            ]["resolution"]
+
+    print(f"Resolution responses: {temporal_resolution}, {geographical_resolution}")
+    sys.stdout.flush()
+
     response = {
         "preview": elwood_result_df.head(100).to_json(),
         "data_files": data_files,
@@ -328,7 +345,12 @@ def run_elwood(context, filename=None):
         "qualifier_outputs": qualifier_outputs,
         "feature_names": feature_names,
     }
+    if temporal_resolution_value:
+        response["temporal_resolution"] = temporal_resolution_value
+    if geographical_resolution_value:
+        response["spatial_resolution"] = geographical_resolution_value
 
+    print(f"BIG RESPONSE: {response}")
     return response
 
 

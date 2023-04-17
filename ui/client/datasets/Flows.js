@@ -100,6 +100,8 @@ const BasicRegistrationFlow = {
               period: result.period,
               outputs: result.outputs,
               qualifier_outputs: result.qualifier_outputs,
+              temporal_resolution: result.temporal_resolution,
+              spatial_resolution: result.spatial_resolution
             };
             setDatasetInfo(updatedDataset);
             await axios.put(`/api/dojo/indicators`, updatedDataset);
