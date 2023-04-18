@@ -45,7 +45,6 @@ class Paragraph(BaseModel):
     page_no: Optional[int]
     length: Optional[int]
 
-
 class ParagraphBaseListResponse(BaseModel):
     hits: int = Field(
         ...,

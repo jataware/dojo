@@ -87,6 +87,16 @@ class ElwoodProcessor(BaseProcessor):
 
 
 def run_elwood(context, filename=None, on_success_endpoint=None):
+    """
+    Initializes an elwood processor, which normalizes the dataset. Supports
+    initial registration, as well as appending data to an existing dataset.
+    `on_success_endpoint` is only called when provided, as a callback url just
+    before this fn returns the result.
+        `on_success_endpoint` shape and example: {
+                'verb': 'PUT', # defaults to GET
+                'url': 'http://domain.com/my-publish-url'
+            }
+    """
     processor = ElwoodProcessor()
     uuid = context["uuid"]
     # Creating folder for temp file storage on the rq worker since following functions are dependent on file paths

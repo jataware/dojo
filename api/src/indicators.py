@@ -710,6 +710,26 @@ def rescale_indicator(indicator_id: str):
 
 # TODO Add/use csv data dictionary file, Finish after UI-dictionary-file work.
 # @router.post("/indicators/definition")
+"""
+The following function is the start of implementing an endpoint that registers
+a dataset end-to-end from one API call (for developers, services).
+This endpoint will accept multiple files:
+- The dataset data file (presumable a csv, xlsx, netcdf, etc files we support)
+- A dataset metadata json file: contains the dataset name, organization, etc
+- A dictionary file describing the contents of the data and their types.
+  We call this "annotations" under Dojo API (xlsx or csv).
+
+With all of the three above files, the user would immediately receive an
+acknowledge that the dataset registration is in process. The API and workers would
+continue the registration process end-to-end. This is an alternative to the Dojo UI,
+where a gui requests the user separate data accross multiple steps.
+
+This is a work in progress, and thus has not been registered to the Dojo API yet.
+It currently does register a dataset end-to-end if uncommen this the router.post
+line above, but only supports annotations using the old elwood format within
+the metadata file, as well as only supporting csv datasets.
+
+"""
 def dataset_register_files(data: UploadFile = File(...), metadata: UploadFile = File(...)):
     """
     Fields (not columns). Define fields (not annotations?)
@@ -742,7 +762,7 @@ def dataset_register_files(data: UploadFile = File(...), metadata: UploadFile = 
     indicator_id=response["id"]
 
     # Step 2: Upload file to S3
-    upload_file(indicator_id=indicator_id, file=file)
+    upload_file(indicator_id=indicator_id, file=data)
 
     # Step 3: POST annotations
     post_annotation(payload=annotations, indicator_id=indicator_id)
@@ -758,7 +778,7 @@ def dataset_register_files(data: UploadFile = File(...), metadata: UploadFile = 
 
     context = get_context(indicator_id)
 
-    job = q.enqueue_call(
+    q.enqueue_call(
         func=job_string, args=[context], kwargs={
             "on_success_endpoint": {
                 "verb": "PUT",
@@ -824,7 +844,7 @@ If the field is not part of a group, then this should be left blank.""",
         },
         {
             "name": "display_name",
-            "help_text": """""",
+            "help_text": """A name to display instead of field_name.""",
             "validation": None,
         },
         {
@@ -836,11 +856,11 @@ If the field is not part of a group, then this should be left blank.""",
             "name": "data_type",
             "help_text": """Describes the type of data contained in the column.
 Some options include:
-Integer - a numerical value that does not contain a decimal point/place
-String - a word or text value that is not meant to be processed nor interpreted as a any of the other values available to describe the data.
-Float: a numerical value with no decimal place
-Binary: binary data in the dataset (TODO maybe provide an example here?)
-Boolean: data that represents yes/no values (true or false, enabled or disabled, etc)
+integer - a numerical value that does not contain a decimal point/place
+string - a word or text value that is not meant to be processed nor interpreted as a any of the other values available to describe the data.
+float: a numerical value with no decimal place
+binary: binary data in the dataset
+boolean: data that represents yes/no values (true or false, enabled or disabled, etc)
 """,
             "validation": DataValidation(
                 type="list",
@@ -851,19 +871,18 @@ Boolean: data that represents yes/no values (true or false, enabled or disabled,
         {
             "name": "units",
             "help_text": """
-""",
+            Only include, and required, when data_type is not a value that directly correlates to time or location.
+            """,
             "validation": None,
         },
         {
             "name": "units_description",
-            "help_text": """
-""",
+            "help_text": """An optional description for the feature unit, if the unit is required.""",
             "validation": None,
         },
         {
             "name": "primary",
-            "help_text": """
-""",
+            "help_text": """When data_type can be correlated to time or location (eg coordinates, day, year, etc), set only one location and one time as primary. Fields that are grouped together using the group column should all have the same value for this column.""",
             "validation": None,
             "validation": DataValidation(
                 type="list",
@@ -873,25 +892,22 @@ Boolean: data that represents yes/no values (true or false, enabled or disabled,
         },
         {
             "name": "date_format",
-            "help_text": """
-""",
+            "help_text": """Required when prividing a time data_type of month, day, year, or date. Python-compatible formatters only. See Dojo UI dataset registration for further help and examples.""",
             "validation": None,
         },
         {
             "name": "gadm_level",
-            "help_text": """
-""",
+            "help_text": """Level to map coordinates to. In other words, if a coordinate accuracy is at the country, state, territory (etc), level.""",
             "validation": None,
             "validation": DataValidation(
                 type="list",
                 formula1='"country,admin0,admin1,admin2,admin3"',
-                allow_blank=True,
-            ),
+                allow_blank=True
+            )
         },
         {
             "name": "resolve_to_gadm",
-            "help_text": """
-""",
+            "help_text": """If a location data_type field should be auto-resolved by the system to gadm.""",
             "validation": DataValidation(
                 type="list",
                 formula1='"Y,N"',
@@ -901,7 +917,8 @@ Boolean: data that represents yes/no values (true or false, enabled or disabled,
         {
             "name": "coord_format",
             "help_text": """
-""",
+            Only include, and required, when data_type is of coordinates. Some systems provide coordinates in latlon format, while others in lonlat. Please specify here, if applicable.
+            """,
             "validation": None,
             "validation": DataValidation(
                 type="list",
@@ -911,14 +928,12 @@ Boolean: data that represents yes/no values (true or false, enabled or disabled,
         },
         {
             "name": "qualifies",
-            "help_text": """
-""",
+            "help_text": """""",
             "validation": None,
         },
         {
             "name": "qualifier_role",
-            "help_text": """
-""",
+            "help_text": """""",
             "validation": DataValidation(
                 type="list",
                 formula1='"breakdown,weight,minimum,maximum,coefficient"',
