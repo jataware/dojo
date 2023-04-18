@@ -36,6 +36,7 @@ s3 = boto3.resource("s3")
 
 def get_context(uuid):
     from src.indicators import get_indicators, get_annotations
+
     try:
         annotations = get_annotations(uuid)
     except:
@@ -125,9 +126,12 @@ def job(uuid: str, job_string: str, options: Optional[Dict[Any, Any]] = None):
     force_restart = options.pop("force_restart", False)
     synchronous = options.pop("synchronous", False)
     timeout = options.pop("timeout", 60)
+    preview = options.get("preview_run", False)
     recheck_delay = 0.5
 
     job_id = f"{uuid}_{job_string}"
+    if preview:
+        job_id = job_id + "_preview"
     job = q.fetch_job(job_id)
 
     context = options.pop("context", None)
