@@ -66,7 +66,7 @@ class ParagraphProcessor(BaseProcessor):
     @staticmethod
     def run(document_id, s3_url, context={}):
         """
-        Processes PDF: extracts text and caluclates embeddings, then stores
+        Processes PDF: extracts text and calculates embeddings, then stores
         results to elasticsearch
         """
         # 1. Download pdf from S3
