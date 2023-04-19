@@ -178,7 +178,7 @@ def generate_keyword_query(term):
                                     "match_phrase": {
                                         "description": {
                                             "query": term,
-                                            "boost": 2
+                                            "boost": 1
                                         }
                                     }
                                 },
@@ -186,7 +186,7 @@ def generate_keyword_query(term):
                                     "match_phrase": {
                                         "name": {
                                             "query": term,
-                                            "boost": 2
+                                            "boost": 1
                                         }
                                     }
                                 },
@@ -194,7 +194,7 @@ def generate_keyword_query(term):
                                     "match_phrase": {
                                         "display_name": {
                                             "query": term,
-                                            "boost": 2
+                                            "boost": 1
                                         }
                                     }
                                 },
