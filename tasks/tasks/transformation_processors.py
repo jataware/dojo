@@ -1,6 +1,10 @@
 import io
 import json
 import os
+import re
+import requests
+
+import sys
 
 import pandas as pd
 import numpy as np
@@ -47,6 +51,15 @@ def clip_geo(context, filename=None, **kwargs):
             file_buffer.seek(0)
 
             put_rawfile(path=rawfile_path, fileobj=file_buffer)
+
+            post_transformation_message(
+                context=context,
+                prefix="*Clipped",
+                message=(
+                    f"This data was modified from its original geographic extent, transforming from {rows_pre_clip} "
+                    f"entries to {rows_post_clip} entries."
+                ),
+            )
 
         response = {
             "messsage": "Geography clipped successfully",
@@ -99,6 +112,15 @@ def clip_time(context, filename=None, **kwargs):
 
             put_rawfile(path=rawfile_path, fileobj=file_buffer)
 
+            post_transformation_message(
+                context=context,
+                prefix="*Extent",
+                message=(
+                    f"This data was modified from its original temporal extent, transforming from {rows_pre_clip} "
+                    f"entries to {rows_post_clip} entries."
+                ),
+            )
+
         response = {
             "messsage": "Time clipped successfully",
             "preview": json_dataframe_preview,
@@ -136,8 +158,6 @@ def scale_time(context, filename=None, **kwargs):
             geo_columns=geo_columns,
         )
 
-        print(f"RESCALED TIME: {clipped_df}")
-
         json_dataframe_preview = clipped_df.head(100).to_json(default_handler=str)
         rows_post_clip = len(clipped_df.index)
 
@@ -155,6 +175,15 @@ def scale_time(context, filename=None, **kwargs):
             file_buffer.seek(0)
 
             put_rawfile(path=rawfile_path, fileobj=file_buffer)
+
+            post_transformation_message(
+                context=context,
+                prefix="*Scaled",
+                message=(
+                    f"This data was rescaled from its original temporal scale, transforming from {rows_pre_clip} "
+                    f"entries to {rows_post_clip} entries."
+                ),
+            )
 
         response = {
             "messsage": "Time rescaled successfully",
@@ -209,6 +238,15 @@ def regrid_geo(context, filename=None, **kwargs):
             file_buffer.seek(0)
 
             put_rawfile(path=rawfile_path, fileobj=file_buffer)
+
+            post_transformation_message(
+                context=context,
+                prefix="*Regridded",
+                message=(
+                    f"This data was regridded from its original geographical resolution, transforming from {rows_pre_clip} "
+                    f"entries to {rows_post_clip} entries."
+                ),
+            )
 
         response = {
             "messsage": "Geography rescaled successfully",
@@ -334,3 +372,35 @@ def get_dataframe_rows(context, filename=None):
         "dataset_size": file_size,
         "dataset_row": rows_pre_clip,
     }
+
+
+def post_transformation_message(context, message, prefix):
+    # Get original description
+    description = context["dataset"]["description"]
+
+    # Look for old transformation message
+    # Regex matches an * followed by a prefix and any characters, leading to a period character and a new line.
+    prefix_builder = prefix.replace("*", "")
+    regex = f"/\*{prefix_builder}.*\.\n/g"
+
+    found = re.search(regex, description)
+
+    if found:
+        description = description.replace(found, "")
+
+    # Append message
+    transformation_message = f"\n{prefix} {message}\n"
+    description += transformation_message
+
+    # Post new description
+    uuid = context["uuid"]
+    payload = {
+        "id": uuid,
+        "description": description,
+        "name": context["dataset"]["name"],
+        "maintainer": context["dataset"]["maintainer"],
+    }
+
+    api_url = os.environ.get("DOJO_HOST")
+    response = requests.patch(f"{api_url}/indicators?indicator_id={uuid}", json=payload)
+    print(f"Description updated: {response.content}")
