@@ -13,8 +13,14 @@ const extensionMap = {
   },
   'csv':{
     'text/csv': ['.csv'],
+  },
+  'xls': {
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xls']
+  },
+  'xlsx': {
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx']
   }
-}
+};
 
 export function formatExtensionForDropZone(extensionsArray) {
   return extensionsArray.reduce((acc, extension) => {

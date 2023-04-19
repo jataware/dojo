@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import io
 import os
 import re
 import time
@@ -769,7 +770,7 @@ def dataset_register_files(data: UploadFile = File(...), metadata: UploadFile = 
     post_annotation(payload=annotations, indicator_id=indicator_id)
 
     # TODO Step 4.alpha Transform raw File to csv. Later.
-    # NOTE Q: what's the filename of real raw .xls vs converted .csv?
+    # NOTE Q: what's the filename of real raw .xlsx vs converted .csv?
     # file_processors.file_conversion
 
     # Step 4: Call job for mixmasta to normalize. It should then call step 5 (publish)
@@ -796,18 +797,15 @@ def bytes_to_csv(file):
     return list(csv_reader)
 
 @router.post("/indicators/{indicator_id}/annotations/file")
-def upload_data_dictionary_file(indicator_id: str, file: UploadFile = File(...)):
+async def upload_data_dictionary_file(indicator_id: str, file: UploadFile = File(...)):
     """
     Accepts a CSV dictionary file describing a dataset in order to register it. Similar to using the API directly with JSON, or using the Dataset Registration flow on Dojo user interface to annotate a dataset.
     """
 
-    if file.name.endswith('.xlsx') or file.name.endswith('.xls'):
-        logger.info(f"\n\n >>>>>>> excel file annotations: {file}, {file.name}")
-        csv_dictionary_list = xls_to_annotations(file)
-        # from tempfile import NamedTemporaryFile
-        # with NamedTemporaryFile() as tmp:
-            # tmp.write(file)
-            # csv_dictionary_list = xls_to_annotations(tmp)
+    if file.filename.endswith('.xlsx'):
+        f = await file.read()
+        xlsx = io.BytesIO(f)
+        csv_dictionary_list = xls_to_annotations(xlsx)
 
     else:
         logger.info("c\n\n >>>>>> sv annotations file")
@@ -839,7 +837,7 @@ def upload_data_dictionary_file(indicator_id: str, file: UploadFile = File(...))
 def download_data_dictionary_template_file(indicator_id=None, filetype="xlsx"):
 
     if filetype == "csv":
-        file_name = "dataset_annotate_template.template_xlsx"
+        file_name = "dataset_annotate_template.template_csv"
         headers = {"Content-Disposition": f"attachment; filename={file_name.replace('template_', '')}"}
         return FileResponse(file_name, headers=headers)
 
