@@ -1,6 +1,9 @@
 #!/usr/bin/env python
 
 """
+
+Program to compare various es queries and search strategies with target data to be found.
+
 To run locally:
 
 ```
