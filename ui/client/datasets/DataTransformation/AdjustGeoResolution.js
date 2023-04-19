@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import ArrowForwardIcon from '@material-ui/icons/ArrowForward';
 import Button from '@material-ui/core/Button';
@@ -9,6 +9,9 @@ import Select from '@material-ui/core/Select';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 
+import PreviewTransformation from './PreviewTransformation';
+import { generateProcessGeoResArgs } from './dataTransformationHelpers';
+
 export default withStyles((theme) => ({
   selectWrapper: {
     width: '180px',
@@ -17,7 +20,7 @@ export default withStyles((theme) => ({
     display: 'flex',
     justifyContent: 'center',
     gap: theme.spacing(6),
-    marginTop: theme.spacing(6),
+    margin: [[theme.spacing(6), 0]],
   },
   textWrapper: {
     backgroundColor: theme.palette.grey[200],
@@ -44,7 +47,10 @@ export default withStyles((theme) => ({
   resolutionOptions,
   setSavedResolution,
   savedResolution,
-  title,
+  jobString,
+  datasetId,
+  annotations,
+  cleanupRef,
 }) => {
   const [selectedResolution, setSelectedResolution] = useState(savedResolution || '');
 
@@ -58,15 +64,23 @@ export default withStyles((theme) => ({
     setSelectedResolution(event.target.value);
   };
 
+  const createPreviewArgs = useCallback((argsAnnotations) => {
+    const args = generateProcessGeoResArgs(argsAnnotations, selectedResolution, oldResolution);
+    args.preview_run = true;
+    return args;
+  }, [selectedResolution, oldResolution]);
+
   return (
     <div>
-      <Typography align="center" variant="h5">Adjust {title} Resolution</Typography>
+      <Typography align="center" variant="h5">Adjust Geospatial Resolution</Typography>
       {oldResolution ? (
         <>
           <div className={classes.oldToNew}>
             <div className={classes.textWrapper}>
               <Typography variant="h6" align="center">current resolution</Typography>
-              <Typography variant="h6" align="center">{oldResolution} km</Typography>
+              <Typography variant="h6" align="center">
+                {oldResolution.toFixed(2)} km
+              </Typography>
             </div>
             <div className={classes.arrowIcon}>
               <ArrowForwardIcon fontSize="large" />
@@ -74,7 +88,7 @@ export default withStyles((theme) => ({
             <div className={classes.textWrapper}>
               <Typography variant="h6" align="center">new resolution</Typography>
               <Typography variant="h6" align="center">
-                {selectedResolution} {selectedResolution && 'km'}
+                {selectedResolution !== '' && `${selectedResolution.toFixed(2)} km`}
               </Typography>
             </div>
           </div>
@@ -87,7 +101,7 @@ export default withStyles((theme) => ({
                 label="Resolution"
               >
                 {resolutionOptions.map((option) => (
-                  <MenuItem key={option} value={option}>{option} km</MenuItem>
+                  <MenuItem key={option} value={option}>{option.toFixed(2)} km</MenuItem>
                 ))}
               </Select>
             </FormControl>
@@ -101,10 +115,18 @@ export default withStyles((theme) => ({
               Save Resolution
             </Button>
           </div>
+          <PreviewTransformation
+            jobString={jobString}
+            datasetId={datasetId}
+            annotations={annotations}
+            cleanupRef={cleanupRef}
+            createPreviewArgs={createPreviewArgs}
+            disabled={!selectedResolution}
+          />
         </>
       ) : (
         <Typography align="center" variant="h6" style={{ marginTop: '64px' }}>
-          This dataset does not have a useable {title} resolution
+          This dataset does not have a useable geospatial resolution
         </Typography>
       )}
     </div>

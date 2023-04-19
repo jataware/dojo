@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 
 import ArrowForwardIcon from '@material-ui/icons/ArrowForward';
 import Button from '@material-ui/core/Button';
@@ -9,6 +9,9 @@ import MenuItem from '@material-ui/core/MenuItem';
 import Select from '@material-ui/core/Select';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
+
+import PreviewTransformation from './PreviewTransformation';
+import { generateProcessTempResArgs } from './dataTransformationHelpers';
 
 const aggregationFunctions = [
   'count',
@@ -33,7 +36,7 @@ export default withStyles((theme) => ({
     display: 'flex',
     justifyContent: 'center',
     gap: theme.spacing(6),
-    marginTop: theme.spacing(6),
+    margin: [[theme.spacing(6), 0, theme.spacing(10)]],
     flexWrap: 'wrap',
   },
   textWrapper: {
@@ -64,7 +67,10 @@ export default withStyles((theme) => ({
   savedResolution,
   savedAggregation,
   setSavedAggregation,
-  title,
+  jobString,
+  datasetId,
+  annotations,
+  cleanupRef,
 }) => {
   const [selectedResolution, setSelectedResolution] = useState(savedResolution || '');
   const [selectedAggregation, setSelectedAggregation] = useState(savedAggregation || '');
@@ -97,9 +103,17 @@ export default withStyles((theme) => ({
     setSelectedAggregation(event.target.value);
   };
 
+  const createPreviewArgs = useCallback((argsAnnotations) => {
+    const args = generateProcessTempResArgs(
+      argsAnnotations, selectedResolution, selectedAggregation
+    );
+    args.preview_run = true;
+    return args;
+  }, [selectedResolution, selectedAggregation]);
+
   return (
     <div>
-      <Typography align="center" variant="h5">Adjust {title} Resolution</Typography>
+      <Typography align="center" variant="h5">Adjust Temporal Resolution</Typography>
       <div className={classes.oldToNew}>
         <div className={classes.textWrapper}>
           <Typography variant="h6" align="center">current resolution</Typography>
@@ -172,7 +186,16 @@ export default withStyles((theme) => ({
         >
           Save Resolution
         </Button>
+
       </div>
+      <PreviewTransformation
+        jobString={jobString}
+        datasetId={datasetId}
+        annotations={annotations}
+        cleanupRef={cleanupRef}
+        createPreviewArgs={createPreviewArgs}
+        disabled={!selectedAggregation || !selectedResolution.alias}
+      />
     </div>
   );
 });

@@ -53,10 +53,21 @@ const TransformationButton = withStyles(({ palette }) => ({
     }
   };
 
+  // If no message is supplied from the backend, we default to true, so use a default message
+  const tooltipText = error.length ? error : 'This data is not available for transformation';
+
   return (
-    <Tooltip arrow placement="right" title={error || ''}>
+    <Tooltip
+      arrow
+      placement="right"
+      title={error ? tooltipText : ''}
+    >
       <span style={{ position: 'relative' }}>
-        <ListItem button disabled={loading || error !== false}>
+        <ListItem
+          button
+          disabled={loading || error !== false}
+          onClick={onClick}
+        >
           <ListItemIcon>
             <Icon
               fontSize="large"
@@ -65,7 +76,6 @@ const TransformationButton = withStyles(({ palette }) => ({
           </ListItemIcon>
           <ListItemText
             primaryTypographyProps={{ variant: 'h6' }}
-            onClick={onClick}
             className={isComplete ? classes.complete : classes.incomplete}
           >
             {title}

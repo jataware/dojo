@@ -270,7 +270,7 @@ export const DateControls = ({
         <div style={{paddingTop: '0.5rem'}}>
           <FormatValidationInput
             name="time_format"
-            required
+            required={requiresFormatting}
             label="Date Format"
             validateFormat={validateDateFormat}
             parentName={editingColumnName}

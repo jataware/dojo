@@ -15,8 +15,21 @@ import Progress from './Progress';
 import TableAnnotation from './annotations/Table';
 import { formatAnnotationsIN } from './annotations/dataIN';
 import { formatAnnotationsOUT } from './annotations/dataOUT';
-import { validateRequirements } from './annotations/annotationRules';
+import { validateRequirements, knownFieldAnnotations } from './annotations/annotationRules';
 import Prompt from './PromptDialog';
+import { uploadFile } from '../utils';
+
+export function formatFileUploadValidationError(json) {
+  try {
+    const property = json[0].loc[0];
+    const field = json[0].input_value.field_name;
+    const value = json[0].input_value[property];
+
+    return `A validation error has occured on the file provided: The field \`${field}\` has no valid \`${property}\` value. Value provided: \`${value}\`.`;
+  } catch(e) {
+    return json;
+  }
+}
 
 /**
  * Receives geoclassify data and formats column information for our Data Grid
@@ -66,11 +79,31 @@ export default withStyles(({ spacing }) => ({
 
   const [promptMessage, setPromptMessage] = useState('');
 
+  function formatAndSetAnnotations(serverAnnotations, knownColumns) {
+    if (serverAnnotations) {
+      const annotationsToLoad = knownFieldAnnotations(serverAnnotations, knownColumns)
+      const formattedIn = formatAnnotationsIN(annotationsToLoad);
+
+      setInternalAnnotations(formattedIn.annotations);
+      setMultiPartData(formattedIn.multiPartData);
+
+      return true;
+    }
+
+    return false;
+  }
+
+  // If UI or server modify saved annotations in DB, refresh and set them on UI here
+  const refreshAnnotations = async () => {
+    const serverAnnotationData = await axios.get(`/api/dojo/indicators/${datasetInfo.id}/annotations`);
+    const { annotations: serverAnnotations } = serverAnnotationData.data;
+    return formatAndSetAnnotations(serverAnnotations, columns);
+  };
+
   useEffect(() => {
     if (!isLoading || (isLoading && !datasetInfo?.id)) {
       return;
     }
-
 
     const fileArg = (useFilepath ? "filepath" : "filename");
     const previewUrl = `/api/dojo/indicators/${datasetInfo.id}/preview/raw${rawFileName ? `?${fileArg}=${rawFileName}` : ''}`;
@@ -83,7 +116,7 @@ export default withStyles(({ spacing }) => ({
         return {data: annotations};
       }
       else {
-        // Load annotations from API, which also include other data unavailable if we don't call this
+        // Load annotations from API, which also includes other data unavailable if we don't call this
         return axios.get(`/api/dojo/indicators/${datasetInfo.id}/annotations`);
       }
     };
@@ -107,11 +140,7 @@ export default withStyles(({ spacing }) => ({
         setInferredData(inferred);
         setColumnStats(stats);
 
-        if (serverAnnotations) {
-          const formattedIn = formatAnnotationsIN(serverAnnotations);
-          setInternalAnnotations(formattedIn.annotations);
-          setMultiPartData(formattedIn.multiPartData);
-        }
+        return formatAndSetAnnotations(serverAnnotations, parsedColumns);
       })
       .catch((e) => {
         setPromptMessage('Error loading annotation data.');
@@ -178,6 +207,18 @@ export default withStyles(({ spacing }) => ({
     }
   }
 
+  const handleUploadAnnotations = (file) => {
+
+    return uploadFile(file, `/api/dojo/indicators/${datasetInfo.id}/annotations/file`)
+      .then(refreshAnnotations)
+      .catch((e) => {
+        const json = e.response?.data?.detail;
+        const message = formatFileUploadValidationError(json);
+
+        throw new Error(message || 'Your file contains an incorrect format and our application has not accepted it. Please verify and correct your CSV file annotations.');
+      });
+  };
+
   return (
     <Container
       className={classes.root}
@@ -206,6 +247,8 @@ export default withStyles(({ spacing }) => ({
         validateDateFormat={validateDateFormat}
         fieldsConfig={fieldsConfig}
         addingAnnotationsAllowed={addingAnnotationsAllowed}
+        onUploadAnnotations={handleUploadAnnotations}
+        datasetID={datasetInfo?.id}
       />
 
       <Navigation

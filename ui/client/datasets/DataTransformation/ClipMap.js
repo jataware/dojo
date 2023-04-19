@@ -22,6 +22,9 @@ import {
   TileLayer,
 } from 'react-leaflet';
 
+import PreviewTransformation from './PreviewTransformation';
+import { generateProcessGeoCovArgs } from './dataTransformationHelpers';
+
 const Geoman = ({ setDrawings, mapBoundsLatLng, setDisableDrawerClose }) => {
   const context = useLeafletContext();
 
@@ -155,6 +158,10 @@ export default withStyles((theme) => ({
   closeDrawer,
   disableDrawerClose,
   setDisableDrawerClose,
+  datasetId,
+  jobString,
+  annotations,
+  cleanupRef,
 }) => {
   const [drawings, setDrawings] = useState([]);
   const theme = useTheme();
@@ -203,6 +210,13 @@ export default withStyles((theme) => ({
       node.pm._layer.options.pmIgnore = true;
     }
   }, []);
+
+  const createPreviewArgs = useCallback((argsAnnotations) => {
+    // merge drawings and savedDrawings, in case the user previews drawings from previous open
+    const args = generateProcessGeoCovArgs(argsAnnotations, [...drawings, ...savedDrawings]);
+    args.preview_run = true;
+    return args;
+  }, [drawings, savedDrawings]);
 
   const onSaveClipsClick = () => {
     saveDrawings(drawings);
@@ -281,6 +295,14 @@ export default withStyles((theme) => ({
               </span>
             </Tooltip>
           </div>
+          <PreviewTransformation
+            datasetId={datasetId}
+            jobString={jobString}
+            annotations={annotations}
+            cleanupRef={cleanupRef}
+            createPreviewArgs={createPreviewArgs}
+            disabled={!drawings.length && !savedDrawings.length}
+          />
         </>
       ) : (
         <div className={classes.problem}>
