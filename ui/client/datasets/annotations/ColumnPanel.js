@@ -56,7 +56,7 @@ const initialColumnValues = {
 
   // Namespaced values, such as below (date.sample, geo.another), as only used on UI
   // If the data needs to be sent to server, it may be parsed and formatted
-  // to a different shape and concepts internally (see helpers.js)
+  // to a different shape and concepts internally (see helpers.js, dataIN.js, and dataOUT.js)
   'geo.multi-column': false,
   'geo.coordinate-pair': false,
   'geo.coordinate-pair-column': '', // if inferred data returns, use it

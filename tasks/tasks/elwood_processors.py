@@ -15,6 +15,10 @@ import sys
 from utils import get_rawfile, put_rawfile, download_rawfile
 from elwood import elwood as mix
 from elwood import feature_normalization as scaler
+from resolution_processors import (
+    calculate_geographical_resolution,
+    calculate_temporal_resolution,
+)
 from base_annotation import BaseProcessor
 from settings import settings
 
@@ -70,7 +74,7 @@ class ElwoodProcessor(BaseProcessor):
         admin_level = None  # Default to admin1
         geo_annotations = context["annotations"]["annotations"]["geo"]
         for annotation in geo_annotations:
-            if annotation["primary_geo"] and "gadm_level" in annotation:
+            if annotation.get("primary_geo") and "gadm_level" in annotation:
                 admin_level = annotation["gadm_level"]
                 break
         uuid = context["uuid"]
@@ -86,7 +90,17 @@ class ElwoodProcessor(BaseProcessor):
         return ret
 
 
-def run_elwood(context, filename=None):
+def run_elwood(context, filename=None, on_success_endpoint=None):
+    """
+    Initializes an elwood processor, which normalizes the dataset. Supports
+    initial registration, as well as appending data to an existing dataset.
+    `on_success_endpoint` is only called when provided, as a callback url just
+    before this fn returns the result.
+        `on_success_endpoint` shape and example: {
+                'verb': 'PUT', # defaults to GET
+                'url': 'http://domain.com/my-publish-url'
+            }
+    """
     processor = ElwoodProcessor()
     uuid = context["uuid"]
     # Creating folder for temp file storage on the rq worker since following functions are dependent on file paths
@@ -217,29 +231,30 @@ def run_elwood(context, filename=None):
         )
         # Append
         # TODO: Hackish way to determine that the feature is not a qualifier
-        if len(feature["qualifies"]) == 0:
-            outputs.append(output)
-        # Qualifier output for qualifying features
-        elif len(feature["qualifies"]) > 0:
-            qualifier_output = dict(
-                name=feature["name"],
-                display_name=feature["display_name"],
-                description=feature["description"],
-                # Gross conversion between the two output types.
-                type=(
-                    "str"
-                    if feature["feature_type"] == "string"
-                    else "binary"
-                    if feature["feature_type"] == "boolean"
-                    else feature["feature_type"]
-                ),
-                unit=feature["units"],
-                unit_description=feature["units_description"],
-                ontologies={},
-                related_features=feature["qualifies"],
-            )
-            # Append to qualifier outputs
-            qualifier_outputs.append(qualifier_output)
+        if feature["qualifies"]:
+            if len(feature["qualifies"]) == 0:
+                outputs.append(output)
+                # Qualifier output for qualifying features
+            elif len(feature["qualifies"]) > 0:
+                qualifier_output = dict(
+                    name=feature["name"],
+                    display_name=feature["display_name"],
+                    description=feature["description"],
+                    # Gross conversion between the two output types.
+                    type=(
+                        "str"
+                        if feature["feature_type"] == "string"
+                        else "binary"
+                        if feature["feature_type"] == "boolean"
+                        else feature["feature_type"]
+                    ),
+                    unit=feature["units"],
+                    unit_description=feature["units_description"],
+                    ontologies={},
+                    related_features=feature["qualifies"],
+                )
+                # Append to qualifier outputs
+                qualifier_outputs.append(qualifier_output)
 
     # Qualifier_outputs
     for date in context["annotations"]["annotations"]["date"]:
@@ -276,6 +291,76 @@ def run_elwood(context, filename=None):
         # Append
         qualifier_outputs.append(qualifier_output)
 
+    # Resolution Detection
+
+    datetime_column = ""
+    time_format = ""
+    lat_col = ""
+    lon_col = ""
+    temporal_resolution_value = None
+    geographical_resolution_value = None
+
+    # Loops through annotations looking for primary fields to detect resoltuion on.
+    for date in mm_ready_annotations["date"]:
+        if date.get("primary_date", None):
+            datetime_column = date["name"]
+            time_format = date["time_format"]
+            break
+
+    for geo in mm_ready_annotations["geo"]:
+        if geo.get("primary_geo", None) and geo.get("is_geo_pair", None):
+            if geo["geo_type"] == "latitude":
+                lat_col = geo["name"]
+                lon_col = geo["is_geo_pair"]
+                break
+            lat_col = geo["is_geo_pair"]
+            lon_col = geo["name"]
+
+    # Tries to combine all primaries found for detection.
+    kwargs = {
+        "datetime_column": datetime_column,
+        "time_format": time_format,
+        "lat_column": lat_col,
+        "lon_column": lon_col,
+    }
+
+    # Maps cartwright output units to dojo indicator metadata resolution schema.
+    temporal_resolution_mapping = {
+        "day": "daily",
+        "week": "weekly",
+        "month": "monthly",
+        "year": "annual",
+        "decade": "dekad",
+        "second": "other",
+        "minute": "other",
+        "hour": "other",
+        "century": "other",
+        "millennium": "other",
+    }
+
+    # Calculates temporal resolution
+    if datetime_column and time_format:
+        temporal_resolution = calculate_temporal_resolution(
+            context=context, filename=filename, **kwargs
+        )
+        if temporal_resolution and temporal_resolution["resolution_result"] != "None":
+            temporal_resolution_value = temporal_resolution_mapping[
+                temporal_resolution["resolution_result"]["unit"]
+            ]
+    # Calculates geographical resolution (Note: Cartwright can only detect on lat/lon geo)
+    if lat_col and lon_col:
+        geographical_resolution = calculate_geographical_resolution(
+            context=context, filename=filename, **kwargs
+        )
+        if (
+            geographical_resolution
+            and geographical_resolution["resolution_result"] != "None"
+        ):
+            geographical_resolution_value = geographical_resolution[
+                "resolution_result"
+            ]["resolution"]
+
+    # Constructs final elwood response to update metadata in dojo
     response = {
         "preview": elwood_result_df.head(100).to_json(),
         "data_files": data_files,
@@ -285,6 +370,17 @@ def run_elwood(context, filename=None):
         "qualifier_outputs": qualifier_outputs,
         "feature_names": feature_names,
     }
+
+    # Appends resolutions if they exist
+    if temporal_resolution_value:
+        response["temporal_resolution"] = temporal_resolution_value
+    if geographical_resolution_value:
+        response["spatial_resolution"] = geographical_resolution_value
+    if on_success_endpoint:
+        requests.request(
+            on_success_endpoint.get("verb", "GET"), on_success_endpoint.get("url")
+        )
+
     return response
 
 

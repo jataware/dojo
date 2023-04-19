@@ -1,5 +1,6 @@
 /* eslint-disable no-undef */
-import { previousPrimaryColumn, verifyQualifierPrimaryRules } from './annotationRules';
+import { previousPrimaryColumn, verifyQualifierPrimaryRules,
+         verifyConditionalRequiredFields, knownFieldAnnotations } from './annotationRules';
 
 describe('verifyQualifierPrimaryRules', () => {
   test('Cant qualify other qualifier columns', () => {
@@ -137,4 +138,117 @@ describe('previousPrimaryColumn', () => {
 
     expect(result).toBeNull();
   });
+
+});
+
+describe('verifyConditionalRequiredFields', () => {
+  test('Epoch date type doesn\' require a time_format', () => {
+
+    const currentColumnValues = {
+      category: 'time',
+      date_type: 'epoch',
+      description: 'hello'
+    };
+
+    const result = verifyConditionalRequiredFields(currentColumnValues);
+
+    expect(result).toEqual({});
+
+  });
+});
+
+
+describe('knownFieldAnnotations', () => {
+  test('removes top-level base annotations that arent related to dataset fields', () => {
+
+
+    const annotations = {
+      geo: [{
+        "name": "country",
+        "display_name": "",
+        "description": "all_gadm_levels",
+        "type": "geo",
+        "geo_type": "country",
+        "primary_geo": true,
+        "resolve_to_gadm": null,
+        "is_geo_pair": null,
+        "coord_format": null,
+        "qualifies": null,
+        "aliases": {},
+        "gadm_level": "admin0"
+      }, {
+        "name": "admin1",
+        "display_name": "",
+        "description": "all_gadm_levels",
+        "type": "geo",
+        "geo_type": "state/territory",
+        "primary_geo": true,
+        "resolve_to_gadm": null,
+        "is_geo_pair": null,
+        "coord_format": null,
+        "qualifies": null,
+        "aliases": {},
+        "gadm_level": "admin1"
+      }]
+    };
+
+    const columns = [{field: 'country'}];
+
+    const output = knownFieldAnnotations(annotations, columns);
+
+    expect(output.geo).toEqual(
+      [{
+        "name": "country",
+        "display_name": "",
+        "description": "all_gadm_levels",
+        "type": "geo",
+        "geo_type": "country",
+        "primary_geo": true,
+        "resolve_to_gadm": null,
+        "is_geo_pair": null,
+        "coord_format": null,
+        "qualifies": null,
+        "aliases": {},
+        "gadm_level": "admin0"
+      }]
+    );
+  });
+
+  test('if a present top-level annotaiton is of date type, and contains associated columns for non existing fields, removes those', () => {
+
+    const columns = [{field: 'year'}];
+    const annotations = {
+      date: [{
+        "name": "year",
+        "display_name": "",
+        "description": "sample date",
+        "type": "date",
+        "date_type": "year",
+        "primary_date": true,
+        "time_format": "%Y",
+        "associated_columns": {
+          "Month": "month",
+          "Day": "day"
+        },
+        "qualifies": null,
+        "aliases": {}
+      }]
+    };
+
+    const output = knownFieldAnnotations(annotations, columns);
+
+    expect(output.date).toEqual([{
+      "name": "year",
+      "display_name": "",
+      "description": "sample date",
+      "type": "date",
+      "date_type": "year",
+      "primary_date": true,
+      "time_format": "%Y",
+      "associated_columns": null,
+      "qualifies": null,
+      "aliases": {}
+    }]);
+  });
+
 });

@@ -1,6 +1,10 @@
 import io
 import json
 import os
+import re
+import requests
+
+import sys
 
 import pandas as pd
 import numpy as np
@@ -33,16 +37,29 @@ def clip_geo(context, filename=None, **kwargs):
         json_dataframe_preview = clipped_df.head(100).to_json(default_handler=str)
         rows_post_clip = len(clipped_df.index)
 
-        file.seek(0)
-        persist_untransformed_file(context["uuid"], filename, file)
+        preview = kwargs.get("preview_run", False)
 
-        # Put the new clipped file to overwrite the old one.
-        file_buffer = io.BytesIO()
+        if not preview:
+            # If the run is not a preview run, persist the transformation.
+            file.seek(0)
+            persist_untransformed_file(context["uuid"], filename, file)
 
-        clipped_df.to_csv(file_buffer)
-        file_buffer.seek(0)
+            # Put the new clipped file to overwrite the old one.
+            file_buffer = io.BytesIO()
 
-        put_rawfile(path=rawfile_path, fileobj=file_buffer)
+            clipped_df.to_csv(file_buffer)
+            file_buffer.seek(0)
+
+            put_rawfile(path=rawfile_path, fileobj=file_buffer)
+
+            post_transformation_message(
+                context=context,
+                prefix="*Clipped",
+                message=(
+                    f"This data was modified from its original geographic extent, transforming from {rows_pre_clip} "
+                    f"entries to {rows_post_clip} entries."
+                ),
+            )
 
         response = {
             "messsage": "Geography clipped successfully",
@@ -80,16 +97,29 @@ def clip_time(context, filename=None, **kwargs):
         json_dataframe_preview = clipped_df.head(100).to_json(default_handler=str)
         rows_post_clip = len(clipped_df.index)
 
-        file.seek(0)
-        persist_untransformed_file(context["uuid"], filename, file)
+        preview = kwargs.get("preview_run", False)
 
-        # Put the new clipped file to overwrite the old one.
-        file_buffer = io.BytesIO()
+        if not preview:
+            # If the run is not a preview run, persist the transformation.
+            file.seek(0)
+            persist_untransformed_file(context["uuid"], filename, file)
 
-        clipped_df.to_csv(file_buffer)
-        file_buffer.seek(0)
+            # Put the new clipped file to overwrite the old one.
+            file_buffer = io.BytesIO()
 
-        put_rawfile(path=rawfile_path, fileobj=file_buffer)
+            clipped_df.to_csv(file_buffer)
+            file_buffer.seek(0)
+
+            put_rawfile(path=rawfile_path, fileobj=file_buffer)
+
+            post_transformation_message(
+                context=context,
+                prefix="*Extent",
+                message=(
+                    f"This data was modified from its original temporal extent, transforming from {rows_pre_clip} "
+                    f"entries to {rows_post_clip} entries."
+                ),
+            )
 
         response = {
             "messsage": "Time clipped successfully",
@@ -117,30 +147,43 @@ def scale_time(context, filename=None, **kwargs):
     time_column = kwargs.get("datetime_column", "")
     time_bucket = kwargs.get("datetime_bucket", "")
     aggregation_list = kwargs.get("aggregation_function_list", [])
+    geo_columns = kwargs.get("geo_columns", None)
 
     if time_column and time_bucket and aggregation_list:
         clipped_df = elwood.rescale_dataframe_time(
             dataframe=original_dataframe,
             time_column=time_column,
             time_bucket=time_bucket,
-            aggregation_function_list=aggregation_list,
+            aggregation_functions=aggregation_list,
+            geo_columns=geo_columns,
         )
-
-        print(f"RESCALED TIME: {clipped_df}")
 
         json_dataframe_preview = clipped_df.head(100).to_json(default_handler=str)
         rows_post_clip = len(clipped_df.index)
 
-        file.seek(0)
-        persist_untransformed_file(context["uuid"], filename, file)
+        preview = kwargs.get("preview_run", False)
 
-        # Put the new clipped file to overwrite the old one.
-        file_buffer = io.BytesIO()
+        if not preview:
+            # If the run is not a preview run, persist the transformation.
+            file.seek(0)
+            persist_untransformed_file(context["uuid"], filename, file)
 
-        clipped_df.to_csv(file_buffer)
-        file_buffer.seek(0)
+            # Put the new clipped file to overwrite the old one.
+            file_buffer = io.BytesIO()
 
-        put_rawfile(path=rawfile_path, fileobj=file_buffer)
+            clipped_df.to_csv(file_buffer)
+            file_buffer.seek(0)
+
+            put_rawfile(path=rawfile_path, fileobj=file_buffer)
+
+            post_transformation_message(
+                context=context,
+                prefix="*Scaled",
+                message=(
+                    f"This data was rescaled from its original temporal scale, transforming from {rows_pre_clip} "
+                    f"entries to {rows_post_clip} entries."
+                ),
+            )
 
         response = {
             "messsage": "Time rescaled successfully",
@@ -165,13 +208,15 @@ def regrid_geo(context, filename=None, **kwargs):
 
     # Main Call
     geo_column = kwargs.get("geo_columns")
+    time_column = kwargs.get("datetime_column")
     scale_multiplier = kwargs.get("scale_multi")
     scale = kwargs.get("scale", None)
 
-    if geo_column and scale_multiplier:
+    if geo_column and time_column and scale_multiplier:
         regridded_df = elwood.regrid_dataframe_geo(
             dataframe=original_dataframe,
             geo_columns=geo_column,
+            time_column=time_column,
             scale_multi=scale_multiplier,
             scale=scale,
         )
@@ -179,16 +224,29 @@ def regrid_geo(context, filename=None, **kwargs):
         json_dataframe_preview = regridded_df.head(100).to_json(default_handler=str)
         rows_post_clip = len(regridded_df.index)
 
-        file.seek(0)
-        persist_untransformed_file(context["uuid"], filename, file)
+        preview = kwargs.get("preview_run", False)
 
-        # Put the new clipped file to overwrite the old one.
-        file_buffer = io.BytesIO()
+        if not preview:
+            # If the run is not a preview run, persist the transformation.
+            file.seek(0)
+            persist_untransformed_file(context["uuid"], filename, file)
 
-        regridded_df.to_csv(file_buffer)
-        file_buffer.seek(0)
+            # Put the new clipped file to overwrite the old one.
+            file_buffer = io.BytesIO()
 
-        put_rawfile(path=rawfile_path, fileobj=file_buffer)
+            regridded_df.to_csv(file_buffer)
+            file_buffer.seek(0)
+
+            put_rawfile(path=rawfile_path, fileobj=file_buffer)
+
+            post_transformation_message(
+                context=context,
+                prefix="*Regridded",
+                message=(
+                    f"This data was regridded from its original geographical resolution, transforming from {rows_pre_clip} "
+                    f"entries to {rows_post_clip} entries."
+                ),
+            )
 
         response = {
             "messsage": "Geography rescaled successfully",
@@ -305,9 +363,44 @@ def get_dataframe_rows(context, filename=None):
     file, filename, rawfile_path = job_setup(context=context, filename=filename)
     original_dataframe = pd.read_csv(file, delimiter=",")
 
+    file_size = os.fstat(file.fileno()).st_size
+
     rows_pre_clip = len(original_dataframe.index)
 
     return {
         "message": "Current rows in the dataset calculated.",
+        "dataset_size": file_size,
         "dataset_row": rows_pre_clip,
     }
+
+
+def post_transformation_message(context, message, prefix):
+    # Get original description
+    description = context["dataset"]["description"]
+
+    # Look for old transformation message
+    # Regex matches an * followed by a prefix and any characters, leading to a period character and a new line.
+    prefix_builder = prefix.replace("*", "")
+    regex = f"/\*{prefix_builder}.*\.\n/g"
+
+    found = re.search(regex, description)
+
+    if found:
+        description = description.replace(found, "")
+
+    # Append message
+    transformation_message = f"\n{prefix} {message}\n"
+    description += transformation_message
+
+    # Post new description
+    uuid = context["uuid"]
+    payload = {
+        "id": uuid,
+        "description": description,
+        "name": context["dataset"]["name"],
+        "maintainer": context["dataset"]["maintainer"],
+    }
+
+    api_url = os.environ.get("DOJO_HOST")
+    response = requests.patch(f"{api_url}/indicators?indicator_id={uuid}", json=payload)
+    print(f"Description updated: {response.content}")

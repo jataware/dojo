@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import Button from '@material-ui/core/Button';
 import CircularProgress from '@material-ui/core/CircularProgress';
@@ -30,6 +30,9 @@ import {
 import {
   Chart
 } from 'react-chartjs-2';
+
+import PreviewTransformation from './PreviewTransformation';
+import { generateProcessTempCovArgs } from './dataTransformationHelpers';
 
 ChartJS.register(
   CategoryScale,
@@ -130,13 +133,17 @@ export default withStyles((theme) => ({
     display: 'flex',
     justifyContent: 'flex-end',
     margin: [[theme.spacing(8), theme.spacing(4)]],
-  }
+  },
 }))(({
   classes,
   timeBounds,
   setSavedTimeBounds,
   savedTimeBounds,
   closeDrawer,
+  jobString,
+  datasetId,
+  annotations,
+  cleanupRef,
 }) => {
   const [startValue, setStartValue] = useState(() => {
     if (savedTimeBounds) return savedTimeBounds[0];
@@ -233,6 +240,16 @@ export default withStyles((theme) => ({
     closeDrawer();
   };
 
+  const createPreviewArgs = useCallback((argsAnnotations) => {
+    const args = generateProcessTempCovArgs({
+      annotations: argsAnnotations,
+      start: startValue,
+      end: endValue,
+    });
+    args.preview_run = true;
+    return args;
+  }, [startValue, endValue]);
+
   const header = <Typography align="center" variant="h5">Select Temporal Coverage</Typography>;
 
   if (timeBounds.length === 1) {
@@ -324,6 +341,14 @@ export default withStyles((theme) => ({
               </Button>
             </div>
           </div>
+          <PreviewTransformation
+            jobString={jobString}
+            datasetId={datasetId}
+            annotations={annotations}
+            cleanupRef={cleanupRef}
+            createPreviewArgs={createPreviewArgs}
+            disabled={!startValue && !endValue}
+          />
         </>
       ) : (
         <div className={classes.loading}>
