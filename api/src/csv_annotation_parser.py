@@ -130,10 +130,7 @@ mappings = {
 
 
 def dict_val_lower(my_dict, key):
-    if key is None:
-        del my_dict[key]
-    else:
-        my_dict[key] = my_dict.get(key, "").lower()
+    my_dict[key] = (my_dict.get(key, "") or "").lower()
 
 class RequiredField(BaseModel):
     class Config:
@@ -143,12 +140,12 @@ class RequiredField(BaseModel):
 
 
 def format_schema_helper(item_dict):
+    # Remove potential typos that don't affect data
+    dict_val_lower(item_dict, "data_type")
+    dict_val_lower(item_dict, "gadm_level")
+
     # Remove all empty keys first
     out_dict = {k: v for k, v in item_dict.items() if v}
-
-    # Remove potential typos that don't affect data
-    dict_val_lower(out_dict, "data_type")
-    dict_val_lower(out_dict, "gadm_level")
 
     # Re-add required attribute defaults
     out_dict = {"display_name": ""}|out_dict
