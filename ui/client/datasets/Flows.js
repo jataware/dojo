@@ -109,7 +109,6 @@ const BasicRegistrationFlow = {
           id: 'elwood_processors.scale_features',
           send_context: true,
           handler: async ({result, annotations, setAnnotations, datasetInfo, setDatasetInfo, ...extra}) => {
-            console.log("RESULT FROM SCALE: ", result);
             const updatedDataset = {
               ...datasetInfo,
               ...result,

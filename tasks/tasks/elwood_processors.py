@@ -10,6 +10,8 @@ from urllib.parse import urlparse
 import pandas as pd
 import numpy as np
 
+import sys
+
 from utils import get_rawfile, put_rawfile, download_rawfile
 from elwood import elwood as mix
 from elwood import feature_normalization as scaler
@@ -337,7 +339,6 @@ def run_model_elwood(context, *args, **kwargs):
     return response
 
 
-# TODO Clean this up
 def scale_features(context, filename=None):
     # 0 to 1 scaled dataframe
 
@@ -363,13 +364,12 @@ def scale_features(context, filename=None):
 
     # figure out which files paths are have been normalized
     # and which are new files that are not yet normalized
-    old_files_normed = [
-        path
-        for path in data_paths_not_str
-        for norm_path in data_paths_normalized
-        if str(path.split("/")[-1].split(".parquet")[0] + "_normalized.parquet.gzip")
-        == norm_path.split("/")[-1]
-    ]
+    old_files_normed = generate_files_list(
+        data_paths_not_str=data_paths_not_str,
+        normalized_paths_list=data_paths_normalized,
+        target_suffix="_normalized.parquet.gzip",
+    )
+
     new_files_not_normed = [
         path for path in data_paths_not_str if path not in old_files_normed
     ]
@@ -383,15 +383,12 @@ def scale_features(context, filename=None):
 
     # figure out which files paths are have been normalized_robust
     # and which are new files that are not yet normalized_robust
-    old_files_normed = [
-        path
-        for path in data_paths_not_str
-        for norm_path in data_paths_normalized_robust
-        if str(
-            path.split("/")[-1].split(".parquet")[0] + "_normalized_robust.parquet.gzip"
-        )
-        == norm_path.split("/")[-1]
-    ]
+    old_files_normed = generate_files_list(
+        data_paths_not_str=data_paths_not_str,
+        normalized_paths_list=data_paths_normalized_robust,
+        target_suffix="_normalized_robust.parquet.gzip",
+    )
+
     new_files_not_normed = [
         path for path in data_paths_not_str if path not in old_files_normed
     ]
@@ -408,7 +405,6 @@ def scale_features(context, filename=None):
         "data_paths_normalized": data_paths_normalized,
         "data_paths_normalized_robust": data_paths_normalized_robust,
     }
-    print(results_dictionary)
 
     return results_dictionary
 
@@ -518,3 +514,16 @@ def new_min_max_values_found(old_mapping, new_mapping):
         if new_mapping[f].get("max") > old_mapping[f].get("max"):
             return True
     return False
+
+
+def generate_files_list(data_paths_not_str, normalized_paths_list, target_suffix):
+
+    files_list = [
+        path
+        for path in data_paths_not_str
+        for norm_path in normalized_paths_list
+        if str(path.split("/")[-1].split(".parquet")[0] + target_suffix)
+        == norm_path.split("/")[-1]
+    ]
+
+    return files_list
