@@ -806,12 +806,8 @@ async def upload_data_dictionary_file(indicator_id: str, file: UploadFile = File
         f = await file.read()
         xlsx = io.BytesIO(f)
         csv_dictionary_list = xls_to_annotations(xlsx)
-
     else:
-        logger.info("c\n\n >>>>>> sv annotations file")
         csv_dictionary_list = bytes_to_csv(file.file)
-
-    logger.info(f"dictionary list parsed: {csv_dictionary_list}")
 
     try:
         formatted = format_annotations(csv_dictionary_list)
