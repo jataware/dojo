@@ -31,8 +31,6 @@ es = Elasticsearch(f"http://{args.es_host}")
 
 print(es.info())
 
-# engine = BertSentenceSearch(corpus, cuda=args.use_gpu)
-
 def calcOutputEmbeddings(output):
     """
     Embeddings are created from a subset of the output properties:
@@ -74,22 +72,21 @@ es_body = {
     }
 }
 
-total_processed = 0
 
-def parse_indicators(hits):
-    global total_processed
-
+def parse_indicators(hits, total_processed):
     print(f"This page found {len(hits)} indicator hits.")
 
     for idx, indicator in enumerate(hits):
         one_match = indicator["_source"]
         indicator_id = one_match["id"]
+
         print(f"total: {total_processed} idx: {idx}, Processing indicator id: {indicator_id}\n")
+
         saveAllOutputEmbeddings(one_match, indicator_id)
         total_processed += 1
 
+    return total_processed
 
-SIZE = 10
 
 
 def process_upload_indicators():
@@ -97,18 +94,21 @@ def process_upload_indicators():
     """
     print("Called process_upload_indicators\n")
 
-    results = es.search(index="indicators", body=es_body, scroll="2m", size=SIZE)
+    total_processed = 0
+    PAGE_SIZE = 20
+
+    results = es.search(index="indicators", body=es_body, scroll="2m", size=PAGE_SIZE)
 
     hits = results["hits"]["hits"]
 
     if len(hits):
-        parse_indicators(hits)
+        total_processed = parse_indicators(hits, total_processed)
 
     scroll_id = results["_scroll_id"]
 
     print(f"scroll id: {scroll_id}\n")
 
-    while bool(scroll_id) and len(hits) >= SIZE:
+    while bool(scroll_id) and len(hits) >= PAGE_SIZE:
         print("There are more results\n")
 
         # new results
@@ -117,9 +117,10 @@ def process_upload_indicators():
         scroll_id = results["_scroll_id"]
 
         if len(hits):
-            parse_indicators(hits)
+            total_processed = parse_indicators(hits, total_processed)
 
 
 if __name__ == "__main__":
     process_upload_indicators()
     exit(0)
+

@@ -1,3 +1,4 @@
+import axios from 'axios';
 import { zonedTimeToUtc } from 'date-fns-tz';
 
 export const sleep = async (t) => new Promise((r) => setTimeout(r, t));
@@ -82,4 +83,22 @@ export const splitOnWildCard = (filepath) => {
       children_str = children.join("/");
   }
   return [parent_str, children_str];
+};
+
+/**
+ * Uploads a file to a backend service as form multipart data.
+ **/
+export const uploadFile = async (file, url, params={}) => {
+
+  const uploadData = new window.FormData();
+
+  uploadData.append('file', file);
+
+  const response = await axios({
+    method: 'post',
+    url,
+    data: uploadData,
+    params: params
+  });
+  return response;
 };

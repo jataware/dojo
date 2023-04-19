@@ -143,11 +143,10 @@ class FeatureAnnotation(BaseModel):
     aliases: Dict[str, str] = {}
 
 
-
 class AnnotationSchema(BaseModel):
     class Config:
         extra = Extra.allow
-    
+
     geo: Optional[List[GeoAnnotation]]
     date: Optional[List[DateAnnotation]]
     feature: Optional[List[FeatureAnnotation]]

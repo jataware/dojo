@@ -10,8 +10,6 @@ from urllib.parse import urlparse
 import pandas as pd
 import numpy as np
 
-import sys
-
 from utils import get_rawfile, put_rawfile, download_rawfile
 from elwood import elwood as mix
 from elwood import feature_scaling as scaler
@@ -74,7 +72,7 @@ class ElwoodProcessor(BaseProcessor):
         admin_level = None  # Default to admin1
         geo_annotations = context["annotations"]["annotations"]["geo"]
         for annotation in geo_annotations:
-            if annotation["primary_geo"] and "gadm_level" in annotation:
+            if annotation.get("primary_geo") and "gadm_level" in annotation:
                 admin_level = annotation["gadm_level"]
                 break
         uuid = context["uuid"]
@@ -90,7 +88,17 @@ class ElwoodProcessor(BaseProcessor):
         return ret
 
 
-def run_elwood(context, filename=None):
+def run_elwood(context, filename=None, on_success_endpoint=None):
+    """
+    Initializes an elwood processor, which normalizes the dataset. Supports
+    initial registration, as well as appending data to an existing dataset.
+    `on_success_endpoint` is only called when provided, as a callback url just
+    before this fn returns the result.
+        `on_success_endpoint` shape and example: {
+                'verb': 'PUT', # defaults to GET
+                'url': 'http://domain.com/my-publish-url'
+            }
+    """
     processor = ElwoodProcessor()
     uuid = context["uuid"]
     # Creating folder for temp file storage on the rq worker since following functions are dependent on file paths
@@ -221,29 +229,30 @@ def run_elwood(context, filename=None):
         )
         # Append
         # TODO: Hackish way to determine that the feature is not a qualifier
-        if len(feature["qualifies"]) == 0:
-            outputs.append(output)
-        # Qualifier output for qualifying features
-        elif len(feature["qualifies"]) > 0:
-            qualifier_output = dict(
-                name=feature["name"],
-                display_name=feature["display_name"],
-                description=feature["description"],
-                # Gross conversion between the two output types.
-                type=(
-                    "str"
-                    if feature["feature_type"] == "string"
-                    else "binary"
-                    if feature["feature_type"] == "boolean"
-                    else feature["feature_type"]
-                ),
-                unit=feature["units"],
-                unit_description=feature["units_description"],
-                ontologies={},
-                related_features=feature["qualifies"],
-            )
-            # Append to qualifier outputs
-            qualifier_outputs.append(qualifier_output)
+        if feature["qualifies"]:
+            if len(feature["qualifies"]) == 0:
+                outputs.append(output)
+                # Qualifier output for qualifying features
+            elif len(feature["qualifies"]) > 0:
+                qualifier_output = dict(
+                    name=feature["name"],
+                    display_name=feature["display_name"],
+                    description=feature["description"],
+                    # Gross conversion between the two output types.
+                    type=(
+                        "str"
+                        if feature["feature_type"] == "string"
+                        else "binary"
+                        if feature["feature_type"] == "boolean"
+                        else feature["feature_type"]
+                    ),
+                    unit=feature["units"],
+                    unit_description=feature["units_description"],
+                    ontologies={},
+                    related_features=feature["qualifies"],
+                )
+                # Append to qualifier outputs
+                qualifier_outputs.append(qualifier_output)
 
     # Qualifier_outputs
     for date in context["annotations"]["annotations"]["date"]:
@@ -365,6 +374,10 @@ def run_elwood(context, filename=None):
         response["temporal_resolution"] = temporal_resolution_value
     if geographical_resolution_value:
         response["spatial_resolution"] = geographical_resolution_value
+    if on_success_endpoint:
+        requests.request(
+            on_success_endpoint.get("verb", "GET"), on_success_endpoint.get("url")
+        )
 
     return response
 

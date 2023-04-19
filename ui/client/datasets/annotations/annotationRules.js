@@ -3,6 +3,8 @@ import forEach from 'lodash/forEach';
 import find from 'lodash/find';
 import isEmpty from 'lodash/isEmpty';
 import capitalize from 'lodash/capitalize';
+import reduce from 'lodash/reduce';
+import values from 'lodash/values';
 import { CATEGORIES } from './constants';
 
 /**
@@ -182,10 +184,8 @@ export function verifyConditionalRequiredFields(annotation) {
     });
   }
 
-  // TODO which fields are required on multi-column-admin geos?
-
   if (annotation.category === CATEGORIES.time) {
-    if (!annotation.time_format && !annotation['date.multi-column']) {
+    if (!annotation.time_format && !annotation['date.multi-column'] && annotation.date_type !== 'epoch') {
       errors.time_format = 'Required';
     }
   }
@@ -198,3 +198,38 @@ export function verifyConditionalRequiredFields(annotation) {
 
   return errors;
 }
+
+/**
+ * Given server annotation (and its shape), returns annotations for fields that
+ * exist in the data itself (which we gather as columns, from previewData).
+ */
+export const knownFieldAnnotations = (serverAnnotations, columns) => reduce(
+  serverAnnotations,
+  (acc, annotations, property) => {
+    let valid = annotations.filter((annotation) =>
+      columns.find(col => col.field === annotation.name)
+    );
+
+    // For now, addressing and fixing scenario we ran into, for dates, in UI:
+    if (property === 'date') {
+      valid = valid.map((annotation) => {
+        if (!isEmpty(annotation.associated_columns)) {
+          const associated = values(annotation.associated_columns);
+
+          const foreignAssociations = associated
+                .filter(k => columns.find(col => col.field === k));
+
+          if (foreignAssociations.length !== associated.length) {
+            // For now reset foreign associated_columns
+            annotation.associated_columns = null;
+          }
+        }
+        return annotation;
+      });
+    }
+
+    acc[property] = valid;
+    return acc;
+  },
+  {}
+);
