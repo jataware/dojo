@@ -32,7 +32,6 @@ from fastapi.logger import logger
 from fastapi.responses import FileResponse
 from redis import Redis
 from rq import Queue
-from rq.exceptions import NoSuchJobError # TODO handle
 
 from pydantic import ValidationError
 
@@ -104,7 +103,6 @@ def create_indicator(payload: IndicatorSchema.IndicatorMetadataSchema):
     plugin_action("post_create", data=body, type="annotation")
 
     # Saves all outputs, as features in a new index, with LLM embeddings
-    # TODO ask if outputs will ever be populated on create, or find out when it is to add features
     if payload.outputs:
         enqueue_indicator_feature(indicator_id, json.loads(payload.json()))
 
@@ -157,6 +155,71 @@ def patch_indicator(
     )
 
 
+def generate_keyword_query(term):
+    q = {
+        "query": {
+            "bool": {
+                "should": [
+                    {
+                        "multi_match": {
+                            "query": term,
+                            "operator": "and",
+                            "fuzziness": "AUTO",
+                            "fields": ["display_name", "name", "description"],
+                            "type": "most_fields",
+                            "slop": 2
+                        }
+                    },
+                    {
+                        "bool": {
+                            "minimum_should_match": 1,
+                            "should": [
+                                {
+                                    "match_phrase": {
+                                        "description": {
+                                            "query": term,
+                                            "boost": 1
+                                        }
+                                    }
+                                },
+                                {
+                                    "match_phrase": {
+                                        "name": {
+                                            "query": term,
+                                            "boost": 1
+                                        }
+                                    }
+                                },
+                                {
+                                    "match_phrase": {
+                                        "display_name": {
+                                            "query": term,
+                                            "boost": 1
+                                        }
+                                    }
+                                },
+                                {
+                                    "multi_match": {
+                                        "query": term,
+                                        "fields": ["display_name", "name", "description"],
+                                        "type": "cross_fields",
+                                        "operator": "and",
+                                        "slop": 1
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
+        },
+        "_source": {
+            "excludes": "embeddings"
+        }
+    }
+    return q
+
+
 @router.get(
 "/features/search", response_model=IndicatorSchema.FeaturesSemanticSearchSchema
 )
@@ -175,22 +238,20 @@ def semantic_search_features(query: Optional[str], size=10, scroll_id: Optional[
         # that matches its input, and we provide only one- query.
         query_embedding = embedder.embed([query])[0]
 
-        features_query = {
-            "query": {
-                "script_score": {
-                    "query": {"match_all": {}},
-                    "script": {
-                        "source": "Math.max(cosineSimilarity(params.query_vector, 'embeddings'), 0)",
-                        "params": {
-                            "query_vector": query_embedding
-                        }
+        features_query = generate_keyword_query(query)
+
+        features_query["query"]["bool"]["should"].append({
+            "script_score": {
+                "query": {"match_all": {}},
+                "script": {
+                    "source": "Math.max(cosineSimilarity(params.query_vector, 'embeddings'), 0)",
+                    "params": {
+                        "query_vector": query_embedding
                     }
                 }
-            },
-            "_source": {
-                "excludes": ["embeddings"]
             }
-        }
+        })
+
         results = es.search(index="features", body=features_query, scroll="2m", size=size)
 
     items_in_page = len(results["hits"]["hits"])
@@ -217,19 +278,6 @@ def semantic_search_features(query: Optional[str], size=10, scroll_id: Optional[
     }
 
 
-def formatHitWithId(hit):
-    return {
-        "id": hit["_id"],
-        **hit["_source"]
-    }
-
-
-def getWildcardsForAllProperties(t):
-            return [{"wildcard": {"name": f"*{t}*"}},
-                    {"wildcard": {"display_name": f"*{t}*"}},
-                    {"wildcard": {"description": f"*{t}*"}}]
-
-
 @router.get(
     "/features", response_model=IndicatorSchema.FeaturesSearchSchema
 )
@@ -238,33 +286,12 @@ def list_features(term: Optional[str]=None,
                   scroll_id: Optional[str]=None):
     """
     Lists all features, with pagination, or results from searching
-    through them by keywords (within input `term`).
-    Will match `term` with wildcard to feature `name`,
-    `display_name`, or `description`.
+    through them (using input sentence `term`). Will match `term`
+    to feature `name`, `display_name`, or `description`.
     """
 
     if term:
-        q = {
-            "query": {
-                "bool": {
-                    "should": [
-                        # NOTE End result format, 3 properties matched for each
-                        #      word in text (split by whitespace)
-                        # Note: This is a slow search. Use es token indexing features
-                        #       in the future
-                        # { "wildcard": { "name": wildcardTerm }},
-                        # { "wildcard": { "display_name": wildcardTerm }},
-                        # { "wildcard": { "description": wildcardTerm }}
-                    ]
-                }
-            },
-            "_source": {
-                "excludes": "embeddings"
-            }
-        }
-
-        for item in term.split():
-            q["query"]["bool"]["should"] += getWildcardsForAllProperties(item)
+        q = generate_keyword_query(term)
 
     else:
         q = {
@@ -281,23 +308,35 @@ def list_features(term: Optional[str]=None,
     else:
         results = es.scroll(scroll_id=scroll_id, scroll="2m")
 
-    totalHitsInPage = len(results["hits"]["hits"])
+    es_hits = results["hits"]["hits"]
+    hits_count = len(es_hits)
 
-    # if results are less than the page size (10) don't return a scroll_id
-    if totalHitsInPage < size:
+    # if hits are less than the page size (10) don't return a scroll_id
+    if hits_count < size:
         scroll_id = None
     else:
         scroll_id = results.get("_scroll_id", None)
 
-    # Groups features as array list from `results`, into `response`
-    response = results["hits"]["hits"]
+    max_score = results["hits"]["max_score"]
 
-    return {
+    def formatOneResult(r):
+        if term:
+            r["_source"]["metadata"]={}
+            r["_source"]["metadata"]["match_score"] = r["_score"]
+        r["_source"]["id"] = r["_id"]
+        return r["_source"]
+
+    response = {
         "hits": results["hits"]["total"]["value"],
-        "items_in_page": len(response),
-        "results": [formatHitWithId(i) for i in response],
+        "items_in_page": hits_count,
+        "results": [formatOneResult(i) for i in es_hits],
         "scroll_id": scroll_id
     }
+
+    if term:
+        response["max_score"] = max_score
+
+    return response
 
 
 @router.get(

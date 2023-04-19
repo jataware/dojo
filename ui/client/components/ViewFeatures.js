@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 
 import axios from 'axios';
 import debounce from 'lodash/debounce';
+import identity from 'lodash/identity';
 
 import Button from '@material-ui/core/Button';
 import { GridOverlay, DataGrid, useGridSlotComponentProps } from '@material-ui/data-grid';
@@ -44,7 +45,7 @@ export const ConfidenceBar = withStyles((theme) => ({
 }))(LinearProgress);
 
 const semanticSearchFeatures = async(query) => {
-  let url = `/api/dojo/features/search?query=${query}`;
+  let url = `/api/dojo/features/search?query=${query}&size=50`;
   const response = await axios.get(url);
   return response.data;
 };
@@ -147,10 +148,34 @@ function CustomLoadingOverlay() {
   );
 }
 
-const SEARCH_MODE = {
-  KEYWORD: 'KEYWORD',
-  SEMANTIC: 'SEMANTIC'
-};
+/**
+ *
+ */
+const ViewFeatures = withStyles((theme) => ({
+  root: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column'
+  },
+  aboveTableWrapper: {
+    display: 'flex',
+    maxWidth: "100vw",
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    flexWrap: 'wrap',
+    marginBottom: '1rem',
+  }
+}))(({classes}) => {
+
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTermValue, setSearchTermValue] = useState('');
+  const updateSearchTerm = useCallback(debounce(setSearchTerm, 500), []);
+
+  const [features, setFeatures] = useState([]);
+  const [featuresError, setFeaturesError] = useState(false);
+  const [featuresLoading, setFeaturesLoading] = useState(false);
+
+  const [maxSearchScore, setMaxSearchScore] = useState(1);
 
 const featureColumns = [
     {
@@ -177,17 +202,27 @@ const featureColumns = [
       field: 'match_score',
       headerName: 'Match %',
       renderCell: (rowParent) => {
-        const matchScore = rowParent?.row?.metadata?.match_score;
 
-        return matchScore ? (
+        const matchScore = rowParent?.row?.metadata?.match_score;
+        if (!matchScore) {
+          return null;
+        }
+
+        const isSemanticResult = maxSearchScore > 1 && matchScore < 1;
+
+        let maxScore =  isSemanticResult ? 1 : maxSearchScore;
+        let op = isSemanticResult ? Math.sqrt : identity;
+
+        const value = op(matchScore/maxScore) * 100;
+
+        return (
           <div style={{width: '100%'}}>
             <ConfidenceBar
-              value={Math.sqrt(matchScore) * 100}
+              value={value}
               variant='determinate'
             />
           </div>
-        ) : null;
-
+        );
       },
       disableColumnMenu: true,
       width: 130,
@@ -219,56 +254,27 @@ const featureColumns = [
     }
   ];
 
-/**
- *
- */
-const ViewFeatures = withStyles((theme) => ({
-  root: {
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'column'
-  },
-  aboveTableWrapper: {
-    display: 'flex',
-    maxWidth: "100vw",
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    marginBottom: '1rem',
-  }
-}))(({classes}) => {
-
-  const [searchTerm, setSearchTerm] = useState('');
-  const [searchTermValue, setSearchTermValue] = useState('');
-  const updateSearchTerm = useCallback(debounce(setSearchTerm, 500), []);
-  const [searchMode, setSearchMode] = useState(SEARCH_MODE.KEYWORD);
-
-  const [features, setFeatures] = useState([]);
-  const [featuresError, setFeaturesError] = useState(false);
-  const [featuresLoading, setFeaturesLoading] = useState(false);
 
   useEffect(() => {
     updateSearchTerm(searchTermValue);
   }, [searchTermValue]);
 
   const performSearch = () => {
-    if (searchMode === SEARCH_MODE.KEYWORD) {
-      fetchFeatures(setFeatures, setFeaturesLoading, setFeaturesError, searchTerm);
-    } else {
-      if (!searchTerm) {
-        fetchFeatures(setFeatures, setFeaturesLoading, setFeaturesError, searchTerm);
-        return;
-      }
 
-      setFeaturesLoading(true);
-      semanticSearchFeatures(searchTerm)
-        .then((newFeatures) => {
-          setFeatures(newFeatures.results);
-        })
-        .finally(() => {
-          setFeaturesLoading(false);
-        });
+    if (!searchTerm) {
+      fetchFeatures(setFeatures, setFeaturesLoading, setFeaturesError);
+      return;
     }
+
+    setFeaturesLoading(true);
+    semanticSearchFeatures(searchTerm)
+      .then((newFeatures) => {
+        setMaxSearchScore(newFeatures.max_score);
+        setFeatures(newFeatures.results);
+      })
+      .finally(() => {
+        setFeaturesLoading(false);
+      });
   };
 
   useEffect(() => {
@@ -280,12 +286,6 @@ const ViewFeatures = withStyles((theme) => ({
     setSearchTermValue('');
   };
 
-  const handleSearchModeChange = ({ target: { value } }) => {
-    setSearchMode(value);
-    // performSearch();
-    clearSearch();
-  };
-
   const handleSearchChange = ({ target: { value } }) => {
     // if we have no search term, clear everything
     if (value.length === 0) {
@@ -295,10 +295,6 @@ const ViewFeatures = withStyles((theme) => ({
     setSearchTermValue(value);
   };
 
-  const displayableColumns = searchMode === SEARCH_MODE.SEMANTIC ?
-        featureColumns
-        : featureColumns.filter(col => col.field !== "match_score");
-
   return featuresError ? (
     <Typography>
       Error loading features.
@@ -307,20 +303,6 @@ const ViewFeatures = withStyles((theme) => ({
     <div className={classes.root}>
       <div className={classes.aboveTableWrapper}>
         <div>
-          <TextField
-            label="Search By"
-            select
-            SelectProps={{
-              native: true,
-            }}
-            variant="outlined"
-            value={searchMode}
-            onChange={handleSearchModeChange}
-            style={{marginRight: "1rem"}}
-          >
-            <option value={SEARCH_MODE.KEYWORD}>Keyword</option>
-            <option value={SEARCH_MODE.SEMANTIC}>Semantic</option>
-          </TextField>
           <TextField
             label="Search Features"
             variant="outlined"
@@ -353,7 +335,7 @@ const ViewFeatures = withStyles((theme) => ({
         }}
         loading={featuresLoading}
         getRowId={(row) => `${row.owner_dataset.id}-${row.name}`}
-        columns={displayableColumns}
+        columns={featureColumns}
         rows={features}
       />
     </div>
