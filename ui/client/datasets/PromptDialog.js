@@ -6,6 +6,7 @@ import DialogContent from '@material-ui/core/DialogContent';
 import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 
+
 export default ({
   open, title, message, handleClose
 }) => (
@@ -16,11 +17,13 @@ export default ({
     <DialogTitle>
       {title}
     </DialogTitle>
+
     <DialogContent>
       <DialogContentText>
         {message}
       </DialogContentText>
     </DialogContent>
+
     <DialogActions>
       <Button onClick={handleClose} color="primary">
         Ok

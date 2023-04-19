@@ -17,7 +17,10 @@ import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 // import get from 'lodash/get';
 
-import { readFile, uploadFile } from '../utils';
+import { readFile } from '../utils';
+
+import { uploadFile } from '../../utils';
+
 import { FileDropSelector } from './DropArea';
 import { SelectedFileList } from './FileList';
 import EditMetadata from './EditMetadata';
@@ -240,8 +243,7 @@ const UploadDocumentForm = withStyles((theme) => ({
         console.log('Error creating doc', e);
       }).then(response => {
         const doc = response.data;
-        return uploadFile(file, doc.id, {});
-
+        return uploadFile(file, `/api/dojo/documents/${doc.id}/upload`, {});
       }).catch((e) => {
         console.log("Error uploading files", e);
       }).then(() => {

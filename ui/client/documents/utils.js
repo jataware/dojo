@@ -137,28 +137,3 @@ function transformValues(key, value) {
 function formatKey(key) {
   return flow(snakeCase, renameKeys)(key);
 }
-
-/**
- * Uploads a file to the backend service.
- * Receives a form dom reference, datasetId, and optional params.
- * TODO move to common project location, as datasets also uses this..?
- * will need to receive url or so.
- * TODO check why the datasets version needs a ref to the form, instead
- * of a reference to the selected file as we do here.
- **/
-export const uploadFile = async (file, documentID, params={}) => {
-
-  console.log('upload file', file);
-
-  const uploadData = new window.FormData();
-
-  uploadData.append('file', file);
-
-  const response = await axios({
-    method: 'post',
-    url: `/api/dojo/documents/${documentID}/upload`,
-    data: uploadData,
-    params: params
-  });
-  return response;
-};

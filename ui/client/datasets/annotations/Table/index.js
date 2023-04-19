@@ -4,19 +4,25 @@ import clsx from 'clsx';
 import get from 'lodash/get';
 import find from 'lodash/find';
 import isEmpty from 'lodash/isEmpty';
+import axios from 'axios';
 
-import { DataGrid } from '@material-ui/data-grid';
 import { withStyles } from '@material-ui/core/styles';
+import { GridOverlay, DataGrid } from '@material-ui/data-grid';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Checkbox from '@material-ui/core/Checkbox';
+import IconButton from '@material-ui/core/IconButton';
+import Button from '@material-ui/core/Button';
 import Tooltip from '@material-ui/core/Tooltip';
-
-import BasicAlert from '../../../components/BasicAlert';
-
-import ColumnPanel from '../ColumnPanel';
+import LinearProgress from '@material-ui/core/LinearProgress';
+import InboxIcon from '@material-ui/icons/MoveToInbox';
 
 import { calcPointerLocation, groupColumns } from './helpers';
+import BasicAlert from '../../../components/BasicAlert';
+import ColumnPanel from '../ColumnPanel';
 import Header from './Header';
+
+import AnnotationDialog from './UploadAnnotationFileDialog';
+import { FileDropSelector } from '../../../documents/upload/DropArea';
 
 const rowsPerPageOptions = [25, 50, 100];
 
@@ -51,9 +57,20 @@ const Cell = withStyles(({ palette, spacing }) => ({
 const ROW_HEIGHT = 52;
 const HEADER_HEIGHT = 80;
 
-// TODO add Show Inferred button
-// TODO add show Stats button
-// TODO change Instructions once colors finalized
+/**
+ * Blue linear loading animation displayed when table loading/searching of
+ * features is still in progress.
+ */
+function CustomLoadingOverlay() {
+  return (
+    <GridOverlay>
+      <div style={{ position: 'absolute', top: 0, width: '100%', zIndex: 15 }}>
+        <LinearProgress style={{height: 3}}/>
+      </div>
+    </GridOverlay>
+  );
+}
+
 
 /**
  *
@@ -117,7 +134,7 @@ export default withStyles(({ palette }) => ({
   columns, annotations, inferredData,
   loading, multiPartData, setMultiPartData,
   validateDateFormat, columnStats,
-  fieldsConfig, addingAnnotationsAllowed
+  fieldsConfig, addingAnnotationsAllowed, onUploadAnnotations, datasetID
 }) => {
   const [pageSize, setPageSize] = useState(rowsPerPageOptions[0]);
   const [highlightedColumn, setHighlightedColumn] = useState(null);
@@ -127,6 +144,15 @@ export default withStyles(({ palette }) => ({
     message: '',
     severity: 'success',
   });
+
+  const [isUploadingAnnotations, setUploadingAnnotations] = useState(false);
+  const [fileDictionaryError, setfileDictionaryError] = useState(null);
+  const [dictionaryUploadLoading, setDictionaryUploadLoading] = useState(false);
+
+  function cancelUploadAnnotations() {
+    setUploadingAnnotations(false);
+    setfileDictionaryError(null);
+  }
 
   const [isShowMarkers, setShowMarkers] = useState(true);
 
@@ -270,25 +296,73 @@ export default withStyles(({ palette }) => ({
     }
   };
 
+  const handleFileSelect = (acceptedFiles) => {
+
+    setDictionaryUploadLoading(true);
+    onUploadAnnotations(acceptedFiles[0])
+      .then((success) => {
+        cancelUploadAnnotations();
+
+        if (success) {
+          setAnnotationSuccessAlert(true);
+          setAnnotationAlertMessage({
+            message: `Your annotations were successfully applied`,
+            severity: 'success'
+          });
+        }
+      })
+      .catch((e) => {
+        setfileDictionaryError(e.message);
+      })
+      .finally(() => { setDictionaryUploadLoading(false); });
+  };
+
+  const handleDropFilesRejection = (error) => {
+    let errorMessage = `The data dictionary file was rejected. `;
+
+    try {
+      errorMessage += error[0].errors.map(item => item.message).join('\n');
+    } catch(e) {
+      errorMessage += 'Only one CSV file allowed at a time.';
+    }
+
+    setfileDictionaryError(errorMessage);
+  };
+
   return (
     <div className={classes.root}>
 
-      <div>
-        <Tooltip
-          classes={{ tooltip: classes.tooltip }}
-          title="Display context icons for columns with inferred data, annotated as primary, or as qualifier."
-        >
-          <FormControlLabel
-            control={(
-              <Checkbox
-                checked={isShowMarkers}
-                onChange={(e) => setShowMarkers(e.target.checked)}
-                color="primary"
-              />
-            )}
-            label="Show Additional Markers"
-          />
-        </Tooltip>
+      <div style={{display: 'flex'}}>
+        <div style={{flex: 1}}>
+          <Tooltip
+            classes={{ tooltip: classes.tooltip }}
+            title="Display context icons for columns with inferred data, annotated as primary, or as qualifier."
+          >
+            <FormControlLabel
+              control={(
+                <Checkbox
+                  checked={isShowMarkers}
+                  onChange={(e) => setShowMarkers(e.target.checked)}
+                  color="primary"
+                />
+              )}
+              label="Show Additional Markers"
+            />
+          </Tooltip>
+        </div>
+
+        {addingAnnotationsAllowed && (
+          <div style={{display: 'flex', alignItems: 'center'}}>
+            <Button
+              color="primary"
+              size="large"
+              startIcon={<InboxIcon />}
+              onClick={() => setUploadingAnnotations(true)}
+            >
+              Upload File
+            </Button>
+          </div>
+        )}
       </div>
 
       <DataGrid
@@ -297,6 +371,9 @@ export default withStyles(({ palette }) => ({
         disableColumnMenu
         disableSelectionOnClick
         getRowId={(row) => row.__id}
+        components={{
+          LoadingOverlay: CustomLoadingOverlay
+        }}
         classes={{
           root: clsx([classes.grid, classes.gridScroll, classes.hideHeaderBorder]),
           row: classes.row,
@@ -339,11 +416,23 @@ export default withStyles(({ palette }) => ({
 
         fieldsConfig={fieldsConfig}
       />
+
       <BasicAlert
         alert={annotationAlertMessage}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
         visible={annotationSuccessAlert}
         setVisible={setAnnotationSuccessAlert}
+      />
+
+      <AnnotationDialog
+        open={isUploadingAnnotations}
+        handleClose={cancelUploadAnnotations}
+        handleFileSelect={handleFileSelect}
+        handleDropFilesRejection={handleDropFilesRejection}
+        errorMessage={fileDictionaryError}
+        clearErrorMessage={()=>{setfileDictionaryError(null);}}
+        loading={dictionaryUploadLoading}
+        datasetID={datasetID}
       />
     </div>
   );
