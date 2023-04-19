@@ -1,5 +1,4 @@
 from functools import reduce
-from collections import defaultdict
 from pydantic import BaseModel, Extra, ValidationError
 
 
@@ -17,7 +16,24 @@ if __name__ == "__main__":
     sys.path.append(str(Path(__file__).resolve().parent.parent))
 
 
+import openpyxl
 from validation.MetadataSchema import GeoAnnotation, DateAnnotation, FeatureAnnotation
+
+
+def extract_filled_rows(rows):
+    valid_rows = [row for row in rows if any(item is not None for item in row)]
+    [headers, *data] = valid_rows
+
+    return [dict(zip(headers, v)) for v in data]
+
+
+def xls_to_annotations(file):
+    wb = openpyxl.load_workbook(file)
+    ws = wb.active
+
+    data = list(ws.iter_rows(values_only=True))
+
+    return extract_filled_rows(data)
 
 
 type_buckets = {

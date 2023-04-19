@@ -28,6 +28,7 @@ from fastapi import (
     File
 )
 from fastapi.logger import logger
+from fastapi.responses import FileResponse
 from redis import Redis
 from rq import Queue
 from rq.exceptions import NoSuchJobError # TODO handle
@@ -46,7 +47,7 @@ from src.causemos import deprecate_dataset
 from src.utils import put_rawfile, get_rawfile, list_files
 from src.plugins import plugin_action
 
-from src.csv_annotation_parser import format_annotations
+from src.csv_annotation_parser import format_annotations, xls_to_annotations
 
 from src.embedder_engine import embedder
 
@@ -795,11 +796,24 @@ def bytes_to_csv(file):
     return list(csv_reader)
 
 @router.post("/indicators/{indicator_id}/annotations/file")
-def upload_csv_data_dictionary_file(indicator_id: str, file: UploadFile = File(...)):
+def upload_data_dictionary_file(indicator_id: str, file: UploadFile = File(...)):
     """
     Accepts a CSV dictionary file describing a dataset in order to register it. Similar to using the API directly with JSON, or using the Dataset Registration flow on Dojo user interface to annotate a dataset.
     """
-    csv_dictionary_list = bytes_to_csv(file.file)
+
+    if file.name.endswith('.xlsx') or file.name.endswith('.xls'):
+        logger.info(f"\n\n >>>>>>> excel file annotations: {file}, {file.name}")
+        csv_dictionary_list = xls_to_annotations(file)
+        # from tempfile import NamedTemporaryFile
+        # with NamedTemporaryFile() as tmp:
+            # tmp.write(file)
+            # csv_dictionary_list = xls_to_annotations(tmp)
+
+    else:
+        logger.info("c\n\n >>>>>> sv annotations file")
+        csv_dictionary_list = bytes_to_csv(file.file)
+
+    logger.info(f"dictionary list parsed: {csv_dictionary_list}")
 
     try:
         formatted = format_annotations(csv_dictionary_list)
@@ -822,7 +836,13 @@ def upload_csv_data_dictionary_file(indicator_id: str, file: UploadFile = File(.
 
 
 @router.get("/indicators/annotations/file-template")
-def download_csv_data_dictionary_template_file(indicator_id=None):
+def download_data_dictionary_template_file(indicator_id=None, filetype="xlsx"):
+
+    if filetype == "csv":
+        file_name = "dataset_annotate_template.template_xlsx"
+        headers = {"Content-Disposition": f"attachment; filename={file_name.replace('template_', '')}"}
+        return FileResponse(file_name, headers=headers)
+
     wb = Workbook()
     ws = wb.active
     ws.title = "Dojo Annotation Template"
