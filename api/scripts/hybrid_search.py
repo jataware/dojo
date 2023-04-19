@@ -35,6 +35,10 @@ import pprint
 
 sys.path.append(str(Path(__file__).resolve().parent.parent))
 
+# TODO import query in use from common file (dont paste here)
+# TODO loop through each query, and compare latency AND search result
+ # accuracy across all queries we can come up with, automatically.
+
 from src.embedder_engine import embedder
 from elasticsearch import Elasticsearch
 
