@@ -288,11 +288,12 @@ def run_elwood(context, filename=None):
     lon_col = ""
     temporal_resolution_value = None
     geographical_resolution_value = None
+
+    # Loops through annotations looking for primary fields to detect resoltuion on.
     for date in mm_ready_annotations["date"]:
         if date.get("primary_date", None):
             datetime_column = date["name"]
             time_format = date["time_format"]
-            print(f"date res: {datetime_column}, {time_format}")
             break
 
     for geo in mm_ready_annotations["geo"]:
@@ -303,24 +304,39 @@ def run_elwood(context, filename=None):
                 break
             lat_col = geo["is_geo_pair"]
             lon_col = geo["name"]
-            print(f"geo res: {lat_col}, {lon_col}")
 
+    # Tries to combine all primaries found for detection.
     kwargs = {
         "datetime_column": datetime_column,
         "time_format": time_format,
         "lat_column": lat_col,
         "lon_column": lon_col,
     }
-    print(f"KWARGS: {kwargs}")
 
+    # Maps cartwright output units to dojo indicator metadata resolution schema.
+    temporal_resolution_mapping = {
+        "day": "daily",
+        "week": "weekly",
+        "month": "monthly",
+        "year": "annual",
+        "decade": "dekad",
+        "second": "other",
+        "minute": "other",
+        "hour": "other",
+        "century": "other",
+        "millennium": "other",
+    }
+
+    # Calculates temporal resolution
     if datetime_column and time_format:
         temporal_resolution = calculate_temporal_resolution(
             context=context, filename=filename, **kwargs
         )
-        if temporal_resolution:
-            temporal_resolution_value = (
-                temporal_resolution["resolution_result"]["unit"] + "ly"
-            )
+        if temporal_resolution and temporal_resolution["resolution_result"] != "None":
+            temporal_resolution_value = temporal_resolution_mapping[
+                temporal_resolution["resolution_result"]["unit"]
+            ]
+    # Calculates geographical resolution (Note: Cartwright can only detect on lat/lon geo)
     if lat_col and lon_col:
         geographical_resolution = calculate_geographical_resolution(
             context=context, filename=filename, **kwargs
@@ -333,9 +349,7 @@ def run_elwood(context, filename=None):
                 "resolution_result"
             ]["resolution"]
 
-    print(f"Resolution responses: {temporal_resolution}, {geographical_resolution}")
-    sys.stdout.flush()
-
+    # Constructs final elwood response to update metadata in dojo
     response = {
         "preview": elwood_result_df.head(100).to_json(),
         "data_files": data_files,
@@ -345,12 +359,13 @@ def run_elwood(context, filename=None):
         "qualifier_outputs": qualifier_outputs,
         "feature_names": feature_names,
     }
+
+    # Appends resolutions if they exist
     if temporal_resolution_value:
         response["temporal_resolution"] = temporal_resolution_value
     if geographical_resolution_value:
         response["spatial_resolution"] = geographical_resolution_value
 
-    print(f"BIG RESPONSE: {response}")
     return response
 
 
