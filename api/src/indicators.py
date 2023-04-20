@@ -1013,7 +1013,6 @@ boolean: data that represents yes/no values (true or false, enabled or disabled,
 
     if indicator_id:
         annotations = get_annotations(indicator_id)
-        logger.warn(annotations)
         for index, row in enumerate(annotations.get("metadata", {}).get("column_statistics", {}).keys(), start=2):
             ws.cell(row=index, column=1, value=row)
 

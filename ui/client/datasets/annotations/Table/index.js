@@ -359,7 +359,7 @@ export default withStyles(({ palette }) => ({
               startIcon={<InboxIcon />}
               onClick={() => setUploadingAnnotations(true)}
             >
-              Upload File
+              Upload Data Dictionary
             </Button>
           </div>
         )}

@@ -26,12 +26,12 @@ export default ({
     onClose={handleClose}
   >
     <DialogTitle>
-      Upload Annotations File
+      Upload Data Dictionary File
     </DialogTitle>
 
     <DialogContent>
        <DialogContentText variant="body2">
-         Uploading a .csv or .xlsx file is an alternate method of annotating a dataset's fields. Download the template spreadsheet and include a row describing each field of interest in the dataset. Upload the final file by dropping below, or click on the drop area to use a file picker.
+         Uploading a .csv or .xlsx file is an alternate method of annotating a dataset's fields. Download the template spreadsheet and include a row describing each field of interest in the dataset. Upload the final file by dropping below, or click on the drop area to use a file picker. Selecting a file will immediately apply the changes and save them.
        </DialogContentText>
 
       <div style={{display: 'relative'}}>
@@ -39,7 +39,7 @@ export default ({
           onFileSelect={handleFileSelect}
           onDropFilesRejected={handleDropFilesRejection}
           acceptExtensions={['csv', 'xlsx']}
-          CTA="Upload Annotations File"
+          CTA="Drop or Select a File"
           multiple={false}
         />
         {loading && (
