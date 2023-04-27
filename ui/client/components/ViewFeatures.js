@@ -54,15 +54,13 @@ const semanticSearchFeatures = async(query) => {
  * Adapted from ViewModels.js::fetchModels
  */
 const fetchFeatures = async (
-  setFeatures, setFeaturesLoading, setFeaturesError, searchTerm, scrollId
+  setFeatures, setFeaturesLoading, setFeaturesError, scrollId
 ) => {
   setFeaturesLoading(true);
 
-  let url = `/api/dojo/features`;
+  let url = `/api/dojo/features?size=2000`;
   if (scrollId) {
-    url += `?scroll_id=${scrollId}`;
-  } else if (searchTerm) {
-    url += `?term=${searchTerm}`;
+    url += `&scroll_id=${scrollId}`;
   }
 
   const featuresRequest = axios.get(url).then(
@@ -72,38 +70,17 @@ const fetchFeatures = async (
     }
   );
 
-  let preparedFeatures = null;
-  let hitFeatureCountThreshold = false;
-
-  preparedFeatures = featuresRequest.then((featuresData) => {
-
+  featuresRequest.then((featuresData) => {
     setFeatures((prev) => {
-
-      if (prev.length > 500) {
-        hitFeatureCountThreshold = true;
-      }
-
       return !scrollId ? featuresData.results : prev.concat(featuresData.results);
     });
-
-    return [featuresData.scroll_id, featuresData.results];
-  });
-
-  preparedFeatures.then(([ newScrollId, results ]) => {
-
-    // when there's no scroll id, we've hit the end of the results
-    if (newScrollId && !hitFeatureCountThreshold) {
-      // if we get a scroll id back, there are more results
-      // so call fetchModels again to fetch the next set
-      fetchFeatures(setFeatures, setFeaturesLoading, setFeaturesError, searchTerm, newScrollId);
-    } else {
+  })
+    .catch((error) => {
+      console.log('error:', error);
+      setFeaturesError(true);
+    })
+  .finally(() => {
       setFeaturesLoading(false);
-    }
-  });
-
-  preparedFeatures.catch((error) => {
-    console.log('error:', error);
-    setFeaturesError(true);
   });
 };
 
@@ -113,6 +90,8 @@ const fetchFeatures = async (
  * b) Wire and display the rest of the labels that are usually
  *    set for us when we don't need custom behavior.
  */
+// Reverted Many count per implementation changes.
+// Leaving CustomTablePagination in to assess action after feedback.
 const CustomTablePagination = props => {
 
   const { state, apiRef } = useGridSlotComponentProps();
@@ -120,7 +99,8 @@ const CustomTablePagination = props => {
   return (
     <TablePagination
       labelDisplayedRows={({from, to, count}) => {
-        const displayCount = count > 500 ? 'Many' : count;
+        // const displayCount = count > 500 ? 'Many' : count;
+        const displayCount = count;
         return `${from}-${to} of ${displayCount}`;
       }}
       {...props}
