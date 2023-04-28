@@ -7,6 +7,7 @@ import identity from 'lodash/identity';
 import Button from '@material-ui/core/Button';
 import { GridOverlay, DataGrid, useGridSlotComponentProps } from '@material-ui/data-grid';
 import Typography from '@material-ui/core/Typography';
+import clsx from 'clsx';
 import { withStyles } from '@material-ui/core/styles';
 import TablePagination from '@material-ui/core/TablePagination';
 import Alert from '@material-ui/lab/Alert';
@@ -22,14 +23,16 @@ import InputAdornment from '@material-ui/core/InputAdornment';
 import TextField from '@material-ui/core/TextField';
 
 
-
 const expandableCell = ({ value, colDef }) => (
-    <ExpandableDataGridCell
-      value={value}
-      width={colDef.computedWidth}
-    />
+  <ExpandableDataGridCell
+    value={value}
+    width={colDef.computedWidth}
+  />
 );
 
+/**
+ * Maytch % confidence bar
+ **/
 export const ConfidenceBar = withStyles((theme) => ({
   root: {
     height: 15,
@@ -42,7 +45,29 @@ export const ConfidenceBar = withStyles((theme) => ({
   bar: {
     backgroundColor: '#00cd00',
   },
-}))(LinearProgress);
+  semanticBar: {
+    backgroundColor: '#4e6bf1'
+  }
+}))(({ semantic, classes, ...props }) => {
+
+  let overrides = {};
+
+  const {semanticBar, ...supportedClasses} = classes;
+
+  if (semantic) {
+    overrides = {bar: semanticBar}
+  }
+
+  return (
+    <LinearProgress
+      {...props}
+      classes={{
+        ...supportedClasses,
+        ...overrides
+      }}
+    />
+  );
+});
 
 const semanticSearchFeatures = async(query) => {
   let url = `/api/dojo/features/search?query=${query}&size=50`;
@@ -157,7 +182,7 @@ const ViewFeatures = withStyles((theme) => ({
 
   const [maxSearchScore, setMaxSearchScore] = useState(1);
 
-const featureColumns = [
+  const featureColumns = [
     {
       field: 'name',
       headerName: 'Name',
@@ -198,6 +223,7 @@ const featureColumns = [
         return (
           <div style={{width: '100%'}}>
             <ConfidenceBar
+              semantic={isSemanticResult}
               value={value}
               variant='determinate'
             />

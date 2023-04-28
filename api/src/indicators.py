@@ -49,7 +49,7 @@ from src.plugins import plugin_action
 
 from src.csv_annotation_parser import format_annotations, xls_to_annotations
 
-from src.embedder_engine import embedder
+from src.feature_queries import hybrid_query_v1, keyword_query_v2
 
 router = APIRouter()
 es = Elasticsearch([settings.ELASTICSEARCH_URL], port=settings.ELASTICSEARCH_PORT)
@@ -226,8 +226,8 @@ def generate_keyword_query(term):
 def semantic_search_features(query: Optional[str], size=10, scroll_id: Optional[str]=None):
     """
     Given a text query, uses semantic search engine to search for features that
-    match the query semantically. Query is a sentence that can be interpreted to
-    be related to a concept, such as:
+    match the query semantically. Query is a sentence that can be interpreted
+    to be related to a concept, such as:
     'number of people who have been vaccinated'
     """
 
@@ -236,21 +236,7 @@ def semantic_search_features(query: Optional[str], size=10, scroll_id: Optional[
     else:
         # Retrieve first item in output, since it returns an array output
         # that matches its input, and we provide only one- query.
-        query_embedding = embedder.embed([query])[0]
-
-        features_query = generate_keyword_query(query)
-
-        features_query["query"]["bool"]["should"].append({
-            "script_score": {
-                "query": {"match_all": {}},
-                "script": {
-                    "source": "Math.max(cosineSimilarity(params.query_vector, 'embeddings'), 0)",
-                    "params": {
-                        "query_vector": query_embedding
-                    }
-                }
-            }
-        })
+        features_query = hybrid_query_v1(query)
 
         results = es.search(index="features", body=features_query, scroll="2m", size=size)
 
