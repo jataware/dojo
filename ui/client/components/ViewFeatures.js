@@ -30,6 +30,11 @@ const expandableCell = ({ value, colDef }) => (
   />
 );
 
+const MATCH_TYPE = {
+  semantic: 'semantic',
+  hybrid: 'hybrid'
+}
+
 /**
  * Maytch % confidence bar
  **/
@@ -57,9 +62,9 @@ export const ConfidenceBar = withStyles((theme) => ({
 
   const {semanticBar, hybridBar, ...supportedClasses} = classes;
 
-  if (matchType === "semantic") {
+  if (matchType === MATCH_TYPE.semantic) {
     overrides = {bar: semanticBar};
-  } else if (matchType === "hybrid") {
+  } else if (matchType === MATCH_TYPE.hybrid) {
     overrides = {bar: hybridBar};
   }
 
@@ -231,21 +236,24 @@ const ViewFeatures = withStyles((theme) => ({
           return null;
         }
 
-        const isSemanticResult = maxSearchScore > 1 && matchScore < 1;
+        const isHybridSemanticResult = maxSearchScore > 1 && matchScore <= 1;
 
-        let maxScore = isSemanticResult ? 1 : maxSearchScore;
-        let op = isSemanticResult ? Math.sqrt : identity;
+        const isSemanticResult = maxSearchScore < 1;
 
-        const value = identity(matchScore/maxScore) * 100;
+        let maxScore = isHybridSemanticResult ? 1.3 : isSemanticResult ? 1 : maxSearchScore;
+
+        let op = isSemanticResult||isHybridSemanticResult ? Math.sqrt : identity;
+
+        const value = op(matchScore/maxScore) * 100;
 
         const matchArray = rowParent?.row?.metadata?.matched_queries;
 
         let matchType = "keyword";
 
         if (matchArray.length === 1 && matchArray.includes("semantic_search")) {
-          matchType = "semantic";
+          matchType = MATCH_TYPE.semantic;
         } else if (matchArray.length > 1 && matchArray.includes("semantic_search")) {
-          matchType = "hybrid";
+          matchType = MATCH_TYPE.hybrid;
         }
 
         return (
@@ -357,13 +365,10 @@ const ViewFeatures = withStyles((theme) => ({
             <Typography variant="h6">Match Legend</Typography>
             &nbsp;
             &nbsp;
-            <Legend color="rgb(111,216,250)" label="Keyword" />
+            <Legend color="rgb(142,114,233)" label="Hybrid" />
             &nbsp;
             &nbsp;
             <Legend color="rgb(68,81,225)" label="Semantic" />
-            &nbsp;
-            &nbsp;
-            <Legend color="rgb(142,114,233)" label="Both" />
           </div>
         )}
       </div>

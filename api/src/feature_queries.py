@@ -10,7 +10,7 @@ def keyword_query_v2(term):
                         "multi_match": {
                             "query": term,
                             "operator": "and",
-                            # "fuzziness": "AUTO",
+                            "fuzziness": "AUTO",
                             "fields": ["display_name", "name", "description"],
                             "type": "most_fields",
                             "slop": 1,
