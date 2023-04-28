@@ -10,10 +10,11 @@ def keyword_query_v2(term):
                         "multi_match": {
                             "query": term,
                             "operator": "and",
-                            "fuzziness": "AUTO",
+                            # "fuzziness": "AUTO",
                             "fields": ["display_name", "name", "description"],
                             "type": "most_fields",
-                            "slop": 2
+                            "slop": 1,
+                            "_name": "multi_match_most_fields"
                         }
                     },
                     {
@@ -24,15 +25,17 @@ def keyword_query_v2(term):
                                     "match_phrase": {
                                         "description": {
                                             "query": term,
-                                            "boost": 1
-                                        }
+                                            "boost": 1,
+                                            "_name": "match_phrase_description"
+                                        },
                                     }
                                 },
                                 {
                                     "match_phrase": {
                                         "name": {
                                             "query": term,
-                                            "boost": 1
+                                            "boost": 1,
+                                            "_name": "match_phrase_name"
                                         }
                                     }
                                 },
@@ -40,7 +43,8 @@ def keyword_query_v2(term):
                                     "match_phrase": {
                                         "display_name": {
                                             "query": term,
-                                            "boost": 1
+                                            "boost": 1,
+                                            "_name": "match_phrase_display_name"
                                         }
                                     }
                                 },
@@ -50,7 +54,8 @@ def keyword_query_v2(term):
                                         "fields": ["display_name", "name", "description"],
                                         "type": "cross_fields",
                                         "operator": "and",
-                                        "slop": 1
+                                        "slop": 1,
+                                        "_name": "multi_match_chross_fields"
                                     }
                                 }
                             ]
@@ -98,6 +103,7 @@ def hybrid_query_v1(term):
     features_query["query"]["bool"]["should"].append({
         "script_score": {
             "query": {"match_all": {}},
+            "_name": "semantic_search",
             "script": {
                 "source": "Math.max(cosineSimilarity(params.query_vector, 'embeddings'), 0)",
                 "params": {
@@ -110,9 +116,19 @@ def hybrid_query_v1(term):
 
 
 def getWildcardsForAllProperties(t):
-    return [{"wildcard": {"name": f"*{t}*"}},
-            {"wildcard": {"display_name": f"*{t}*"}},
-            {"wildcard": {"description": f"*{t}*"}}]
+    return [{
+        "wildcard": {
+            "name": f"*{t}*",
+        }
+    }, {
+        "wildcard": {
+            "display_name": f"*{t}*"
+        }
+    }, {
+        "wildcard": {
+            "description": f"*{t}*"
+        }
+    }]
 
 
 def keyword_query_v1(term):
@@ -150,6 +166,7 @@ def hybrid_query_v0(query):
     features_query["query"]["bool"]["should"].append({
         "script_score": {
             "query": {"match_all": {}},
+            "_name": "semantic_search",
             "boost": 1,
             "script": {
                 "source": "Math.max(cosineSimilarity(params.query_vector, 'embeddings'), 0)",

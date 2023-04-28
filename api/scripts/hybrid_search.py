@@ -91,40 +91,40 @@ pp = pprint.PrettyPrinter(indent=2)
 
 
 test_inputs = [
-    # {"target_id": "b1a6c625-69a1-4399-b3cb-68cf484826a7-TX.VAL.TRAN.ZS.WT",
-    #  "queries": ["TX.VAL.TRAN.ZS.WT", "Transport", "Transport services", "Service for all transport types",
-    #              "Services for all types of transport: air, sea, land, etc",
-    #              "services that exclude freight insurance",
-    #              "Rent cars"]},
+    {"target_id": "b1a6c625-69a1-4399-b3cb-68cf484826a7-TX.VAL.TRAN.ZS.WT",
+     "queries": ["TX.VAL.TRAN.ZS.WT", "Transport", "Transport services", "Service for all transport types",
+                 "Services for all types of transport: air, sea, land, etc",
+                 "services that exclude freight insurance",
+                 "Rent cars"]},
 
-    # {"target_id": "8a143348-f0bd-4142-9661-2ca7e5806433-SE.SEC.NENR.FE",
-    #  "queries": ["ratio girls school", "poverty rate indicators from female population",
-    #              "education indicators", "school enrollment", "education affecting economy", "women",
-    #              "women enrolled in education programs",
-    #              "Education indicators female", "female"]
-    #  },
+    {"target_id": "8a143348-f0bd-4142-9661-2ca7e5806433-SE.SEC.NENR.FE",
+     "queries": ["ratio girls school", "poverty rate indicators from female population",
+                 "education indicators", "school enrollment", "education affecting economy", "women",
+                 "women enrolled in education programs",
+                 "Education indicators female", "female"]
+     },
 
-    {
-        "target_id": "db48c2bb-9080-41d6-a5b9-916c0c6871f1-Amount (Constant USD2017)",
+    # {
+    #     "target_id": "db48c2bb-9080-41d6-a5b9-916c0c6871f1-Amount (Constant USD2017)",
 
-        "queries": ["expenses of aiding china's military", "chinese aid",
-                "aid chinese", "aid to china", "aid china",
-                "Chinese Military Aid in", "military aid expenses from china",
-                "indicators of military expenses", "military expenses from countries",
-                "military expenses in USD", "aid countries by china", "china aids countries information",
-                    "china aids countries information", "china", "aid", "Military Aid in Constant USD", "Expenses in 2017"
-                ]
-    },
+    #     "queries": ["expenses of aiding china's military", "chinese aid",
+    #             "aid chinese", "aid to china", "aid china",
+    #             "Chinese Military Aid in", "military aid expenses from china",
+    #             "indicators of military expenses", "military expenses from countries",
+    #             "military expenses in USD", "aid countries by china", "china aids countries information",
+    #                 "china aids countries information", "china", "aid", "Military Aid in Constant USD", "Expenses in 2017"
+    #             ]
+    # },
 
-    {
-        "target_id": "62fcdd55-1459-41c8-b815-e5fd90e06587-NY.ADJ.DCO2.CD",
+    # {
+    #     "target_id": "62fcdd55-1459-41c8-b815-e5fd90e06587-NY.ADJ.DCO2.CD",
 
-        "queries": [
-            "damage due to carbon dioxide emissions", "fossil fuel use", "global warming", "climate change",
-            "savings on adjustments for climate change", "climate change adjustments budget by country",
-            "CO2 emissions", "gas emissions by country", "CO2 damage", "CO2 damage in US dollars", "global warming damage in currency", "carbon dioxide climate change estimates"
-        ]
-    }
+    #     "queries": [
+    #         "damage due to carbon dioxide emissions", "fossil fuel use", "global warming", "climate change",
+    #         "savings on adjustments for climate change", "climate change adjustments budget by country",
+    #         "CO2 emissions", "gas emissions by country", "CO2 damage", "CO2 damage in US dollars", "global warming damage in currency", "carbon dioxide climate change estimates"
+    #     ]
+    # }
 
 ]
 

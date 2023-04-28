@@ -42,20 +42,25 @@ export const ConfidenceBar = withStyles((theme) => ({
     backgroundColor: 'transparent',
     background: 'repeating-linear-gradient( -45deg, gray, gray 1px, white 1px, white 4px )'
   },
-  bar: {
-    backgroundColor: '#00cd00',
+  bar: { // keyword matches
+    backgroundColor: 'rgb(111,216,250)',
+  },
+  hybridBar: {
+    backgroundColor: 'rgb(142,114,233)',
   },
   semanticBar: {
-    backgroundColor: '#4e6bf1'
+    backgroundColor: 'rgb(68,81,225)'
   }
-}))(({ semantic, classes, ...props }) => {
+}))(({ matchType, classes, ...props }) => {
 
   let overrides = {};
 
-  const {semanticBar, ...supportedClasses} = classes;
+  const {semanticBar, hybridBar, ...supportedClasses} = classes;
 
-  if (semantic) {
-    overrides = {bar: semanticBar}
+  if (matchType === "semantic") {
+    overrides = {bar: semanticBar};
+  } else if (matchType === "hybrid") {
+    overrides = {bar: hybridBar};
   }
 
   return (
@@ -155,6 +160,19 @@ function CustomLoadingOverlay() {
 
 /**
  *
+ **/
+const Legend = ({color, label}) => {
+  return (
+    <div style={{display: 'flex', alignItems: 'center'}}>
+      <div style={{width: 14, height: 14, backgroundColor: color, display: 'block', border: 'darkgray'}}></div>
+      &nbsp;
+      <span>{label}</span>
+    </div>
+  );
+};
+
+/**
+ *
  */
 const ViewFeatures = withStyles((theme) => ({
   root: {
@@ -166,7 +184,7 @@ const ViewFeatures = withStyles((theme) => ({
     display: 'flex',
     maxWidth: "100vw",
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-end',
     flexWrap: 'wrap',
     marginBottom: '1rem',
   }
@@ -215,15 +233,25 @@ const ViewFeatures = withStyles((theme) => ({
 
         const isSemanticResult = maxSearchScore > 1 && matchScore < 1;
 
-        let maxScore =  isSemanticResult ? 1 : maxSearchScore;
+        let maxScore = isSemanticResult ? 1 : maxSearchScore;
         let op = isSemanticResult ? Math.sqrt : identity;
 
-        const value = op(matchScore/maxScore) * 100;
+        const value = identity(matchScore/maxScore) * 100;
+
+        const matchArray = rowParent?.row?.metadata?.matched_queries;
+
+        let matchType = "keyword";
+
+        if (matchArray.length === 1 && matchArray.includes("semantic_search")) {
+          matchType = "semantic";
+        } else if (matchArray.length > 1 && matchArray.includes("semantic_search")) {
+          matchType = "hybrid";
+        }
 
         return (
           <div style={{width: '100%'}}>
             <ConfidenceBar
-              semantic={isSemanticResult}
+              matchType={matchType}
               value={value}
               variant='determinate'
             />
@@ -324,13 +352,20 @@ const ViewFeatures = withStyles((theme) => ({
             }}
           />
         </div>
-        <Alert
-          variant="outlined"
-          severity="info"
-          style={{border: 'none'}}
-        >
-          Click on a row, then CTRL+C or CMD+C to copy contents.
-        </Alert>
+        {Boolean(searchTerm) && (
+          <div style={{display: 'flex', justifyContent: 'space-evenly', alignItems: 'bottom'}}>
+            <Typography variant="h6">Match Legend</Typography>
+            &nbsp;
+            &nbsp;
+            <Legend color="rgb(111,216,250)" label="Keyword" />
+            &nbsp;
+            &nbsp;
+            <Legend color="rgb(68,81,225)" label="Semantic" />
+            &nbsp;
+            &nbsp;
+            <Legend color="rgb(142,114,233)" label="Both" />
+          </div>
+        )}
       </div>
 
       <DataGrid
