@@ -49,7 +49,7 @@ from src.plugins import plugin_action
 
 from src.csv_annotation_parser import format_annotations, xls_to_annotations
 
-from src.embedder_engine import embedder
+from src.feature_queries import keyword_query_v1, hybrid_query_v1
 
 router = APIRouter()
 es = Elasticsearch([settings.ELASTICSEARCH_URL], port=settings.ELASTICSEARCH_PORT)
@@ -155,79 +155,14 @@ def patch_indicator(
     )
 
 
-def generate_keyword_query(term):
-    q = {
-        "query": {
-            "bool": {
-                "should": [
-                    {
-                        "multi_match": {
-                            "query": term,
-                            "operator": "and",
-                            "fuzziness": "AUTO",
-                            "fields": ["display_name", "name", "description"],
-                            "type": "most_fields",
-                            "slop": 2
-                        }
-                    },
-                    {
-                        "bool": {
-                            "minimum_should_match": 1,
-                            "should": [
-                                {
-                                    "match_phrase": {
-                                        "description": {
-                                            "query": term,
-                                            "boost": 1
-                                        }
-                                    }
-                                },
-                                {
-                                    "match_phrase": {
-                                        "name": {
-                                            "query": term,
-                                            "boost": 1
-                                        }
-                                    }
-                                },
-                                {
-                                    "match_phrase": {
-                                        "display_name": {
-                                            "query": term,
-                                            "boost": 1
-                                        }
-                                    }
-                                },
-                                {
-                                    "multi_match": {
-                                        "query": term,
-                                        "fields": ["display_name", "name", "description"],
-                                        "type": "cross_fields",
-                                        "operator": "and",
-                                        "slop": 1
-                                    }
-                                }
-                            ]
-                        }
-                    }
-                ]
-            }
-        },
-        "_source": {
-            "excludes": "embeddings"
-        }
-    }
-    return q
-
-
 @router.get(
 "/features/search", response_model=IndicatorSchema.FeaturesSemanticSearchSchema
 )
 def semantic_search_features(query: Optional[str], size=10, scroll_id: Optional[str]=None):
     """
     Given a text query, uses semantic search engine to search for features that
-    match the query semantically. Query is a sentence that can be interpreted to
-    be related to a concept, such as:
+    match the query semantically. Query is a sentence that can be interpreted
+    to be related to a concept, such as:
     'number of people who have been vaccinated'
     """
 
@@ -236,21 +171,7 @@ def semantic_search_features(query: Optional[str], size=10, scroll_id: Optional[
     else:
         # Retrieve first item in output, since it returns an array output
         # that matches its input, and we provide only one- query.
-        query_embedding = embedder.embed([query])[0]
-
-        features_query = generate_keyword_query(query)
-
-        features_query["query"]["bool"]["should"].append({
-            "script_score": {
-                "query": {"match_all": {}},
-                "script": {
-                    "source": "Math.max(cosineSimilarity(params.query_vector, 'embeddings'), 0)",
-                    "params": {
-                        "query_vector": query_embedding
-                    }
-                }
-            }
-        })
+        features_query = hybrid_query_v1(query)
 
         results = es.search(index="features", body=features_query, scroll="2m", size=size)
 
@@ -267,6 +188,7 @@ def semantic_search_features(query: Optional[str], size=10, scroll_id: Optional[
         r["_source"]["metadata"]={}
         r["_source"]["metadata"]["match_score"] = r["_score"]
         r["_source"]["id"] = r["_id"]
+        r["_source"]["metadata"]["matched_queries"] = r["matched_queries"]
         return r["_source"]
 
     return {
@@ -291,7 +213,7 @@ def list_features(term: Optional[str]=None,
     """
 
     if term:
-        q = generate_keyword_query(term)
+        q = keyword_query_v1(term)
 
     else:
         q = {

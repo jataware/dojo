@@ -7,6 +7,7 @@ import identity from 'lodash/identity';
 import Button from '@material-ui/core/Button';
 import { GridOverlay, DataGrid, useGridSlotComponentProps } from '@material-ui/data-grid';
 import Typography from '@material-ui/core/Typography';
+import clsx from 'clsx';
 import { withStyles } from '@material-ui/core/styles';
 import TablePagination from '@material-ui/core/TablePagination';
 import Alert from '@material-ui/lab/Alert';
@@ -22,14 +23,21 @@ import InputAdornment from '@material-ui/core/InputAdornment';
 import TextField from '@material-ui/core/TextField';
 
 
-
 const expandableCell = ({ value, colDef }) => (
-    <ExpandableDataGridCell
-      value={value}
-      width={colDef.computedWidth}
-    />
+  <ExpandableDataGridCell
+    value={value}
+    width={colDef.computedWidth}
+  />
 );
 
+const MATCH_TYPE = {
+  semantic: 'semantic',
+  hybrid: 'hybrid'
+}
+
+/**
+ * Maytch % confidence bar
+ **/
 export const ConfidenceBar = withStyles((theme) => ({
   root: {
     height: 15,
@@ -39,10 +47,37 @@ export const ConfidenceBar = withStyles((theme) => ({
     backgroundColor: 'transparent',
     background: 'repeating-linear-gradient( -45deg, gray, gray 1px, white 1px, white 4px )'
   },
-  bar: {
-    backgroundColor: '#00cd00',
+  bar: { // keyword matches
+    backgroundColor: 'rgb(111,216,250)',
   },
-}))(LinearProgress);
+  hybridBar: {
+    backgroundColor: 'rgb(142,114,233)',
+  },
+  semanticBar: {
+    backgroundColor: 'rgb(68,81,225)'
+  }
+}))(({ matchType, classes, ...props }) => {
+
+  let overrides = {};
+
+  const {semanticBar, hybridBar, ...supportedClasses} = classes;
+
+  if (matchType === MATCH_TYPE.semantic) {
+    overrides = {bar: semanticBar};
+  } else if (matchType === MATCH_TYPE.hybrid) {
+    overrides = {bar: hybridBar};
+  }
+
+  return (
+    <LinearProgress
+      {...props}
+      classes={{
+        ...supportedClasses,
+        ...overrides
+      }}
+    />
+  );
+});
 
 const semanticSearchFeatures = async(query) => {
   let url = `/api/dojo/features/search?query=${query}&size=50`;
@@ -130,6 +165,19 @@ function CustomLoadingOverlay() {
 
 /**
  *
+ **/
+const Legend = ({color, label}) => {
+  return (
+    <div style={{display: 'flex', alignItems: 'center'}}>
+      <div style={{width: 14, height: 14, backgroundColor: color, display: 'block', border: 'darkgray'}}></div>
+      &nbsp;
+      <span>{label}</span>
+    </div>
+  );
+};
+
+/**
+ *
  */
 const ViewFeatures = withStyles((theme) => ({
   root: {
@@ -141,7 +189,7 @@ const ViewFeatures = withStyles((theme) => ({
     display: 'flex',
     maxWidth: "100vw",
     justifyContent: 'space-between',
-    alignItems: 'center',
+    alignItems: 'flex-end',
     flexWrap: 'wrap',
     marginBottom: '1rem',
   }
@@ -157,7 +205,7 @@ const ViewFeatures = withStyles((theme) => ({
 
   const [maxSearchScore, setMaxSearchScore] = useState(1);
 
-const featureColumns = [
+  const featureColumns = [
     {
       field: 'name',
       headerName: 'Name',
@@ -188,16 +236,30 @@ const featureColumns = [
           return null;
         }
 
-        const isSemanticResult = maxSearchScore > 1 && matchScore < 1;
+        const isHybridSemanticResult = maxSearchScore > 1 && matchScore <= 1;
 
-        let maxScore =  isSemanticResult ? 1 : maxSearchScore;
-        let op = isSemanticResult ? Math.sqrt : identity;
+        const isSemanticResult = maxSearchScore < 1;
+
+        let maxScore = isHybridSemanticResult ? 1.3 : isSemanticResult ? 1 : maxSearchScore;
+
+        let op = isSemanticResult||isHybridSemanticResult ? Math.sqrt : identity;
 
         const value = op(matchScore/maxScore) * 100;
+
+        const matchArray = rowParent?.row?.metadata?.matched_queries;
+
+        let matchType = "keyword";
+
+        if (matchArray.length === 1 && matchArray.includes("semantic_search")) {
+          matchType = MATCH_TYPE.semantic;
+        } else if (matchArray.length > 1 && matchArray.includes("semantic_search")) {
+          matchType = MATCH_TYPE.hybrid;
+        }
 
         return (
           <div style={{width: '100%'}}>
             <ConfidenceBar
+              matchType={matchType}
               value={value}
               variant='determinate'
             />
@@ -298,13 +360,17 @@ const featureColumns = [
             }}
           />
         </div>
-        <Alert
-          variant="outlined"
-          severity="info"
-          style={{border: 'none'}}
-        >
-          Click on a row, then CTRL+C or CMD+C to copy contents.
-        </Alert>
+        {Boolean(searchTerm) && (
+          <div style={{display: 'flex', justifyContent: 'space-evenly', alignItems: 'bottom'}}>
+            <Typography variant="h6">Match Legend</Typography>
+            &nbsp;
+            &nbsp;
+            <Legend color="rgb(142,114,233)" label="Hybrid" />
+            &nbsp;
+            &nbsp;
+            <Legend color="rgb(68,81,225)" label="Semantic" />
+          </div>
+        )}
       </div>
 
       <DataGrid
