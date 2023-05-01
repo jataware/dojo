@@ -51,10 +51,10 @@ export const ConfidenceBar = withStyles((theme) => ({
     backgroundColor: 'rgb(111,216,250)',
   },
   hybridBar: {
-    backgroundColor: 'rgb(142,114,233)',
+    backgroundColor: 'rgb(111,216,250)',
   },
   semanticBar: {
-    backgroundColor: 'rgb(68,81,225)'
+    backgroundColor: 'rgb(142,114,233)' // rgb(68,81,225)
   }
 }))(({ matchType, classes, ...props }) => {
 
@@ -365,10 +365,10 @@ const ViewFeatures = withStyles((theme) => ({
             <Typography variant="h6">Match Legend</Typography>
             &nbsp;
             &nbsp;
-            <Legend color="rgb(142,114,233)" label="Hybrid" />
+            <Legend color="rgb(111,216,250)" label="Keyword" />
             &nbsp;
             &nbsp;
-            <Legend color="rgb(68,81,225)" label="Semantic" />
+            <Legend color="rgb(142,114,233)" label="Semantic" />
           </div>
         )}
       </div>
