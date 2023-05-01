@@ -376,8 +376,7 @@ const ViewFeatures = withStyles((theme) => ({
       <DataGrid
         autoHeight
         components={{
-          LoadingOverlay: CustomLoadingOverlay,
-          Pagination: CustomTablePagination
+          LoadingOverlay: CustomLoadingOverlay
         }}
         loading={featuresLoading}
         getRowId={(row) => `${row.owner_dataset.id}-${row.name}`}
