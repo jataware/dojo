@@ -18,7 +18,6 @@ const aggregationFunctions = [
   'size',
   'sum',
   'mean',
-  'average',
   'std',
   'var',
   'sem',
