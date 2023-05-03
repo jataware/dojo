@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
 import clsx from 'clsx';
 import { withStyles } from '@material-ui/core/styles';
@@ -6,6 +6,8 @@ import { withStyles } from '@material-ui/core/styles';
 import IconButton from '@material-ui/core/IconButton';
 import InboxIcon from '@material-ui/icons/MoveToInbox';
 import Typography from '@material-ui/core/Typography';
+
+import BasicAlert from '../../components/BasicAlert';
 
 const extensionMap = {
   'pdf':{
@@ -31,9 +33,6 @@ export function formatExtensionForDropZone(extensionsArray) {
   }, {});
 }
 
-/**
- *
- **/
 export const FileDropSelector = withStyles((theme => ({
   root: {
     margin: '1rem 0 1rem 0',
@@ -62,14 +61,76 @@ export const FileDropSelector = withStyles((theme => ({
     margin: 1,
     flexDirection: 'row'
   }
-})))(({classes, onFileSelect, onDropFilesRejected, acceptExtensions, mini, CTA, multiple=true}) => {
+})))(({
+  classes,
+  onFileSelect,
+  acceptExtensions,
+  mini,
+  CTA,
+  multiple = true,
+  disableSelector,
+}) => {
+  const [alertVisible, setAlertVisible] = useState(false);
+  const [alertMessage, setAlertMessage] = useState('');
 
-  const {getRootProps, getInputProps, isDragActive} = useDropzone({
+  const onDropFilesRejected = (fileRejections) => {
+    if (fileRejections.length > 10) {
+      setAlertMessage('The upload limit is 10 files. Please try again with fewer files.');
+      setAlertVisible(true);
+    } else {
+      setAlertMessage(fileRejections[0].errors[0].message);
+      setAlertVisible(true);
+    }
+  };
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDropAccepted: onFileSelect,
     multiple,
     onDropRejected: onDropFilesRejected,
-    accept: formatExtensionForDropZone(acceptExtensions)
+    accept: formatExtensionForDropZone(acceptExtensions),
+    maxFiles: 10,
+    disabled: disableSelector,
   });
+
+  useEffect(() => {
+    // stop drag and drop behavior when we want to disable the drop area
+    // eg when the user has added the max number of files
+    const preventDefaultDragAndDrop = (e) => {
+      e.preventDefault();
+    };
+
+    if (disableSelector) {
+      window.addEventListener('dragover', preventDefaultDragAndDrop);
+      window.addEventListener('drop', preventDefaultDragAndDrop);
+    }
+
+    if (!disableSelector) {
+      window.removeEventListener('dragover', preventDefaultDragAndDrop);
+      window.removeEventListener('drop', preventDefaultDragAndDrop);
+    }
+
+    return () => {
+      window.removeEventListener('dragover', preventDefaultDragAndDrop);
+      window.removeEventListener('drop', preventDefaultDragAndDrop);
+    };
+  }, [disableSelector]);
+
+  const getUploadMessage = () => {
+    if (isDragActive) {
+      return 'Drop the files here';
+    }
+
+    if (disableSelector) {
+      return (
+        <>
+          Upload limit of 10 documents reached. <br />
+          Please complete your annotations and start another bulk upload to upload more.
+        </>
+      );
+    }
+
+    return CTA || `Drag ${acceptExtensions.map(i => i.toUpperCase()+'s').join(',')} here. Click to select up to ten files.`;
+  };
 
   return (
     <div
@@ -84,6 +145,7 @@ export const FileDropSelector = withStyles((theme => ({
         style={{pointerEvents: mini ? 'none' : 'unset'}}
         size={mini ? 'medium' : 'small'}
         color={isDragActive ? "primary" : "default"}
+        disabled={disableSelector}
       >
         <InboxIcon className={mini ? '' : classes.dropIcon}  />
       </IconButton>
@@ -91,16 +153,18 @@ export const FileDropSelector = withStyles((theme => ({
       <input {...getInputProps()} /> {/*is hidden*/}
 
       <Typography
-        variant={mini ? "caption" : "h6"}
+        variant={mini ? 'caption' : 'h6'}
         color="textSecondary"
-        style={{whiteSpace: 'nowrap', paddingRight: 10}}
+        style={{ whiteSpace: 'nowrap', paddingRight: 10 }}
+        align="center"
       >
-        {
-          isDragActive ?
-            'Drop the files here' :
-            CTA || `Drag ${acceptExtensions.map(i => i.toUpperCase()+'s').join(',')} here. Click to select files.`
-        }
+        {getUploadMessage()}
       </Typography>
+      <BasicAlert
+        alert={{ message: alertMessage, severity: 'warning' }}
+        visible={alertVisible}
+        setVisible={setAlertVisible}
+      />
     </div>
   );
 });
