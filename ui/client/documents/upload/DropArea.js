@@ -27,9 +27,9 @@ const extensionMap = {
 export function formatExtensionForDropZone(extensionsArray) {
   return extensionsArray.reduce((acc, extension) => {
     // Optional preceding dot . for extension removed
-    let buff = extension.replace(/^\./g, '');
+    const buff = extension.replace(/^\./g, '');
 
-    return {...acc, ...extensionMap[buff]};
+    return { ...acc, ...extensionMap[buff] };
   }, {});
 }
 
@@ -74,13 +74,19 @@ export const FileDropSelector = withStyles((theme => ({
   const [alertMessage, setAlertMessage] = useState('');
 
   const onDropFilesRejected = (fileRejections) => {
-    if (fileRejections.length > 10) {
-      setAlertMessage('The upload limit is 10 files. Please try again with fewer files.');
-      setAlertVisible(true);
+    let errorMessage = 'There was an issue with your file upload: ';
+
+    if (fileRejections.length > 10 && acceptExtensions.includes('pdf')) {
+      errorMessage += 'The upload limit is 10 files. Please try again with fewer files.';
+    } else if (fileRejections[0].errors) {
+      errorMessage += fileRejections[0].errors.map((item) => item?.message).join('; ');
     } else {
-      setAlertMessage(fileRejections[0].errors[0].message);
-      setAlertVisible(true);
+      errorMessage += `Your file(s) could not be processed.
+        Please check that the number of files and the file extension(s) are correct.`;
     }
+
+    setAlertMessage(errorMessage);
+    setAlertVisible(true);
   };
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
@@ -93,7 +99,7 @@ export const FileDropSelector = withStyles((theme => ({
   });
 
   useEffect(() => {
-    // stop drag and drop behavior when we want to disable the drop area
+    // stop default browser drag and drop behavior when we want to disable the drop area
     // eg when the user has added the max number of files
     const preventDefaultDragAndDrop = (e) => {
       e.preventDefault();

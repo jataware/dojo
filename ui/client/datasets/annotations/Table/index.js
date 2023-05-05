@@ -4,31 +4,25 @@ import clsx from 'clsx';
 import get from 'lodash/get';
 import find from 'lodash/find';
 import isEmpty from 'lodash/isEmpty';
-import axios from 'axios';
 
 import { withStyles } from '@material-ui/core/styles';
 import { GridOverlay, DataGrid } from '@material-ui/data-grid';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Checkbox from '@material-ui/core/Checkbox';
-import IconButton from '@material-ui/core/IconButton';
 import Button from '@material-ui/core/Button';
 import Tooltip from '@material-ui/core/Tooltip';
 import LinearProgress from '@material-ui/core/LinearProgress';
 import InboxIcon from '@material-ui/icons/MoveToInbox';
 
-import { calcPointerLocation, groupColumns } from './helpers';
+import { groupColumns } from './helpers';
 import BasicAlert from '../../../components/BasicAlert';
 import ColumnPanel from '../ColumnPanel';
 import Header from './Header';
 
 import AnnotationDialog from './UploadAnnotationFileDialog';
-import { FileDropSelector } from '../../../documents/upload/DropArea';
 
 const rowsPerPageOptions = [25, 50, 100];
 
-/**
- *
- * */
 const Cell = withStyles(({ palette, spacing }) => ({
   root: {
     marginLeft: -6,
@@ -65,16 +59,12 @@ function CustomLoadingOverlay() {
   return (
     <GridOverlay>
       <div style={{ position: 'absolute', top: 0, width: '100%', zIndex: 15 }}>
-        <LinearProgress style={{height: 3}}/>
+        <LinearProgress style={{ height: 3 }} />
       </div>
     </GridOverlay>
   );
 }
 
-
-/**
- *
- * */
 export default withStyles(({ palette }) => ({
   root: {
     display: 'flex',
@@ -297,7 +287,6 @@ export default withStyles(({ palette }) => ({
   };
 
   const handleFileSelect = (acceptedFiles) => {
-
     setDictionaryUploadLoading(true);
     onUploadAnnotations(acceptedFiles[0])
       .then((success) => {
@@ -306,7 +295,7 @@ export default withStyles(({ palette }) => ({
         if (success) {
           setAnnotationSuccessAlert(true);
           setAnnotationAlertMessage({
-            message: `Your annotations were successfully applied`,
+            message: 'Your annotations were successfully applied',
             severity: 'success'
           });
         }
@@ -317,23 +306,11 @@ export default withStyles(({ palette }) => ({
       .finally(() => { setDictionaryUploadLoading(false); });
   };
 
-  const handleDropFilesRejection = (error) => {
-    let errorMessage = `The data dictionary file was rejected. `;
-
-    try {
-      errorMessage += error[0].errors.map(item => item.message).join('\n');
-    } catch(e) {
-      errorMessage += 'Only one CSV file allowed at a time.';
-    }
-
-    setfileDictionaryError(errorMessage);
-  };
-
   return (
     <div className={classes.root}>
 
-      <div style={{display: 'flex'}}>
-        <div style={{flex: 1}}>
+      <div style={{ display: 'flex' }}>
+        <div style={{ flex: 1 }}>
           <Tooltip
             classes={{ tooltip: classes.tooltip }}
             title="Display context icons for columns with inferred data, annotated as primary, or as qualifier."
@@ -352,7 +329,7 @@ export default withStyles(({ palette }) => ({
         </div>
 
         {addingAnnotationsAllowed && (
-          <div style={{display: 'flex', alignItems: 'center'}}>
+          <div style={{ display: 'flex', alignItems: 'center' }}>
             <Button
               color="primary"
               size="large"
@@ -428,7 +405,6 @@ export default withStyles(({ palette }) => ({
         open={isUploadingAnnotations}
         handleClose={cancelUploadAnnotations}
         handleFileSelect={handleFileSelect}
-        handleDropFilesRejection={handleDropFilesRejection}
         errorMessage={fileDictionaryError}
         clearErrorMessage={()=>{setfileDictionaryError(null);}}
         loading={dictionaryUploadLoading}
