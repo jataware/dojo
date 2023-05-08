@@ -26,7 +26,6 @@ import { SelectedFileList } from './FileList';
 import EditMetadata from './EditMetadata';
 import PDFViewer from './PDFViewer';
 
-
 const PDF_ATTR_GETTERS = [
   'getTitle',
   'getAuthor',
@@ -267,10 +266,6 @@ const UploadDocumentForm = withStyles((theme) => ({
     console.log("deleting file index:", index);
   };
 
-  const handleDropFilesRejection = ({errors, file}, event) => {
-    console.log("some file types were rejected. They should be a pdf type.");
-  };
-
   return (
     <Container
       className={classes.root}
@@ -304,7 +299,7 @@ const UploadDocumentForm = withStyles((theme) => ({
 
         <FileDropSelector
           onFileSelect={handleFileSelect}
-          onDropFilesRejected={handleDropFilesRejection}
+          disableSelector={files.length >= 10}
         />
 
         {loading && (
@@ -412,7 +407,6 @@ const UploadDocumentForm = withStyles((theme) => ({
 
         )}
       </div>
-
     </Container>
   );
 });
