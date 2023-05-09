@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import axios from 'axios';
 import isEmpty from 'lodash/isEmpty';
@@ -6,16 +6,13 @@ import snakeCase from 'lodash/snakeCase';
 
 import { PDFDocument } from 'pdf-lib';
 
-// import ClearIcon from '@material-ui/icons/Clear';
 import Alert from '@material-ui/lab/Alert';
 import Button from '@material-ui/core/Button';
 import Container from '@material-ui/core/Container';
 import CircularProgress from '@material-ui/core/CircularProgress';
-import LinearProgress from '@material-ui/core/LinearProgress';
 import Typography from '@material-ui/core/Typography';
 
 import { withStyles } from '@material-ui/core/styles';
-// import get from 'lodash/get';
 
 import { readFile } from '../utils';
 
@@ -249,21 +246,16 @@ const UploadDocumentForm = withStyles((theme) => ({
       }).then(() => {
         history.push('/documents');
       });
-
-      // if we map files to promises to await all uploads:
-      // return documentsPromise;
-
     });
   };
 
-  /**
-   * TODO: In order to handle deletes- either do backflips around deleted indexes,
-   * not rendering deleted ones, etc, or change the collection/representation
-   * of data from arrays and selected index to an object with key=>properties.
-   **/
   const handleFileDelete = (index) => {
-    // TODO Implement me once we use SortedMap
-    console.log("deleting file index:", index);
+    // always reset back to zero, even if we aren't touching the selectedFile
+    // so we don't end up in a weird state where we're modifying the array around this index
+    setSelectedFileIndex(0);
+    // remove the file at the index from both the metadata and files arrays
+    setAllPDFMetadata((prev) => [...prev.slice(0, index), ...prev.slice(index + 1)]);
+    setFiles((prev) => [...prev.slice(0, index), ...prev.slice(index + 1)]);
   };
 
   return (

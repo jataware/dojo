@@ -1,8 +1,8 @@
 import React from 'react';
 import { withStyles } from '@material-ui/core/styles';
 
-import { formatBytes } from '../utils';
-
+import ClearIcon from '@material-ui/icons/Clear';
+import IconButton from '@material-ui/core/IconButton';
 import List from '@material-ui/core/List';
 import ListItem from '@material-ui/core/ListItem';
 import ListItemIcon from '@material-ui/core/ListItemIcon';
@@ -13,10 +13,9 @@ import Paper from '@material-ui/core/Paper';
 import RadioGroup from '@material-ui/core/RadioGroup';
 import Radio from '@material-ui/core/Radio';
 
-/**
- *
- **/
-export const FileTile = withStyles((theme) => ({
+import { formatBytes } from '../utils';
+
+export const FileTile = withStyles(() => ({
   root: {
     cursor: 'pointer'
   },
@@ -36,7 +35,13 @@ export const FileTile = withStyles((theme) => ({
   filenameText: {
     wordBreak: 'break-all'
   }
-}))(({ classes, file, value, uploadStatus, onClick, selected, onDelete }) => {
+}))(({
+  classes, file, value, onClick, selected, onDelete
+}) => {
+  const handleDeleteClick = (event) => {
+    event.stopPropagation();
+    onDelete();
+  };
 
   return (
     <ListItem
@@ -51,26 +56,22 @@ export const FileTile = withStyles((theme) => ({
       </ListItemIcon>
 
       <ListItemText
-        classes={{primary: classes.filenameText}}
+        classes={{ primary: classes.filenameText }}
         primary={file.name}
         secondary={`Size: ${formatBytes(file.size)}`}
       />
 
-      {/* TODO Add delete icon when we need it, implement handler. */}
-      {/* <ListItemSecondaryAction> */}
-      {/*   <IconButton edge="end" aria-label="delete" onClick={onDelete}> */}
-      {/*     <ClearIcon /> */}
-      {/*   </IconButton> */}
-      {/* </ListItemSecondaryAction> */}
+      <ListItemSecondaryAction>
+        <IconButton edge="end" aria-label="delete" onClick={handleDeleteClick}>
+          <ClearIcon />
+        </IconButton>
+      </ListItemSecondaryAction>
 
     </ListItem>
   );
 });
 
-/**
- *
- **/
-export const SelectedFileList = withStyles((theme) => ({
+export const SelectedFileList = withStyles(() => ({
   root: {
     border: '1px solid #eaeaea',
     borderRadius: 0,
@@ -87,37 +88,35 @@ export const SelectedFileList = withStyles((theme) => ({
     right: 0,
     backgroundColor: 'white'
   }
-}))(({ classes, files, onItemClick, onDelete, selectedIndex }) => {
-
-  return (
-    <Paper
-      className={classes.root}
+}))(({
+  classes, files, onItemClick, onDelete, selectedIndex
+}) => (
+  <Paper
+    className={classes.root}
+  >
+    <RadioGroup
+      value={selectedIndex+""}
     >
-      <RadioGroup
-        value={selectedIndex+""}
+
+      <List
+        subheader={(
+          <ListSubheader component="div">
+            Files
+          </ListSubheader>
+        )}
+        className={classes.list}
       >
-
-        <List
-          subheader={
-            <ListSubheader component="div">
-              Files
-            </ListSubheader>
-          }
-          className={classes.list}
-        >
-          {files.map((file, index) => file && (
-            <FileTile
-              onDelete={() => onDelete(index)}
-              selected={index === selectedIndex}
-              onClick={() => onItemClick(index)}
-              value={index+""}
-              file={file}
-              key={file.path+file.size}
-            />
-          ))}
-        </List>
-      </RadioGroup>
-    </Paper>
-  );
-});
-
+        {files.map((file, index) => file && (
+          <FileTile
+            onDelete={() => onDelete(index)}
+            selected={index === selectedIndex}
+            onClick={() => onItemClick(index)}
+            value={index+""}
+            file={file}
+            key={file.path+file.size}
+          />
+        ))}
+      </List>
+    </RadioGroup>
+  </Paper>
+));
