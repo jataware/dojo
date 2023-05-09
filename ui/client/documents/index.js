@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useCallback } from 'react';
 
+import useSWR from 'swr';
 import axios from 'axios';
 import debounce from 'lodash/debounce';
 
@@ -32,7 +33,7 @@ import Divider from '@material-ui/core/Divider';
 
 import { Link as RouteLink } from 'react-router-dom';
 
-import { useDocuments } from "../components/SWRHooks";
+import { fetcher } from "../components/SWRHooks";
 import { calculateHighlightTargets } from "./utils";
 
 import ExpandableDataGridCell from "../components/ExpandableDataGridCell";
@@ -377,7 +378,29 @@ const ViewDocumentsGrid = withStyles((theme) => ({
     alignItems: 'center',
     marginBottom: '1rem',
   }
-}))(({classes}) => {
+}))(({ classes }) => {
+  const [page, setPage] = useState(0);
+  const scrollIdRef = React.useRef(null);
+  // TODO: this returns the same set of documents with each response
+  // the scroll_id is not getting through to the backend for some reason, figure this out tomorrow
+  // let url = `/api/dojo/documents?size=20&page=${page}`;
+  // if (scrollIdRef.current) url += `?scroll_id=${scrollIdRef.current}`
+  const { data: documentsData, error: documentsError } = useSWR(
+    `/api/dojo/documents?size=20&page=${page}${scrollIdRef.current ? '?scroll_id=' + scrollIdRef.current : '' }`,
+    fetcher,
+    {
+      revalidateIfStale: false,
+      revalidateOnFocus: false,
+      revalidateOnReconnect: false
+    }
+  );
+
+  useEffect(() => {
+    if (documentsData?.scroll_id && !scrollIdRef.current) {
+      console.log('are we setting scrollId?', documentsData.scroll_id)
+      scrollIdRef.current = documentsData.scroll_id;
+    }
+  }, [documentsData]);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [searchTermValue, setSearchTermValue] = useState('');
@@ -389,7 +412,7 @@ const ViewDocumentsGrid = withStyles((theme) => ({
 
   const [openedDocument, setOpenedDocument] = useState(null);
 
-  const { documents: documentsData, documentsLoading, documentsError } = useDocuments();
+  // const { documents: documentsData, documentsLoading, documentsError } = useDocuments();
 
   const documents = documentsData?.results;
 
@@ -443,13 +466,14 @@ const ViewDocumentsGrid = withStyles((theme) => ({
             console.info("Semantic Highlighter disabled.");
           }
         });
-
       })
       .finally(() => {
         setSearchLoading(false);
       });
-
   };
+
+
+console.log('documentsData', documentsData)
 
   useEffect(() => {
     performSearch();
@@ -487,6 +511,10 @@ const ViewDocumentsGrid = withStyles((theme) => ({
     openDocument(docData.row);
   };
 
+  const handlePageChange = (params) => {
+    setPage(params);
+  };
+
   return documentsError ? (
     <Typography>
       Error loading documents.
@@ -508,21 +536,21 @@ const ViewDocumentsGrid = withStyles((theme) => ({
       <br />
 
       <div className={classes.aboveTableWrapper}>
-          <TextField
-            style={{width: "100%", maxWidth: "60rem"}}
-            label="Enter query to perform Semantic Search through Documents"
-            variant="outlined"
-            value={searchTermValue}
-            onChange={handleSearchChange}
-            role="searchbox"
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton onClick={clearSearch}><CancelIcon /></IconButton>
-                </InputAdornment>
-              )
-            }}
-          />
+        <TextField
+          style={{ width: "100%", maxWidth: "60rem" }}
+          label="Enter query to perform Semantic Search through Documents"
+          variant="outlined"
+          value={searchTermValue}
+          onChange={handleSearchChange}
+          role="searchbox"
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton onClick={clearSearch}><CancelIcon /></IconButton>
+              </InputAdornment>
+            )
+          }}
+        />
       </div>
 
       <br />
@@ -534,7 +562,7 @@ const ViewDocumentsGrid = withStyles((theme) => ({
           </Typography>
 
           {searchLoading && (
-              <LinearProgress style={{width: "90%"}} />
+            <LinearProgress style={{ width: "90%" }} />
           )}
 
           {docParagraphResults.map((p, index) => (
@@ -549,7 +577,7 @@ const ViewDocumentsGrid = withStyles((theme) => ({
         </div>
       ) : (
         <>
-          <div style={{display: "flex", justifyContent: "space-between"}}>
+          <div style={{ display: "flex", justifyContent: "space-between" }}>
             <Typography
               variant="h5"
             >
@@ -559,7 +587,8 @@ const ViewDocumentsGrid = withStyles((theme) => ({
               to="/documents/upload"
               component={RouteLink}
               variant="contained"
-              color="primary">
+              color="primary"
+            >
               Upload Documents
             </Button>
           </div>
@@ -572,9 +601,13 @@ const ViewDocumentsGrid = withStyles((theme) => ({
               LoadingOverlay: CustomLoadingOverlay
             }}
             onRowClick={onDocumentRowClick}
-            loading={documentsLoading || searchLoading}
+            loading={(!documentsData && !documentsError) || searchLoading}
             columns={displayableColumns}
             rows={documents || []}
+            pageSize={20}
+            onPageChange={handlePageChange}
+            paginationMode="server"
+            rowCount={Number(documentsData?.hits)}
           />
         </>
       )}
