@@ -1,10 +1,3 @@
-import pytest
-
-import sys
-from pathlib import Path
-sys.path.append(str(Path(__file__).resolve().parent.parent))
-
-# Append out project python path for easier file-module resolution
 from src.csv_annotation_parser import format_annotations, format_schema_helper
 
 """
