@@ -6,7 +6,7 @@ def clean_and_decode_str(text: str) -> str:
     """
     Given a `text` input string that is optionally url encoded, decodes
     it and strips special, non-word, characters out (eg %, ^, &, $, >, etc)
-    and returns the clean and easy to word text only.
+    and returns the clean, easy to read and semantic search, text only.
     """
 
     # Handle case when encoding spaces with `+` instead of %20
