@@ -386,7 +386,8 @@ const ViewDocumentsGrid = withStyles((theme) => ({
   // let url = `/api/dojo/documents?size=20&page=${page}`;
   // if (scrollIdRef.current) url += `?scroll_id=${scrollIdRef.current}`
   const { data: documentsData, error: documentsError } = useSWR(
-    `/api/dojo/documents?size=20&page=${page}${scrollIdRef.current ? '?scroll_id=' + scrollIdRef.current : '' }`,
+    `/api/dojo/documents?size=20
+      ${scrollIdRef.current ? '&scroll_id=' + scrollIdRef.current : ''}&page=${page}`,
     fetcher,
     {
       revalidateIfStale: false,

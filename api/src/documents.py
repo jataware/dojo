@@ -331,10 +331,8 @@ def list_documents(scroll_id: Optional[str]=None, size: int = 10):
     }
 
     if not scroll_id:
-        logger.info("NOT SCROLL ID")
         results = es.search(index="documents", body=q, scroll="2m", size=size)
     else:
-        logger.info("WE HAVE A SCROLLID")
         results = es.scroll(scroll_id=scroll_id, scroll="2m")
 
     totalDocsInPage = len(results["hits"]["hits"])
