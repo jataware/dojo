@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useCallback, useEffect, useRef, useState, } from 'react';
 
 import useSWR from 'swr';
 import axios from 'axios';
@@ -379,29 +379,56 @@ const ViewDocumentsGrid = withStyles((theme) => ({
     marginBottom: '1rem',
   }
 }))(({ classes }) => {
-  const [page, setPage] = useState(0);
-  const scrollIdRef = React.useRef(null);
-  // TODO: this returns the same set of documents with each response
-  // the scroll_id is not getting through to the backend for some reason, figure this out tomorrow
-  // let url = `/api/dojo/documents?size=20&page=${page}`;
-  // if (scrollIdRef.current) url += `?scroll_id=${scrollIdRef.current}`
-  const { data: documentsData, error: documentsError } = useSWR(
-    `/api/dojo/documents?size=20
-      ${scrollIdRef.current ? '&scroll_id=' + scrollIdRef.current : ''}&page=${page}`,
-    fetcher,
-    {
-      revalidateIfStale: false,
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false
-    }
+  // use refs here to have references that won't trigger any rerenders
+  const scrollIdRef = useRef(null);
+  const cachedDocumentsRef = useRef({});
+
+  const [documents, setDocuments] = useState([]);
+  const [documentsError, setDocumentsError] = useState(null);
+  const [documentsLoading, setDocumentsLoading] = useState(false);
+
+  const fetchData = useCallback(
+    async (page) => {
+      setDocumentsLoading(true);
+      setDocumentsError(null);
+
+      // check if data for the page is already in the cache
+      if (cachedDocumentsRef.current[page]) {
+        setDocuments(cachedDocumentsRef.current[page]);
+        setDocumentsLoading(false);
+      } else {
+        try {
+          const response = await axios.get(
+            // eslint-disable-next-line prefer-template
+            `/api/dojo/documents?size=20${scrollIdRef.current ? '&scroll_id=' + scrollIdRef.current : ''}&page=${page}`
+          );
+
+          const { data } = response;
+          if (data?.scroll_id && !scrollIdRef.current) {
+            scrollIdRef.current = data.scroll_id;
+          }
+
+          // store the fetched data in the cache
+          cachedDocumentsRef.current = {
+            ...cachedDocumentsRef.current,
+            [page]: data,
+          };
+
+          setDocuments(data);
+        } catch (error) {
+          setDocumentsError(error);
+        } finally {
+          setDocumentsLoading(false);
+        }
+      }
+    }, []
   );
 
+  // do the initial fetch to load our first page
   useEffect(() => {
-    if (documentsData?.scroll_id && !scrollIdRef.current) {
-      console.log('are we setting scrollId?', documentsData.scroll_id)
-      scrollIdRef.current = documentsData.scroll_id;
-    }
-  }, [documentsData]);
+    // fetchData only references refs and state setters, so this should only be called once
+    fetchData(0);
+  }, [fetchData]);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [searchTermValue, setSearchTermValue] = useState('');
@@ -415,7 +442,7 @@ const ViewDocumentsGrid = withStyles((theme) => ({
 
   // const { documents: documentsData, documentsLoading, documentsError } = useDocuments();
 
-  const documents = documentsData?.results;
+  // const documents = documentsData?.results;
 
   useEffect(() => {
     updateSearchTerm(searchTermValue);
@@ -474,7 +501,7 @@ const ViewDocumentsGrid = withStyles((theme) => ({
   };
 
 
-console.log('documentsData', documentsData)
+console.log('documents', documents)
 
   useEffect(() => {
     performSearch();
@@ -513,7 +540,8 @@ console.log('documentsData', documentsData)
   };
 
   const handlePageChange = (params) => {
-    setPage(params);
+    fetchData(params);
+    // setPage(params);
   };
 
   return documentsError ? (
@@ -602,13 +630,13 @@ console.log('documentsData', documentsData)
               LoadingOverlay: CustomLoadingOverlay
             }}
             onRowClick={onDocumentRowClick}
-            loading={(!documentsData && !documentsError) || searchLoading}
+            loading={documentsLoading || searchLoading}//(!documentsData && !documentsError) || searchLoading}
             columns={displayableColumns}
-            rows={documents || []}
+            rows={documents?.results || []}
             pageSize={20}
             onPageChange={handlePageChange}
             paginationMode="server"
-            rowCount={Number(documentsData?.hits)}
+            rowCount={Number(documents?.hits)}
           />
         </>
       )}
