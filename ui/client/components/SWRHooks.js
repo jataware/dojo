@@ -1,6 +1,6 @@
 import useSWR from 'swr';
 
-export const fetcher = async (url) => {
+const fetcher = async (url) => {
   const response = await fetch(url);
 
   if (!response.ok) {
@@ -195,25 +195,3 @@ export function useParams(modelId) {
     paramsError: error,
   };
 }
-
-// export function useDocuments(scrollId) {
-//   let url = '/api/dojo/documents?size=20';
-
-//   if (scrollId) {
-//     url += `?scrollId=${scrollId}`;
-//   }
-
-//   const { data, error, mutate } = useSWR(
-//     url, fetcher, {
-//       revalidateIfStale: false,
-//       revalidateOnFocus: false,
-//       revalidateOnReconnect: false
-//     }
-//   );
-
-//   return {
-//     documents: data,
-//     documentsLoading: !error && !data,
-//     documentsError: error,
-//   };
-// }

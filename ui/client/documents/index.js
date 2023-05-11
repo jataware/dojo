@@ -1,15 +1,14 @@
-import React, { useCallback, useEffect, useRef, useState, } from 'react';
+import React, {
+  useCallback, useEffect, useRef, useState,
+} from 'react';
 
-import useSWR from 'swr';
 import axios from 'axios';
 import debounce from 'lodash/debounce';
 
 import Button from '@material-ui/core/Button';
-import { GridOverlay, DataGrid, useGridSlotComponentProps } from '@material-ui/data-grid';
+import { GridOverlay, DataGrid } from '@material-ui/data-grid';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
-import TablePagination from '@material-ui/core/TablePagination';
-import Alert from '@material-ui/lab/Alert';
 
 import LinearProgress from '@material-ui/core/LinearProgress';
 import CircularProgress from '@material-ui/core/CircularProgress';
@@ -25,7 +24,6 @@ import get from 'lodash/get';
 
 import Container from '@material-ui/core/Container';
 import Dialog from '@material-ui/core/Dialog';
-import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
 import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
@@ -33,7 +31,6 @@ import Divider from '@material-ui/core/Divider';
 
 import { Link as RouteLink } from 'react-router-dom';
 
-import { fetcher } from "../components/SWRHooks";
 import { calculateHighlightTargets } from "./utils";
 
 import ExpandableDataGridCell from "../components/ExpandableDataGridCell";
@@ -387,10 +384,13 @@ const ViewDocumentsGrid = withStyles(() => ({
   const [documentsLoading, setDocumentsLoading] = useState(false);
 
   const fetchData = useCallback(
+    // we use DataGrid's page index to maintain a cache for what DG should display
+    // on each page of results. The API just uses a scroll_id and has no notion of this page
     async (page) => {
       setDocumentsLoading(true);
       setDocumentsError(null);
       // clear documents when loading so that we don't display the previous page
+      // before loading the next set of results
       setDocuments(null);
 
       // check if data for the page is already in the cache
@@ -401,7 +401,7 @@ const ViewDocumentsGrid = withStyles(() => ({
         try {
           const response = await axios.get(
             // eslint-disable-next-line prefer-template
-            `/api/dojo/documents?size=20${scrollIdRef.current ? '&scroll_id=' + scrollIdRef.current : ''}&page=${page}`
+            `/api/dojo/documents?size=20${scrollIdRef.current ? '&scroll_id=' + scrollIdRef.current : ''}`
           );
 
           const { data } = response;
@@ -433,7 +433,8 @@ const ViewDocumentsGrid = withStyles(() => ({
 
   // fetch the rows out of the cache for page 0 so that we maintain it even when we clear
   // documents state on page change, defaulting to 0 to prevent NaN in case we have no hits
-  const totalRowsCount = Number(documents?.hits) || cachedDocumentsRef.current[0]?.hits || 0;
+  const totalRowsCount = Number(documents?.hits)
+    || Number(cachedDocumentsRef.current[0]?.hits) || 0;
 
   const handlePageChange = (params) => {
     fetchData(params);
@@ -504,9 +505,6 @@ const ViewDocumentsGrid = withStyles(() => ({
         setSearchLoading(false);
       });
   };
-
-
-console.log('documents', documents)
 
   useEffect(() => {
     performSearch();
