@@ -359,11 +359,10 @@ export const ParagraphTile = withStyles((theme) => ({
   );
 });
 
-
 /**
  *
  */
-const ViewDocumentsGrid = withStyles((theme) => ({
+const ViewDocumentsGrid = withStyles(() => ({
   root: {
     flex: 1,
     display: 'flex',
@@ -383,7 +382,7 @@ const ViewDocumentsGrid = withStyles((theme) => ({
   const scrollIdRef = useRef(null);
   const cachedDocumentsRef = useRef({});
 
-  const [documents, setDocuments] = useState([]);
+  const [documents, setDocuments] = useState(null);
   const [documentsError, setDocumentsError] = useState(null);
   const [documentsLoading, setDocumentsLoading] = useState(false);
 
@@ -391,6 +390,8 @@ const ViewDocumentsGrid = withStyles((theme) => ({
     async (page) => {
       setDocumentsLoading(true);
       setDocumentsError(null);
+      // clear documents when loading so that we don't display the previous page
+      setDocuments(null);
 
       // check if data for the page is already in the cache
       if (cachedDocumentsRef.current[page]) {
@@ -430,6 +431,14 @@ const ViewDocumentsGrid = withStyles((theme) => ({
     fetchData(0);
   }, [fetchData]);
 
+  // fetch the rows out of the cache for page 0 so that we maintain it even when we clear
+  // documents state on page change, defaulting to 0 to prevent NaN in case we have no hits
+  const totalRowsCount = Number(documents?.hits) || cachedDocumentsRef.current[0]?.hits || 0;
+
+  const handlePageChange = (params) => {
+    fetchData(params);
+  };
+
   const [searchTerm, setSearchTerm] = useState('');
   const [searchTermValue, setSearchTermValue] = useState('');
   const updateSearchTerm = useCallback(debounce(setSearchTerm, 1000), []);
@@ -439,10 +448,6 @@ const ViewDocumentsGrid = withStyles((theme) => ({
   const [highlights, setHighlights] = useState(null);
 
   const [openedDocument, setOpenedDocument] = useState(null);
-
-  // const { documents: documentsData, documentsLoading, documentsError } = useDocuments();
-
-  // const documents = documentsData?.results;
 
   useEffect(() => {
     updateSearchTerm(searchTermValue);
@@ -539,16 +544,7 @@ console.log('documents', documents)
     openDocument(docData.row);
   };
 
-  const handlePageChange = (params) => {
-    fetchData(params);
-    // setPage(params);
-  };
-
-  return documentsError ? (
-    <Typography>
-      Error loading documents.
-    </Typography>
-  ) : (
+  return (
     <Container
       className={classes.root}
       component="main"
@@ -558,93 +554,103 @@ console.log('documents', documents)
         variant="h3"
         align="center"
         paragraph
+        style={{ marginBottom: '32px' }}
       >
         Document Explorer
       </Typography>
 
-      <br />
-
-      <div className={classes.aboveTableWrapper}>
-        <TextField
-          style={{ width: "100%", maxWidth: "60rem" }}
-          label="Enter query to perform Semantic Search through Documents"
-          variant="outlined"
-          value={searchTermValue}
-          onChange={handleSearchChange}
-          role="searchbox"
-          InputProps={{
-            endAdornment: (
-              <InputAdornment position="end">
-                <IconButton onClick={clearSearch}><CancelIcon /></IconButton>
-              </InputAdornment>
-            )
-          }}
-        />
-      </div>
-
-      <br />
-
-      {docParagraphResults?.length ? (
-        <div>
-          <Typography variant="h5">
-            Top Matches ({docParagraphResults?.length})
-          </Typography>
-
-          {searchLoading && (
-            <LinearProgress style={{ width: "90%" }} />
-          )}
-
-          {docParagraphResults.map((p, index) => (
-            <ParagraphTile
-              onClick={onParagraphResultClick}
-              key={p.id}
-              paragraph={p}
-              highlights={get(highlights, `[${index}]`, null)}
-              query={searchTerm}
-            />
-          ))}
-        </div>
+      {documentsError ? (
+        <Typography align="center" variant="h6">
+          Error loading documents.
+        </Typography>
       ) : (
         <>
-          <div style={{ display: "flex", justifyContent: "space-between" }}>
-            <Typography
-              variant="h5"
-            >
-              All Documents
-            </Typography>
-            <Button
-              to="/documents/upload"
-              component={RouteLink}
-              variant="contained"
-              color="primary"
-            >
-              Upload Documents
-            </Button>
+          <div className={classes.aboveTableWrapper}>
+            <TextField
+              style={{ width: "100%", maxWidth: "60rem" }}
+              label="Enter query to perform Semantic Search through Documents"
+              variant="outlined"
+              value={searchTermValue}
+              onChange={handleSearchChange}
+              role="searchbox"
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton onClick={clearSearch}><CancelIcon /></IconButton>
+                  </InputAdornment>
+                )
+              }}
+            />
           </div>
 
           <br />
 
-          <DataGrid
-            autoHeight
-            components={{
-              LoadingOverlay: CustomLoadingOverlay
-            }}
-            onRowClick={onDocumentRowClick}
-            loading={documentsLoading || searchLoading}//(!documentsData && !documentsError) || searchLoading}
-            columns={displayableColumns}
-            rows={documents?.results || []}
-            pageSize={20}
-            onPageChange={handlePageChange}
-            paginationMode="server"
-            rowCount={Number(documents?.hits)}
+          {docParagraphResults?.length ? (
+            <div>
+              <Typography variant="h5">
+                Top Matches ({docParagraphResults?.length})
+              </Typography>
+
+              {searchLoading && (
+                <LinearProgress style={{ width: "90%" }} />
+              )}
+
+              {docParagraphResults.map((p, index) => (
+                <ParagraphTile
+                  onClick={onParagraphResultClick}
+                  key={p.id}
+                  paragraph={p}
+                  highlights={get(highlights, `[${index}]`, null)}
+                  query={searchTerm}
+                />
+              ))}
+            </div>
+          ) : (
+            <>
+              <div
+                style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}
+              >
+                <Typography
+                  variant="h5"
+                >
+                  All Documents
+                </Typography>
+                <Button
+                  to="/documents/upload"
+                  component={RouteLink}
+                  variant="contained"
+                  color="primary"
+                  disableElevation
+                >
+                  Upload Documents
+                </Button>
+              </div>
+
+              <br />
+
+              <DataGrid
+                autoHeight
+                components={{
+                  LoadingOverlay: CustomLoadingOverlay
+                }}
+                onRowClick={onDocumentRowClick}
+                loading={documentsLoading || searchLoading}
+                columns={displayableColumns}
+                rows={documents?.results || []}
+                pageSize={20}
+                onPageChange={handlePageChange}
+                paginationMode="server"
+                rowCount={totalRowsCount}
+              />
+            </>
+          )}
+
+          <ViewDocumentDialog
+            doc={openedDocument}
+            onClose={unselectDocument}
           />
         </>
       )}
-
-      <ViewDocumentDialog
-        doc={openedDocument}
-        onClose={unselectDocument}
-      />
 
     </Container>
   );
