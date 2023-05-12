@@ -26,7 +26,6 @@ import { SelectedFileList } from './FileList';
 import EditMetadata from './EditMetadata';
 import PDFViewer from './PDFViewer';
 
-
 const PDF_ATTR_GETTERS = [
   'getTitle',
   'getAuthor',
@@ -166,7 +165,7 @@ const UploadDocumentForm = withStyles((theme) => ({
     setLoading(true);
     setAcceptedFilesCount(current => acceptedFiles.length + current);
 
-    const byteData = [];
+    const byteData = {};
 
     const pdfData = acceptedFiles.map((pdfFile) => {
       return readFile(pdfFile)
@@ -174,7 +173,7 @@ const UploadDocumentForm = withStyles((theme) => ({
           // Some side-effects on a map fn...
           const blob = new Blob([ bytes ], {type: "application/pdf"});
           const docUrl = URL.createObjectURL(blob);
-          byteData.push(docUrl);
+          byteData[pdfFile.path] = docUrl;
 
           return PDFDocument.load(bytes)
             .then(pdf => {
@@ -188,10 +187,11 @@ const UploadDocumentForm = withStyles((theme) => ({
     Promise.all(pdfData)
       .then((allPdfData) => {
         const formattedFiles = acceptedFiles
-              .map((file, idx) => {
-                file.blobUrl = byteData[idx];
-                return file;
-              });
+          .map((file) => {
+            // eslint-disable-next-line no-param-reassign
+            file.blobUrl = byteData[file.path];
+            return file;
+          });
 
         // Let's update the state all together when we have everything available.
         // It's hard to trust and coordinate batch updates when performing updates
@@ -266,10 +266,6 @@ const UploadDocumentForm = withStyles((theme) => ({
     console.log("deleting file index:", index);
   };
 
-  const handleDropFilesRejection = ({errors, file}, event) => {
-    console.log("some file types were rejected. They should be a pdf type.");
-  };
-
   return (
     <Container
       className={classes.root}
@@ -303,7 +299,7 @@ const UploadDocumentForm = withStyles((theme) => ({
 
         <FileDropSelector
           onFileSelect={handleFileSelect}
-          onDropFilesRejected={handleDropFilesRejection}
+          disableSelector={files.length >= 10}
         />
 
         {loading && (
@@ -411,7 +407,6 @@ const UploadDocumentForm = withStyles((theme) => ({
 
         )}
       </div>
-
     </Container>
   );
 });

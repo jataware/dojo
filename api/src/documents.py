@@ -26,6 +26,7 @@ from validation import DocumentSchema
 from src.settings import settings
 
 from src.utils import put_rawfile, get_rawfile
+from src.urls import clean_and_decode_str
 
 from rq import Queue
 from redis import Redis
@@ -134,12 +135,15 @@ def semantic_search_paragraphs(query: str,
     Uses query to perform a Semantic Search on paragraphs; where LLM embeddings
     are used to compare a text query to items stored.
     """
+
+    clean_query = clean_and_decode_str(query)
+
     if scroll_id:
         results = es.scroll(scroll_id=scroll_id, scroll="2m")
     else:
         # Retrieve first item in output, since it accepts an array and returns
         # an array, and we provided only one item (query)
-        query_embedding = embedder.embed([query])[0]
+        query_embedding = embedder.embed([clean_query])[0]
 
         MIN_TEXT_LENGTH_THRESHOLD = 100
 
@@ -188,7 +192,7 @@ def semantic_search_paragraphs(query: str,
 
     if highlight:
         text_vec = list(map(lambda x: x.get('_source').get('text'), hits))
-        highlights = highlighter.highlight_multiple(query, text_vec)
+        highlights = highlighter.highlight_multiple(clean_query, text_vec)
 
     result_len = len(hits)
 

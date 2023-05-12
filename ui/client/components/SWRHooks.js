@@ -198,7 +198,7 @@ export function useParams(modelId) {
 
 export function useDocuments(scrollId) {
 
-  let url = '/api/dojo/documents?size=100';
+  let url = '/api/dojo/documents?size=1000';
 
   if (scrollId) {
     url += `?scrollId=${scrollId}`;

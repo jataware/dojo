@@ -512,6 +512,7 @@ class DateValidationResponseSchema(BaseModel):
 
 class MetadataOpts(BaseModel):
     match_score: float
+    matched_queries: List[str]
 
 class FeatureResult(Feature):
     metadata: Optional[MetadataOpts]

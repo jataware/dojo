@@ -143,33 +143,6 @@ const fetchParagraphs = async (
 };
 
 /**
- * Uses internal DataGrid API to:
- * a) Decide if we should display "Many" for features count
- * b) Wire and display the rest of the labels that are usually
- *    set for us when we don't need custom behavior.
- */
-const CustomTablePagination = props => {
-
-  const { state, apiRef } = useGridSlotComponentProps();
-
-  return (
-    <TablePagination
-      labelDisplayedRows={({from, to, count}) => {
-        const displayCount = count > 500 ? 'Many' : count;
-        return `${from}-${to} of ${displayCount}`;
-      }}
-      {...props}
-      page={state.pagination.page}
-      onPageChange={(event, value) => {
-        return apiRef.current.setPage(value);
-      }}
-      rowsPerPage={100}
-      count={state.pagination.rowCount}
-    />
-  );
-};
-
-/**
  * Blue linear loading animation displayed when table loading/searching of
  * features is still in progress.
  */
@@ -596,8 +569,7 @@ const ViewDocumentsGrid = withStyles((theme) => ({
           <DataGrid
             autoHeight
             components={{
-              LoadingOverlay: CustomLoadingOverlay,
-              Pagination: CustomTablePagination
+              LoadingOverlay: CustomLoadingOverlay
             }}
             onRowClick={onDocumentRowClick}
             loading={documentsLoading || searchLoading}
