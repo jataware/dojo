@@ -61,7 +61,7 @@ describe('formatAnnotationsIN', () => {
 
         geo_type: 'coordinates',
         primary_geo: true,
-        resolve_to_gadm: false,
+        resolve_to_gadm: true,
 
         coord_format: 'lonlat',
         gadm_level: 'admin2',
@@ -87,7 +87,7 @@ describe('formatAnnotationsIN', () => {
           isQualifies: false,
           geo_type: 'coordinates',
           primary: true,
-          resolve_to_gadm: false,
+          resolve_to_gadm: true,
           gadm_level: 'admin2',
 
           coord_format: 'lonlat',
@@ -149,7 +149,7 @@ describe('formatAnnotationsIN', () => {
 
         geo_type: 'country',
         primary_geo: true,
-        resolve_to_gadm: false,
+        resolve_to_gadm: true,
 
         aliases: {
           a: 'b'
@@ -172,7 +172,7 @@ describe('formatAnnotationsIN', () => {
           isQualifies: false,
           geo_type: 'country',
           primary: true,
-          resolve_to_gadm: false,
+          resolve_to_gadm: true,
 
           annotated: true
         }
@@ -527,6 +527,7 @@ describe('formatAnnotationsIN', () => {
           qualifierrole: 'breakdown',
           category: 'geo',
           isQualifies: false,
+          resolve_to_gadm: true,
           annotated: true
         },
         admin2: {
@@ -538,6 +539,7 @@ describe('formatAnnotationsIN', () => {
           qualifierrole: 'breakdown',
           category: 'geo',
           isQualifies: false,
+          resolve_to_gadm: true,
           annotated: true
         },
         admin3: {
@@ -549,6 +551,7 @@ describe('formatAnnotationsIN', () => {
           qualifierrole: 'breakdown',
           category: 'geo',
           isQualifies: false,
+          resolve_to_gadm: true,
           annotated: true
         },
         admin0: {
@@ -560,6 +563,7 @@ describe('formatAnnotationsIN', () => {
           qualifierrole: 'breakdown',
           category: 'geo',
           isQualifies: false,
+          resolve_to_gadm: true,
           annotated: true,
         }
       });

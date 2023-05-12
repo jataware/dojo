@@ -20,7 +20,7 @@ describe('formatAnnotationsOUT', () => {
         geo_type: 'latitude',
         coord_format: 'lonlat',
         primary: false,
-        resolve_to_gadm: false,
+        resolve_to_gadm: true,
         gadm_level: 'admin3',
         'geo.coordinate-pair': false,
 
@@ -78,7 +78,7 @@ describe('formatAnnotationsOUT', () => {
         geo_type: 'latitude',
         coord_format: 'lonlat',
         primary: false,
-        resolve_to_gadm: false,
+        resolve_to_gadm: true,
         gadm_level: 'admin3',
         'geo.coordinate-pair': false,
 
@@ -137,7 +137,7 @@ describe('formatAnnotationsOUT', () => {
         geo_type: 'latitude',
         coord_format: 'lonlat',
         primary: false,
-        resolve_to_gadm: false,
+        resolve_to_gadm: true,
         gadm_level: 'admin3',
         'geo.coordinate-pair': false,
 
@@ -195,7 +195,7 @@ describe('formatAnnotationsOUT', () => {
         geo_type: 'latitude',
         coord_format: 'lonlat',
         primary: true,
-        resolve_to_gadm: false,
+        resolve_to_gadm: true,
         gadm_level: 'admin3',
         'geo.coordinate-pair': false,
 
@@ -249,7 +249,7 @@ describe('formatAnnotationsOUT', () => {
         geo_type: 'latitude',
         coord_format: 'lonlat',
         primary: true,
-        resolve_to_gadm: false,
+        resolve_to_gadm: true,
         gadm_level: 'admin3',
         'geo.coordinate-pair': false,
 
@@ -282,7 +282,7 @@ describe('formatAnnotationsOUT', () => {
 
       aliases: {},
       geo_type: 'latitude',
-      resolve_to_gadm: false,
+      resolve_to_gadm: true,
       coord_format: 'lonlat'
     }]);
   });
@@ -305,7 +305,7 @@ describe('formatAnnotationsOUT', () => {
         geo_type: 'latitude',
         coord_format: 'lonlat',
         primary: false,
-        resolve_to_gadm: false,
+        resolve_to_gadm: true,
         gadm_level: 'admin3',
         'geo.coordinate-pair': false,
 
@@ -339,7 +339,7 @@ describe('formatAnnotationsOUT', () => {
         geo_type: 'latitude',
         coord_format: 'lonlat',
         primary: true,
-        resolve_to_gadm: false,
+        resolve_to_gadm: true,
         gadm_level: 'admin3',
         'geo.coordinate-pair': false,
 
@@ -460,7 +460,7 @@ describe('formatAnnotationsOUT', () => {
         geo_type: 'latitude',
         coord_format: 'lonlat',
         primary: true,
-        resolve_to_gadm: false,
+        resolve_to_gadm: true,
         gadm_level: 'admin3',
         'geo.coordinate-pair': false,
 
@@ -494,7 +494,7 @@ describe('formatAnnotationsOUT', () => {
         geo_type: 'latitude',
         coord_format: 'lonlat',
         primary: true,
-        resolve_to_gadm: false,
+        resolve_to_gadm: true,
         gadm_level: 'admin3',
         'geo.coordinate-pair': false,
 
@@ -574,7 +574,7 @@ describe('formatAnnotationsOUT', () => {
         geo_type: 'coordinates',
         coord_format: 'lonlat',
         primary: false,
-        resolve_to_gadm: false,
+        resolve_to_gadm: true,
         gadm_level: 'admin3',
         'geo.coordinate-pair': false,
 
@@ -619,7 +619,7 @@ describe('formatAnnotationsOUT', () => {
         geo_type: 'latitude',
         coord_format: 'lonlat',
         primary: true,
-        resolve_to_gadm: false,
+        resolve_to_gadm: true,
         gadm_level: 'admin3',
         'geo.coordinate-pair': false,
 
@@ -662,7 +662,7 @@ describe('formatAnnotationsOUT', () => {
         geo_type: 'latitude',
         coord_format: 'lonlat',
         primary: true,
-        resolve_to_gadm: false,
+        resolve_to_gadm: true,
         gadm_level: 'admin3',
 
         'geo.coordinate-pair': true,
@@ -697,7 +697,7 @@ describe('formatAnnotationsOUT', () => {
         display_name: 'GEOLOGI',
         primary_geo: true,
 
-        resolve_to_gadm: false,
+        resolve_to_gadm: true,
         gadm_level: 'admin3',
 
         coord_format: 'lonlat',
@@ -716,7 +716,7 @@ describe('formatAnnotationsOUT', () => {
         primary_geo: true,
         gadm_level: 'admin3',
 
-        resolve_to_gadm: false,
+        resolve_to_gadm: true,
 
         coord_format: 'lonlat',
         aliases: {},
@@ -744,7 +744,7 @@ describe('formatAnnotationsOUT', () => {
         geo_type: '',
         coord_format: '',
         primary: true,
-        resolve_to_gadm: false,
+        resolve_to_gadm: true,
         gadm_level: 'admin3',
         'geo.coordinate-pair': false,
 
@@ -873,6 +873,7 @@ describe('formatAnnotationsOUT', () => {
           description: 'merged geo description from multi admin',
           display_name: 'SUPER_GGEO',
           primary_geo: true,
+          resolve_to_gadm: true,
 
           aliases: {},
           qualifies: [],
@@ -888,6 +889,7 @@ describe('formatAnnotationsOUT', () => {
           description: 'merged geo description from multi admin',
           display_name: 'SUPER_GGEO',
           primary_geo: true,
+          resolve_to_gadm: true,
 
           aliases: {},
           qualifies: [],
@@ -903,6 +905,7 @@ describe('formatAnnotationsOUT', () => {
           description: 'merged geo description from multi admin',
           display_name: 'SUPER_GGEO',
           primary_geo: true,
+          resolve_to_gadm: true,
 
           aliases: {},
           qualifies: [],
@@ -917,6 +920,7 @@ describe('formatAnnotationsOUT', () => {
           description: 'merged geo description from multi admin',
           display_name: 'SUPER_GGEO',
           primary_geo: true,
+          resolve_to_gadm: true,
 
           aliases: {},
           qualifies: [],
@@ -972,6 +976,7 @@ describe('formatAnnotationsOUT', () => {
           description: 'merged geo description from multi admin',
           display_name: 'SUPER_GGEO',
           primary_geo: true,
+          resolve_to_gadm: true,
 
           aliases: {},
           qualifies: [],
@@ -982,6 +987,7 @@ describe('formatAnnotationsOUT', () => {
           type: 'geo',
 
           geo_type: 'country',
+          resolve_to_gadm: true,
 
           description: 'merged geo description from multi admin',
           display_name: 'SUPER_GGEO',
@@ -1041,6 +1047,7 @@ describe('formatAnnotationsOUT', () => {
           description: 'merged geo description from multi admin',
           display_name: 'SUPER_GGEO',
           primary_geo: true,
+          resolve_to_gadm: true,
 
           aliases: {},
           qualifies: [],
