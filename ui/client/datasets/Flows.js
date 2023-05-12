@@ -16,7 +16,8 @@ import { useState } from 'react';
 const updateFlowDisabledFields = [
   'feature_type', 'geo_type',
   'coord_format', 'primary',
-  'resolve_to_gadm', 'geo.coordinate-pair',
+  'resolve_to_gadm', // Might be hardcoded and not even offered to the user anymore, but this is harmless.
+  'geo.coordinate-pair',
   'geo.coordinate-pair-column', 'geo.multi-column',
   'gadm_level', 'date_type',
   'date.multi-column', 'time_format',

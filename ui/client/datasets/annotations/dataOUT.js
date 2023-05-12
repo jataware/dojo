@@ -142,6 +142,8 @@ function formatGeoAnnotationOUT(localAnnotation, outgoingAnnotationBase) {
     outgoingAnnotation.gadm_level = localAnnotation.gadm_level;
   }
 
+  outgoingAnnotation.resolve_to_gadm = true;
+
   if (localAnnotation.multiPartBase) {
     outgoingAnnotation.name = localAnnotation.multiPartBase;
 

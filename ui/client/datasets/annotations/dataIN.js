@@ -88,6 +88,8 @@ function formatAnnotationIn(obj) {
   } else if (obj.type === 'geo' ) {
     data.gadm_level = obj.gadm_level;
 
+    data.resolve_to_gadm = true
+
     if (obj.is_geo_pair) {
       data['geo.coordinate-pair'] = true;
       data['geo.coordinate-pair-column'] = obj.is_geo_pair;

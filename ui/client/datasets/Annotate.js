@@ -81,7 +81,7 @@ export default withStyles(({ spacing }) => ({
 
   function formatAndSetAnnotations(serverAnnotations, knownColumns) {
     if (serverAnnotations) {
-      const annotationsToLoad = knownFieldAnnotations(serverAnnotations, knownColumns)
+      const annotationsToLoad = knownFieldAnnotations(serverAnnotations, knownColumns);
       const formattedIn = formatAnnotationsIN(annotationsToLoad);
 
       setInternalAnnotations(formattedIn.annotations);
