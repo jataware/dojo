@@ -11,43 +11,6 @@ from validation import ModelSchema
 
 
 class CausemosPlugin(PluginInterface):
-    def convert_to_causemos_format(self, model):
-        """
-        Transforms model from internal representation to the representation
-        accepted by Cauesmos.
-        """
-
-        def to_parameter(annot):
-            """
-            Transform Dojo annotation into a Causemos parameter.
-            """
-            return {
-                "name": annot["name"],
-                "display_name": annot["name"],
-                "description": annot["description"],
-                "type": annot["type"],
-                "unit": annot["unit"],
-                "unit_description": annot["unit_description"],
-                "ontologies": None,
-                "is_drilldown": None,
-                "additional_options": None,
-                "data_type": annot["data_type"],
-                "default": annot["default_value"],
-                "choices": annot["options"] if annot["predefined"] else None,
-                # NOTE: Do we want to store these as strings internally?
-                "min": float(annot["min"]) if annot["min"] != "" else None,
-                "max": float(annot["max"]) if annot["max"] != "" else None,
-            }
-
-        causemos_model = deepcopy(model)
-        causemos_model["parameters"] = [
-            to_parameter(parameters["annotation"])
-            for parameters in get_parameters(model["id"])
-        ]
-        causemos_model = get_ontologies(causemos_model, type="model")
-        payload = ModelSchema.CausemosModelMetadataSchema(**causemos_model)
-        return json.loads(payload.json())
-
     def publish(self, data, type):
         if type == "model":
 
@@ -78,7 +41,7 @@ class CausemosPlugin(PluginInterface):
                 return
 
             # Notify causemos of the new indicator
-            logger.info("causemos indicator", json.dumps(data, indent=2))
+            # logger.info("causemos indicator", json.dumps(data, indent=2))
             self.notify_causemos(data=data, type="indicator")
 
     def notify_causemos(self, data, type="indicator"):
@@ -191,3 +154,41 @@ class CausemosPlugin(PluginInterface):
 
             if indicator_payload["deprecated"]:
                 publish(data, type="model")
+
+
+def convert_to_causemos_format(self, model):
+    """
+    Transforms model from internal representation to the representation
+    accepted by Cauesmos.
+    """
+
+    def to_parameter(annot):
+        """
+        Transform Dojo annotation into a Causemos parameter.
+        """
+        return {
+            "name": annot["name"],
+            "display_name": annot["name"],
+            "description": annot["description"],
+            "type": annot["type"],
+            "unit": annot["unit"],
+            "unit_description": annot["unit_description"],
+            "ontologies": None,
+            "is_drilldown": None,
+            "additional_options": None,
+            "data_type": annot["data_type"],
+            "default": annot["default_value"],
+            "choices": annot["options"] if annot["predefined"] else None,
+            # NOTE: Do we want to store these as strings internally?
+            "min": float(annot["min"]) if annot["min"] != "" else None,
+            "max": float(annot["max"]) if annot["max"] != "" else None,
+        }
+
+    causemos_model = deepcopy(model)
+    causemos_model["parameters"] = [
+        to_parameter(parameters["annotation"])
+        for parameters in get_parameters(model["id"])
+    ]
+    causemos_model = get_ontologies(causemos_model, type="model")
+    payload = ModelSchema.CausemosModelMetadataSchema(**causemos_model)
+    return json.loads(payload.json())

@@ -2,7 +2,7 @@ import os
 
 import requests
 from fastapi.logger import logger
-from plugins.causemos import convert_to_causemos_format
+from src.plugins.causemos import convert_to_causemos_format
 
 
 def deprecate_dataset(dataset_id):

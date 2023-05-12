@@ -19,15 +19,7 @@ from openpyxl.workbook import Workbook
 from openpyxl.worksheet.datavalidation import DataValidation
 
 from elasticsearch import Elasticsearch
-from fastapi import (
-    APIRouter,
-    HTTPException,
-    Query,
-    Response,
-    status,
-    UploadFile,
-    File
-)
+from fastapi import APIRouter, HTTPException, Query, Response, status, UploadFile, File
 from fastapi.logger import logger
 from fastapi.responses import FileResponse
 from redis import Redis
@@ -57,7 +49,7 @@ es = Elasticsearch([settings.ELASTICSEARCH_URL], port=settings.ELASTICSEARCH_POR
 # REDIS CONNECTION AND QUEUE OBJECTS
 redis = Redis(
     os.environ.get("REDIS_HOST", "redis.dojo-stack"),
-    int(os.environ.get("REDIS_PORT", 6379))
+    int(os.environ.get("REDIS_PORT", 6379)),
 )
 q = Queue(connection=redis, default_timeout=-1)
 
@@ -74,14 +66,9 @@ def enqueue_indicator_feature(indicator_id, indicator_dict):
     job_string = "embeddings_processors.calculate_store_embeddings"
     job_id = f"{indicator_id}_{job_string}"
 
-    context = {
-        "indicator_id": indicator_id,
-        "full_indicator": indicator_dict
-    }
+    context = {"indicator_id": indicator_id, "full_indicator": indicator_dict}
 
-    job = q.enqueue_call(
-        func=job_string, args=[context], kwargs={}, job_id=job_id
-    )
+    job = q.enqueue_call(func=job_string, args=[context], kwargs={}, job_id=job_id)
 
 
 @router.post("/indicators")
@@ -144,7 +131,9 @@ def patch_indicator(
     body = json.loads(payload.json(exclude_unset=True))
     es.update(index="indicators", body={"doc": body}, id=indicator_id)
 
-    updated = es.get_source(index="indicators", id=indicator_id, params={"_source": "name,outputs"})
+    updated = es.get_source(
+        index="indicators", id=indicator_id, params={"_source": "name,outputs"}
+    )
     if updated["outputs"]:
         enqueue_indicator_feature(indicator_id, updated)
 
@@ -167,7 +156,7 @@ def generate_keyword_query(term):
                             "fuzziness": "AUTO",
                             "fields": ["display_name", "name", "description"],
                             "type": "most_fields",
-                            "slop": 2
+                            "slop": 2,
                         }
                     },
                     {
@@ -176,54 +165,45 @@ def generate_keyword_query(term):
                             "should": [
                                 {
                                     "match_phrase": {
-                                        "description": {
-                                            "query": term,
-                                            "boost": 1
-                                        }
+                                        "description": {"query": term, "boost": 1}
                                     }
                                 },
+                                {"match_phrase": {"name": {"query": term, "boost": 1}}},
                                 {
                                     "match_phrase": {
-                                        "name": {
-                                            "query": term,
-                                            "boost": 1
-                                        }
-                                    }
-                                },
-                                {
-                                    "match_phrase": {
-                                        "display_name": {
-                                            "query": term,
-                                            "boost": 1
-                                        }
+                                        "display_name": {"query": term, "boost": 1}
                                     }
                                 },
                                 {
                                     "multi_match": {
                                         "query": term,
-                                        "fields": ["display_name", "name", "description"],
+                                        "fields": [
+                                            "display_name",
+                                            "name",
+                                            "description",
+                                        ],
                                         "type": "cross_fields",
                                         "operator": "and",
-                                        "slop": 1
+                                        "slop": 1,
                                     }
-                                }
-                            ]
+                                },
+                            ],
                         }
-                    }
+                    },
                 ]
             }
         },
-        "_source": {
-            "excludes": "embeddings"
-        }
+        "_source": {"excludes": "embeddings"},
     }
     return q
 
 
 @router.get(
-"/features/search", response_model=IndicatorSchema.FeaturesSemanticSearchSchema
+    "/features/search", response_model=IndicatorSchema.FeaturesSemanticSearchSchema
 )
-def semantic_search_features(query: Optional[str], size=10, scroll_id: Optional[str]=None):
+def semantic_search_features(
+    query: Optional[str], size=10, scroll_id: Optional[str] = None
+):
     """
     Given a text query, uses semantic search engine to search for features that
     match the query semantically. Query is a sentence that can be interpreted to
@@ -240,19 +220,21 @@ def semantic_search_features(query: Optional[str], size=10, scroll_id: Optional[
 
         features_query = generate_keyword_query(query)
 
-        features_query["query"]["bool"]["should"].append({
-            "script_score": {
-                "query": {"match_all": {}},
-                "script": {
-                    "source": "Math.max(cosineSimilarity(params.query_vector, 'embeddings'), 0)",
-                    "params": {
-                        "query_vector": query_embedding
-                    }
+        features_query["query"]["bool"]["should"].append(
+            {
+                "script_score": {
+                    "query": {"match_all": {}},
+                    "script": {
+                        "source": "Math.max(cosineSimilarity(params.query_vector, 'embeddings'), 0)",
+                        "params": {"query_vector": query_embedding},
+                    },
                 }
             }
-        })
+        )
 
-        results = es.search(index="features", body=features_query, scroll="2m", size=size)
+        results = es.search(
+            index="features", body=features_query, scroll="2m", size=size
+        )
 
     items_in_page = len(results["hits"]["hits"])
 
@@ -264,7 +246,7 @@ def semantic_search_features(query: Optional[str], size=10, scroll_id: Optional[
     max_score = results["hits"]["max_score"]
 
     def formatOneResult(r):
-        r["_source"]["metadata"]={}
+        r["_source"]["metadata"] = {}
         r["_source"]["metadata"]["match_score"] = r["_score"]
         r["_source"]["id"] = r["_id"]
         return r["_source"]
@@ -274,16 +256,14 @@ def semantic_search_features(query: Optional[str], size=10, scroll_id: Optional[
         "items_in_page": items_in_page,
         "max_score": max_score,
         "results": [formatOneResult(i) for i in results["hits"]["hits"]],
-        "scroll_id": scroll_id
+        "scroll_id": scroll_id,
     }
 
 
-@router.get(
-    "/features", response_model=IndicatorSchema.FeaturesSearchSchema
-)
-def list_features(term: Optional[str]=None,
-                  size: int = 10,
-                  scroll_id: Optional[str]=None):
+@router.get("/features", response_model=IndicatorSchema.FeaturesSearchSchema)
+def list_features(
+    term: Optional[str] = None, size: int = 10, scroll_id: Optional[str] = None
+):
     """
     Lists all features, with pagination, or results from searching
     through them (using input sentence `term`). Will match `term`
@@ -294,14 +274,7 @@ def list_features(term: Optional[str]=None,
         q = generate_keyword_query(term)
 
     else:
-        q = {
-            "query": {
-                "match_all": {}
-            },
-            "_source": {
-                "excludes": "embeddings"
-            }
-        }
+        q = {"query": {"match_all": {}}, "_source": {"excludes": "embeddings"}}
 
     if not scroll_id:
         results = es.search(index="features", body=q, scroll="2m", size=size)
@@ -321,7 +294,7 @@ def list_features(term: Optional[str]=None,
 
     def formatOneResult(r):
         if term:
-            r["_source"]["metadata"]={}
+            r["_source"]["metadata"] = {}
             r["_source"]["metadata"]["match_score"] = r["_score"]
         r["_source"]["id"] = r["_id"]
         return r["_source"]
@@ -330,7 +303,7 @@ def list_features(term: Optional[str]=None,
         "hits": results["hits"]["total"]["value"],
         "items_in_page": hits_count,
         "results": [formatOneResult(i) for i in es_hits],
-        "scroll_id": scroll_id
+        "scroll_id": scroll_id,
     }
 
     if term:
@@ -447,11 +420,11 @@ def publish_indicator(indicator_id: str):
         es.index(index="indicators", body=data, id=indicator_id)
 
         # Notify Causemos that an indicator was created
-        plugin_action("before_register", data=indicator, type="indicator")
-        # TODO: Move notify_causemose only to causemos plugin
-        notify_causemos(data, type="indicator")
-        plugin_action("register", data=indicator, type="indicator")
-        plugin_action("post_register", data=indicator, type="indicator")
+        plugin_action("before_publish", data=indicator, type="indicator")
+        # TODO: Move notify_causemos only to causemos plugin
+        # notify_causemos(data, type="indicator")
+        plugin_action("publish", data=indicator, type="indicator")
+        plugin_action("post_publish", data=indicator, type="indicator")
     except Exception as e:
         logger.exception(e)
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
@@ -564,6 +537,7 @@ def put_annotation(payload: MetadataSchema.MetaModel, indicator_id: str):
             content=f"Could not create annotation with id = {indicator_id}",
         )
 
+
 @router.patch("/indicators/{indicator_id}/annotations")
 def patch_annotation(payload: MetadataSchema.MetaModel, indicator_id: str):
     """Patch annotation for a dataset to Elasticsearch.
@@ -662,7 +636,9 @@ def validate_date(payload: IndicatorSchema.DateValidationRequestSchema):
 
 @router.post("/indicators/{indicator_id}/preview/{preview_type}")
 async def create_preview(
-    indicator_id: str, preview_type: IndicatorSchema.PreviewType, filename: Optional[str] = Query(None),
+    indicator_id: str,
+    preview_type: IndicatorSchema.PreviewType,
+    filename: Optional[str] = Query(None),
     filepath: Optional[str] = Query(None),
 ):
     """Get preview for a dataset.
@@ -675,19 +651,19 @@ async def create_preview(
     """
     try:
         if filename:
-            file_suffix_match = re.search(r'raw_data(_\d+)?\.', filename)
+            file_suffix_match = re.search(r"raw_data(_\d+)?\.", filename)
             if file_suffix_match:
-                file_suffix = file_suffix_match.group(1) or ''
+                file_suffix = file_suffix_match.group(1) or ""
             else:
-                file_suffix = ''
+                file_suffix = ""
         else:
-            file_suffix = ''
+            file_suffix = ""
         # TODO - Get all potential string files concatenated together using list file utility
         if preview_type == IndicatorSchema.PreviewType.processed:
             if filepath:
                 rawfile_path = os.path.join(
                     settings.DATASET_STORAGE_BASE_URL,
-                    filepath.replace(".csv", ".parquet.gzip")
+                    filepath.replace(".csv", ".parquet.gzip"),
                 )
             else:
                 rawfile_path = os.path.join(
@@ -711,9 +687,7 @@ async def create_preview(
 
         else:
             if filepath:
-                rawfile_path = os.path.join(
-                    settings.DATASET_STORAGE_BASE_URL, filepath
-                )
+                rawfile_path = os.path.join(settings.DATASET_STORAGE_BASE_URL, filepath)
             else:
                 rawfile_path = os.path.join(
                     settings.DATASET_STORAGE_BASE_URL, indicator_id, "raw_data.csv"
@@ -721,7 +695,9 @@ async def create_preview(
             file = get_rawfile(rawfile_path)
             df = pd.read_csv(file, delimiter=",")
 
-        obj = json.loads(df.sort_index().reset_index(drop=True).head(100).to_json(orient="index"))
+        obj = json.loads(
+            df.sort_index().reset_index(drop=True).head(100).to_json(orient="index")
+        )
         indexed_rows = [{"__id": key, **value} for key, value in obj.items()]
 
         return indexed_rows
@@ -771,15 +747,19 @@ line above, but only supports annotations using the old elwood format within
 the metadata file, as well as only supporting csv datasets.
 
 """
-def dataset_register_files(data: UploadFile = File(...), metadata: UploadFile = File(...)):
+
+
+def dataset_register_files(
+    data: UploadFile = File(...), metadata: UploadFile = File(...)
+):
     """
     Fields (not columns). Define fields (not annotations?)
     See what we'll do with filename
     """
     json_data = json.load(metadata.file)
 
-    indicator_error=[]
-    annotations_error=[]
+    indicator_error = []
+    annotations_error = []
 
     # Step 1: Create indicator
     try:
@@ -800,7 +780,7 @@ def dataset_register_files(data: UploadFile = File(...), metadata: UploadFile = 
     create_response = create_indicator(indicator)
     response = json.loads(create_response.body)
 
-    indicator_id=response["id"]
+    indicator_id = response["id"]
 
     # Step 2: Upload file to S3
     upload_file(indicator_id=indicator_id, file=data)
@@ -820,20 +800,24 @@ def dataset_register_files(data: UploadFile = File(...), metadata: UploadFile = 
     context = get_context(indicator_id)
 
     q.enqueue_call(
-        func=job_string, args=[context], kwargs={
+        func=job_string,
+        args=[context],
+        kwargs={
             "on_success_endpoint": {
                 "verb": "PUT",
-                "url": f"{settings.DOJO_URL}/indicators/{indicator_id}/publish"
+                "url": f"{settings.DOJO_URL}/indicators/{indicator_id}/publish",
             }
-        }, job_id=job_id
+        },
+        job_id=job_id,
     )
 
     return create_response
 
 
 def bytes_to_csv(file):
-    csv_reader = csv.DictReader(codecs.iterdecode(file, 'utf-8'))
+    csv_reader = csv.DictReader(codecs.iterdecode(file, "utf-8"))
     return list(csv_reader)
+
 
 @router.post("/indicators/{indicator_id}/annotations/file")
 async def upload_data_dictionary_file(indicator_id: str, file: UploadFile = File(...)):
@@ -841,7 +825,7 @@ async def upload_data_dictionary_file(indicator_id: str, file: UploadFile = File
     Accepts a CSV dictionary file describing a dataset in order to register it. Similar to using the API directly with JSON, or using the Dataset Registration flow on Dojo user interface to annotate a dataset.
     """
 
-    if file.filename.endswith('.xlsx'):
+    if file.filename.endswith(".xlsx"):
         f = await file.read()
         xlsx = io.BytesIO(f)
         csv_dictionary_list = xls_to_annotations(xlsx)
@@ -863,7 +847,7 @@ async def upload_data_dictionary_file(indicator_id: str, file: UploadFile = File
         full_data[0]["message"] = str(e)
         raise HTTPException(status_code=422, detail=full_data)
 
-    annotation_payload=MetadataSchema.MetaModel(annotations=formatted)
+    annotation_payload = MetadataSchema.MetaModel(annotations=formatted)
 
     return patch_annotation(payload=annotation_payload, indicator_id=indicator_id)
 
@@ -873,7 +857,9 @@ def download_data_dictionary_template_file(indicator_id=None, filetype="xlsx"):
 
     if filetype == "csv":
         file_name = "dataset_annotate_template.template_csv"
-        headers = {"Content-Disposition": f"attachment; filename={file_name.replace('template_', '')}"}
+        headers = {
+            "Content-Disposition": f"attachment; filename={file_name.replace('template_', '')}"
+        }
         return FileResponse(file_name, headers=headers)
 
     wb = Workbook()
@@ -955,8 +941,8 @@ boolean: data that represents yes/no values (true or false, enabled or disabled,
             "validation": DataValidation(
                 type="list",
                 formula1='"country,admin0,admin1,admin2,admin3"',
-                allow_blank=True
-            )
+                allow_blank=True,
+            ),
         },
         {
             "name": "resolve_to_gadm",
@@ -1001,23 +987,32 @@ boolean: data that represents yes/no values (true or false, enabled or disabled,
         cell = ws.cell(row=1, column=index, value=col_name)
         cell.font = bold_font
         help_text = col.get("help_text", "").strip()
-        help_prompt = DataValidation(type="custom", formula1="1", promptTitle=col_name, prompt=help_text, allow_blank=False, showInputMessage=True)
+        help_prompt = DataValidation(
+            type="custom",
+            formula1="1",
+            promptTitle=col_name,
+            prompt=help_text,
+            allow_blank=False,
+            showInputMessage=True,
+        )
         help_prompt.add(f"{col_letter}1")
         ws.add_data_validation(help_prompt)
 
         validation = col.get("validation", None)
         if validation:
             logger.warn(f"{col_name}: {validation}")
-            validation.add(f'{col_letter}2:{col_letter}1048576')
+            validation.add(f"{col_letter}2:{col_letter}1048576")
             ws.add_data_validation(validation)
 
     if indicator_id:
         annotations = get_annotations(indicator_id)
-        for index, row in enumerate(annotations.get("metadata", {}).get("column_statistics", {}).keys(), start=2):
+        for index, row in enumerate(
+            annotations.get("metadata", {}).get("column_statistics", {}).keys(), start=2
+        ):
             ws.cell(row=index, column=1, value=row)
 
     # Freeze the top and left-most row/column
-    ws.freeze_panes = 'B2'
+    ws.freeze_panes = "B2"
 
     file_name = "dataset_annotation_template.xlsx"
     headers = {
@@ -1026,6 +1021,7 @@ boolean: data that represents yes/no values (true or false, enabled or disabled,
     }
 
     from tempfile import NamedTemporaryFile
+
     with NamedTemporaryFile() as tmp:
         wb.save(tmp.name)
         tmp.seek(0)
