@@ -1,43 +1,48 @@
-import copy
-import requests
 import json
 import os
-from fastapi.logger import logger
+from copy import deepcopy
 
+import requests
+from fastapi.logger import logger
+from src.dojo import get_parameters
+from src.ontologies import get_ontologies
 from src.plugins import PluginInterface
+from validation import ModelSchema
 
 
 class CausemosPlugin(PluginInterface):
+    def publish(self, data, type):
+        if type == "model":
 
-    def on_register_model(self, model):
-        from src.settings import settings
-        from .models import model_versions
+            from src.settings import settings
 
-        if settings.DEBUG:
-            return
+            from .models import model_versions
 
-        notify_data = copy.deepcopy(model)
+            if settings.DEBUG:
+                return
 
-        # On the notification step only, we want to include any previous versions so that they can be deprecated
-        previous_versions = model_versions(model["id"])['prev_versions']
-        notify_data["deprecatesIDs"] = previous_versions
+            notify_data = deepcopy(data)
+            notify_data = convert_to_causemos_format(notify_data)
 
-        # Notify causemos of the new model
-        self.notify_causemos(data=model, type="model")
+            # On the notification step only, we want to include any previous versions so that they can be deprecated
+            previous_versions = model_versions(data["id"])["prev_versions"]
+            notify_data["deprecatesIDs"] = previous_versions
 
-        # Send CauseMos a default run
-        logger.info("Submitting defualt run to CauseMos")
-        self.submit_run(model)
+            # Notify causemos of the new model
+            self.notify_causemos(data=notify_data, type="model")
 
-    def on_register_indicator(self, indicator):
-        from src.settings import settings
+            # Send CauseMos a default run
+            logger.info("Submitting defualt run to CauseMos")
+            self.submit_run(notify_data)
+        if type == "indicator":
+            from src.settings import settings
 
-        if settings.DEBUG:
-            return
+            if settings.DEBUG:
+                return
 
-        # Notify causemos of the new indicator
-        logger.info("causemos indicator", json.dumps(indicator, indent=2))
-        self.notify_causemos(data=indicator, type="indicator")
+            # Notify causemos of the new indicator
+            # logger.info("causemos indicator", json.dumps(data, indent=2))
+            self.notify_causemos(data=data, type="indicator")
 
     def notify_causemos(self, data, type="indicator"):
         """
@@ -82,7 +87,6 @@ class CausemosPlugin(PluginInterface):
             logger.error(f"Encountered problems communicating with Causemos: {e}")
             logger.exception(e)
 
-
     def submit_run(self, model):
         """
         This function takes in a model and submits a default run for that model to CauseMos
@@ -104,24 +108,30 @@ class CausemosPlugin(PluginInterface):
         causemos_pwd = os.getenv("CAUSEMOS_PWD")
 
         params = []
-        for param in model.get("parameters",[]):
+        for param in model.get("parameters", []):
             param_obj = {}
-            param_obj['name'] = param['name']
-            param_obj['value'] = param['default']
+            param_obj["name"] = param["name"]
+            param_obj["value"] = param["default"]
             params.append(param_obj)
 
-        payload = {"model_id": model["id"],
-                "model_name": model["name"],
-                "is_default_run": True,
-                "parameters": params}
+        payload = {
+            "model_id": model["id"],
+            "model_name": model["name"],
+            "is_default_run": True,
+            "parameters": params,
+        }
 
         try:
             # Notify Uncharted
             if os.getenv("CAUSEMOS_DEBUG") == "true":
-                logger.info("CauseMos debug mode: no need to submit default model run to Uncharted")
+                logger.info(
+                    "CauseMos debug mode: no need to submit default model run to Uncharted"
+                )
                 return
             else:
-                logger.info(f"Submitting default model run to CauseMos with payload: {payload}")
+                logger.info(
+                    f"Submitting default model run to CauseMos with payload: {payload}"
+                )
                 response = requests.post(
                     url,
                     headers={"Content-Type": "application/json"},
@@ -134,3 +144,51 @@ class CausemosPlugin(PluginInterface):
         except Exception as e:
             logger.error(f"Encountered problems communicating with Causemos: {e}")
             logger.exception(e)
+
+    def post_update(self, data, type):
+
+        from ..indicators import get_indicators
+
+        if type == "deprecate":
+            indicator_payload = get_indicators(data["id"])
+
+            if indicator_payload["deprecated"]:
+                publish(data, type="model")
+
+
+def convert_to_causemos_format(self, model):
+    """
+    Transforms model from internal representation to the representation
+    accepted by Cauesmos.
+    """
+
+    def to_parameter(annot):
+        """
+        Transform Dojo annotation into a Causemos parameter.
+        """
+        return {
+            "name": annot["name"],
+            "display_name": annot["name"],
+            "description": annot["description"],
+            "type": annot["type"],
+            "unit": annot["unit"],
+            "unit_description": annot["unit_description"],
+            "ontologies": None,
+            "is_drilldown": None,
+            "additional_options": None,
+            "data_type": annot["data_type"],
+            "default": annot["default_value"],
+            "choices": annot["options"] if annot["predefined"] else None,
+            # NOTE: Do we want to store these as strings internally?
+            "min": float(annot["min"]) if annot["min"] != "" else None,
+            "max": float(annot["max"]) if annot["max"] != "" else None,
+        }
+
+    causemos_model = deepcopy(model)
+    causemos_model["parameters"] = [
+        to_parameter(parameters["annotation"])
+        for parameters in get_parameters(model["id"])
+    ]
+    causemos_model = get_ontologies(causemos_model, type="model")
+    payload = ModelSchema.CausemosModelMetadataSchema(**causemos_model)
+    return json.loads(payload.json())
