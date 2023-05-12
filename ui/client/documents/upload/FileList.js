@@ -15,6 +15,9 @@ import Radio from '@material-ui/core/Radio';
 
 import { formatBytes } from '../utils';
 
+/**
+ *
+ **/
 export const FileTile = withStyles(() => ({
   root: {
     cursor: 'pointer'
@@ -71,6 +74,9 @@ export const FileTile = withStyles(() => ({
   );
 });
 
+/**
+ *
+ **/
 export const SelectedFileList = withStyles(() => ({
   root: {
     border: '1px solid #eaeaea',
