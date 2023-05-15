@@ -877,6 +877,7 @@ describe('formatAnnotationsOUT', () => {
           aliases: {},
           qualifies: [],
           qualifierrole: 'breakdown',
+          resolve_to_gadm: true
         },
         {
 
@@ -892,6 +893,7 @@ describe('formatAnnotationsOUT', () => {
           aliases: {},
           qualifies: [],
           qualifierrole: 'breakdown',
+          resolve_to_gadm: true
         },
         {
 
@@ -907,6 +909,7 @@ describe('formatAnnotationsOUT', () => {
           aliases: {},
           qualifies: [],
           qualifierrole: 'breakdown',
+          resolve_to_gadm: true
         },
         {
           name: 'admin0',
@@ -921,6 +924,7 @@ describe('formatAnnotationsOUT', () => {
           aliases: {},
           qualifies: [],
           qualifierrole: 'breakdown',
+          resolve_to_gadm: true
         },
       ]);
   });
@@ -976,6 +980,7 @@ describe('formatAnnotationsOUT', () => {
           aliases: {},
           qualifies: [],
           qualifierrole: 'breakdown',
+          resolve_to_gadm: true
         },
         {
           name: 'admin0',
@@ -990,6 +995,7 @@ describe('formatAnnotationsOUT', () => {
           aliases: {},
           qualifies: [],
           qualifierrole: 'breakdown',
+          resolve_to_gadm: true
         },
       ]);
   });
@@ -1045,6 +1051,7 @@ describe('formatAnnotationsOUT', () => {
           aliases: {},
           qualifies: [],
           qualifierrole: 'breakdown',
+          resolve_to_gadm: true
         },
       ]);
   });
