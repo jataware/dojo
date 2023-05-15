@@ -1,14 +1,14 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, {
+  useCallback, useEffect, useRef, useState,
+} from 'react';
 
 import axios from 'axios';
 import debounce from 'lodash/debounce';
 
 import Button from '@material-ui/core/Button';
-import { GridOverlay, DataGrid, useGridSlotComponentProps } from '@material-ui/data-grid';
+import { GridOverlay, DataGrid } from '@material-ui/data-grid';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
-import TablePagination from '@material-ui/core/TablePagination';
-import Alert from '@material-ui/lab/Alert';
 
 import LinearProgress from '@material-ui/core/LinearProgress';
 import CircularProgress from '@material-ui/core/CircularProgress';
@@ -24,7 +24,6 @@ import get from 'lodash/get';
 
 import Container from '@material-ui/core/Container';
 import Dialog from '@material-ui/core/Dialog';
-import DialogActions from '@material-ui/core/DialogActions';
 import DialogContent from '@material-ui/core/DialogContent';
 import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
@@ -32,7 +31,6 @@ import Divider from '@material-ui/core/Divider';
 
 import { Link as RouteLink } from 'react-router-dom';
 
-import { useDocuments } from "../components/SWRHooks";
 import { calculateHighlightTargets } from "./utils";
 
 import ExpandableDataGridCell from "../components/ExpandableDataGridCell";
@@ -358,11 +356,10 @@ export const ParagraphTile = withStyles((theme) => ({
   );
 });
 
-
 /**
  *
  */
-const ViewDocumentsGrid = withStyles((theme) => ({
+const ViewDocumentsGrid = withStyles(() => ({
   root: {
     flex: 1,
     display: 'flex',
@@ -377,7 +374,71 @@ const ViewDocumentsGrid = withStyles((theme) => ({
     alignItems: 'center',
     marginBottom: '1rem',
   }
-}))(({classes}) => {
+}))(({ classes }) => {
+  // use refs here to have references that won't trigger any rerenders
+  const scrollIdRef = useRef(null);
+  const cachedDocumentsRef = useRef({});
+
+  const [documents, setDocuments] = useState(null);
+  const [documentsError, setDocumentsError] = useState(null);
+  const [documentsLoading, setDocumentsLoading] = useState(false);
+
+  const fetchData = useCallback(
+    // we use DataGrid's page index to maintain a cache for what DG should display
+    // on each page of results. The API just uses a scroll_id and has no notion of this page
+    async (page) => {
+      setDocumentsLoading(true);
+      setDocumentsError(null);
+      // clear documents when loading so that we don't display the previous page
+      // before loading the next set of results
+      setDocuments(null);
+
+      // check if data for the page is already in the cache
+      if (cachedDocumentsRef.current[page]) {
+        setDocuments(cachedDocumentsRef.current[page]);
+        setDocumentsLoading(false);
+      } else {
+        try {
+          const response = await axios.get(
+            // eslint-disable-next-line prefer-template
+            `/api/dojo/documents?size=100${scrollIdRef.current ? '&scroll_id=' + scrollIdRef.current : ''}`
+          );
+
+          const { data } = response;
+          if (data?.scroll_id && !scrollIdRef.current) {
+            scrollIdRef.current = data.scroll_id;
+          }
+
+          // store the fetched data in the cache
+          cachedDocumentsRef.current = {
+            ...cachedDocumentsRef.current,
+            [page]: data,
+          };
+
+          setDocuments(data);
+        } catch (error) {
+          setDocumentsError(error);
+        } finally {
+          setDocumentsLoading(false);
+        }
+      }
+    }, []
+  );
+
+  // do the initial fetch to load our first page
+  useEffect(() => {
+    // fetchData only references refs and state setters, so this should only be called once
+    fetchData(0);
+  }, [fetchData]);
+
+  // fetch the rows out of the cache for page 0 so that we maintain it even when we clear
+  // documents state on page change, defaulting to 0 to prevent NaN in case we have no hits
+  const totalRowsCount = Number(documents?.hits)
+    || Number(cachedDocumentsRef.current[0]?.hits) || 0;
+
+  const handlePageChange = (params) => {
+    fetchData(params);
+  };
 
   const [searchTerm, setSearchTerm] = useState('');
   const [searchTermValue, setSearchTermValue] = useState('');
@@ -388,10 +449,6 @@ const ViewDocumentsGrid = withStyles((theme) => ({
   const [highlights, setHighlights] = useState(null);
 
   const [openedDocument, setOpenedDocument] = useState(null);
-
-  const { documents: documentsData, documentsLoading, documentsError } = useDocuments();
-
-  const documents = documentsData?.results;
 
   useEffect(() => {
     updateSearchTerm(searchTermValue);
@@ -443,12 +500,10 @@ const ViewDocumentsGrid = withStyles((theme) => ({
             console.info("Semantic Highlighter disabled.");
           }
         });
-
       })
       .finally(() => {
         setSearchLoading(false);
       });
-
   };
 
   useEffect(() => {
@@ -487,11 +542,7 @@ const ViewDocumentsGrid = withStyles((theme) => ({
     openDocument(docData.row);
   };
 
-  return documentsError ? (
-    <Typography>
-      Error loading documents.
-    </Typography>
-  ) : (
+  return (
     <Container
       className={classes.root}
       component="main"
@@ -501,88 +552,103 @@ const ViewDocumentsGrid = withStyles((theme) => ({
         variant="h3"
         align="center"
         paragraph
+        style={{ marginBottom: '32px' }}
       >
         Document Explorer
       </Typography>
 
-      <br />
-
-      <div className={classes.aboveTableWrapper}>
-          <TextField
-            style={{width: "100%", maxWidth: "60rem"}}
-            label="Enter query to perform Semantic Search through Documents"
-            variant="outlined"
-            value={searchTermValue}
-            onChange={handleSearchChange}
-            role="searchbox"
-            InputProps={{
-              endAdornment: (
-                <InputAdornment position="end">
-                  <IconButton onClick={clearSearch}><CancelIcon /></IconButton>
-                </InputAdornment>
-              )
-            }}
-          />
-      </div>
-
-      <br />
-
-      {docParagraphResults?.length ? (
-        <div>
-          <Typography variant="h5">
-            Top Matches ({docParagraphResults?.length})
-          </Typography>
-
-          {searchLoading && (
-              <LinearProgress style={{width: "90%"}} />
-          )}
-
-          {docParagraphResults.map((p, index) => (
-            <ParagraphTile
-              onClick={onParagraphResultClick}
-              key={p.id}
-              paragraph={p}
-              highlights={get(highlights, `[${index}]`, null)}
-              query={searchTerm}
-            />
-          ))}
-        </div>
+      {documentsError ? (
+        <Typography align="center" variant="h6">
+          Error loading documents.
+        </Typography>
       ) : (
         <>
-          <div style={{display: "flex", justifyContent: "space-between"}}>
-            <Typography
-              variant="h5"
-            >
-              All Documents
-            </Typography>
-            <Button
-              to="/documents/upload"
-              component={RouteLink}
-              variant="contained"
-              color="primary">
-              Upload Documents
-            </Button>
+          <div className={classes.aboveTableWrapper}>
+            <TextField
+              style={{ width: "100%", maxWidth: "60rem" }}
+              label="Enter query to perform Semantic Search through Documents"
+              variant="outlined"
+              value={searchTermValue}
+              onChange={handleSearchChange}
+              role="searchbox"
+              InputProps={{
+                endAdornment: (
+                  <InputAdornment position="end">
+                    <IconButton onClick={clearSearch}><CancelIcon /></IconButton>
+                  </InputAdornment>
+                )
+              }}
+            />
           </div>
 
           <br />
 
-          <DataGrid
-            autoHeight
-            components={{
-              LoadingOverlay: CustomLoadingOverlay
-            }}
-            onRowClick={onDocumentRowClick}
-            loading={documentsLoading || searchLoading}
-            columns={displayableColumns}
-            rows={documents || []}
+          {docParagraphResults?.length ? (
+            <div>
+              <Typography variant="h5">
+                Top Matches ({docParagraphResults?.length})
+              </Typography>
+
+              {searchLoading && (
+                <LinearProgress style={{ width: "90%" }} />
+              )}
+
+              {docParagraphResults.map((p, index) => (
+                <ParagraphTile
+                  onClick={onParagraphResultClick}
+                  key={p.id}
+                  paragraph={p}
+                  highlights={get(highlights, `[${index}]`, null)}
+                  query={searchTerm}
+                />
+              ))}
+            </div>
+          ) : (
+            <>
+              <div
+                style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}
+              >
+                <Typography
+                  variant="h5"
+                >
+                  All Documents
+                </Typography>
+                <Button
+                  to="/documents/upload"
+                  component={RouteLink}
+                  variant="contained"
+                  color="primary"
+                  disableElevation
+                >
+                  Upload Documents
+                </Button>
+              </div>
+
+              <br />
+
+              <DataGrid
+                autoHeight
+                components={{
+                  LoadingOverlay: CustomLoadingOverlay
+                }}
+                onRowClick={onDocumentRowClick}
+                loading={documentsLoading || searchLoading}
+                columns={displayableColumns}
+                rows={documents?.results || []}
+                pageSize={100}
+                onPageChange={handlePageChange}
+                paginationMode="server"
+                rowCount={totalRowsCount}
+              />
+            </>
+          )}
+
+          <ViewDocumentDialog
+            doc={openedDocument}
+            onClose={unselectDocument}
           />
         </>
       )}
-
-      <ViewDocumentDialog
-        doc={openedDocument}
-        onClose={unselectDocument}
-      />
 
     </Container>
   );
