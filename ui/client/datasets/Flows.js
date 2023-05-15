@@ -92,6 +92,7 @@ const BasicRegistrationFlow = {
       jobs: [
         {
           id: 'elwood_processors.run_elwood',
+          send_context: true,
           handler: async ({result, annotations, setAnnotations, datasetInfo, setDatasetInfo, ...extra}) => {
             const updatedDataset = {
               ...datasetInfo,

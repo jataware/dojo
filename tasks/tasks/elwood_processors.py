@@ -231,7 +231,7 @@ def run_elwood(context, filename=None, on_success_endpoint=None):
         )
         # Append
         # TODO: Hackish way to determine that the feature is not a qualifier
-        if feature["qualifies"]:
+        if feature.get("qualifies", None):
             if len(feature["qualifies"]) == 0:
                 outputs.append(output)
                 # Qualifier output for qualifying features
@@ -255,6 +255,8 @@ def run_elwood(context, filename=None, on_success_endpoint=None):
                 )
                 # Append to qualifier outputs
                 qualifier_outputs.append(qualifier_output)
+        else:
+            outputs.append(output)
 
     # Qualifier_outputs
     for date in context["annotations"]["annotations"]["date"]:
