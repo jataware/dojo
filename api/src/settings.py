@@ -42,7 +42,8 @@ class Settings(BaseSettings):
     PLUGINS: Dict[str, str] = {
         # "my_plugin": "plugin_module.MyPlugin",  # Where plugin_module.MyPlugin is an importable dotted path and MyPlugin
         # is a subclass of utils.PluginInterface
-        # "causemos": "src.plugins.causemos.CausemosPlugin",
+        "causemos": "src.plugins.causemos.CausemosPlugin",
+        "sync": "src.plugins.sync.SyncPlugin",
         "logger": "src.plugins.logging.LoggingPlugin",
     }
 
