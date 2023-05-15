@@ -51,7 +51,7 @@ const initialColumnValues = {
   geo_type: 'latitude',
   coord_format: 'lonlat',
   primary: false,
-  resolve_to_gadm: false,
+  resolve_to_gadm: true,
   gadm_level: 'admin3',
 
   // Namespaced values, such as below (date.sample, geo.another), as only used on UI
