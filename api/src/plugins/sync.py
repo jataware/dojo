@@ -3,11 +3,7 @@ import json
 import requests
 from fastapi.logger import logger
 from src.plugins import PluginInterface
-<<<<<<< HEAD
 from src.indicators import patch_indicator
-=======
-from src.indicators import update_indicator
->>>>>>> origin/dev
 from src.data import get_context
 from validation import IndicatorSchema
 
