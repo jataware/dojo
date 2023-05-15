@@ -195,26 +195,3 @@ export function useParams(modelId) {
     paramsError: error,
   };
 }
-
-export function useDocuments(scrollId) {
-
-  let url = '/api/dojo/documents?size=1000';
-
-  if (scrollId) {
-    url += `?scrollId=${scrollId}`;
-  }
-
-  const { data, error, mutate } = useSWR(
-    url, fetcher, {
-      revalidateIfStale: false,
-      revalidateOnFocus: false,
-      revalidateOnReconnect: false
-    }
-  );
-
-  return {
-    documents: data,
-    documentsLoading: !error && !data,
-    documentsError: error,
-  };
-}

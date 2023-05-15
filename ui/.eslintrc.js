@@ -21,7 +21,7 @@ module.exports = {
     "camelcase": "off",
     "jsx-a11y/alt-text": "warn",
     "react/jsx-props-no-multi-spaces": "off",
-
+    "spaced-comment": ["error", "always", { "block": { "exceptions": ["*"] } }],
     "sort-imports": ["error", {
       "ignoreCase": false,
       "ignoreDeclarationSort": true,
