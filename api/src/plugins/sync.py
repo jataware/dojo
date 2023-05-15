@@ -3,7 +3,7 @@ import json
 import requests
 from fastapi.logger import logger
 from src.plugins import PluginInterface
-from src.indicators import update_indicator
+from src.indicators import patch_indicator
 from src.data import get_context
 from validation import IndicatorSchema
 
@@ -121,4 +121,4 @@ class SyncPlugin(PluginInterface):
 
         schema = IndicatorSchema.IndicatorMetadataSchema.parse_obj(response)
 
-        update_indicator(schema)
+        patch_indicator(schema, uuid)
