@@ -401,7 +401,7 @@ const ViewDocumentsGrid = withStyles(() => ({
         try {
           const response = await axios.get(
             // eslint-disable-next-line prefer-template
-            `/api/dojo/documents?size=20${scrollIdRef.current ? '&scroll_id=' + scrollIdRef.current : ''}`
+            `/api/dojo/documents?size=100${scrollIdRef.current ? '&scroll_id=' + scrollIdRef.current : ''}`
           );
 
           const { data } = response;
@@ -635,7 +635,7 @@ const ViewDocumentsGrid = withStyles(() => ({
                 loading={documentsLoading || searchLoading}
                 columns={displayableColumns}
                 rows={documents?.results || []}
-                pageSize={20}
+                pageSize={100}
                 onPageChange={handlePageChange}
                 paginationMode="server"
                 rowCount={totalRowsCount}
