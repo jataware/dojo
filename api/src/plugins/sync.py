@@ -40,7 +40,17 @@ class SyncPlugin(PluginInterface):
                         ),
                         "spatial_resolution": context.get("dataset", {}).get(
                             "spatial_resolution", None
-                        ),
+                        )  # This logic can be removed when there are no longer two types of spatial resolution in dojo (meters and degrees)
+                        if isinstance(
+                            context.get("dataset", {}).get("spatial_resolution", None),
+                            list,
+                        )
+                        else [
+                            context.get("dataset", {}).get("spatial_resolution", None)
+                        ]
+                        if context.get("dataset", {}).get("spatial_resolution", None)
+                        is not None
+                        else [],
                     },
                     alias=feature["aliases"],
                 )
