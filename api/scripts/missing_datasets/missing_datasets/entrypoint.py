@@ -111,6 +111,11 @@ def main():
         print("Saving missing datasets to csv file")
         write_dict_list_to_csv(missing_datasets, "missing_data_full_run_ca.csv")
 
-        return missing_datasets
+        return len(missing_datasets)
 
 
+
+def save_list_csv():
+    # populate dictionary list here in case you forget to save output to csv:
+    prev_run = []
+    write_dict_list_to_csv(prev_run, "lastrun.csv")

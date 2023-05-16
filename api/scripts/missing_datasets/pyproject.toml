@@ -14,6 +14,7 @@ dpath = "^2.1.5"
 
 [tool.poetry.scripts]
 main = "missing_datasets.entrypoint:main"
+debug = "missing_datasets.entrypoint:save_list_csv"
 
 [build-system]
 requires = ["poetry-core"]
