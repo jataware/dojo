@@ -2,7 +2,7 @@ import requests
 from dotenv import load_dotenv
 from pathlib import Path
 
-# import pprint
+import pprint
 import os
 from os.path import join as path_join
 import time
@@ -11,20 +11,22 @@ from datetime import datetime
 import csv
 
 load_dotenv()
+pp = pprint.PrettyPrinter(indent=2)
+
 
 PROTOCOL = os.getenv('MD_PROTOCOL')
 HOST = os.getenv('MD_HOST')
 API_ROOT = os.getenv('MD_API_ROOT')
-
 API_BASE_URL = f"{PROTOCOL}://{HOST}/{API_ROOT}" # does not have trailing slash
 
+# For saving csv for list of dicts output:
 root_dir = Path(__file__).resolve().parent.parent
 output_dir = path_join(root_dir, "output")
 
 
+
 def get_individual_dataset(session, id):
-    # TODO this wont work on windows: (http vs fs path / \ direction):
-    url = path_join(API_BASE_URL, "indicators", id)
+    url = f'{API_BASE_URL}/indicators/{id}'
     response = session.get(str(url))
     return response.json()
 
@@ -49,9 +51,15 @@ def format_dataset(dataset):
     formatted_date = datetime.fromtimestamp(formatted_dataset["created_at"]/1000)
     formatted_dataset["created_date"] = str(formatted_date.date())
 
-    formatted_dataset["qualifiers_count"] = len(dataset.get("qualifier_outputs", []))
-    formatted_dataset["outputs_count"] = len(dataset.get("outputs", []))
-    formatted_dataset["datapaths_count"] = len(dataset.get("data_paths", []))
+    try:
+        formatted_dataset["qualifiers_count"] = len(dataset.get("qualifier_outputs") or [])
+        formatted_dataset["outputs_count"] = len(dataset.get("outputs") or [])
+        formatted_dataset["datapaths_count"] = len(dataset.get("data_paths") or [])
+    except TypeError:
+        print(f"Script failed with this dataset:")
+        pp.pprint(dataset)
+        print("Skipping above dataset and trying to continue.")
+        # Possibly one of the above datasets returns none.
 
     return formatted_dataset
 
@@ -106,7 +114,7 @@ def main():
         print(f"Dojo returned {len(json_body)} datasets (includes deprecated).")
 
         # sort input dataset list by date; API doesnt provide sort param so we do so locally
-        sorted_by_most_recent=sorted(json_body, key=lambda x: x["created_at"], reverse=True)
+        sorted_by_most_recent=sorted(json_body, key=lambda d: d["created_at"], reverse=True)
 
         for idx, simple_dataset in enumerate(sorted_by_most_recent):
 
@@ -121,13 +129,14 @@ def main():
 
                 print(f"Parsing dataset No. {idx}")
 
-                if not dataset["published"]:
+                if not dataset.get("published"):
                     print(f"Skipping unpublished dataset No. {idx}, Id: {dataset['id']}")
                     continue
 
-                if not dataset["data_paths"] or len(dataset["data_paths"]) == 0:
-                    print(f"Dataset {dataset['id']} is published, but missing data paths.")
+                if len(dataset.get("data_paths") or []) == 0:
+                    print(f"Dataset {dataset['id']} is published, but missing data paths. Skipping.")
                     missing_data_paths.append(format_dataset(dataset))
+                    continue
 
                 formatted_dataset = check_dataset_external_service(session, dataset)
 
@@ -136,10 +145,10 @@ def main():
                     response_failed_external_count += 1
                 elif formatted_dataset:
                     missing_datasets.append(formatted_dataset)
-                # else None; dataset not missing nor error; Do nothing since dataset is good.
+                # else: dataset not missing nor error. Do nothing since dataset is good.
 
                 # Arbitrary sleep time to not overload any services.
-                time.sleep(0.2)
+                time.sleep(0.1)
             else:
                 print(f"Dataset No. {idx} with id:{dataset['id']} deprecated. Skipping.")
 
@@ -147,9 +156,13 @@ def main():
         print(f"Third party's service resturn {response_failed_external_count} bad responses and were skipped.")
 
         print("Saving missing datasets to csv file")
-        write_dict_list_to_csv(missing_datasets, "missing_data_run_ca_20.csv")
 
-        write_dict_list_to_csv(missing_data_paths, "missing_datapaths_ca_20.csv")
+        host_for_filename = HOST.replace('.', '_')
+        now = datetime.now()
+        time_filename = now.strftime("%d-%m-%Y_%H:%M:%S")
+
+        write_dict_list_to_csv(missing_datasets, f"missing_datasets_published_{host_for_filename}_full_{time_filename}.csv")
+        write_dict_list_to_csv(missing_data_paths, f"missing_datapaths_published_{host_for_filename}_full_{time_filename}.csv")
 
         return len(missing_datasets)
 
