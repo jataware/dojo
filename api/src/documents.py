@@ -15,6 +15,7 @@ from fastapi import (
     UploadFile,
     File,
     Request,
+    Query,
 )
 from fastapi.responses import FileResponse
 from fastapi.logger import logger
@@ -282,9 +283,24 @@ def format_document(doc):
 @router.get(
     "/documents/latest", response_model=DocumentSchema.DocumentListResponse
 )
-def latest_documents(scroll_id: Optional[str]=None, size: int = 10):
+def latest_documents(
+    scroll_id: Optional[str] = None,
+    size: int = 10,
+    sort_by: str = Query("uploaded_at", description="Field to sort by"),
+    order: str = Query("desc", description="Order to sort by")
+):
     """
     """
+    if order not in ["asc", "desc"]:
+        raise HTTPException(status_code=400, detail="Invalid sort order. Must be either 'asc' or 'desc'")
+
+    valid_fields = ["title", "publisher", "description", "uploaded_at", "creation_date"]
+    if sort_by not in valid_fields:
+        raise HTTPException(status_code=400, detail=f"Invalid sort field. Must be one of {valid_fields}")
+
+    # Apply .keyword to specific fields
+    if sort_by in ["title", "publisher", "description"]:
+        sort_by += ".keyword"
 
     q = {
         "query": {
@@ -292,8 +308,8 @@ def latest_documents(scroll_id: Optional[str]=None, size: int = 10):
         },
         "sort": [
             {
-                "uploaded_at": {
-                    "order": "desc"
+                sort_by: {
+                    "order": order
                 }
             }
         ]
@@ -310,7 +326,6 @@ def latest_documents(scroll_id: Optional[str]=None, size: int = 10):
         scroll_id = None
     else:
         scroll_id = results.get("_scroll_id", None)
-
     return {
         "hits": results["hits"]["total"]["value"],
         "items_in_page": totalDocsInPage,

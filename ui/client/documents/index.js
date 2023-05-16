@@ -386,7 +386,7 @@ const ViewDocumentsGrid = withStyles(() => ({
   const fetchData = useCallback(
     // we use DataGrid's page index to maintain a cache for what DG should display
     // on each page of results. The API just uses a scroll_id and has no notion of this page
-    async (page) => {
+    async (page, column = 'uploaded_at', order = 'desc') => {
       setDocumentsLoading(true);
       setDocumentsError(null);
       // clear documents when loading so that we don't display the previous page
@@ -400,8 +400,7 @@ const ViewDocumentsGrid = withStyles(() => ({
       } else {
         try {
           const response = await axios.get(
-            // eslint-disable-next-line prefer-template
-            `/api/dojo/documents?size=100${scrollIdRef.current ? '&scroll_id=' + scrollIdRef.current : ''}`
+            `/api/dojo/documents/latest?size=10&sort_by=${column}&order=${order}${scrollIdRef.current ? `&scroll_id=${scrollIdRef.current}` : ''}`
           );
 
           const { data } = response;
@@ -414,7 +413,7 @@ const ViewDocumentsGrid = withStyles(() => ({
             ...cachedDocumentsRef.current,
             [page]: data,
           };
-
+          console.log('THIS IS THE NEW DATA', data)
           setDocuments(data);
         } catch (error) {
           setDocumentsError(error);
@@ -438,6 +437,13 @@ const ViewDocumentsGrid = withStyles(() => ({
 
   const handlePageChange = (params) => {
     fetchData(params);
+  };
+
+  const handleSortChange = (newSort) => {
+    console.log('THIS is newSort', newSort);
+    scrollIdRef.current = null;
+    cachedDocumentsRef.current = {};
+    fetchData(0, newSort[0].field, newSort[0].sort);
   };
 
   const [searchTerm, setSearchTerm] = useState('');
@@ -635,10 +641,13 @@ const ViewDocumentsGrid = withStyles(() => ({
                 loading={documentsLoading || searchLoading}
                 columns={displayableColumns}
                 rows={documents?.results || []}
-                pageSize={100}
+                pageSize={10}
                 onPageChange={handlePageChange}
                 paginationMode="server"
                 rowCount={totalRowsCount}
+                disableColumnFilter
+                sortingMode="server"
+                onSortModelChange={handleSortChange}
               />
             </>
           )}
