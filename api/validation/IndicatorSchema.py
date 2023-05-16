@@ -58,6 +58,7 @@ class PreviewType(Enum):
 #         title="Final Alias Name",
 #     )
 
+
 class Maintainer(BaseModel):
     class Config:
         extra = Extra.allow
@@ -168,10 +169,8 @@ class Resolution(BaseModel):
     )
     spatial_resolution: Optional[List[float]] = Field(
         None,
-        description="Spatial resolution of the output (in meters)",
-        examples=[[20, 20]],
-        max_items=2,
-        min_items=2,
+        description="Spatial resolution of the output (in meters x/y or degrees)",
+        examples=[[20, 20], [2.49999]],
         title="Spatial Resolution",
     )
 
@@ -253,10 +252,8 @@ class Output(BaseModel):
         description="Spatial and temporal resolution of the data",
         title="Data Resolution",
     )
-    alias: Optional[Dict[Any,Any]] = Field(
-        None,
-        description="alias dictionary",
-        title="Alias"
+    alias: Optional[Dict[Any, Any]] = Field(
+        None, description="alias dictionary", title="Alias"
     )
 
 
@@ -268,8 +265,12 @@ class OwnerDataset(BaseModel):
         title="Dataset ID",
     )
     name: str = Field(
-        ..., description="The dataset name that owns an object.", examples=["WDI"], title="Dataset Name"
+        ...,
+        description="The dataset name that owns an object.",
+        examples=["WDI"],
+        title="Dataset Name",
     )
+
 
 class Feature(Output):
     class Config:
@@ -396,9 +397,7 @@ class IndicatorMetadataSchema(BaseModel):
         title="Data Path URLs",
     )
     outputs: Optional[List[Output]] = Field(
-        [],
-        description="An array of dataset variables",
-        title="Dataset Outputs"
+        [], description="An array of dataset variables", title="Dataset Outputs"
     )
     qualifier_outputs: Optional[List[QualifierOutput]] = Field(
         None,
@@ -426,17 +425,13 @@ class IndicatorMetadataSchema(BaseModel):
     data_sensitivity: Optional[str] = Field(
         None,
         description="Specifies any restrictions on data use.",
-        examples=[
-            "..."
-        ],
+        examples=["..."],
         title="Dataset Sensitivity",
     )
     data_quality: Optional[str] = Field(
         None,
         description="Specify if the data is measured, derived, or estimated data and what was the methodology associated with each of these.",
-        examples=[
-            "measured"
-        ],
+        examples=["measured"],
         title="Dataset Quality",
     )
     published: Boolean = Field(
@@ -494,7 +489,7 @@ class DateValidationRequestSchema(BaseModel):
             ["2001-01-01", "2022-07-11", "2011-03-27"],
             ["2002", "2005", "1998"],
             ["Nov 11, 1911", "Dec 25, 2020", "Feb 9, 1999"],
-        ]
+        ],
     )
 
 
@@ -510,31 +505,33 @@ class DateValidationResponseSchema(BaseModel):
         examples=[True, False],
     )
 
+
 class MetadataOpts(BaseModel):
     match_score: float
     matched_queries: List[str]
 
+
 class FeatureResult(Feature):
     metadata: Optional[MetadataOpts]
+
 
 class FeaturesSearchSchema(BaseModel):
     hits: int = Field(
         ...,
         description="Total feature count matching your request.",
-        examples=[10, 15, 45]
+        examples=[10, 15, 45],
     )
     items_in_page: int = Field(
         ...,
         description="Feature item count in current page/scroll response.",
-        examples=[10, 15, 45]
+        examples=[10, 15, 45],
     )
     scroll_id: Optional[str] = Field(
         title="Scroll ID",
-        description= "Scroll id to use as query param, in order to navigate to the next page of feature results. Will return None|null when there are no pages left."
+        description="Scroll id to use as query param, in order to navigate to the next page of feature results. Will return None|null when there are no pages left.",
     )
     results: List[FeatureResult] = Field(
-        ...,
-        description="Features data in current page for a given list or search."
+        ..., description="Features data in current page for a given list or search."
     )
     max_score: Optional[float]
 
@@ -543,5 +540,5 @@ class FeaturesSemanticSearchSchema(FeaturesSearchSchema):
     max_score: Optional[float] = Field(
         ...,
         description="Max search engine score from all matches. This will match the first result's score within the first scroll page.",
-        examples=[0.72]
+        examples=[0.72],
     )
