@@ -11,29 +11,20 @@ import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 
 import LinearProgress from '@material-ui/core/LinearProgress';
-import CircularProgress from '@material-ui/core/CircularProgress';
 import CancelIcon from '@material-ui/icons/Cancel';
 import IconButton from '@material-ui/core/IconButton';
 import InputAdornment from '@material-ui/core/InputAdornment';
 import TextField from '@material-ui/core/TextField';
-import Chip from '@material-ui/core/Chip';
-import isEmpty from 'lodash/isEmpty';
-import startCase from 'lodash/startCase';
 import map from 'lodash/map';
 import get from 'lodash/get';
 
 import Container from '@material-ui/core/Container';
-import Dialog from '@material-ui/core/Dialog';
-import DialogContent from '@material-ui/core/DialogContent';
-import DialogContentText from '@material-ui/core/DialogContentText';
-import DialogTitle from '@material-ui/core/DialogTitle';
-import Divider from '@material-ui/core/Divider';
 
 import { Link as RouteLink } from 'react-router-dom';
 
-import { calculateHighlightTargets } from "./utils";
-
 import ExpandableDataGridCell from "../components/ExpandableDataGridCell";
+import { ViewDocumentDialog } from './ViewDocumentDialog';
+import { ParagraphTile } from './ParagraphTile';
 
 const expandableCell = ({ value, colDef }) => (
     <ExpandableDataGridCell
@@ -42,22 +33,8 @@ const expandableCell = ({ value, colDef }) => (
     />
 );
 
-export const ConfidenceBar = withStyles((theme) => ({
-  root: {
-    height: 15,
-  },
-  colorPrimary: {
-    border: '1px solid gray',
-    backgroundColor: 'transparent',
-    background: 'repeating-linear-gradient( -45deg, gray, gray 1px, white 1px, white 4px )'
-  },
-  bar: {
-    backgroundColor: '#00cd00',
-  },
-}))(LinearProgress);
-
-const semanticSearchParagraphs = async(query) => {
-  let url = `/api/dojo/paragraphs/search?query=${query}&size=40`;
+const semanticSearchParagraphs = async (query) => {
+  const url = `/api/dojo/paragraphs/search?query=${query}&size=40`;
   const response = await axios.get(url);
   return response.data;
 };
@@ -70,74 +47,6 @@ const semanticSearchParagraphs = async(query) => {
 const fetchDocument = async (docId) => {
   const response = await axios.get(`/api/dojo/documents/${docId}`);
   return response.data;
-};
-
-const fetchDocumentFullText = async (documentId) => {
-  // paragraph id format: documentId-<paragraphIndex>
-  const url = `/api/dojo/documents/${documentId}/paragraphs?size=200`;
-
-  const response = await axios.get(url);
-  return response.data.paragraphs;
-};
-
-
-/**
- * Fetches ALL paragraphs in DB until there's no more scroll ID
- * or the max limit of items is reached.
- * Logic copies from ViewFeatures.js, although we have different requirements here.
- * Only used on experimental paragraph listings.
- **/
-const fetchParagraphs = async (
-  setParagraphs, setSearchLoading, setParagraphsError, scrollId
-) => {
-  setSearchLoading(true);
-
-  let url = `/api/dojo/paragraphs`;
-  if (scrollId) {
-    url += `?scroll_id=${scrollId}`;
-  }
-
-  const paragraphsRequest = axios.get(url).then(
-    (response) => {
-      const data = response.data;
-      return data;
-    }
-  );
-
-  let preparedParagraphs = null;
-  let hitCountThreshold = false;
-
-  preparedParagraphs = paragraphsRequest.then((paragraphsData) => {
-
-    setParagraphs((prev) => {
-
-      // TODO Lets fetch max 100 paragraphs for now
-      if (prev.length > 100) {
-        hitCountThreshold = true;
-      }
-
-      return !scrollId ? paragraphsData.results : prev.concat(paragraphsData.results);
-    });
-
-    return [paragraphsData.scroll_id, paragraphsData.results];
-  });
-
-  preparedParagraphs.then(([ newScrollId, results ]) => {
-
-    // when there's no scroll id, we've hit the end of the results
-    if (newScrollId && !hitCountThreshold) {
-      // if we get a scroll id back, there are more results
-      // so call fetchModels again to fetch the next set
-      fetchParagraphs(setParagraphs, setSearchLoading, setParagraphsError, newScrollId);
-    } else {
-      setSearchLoading(false);
-    }
-  });
-
-  preparedParagraphs.catch((error) => {
-    console.log('error:', error);
-    setParagraphsError(true);
-  });
 };
 
 /**
@@ -159,8 +68,8 @@ function CustomLoadingOverlay() {
  **/
 const documentColumns = [
   {
-    field: 'id',
-    headerName: 'ID',
+    field: 'creation_date',
+    headerName: 'Creation Date',
     minWidth: 200,
   },
   {
@@ -182,182 +91,7 @@ const documentColumns = [
 ];
 
 /**
- *
- **/
-export const ViewDocumentDialog = ({doc, onClose}) => {
-
-  const document = doc || {};
-  const [documentText, setDocumentText] = useState(null);
-  const [documentTextLoading, setDocumentTextLoading] = useState(null);
-
-  useEffect(() => {
-
-    if(!doc?.id) {
-      return;
-    }
-
-    setDocumentTextLoading(true);
-
-    fetchDocumentFullText(doc.id)
-      .then(response => {
-        setDocumentText(response);
-      })
-      .finally(() => setDocumentTextLoading(false));
-
-  }, [doc]);
-
-
-  return (
-    <Dialog
-      open={Boolean(doc)}
-      onClose={onClose}
-      maxWidth="md"
-    >
-      <DialogTitle style={{paddingBottom: 1}}>
-        {document.title}
-      </DialogTitle>
-
-      <Divider
-        variant="fullWidth"
-        style={{margin: "0.5rem 0"}}
-      />
-
-      <DialogContent>
-        {!isEmpty(doc) && (
-          <dl>
-            {["publisher", "creation_date", "type", "original_language",
-              "classification", "producer", "stated_genre"]
-             .map((item, idx) => document[item] ? (
-            <div>
-              <dt>{startCase(item)}</dt>
-              <dd>{document[item]}</dd>
-            </div>
-          ) : null)}
-        </dl>
-        )}
-
-        {documentTextLoading ? (
-          <CircularProgress />
-        ) : documentText?.length ? (
-          <div>
-            <p>Full Text</p>
-              {documentText.map(paragraph => Boolean(paragraph) && (
-                <DialogContentText key={paragraph.id}>
-                  {paragraph.text}
-                </DialogContentText>
-              ))}
-            {documentText.length > 200 && (
-              <p>Document continues. Truncated to 200 lines.</p>
-            )}
-          </div>
-        ) : (
-          <p>Document only contains metadata fields. Does not have text contents.</p>
-        )}
-
-      </DialogContent>
-
-    </Dialog>
-  );
-
-};
-
-export const ParagraphTile = withStyles((theme) => ({
-  root: {
-    padding: "0.5rem 1.5rem",
-    margin: "0.75rem 0",
-    border: "1px solid #B2dfee",
-    borderRadius: 2,
-    background: "#f9f9f9",
-    boxShadow: "4px 4px 8px 0px #9a999969",
-    cursor: "pointer",
-    ["& dl > div"]: {display: "flex", // alignItems: "center"
-                    },
-    ["& dd"]: {margin: 0}
-  },
-  squareChip: {
-    borderRadius: 0,
-    background: "#e7e6e6",
-    marginRight: "0.75rem"
-  },
-  chipLabel: {
-    fontWeight: "bold",
-    width: "4rem",
-    display: "flex",
-    justifyContent: "center"
-  }
-}))(({classes, paragraph, highlights=null, query, onClick}) => {
-
-  const handleClick = () => onClick(paragraph);
-
-  return (
-    <div
-      className={classes.root}
-      onClick={handleClick}
-    >
-      <Typography
-        variant="body1"
-        component="div">
-
-        <dl>
-          <div style={{alignItems: "center", marginBottom: "1rem"}}>
-            <dt>
-              <Chip classes={{root: classes.squareChip, label: classes.chipLabel}} label="ID" />
-            </dt>
-            <dd>{paragraph.id}</dd>
-          </div>
-
-          <div style={{alignItems: "center", marginBottom: "1rem"}}>
-            <dt>
-              <Chip classes={{root: classes.squareChip, label: classes.chipLabel}} label="Title" />
-            </dt>
-            <dd>{paragraph.parent_document.title || "No Title Available"}</dd>
-          </div>
-
-          {paragraph.parent_document.publisher && (
-            <div style={{alignItems: "center", marginBottom: "1rem"}}>
-              <dt>
-                <Chip classes={{root: classes.squareChip, label: classes.chipLabel}} label="Publisher" />
-              </dt>
-              <dd>{paragraph.parent_document.publisher}</dd>
-            </div>
-          )}
-
-          <div>
-            <dt>
-              <Chip classes={{root: classes.squareChip, label: classes.chipLabel}} label="text" />
-            </dt>
-            <dd>{(highlights || calculateHighlightTargets(paragraph.text, query))
-                 .map((partInfo, idx) => (
-                   <span
-                     key={idx}
-                     style={partInfo.highlight ?
-                            {fontWeight: 'bold', background: 'yellow'} :
-                            {}}
-                   >
-                     {partInfo.text}
-                   </span>
-                 ))}</dd>
-          </div>
-        </dl>
-
-        <div style={{display: "flex", alignItems: "center"}}>
-          <Chip classes={{root: classes.squareChip, label: classes.chipLabel}} label="Hit%" />
-          <div style={{display: "block", width: "8rem"}}>
-            <ConfidenceBar
-              value={Math.sqrt(paragraph?.metadata?.match_score || 0) * 100}
-              variant='determinate'
-            />
-          </div>
-        </div>
-      </Typography>
-
-      <br />
-    </div>
-  );
-});
-
-/**
- *
+ * The root component for the document browser, rendering the page Container, DataGrid, and Dialog
  */
 const ViewDocumentsGrid = withStyles(() => ({
   root: {
@@ -379,6 +113,8 @@ const ViewDocumentsGrid = withStyles(() => ({
   const scrollIdRef = useRef(null);
   const cachedDocumentsRef = useRef({});
 
+  // controlled grid page state so that we can manually reset it to 0 when the sort changes
+  const [gridPage, setGridPage] = useState(0);
   const [documents, setDocuments] = useState(null);
   const [documentsError, setDocumentsError] = useState(null);
   const [documentsLoading, setDocumentsLoading] = useState(false);
@@ -386,7 +122,7 @@ const ViewDocumentsGrid = withStyles(() => ({
   const fetchData = useCallback(
     // we use DataGrid's page index to maintain a cache for what DG should display
     // on each page of results. The API just uses a scroll_id and has no notion of this page
-    async (page, column = 'uploaded_at', order = 'desc') => {
+    async (page, column = 'creation_date', order = 'desc') => {
       setDocumentsLoading(true);
       setDocumentsError(null);
       // clear documents when loading so that we don't display the previous page
@@ -396,6 +132,7 @@ const ViewDocumentsGrid = withStyles(() => ({
       // check if data for the page is already in the cache
       if (cachedDocumentsRef.current[page]) {
         setDocuments(cachedDocumentsRef.current[page]);
+        setGridPage(page);
         setDocumentsLoading(false);
       } else {
         try {
@@ -413,8 +150,9 @@ const ViewDocumentsGrid = withStyles(() => ({
             ...cachedDocumentsRef.current,
             [page]: data,
           };
-          console.log('THIS IS THE NEW DATA', data)
+
           setDocuments(data);
+          setGridPage(page);
         } catch (error) {
           setDocumentsError(error);
         } finally {
@@ -435,14 +173,16 @@ const ViewDocumentsGrid = withStyles(() => ({
   const totalRowsCount = Number(documents?.hits)
     || Number(cachedDocumentsRef.current[0]?.hits) || 0;
 
-  const handlePageChange = (params) => {
-    fetchData(params);
+  const handlePageChange = (newPage) => {
+    fetchData(newPage);
   };
 
   const handleSortChange = (newSort) => {
-    console.log('THIS is newSort', newSort);
+    // clear the scrollId so the API doesn't think we are continuing a request
     scrollIdRef.current = null;
+    // clear the cache so we don't try to reload previous results (that have a different sort)
     cachedDocumentsRef.current = {};
+    // fetch the data & load it into the grid
     fetchData(0, newSort[0].field, newSort[0].sort);
   };
 
@@ -633,6 +373,7 @@ const ViewDocumentsGrid = withStyles(() => ({
               <br />
 
               <DataGrid
+                page={gridPage}
                 autoHeight
                 components={{
                   LoadingOverlay: CustomLoadingOverlay

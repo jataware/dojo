@@ -2,7 +2,7 @@ import React from 'react';
 import { Field, Formik, Form } from 'formik';
 import identity from 'lodash/identity';
 
-import { ViewDocumentDialog } from '../client/documents';
+import { ViewDocumentDialog } from '../client/documents/ViewDocumentDialog';
 
 export default {
   title: 'Document Explorer/ViewDocument Dialog',

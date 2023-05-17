@@ -2,7 +2,7 @@ import React from 'react';
 import { Field, Formik, Form } from 'formik';
 import identity from 'lodash/identity';
 
-import { ParagraphTile } from '../client/documents';
+import { ParagraphTile } from '../client/documents/ParagraphTile';
 
 export default {
   title: 'Document Explorer/Paragraph Tile',

@@ -286,7 +286,7 @@ def format_document(doc):
 def latest_documents(
     scroll_id: Optional[str] = None,
     size: int = 10,
-    sort_by: str = Query("uploaded_at", description="Field to sort by"),
+    sort_by: str = Query("creation_date", description="Field to sort by"),
     order: str = Query("desc", description="Order to sort by")
 ):
     """
