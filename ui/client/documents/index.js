@@ -22,15 +22,15 @@ import Container from '@material-ui/core/Container';
 
 import { Link as RouteLink } from 'react-router-dom';
 
-import ExpandableDataGridCell from "../components/ExpandableDataGridCell";
+import ExpandableDataGridCell from '../components/ExpandableDataGridCell';
 import { ViewDocumentDialog } from './ViewDocumentDialog';
 import { ParagraphTile } from './ParagraphTile';
 
 const expandableCell = ({ value, colDef }) => (
-    <ExpandableDataGridCell
-      value={value}
-      width={colDef.computedWidth}
-    />
+  <ExpandableDataGridCell
+    value={value}
+    width={colDef.computedWidth}
+  />
 );
 
 const semanticSearchParagraphs = async (query) => {
@@ -98,12 +98,12 @@ const ViewDocumentsGrid = withStyles(() => ({
     flex: 1,
     display: 'flex',
     flexDirection: 'column',
-    padding: "2rem",
-    marginTop: "1rem"
+    padding: '2rem',
+    marginTop: '1rem'
   },
   aboveTableWrapper: {
     display: 'flex',
-    maxWidth: "100vw",
+    maxWidth: '100vw',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: '1rem',
@@ -218,7 +218,7 @@ const ViewDocumentsGrid = withStyles(() => ({
         const allDocPromises = allParagraphs.map((paragraph, idx) => {
           const documentPromise = fetchDocument(paragraph.document_id);
 
-          documentPromise.then(doc => {
+          documentPromise.then((doc) => {
             allParagraphs[idx].parent_document = doc;
           });
 
@@ -228,23 +228,21 @@ const ViewDocumentsGrid = withStyles(() => ({
         Promise.all(allDocPromises).then(() => {
           setDocParagraphResults(allParagraphs);
 
-          if (process.env.DISABLE_SEMANTIC_HIGHLIGHT !== "true") {
+          if (process.env.DISABLE_SEMANTIC_HIGHLIGHT !== 'true') {
             // fetch all highlights for results
             const matches = map(allParagraphs, 'text');
             const query = searchTerm;
 
-            let url = `/api/dojo/paragraphs/highlight`;
+            const url = '/api/dojo/paragraphs/highlight';
 
             return axios.post(url, {
               query,
               matches
             }).then((response) => {
               setHighlights(response.data.highlights);
-              return;
             });
-          } else {
-            console.info("Semantic Highlighter disabled.");
           }
+          console.info('Semantic Highlighter disabled.');
         });
       })
       .finally(() => {
@@ -311,7 +309,7 @@ const ViewDocumentsGrid = withStyles(() => ({
         <>
           <div className={classes.aboveTableWrapper}>
             <TextField
-              style={{ width: "100%", maxWidth: "60rem" }}
+              style={{ width: '100%', maxWidth: '60rem' }}
               label="Enter query to perform Semantic Search through Documents"
               variant="outlined"
               value={searchTermValue}
@@ -336,7 +334,7 @@ const ViewDocumentsGrid = withStyles(() => ({
               </Typography>
 
               {searchLoading && (
-                <LinearProgress style={{ width: "90%" }} />
+                <LinearProgress style={{ width: '90%' }} />
               )}
 
               {docParagraphResults.map((p, index) => (
