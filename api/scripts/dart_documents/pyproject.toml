@@ -2,7 +2,7 @@
 name = "dart-documents"
 version = "0.1.0"
 description = ""
-authors = ["Joel Quiles <joel@radcoding.com>"]
+authors = ["Joel & David @jataware.com>"]
 readme = "README.md"
 packages = [{include = "dart_documents"}]
 
