@@ -1,0 +1,19 @@
+[tool.poetry]
+name = "dart-documents"
+version = "0.1.0"
+description = ""
+authors = ["Joel & David @jataware.com>"]
+readme = "README.md"
+packages = [{include = "dart_documents"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+elasticsearch = "7.12.0"
+
+[tool.poetry.scripts]
+upload_documents = "dart_documents.upload_documents:index_all_documents"
+# upload_doc_paragraphs = "dart_documents.entrypoint:run"
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
