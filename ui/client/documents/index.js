@@ -137,7 +137,7 @@ const ViewDocumentsGrid = withStyles(() => ({
       } else {
         try {
           const response = await axios.get(
-            `/api/dojo/documents/latest?size=10&sort_by=${column}&order=${order}${scrollIdRef.current ? `&scroll_id=${scrollIdRef.current}` : ''}`
+            `/api/dojo/documents?size=10&sort_by=${column}&order=${order}${scrollIdRef.current ? `&scroll_id=${scrollIdRef.current}` : ''}`
           );
 
           const { data } = response;

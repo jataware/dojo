@@ -283,24 +283,9 @@ def format_document(doc):
 @router.get(
     "/documents/latest", response_model=DocumentSchema.DocumentListResponse
 )
-def latest_documents(
-    scroll_id: Optional[str] = None,
-    size: int = 10,
-    sort_by: str = Query("creation_date", description="Field to sort by"),
-    order: str = Query("desc", description="Order to sort by")
-):
+def latest_documents(scroll_id: Optional[str] = None, size: int = 10):
     """
     """
-    if order not in ["asc", "desc"]:
-        raise HTTPException(status_code=400, detail="Invalid sort order. Must be either 'asc' or 'desc'")
-
-    valid_fields = ["title", "publisher", "description", "uploaded_at", "creation_date"]
-    if sort_by not in valid_fields:
-        raise HTTPException(status_code=400, detail=f"Invalid sort field. Must be one of {valid_fields}")
-
-    # Apply .keyword to specific fields
-    if sort_by in ["title", "publisher", "description"]:
-        sort_by += ".keyword"
 
     q = {
         "query": {
@@ -308,8 +293,8 @@ def latest_documents(
         },
         "sort": [
             {
-                sort_by: {
-                    "order": order
+                "uploaded_at": {
+                    "order": "desc"
                 }
             }
         ]
@@ -326,6 +311,7 @@ def latest_documents(
         scroll_id = None
     else:
         scroll_id = results.get("_scroll_id", None)
+
     return {
         "hits": results["hits"]["total"]["value"],
         "items_in_page": totalDocsInPage,
@@ -338,16 +324,37 @@ def latest_documents(
 @router.get(
     "/documents", response_model=DocumentSchema.DocumentListResponse
 )
-def list_documents(scroll_id: Optional[str]=None, size: int = 10):
+def list_documents(
+    scroll_id: Optional[str] = None,
+    size: int = 10,
+    sort_by: Optional[str] = Query(None, description="Field to sort by"),
+    order: Optional[str] = Query(None, description="Order to sort by")
+):
     """
     Retrieves all stored documents, regardless of files uploaded or processed.
+    Optional `sort_by` and `order` params return sorted results.
     """
+
+    if order not in ["asc", "desc"]:
+        raise HTTPException(status_code=400, detail="Invalid sort order. Must be either 'asc' or 'desc'")
+
+    valid_fields = ["title", "publisher", "description", "creation_date"]
+    if sort_by not in valid_fields:
+        raise HTTPException(status_code=400, detail=f"Invalid sort field. Must be one of {valid_fields}")
+
+    # Apply .keyword to specific fields
+    if sort_by in ["title", "publisher", "description"]:
+        sort_by += ".keyword"
 
     q = {
         "query": {
             "match_all": {}
         }
     }
+
+    # Only add sort clause if sort_by and order are defined
+    if sort_by and order:
+        q["sort"] = [{sort_by: {"order": order}}]
 
     if not scroll_id:
         results = es.search(index="documents", body=q, scroll="2m", size=size)
