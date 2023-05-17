@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from pathlib import Path
+# from pathlib import Path # Maybe use in the future.
 import argparse
 from elasticsearch import Elasticsearch
 

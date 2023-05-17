@@ -62,9 +62,11 @@ PUT /document_paragraphs
 
 The script files point to hardcoded local elasticsearch urls.
 
-To upload document metadata to es, run:
+To upload document metadata to es, from the same dir as README run:
 
 `poetry run upload_documents`
+
+
 
 TODO:
 To upload paragraph text and llm embeddings to es:
