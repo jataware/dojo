@@ -137,7 +137,7 @@ const ViewDocumentsGrid = withStyles(() => ({
       } else {
         try {
           const response = await axios.get(
-            `/api/dojo/documents?size=10&sort_by=${column}&order=${order}${scrollIdRef.current ? `&scroll_id=${scrollIdRef.current}` : ''}`
+            `/api/dojo/documents?size=100&sort_by=${column}&order=${order}${scrollIdRef.current ? `&scroll_id=${scrollIdRef.current}` : ''}`
           );
 
           const { data } = response;
@@ -371,6 +371,7 @@ const ViewDocumentsGrid = withStyles(() => ({
               <br />
 
               <DataGrid
+                sortingOrder={['desc', 'asc']}
                 page={gridPage}
                 autoHeight
                 components={{
@@ -380,13 +381,14 @@ const ViewDocumentsGrid = withStyles(() => ({
                 loading={documentsLoading || searchLoading}
                 columns={displayableColumns}
                 rows={documents?.results || []}
-                pageSize={10}
+                pageSize={100}
                 onPageChange={handlePageChange}
                 paginationMode="server"
                 rowCount={totalRowsCount}
                 disableColumnFilter
                 sortingMode="server"
                 onSortModelChange={handleSortChange}
+                disableColumnMenu
               />
             </>
           )}
