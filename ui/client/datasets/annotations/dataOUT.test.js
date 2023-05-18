@@ -1056,8 +1056,7 @@ describe('formatAnnotationsOUT', () => {
       ]);
   });
 
-
-test('regular admin0 geo is forced to resolve_to_gadm=true', () => {
+  test('regular admin0 geo is forced to resolve_to_gadm=true', () => {
     const input = {
       'admin0': {
         aliases: [],
@@ -1086,7 +1085,6 @@ test('regular admin0 geo is forced to resolve_to_gadm=true', () => {
         time_format: '',
         'date.multi-column': false,
 
-        multiPartBase: 'admin0',
         annotated: true
       }
     };
@@ -1109,6 +1107,61 @@ test('regular admin0 geo is forced to resolve_to_gadm=true', () => {
           qualifies: [],
           qualifierrole: 'breakdown',
           resolve_to_gadm: true
+        },
+      ]);
+  });
+
+test('date format is removed for timestamp/epoch fields', () => {
+    const input = {
+      'timestamp': {
+        aliases: [],
+
+        category: 'time',
+        display_name: 'my epoch ts',
+        description: 'date format is not used so it will be removed',
+
+        isQualifies: false,
+        qualifierrole: 'breakdown',
+        qualifies: [],
+
+        geo_type: '',
+        primary: true,
+        gadm_level: '',
+        'geo.coordinate-pair': false,
+
+        'geo.multi-column': false,
+
+        'geo.multi-column.admin0': '',
+        'geo.multi-column.admin1': '',
+        'geo.multi-column.admin2': '',
+        'geo.multi-column.admin3': '',
+
+        date_type: 'epoch',
+        time_format: 'unix_time', // what helped us discover this bug; cartwrights format annotaition
+        'date.multi-column': false,
+
+        annotated: true
+      }
+    };
+
+    const output = formatAnnotationsOUT(input);
+
+    expect(output.date)
+      .toEqual([
+        {
+          name: 'timestamp',
+          type: 'date',
+
+          date_type: 'epoch',
+          time_format: '',
+
+          description: 'date format is not used so it will be removed',
+          display_name: 'my epoch ts',
+          primary_date: true,
+
+          aliases: {},
+          qualifies: [],
+          qualifierrole: 'breakdown'
         },
       ]);
   });
