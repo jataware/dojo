@@ -122,7 +122,7 @@ const ViewDocumentsGrid = withStyles(() => ({
   const fetchData = useCallback(
     // we use DataGrid's page index to maintain a cache for what DG should display
     // on each page of results. The API just uses a scroll_id and has no notion of this page
-    async (page, column = 'creation_date', order = 'desc') => {
+    async ({ page, column = 'creation_date', order = 'desc' }) => {
       setDocumentsLoading(true);
       setDocumentsError(null);
       // clear documents when loading so that we don't display the previous page
@@ -165,7 +165,7 @@ const ViewDocumentsGrid = withStyles(() => ({
   // do the initial fetch to load our first page
   useEffect(() => {
     // fetchData only references refs and state setters, so this should only be called once
-    fetchData(0);
+    fetchData({ page: 0 });
   }, [fetchData]);
 
   // fetch the rows out of the cache for page 0 so that we maintain it even when we clear
@@ -174,7 +174,7 @@ const ViewDocumentsGrid = withStyles(() => ({
     || Number(cachedDocumentsRef.current[0]?.hits) || 0;
 
   const handlePageChange = (newPage) => {
-    fetchData(newPage);
+    fetchData({ page: newPage });
   };
 
   const handleSortChange = (newSort) => {
@@ -183,7 +183,7 @@ const ViewDocumentsGrid = withStyles(() => ({
     // clear the cache so we don't try to reload previous results (that have a different sort)
     cachedDocumentsRef.current = {};
     // fetch the data & load it into the grid
-    fetchData(0, newSort[0].field, newSort[0].sort);
+    fetchData({ page: 0, column: newSort[0].field, order: newSort[0].sort });
   };
 
   const [searchTerm, setSearchTerm] = useState('');

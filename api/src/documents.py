@@ -7,6 +7,7 @@ from datetime import datetime
 from typing import Any, Dict, Generator, List, Optional
 from urllib.parse import urlparse
 from elasticsearch import Elasticsearch
+from elasticsearch.exceptions import RequestError
 from fastapi import (
     APIRouter,
     HTTPException,
@@ -327,39 +328,41 @@ def latest_documents(scroll_id: Optional[str] = None, size: int = 10):
 def list_documents(
     scroll_id: Optional[str] = None,
     size: int = 10,
-    sort_by: Optional[str] = Query(None, description="Field to sort by"),
-    order: Optional[str] = Query(None, description="Order to sort by")
+    sort_by: Optional[str] = Query("creation_date", description="Field to sort by"),
+    order: Optional[str] = Query("desc", description="Order to sort by")
 ):
     """
     Retrieves all stored documents, regardless of files uploaded or processed.
-    Optional `sort_by` and `order` params return sorted results.
+    `sort_by` and `order` params return sorted results.
     """
 
     if order not in ["asc", "desc"]:
         raise HTTPException(status_code=400, detail="Invalid sort order. Must be either 'asc' or 'desc'")
 
-    valid_fields = ["title", "publisher", "description", "creation_date"]
-    if sort_by not in valid_fields:
-        raise HTTPException(status_code=400, detail=f"Invalid sort field. Must be one of {valid_fields}")
-
-    # Apply .keyword to specific fields
-    if sort_by in ["title", "publisher", "description"]:
+    # Apply .keyword to the fields with keyword mappings
+    if sort_by in ["type", "description", "original_language", "classification", "title", "producer", "stated_genre", "publisher"]:
         sort_by += ".keyword"
 
     q = {
         "query": {
             "match_all": {}
-        }
+        },
+        "sort": [
+            {
+                sort_by: {
+                    "order": order
+                }
+            }
+        ]
     }
 
-    # Only add sort clause if sort_by and order are defined
-    if sort_by and order:
-        q["sort"] = [{sort_by: {"order": order}}]
-
-    if not scroll_id:
-        results = es.search(index="documents", body=q, scroll="2m", size=size)
-    else:
-        results = es.scroll(scroll_id=scroll_id, scroll="2m")
+    try:
+        if not scroll_id:
+            results = es.search(index="documents", body=q, scroll="2m", size=size)
+        else:
+            results = es.scroll(scroll_id=scroll_id, scroll="2m")
+    except RequestError as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
     totalDocsInPage = len(results["hits"]["hits"])
 
