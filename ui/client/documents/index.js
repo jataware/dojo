@@ -69,13 +69,13 @@ function CustomLoadingOverlay() {
 const documentColumns = [
   {
     field: 'creation_date',
-    headerName: 'Creation Date',
+    headerName: 'Date Created',
     minWidth: 200,
   },
   {
-    field: 'title',
-    headerName: 'Title',
-    flex: 1
+    field: 'uploaded_at',
+    headerName: 'Date Uploaded',
+    minWidth: 200,
   },
   {
     field: 'publisher',
@@ -83,11 +83,11 @@ const documentColumns = [
     width: 200,
   },
   {
-    field: 'description',
-    headerName: 'Description',
-    renderCell: expandableCell,
-    flex: 2
-  }
+    field: 'title',
+    headerName: 'Title',
+    flex: 1,
+    renderCell: expandableCell
+  },
 ];
 
 /**
