@@ -1,0 +1,11 @@
+version: '2.2'
+services:
+  testmos:
+    build: .
+    container_name: dojo-testmos
+    networks:
+      - dojo
+
+networks:
+  dojo:
+    driver: bridge
