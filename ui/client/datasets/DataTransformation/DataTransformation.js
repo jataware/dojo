@@ -4,6 +4,8 @@ import React, {
 
 import axios from 'axios';
 
+import cloneDeep from 'lodash/cloneDeep';
+
 import AspectRatioIcon from '@material-ui/icons/AspectRatio';
 import TodayIcon from '@material-ui/icons/Today';
 import GridOnIcon from '@material-ui/icons/GridOn';
@@ -344,9 +346,31 @@ const DataTransformation = withStyles(() => ({
       if (modified) {
         localStorage.setItem(`dataTransformation-${datasetInfo.id}`, true);
       }
-      // only do the next step after we've kicked off the jobs
-      // and heard back that they have started
-      handleNext();
+
+      // We want to store a backup of the data transformation decisions
+      // first construct an object with all the filled transformations in it
+      const transformations = {};
+      if (savedDrawings && savedDrawings.length !== 0) transformations.clip_geo = savedDrawings;
+      if (savedMapResolution !== null) transformations.regrid_geo = savedMapResolution;
+      if (savedTimeResolution !== null) transformations.scale_time = savedTimeResolution;
+      if (savedAggregation !== null) transformations.scale_time_aggregation = savedAggregation;
+      if (savedTimeBounds !== null) transformations.clip_time = savedTimeBounds;
+
+      const clonedAnnotations = cloneDeep(annotations.annotations);
+      // then add it to a deep copy of the annotations object
+      clonedAnnotations.transformations = transformations;
+
+      // and PATCH that to the dataset's annotations
+      axios.patch(
+        `/api/dojo/indicators/${datasetInfo.id}/annotations`, { annotations: clonedAnnotations }
+      ).then(() => {
+// TODO: remove this -- temporary check to make sure the patch is working
+axios.get(`/api/dojo/indicators/${datasetInfo.id}/verbose`).then((resp) => {
+  console.log('this is the /verbose response:', resp);
+});
+        // only do the next step after we've kicked off the jobs and updated the annotations
+        // handleNext();
+      });
     });
   };
 
