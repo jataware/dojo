@@ -479,15 +479,16 @@ def patch_annotation(payload: MetadataSchema.MetaModel, indicator_id: str):
         body = json.loads(payload.json(exclude_unset=True))
 
         # Handles datasets being regsitered with no date.
-        if not body.get("annotations").get("date", []):
-            logger.info("No Date Annotated, making one.")
-            rawfile_path = os.path.join(
-                settings.DATASET_STORAGE_BASE_URL,
-                indicator_id,
-                f"raw_data.csv",
-            )
-            date_annotation = add_date_to_dataset(path=rawfile_path)
-            body["annotations"]["date"] = [date_annotation]
+        if body.get("annotations"):
+            if not body.get("annotations").get("date", []):
+                logger.info("No Date Annotated, making one.")
+                rawfile_path = os.path.join(
+                    settings.DATASET_STORAGE_BASE_URL,
+                    indicator_id,
+                    f"raw_data.csv",
+                )
+                date_annotation = add_date_to_dataset(path=rawfile_path)
+                body["annotations"]["date"] = [date_annotation]
 
         es.update(index="annotations", body={"doc": body}, id=indicator_id)
 
