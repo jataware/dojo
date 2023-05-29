@@ -3,7 +3,7 @@ describe('ModelRuns List', function () {
   before(function () {
     cy.fixture('modelruns.json')
       .then((runs) => {
-        cy.intercept('/api/dojo/runs', { body: {results: runs} });
+        cy.intercept('/api/dojo/runs*', { body: {results: runs} });
         cy.visit('/runs');
       });
   });
@@ -75,7 +75,7 @@ describe(`Summary Page for Model Runs`, function () {
           .should('have.text', run.parameters[0].value);
       });
 
-      it('Refresh Status button available for not completed runs', () => {
+      it('Refresh or Logs button available for runs (refresh for not completed, logs for completed runs)', () => {
         if (!isCompleted) {
           cy.findAllByRole('button')
             .contains('REFRESH');
