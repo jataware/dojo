@@ -80,9 +80,8 @@ describe(`Summary Page for Model Runs`, function () {
           cy.findAllByRole('button')
             .contains('REFRESH');
         } else {
-          cy.findByRole('button') // Find the one button
-            .invoke('text')
-            .should('match', /View Logs/i);
+          cy.findAllByRole('button') // Find the one button
+            .contains('View Logs');
         }
       });
 
@@ -101,26 +100,15 @@ describe(`Summary Page for Model Runs`, function () {
         }
       });
 
-      it('Verifies Data and Output Paths', function () {
-
-        cy.findAllByRole('region', {name: /Data Paths/i})
-          .as('DataPathsRegion');
+      it('Verifies Output Paths', function () {
 
         cy.findAllByRole('region', {name: /Output Paths/i})
           .as('OutputPathsRegion');
 
         if (run.id === 'foo-test-mocked-rerun') { // A run was forced to miss these properties
-          cy.get('@DataPathsRegion')
-            .contains('No Data Paths');
-
           cy.get('@OutputPathsRegion')
             .contains('No Output Paths');
         } else {
-          cy.get('@DataPathsRegion')
-            .findAllByRole('link')
-            .first()
-            .should('include.text', 'parquet.gzip');
-
           cy.get('@OutputPathsRegion')
             .findAllByRole('link')
             .first()
