@@ -205,12 +205,6 @@ describe('Dataset Register Flow', function () {
 
     cy.get('@AnnotateButtons').eq(1).as('ValueColumnLabel');
 
-    // cy
-    //   .get('@ValueColumnLabel')
-    //   .siblings('div')
-    //   .findByText('inferred')
-    //   .should('exist');
-
     cy.get('@ValueColumnLabel')
       .click();
 
