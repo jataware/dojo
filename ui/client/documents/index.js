@@ -4,6 +4,7 @@ import React, {
 
 import axios from 'axios';
 import debounce from 'lodash/debounce';
+import { format } from 'date-fns'
 
 import Button from '@material-ui/core/Button';
 import { GridOverlay, DataGrid } from '@material-ui/data-grid';
@@ -76,6 +77,11 @@ const documentColumns = [
     field: 'uploaded_at',
     headerName: 'Date Uploaded',
     minWidth: 200,
+    renderCell: (params) => {
+      if (params.value) {
+        return <span>{format(params.value, 'yyyy-MM-dd')}</span>;
+      }
+    },
   },
   {
     field: 'publisher',
