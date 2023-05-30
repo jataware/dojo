@@ -155,6 +155,12 @@ def generate_index_model_weights(
     compute_weights(tree)
     compute_edge_percent(tree)
 
+    # GENERATE THE PAYLOAD UNCHARTED EXPECTS
+
+    output = generate_output_payload(tree)
+
+    return output
+
 
 # TODO REMOVE
 api_url = "http://causemos-analyst.dojo-modeling.com/api/dojo/dojo/"
@@ -281,6 +287,18 @@ def compute_edge_percent(  # TODO this returns all the final percents in the tre
             node.edges[parent_name] = 0
     for child in node.children:
         compute_edge_percent(child)
+
+
+def generate_output_payload(node):
+    output_payload = {}
+
+    def cycle_tree(node):
+        if node.parent:
+            output_payload[node.name] = node.edges.values()[0]
+        for child in node.children:
+            cycle_tree(child)
+
+    return output_payload
 
 
 # def print_tree(node, indent=""):
