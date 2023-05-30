@@ -2,9 +2,9 @@
 
 ## Setup
 
-1. Clone repo
-2. Run `$ make init` to configure and pull the required submodules
-3. Optional: Add your secrets to the file `envfile`  
+1. Clone repo: `dev` is used as the stage/development branch. All work and Pull Requests are based against it.
+2. Run `$ make init` to configure and pull the required submodules.
+3. Optional: Add your secrets to the file `envfile`.
 
 ##### Optional: Dev Setup to Publish Models
 To publish and work with Model flows:
