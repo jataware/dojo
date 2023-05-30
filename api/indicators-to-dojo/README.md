@@ -6,8 +6,8 @@
 1. Export your AWS credentials as environmental variables:
 
 	```
-	export AWS_ACCESS_KEY=<HERE>
-	export AWS_SECRET_KEY=<HERE>
+	export AWS_ACCESS_KEY_ID=<HERE>
+	export AWS_SECRET_ACCESS_KEY=<HERE>
 	```
 
 2. Have a local instance of Dojo running __*OR*__ update the url in the `indicator_to_dojo.py` script.
