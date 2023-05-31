@@ -129,10 +129,10 @@ services:
       interval: 3s
       retries: 20
       test:
-      - CMD
-      - curl
-      - --fail
-      - http://localhost:9200/_cluster/health
+        - CMD
+        - curl
+        - --fail
+        - http://localhost:9200/_cluster/health
       timeout: 3s
   redis:
     env_file:
@@ -209,6 +209,15 @@ services:
       - dmc-data-results:/data/results
       - dmc-data-mappers:/data/mappers
       - dmc-data-model_configs:/data/model_configs
+  testmos:
+    build:
+      context: ./testmos
+    env_file:
+      - envfile
+    networks:
+      - dojo-stack
+    ports:
+      - 8012:8012
 
 networks:
   dojo-stack:

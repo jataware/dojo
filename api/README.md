@@ -42,7 +42,9 @@ docker-compose -f docker-compose-dev.yaml up -d
 
 This will turn on the API, Elasticsearch and Kibana, but the API will be in `reload` mode and any changes made to the local repository will be reflected in the container to facilitate development.
 
-You should also ensure that `CAUSEMOS_DEBUG` in `.env` is set to `true` as this will bypass notifying Uncharted that indicators were created. In production, this should be set to `false` so that Uncharted gets notified whenever a new indicator is created.
+You should also ensure that `CAUSEMOS_DEBUG` in `envfile` is set to `true` as this will bypass notifying Uncharted that indicators were created. In production, this should be set to `false` so that Uncharted gets notified whenever a new indicator is created.
+
+Or, if the causemos mock docker service is running on development (testmos), you may set `CAUSEMOS_DEBUG=false` and change the causemos env url to: `CAUSEMOS_IND_URL=http://testmos:8012/api/maas`
 
 ## Setup
 
