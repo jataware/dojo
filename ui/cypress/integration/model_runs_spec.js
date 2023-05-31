@@ -100,19 +100,32 @@ describe(`Summary Page for Model Runs`, function () {
         }
       });
 
-      it('Verifies Output Paths', function () {
+      it('Verifies Data Paths and Output Paths', function () {
+
+        cy.findAllByRole('region', {name: /Data Paths/i})
+          .as('DataPathsRegion');
 
         cy.findAllByRole('region', {name: /Output Paths/i})
           .as('OutputPathsRegion');
 
         if (run.id === 'foo-test-mocked-rerun') { // A run was forced to miss these properties
+          cy.get('@DataPathsRegion')
+            .contains('No Data Paths');
+
           cy.get('@OutputPathsRegion')
             .contains('No Output Paths');
         } else {
+
+          cy.get('@DataPathsRegion')
+            .findAllByRole('link')
+            .first()
+            .should('include.text', 'parquet.gzip');
+
           cy.get('@OutputPathsRegion')
             .findAllByRole('link')
             .first()
             .should('include.text', 'lime-cat');
+
         }
       });
 
