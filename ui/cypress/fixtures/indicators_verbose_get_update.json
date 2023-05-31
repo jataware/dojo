@@ -477,6 +477,7 @@
                     "aliases": {},
                     "qualifies": [],
                     "name": "date",
+                    "primary_date": true,
                     "description": "dwd",
                     "display_name": "",
                     "type": "date"
