@@ -5,6 +5,8 @@ services:
     container_name: dojo-testmos
     networks:
       - dojo-stack
+    ports:
+      - 8012:8012
 
 networks:
   dojo:

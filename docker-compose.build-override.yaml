@@ -217,7 +217,7 @@ services:
     networks:
       - dojo-stack
     ports:
-      - 8012:80
+      - 8012:8012
 
 networks:
   dojo-stack:

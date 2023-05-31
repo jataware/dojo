@@ -11,7 +11,7 @@ ADD . /app
 RUN pip install --no-cache-dir fastapi uvicorn
 
 # Make port 80 available to the world outside this container
-EXPOSE 80
+EXPOSE 8012
 
 # Run app.py when the container launches
-CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "80"]
+CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8012"]
