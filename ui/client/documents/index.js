@@ -4,6 +4,7 @@ import React, {
 
 import axios from 'axios';
 import debounce from 'lodash/debounce';
+import { format } from 'date-fns'
 
 import Button from '@material-ui/core/Button';
 import { GridOverlay, DataGrid } from '@material-ui/data-grid';
@@ -69,13 +70,18 @@ function CustomLoadingOverlay() {
 const documentColumns = [
   {
     field: 'creation_date',
-    headerName: 'Creation Date',
+    headerName: 'Date Created',
     minWidth: 200,
   },
   {
-    field: 'title',
-    headerName: 'Title',
-    flex: 1
+    field: 'uploaded_at',
+    headerName: 'Date Uploaded',
+    minWidth: 200,
+    renderCell: (params) => {
+      if (params.value) {
+        return <span>{format(params.value, 'yyyy-MM-dd')}</span>;
+      }
+    },
   },
   {
     field: 'publisher',
@@ -83,11 +89,11 @@ const documentColumns = [
     width: 200,
   },
   {
-    field: 'description',
-    headerName: 'Description',
-    renderCell: expandableCell,
-    flex: 2
-  }
+    field: 'title',
+    headerName: 'Title',
+    flex: 1,
+    renderCell: expandableCell
+  },
 ];
 
 /**

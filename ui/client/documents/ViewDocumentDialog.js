@@ -61,7 +61,7 @@ export const ViewDocumentDialog = ({ doc, onClose }) => {
         {!isEmpty(doc) && (
           <dl>
             {['publisher', 'creation_date', 'type', 'original_language',
-              'classification', 'producer', 'stated_genre', 'id']
+              'classification', 'producer', 'stated_genre', 'id', 'description']
               .map((item) => (document[item] ? (
                 <div key={item}>
                   <dt>{startCase(item)}</dt>
