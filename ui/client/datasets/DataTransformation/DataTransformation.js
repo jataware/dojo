@@ -118,10 +118,11 @@ const DataTransformation = withStyles(() => ({
   const [savedDrawings, setSavedDrawings] = useState([]);
 
   const [savedMapResolution, setSavedMapResolution] = useState(null);
+  const [savedMapAggregation, setSavedMapAggregation] = useState(null);
 
   const [timeResolutionOptions, setTimeResolutionOptions] = useState([]);
   const [savedTimeResolution, setSavedTimeResolution] = useState(null);
-  const [savedAggregation, setSavedAggregation] = useState(null);
+  const [savedTimeAggregation, setSavedTimeAggregation] = useState(null);
 
   const [savedTimeBounds, setSavedTimeBounds] = useState(null);
 
@@ -300,7 +301,9 @@ const DataTransformation = withStyles(() => ({
 
   const processAdjustGeo = () => {
     if (savedMapResolution) {
-      const args = generateProcessGeoResArgs(annotations, savedMapResolution, mapResolution);
+      const args = generateProcessGeoResArgs(
+        annotations, savedMapResolution, mapResolution, savedMapAggregation
+      );
       return startElwoodJob(datasetInfo.id, args, 'transformation_processors.regrid_geo');
     }
   };
@@ -325,7 +328,9 @@ const DataTransformation = withStyles(() => ({
 
   const processAdjustTime = () => {
     if (savedTimeResolution) {
-      const args = generateProcessTempResArgs(annotations, savedTimeResolution, savedAggregation);
+      const args = generateProcessTempResArgs(
+        annotations, savedTimeResolution, savedTimeAggregation
+      );
       return startElwoodJob(datasetInfo.id, args, 'transformation_processors.scale_time');
     }
   };
@@ -360,6 +365,8 @@ const DataTransformation = withStyles(() => ({
             resolutionOptions={mapResolutionOptions}
             setSavedResolution={setSavedMapResolution}
             savedResolution={savedMapResolution}
+            savedAggregation={savedMapAggregation}
+            setSavedAggregation={setSavedMapAggregation}
             jobString="transformation_processors.regrid_geo"
             datasetId={datasetInfo.id}
             annotations={annotations}
@@ -389,8 +396,8 @@ const DataTransformation = withStyles(() => ({
             resolutionOptions={timeResolutionOptions}
             setSavedResolution={setSavedTimeResolution}
             savedResolution={savedTimeResolution}
-            savedAggregation={savedAggregation}
-            setSavedAggregation={setSavedAggregation}
+            savedAggregation={savedTimeAggregation}
+            setSavedAggregation={setSavedTimeAggregation}
             jobString="transformation_processors.scale_time"
             datasetId={datasetInfo.id}
             annotations={annotations}

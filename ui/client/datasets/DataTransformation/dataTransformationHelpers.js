@@ -10,11 +10,14 @@ export const generateProcessTempResArgs = (annotations, resolution, aggregation)
   return args;
 };
 
-export const generateProcessGeoResArgs = (annotations, newMapResolution, oldMapResolution) => {
+export const generateProcessGeoResArgs = (
+  annotations, newMapResolution, oldMapResolution, aggregation
+) => {
   const args = {
     datetime_column: [annotations?.annotations.date[0].name],
     geo_columns: [],
     scale_multi: newMapResolution,
+    aggregation_function_list: [aggregation],
     scale: oldMapResolution,
   };
   annotations.annotations.geo.forEach((geo) => args.geo_columns.push(geo.name));

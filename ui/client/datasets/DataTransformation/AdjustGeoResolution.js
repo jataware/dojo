@@ -3,6 +3,7 @@ import React, { useCallback, useState } from 'react';
 import ArrowForwardIcon from '@material-ui/icons/ArrowForward';
 import Button from '@material-ui/core/Button';
 import FormControl from '@material-ui/core/FormControl';
+import FormHelperText from '@material-ui/core/FormHelperText';
 import InputLabel from '@material-ui/core/InputLabel';
 import MenuItem from '@material-ui/core/MenuItem';
 import Select from '@material-ui/core/Select';
@@ -12,15 +13,28 @@ import { withStyles } from '@material-ui/core/styles';
 import PreviewTransformation from './PreviewTransformation';
 import { generateProcessGeoResArgs } from './dataTransformationHelpers';
 
+const aggregationFunctions = [
+  'CONSERVATIVE',
+  'SUM',
+  'MINIMUM',
+  'MAXIMUM',
+  'MEDIAN',
+  'AVERAGE',
+  'BILINEAR',
+  'BICUBIC',
+  'NEAREST_NEIGHBOR',
+];
+
 export default withStyles((theme) => ({
   selectWrapper: {
-    width: '180px',
+    width: '200px',
   },
   bottomWrapper: {
     display: 'flex',
     justifyContent: 'center',
     gap: theme.spacing(6),
     margin: [[theme.spacing(6), 0]],
+    flexWrap: 'wrap',
   },
   textWrapper: {
     backgroundColor: theme.palette.grey[200],
@@ -34,6 +48,7 @@ export default withStyles((theme) => ({
   },
   button: {
     minWidth: '160px',
+    height: '56px',
   },
   arrowIcon: {
     display: 'flex',
@@ -47,28 +62,42 @@ export default withStyles((theme) => ({
   resolutionOptions,
   setSavedResolution,
   savedResolution,
+  savedAggregation,
+  setSavedAggregation,
   jobString,
   datasetId,
   annotations,
   cleanupRef,
 }) => {
   const [selectedResolution, setSelectedResolution] = useState(savedResolution || '');
+  const [selectedAggregation, setSelectedAggregation] = useState(savedAggregation || '');
+  const [saveAttempt, setSaveAttempt] = useState(false);
 
   const handleSaveClick = () => {
-    if (selectedResolution !== '') setSavedResolution(selectedResolution);
-
-    closeDrawer();
+    // toggle saveAttempt to show our errors if either select hasn't been chosen
+    setSaveAttempt(true);
+    if (selectedResolution !== '' && selectedAggregation !== '') {
+      setSavedResolution(selectedResolution);
+      setSavedAggregation(selectedAggregation);
+      closeDrawer();
+    }
   };
 
   const handleChangeResolution = (event) => {
     setSelectedResolution(event.target.value);
   };
 
+  const handleChangeAggregation = (event) => {
+    setSelectedAggregation(event.target.value);
+  };
+
   const createPreviewArgs = useCallback((argsAnnotations) => {
-    const args = generateProcessGeoResArgs(argsAnnotations, selectedResolution, oldResolution);
+    const args = generateProcessGeoResArgs(
+      argsAnnotations, selectedResolution, oldResolution, selectedAggregation
+    );
     args.preview_run = true;
     return args;
-  }, [selectedResolution, oldResolution]);
+  }, [selectedResolution, selectedAggregation, oldResolution]);
 
   return (
     <div>
@@ -94,16 +123,44 @@ export default withStyles((theme) => ({
           </div>
           <div className={classes.bottomWrapper}>
             <FormControl variant="outlined" className={classes.selectWrapper}>
+              <InputLabel error={saveAttempt && !selectedAggregation}>
+                Aggregation Function
+              </InputLabel>
+              <Select
+                value={selectedAggregation}
+                onChange={handleChangeAggregation}
+                label="Aggregation Function"
+                error={saveAttempt && !selectedAggregation}
+              >
+                {aggregationFunctions.map((funct) => (
+                  <MenuItem key={funct} value={funct}>
+                    {funct.toLowerCase().replaceAll('_', ' ')}
+                  </MenuItem>
+                ))}
+              </Select>
+              {saveAttempt && !selectedAggregation && (
+                <FormHelperText error={saveAttempt && !selectedAggregation}>
+                  Please select an aggregation function
+                </FormHelperText>
+              )}
+            </FormControl>
+            <FormControl variant="outlined" className={classes.selectWrapper}>
               <InputLabel>Resolution</InputLabel>
               <Select
                 value={selectedResolution}
                 onChange={handleChangeResolution}
                 label="Resolution"
+                error={saveAttempt && !selectedResolution}
               >
                 {resolutionOptions.map((option) => (
                   <MenuItem key={option} value={option}>{option.toFixed(2)} km</MenuItem>
                 ))}
               </Select>
+              {saveAttempt && !selectedResolution && (
+                <FormHelperText error={saveAttempt && !selectedResolution}>
+                  Please select a resolution
+                </FormHelperText>
+              )}
             </FormControl>
             <Button
               color="primary"
