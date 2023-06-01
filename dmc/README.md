@@ -14,8 +14,8 @@ The Domain Model Controller (DMC), is an implementation of Airflow designed to s
 This assumes you are already running the Dojo API locally. First, you must set environment variables for the AWS access and secret keys in order to be able to push results to S3:
 
 ```
-export AWS_ACCESS_KEY=youraccesskey
-export AWS_SECRET_KEY=yoursecretkey
+export AWS_ACCESS_KEY_ID=youraccesskey
+export AWS_SECRET_ACCESS_KEY=yoursecretkey
 ```
 
 > **Note**: you must **URL encode** your access and secret keys before setting the environment variables
