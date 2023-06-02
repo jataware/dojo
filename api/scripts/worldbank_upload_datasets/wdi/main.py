@@ -31,13 +31,13 @@ def populate_wdi_data(args):
         print(args)
         download_data()
 
-        raw_data = pd.read_csv("data/WDIData.csv")
+        raw_data = pd.read_csv(path_join(downloads_dir, "WDIData.csv"))
 
         # list of valid country codes
         # countries = pd.read_csv('src/data/country.csv')
         countries = pd.read_csv(path_join(assets_dir, "country.csv"))
         country_codes = set(countries["Alpha-3_Code"].tolist())
-        series_info = pd.read_csv("data/WDISeries.csv")
+        series_info = pd.read_csv(path_join(downloads_dir, "WDISeries.csv"))
 
         # DEBUG. user should define what the groups are in indicator_groups.json
         save_indicators(raw_data, series_info)
@@ -104,23 +104,24 @@ def download_data():
 
     data_link = "http://databank.worldbank.org/data/download/WDI_csv.zip"
 
-    # download to 'data' folder if not already downloaded
-    if not os.path.exists("data"):
-        os.makedirs("data")
-    if not os.path.exists("data/WDI_csv.zip"):
-        call(["wget", data_link, "-O", "data/WDI_csv.zip"])
+    # download to 'downloads' folder if not already downloaded
+    if not os.path.exists(downloads_dir):
+        os.makedirs(downloads_dir)
+
+    if not os.path.exists(path_join(downloads_dir, "WDI_csv.zip")):
+        call(["wget", data_link, "-O", path_join(downloads_dir, "WDI_csv.zip")])
     else:
-        print("Skipping download, data already exists")
+        print("Skipping download, data already exists.")
 
     # unzip data if not already unzipped
-    with ZipFile("data/WDI_csv.zip", "r") as zip_ref:
+    with ZipFile(path_join(downloads_dir, "WDI_csv.zip"), "r") as zip_ref:
         filenames = zip_ref.namelist()
-        if not all([os.path.exists("data/" + filename) for filename in filenames]):
+        if not all([os.path.exists(path_join(downloads_dir, filename)) for filename in filenames]):
             print("Unzipping data...", end="", flush=True)
             zip_ref.extractall("data")
-            print("Done")
+            print("Done.")
         else:
-            print("Skipping unzip, data already exists")
+            print("Skipping unzip, data already exists.")
 
 
 def save_indicators(df, series_info):
