@@ -15,7 +15,6 @@ class Settings(BaseSettings):
     DMC_PASSWORD: str
     DMC_LOCAL_DIR: str
 
-    DATASET_STORAGE_BASE_URL: str
     DOJO_URL: str
 
     REDIS_HOST: str
@@ -26,9 +25,11 @@ class Settings(BaseSettings):
     DOCKERHUB_PWD: str = ""
     DOCKERHUB_ORG: str = "jataware"
 
-    DATASET_STORAGE_BASE_URL: str = "file:///datasets/"
+    DATASET_STORAGE_BASE_URL: str = "s3://datasets/"
 
-    CONFIG_STORAGE_BASE: str = "file:///dojo/configs/"
+    DOCUMENT_STORAGE_BASE_URL: str = "s3://documents/"
+
+    CONFIG_STORAGE_BASE: str = "s3://dojo/configs/"
 
     UVICORN_RELOAD: bool = False
 
@@ -36,9 +37,13 @@ class Settings(BaseSettings):
     UAZ_THRESHOLD: str = ""
     UAZ_HITS: str = ""
 
+    DEBUG: bool = False
+
     PLUGINS: Dict[str, str] = {
         # "my_plugin": "plugin_module.MyPlugin",  # Where plugin_module.MyPlugin is an importable dotted path and MyPlugin
-                                                  # is a subclass of utils.PluginInterface
+        # is a subclass of utils.PluginInterface
+        "causemos": "src.plugins.causemos.CausemosPlugin",
+        "sync": "src.plugins.sync.SyncPlugin",
         "logger": "src.plugins.logging.LoggingPlugin",
     }
 

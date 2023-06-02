@@ -46,7 +46,7 @@ function mockHttpRequests() {
     url: '/api/dojo/indicators/*/preview/processed*'
   }, {fixture: 'indicators_preview_processed_post.json'});
 
-  // This is done to add mixmasta/jobs results to datasetInfo
+  // This is done to add elwood/jobs results to datasetInfo
   // TODO, should we change to PATCH, to simplify available stepper/flows?
   // PUT will reset some values.
   cy.intercept(
@@ -67,7 +67,7 @@ function mockHttpRequests() {
   cy.intercept({
     url:'/api/dojo/indicators/*/verbose*',
     method: 'GET'
-  }, {fixture: 'indicators_verbose_get.json'}).as('DatasetsVerboseGETStub');
+  }, {fixture: 'indicators_verbose_get_update.json'}).as('DatasetsVerboseGETStub');
 
   cy.intercept({
     url:'/api/dojo/indicators/validate_date*',
@@ -130,7 +130,7 @@ describe('Dataset Update Metadata Flow', function () {
     // Annotate page actions
 
     // ====== Annotate the date column ==============
-    cy.findByText('date').click();
+    cy.findAllByRole('button', {name: /^edit/i}).eq(0).click();
 
     cy.findAllByRole('button', {name: /^type/i})
       .should('have.class', 'Mui-disabled');
@@ -144,33 +144,6 @@ describe('Dataset Update Metadata Flow', function () {
 
     cy.findByRole('button', {name: /^save/i})
       .click();
-
-    // ========== Annotate the value column as feature =============
-
-    cy.findByText('color_hue').as('ColorColumnLabel');
-
-    cy
-      .get('@ColorColumnLabel')
-      .siblings('div')
-      .findByText('inferred')
-      .should('not.exist');
-
-    cy.get('@ColorColumnLabel')
-      .click();
-
-    cy.findAllByRole('button', {name: /type/i})
-      .should('have.class', 'Mui-disabled');
-
-    cy.findAllByRole('textbox', {name: /^Description/i})
-      .type(' sample column description for a feature');
-
-    cy.findByRole('textbox', {name: /^units/i})
-      .type('mmmm');
-
-    cy.findAllByRole('button', {name: /clear/i})
-      .should('be.disabled');
-
-    cy.findAllByRole('button', {name: /save/i}).click();
 
     // READY TO SUBMIT ANNOTATE step
 

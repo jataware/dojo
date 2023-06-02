@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import clsx from 'clsx';
 import { Form, Formik } from 'formik';
 import * as yup from 'yup';
@@ -56,7 +56,7 @@ const initialColumnValues = {
 
   // Namespaced values, such as below (date.sample, geo.another), as only used on UI
   // If the data needs to be sent to server, it may be parsed and formatted
-  // to a different shape and concepts internally (see helpers.js)
+  // to a different shape and concepts internally (see helpers.js, dataIN.js, and dataOUT.js)
   'geo.multi-column': false,
   'geo.coordinate-pair': false,
   'geo.coordinate-pair-column': '', // if inferred data returns, use it
@@ -250,10 +250,37 @@ export default withStyles(({ palette, spacing, breakpoints }) => ({
   multiPartData, setMultiPartData,
   validateDateFormat,
   onSubmit, onClose, columnStats,
-  fieldsConfig=()=>({})
+  fieldsConfig = () => ({})
 }) => {
-
   const [displayStatistics, setDisplayStatistics] = React.useState(false);
+  // focusRef is passed down to columnAnnotation to autofocus on the first input
+  // which we have to do manually due to the potential focus on grid cells (MUI autofocus fails)
+  const focusRef = useRef(null);
+
+  useEffect(() => {
+    if (focusRef.current) {
+      // setTimeout is necessary here to bump this back in the render cycle
+      // to after the drawer is on the page (this seems to be the issue, at least)
+      setTimeout(() => focusRef.current.focus());
+    }
+  }, [columnName]);
+
+  useEffect(() => {
+    const onEscape = (event) => {
+      if (event.key === 'Escape') {
+        onClose();
+      }
+    };
+
+    // only add the event listener if we have the drawer open
+    if (columnName) {
+      document.addEventListener('keydown', onEscape);
+    }
+
+    return () => {
+      document.removeEventListener('keydown', onEscape);
+    };
+  }, [onClose, columnName]);
 
   function clearColumnAnnotations() {
     const multiPart = get(multiPartData, columnName);
@@ -295,25 +322,25 @@ export default withStyles(({ palette, spacing, breakpoints }) => ({
 
   const statDataAvailable = !isEmpty(statistics) || !isEmpty(histogramData.labels);
 
-  const allAnnotatedColumns = columns.filter(column => annotations[column.field]);
+  const allAnnotatedColumns = columns.filter((column) => annotations[column.field]);
 
   return (
     <Drawer
       variant="persistent"
-      classes={{ paper: clsx({[classes.root]: true, [classes.expanded]: displayStatistics }) }}
+      classes={{ paper: clsx({ [classes.root]: true, [classes.expanded]: displayStatistics }) }}
       anchor={anchorPosition}
       open={Boolean(columnName)}
       onClose={onClose}
     >
       {columnName && (
-        <div style={{height: '200%', display: 'flex'}}>
+        <div style={{ height: '200%', display: 'flex' }}>
 
           <div className={classes.tabsPanel}>
             <div>
               <Button
                 fullWidth
                 disableRipple
-                classes={{root: classes.statisticsButton}}
+                classes={{ root: classes.statisticsButton }}
                 onClick={() => setDisplayStatistics(!displayStatistics)}
                 disabled={!statDataAvailable}
                 color="primary"
@@ -421,6 +448,8 @@ export default withStyles(({ palette, spacing, breakpoints }) => ({
                       ...individualPartsOverrides,
                       [targetColumnName]: {
                         ...cleanValues,
+                        display_name: cleanValues.display_name
+                          ? cleanValues.display_name : columnName,
                         annotated: true
                       }
                     };
@@ -428,7 +457,7 @@ export default withStyles(({ palette, spacing, breakpoints }) => ({
                     annotateColumns(newAnnotations);
 
                     onClose();
-                    onSubmit();
+                    onSubmit(columnName);
                   }}
                 >
                   {(formik) => (
@@ -439,8 +468,9 @@ export default withStyles(({ palette, spacing, breakpoints }) => ({
                           variant="body2"
                           paragraph
                           component="div"
-                          style={{display: 'flex', alignItems: 'center'}}>
-                          <InfoRoundedIcon style={{marginRight: '0.5rem', color: '#51abf1b3'}} />
+                          style={{ display: 'flex', alignItems: 'center' }}
+                        >
+                          <InfoRoundedIcon style={{ marginRight: '0.5rem', color: '#51abf1b3' }} />
                           Defaults include inferred values from Dojo analysis.
                         </Typography>
                       )}
@@ -453,6 +483,7 @@ export default withStyles(({ palette, spacing, breakpoints }) => ({
                         validateDateFormat={validateDateFormat}
                         annotatedColumns={allAnnotatedColumns}
                         fieldsConfig={fieldsConfig}
+                        focusRef={focusRef}
                       />
 
                       <div className={classes.buttonContainer}>
@@ -472,6 +503,7 @@ export default withStyles(({ palette, spacing, breakpoints }) => ({
                           <Button
                             color="primary"
                             onClick={formik.handleSubmit}
+                            type="submit"
                           >
                             Save
                           </Button>

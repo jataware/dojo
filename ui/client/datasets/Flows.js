@@ -3,6 +3,7 @@ import Register from './Register';
 import Annotate from './Annotate';
 import AnomalyDetection from './AnomalyDetection';
 import Append from './Append';
+import DataTransformation from './DataTransformation/DataTransformation';
 import UpdateMetadata from './UpdateMetadata';
 import ModelOutput from './ModelOutput';
 import Preview from './Preview';
@@ -76,6 +77,13 @@ const BasicRegistrationFlow = {
     options: {}
   },
   {
+    slug: 'transform',
+    title: 'Transform Data',
+    label: 'Transformation',
+    component: DataTransformation,
+    options: {}
+  },
+  {
     slug: 'process',
     title: 'Processing Dataset',
     label: 'Processing',
@@ -83,8 +91,9 @@ const BasicRegistrationFlow = {
     options: {
       jobs: [
         {
-          id: 'mixmasta_processors.run_mixmasta',
-          handler: async ({result, annotations, setAnnotations, datasetInfo, ...extra}) => {
+          id: 'elwood_processors.run_elwood',
+          send_context: true,
+          handler: async ({result, annotations, setAnnotations, datasetInfo, setDatasetInfo, ...extra}) => {
             const updatedDataset = {
               ...datasetInfo,
               data_paths: result.data_files,
@@ -92,7 +101,22 @@ const BasicRegistrationFlow = {
               period: result.period,
               outputs: result.outputs,
               qualifier_outputs: result.qualifier_outputs,
+              temporal_resolution: result.temporal_resolution,
+              spatial_resolution: result.spatial_resolution
             };
+            setDatasetInfo(updatedDataset);
+            await axios.put(`/api/dojo/indicators`, updatedDataset);
+          }
+        },
+        {
+          id: 'elwood_processors.scale_features',
+          send_context: true,
+          handler: async ({result, annotations, setAnnotations, datasetInfo, setDatasetInfo, ...extra}) => {
+            const updatedDataset = {
+              ...datasetInfo,
+              ...result,
+            };
+            setDatasetInfo(updatedDataset);
             await axios.put(`/api/dojo/indicators`, updatedDataset);
           }
         },
@@ -174,7 +198,7 @@ const ModelOutputFlow = {
     options: {
       jobs: [
         {
-          id: 'mixmasta_processors.run_model_mixmasta',
+          id: 'elwood_processors.run_model_elwood',
           send_context: true,
           handler: async ({result, annotations, setAnnotations, datasetInfo, setDatasetInfo, ...extra}) => {
             annotations.metadata["mixmasterAnnotations"] = result.mixmaster_annotations;
@@ -226,17 +250,30 @@ const AppendFlow = {
           args: {},
         },
         {
-          id: 'mixmasta_processors.run_mixmasta',
-          handler: async ({result, annotations, setAnnotations, datasetInfo, ...extra}) => {
+          id: 'elwood_processors.run_elwood',
+          handler: async ({result, annotations, setAnnotations, datasetInfo, setDatasetInfo, ...extra}) => {
             const updatedDataset = {
               ...datasetInfo,
               data_paths: Array.concat(datasetInfo.data_paths, result.data_files),
               geography: result.geography,
               period: result.period,
             };
+            setDatasetInfo(updatedDataset);
             await axios.put(`/api/dojo/indicators`, updatedDataset);
           }
-        }
+        },
+        {
+          id: 'elwood_processors.scale_features',
+          send_context: true,
+          handler: async ({result, annotations, setAnnotations, datasetInfo, setDatasetInfo, ...extra}) => {
+            const updatedDataset = {
+              ...datasetInfo,
+              ...result,
+            };
+            setDatasetInfo(updatedDataset);
+            await axios.put(`/api/dojo/indicators`, updatedDataset);
+          }
+        },
       ]
     }
   },

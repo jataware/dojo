@@ -14,6 +14,11 @@ export default withStyles(({ spacing }) => ({
     minWidth: '20rem',
     padding: spacing(3)
   },
+  wideRoot: {
+    width: '40%',
+    minWidth: '20rem',
+    padding: spacing(3)
+  },
   drawerControls: {
     display: 'flex',
     justifyContent: 'flex-end'
@@ -28,6 +33,7 @@ export default withStyles(({ spacing }) => ({
   open,
   variant = 'persistent',
   noConfirm = false,
+  wide,
   ...props
 }) => {
   const [confirmClose, setConfirmClose] = useState(false);
@@ -36,10 +42,9 @@ export default withStyles(({ spacing }) => ({
     if (noConfirm) {
       // if we don't want a confirm dialog, don't prevent clicking outside to close
       // and just call our onClose function right away
-      onClose(true);
+      onClose(true, event);
       return;
     }
-
     // disable clicking outside the drawer to close for variant=temporary
     // instead relying on the close or X buttons (or noConfirm prop, as above)
     if (event.target.className === 'MuiBackdrop-root') {
@@ -59,10 +64,11 @@ export default withStyles(({ spacing }) => ({
     <>
       <Drawer
         variant={variant}
-        classes={{ paper: classes.root }}
+        classes={{ paper: wide ? classes.wideRoot : classes.root }}
         anchor={anchorPosition}
         open={open}
         onClose={handleClose}
+        style={{ width: wide ? '40%' : '30%' }}
         {...props}
       >
         <>

@@ -1,51 +1,8 @@
-import json
-import requests
 import os
-from copy import deepcopy
+
+import requests
 from fastapi.logger import logger
-
-from validation import ModelSchema
-from src.dojo import get_parameters
-from src.ontologies import get_ontologies
-
-
-def convert_to_causemos_format(model):
-    """
-    Transforms model from internal representation to the representation
-    accepted by Cauesmos.
-    """
-    def to_parameter(annot):
-        """
-        Transform Dojo annotation into a Causemos parameter.
-        """
-        return {
-            "name": annot["name"],
-            "display_name": annot["name"],
-            "description": annot["description"],
-            "type": annot["type"],
-            "unit": annot["unit"],
-            "unit_description": annot["unit_description"],
-            "ontologies": None,
-            "is_drilldown": None,
-            "additional_options": None,
-            "data_type": annot["data_type"],
-            "default": annot["default_value"],
-            "choices": annot["options"] if annot["predefined"] else None,
-            # NOTE: Do we want to store these as strings internally?
-            "min": float(annot["min"]) if annot["min"] != "" else None,
-            "max": float(annot["max"]) if annot["max"] != "" else None
-        }
-
-    causemos_model = deepcopy(model)
-    causemos_model["parameters"] = [
-        to_parameter(parameters["annotation"])
-        for parameters in get_parameters(model['id'])
-    ]
-    causemos_model = get_ontologies(causemos_model, type='model')
-    payload = ModelSchema.CausemosModelMetadataSchema(
-        **causemos_model
-    )
-    return json.loads(payload.json())
+from src.plugins.causemos import convert_to_causemos_format
 
 
 def deprecate_dataset(dataset_id):
@@ -149,18 +106,24 @@ def submit_run(model):
     causemos_user = os.getenv("CAUSEMOS_USER")
     causemos_pwd = os.getenv("CAUSEMOS_PWD")
 
-    payload = {"model_id": model["id"],
-               "model_name": model["name"],
-               "is_default_run": True,
-               "parameters": []}
+    payload = {
+        "model_id": model["id"],
+        "model_name": model["name"],
+        "is_default_run": True,
+        "parameters": [],
+    }
 
     try:
         # Notify Uncharted
         if os.getenv("CAUSEMOS_DEBUG") == "true":
-            logger.info("CauseMos debug mode: no need to submit default model run to Uncharted")
+            logger.info(
+                "CauseMos debug mode: no need to submit default model run to Uncharted"
+            )
             return
         else:
-            logger.info(f"Submitting default model run to CauseMos with payload: {payload}")
+            logger.info(
+                f"Submitting default model run to CauseMos with payload: {payload}"
+            )
             response = requests.post(
                 url,
                 headers={"Content-Type": "application/json"},

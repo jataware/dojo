@@ -1,29 +1,20 @@
 from __future__ import annotations
 import logging
-import re
 import time
-import tempfile
 import os
-import json
-from io import BytesIO
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 
 import pandas as pd
-from sqlite3 import connect
 
-from requests import put
 from fastapi import APIRouter, Response, File, UploadFile, status
-from elasticsearch import Elasticsearch
-from rq import Worker, Queue
+from rq import Queue
 from rq.job import Job
 from redis import Redis
 from rq.exceptions import NoSuchJobError
-from rq import job
 import boto3
 
 from src.utils import get_rawfile, put_rawfile
-from src.indicators import get_indicators, get_annotations
 from src.settings import settings
 
 logging.basicConfig()
@@ -44,6 +35,8 @@ s3 = boto3.resource("s3")
 
 
 def get_context(uuid):
+    from src.indicators import get_indicators, get_annotations
+
     try:
         annotations = get_annotations(uuid)
     except:
@@ -111,7 +104,7 @@ def available_job_strings():
     # TODO - get this from the rq worker dynamically?
     job_string_dict = {
         "Geotime Classify Job": "geotime_processors.geotime_classify",
-        "Mixmasta Job": "mixmasta_processors.run_mixmasta",
+        "Elwood Job": "elwood_processors.run_elwood",
         "Anomaly Detection": "tasks.anomaly_detection",
     }
     return job_string_dict
@@ -127,16 +120,18 @@ def cancel_job(job_id):
 # Last to not interfere with other routes
 @router.post("/job/{uuid}/{job_string}")
 def job(uuid: str, job_string: str, options: Optional[Dict[Any, Any]] = None):
-
     if options is None:
         options = {}
 
     force_restart = options.pop("force_restart", False)
     synchronous = options.pop("synchronous", False)
     timeout = options.pop("timeout", 60)
+    preview = options.get("preview_run", False)
     recheck_delay = 0.5
 
     job_id = f"{uuid}_{job_string}"
+    if preview:
+        job_id = job_id + "_preview"
     job = q.fetch_job(job_id)
 
     context = options.pop("context", None)
@@ -149,6 +144,7 @@ def job(uuid: str, job_string: str, options: Optional[Dict[Any, Any]] = None):
                 context = get_context(uuid=uuid)
         except Exception as e:
             logging.error(e)
+
         job = q.enqueue_call(
             func=job_string, args=[context], kwargs=options, job_id=job_id
         )
@@ -180,7 +176,6 @@ def job(uuid: str, job_string: str, options: Optional[Dict[Any, Any]] = None):
         "result": job_result,
     }
     return response
-
 
 
 # TEST ENDPOINTS

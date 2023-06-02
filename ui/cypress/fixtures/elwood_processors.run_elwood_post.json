@@ -1,5 +1,5 @@
 {
-    "id": "test-guid_mixmasta_processors.run_mixmasta",
+    "id": "test-guid_elwood_processors.run_elwood",
     "created_at": "2022-08-17T17:51:07.512280",
     "enqueued_at": "2022-08-17T17:51:07.514339",
     "started_at": "2022-08-17T17:51:07.549496",
@@ -16,7 +16,7 @@
                 "location": "/api/indicators/aebbeb28-cf70-4b46-b54d-dd078f731700",
                 "content-length": "64"
             },
-            "url": "http://api.world-modelers/indicators/mixmasta_update/aebbeb28-cf70-4b46-b54d-dd078f731700",
+            "url": "http://api.world-modelers/indicators/elwood_update/aebbeb28-cf70-4b46-b54d-dd078f731700",
             "history": [],
             "encoding": null,
             "reason": "OK",
@@ -24,7 +24,7 @@
             "elapsed": 0.100474,
             "request": {
                 "method": "POST",
-                "url": "http://api.world-modelers/indicators/mixmasta_update/aebbeb28-cf70-4b46-b54d-dd078f731700",
+                "url": "http://api.world-modelers/indicators/elwood_update/aebbeb28-cf70-4b46-b54d-dd078f731700",
                 "headers": {
                     "User-Agent": "python-requests/2.28.1",
                     "Accept-Encoding": "gzip, deflate",

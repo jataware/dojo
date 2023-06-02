@@ -10,6 +10,7 @@ from src import (
     dojo,
     healthcheck,
     indicators,
+    documents,
     models,
     ui,
     runs,
@@ -24,6 +25,7 @@ api.include_router(models.router, tags=["Models"])
 api.include_router(dojo.router, tags=["Dojo"])
 api.include_router(runs.router, tags=["Runs"])
 api.include_router(indicators.router, tags=["Indicators"])
+api.include_router(documents.router, tags=["Documents"])
 api.include_router(terminal.router, prefix="/terminal", tags=["Terminal"])
 api.include_router(ui.router, prefix="/ui", tags=["Dojo UI"])
 api.include_router(data.router, tags=["Data"])
@@ -134,7 +136,7 @@ def setup_elasticsearch_indexes():
                         "type": "text",
                         "fields": {"keyword": {"type": "keyword", "ignore_above": 256}},
                     },
-                    "outputs": {"type": "object", "enabled": False},
+                    "outputs": {"type": "nested"},
                     "period": {
                         "properties": {"gte": {"type": "long"}, "lte": {"type": "long"}}
                     },
@@ -154,6 +156,47 @@ def setup_elasticsearch_indexes():
         "models": {},
         "outputfiles": {},
         "runs": {},
+        "features": {
+            "mappings": {
+                "properties": {
+                    "embeddings": {
+                        "type": "dense_vector",
+                        "dims": 768
+                    }
+                }
+            }
+        },
+        "documents": {
+            "settings": {
+                "index": {
+                    "sort.field": "uploaded_at",
+                    "sort.order": "desc"
+                }
+            },
+            "mappings": {
+                "properties": {
+                    "uploaded_at": {
+                        "type": "date"
+                    },
+                    "processed_at": {
+                        "type": "date"
+                    }
+                }
+            }
+        },
+        "document_paragraphs": {
+            "mappings": {
+                "properties": {
+                    "embeddings": {
+                        "type": "dense_vector",
+                        "dims": 768
+                    },
+                    "length": {
+                        "type": "short"
+                    }
+                }
+            }
+        },
     }
     es = Elasticsearch([settings.ELASTICSEARCH_URL], port=settings.ELASTICSEARCH_PORT)
 

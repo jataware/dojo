@@ -2,10 +2,13 @@ import os
 import tempfile
 import time
 import csv
+import re
+from collections import namedtuple
 from urllib.parse import urlparse
 from io import BytesIO, StringIO
+from typing import Optional
 from zlib import compressobj
-
+from fastapi.logger import logger
 import pandas as pd
 from elasticsearch import Elasticsearch
 import boto3
@@ -15,9 +18,15 @@ from src.settings import settings
 from validation import ModelSchema
 
 es = Elasticsearch([settings.ELASTICSEARCH_URL], port=settings.ELASTICSEARCH_PORT)
-
-# S3 OBJECT
-s3 = boto3.client("s3")
+s3 = boto3.client(
+    "s3",
+    endpoint_url=os.getenv("STORAGE_HOST") or None,
+    aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
+    aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+    aws_session_token=None,
+    config=boto3.session.Config(signature_version="s3v4"),
+    verify=False,
+)
 
 
 def try_parse_int(s: str, default: int = 0) -> int:
@@ -108,74 +117,116 @@ def run_model_with_defaults(model_id):
     return run_id
 
 
-def get_rawfile(path):
-    location_info = urlparse(path)
+S3FileInfo = namedtuple("FileInfo", field_names=["bucket", "path", "region"], defaults=[None])
+def s3_url(self):
+    return f"s3://{self.bucket}/{self.path}"
+S3FileInfo.s3_url = property(s3_url)
 
-    if location_info.scheme.lower() == "file":
-        raw_file = open(location_info.path, "rb")
-    elif location_info.scheme.lower() == "s3":
-        try:
-            file_path = location_info.path.lstrip("/")
-            raw_file = tempfile.TemporaryFile()
-            s3.download_fileobj(
-                Bucket=location_info.netloc, Key=file_path, Fileobj=raw_file
-            )
-            raw_file.seek(0)
-        except botocore.exceptions.ClientError as e:
-            raise FileNotFoundError()
+
+def normalize_file_info(url: str) -> Optional[S3FileInfo]:
+    """
+    """
+    url_info = urlparse(url)
+    path = url_info.path.lstrip("/")
+    if url_info.scheme == "file":
+        return S3FileInfo(bucket=url_info.netloc, path=path)
+    elif url_info.scheme == "https":
+        match = re.match(r'https://(?P<bucket>.+)\.s3.(?P<region>.+\.)?amazonaws.com', url)
+        if not match:
+            return None
+        return S3FileInfo(bucket=match.group("bucket"), path=path, region=match.group("region"))
+    elif url_info.scheme == "s3":
+        return S3FileInfo(bucket=url_info.netloc, path=path)
     else:
-        raise RuntimeError("File storage format is unknown")
+        return None
+
+
+def get_rawfile(path):
+    """Gets a file from a filepath
+
+    Args:
+        path (str): URI to file
+
+    Raises:
+        FileNotFoundError: If the file cannnot be found on S3.
+        RuntimeError: If the path URI does not begin with 'file' or 's3'
+        there is no handler for it yet.
+
+    Returns:
+        file: a file-like object
+    """
+    file_info = normalize_file_info(path)
+    try:
+        raw_file = tempfile.TemporaryFile()
+        s3.download_fileobj(
+            Bucket=file_info.bucket, Key=file_info.path, Fileobj=raw_file
+        )
+        raw_file.seek(0)
+    except botocore.exceptions.ClientError as error:
+        raise FileNotFoundError() from error
 
     return raw_file
 
 
 def put_rawfile(path, fileobj):
-    location_info = urlparse(path)
+    """Puts/uploads a file at URI specified
+    Args:
+        path (str): URI to put/upload the file to.
+        fileobj (file): The file-like object to upload.
+    Raises:
+        RuntimeError: If the path URI does not begin with 'file' or 's3'
+        there is no handler for it yet.
+    """
 
-    if location_info.scheme.lower() == "file":
-        if not os.path.isdir(os.path.dirname(location_info.path)):
-            os.makedirs(os.path.dirname(location_info.path), exist_ok=True)
-        with open(location_info.path, "wb") as output_file:
-            output_file.write(fileobj.read())
-    elif location_info.scheme.lower() == "s3":
-        output_path = location_info.path.lstrip("/")
-        s3.put_object(Bucket=location_info.netloc, Key=output_path, Body=fileobj)
-    else:
-        raise RuntimeError("File storage format is unknown")
+    file_info = normalize_file_info(path)
+    s3.put_object(Bucket=file_info.bucket, Key=file_info.path, Body=fileobj)
 
 
 def list_files(path):
-    location_info = urlparse(path)
-    if location_info.scheme.lower() == "file":
-        return os.listdir(location_info.path)
-    elif location_info.scheme.lower() == "s3":
-        s3_list = s3.list_objects(
-            Bucket=location_info.netloc, Marker=location_info.path
-        )
-        s3_contents = s3_list["Contents"]
-        final_file_list = []
-        for x in s3_contents:
-            filename = x["Key"]
-            final_file_list.append(f"{location_info.path}/{filename}")
+    file_info = normalize_file_info(path)
 
-        return final_file_list
-    else:
-        raise RuntimeError("File storage format is unknown")
+    s3_list = s3.list_objects(Bucket=file_info.bucket, Prefix=file_info.path)
+    s3_contents = s3_list["Contents"]
+    final_file_list = []
+    for x in s3_contents:
+        filename = x["Key"]
+        final_file_list.append(f"{file_info.path}/{filename}")
+
+    return final_file_list
 
 
-async def stream_csv_from_data_paths(data_paths, wide_format='false'):
+async def stream_csv_from_data_paths(data_paths, wide_format="false"):
+
+    storage_options = {
+        "key": os.getenv("AWS_ACCESS_KEY_ID"),
+        "secret": os.getenv("AWS_SECRET_ACCESS_KEY"),
+        "token": None,
+        "client_kwargs": {"endpoint_url": None},
+    }
+
     # Build single dataframe
-    df = pd.concat(pd.read_parquet(file) for file in data_paths)
+    df = pd.concat(
+        pd.read_parquet(
+            file,
+            storage_options=None if file.startswith('http') else storage_options
+        )
+        for file in data_paths
+    )
 
     # Ensure pandas floats are used because vanilla python ones are problematic
-    df = df.fillna('').astype(
-        {col: 'str' for col in df.select_dtypes(include=['float32', 'float64']).columns},
+    df = df.fillna("").astype(
+        {
+            col: "str"
+            for col in df.select_dtypes(include=["float32", "float64"]).columns
+        },
         # Note: This links it to the previous `df` so not a full copy
-        copy=False
+        copy=False,
     )
     if wide_format == "true":
-        df_wide = pd.pivot(df, index=None, columns='feature', values='value')  # Reshape from long to wide
-        df = df.drop(['feature', 'value'], axis=1)
+        df_wide = pd.pivot(
+            df, index=None, columns="feature", values="value"
+        )  # Reshape from long to wide
+        df = df.drop(["feature", "value"], axis=1)
         df = pd.merge(df, df_wide, left_index=True, right_index=True)
 
     # Prepare for writing CSV to a temporary buffer
@@ -202,4 +253,3 @@ async def compress_stream(content):
     async for buff in content:
         yield compressor.compress(buff.encode())
     yield compressor.flush()
-

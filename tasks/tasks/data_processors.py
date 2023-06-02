@@ -6,7 +6,6 @@ import requests
 import shutil
 
 import pandas as pd
-from geotime_classify import geotime_classify as gc
 import numpy as np
 
 from utils import get_rawfile
@@ -59,5 +58,9 @@ def histogram_data(x):
         return
     if x_mod.dtype != np.dtype(np.object) and x_mod.dtype != np.dtype(np.bool):
         logging.info("Trying to build histogram for column")
-        hist, bins = np.histogram(x_mod)
-        return {"values": hist, "bins": bins}
+        try:
+            hist, bins = np.histogram(x_mod)
+            return {"values": hist, "bins": bins}
+        except Exception as e:
+            logging.error(f"Failed to generate histogram: {e}")
+            return

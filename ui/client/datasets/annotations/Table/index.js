@@ -5,42 +5,36 @@ import get from 'lodash/get';
 import find from 'lodash/find';
 import isEmpty from 'lodash/isEmpty';
 
-import { DataGrid } from '@material-ui/data-grid';
 import { withStyles } from '@material-ui/core/styles';
+import { GridOverlay, DataGrid } from '@material-ui/data-grid';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
 import Checkbox from '@material-ui/core/Checkbox';
+import Button from '@material-ui/core/Button';
 import Tooltip from '@material-ui/core/Tooltip';
+import LinearProgress from '@material-ui/core/LinearProgress';
+import InboxIcon from '@material-ui/icons/MoveToInbox';
 
+import { groupColumns } from './helpers';
+import BasicAlert from '../../../components/BasicAlert';
 import ColumnPanel from '../ColumnPanel';
-
-import { calcPointerLocation, groupColumns } from './helpers';
 import Header from './Header';
+
+import AnnotationDialog from './UploadAnnotationFileDialog';
 
 const rowsPerPageOptions = [25, 50, 100];
 
-/**
- *
- * */
 const Cell = withStyles(({ palette, spacing }) => ({
   root: {
     marginLeft: -6,
     width: '115%',
     marginRight: -6,
     // NOTE How much to space cell content left. We can also use flex + center items
-    paddingLeft: spacing(2)
-  },
-  hoveredCell: {
-    backgroundColor: palette.grey[50],
+    paddingLeft: spacing(2),
     cursor: 'pointer',
   },
-  // NOTE these Cell styles are in case we wish to explore highlighting all cells within the columns
-  // as anotated, similar to spacetag.
-  // annotated: {
-  //   backgroundColor: '#23b26b33'
-  // },
-  // requiresAction: {
-  //   backgroundColor: '#33728833'
-  // }
+  hoveredCell: {
+    backgroundColor: palette.grey[100],
+  },
 }))(({
   isHighlighted, classes, value
 }) => (
@@ -48,8 +42,6 @@ const Cell = withStyles(({ palette, spacing }) => ({
     className={clsx({
       [classes.root]: true,
       [classes.hoveredCell]: isHighlighted,
-      /* [classes.requiresAction]: requiresAction, */
-      /* [classes.annotated]: isAnnotated, */
     })}
   >
     {value}
@@ -59,13 +51,20 @@ const Cell = withStyles(({ palette, spacing }) => ({
 const ROW_HEIGHT = 52;
 const HEADER_HEIGHT = 80;
 
-// TODO add Show Inferred button
-// TODO add show Stats button
-// TODO change Instructions once colors finalized
-
 /**
- *
- * */
+ * Blue linear loading animation displayed when table loading/searching of
+ * features is still in progress.
+ */
+function CustomLoadingOverlay() {
+  return (
+    <GridOverlay>
+      <div style={{ position: 'absolute', top: 0, width: '100%', zIndex: 15 }}>
+        <LinearProgress style={{ height: 3 }} />
+      </div>
+    </GridOverlay>
+  );
+}
+
 export default withStyles(({ palette }) => ({
   root: {
     display: 'flex',
@@ -83,7 +82,20 @@ export default withStyles(({ palette }) => ({
     pointerEvents: 'none'
   },
   columnHeaderTitle: {
-    padding: '0 4px !important'
+    padding: '0 4px !important',
+  },
+  hideHeaderBorder: {
+    // hide the blue outline on the datagrid header when focused
+    '& .MuiDataGrid-columnHeader': {
+      '&:focus-within': {
+        outline: 'none',
+      }
+    },
+    '& .MuiDataGrid-cell': {
+      '&:focus-within': {
+        outline: 'none',
+      }
+    }
   },
   gridScroll: {
     '& *::-webkit-scrollbar': {
@@ -112,12 +124,25 @@ export default withStyles(({ palette }) => ({
   columns, annotations, inferredData,
   loading, multiPartData, setMultiPartData,
   validateDateFormat, columnStats,
-  fieldsConfig, addingAnnotationsAllowed
+  fieldsConfig, addingAnnotationsAllowed, onUploadAnnotations, datasetID
 }) => {
   const [pageSize, setPageSize] = useState(rowsPerPageOptions[0]);
   const [highlightedColumn, setHighlightedColumn] = useState(null);
   const [editingColumn, setEditingColumn] = useState(null);
-  const [anchorPosition, setAnchorPosition] = useState('right');
+  const [annotationSuccessAlert, setAnnotationSuccessAlert] = useState();
+  const [annotationAlertMessage, setAnnotationAlertMessage] = useState({
+    message: '',
+    severity: 'success',
+  });
+
+  const [isUploadingAnnotations, setUploadingAnnotations] = useState(false);
+  const [fileDictionaryError, setfileDictionaryError] = useState(null);
+  const [dictionaryUploadLoading, setDictionaryUploadLoading] = useState(false);
+
+  function cancelUploadAnnotations() {
+    setUploadingAnnotations(false);
+    setfileDictionaryError(null);
+  }
 
   const [isShowMarkers, setShowMarkers] = useState(true);
 
@@ -131,19 +156,11 @@ export default withStyles(({ palette }) => ({
     find(multiPartData, (mp) => mp.members.includes(columnFieldName))
   );
 
-  const handleCellClick = (cell) => {
-
+  const openAnnotationPanel = (cell) => {
     const isColumnAnnotated = !isEmpty(annotations[cell.field]);
-
     if (!isColumnAnnotated && !addingAnnotationsAllowed) {
       return;
     }
-
-    // NOTE removed opening panel on different screen areas
-    //      due to UX + having a statistics tab always on left side.
-    //      We can add/revisit if we'd like. Else remove all this comment if
-    //      it ages badly.
-    // setAnchorPosition(calcPointerLocation(event));
 
     const multiPartMember = find(
       multiPartData, (item) => item && item.members.includes(cell.field)
@@ -158,13 +175,9 @@ export default withStyles(({ palette }) => ({
     } else {
       setEditingColumn({
         name: cell.field,
-        headerName: cell.colDef?.headerName
+        headerName: cell.field,
       });
     }
-  };
-
-  const handleCellOver = (cell) => {
-    setHighlightedColumn(cell.field);
   };
 
   function calcColumnAttrs(columnFieldName) {
@@ -223,6 +236,10 @@ export default withStyles(({ palette }) => ({
           showMarkers={isShowMarkers}
           {...calcColumnAttrs(colDef.field)}
           heading={colDef.headerName}
+          column={column}
+          buttonClick={openAnnotationPanel}
+          isHighlighted={(colDef.field === highlightedColumn)}
+          drawerOpen={Boolean(editingColumn)}
         />
       ),
 
@@ -236,33 +253,93 @@ export default withStyles(({ palette }) => ({
 
   const gridRef = useRef(null);
 
-  function onAnnotationSave() {
-    const grid = gridRef.current;
-    // Scroll internal Table window to left when saving an annotation.
-    // Only useful when creating a new annotation (not editing). We can enhance further.
-    const scrollWindow = grid.querySelector('.MuiDataGrid-window');
-    scrollWindow.scrollTo(0, scrollWindow.scrollTop);
+  function onAnnotationSave(columnName) {
+    setAnnotationSuccessAlert(true);
+    setAnnotationAlertMessage({
+      message: `Your annotation of ${columnName} was successfully added`, severity: 'success'
+    });
   }
+
+  const highlightColumn = (cell, event) => {
+    // Get the next column to highlight from relatedTarget - this works for arrow key navigation
+    const clicked = event.relatedTarget;
+    if (clicked?.getAttribute('role') !== 'cell') {
+      // only continue if the user has clicked on a 'cell'
+      return;
+    }
+
+    // Fetch the column name out of the element's data-field attribute
+    const nextHighlight = clicked.getAttribute('data-field');
+
+    // and set our state to the column name, if it existed
+    if (nextHighlight) setHighlightedColumn(nextHighlight);
+  };
+
+  const handleCellKeyDown = (cell, event) => {
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      // DataGrid's vertical scroll is only disabled with both stopPropagation and preventDefault
+      event.stopPropagation();
+      event.preventDefault();
+    }
+    if (event.key === 'Enter') {
+      openAnnotationPanel(cell);
+    }
+  };
+
+  const handleFileSelect = (acceptedFiles) => {
+    setDictionaryUploadLoading(true);
+    onUploadAnnotations(acceptedFiles[0])
+      .then((success) => {
+        cancelUploadAnnotations();
+
+        if (success) {
+          setAnnotationSuccessAlert(true);
+          setAnnotationAlertMessage({
+            message: 'Your annotations were successfully applied',
+            severity: 'success'
+          });
+        }
+      })
+      .catch((e) => {
+        setfileDictionaryError(e.message);
+      })
+      .finally(() => { setDictionaryUploadLoading(false); });
+  };
 
   return (
     <div className={classes.root}>
 
-      <div>
-        <Tooltip
-          classes={{ tooltip: classes.tooltip }}
-          title="Display context icons for columns with inferred data, annotated as primary, or as qualifier."
-        >
-        <FormControlLabel
-          control={
-            <Checkbox
-              checked={isShowMarkers}
-              onChange={e => setShowMarkers(e.target.checked)}
-              color="primary"
+      <div style={{ display: 'flex' }}>
+        <div style={{ flex: 1 }}>
+          <Tooltip
+            classes={{ tooltip: classes.tooltip }}
+            title="Display context icons for columns with inferred data, annotated as primary, or as qualifier."
+          >
+            <FormControlLabel
+              control={(
+                <Checkbox
+                  checked={isShowMarkers}
+                  onChange={(e) => setShowMarkers(e.target.checked)}
+                  color="primary"
+                />
+              )}
+              label="Show Additional Markers"
             />
-          }
-          label="Show Additional Markers"
-        />
-        </Tooltip>
+          </Tooltip>
+        </div>
+
+        {addingAnnotationsAllowed && (
+          <div style={{ display: 'flex', alignItems: 'center' }}>
+            <Button
+              color="primary"
+              size="large"
+              startIcon={<InboxIcon />}
+              onClick={() => setUploadingAnnotations(true)}
+            >
+              Upload Data Dictionary
+            </Button>
+          </div>
+        )}
       </div>
 
       <DataGrid
@@ -271,13 +348,16 @@ export default withStyles(({ palette }) => ({
         disableColumnMenu
         disableSelectionOnClick
         getRowId={(row) => row.__id}
+        components={{
+          LoadingOverlay: CustomLoadingOverlay
+        }}
         classes={{
-          root: clsx([classes.grid, classes.gridScroll]),
+          root: clsx([classes.grid, classes.gridScroll, classes.hideHeaderBorder]),
           row: classes.row,
           cell: clsx({ [classes.disabledEvents]: isEditing }),
           columnHeader: clsx({
             [classes.disabledEvents]: isEditing,
-            [classes.columnHeaderTitle]: true
+            [classes.columnHeaderTitle]: true,
           }),
         }}
         columns={formattedColumns}
@@ -286,15 +366,15 @@ export default withStyles(({ palette }) => ({
         headerHeight={HEADER_HEIGHT}
         rowsPerPageOptions={rowsPerPageOptions}
         rows={rows}
-        onCellClick={handleCellClick}
-        onColumnHeaderClick={handleCellClick}
-        onColumnHeaderOver={handleCellOver}
-        onCellOver={handleCellOver}
+        onCellDoubleClick={openAnnotationPanel}
+        onColumnHeaderDoubleClick={openAnnotationPanel}
         GridSortModel={null}
+        onCellKeyDown={handleCellKeyDown}
+        onCellBlur={highlightColumn}
+        onCellClick={(cell) => setHighlightedColumn(cell.field)}
       />
 
       <ColumnPanel
-        anchorPosition={anchorPosition}
         onClose={toggleDrawer}
         onSubmit={onAnnotationSave}
 
@@ -314,6 +394,22 @@ export default withStyles(({ palette }) => ({
         fieldsConfig={fieldsConfig}
       />
 
+      <BasicAlert
+        alert={annotationAlertMessage}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        visible={annotationSuccessAlert}
+        setVisible={setAnnotationSuccessAlert}
+      />
+
+      <AnnotationDialog
+        open={isUploadingAnnotations}
+        handleClose={cancelUploadAnnotations}
+        handleFileSelect={handleFileSelect}
+        errorMessage={fileDictionaryError}
+        clearErrorMessage={()=>{setfileDictionaryError(null);}}
+        loading={dictionaryUploadLoading}
+        datasetID={datasetID}
+      />
     </div>
   );
 });
