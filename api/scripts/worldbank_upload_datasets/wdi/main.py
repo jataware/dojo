@@ -16,17 +16,20 @@ import docker
 import tarfile
 import io
 
-from dotenv import load_dotenv
+# from dotenv import load_dotenv
 from pathlib import Path
 from os.path import join as path_join
 
 root_dir = Path(__file__).resolve().parent.parent
 assets_dir = path_join(root_dir, "assets")
 downloads_dir = path_join(root_dir, "downloads")
+output_dir = path_join(root_dir, "output")
+
+def out(filename):
+    return path_join(output_dir, filename)
 
 
-
-def populate_wdi_data(args):
+def populate_wdi_data(args, es):
     try:
         print(args)
         download_data()
@@ -34,7 +37,6 @@ def populate_wdi_data(args):
         raw_data = pd.read_csv(path_join(downloads_dir, "WDIData.csv"))
 
         # list of valid country codes
-        # countries = pd.read_csv('src/data/country.csv')
         countries = pd.read_csv(path_join(assets_dir, "country.csv"))
         country_codes = set(countries["Alpha-3_Code"].tolist())
         series_info = pd.read_csv(path_join(downloads_dir, "WDISeries.csv"))
@@ -44,7 +46,7 @@ def populate_wdi_data(args):
 
         # delete all CSVs and json files in output folder
         for filename in (
-            glob("output/*.csv") + glob("output/*.json") + glob("output/*.gzip")
+            glob(out("*.csv")) + glob(out("*.json")) + glob(out("*.gzip"))
         ):
             os.remove(filename)
 
@@ -67,12 +69,12 @@ def populate_wdi_data(args):
             meta = make_metadata(df, series_info, name, description)  # , feature_codes)
 
             # # ensure output folder exists
-            if not os.path.exists("output"):
-                os.makedirs("output")
+            if not os.path.exists(output_dir):
+                os.makedirs(output_dir)
 
             # # save data to csv and metadata to json
-            df.to_csv(os.path.join("output", f"{meta.get('id')}.csv"), index=False)
-            with open(os.path.join("output", f"{meta.get('id')}_meta.json"), "w") as f:
+            df.to_csv(out(f"{meta.get('id')}.csv"), index=False)
+            with open(out(f"{meta.get('id')}_meta.json"), "w") as f:
                 json.dump(meta, f)
 
             # make parquet files
@@ -86,7 +88,7 @@ def populate_wdi_data(args):
                     f's3://{args.bucket}/datasets/{meta.get("id")}/{meta.get("id")}.parquet.gzip'
                 ]
             else:
-                print("Saving files to docker volumn. Not s3.")
+                print("Saving files to docker volume. Not s3.")
                 upload_to_docker_container(meta.get("id"))
 
                 meta["data_paths"] = [
@@ -94,7 +96,7 @@ def populate_wdi_data(args):
                 ]
 
             # # save meta data to elasticsearch
-            save_meta_es(meta)
+            save_meta_es(meta, es)
     except Exception as e:
         print(f"error {e}")
 
@@ -118,7 +120,7 @@ def download_data():
         filenames = zip_ref.namelist()
         if not all([os.path.exists(path_join(downloads_dir, filename)) for filename in filenames]):
             print("Unzipping data...", end="", flush=True)
-            zip_ref.extractall("data")
+            zip_ref.extractall(downloads_dir)
             print("Done.")
         else:
             print("Skipping unzip, data already exists.")
@@ -164,7 +166,7 @@ def save_indicators(df, series_info):
         f"WDI - {abbrevs[prefix]}": indicators for prefix, indicators in groups.items()
     }
 
-    with open("indicator_groups.json", "w") as f:
+    with open(path_join(downloads_dir, "indicator_groups.json"), "w") as f:
         json.dump(indicators, f)
     # DEBUG plot a histogram of the number of indicators in each group
     # from matplotlib import pyplot as plt
@@ -425,7 +427,7 @@ def find_abbreviations(all_codes, info):
 def indicator_groups():
     """generator for returning groups of indicators to make datasets from"""
 
-    with open("indicator_groups.json", "r") as f:
+    with open(path_join(downloads_dir, "indicator_groups.json"), "r") as f:
         groups = json.load(f)
 
     for name, group in groups.items():
@@ -443,8 +445,6 @@ def gadm_country_lookup(country_code, countries):
 
 
 def make_dataset(df, country_codes, countries):
-    # columns = ['timestamp', 'country', 'admin1', 'admin2', 'admin3', 'lat', 'lng', 'feature', 'value']
-
     # year strings and timestamps (in milliseconds) from 1960 to 2021
     years = [
         (f"{year}", datetime(year, 1, 1, tzinfo=timezone.utc).timestamp() * 1000)
@@ -508,7 +508,7 @@ def save_parquet(df, name):
     # optimize data types for storage
     optimize_df_types(df)
     # save a parquet file
-    df.to_parquet(f"output/{filename}", compression="gzip")
+    df.to_parquet(out(f"{filename}"), compression="gzip")
 
 
 def make_metadata(df, series_info, name, description):
@@ -719,9 +719,8 @@ def current_milli_time():
     return round(time.time() * 1000)
 
 
-def save_meta_es(meta):
+def save_meta_es(meta, es):
     # open json and validate
-    # meta_check=pydantic.parse_file_as(path=f'output/{name}_meta.json', type_=IndicatorMetadataSchema)
     meta["created_at"] = current_milli_time()
     resp = es.index(index="indicators", body=meta, id=meta.get("id"))
     print(resp)
@@ -744,25 +743,25 @@ def upload_to_docker_container(id):
     container = client.containers.get("dojo-api")
     container.exec_run(f"mkdir -p /storage/datasets/{id}")
 
-    src = f"output/{id}.parquet.gzip"
+    src = out(f"{id}.parquet.gzip")
     dest = f"/storage/datasets/{id}/"
     copy_to_container(container=container, src=src, dest=dest)
 
-    src = f"output/{id}.csv"
+    src = out(f"{id}.csv")
     dest = f"/storage/datasets/{id}/"
     copy_to_container(container=container, src=src, dest=dest)
 
 
 def upload_files_to_s3(id, args):
-    with open(f"output/{id}.parquet.gzip", "rb") as f:
+    with open(out(f"{id}.parquet.gzip"), "rb") as f:
         s3.upload_fileobj(f, f"{args.bucket}", f"{args.folder}/{id}/{id}.parquet.gzip")
-    with open(f"output/{id}.csv", "rb") as f:
+    with open(out(f"{id}.csv"), "rb") as f:
         s3.upload_fileobj(f, f"{args.bucket}", f"{args.folder}/{id}/raw_data.csv")
 
 
-if __name__ == "__main__":
+def run():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--es", help="Elasticsearch connection string")
+    parser.add_argument("--es", help="Elasticsearch connection string", default="http://localhost:9200")
     parser.add_argument("--bucket", default=None, help="S3 bucket to save to")
     parser.add_argument("--folder", default=None, help="S3 folder to save to")
     parser.add_argument("--aws_key", help="aws_key")
@@ -770,9 +769,15 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     ELASTICSEARCH_URL = args.es
+
+    print(f"Elasticsearch host: {ELASTICSEARCH_URL}")
     es = Elasticsearch([ELASTICSEARCH_URL])
 
     s3 = boto3.client(
         "s3", aws_access_key_id=args.aws_key, aws_secret_access_key=args.aws_secret
     )
-    populate_wdi_data(args)
+    populate_wdi_data(args, es)
+
+
+if __name__ == "__main__":
+    run()
