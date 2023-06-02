@@ -154,7 +154,7 @@ export default withStyles(({ spacing }) => ({
     });
 
     const terminal_ready_filepath = props["request_path"];
-    const url = `/api/dojo/job/${props.modelId}/tasks.model_output_analysis`;
+    const url = `/api/dojo/job/${modelId}/tasks.model_output_analysis`;
     await axios({
       method: 'post',
       url,
