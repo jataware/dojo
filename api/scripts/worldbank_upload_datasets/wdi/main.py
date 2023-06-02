@@ -22,7 +22,7 @@ from os.path import join as path_join
 
 root_dir = Path(__file__).resolve().parent.parent
 assets_dir = path_join(root_dir, "assets")
-downloads_dir = path_join(root_dir, "downloads")
+downloads_dir = path_join(root_dir, "download")
 output_dir = path_join(root_dir, "output")
 
 def out(filename):
@@ -106,7 +106,7 @@ def download_data():
 
     data_link = "http://databank.worldbank.org/data/download/WDI_csv.zip"
 
-    # download to 'downloads' folder if not already downloaded
+    # download to 'download' folder if not already downloaded
     if not os.path.exists(downloads_dir):
         os.makedirs(downloads_dir)
 
