@@ -1,5 +1,5 @@
 Uses APIs to "scrape" and check if datasets are missing from a third-party service.
-
+As an example, this is relevant when datasets registered by Dojo and published to Causemos are missing in Causemos (publish failed, did not occur, or some other desync occured.). missing_datasets/entrypoint.py will generate a csv report for such datasets.
 ## Setup
 
 Copy env.sample to .env on root dir and populate values.
