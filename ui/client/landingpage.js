@@ -12,6 +12,7 @@ import Typography from '@material-ui/core/Typography';
 
 import ArrowForwardIcon from '@material-ui/icons/ArrowForward';
 import AssessmentIcon from '@material-ui/icons/Assessment';
+import PageviewIcon from '@material-ui/icons/Pageview';
 import ComputerIcon from '@material-ui/icons/Computer';
 import GitHubIcon from '@material-ui/icons/GitHub';
 import LoopIcon from '@material-ui/icons/Loop';
@@ -194,6 +195,18 @@ const LandingPage = () => {
                     className={classes.button}
                   >
                     Register a Dataset
+                  </Button>
+                  <Button
+                    component={RouterLink}
+                    variant="contained"
+                    color="inherit"
+                    to="/documents"
+                    disableElevation
+                    size="large"
+                    endIcon={<PageviewIcon />}
+                    className={classes.button}
+                  >
+                    Document Explorer
                   </Button>
                 </>
               ) : (

@@ -9,5 +9,5 @@ services:
     env_file:
       - .dockerenv
     volumes:
-      - ${PWD}/api/server/settings.yaml:/home/app/connector/settings.yaml
+      - ./api/server/settings.yaml:/home/app/connector/settings.yaml
 

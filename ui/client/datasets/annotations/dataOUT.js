@@ -6,6 +6,7 @@ import pick from 'lodash/pick';
 import difference from 'lodash/difference';
 import head from 'lodash/head';
 import capitalize from 'lodash/capitalize';
+import { GEO_ADMINS } from './constants';
 
 // Properties used when formatting annotations out
 const properties = {
@@ -99,6 +100,8 @@ function genGeoMultiPartMemberAnnotation(multiPartMembers, annotation, data) {
 
     additionalColumnEntry.geo_type = geoMultiPartKeyAdminMapOUT[`geo.multi-column.${relationshipKey}`];
 
+    additionalColumnEntry.resolve_to_gadm = true;
+
     return additionalColumnEntry;
   });
 }
@@ -122,6 +125,13 @@ function formatDateAnnotationOUT(localAnnotation, outgoingAnnotationBase) {
     genDateMultiPartMemberAnnotation(localAnnotation, outgoingAnnotation)
       .forEach((item) => { collectedOutgoingAnnotations.push(item); });
   }
+
+  if (localAnnotation.date_type == 'epoch') {
+    // fix for cartwrights/geotimeclassify inserting time_format for epochs, which is not needed
+    // also helps with csv dictionary annotation
+    outgoingAnnotation.time_format = '';
+  }
+
   collectedOutgoingAnnotations.push(outgoingAnnotation);
 
   return collectedOutgoingAnnotations;
@@ -140,6 +150,13 @@ function formatGeoAnnotationOUT(localAnnotation, outgoingAnnotationBase) {
 
   if (localAnnotation.primary && ((localAnnotation.geo_type === 'coordinates') || isCoordinatePair)) {
     outgoingAnnotation.gadm_level = localAnnotation.gadm_level;
+  }
+
+  // Resolve GADM is only relevant with categorical places (e.g. country, admin1-3)
+  if ([GEO_ADMINS.admin0, GEO_ADMINS.admin1,
+       GEO_ADMINS.admin2, GEO_ADMINS.admin3]
+      .includes(localAnnotation.geo_type)) {
+    outgoingAnnotation.resolve_to_gadm = true;
   }
 
   if (localAnnotation.multiPartBase) {

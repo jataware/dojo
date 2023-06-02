@@ -1,0 +1,13 @@
+version: '2.2'
+services:
+  testmos:
+    build: .
+    container_name: dojo-testmos
+    networks:
+      - dojo-stack
+    ports:
+      - 8012:8012
+
+networks:
+  dojo:
+    driver: bridge

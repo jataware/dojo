@@ -82,11 +82,13 @@ const Template = (args) => (
 
 export const Base = {
   args: {
+    addingAnnotationsAllowed: true,
     annotateColumns,
     rows: sampleData,
     columns: columnsBase,
     annotations,
     inferredData: inferredData,
+    validateDateFormat: () => '',
     multiPartData:{},
     setMultiPartData: identity
   }

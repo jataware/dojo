@@ -1,34 +1,35 @@
 from __future__ import annotations
 
-import csv
 import io
+import os
 import re
 import time
-import zlib
 import uuid
 from datetime import datetime
-from typing import Any, Dict, Generator, List, Optional
-from urllib.parse import urlparse
-
+from typing import List, Optional
 import json
+import csv
+import codecs
+from functools import partial
 import pandas as pd
+
+import openpyxl
+from openpyxl.styles import Font
+from openpyxl.workbook import Workbook
+from openpyxl.worksheet.datavalidation import DataValidation
 
 from elasticsearch import Elasticsearch
-import pandas as pd
-from fastapi import (
-    APIRouter,
-    HTTPException,
-    Query,
-    Response,
-    status,
-    UploadFile,
-    File,
-    Request,
-)
+from fastapi import APIRouter, HTTPException, Query, Response, status, UploadFile, File
 from fastapi.logger import logger
-from fastapi.responses import StreamingResponse
+from fastapi.responses import FileResponse
+from redis import Redis
+from rq import Queue
+
+from pydantic import ValidationError
 
 from validation import IndicatorSchema, DojoSchema, MetadataSchema
+from src.data import get_context
+
 from src.settings import settings
 
 from src.dojo import search_and_scroll
@@ -37,24 +38,37 @@ from src.causemos import notify_causemos
 from src.causemos import deprecate_dataset
 from src.utils import put_rawfile, get_rawfile, list_files
 from src.plugins import plugin_action
-from validation.IndicatorSchema import (
-    IndicatorMetadataSchema,
-    QualifierOutput,
-    Output,
-    Period,
-    Geography,
-)
 
-import os
+from src.csv_annotation_parser import format_annotations, xls_to_annotations
+
+from src.feature_queries import keyword_query_v1, hybrid_query_v1
 
 router = APIRouter()
-
 es = Elasticsearch([settings.ELASTICSEARCH_URL], port=settings.ELASTICSEARCH_PORT)
 
+# REDIS CONNECTION AND QUEUE OBJECTS
+redis = Redis(
+    os.environ.get("REDIS_HOST", "redis.dojo-stack"),
+    int(os.environ.get("REDIS_PORT", 6379)),
+)
+q = Queue(connection=redis, default_timeout=-1)
 
 # For created_at times in epoch milliseconds
 def current_milli_time():
     return round(time.time() * 1000)
+
+
+def enqueue_indicator_feature(indicator_id, indicator_dict):
+    """
+    Adds indicator (dataset!) to queue to process by embeddings_process, which
+    at this time creates and attaches LLM embeddings to its features (outputs)
+    """
+    job_string = "embeddings_processors.calculate_store_embeddings"
+    job_id = f"{indicator_id}_{job_string}"
+
+    context = {"indicator_id": indicator_id, "full_indicator": indicator_dict}
+
+    job = q.enqueue_call(func=job_string, args=[context], kwargs={}, job_id=job_id)
 
 
 @router.post("/indicators")
@@ -69,14 +83,15 @@ def create_indicator(payload: IndicatorSchema.IndicatorMetadataSchema):
     es.index(index="indicators", body=body, id=indicator_id)
     plugin_action("post_create", data=body, type="indicator")
 
-
     empty_annotations_payload = MetadataSchema.MetaModel(metadata={}).json()
     # (?): SHOULD WE HAVE PLUGINS AROUND THE ANNOTATION CREATION?
     plugin_action("before_create", data=body, type="annotation")
     es.index(index="annotations", body=empty_annotations_payload, id=indicator_id)
     plugin_action("post_create", data=body, type="annotation")
 
- 
+    # Saves all outputs, as features in a new index, with LLM embeddings
+    if payload.outputs:
+        enqueue_indicator_feature(indicator_id, json.loads(payload.json()))
 
     return Response(
         status_code=status.HTTP_201_CREATED,
@@ -98,6 +113,9 @@ def update_indicator(payload: IndicatorSchema.IndicatorMetadataSchema):
     es.index(index="indicators", body=body, id=indicator_id)
     plugin_action("post_update", data=body, type="indicator")
 
+    if payload.outputs:
+        enqueue_indicator_feature(indicator_id, json.loads(payload.json()))
+
     return Response(
         status_code=status.HTTP_200_OK,
         headers={"location": f"/api/indicators/{indicator_id}"},
@@ -112,11 +130,119 @@ def patch_indicator(
     payload.created_at = current_milli_time()
     body = json.loads(payload.json(exclude_unset=True))
     es.update(index="indicators", body={"doc": body}, id=indicator_id)
+
+    updated = es.get_source(
+        index="indicators", id=indicator_id, params={"_source": "name,outputs"}
+    )
+    if updated["outputs"]:
+        enqueue_indicator_feature(indicator_id, updated)
+
     return Response(
         status_code=status.HTTP_200_OK,
         headers={"location": f"/api/indicators/{indicator_id}"},
         content=f"Updated indicator with id = {indicator_id}",
     )
+
+
+@router.get(
+    "/features/search", response_model=IndicatorSchema.FeaturesSemanticSearchSchema
+)
+def semantic_search_features(
+    query: Optional[str], size=10, scroll_id: Optional[str] = None
+):
+    """
+    Given a text query, uses semantic search engine to search for features that
+    match the query semantically. Query is a sentence that can be interpreted
+    to be related to a concept, such as:
+    'number of people who have been vaccinated'
+    """
+
+    if scroll_id:
+        results = es.scroll(scroll_id=scroll_id, scroll="2m")
+    else:
+        # Retrieve first item in output, since it returns an array output
+        # that matches its input, and we provide only one- query.
+        features_query = hybrid_query_v1(query)
+
+        results = es.search(
+            index="features", body=features_query, scroll="2m", size=size
+        )
+
+    items_in_page = len(results["hits"]["hits"])
+
+    if items_in_page < int(size):
+        scroll_id = None
+    else:
+        scroll_id = results.get("_scroll_id", None)
+
+    max_score = results["hits"]["max_score"]
+
+    def formatOneResult(r):
+        r["_source"]["metadata"] = {}
+        r["_source"]["metadata"]["match_score"] = r["_score"]
+        r["_source"]["id"] = r["_id"]
+        r["_source"]["metadata"]["matched_queries"] = r["matched_queries"]
+        return r["_source"]
+
+    return {
+        "hits": results["hits"]["total"]["value"],
+        "items_in_page": items_in_page,
+        "max_score": max_score,
+        "results": [formatOneResult(i) for i in results["hits"]["hits"]],
+        "scroll_id": scroll_id,
+    }
+
+
+@router.get("/features", response_model=IndicatorSchema.FeaturesSearchSchema)
+def list_features(
+    term: Optional[str] = None, size: int = 10, scroll_id: Optional[str] = None
+):
+    """
+    Lists all features, with pagination, or results from searching
+    through them (using input sentence `term`). Will match `term`
+    to feature `name`, `display_name`, or `description`.
+    """
+
+    if term:
+        q = keyword_query_v1(term)
+
+    else:
+        q = {"query": {"match_all": {}}, "_source": {"excludes": "embeddings"}}
+
+    if not scroll_id:
+        results = es.search(index="features", body=q, scroll="2m", size=size)
+    else:
+        results = es.scroll(scroll_id=scroll_id, scroll="2m")
+
+    es_hits = results["hits"]["hits"]
+    hits_count = len(es_hits)
+
+    # if hits are less than the page size (10) don't return a scroll_id
+    if hits_count < size:
+        scroll_id = None
+    else:
+        scroll_id = results.get("_scroll_id", None)
+
+    max_score = results["hits"]["max_score"]
+
+    def formatOneResult(r):
+        if term:
+            r["_source"]["metadata"] = {}
+            r["_source"]["metadata"]["match_score"] = r["_score"]
+        r["_source"]["id"] = r["_id"]
+        return r["_source"]
+
+    response = {
+        "hits": results["hits"]["total"]["value"],
+        "items_in_page": hits_count,
+        "results": [formatOneResult(i) for i in es_hits],
+        "scroll_id": scroll_id,
+    }
+
+    if term:
+        response["max_score"] = max_score
+
+    return response
 
 
 @router.get(
@@ -197,6 +323,17 @@ def search_indicators(
     "/indicators/{indicator_id}", response_model=IndicatorSchema.IndicatorMetadataSchema
 )
 def get_indicators(indicator_id: str) -> IndicatorSchema.IndicatorMetadataSchema:
+    """Get Indicator
+
+    Args:
+        indicator_id (str): The UUID of the dataset to retrieve from elasticsearch.
+
+    Raises:
+        HTTPException: This is raised if the dataset is not found in elasticsearch.
+
+    Returns:
+        IndicatorSchema.IndicatorMetadataSchema: Returns the ydantic schema for the dataset that contains a metadata dictionary.
+    """
     try:
         indicator = es.get(index="indicators", id=indicator_id)["_source"]
     except Exception as e:
@@ -216,11 +353,11 @@ def publish_indicator(indicator_id: str):
         es.index(index="indicators", body=data, id=indicator_id)
 
         # Notify Causemos that an indicator was created
-        plugin_action("before_register", data=indicator, type="indicator")
-        # TODO: Move notify_causemose only to causemos plugin
-        notify_causemos(data, type="indicator")
-        plugin_action("register", data=indicator, type="indicator")
-        plugin_action("post_register", data=indicator, type="indicator")
+        plugin_action("before_publish", data=indicator, type="indicator")
+        # TODO: Move notify_causemos only to causemos plugin
+        # notify_causemos(data, type="indicator")
+        plugin_action("publish", data=indicator, type="indicator")
+        plugin_action("post_publish", data=indicator, type="indicator")
     except Exception as e:
         logger.exception(e)
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
@@ -271,7 +408,6 @@ def get_annotations(indicator_id: str) -> MetadataSchema.MetaModel:
     except Exception as e:
         logger.exception(e)
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-        return None
 
 
 @router.post("/indicators/{indicator_id}/annotations")
@@ -381,7 +517,7 @@ def upload_file(
                 [
                     f
                     for f in list_files(dir_path)
-                    if f.startswith("raw_data") and f.endswith(ext)
+                    if os.path.basename(f).startswith("raw_data") and f.endswith(ext)
                 ]
             )
             filename = f"raw_data_{filenum}{ext}"
@@ -433,7 +569,9 @@ def validate_date(payload: IndicatorSchema.DateValidationRequestSchema):
 
 @router.post("/indicators/{indicator_id}/preview/{preview_type}")
 async def create_preview(
-    indicator_id: str, preview_type: IndicatorSchema.PreviewType, filename: Optional[str] = Query(None),
+    indicator_id: str,
+    preview_type: IndicatorSchema.PreviewType,
+    filename: Optional[str] = Query(None),
     filepath: Optional[str] = Query(None),
 ):
     """Get preview for a dataset.
@@ -446,19 +584,19 @@ async def create_preview(
     """
     try:
         if filename:
-            file_suffix_match = re.search(r'raw_data(_\d+)?\.', filename)
+            file_suffix_match = re.search(r"raw_data(_\d+)?\.", filename)
             if file_suffix_match:
-                file_suffix = file_suffix_match.group(1) or ''
+                file_suffix = file_suffix_match.group(1) or ""
             else:
-                file_suffix = ''
+                file_suffix = ""
         else:
-            file_suffix = ''
+            file_suffix = ""
         # TODO - Get all potential string files concatenated together using list file utility
         if preview_type == IndicatorSchema.PreviewType.processed:
             if filepath:
                 rawfile_path = os.path.join(
                     settings.DATASET_STORAGE_BASE_URL,
-                    filepath.replace(".csv", ".parquet.gzip")
+                    filepath.replace(".csv", ".parquet.gzip"),
                 )
             else:
                 rawfile_path = os.path.join(
@@ -466,7 +604,6 @@ async def create_preview(
                     indicator_id,
                     f"{indicator_id}{file_suffix}.parquet.gzip",
                 )
-
             file = get_rawfile(rawfile_path)
             df = pd.read_parquet(file)
             try:
@@ -483,9 +620,7 @@ async def create_preview(
 
         else:
             if filepath:
-                rawfile_path = os.path.join(
-                    settings.DATASET_STORAGE_BASE_URL, filepath
-                )
+                rawfile_path = os.path.join(settings.DATASET_STORAGE_BASE_URL, filepath)
             else:
                 rawfile_path = os.path.join(
                     settings.DATASET_STORAGE_BASE_URL, indicator_id, "raw_data.csv"
@@ -493,7 +628,9 @@ async def create_preview(
             file = get_rawfile(rawfile_path)
             df = pd.read_csv(file, delimiter=",")
 
-        obj = json.loads(df.sort_index().reset_index(drop=True).head(100).to_json(orient="index"))
+        obj = json.loads(
+            df.sort_index().reset_index(drop=True).head(100).to_json(orient="index")
+        )
         indexed_rows = [{"__id": key, **value} for key, value in obj.items()]
 
         return indexed_rows
@@ -508,3 +645,318 @@ async def create_preview(
             headers={"msg": f"Error: {e}"},
             content=f"Queue could not be deleted.",
         )
+
+
+@router.put("/indicators/{indicator_id}/rescale")
+def rescale_indicator(indicator_id: str):
+    from src.data import job
+
+    job_string = "elwood_processors.scale_features"
+
+    resp = job(uuid=indicator_id, job_string=job_string)
+
+    return resp
+
+
+# TODO Add/use csv data dictionary file, Finish after UI-dictionary-file work.
+# @router.post("/indicators/definition")
+"""
+The following function is the start of implementing an endpoint that registers
+a dataset end-to-end from one API call (for developers, services).
+This endpoint will accept multiple files:
+- The dataset data file (presumable a csv, xlsx, netcdf, etc files we support)
+- A dataset metadata json file: contains the dataset name, organization, etc
+- A dictionary file describing the contents of the data and their types.
+  We call this "annotations" under Dojo API (xlsx or csv).
+
+With all of the three above files, the user would immediately receive an
+acknowledge that the dataset registration is in process. The API and workers would
+continue the registration process end-to-end. This is an alternative to the Dojo UI,
+where a gui requests the user separate data accross multiple steps.
+
+This is a work in progress, and thus has not been registered to the Dojo API yet.
+It currently does register a dataset end-to-end if uncommen this the router.post
+line above, but only supports annotations using the old elwood format within
+the metadata file, as well as only supporting csv datasets.
+
+"""
+
+
+def dataset_register_files(
+    data: UploadFile = File(...), metadata: UploadFile = File(...)
+):
+    """
+    Fields (not columns). Define fields (not annotations?)
+    See what we'll do with filename
+    """
+    json_data = json.load(metadata.file)
+
+    indicator_error = []
+    annotations_error = []
+
+    # Step 1: Create indicator
+    try:
+        indicator = IndicatorSchema.IndicatorMetadataSchema.parse_obj(json_data)
+    except ValidationError as e:
+        indicator_error = json.loads(e.json())
+
+    try:
+        annotations = MetadataSchema.MetaModel.parse_obj(json_data)
+    except ValidationError as e:
+        annotations_error = json.loads(e.json())
+
+    merged_possible_errors = indicator_error + annotations_error
+
+    if len(merged_possible_errors):
+        raise HTTPException(status_code=422, detail=merged_possible_errors)
+
+    create_response = create_indicator(indicator)
+    response = json.loads(create_response.body)
+
+    indicator_id = response["id"]
+
+    # Step 2: Upload file to S3
+    upload_file(indicator_id=indicator_id, file=data)
+
+    # Step 3: POST annotations
+    post_annotation(payload=annotations, indicator_id=indicator_id)
+
+    # TODO Step 4.alpha Transform raw File to csv. Later.
+    # NOTE Q: what's the filename of real raw .xlsx vs converted .csv?
+    # file_processors.file_conversion
+
+    # Step 4: Call job for mixmasta to normalize. It should then call step 5 (publish)
+
+    job_string = "elwood_processors.run_elwood"
+    job_id = f"{indicator_id}_{job_string}"
+
+    context = get_context(indicator_id)
+
+    q.enqueue_call(
+        func=job_string,
+        args=[context],
+        kwargs={
+            "on_success_endpoint": {
+                "verb": "PUT",
+                "url": f"{settings.DOJO_URL}/indicators/{indicator_id}/publish",
+            }
+        },
+        job_id=job_id,
+    )
+
+    return create_response
+
+
+def bytes_to_csv(file):
+    csv_reader = csv.DictReader(codecs.iterdecode(file, "utf-8"))
+    return list(csv_reader)
+
+
+@router.post("/indicators/{indicator_id}/annotations/file")
+async def upload_data_dictionary_file(indicator_id: str, file: UploadFile = File(...)):
+    """
+    Accepts a CSV dictionary file describing a dataset in order to register it. Similar to using the API directly with JSON, or using the Dataset Registration flow on Dojo user interface to annotate a dataset.
+    """
+
+    if file.filename.endswith(".xlsx"):
+        f = await file.read()
+        xlsx = io.BytesIO(f)
+        csv_dictionary_list = xls_to_annotations(xlsx)
+    else:
+        csv_dictionary_list = bytes_to_csv(file.file)
+
+    try:
+        formatted = format_annotations(csv_dictionary_list)
+    except ValidationError as e:
+        full_data = json.loads(e.json())
+
+        try:
+            full_data[0]["input_value"] = e.values
+        # We are attaching e.values on our `format_to_schema` fn but handle
+        # `values` not present in case we caught another ValidationError
+        except AttributeError:
+            pass
+
+        full_data[0]["message"] = str(e)
+        raise HTTPException(status_code=422, detail=full_data)
+
+    annotation_payload = MetadataSchema.MetaModel(annotations=formatted)
+
+    return patch_annotation(payload=annotation_payload, indicator_id=indicator_id)
+
+
+@router.get("/indicators/annotations/file-template")
+def download_data_dictionary_template_file(indicator_id=None, filetype="xlsx"):
+
+    if filetype == "csv":
+        file_name = "dataset_annotate_template.template_csv"
+        headers = {
+            "Content-Disposition": f"attachment; filename={file_name.replace('template_', '')}"
+        }
+        return FileResponse(file_name, headers=headers)
+
+    wb = Workbook()
+    ws = wb.active
+    ws.title = "Dojo Annotation Template"
+
+    bold_font = Font(bold=True)
+
+    columns = [
+        {
+            "name": "field_name",
+            "help_text": """The name of the field as it exists in the source document.
+This is usually the topmost cell in a column of a spreadsheet.""",
+            "validation": None,
+        },
+        {
+            "name": "group",
+            "help_text": """Setting this allows you to group related fields such as multi-part dates, or multipart geos.
+If the field is not part of a group, then this should be left blank.""",
+            "validation": None,
+        },
+        {
+            "name": "display_name",
+            "help_text": """A name to display instead of field_name.""",
+            "validation": None,
+        },
+        {
+            "name": "description",
+            "help_text": """Describes the field to provide better context during usage.""",
+            "validation": None,
+        },
+        {
+            "name": "data_type",
+            "help_text": """Describes the type of data contained in the column.
+Some options include:
+integer - a numerical value that does not contain a decimal point/place
+string - a word or text value that is not meant to be processed nor interpreted as a any of the other values available to describe the data.
+float: a numerical value with no decimal place
+binary: binary data in the dataset
+boolean: data that represents yes/no values (true or false, enabled or disabled, etc)
+""",
+            "validation": DataValidation(
+                type="list",
+                formula1='"integer,string,float,binary,boolean,latitude,longitude,coordinates,country,iso2,iso3,state,territory,county,district,municipality,town,month,day,year,epoch,date"',
+                allow_blank=False,
+            ),
+        },
+        {
+            "name": "units",
+            "help_text": """
+            Only include, and required, when data_type is not a value that directly correlates to time or location.
+            """,
+            "validation": None,
+        },
+        {
+            "name": "units_description",
+            "help_text": """An optional description for the feature unit, if the unit is required.""",
+            "validation": None,
+        },
+        {
+            "name": "primary",
+            "help_text": """When data_type can be correlated to time or location (eg coordinates, day, year, etc), set only one location and one time as primary. Fields that are grouped together using the group column should all have the same value for this column.""",
+            "validation": None,
+            "validation": DataValidation(
+                type="list",
+                formula1='"Y,N"',
+                allow_blank=True,
+            ),
+        },
+        {
+            "name": "date_format",
+            "help_text": """Required when prividing a time data_type of month, day, year, or date. Python-compatible formatters only. See Dojo UI dataset registration for further help and examples.""",
+            "validation": None,
+        },
+        {
+            "name": "gadm_level",
+            "help_text": """Level to map coordinates to. In other words, if a coordinate accuracy is at the country, state, territory (etc), level.""",
+            "validation": None,
+            "validation": DataValidation(
+                type="list",
+                formula1='"country,admin0,admin1,admin2,admin3"',
+                allow_blank=True,
+            ),
+        },
+        {
+            "name": "resolve_to_gadm",
+            "help_text": """If a location data_type field should be auto-resolved by the system to gadm.""",
+            "validation": DataValidation(
+                type="list",
+                formula1='"Y,N"',
+                allow_blank=True,
+            ),
+        },
+        {
+            "name": "coord_format",
+            "help_text": """
+            Only include, and required, when data_type is of coordinates. Some systems provide coordinates in latlon format, while others in lonlat. Please specify here, if applicable.
+            """,
+            "validation": None,
+            "validation": DataValidation(
+                type="list",
+                formula1='"lonlat,latlon"',
+                allow_blank=False,
+            ),
+        },
+        {
+            "name": "qualifies",
+            "help_text": """""",
+            "validation": None,
+        },
+        {
+            "name": "qualifier_role",
+            "help_text": """""",
+            "validation": DataValidation(
+                type="list",
+                formula1='"breakdown,weight,minimum,maximum,coefficient"',
+                allow_blank=False,
+            ),
+        },
+    ]
+
+    for index, col in enumerate(columns, start=1):
+        col_name = col["name"]
+        col_letter = openpyxl.utils.cell.get_column_letter(index)
+        cell = ws.cell(row=1, column=index, value=col_name)
+        cell.font = bold_font
+        help_text = col.get("help_text", "").strip()
+        help_prompt = DataValidation(
+            type="custom",
+            formula1="1",
+            promptTitle=col_name,
+            prompt=help_text,
+            allow_blank=False,
+            showInputMessage=True,
+        )
+        help_prompt.add(f"{col_letter}1")
+        ws.add_data_validation(help_prompt)
+
+        validation = col.get("validation", None)
+        if validation:
+            logger.warn(f"{col_name}: {validation}")
+            validation.add(f"{col_letter}2:{col_letter}1048576")
+            ws.add_data_validation(validation)
+
+    if indicator_id:
+        annotations = get_annotations(indicator_id)
+        for index, row in enumerate(
+            annotations.get("metadata", {}).get("column_statistics", {}).keys(), start=2
+        ):
+            ws.cell(row=index, column=1, value=row)
+
+    # Freeze the top and left-most row/column
+    ws.freeze_panes = "B2"
+
+    file_name = "dataset_annotation_template.xlsx"
+    headers = {
+        "Content-Disposition": f"attachment; filename={file_name}",
+        "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    }
+
+    from tempfile import NamedTemporaryFile
+
+    with NamedTemporaryFile() as tmp:
+        wb.save(tmp.name)
+        tmp.seek(0)
+        content = tmp.read()
+    return Response(content=content, headers=headers)

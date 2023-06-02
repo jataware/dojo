@@ -877,6 +877,7 @@ describe('formatAnnotationsOUT', () => {
           aliases: {},
           qualifies: [],
           qualifierrole: 'breakdown',
+          resolve_to_gadm: true
         },
         {
 
@@ -892,6 +893,7 @@ describe('formatAnnotationsOUT', () => {
           aliases: {},
           qualifies: [],
           qualifierrole: 'breakdown',
+          resolve_to_gadm: true
         },
         {
 
@@ -907,6 +909,7 @@ describe('formatAnnotationsOUT', () => {
           aliases: {},
           qualifies: [],
           qualifierrole: 'breakdown',
+          resolve_to_gadm: true
         },
         {
           name: 'admin0',
@@ -921,6 +924,7 @@ describe('formatAnnotationsOUT', () => {
           aliases: {},
           qualifies: [],
           qualifierrole: 'breakdown',
+          resolve_to_gadm: true
         },
       ]);
   });
@@ -976,6 +980,7 @@ describe('formatAnnotationsOUT', () => {
           aliases: {},
           qualifies: [],
           qualifierrole: 'breakdown',
+          resolve_to_gadm: true
         },
         {
           name: 'admin0',
@@ -990,6 +995,7 @@ describe('formatAnnotationsOUT', () => {
           aliases: {},
           qualifies: [],
           qualifierrole: 'breakdown',
+          resolve_to_gadm: true
         },
       ]);
   });
@@ -1045,9 +1051,121 @@ describe('formatAnnotationsOUT', () => {
           aliases: {},
           qualifies: [],
           qualifierrole: 'breakdown',
+          resolve_to_gadm: true
         },
       ]);
   });
+
+  test('regular admin0 geo is forced to resolve_to_gadm=true', () => {
+    const input = {
+      'admin0': {
+        aliases: [],
+
+        category: 'geo',
+        display_name: 'SUPER_GGEO',
+        description: 'merged geo description from multi admin',
+
+        isQualifies: false,
+        qualifierrole: 'breakdown',
+        qualifies: [],
+
+        geo_type: 'country',
+        primary: true,
+        gadm_level: '',
+        'geo.coordinate-pair': false,
+
+        'geo.multi-column': false,
+
+        'geo.multi-column.admin0': '',
+        'geo.multi-column.admin1': '',
+        'geo.multi-column.admin2': '',
+        'geo.multi-column.admin3': '',
+
+        date_type: '',
+        time_format: '',
+        'date.multi-column': false,
+
+        annotated: true
+      }
+    };
+
+    const output = formatAnnotationsOUT(input);
+
+    expect(output.geo)
+      .toEqual([
+        {
+          name: 'admin0',
+          type: 'geo',
+
+          geo_type: 'country',
+
+          description: 'merged geo description from multi admin',
+          display_name: 'SUPER_GGEO',
+          primary_geo: true,
+
+          aliases: {},
+          qualifies: [],
+          qualifierrole: 'breakdown',
+          resolve_to_gadm: true
+        },
+      ]);
+  });
+
+test('date format is removed for timestamp/epoch fields', () => {
+    const input = {
+      'timestamp': {
+        aliases: [],
+
+        category: 'time',
+        display_name: 'my epoch ts',
+        description: 'date format is not used so it will be removed',
+
+        isQualifies: false,
+        qualifierrole: 'breakdown',
+        qualifies: [],
+
+        geo_type: '',
+        primary: true,
+        gadm_level: '',
+        'geo.coordinate-pair': false,
+
+        'geo.multi-column': false,
+
+        'geo.multi-column.admin0': '',
+        'geo.multi-column.admin1': '',
+        'geo.multi-column.admin2': '',
+        'geo.multi-column.admin3': '',
+
+        date_type: 'epoch',
+        time_format: 'unix_time', // what helped us discover this bug; cartwrights format annotaition
+        'date.multi-column': false,
+
+        annotated: true
+      }
+    };
+
+    const output = formatAnnotationsOUT(input);
+
+    expect(output.date)
+      .toEqual([
+        {
+          name: 'timestamp',
+          type: 'date',
+
+          date_type: 'epoch',
+          time_format: '',
+
+          description: 'date format is not used so it will be removed',
+          display_name: 'my epoch ts',
+          primary_date: true,
+
+          aliases: {},
+          qualifies: [],
+          qualifierrole: 'breakdown'
+        },
+      ]);
+  });
+
 });
 
 describe('formatAliasesOUT', () => {

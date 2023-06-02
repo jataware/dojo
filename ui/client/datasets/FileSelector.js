@@ -272,7 +272,7 @@ export const ExtraInput = ({
 /**
  *
  * */
-const FileInput = withStyles(({ spacing }) => ({
+export const FileInput = withStyles(({ spacing }) => ({
   root: {
     margin: [[spacing(1), 0]],
     '& .MuiFormHelperText-root': {

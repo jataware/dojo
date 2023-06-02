@@ -15,9 +15,9 @@ import logging
 from logging import Logger
 logger: Logger = logging.getLogger(__name__)
 
-# Get latest version of mixmasta
-mixmasta_version = os.getenv('MIXMASTA_VERSION')
-print(f'mixmasta_version: {mixmasta_version}')
+# Get latest version of elwood
+elwood_version = os.getenv('ELWOOD_VERSION')
+print(f'elwood_version: {elwood_version}')
 
 ### Get ENV variables for Causemos API
 causemos_user = os.getenv('CAUSEMOS_USER')
@@ -343,15 +343,15 @@ model_node = DojoDockerOperator(
 )
 
 transform_node = DojoDockerOperator(
-    task_id='mixmasta-task',
+    task_id='elwood-task',
     trigger_rule='all_success',
-    image=f"jataware/mixmasta:{mixmasta_version}",
+    image=f"jataware/elwood:{elwood_version}",
     container_name="run_{{ dag_run.conf['run_id'] }}",
     volumes=[dmc_local_dir + "/results/{{ dag_run.conf['run_id'] }}:/tmp",
              dmc_local_dir + "/mappers:/mappers"],
     docker_url=os.environ.get("DOCKER_URL", "unix:///var/run/docker.sock"),
     network_mode="bridge",
-    command="{{ dag_run.conf['mixmasta_cmd'] }}",
+    command="{{ dag_run.conf['elwood_cmd'] }}",
     auto_remove=True,
     dag=dag
 )

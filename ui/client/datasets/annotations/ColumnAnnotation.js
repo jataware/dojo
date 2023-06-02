@@ -71,9 +71,6 @@ export const GeoControls = ({
 }) => {
   const isCoorPairCandidate = ['latitude', 'longitude']
     .includes(values.geo_type);
-  // country, state/territory, county/district:
-  const isResolveGADMCandidate = [GEO_ADMINS.admin0, GEO_ADMINS.admin1, GEO_ADMINS.admin2]
-    .includes(values.geo_type);
 
   const isCoordinatesLocation = values.geo_type === 'coordinates'
         || values['geo.coordinate-pair'];
@@ -129,13 +126,6 @@ export const GeoControls = ({
         helperText="There can only be one primary geo field."
         disabled={values['geo.multi-column']}
         {...fieldsConfig('primary')}
-      />
-
-      <FormAwareCheckBox
-        name="resolve_to_gadm"
-        label="Resolve to GADM"
-        disabled={!isResolveGADMCandidate}
-        {...fieldsConfig('resolve_to_gadm')}
       />
 
       {isCoorPairCandidate && (
@@ -270,7 +260,7 @@ export const DateControls = ({
         <div style={{paddingTop: '0.5rem'}}>
           <FormatValidationInput
             name="time_format"
-            required
+            required={requiresFormatting}
             label="Date Format"
             validateFormat={validateDateFormat}
             parentName={editingColumnName}
@@ -306,9 +296,9 @@ export const ColumnAnnotation = withStyles((theme) => ({
 }))(({
   classes, editingColumnName, columns,
   values, setFieldValue, validateDateFormat,
-  annotatedColumns, fieldsConfig=()=>({})
+  annotatedColumns, fieldsConfig = () => ({}),
+  focusRef
 }) => {
-
   const displayNamePlaceholder = editingColumnName.includes('+') ? '' : editingColumnName;
   const setQualifiesValues = useCallback(
     (val) => {
@@ -327,6 +317,7 @@ export const ColumnAnnotation = withStyles((theme) => ({
         name="display_name"
         label="Display Name"
         placeholder={displayNamePlaceholder}
+        inputRef={focusRef}
         {...fieldsConfig('display_name')}
       />
 
