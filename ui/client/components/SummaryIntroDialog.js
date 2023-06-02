@@ -92,7 +92,9 @@ const SummaryIntroDialog = ({
     setTimeout(() => setStep(defaultStep), theme.transitions.duration.standard);
   };
 
-  const versionBumpModel = async (relaunch) => {
+  const versionBumpModel = async (event, relaunch) => {
+    // prevent the page from redirecting on form submit
+    event.preventDefault();
     // set the endpoint for version bumping
     let versionBumpUrl = `/api/dojo/models/version/${model.id}`;
     let provisionUrl;
@@ -309,11 +311,11 @@ const SummaryIntroDialog = ({
                       disableElevation
                       className={classes.bigButton}
                       data-test="introDialogStartOverBtn"
-                      onClick={() => {
+                      onClick={(event) => {
                         if (model?.image) {
                           setStep('confirm');
                         } else {
-                          versionBumpModel();
+                          versionBumpModel(event);
                         }
                       }}
                     >
@@ -337,7 +339,7 @@ const SummaryIntroDialog = ({
                       color="primary"
                       disableElevation
                       className={classes.bigButton}
-                      onClick={() => versionBumpModel(true)}
+                      onClick={(event) => versionBumpModel(event, true)}
                       disabled={!model?.image}
                     >
                       <Grid container direction="row" justifyContent="center" alignItems="center">
@@ -402,7 +404,7 @@ const SummaryIntroDialog = ({
                     type="submit"
                     disableElevation
                     disabled={disableConfirm}
-                    onClick={() => versionBumpModel()}
+                    onClick={(event) => versionBumpModel(event)}
                     data-test="introDialogConfirmNameBtn"
                   >
                     Confirm
