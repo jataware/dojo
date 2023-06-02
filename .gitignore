@@ -25,7 +25,10 @@ data/**/*
 __pycache__/
 *.py[cod]
 *$py.class
-*.csv
+tasks/**/*.csv
+api/*.csv
+api/src/*.csv
+terminal/**/*.csv
 *.xls*
 # C extensions
 *.so
