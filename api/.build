@@ -1,26 +1,11 @@
 #!/usr/bin/env sh
 
-<<<<<<< HEAD
-DT=$(date +"%Y%m%d")
-GIT=${DT}.git.$(git rev-parse --short HEAD)
-VERSION="1.0.0"
-TAG="api_${VERSION}"
-
-=======
 VERSION="1.0.0"
 TAG="api-${VERSION}"
->>>>>>> dev
 GROUP=jataware
 NAME=dojo
 IMAGE="${GROUP}/${NAME}"
 
 docker build -f Dockerfile \
-<<<<<<< HEAD
-       -t "${IMAGE}:dev" \
        -t "${IMAGE}:${TAG}" \
-       -t "${IMAGE}:${TAG}-dev" \
-       -t "${IMAGE}:${GIT}" \
-=======
-       -t "${IMAGE}:${TAG}" \
->>>>>>> dev
        .

@@ -43,14 +43,14 @@ function DatasetSummaryDetails({ dataset }) {
   const [open, setOpen] = React.useState(false);
   const anchorRef = React.useRef(null);
   const [selectedIndex, setSelectedIndex] = React.useState(0);
-
+  
   const handleMenuItemClick = (event, index) => {
     setSelectedIndex(index);
-
+   
     if(index==1){
         setWideFormat("true")
     }else{
-        setWideFormat("false")
+        setWideFormat("false")    
     }
 
     setOpen(false);
