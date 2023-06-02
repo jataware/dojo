@@ -12,17 +12,20 @@ from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 import numpy
 
+api_url = os.environ.get("DOJO_HOST")
+download_endpoint = "download/csv/"
+indicator_endpoint = "indicators/"
+
 
 def generate_index_model_weights(
     context, filename=None, on_success_endpoint=None, *args, **kwargs
 ):
-
     # Generate Tree and File Retrieval object
 
     retrieval_dictionary = {}
     tree = None
     payload = kwargs.get("json_payload")
-    index_model_object = json.load(payload)
+    index_model_object = json.loads(json.dumps(payload))
     # print(index_model_object)
     retrieval_dictionary = iteration_func(index_model_object)
     tree = build_tree(index_model_object["state"]["index"])
@@ -40,8 +43,9 @@ def generate_index_model_weights(
     session.auth = (WM_USER, WM_PASS)
 
     for key, value in retrieval_dictionary.items():
-
-        if os.path.isfile(f"/code/pca_experiments/datasets/{key}.csv"):
+        if not os.path.exists("/pca/datasets/"):
+            os.makedirs("/pca/datasets/")
+        if os.path.isfile(f"/pca/datasets/{key}.csv"):
             print(f"dataset file for {key} already downloaded, skipping")
         else:
             # else we download the dataset
@@ -50,9 +54,8 @@ def generate_index_model_weights(
             )  # GET NORMALIZED DATA and pivot.
             print(url)
             file_obj = session.get(url)
-            # print(file_obj)
 
-            with open(f"/code/pca_experiments/datasets/{key}.csv", "w") as f:
+            with open(f"/pca/datasets/{key}.csv", "w") as f:
                 writer = csv.writer(f)
                 for line in file_obj.iter_lines():
                     writer.writerow(line.decode("utf-8").split(","))
@@ -60,14 +63,17 @@ def generate_index_model_weights(
 
             print("Done downloading or checking files.")
         original_dataset = pandas.read_csv(
-            f"/code/pca_experiments/datasets/{key}.csv", on_bad_lines="skip"
+            f"/pca/datasets/{key}.csv", on_bad_lines="skip"
         )
         print(f"Looking for: {value}")
+        # Use info extracted from model to get info out of the dataset.
         target_columns = []
         rename_dict = {}
+        aggregation = ""
         for dictionary in value:
             target_columns.append(dictionary["source_column"])
-            rename_dict[dictionary["source_column"]] = dictionary["model_name"]
+            rename_dict[dictionary["source_column"]] = dictionary["name_in_model"]
+            aggregation = dictionary["aggregation"]
         relevant_data = original_dataset[["timestamp", "country", *target_columns]]
 
         #     for v in value: CHECK APPLY MAP FOR HERE (but also we will have outlier robust in the future precomputed)
@@ -85,9 +91,7 @@ def generate_index_model_weights(
 
         dataframe = dataframe.groupby(geo_columns)
 
-        scaled_frame = dataframe.resample("Y", on="timestamp").agg(
-            "mean"
-        )  # TODO grab agg func from input json.
+        scaled_frame = dataframe.resample("Y", on="timestamp").agg(aggregation)
         scaled_frame.reset_index(inplace=True)
         data_list.append(scaled_frame)
 
@@ -97,8 +101,8 @@ def generate_index_model_weights(
             master_frame = dataset
             continue
         master_frame = pandas.merge(master_frame, dataset, on=same_columns, how="outer")
-    print(master_frame)
-    master_frame.to_csv("/code/pca_experiments/ND_gain_synthetic_model.csv")
+    # print(master_frame)
+    # master_frame.to_csv("/pca/datasets/ND_gain_synthetic_model.csv")
 
     # RUN PCA
 
@@ -158,22 +162,21 @@ def generate_index_model_weights(
     # GENERATE THE PAYLOAD UNCHARTED EXPECTS
 
     output = generate_output_payload(tree)
+    print(output)
 
-    return output
+    response = {"final_percentages": output}
 
-
-# TODO REMOVE
-api_url = "http://causemos-analyst.dojo-modeling.com/api/dojo/dojo/"
-download_endpoint = "download/csv/"
-indicator_endpoint = "indicators/"
+    return response
 
 
 # FEATURE + DATASET LIST GENERATION
 
 found_values = {}
+
+
 # Takes the ND_gain.json model and finds all datasets we need to download.
 # Creates a structure of:
-# {<dataset id in dojo>: [{"source_column": <dataset column name>, "model_name": <name of component in index model>}]}
+# {<dataset id in dojo>: [{"source_column": <dataset column name>, "name_in_model": <name of component in index model>}]}
 def iteration_func(data):
     for key, value in data.items():
         if type(value) == type(dict()):
@@ -187,14 +190,16 @@ def iteration_func(data):
                             found_values.get(data_id).append(
                                 {
                                     "source_column": val.get("outputVariable"),
-                                    "model_name": val.get("name"),
+                                    "name_in_model": val.get("name"),
+                                    "aggregation": val.get("temporalAggregation"),
                                 }
                             )
                         else:
                             found_values[data_id] = [
                                 {
                                     "source_column": val.get("outputVariable"),
-                                    "model_name": val.get("name"),
+                                    "name_in_model": val.get("name"),
+                                    "aggregation": val.get("temporalAggregation"),
                                 }
                             ]
                     else:
@@ -213,8 +218,8 @@ def iteration_func(data):
 
 
 class Node:  # Node class for the tree.
-    def __init__(self, output_variable, children=[], parent=None):
-        self.output_variable = output_variable
+    def __init__(self, name, children=[], parent=None):
+        self.name = name
         self.children = children
         self.parent = parent
         self.weight = 0
@@ -233,7 +238,7 @@ class Node:  # Node class for the tree.
         return ancestors
 
     def __str__(self):
-        return f"{self.output_variable}, {self.children}, {self.weight}"
+        return f"{self.name}, {self.children}, {self.weight}"
 
 
 def build_tree(node, parent=None):  # Builds the tree object.
@@ -253,14 +258,14 @@ def update_leaf_weights(
         for child in node.children:
             update_leaf_weights(leaf_weights, child)
     else:
-        if node.output_variable in leaf_weights:
-            node.weight = leaf_weights[node.output_variable]
+        if node.name in leaf_weights:
+            node.weight = leaf_weights[node.name]
 
 
 def sum_of_leaves(node):  # Sums all leaves under a node to get a node's weight
     total_weight = 0
     if not node.children:
-        #         print(f"{node.output_variable} : {node.weight}")
+        #         print(f"{node.name} : {node.weight}")
         total_weight += node.weight
     else:
         for child in node.children:
@@ -274,11 +279,11 @@ def compute_weights(node):  # Computes a weight for a node and assigns it
         compute_weights(child)
 
 
-def compute_edge_percent(  # TODO this returns all the final percents in the tree.
+def compute_edge_percent(
     node,
 ):  # Computes the edge percentage for a node to it's parent and stores it.
     if node.parent:
-        parent_name = node.parent.output_variable
+        parent_name = node.parent.name
         node_weight = node.weight
         parent_weight = node.parent.weight
         if parent_weight != 0:
@@ -292,31 +297,12 @@ def compute_edge_percent(  # TODO this returns all the final percents in the tre
 def generate_output_payload(node):
     output_payload = {}
 
-    def cycle_tree(node):
-        if node.parent:
-            output_payload[node.name] = node.edges.values()[0]
-        for child in node.children:
+    def cycle_tree(tree_node):
+        if tree_node.parent:
+            output_payload[tree_node.name] = next(iter(tree_node.edges.values()))
+        for child in tree_node.children:
             cycle_tree(child)
 
+    cycle_tree(node)
+
     return output_payload
-
-
-# def print_tree(node, indent=""):
-#     print(indent + f"{node.output_variable}: Weight: {node.weight}, Edges: {node.edges}")
-#     for child in node.children:
-#         print_tree(child, indent + "   ")
-
-
-def print_tree(node, indent=""):
-    if indent:
-        last_char = indent[-1]
-        indent = indent[:-1] + "│ " if last_char == "├" else indent[:-1] + " "
-
-    print(f"{indent}{node.output_variable}, Edges: {node.edges}")
-
-    if node.children:
-        for i, child in enumerate(node.children):
-            if i == len(node.children) - 1:
-                print_tree(child, indent + "└── ")
-            else:
-                print_tree(child, indent + "├── ")

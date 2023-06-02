@@ -108,7 +108,6 @@ def import_json_data():
     import json
 
     for file in glob("es-mappings/import/*", recursive=True):
-
         index = file.split("/")[-1].split(".json")[0]
 
         print(f"Importing {file} into {index}", flush=True)
@@ -332,7 +331,6 @@ def delete_outputfile(outputfile_id: str):
     """
 
     try:
-
         outputfile = es.get(index="outputfiles", id=outputfile_id)["_source"]
 
         # search the model for outputs that use this outputfile's ID
@@ -583,14 +581,16 @@ def get_csv(index: str, obj_id: str, request: Request, wide_format: str = "false
 
 
 @router.post("/dojo/index_model_weight/generate")
-def generate_index_model_weights(request: Request):
+async def generate_index_model_weights(request: Request):
     from src.data import job
 
-    json_payload = request.json()
+    json_payload = await request.json()
+    logging.info(json_payload)
     uuid = json_payload.get("id")
 
     job_string = "causemos_processors.generate_index_model_weights"
+    options = {"json_payload": json_payload}
 
-    resp = job(uuid=uuid, job_string=job_string)
+    resp = job(uuid=uuid, job_string=job_string, options=options)
 
     return resp
