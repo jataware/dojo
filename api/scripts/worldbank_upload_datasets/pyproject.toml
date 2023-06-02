@@ -1,0 +1,22 @@
+[tool.poetry]
+name = "worldbank-upload-datasets"
+version = "0.1.0"
+description = ""
+authors = ["Kyle Marsh <kyle@jataware.com>"]
+readme = "README.md"
+packages = [{include = "worldbank_upload_datasets"}]
+
+[tool.poetry.dependencies]
+python = "^3.10"
+pyarrow = "10.0.0"
+fastparquet = "0.8.3"
+pandas = "1.5.1"
+tqdm = "4.64.1"
+boto3 = "1.26.10"
+elasticsearch = "7.13.1"
+docker = "6.0.1"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
