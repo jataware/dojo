@@ -34,4 +34,5 @@ jobs:
         run: npm ci
 
       - name: Build UI
+        working-directory: ./ui
         run: npm run build
