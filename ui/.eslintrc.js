@@ -1,7 +1,6 @@
 module.exports = {
   "parser": "@babel/eslint-parser",
   "extends": ["airbnb", "plugin:react-hooks/recommended", "plugin:storybook/recommended"],
-  // "plugins": ["jest"],
   "env": {
     "browser": true,
     "node": true,
