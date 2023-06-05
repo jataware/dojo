@@ -167,7 +167,7 @@ const ContainerWebSocket = ({
         }
       } else if (id === 'annotate') {
         // modelOutput
-        const { id: reqid } = await storeFileRequest({
+        await storeFileRequest({
           model_id: modelId,
           file_path: meta.files[0],
           request_path: `/container/${modelId}/ops/cat?path=${encodeURIComponent(meta.files[0])}`

@@ -7,18 +7,14 @@ import identity from 'lodash/identity';
 import Button from '@material-ui/core/Button';
 import { GridOverlay, DataGrid, useGridSlotComponentProps } from '@material-ui/data-grid';
 import Typography from '@material-ui/core/Typography';
-import clsx from 'clsx';
 import { withStyles } from '@material-ui/core/styles';
 import TablePagination from '@material-ui/core/TablePagination';
-import Alert from '@material-ui/lab/Alert';
-
 import LinearProgress from '@material-ui/core/LinearProgress';
 import CancelIcon from '@material-ui/icons/Cancel';
 import OpenInNewIcon from '@material-ui/icons/OpenInNew';
 import IconButton from '@material-ui/core/IconButton';
 import InputAdornment from '@material-ui/core/InputAdornment';
 import TextField from '@material-ui/core/TextField';
-import LoadingOverlay from './LoadingOverlay';
 import ExpandableDataGridCell from './ExpandableDataGridCell';
 
 const expandableCell = ({ value, colDef }) => (

@@ -6,7 +6,7 @@ import Button from '@material-ui/core/Button';
 /**
  *
  **/
-export function DefaultErrorFallback({ error, resetErrorBoundary }) {
+export function DefaultErrorFallback({ resetErrorBoundary }) {
   // TODO Send errors to backend to track without user action
 
   return (

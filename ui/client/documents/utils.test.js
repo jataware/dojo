@@ -1,5 +1,4 @@
-import React from 'react';
-import { calculateHighlightTargets, pdfMetadataToForm } from './utils';
+import { calculateHighlightTargets } from './utils';
 
 describe('calculateHighlightTargets', () => {
   test('returns split array with text and expected hightlight data', () => {

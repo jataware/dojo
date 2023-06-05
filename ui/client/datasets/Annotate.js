@@ -1,4 +1,4 @@
-import React, { useEffect, useState, SetStateAction } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import axios from 'axios';
 import isEmpty from 'lodash/isEmpty';
@@ -11,7 +11,6 @@ import { withStyles } from '@material-ui/core/styles';
 import AnnotationsSubmitPrompt from './annotations/AnnotationsSubmitPrompt';
 import Instructions from './Instructions';
 import { Navigation } from '.';
-import Progress from './Progress';
 import TableAnnotation from './annotations/Table';
 import { formatAnnotationsIN } from './annotations/dataIN';
 import { formatAnnotationsOUT } from './annotations/dataOUT';
