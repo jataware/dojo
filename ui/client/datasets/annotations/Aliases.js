@@ -30,7 +30,9 @@ export const Aliases = withStyles(() => ({
     display: 'flex',
     alignItems: 'center'
   }
-}))(({ classes, aliases, disabled, ...props }) => (
+}))(({
+  classes, aliases, disabled, ...props
+}) => (
   <FieldArray
     name="aliases"
     render={(arrayHelpers) => (

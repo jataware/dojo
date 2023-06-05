@@ -104,7 +104,6 @@ const ContainerWebSocket = ({
         const p = `${s.substring(4)}`;
         const f = (p.startsWith('/')) ? p : `${cwd}/${p}`;
 
-
         const { id: reqid } = await storeFileRequest({
           model_id: modelId,
           file_path: f,

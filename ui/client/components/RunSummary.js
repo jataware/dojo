@@ -367,7 +367,7 @@ const RunSummary = ({ classes }) => {
         ) : (
           <Typography>Unexpected Error. No Run found.</Typography>
         )}
-    </Grid>
+      </Grid>
 
     </Container>
   );

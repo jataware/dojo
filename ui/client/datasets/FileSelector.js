@@ -14,22 +14,21 @@ import isFunction from 'lodash/isFunction';
 
 import { matchFileNameExtension } from '../utils';
 
-
-const NullGeotiffTooltip = ({...props}) => <Tooltip
-  title={
-    <Typography variant='caption'>
-      Numeric value that when used indicates missing or null values.<br/>
-      Geotiff values are always an integer or float.
-    </Typography>
-  }
-  {...props}
-/>
-
+const NullGeotiffTooltip = ({ ...props }) => (
+  <Tooltip
+    title={(
+      <Typography variant="caption">
+        Numeric value that when used indicates missing or null values.<br />
+        Geotiff values are always an integer or float.
+      </Typography>
+  )}
+    {...props}
+  />
+);
 
 export const ExtraInput = ({
   formik, fileMetadata, setFileMetadata, ...props
 }) => {
-
   // TODO This metadata is set on user file select etc, not on loading a previously
   // uploaded file. We'll check if we can populate
   // and display these prepopulated instead....
@@ -282,8 +281,8 @@ export const FileInput = withStyles(({ spacing }) => ({
   }
 }))(({
   formik, datasetInfo, setDatasetInfo, fileMetadata, setFileMetadata,
-  name, label, onFileSelect, InputProps={}, required, requiredFn,
-  classes, inputProps={}, ...props
+  name, label, onFileSelect, InputProps = {}, required, requiredFn,
+  classes, inputProps = {}, ...props
 }) => {
   const [{ onChange, value, ...field }, meta, setters] = useField({ ...props, name });
 
@@ -341,7 +340,6 @@ export const FileSelector = withStyles(({ spacing, palette }) => ({
     }
   }
 }))((allProps) => {
-
   const {
     formik, classes,
     fileMetadata, setFileMetadata,
@@ -423,9 +421,9 @@ export const FileSelector = withStyles(({ spacing, palette }) => ({
       // Important- filename and rawFileName set on metadata here
       const metadata = { filetype: filetypeValue, filename, rawFileName };
 
-      return extensionHandler ?
-        extensionHandler(file, metadata) :
-        setFileMetadata({ ...fileMetadata, ...metadata });
+      return extensionHandler
+        ? extensionHandler(file, metadata)
+        : setFileMetadata({ ...fileMetadata, ...metadata });
     }
 
     setMessage(`File ${file.name} is not a type that Dojo is able to process.`);
@@ -444,10 +442,10 @@ export const FileSelector = withStyles(({ spacing, palette }) => ({
   const uploadedFileName = get(props?.datasetInfo, 'fileData.raw.url');
   const uploadedFileMetadata = get(uploadedFilesData, uploadedRawFileNameToUse, null);
 
-  const fileMetadataKeys = uploadedFileMetadata ?
-        Object
-        .keys(uploadedFileMetadata)
-        .filter(k => !['filename', 'excel_sheets', 'rawFileName', 'filetype'].includes(k)) : [];
+  const fileMetadataKeys = uploadedFileMetadata
+    ? Object
+      .keys(uploadedFileMetadata)
+      .filter((k) => !['filename', 'excel_sheets', 'rawFileName', 'filetype'].includes(k)) : [];
 
   return (
     <div>
@@ -455,22 +453,22 @@ export const FileSelector = withStyles(({ spacing, palette }) => ({
         <div className={classes.uploadedFileData}>
           <Typography>
             Uploaded filename: <span className="filename">
-                                 {uploadedFileName}
+              {uploadedFileName}
                                </span>
           </Typography>
 
           <table>
             <tbody>
-            {fileMetadataKeys.map(key => (
-              <tr key={key}>
-                <td>
-                  {key}
-                </td>
-                <td>
-                  {uploadedFileMetadata[key]}
-                </td>
-              </tr>
-            ))}
+              {fileMetadataKeys.map((key) => (
+                <tr key={key}>
+                  <td>
+                    {key}
+                  </td>
+                  <td>
+                    {uploadedFileMetadata[key]}
+                  </td>
+                </tr>
+              ))}
             </tbody>
           </table>
 
@@ -487,10 +485,10 @@ export const FileSelector = withStyles(({ spacing, palette }) => ({
         </div>
       ) : (
         <>
-        <FileInput
-          onFileSelect={analyzeFile}
-          {...props}
-        />
+          <FileInput
+            onFileSelect={analyzeFile}
+            {...props}
+          />
           {displayUploadedFile && (
             <div className={classes.uploadedFileData}>
               <Typography>You're replacing a previously uploaded file.</Typography>

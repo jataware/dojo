@@ -35,22 +35,22 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const options = ['Long','Wide'];
+const options = ['Long', 'Wide'];
 
 function DatasetSummaryDetails({ dataset }) {
   const classes = useStyles();
-  const [wideFormat, setWideFormat] = React.useState("false");
+  const [wideFormat, setWideFormat] = React.useState('false');
   const [open, setOpen] = React.useState(false);
   const anchorRef = React.useRef(null);
   const [selectedIndex, setSelectedIndex] = React.useState(0);
-  
+
   const handleMenuItemClick = (event, index) => {
     setSelectedIndex(index);
-   
-    if(index==1){
-        setWideFormat("true")
-    }else{
-        setWideFormat("false")    
+
+    if (index == 1) {
+      setWideFormat('true');
+    } else {
+      setWideFormat('false');
     }
 
     setOpen(false);

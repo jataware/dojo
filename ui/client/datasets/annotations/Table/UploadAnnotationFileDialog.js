@@ -49,7 +49,7 @@ export default ({
 
       <Button
         component="a"
-        href={`/api/dojo/indicators/annotations/file-template${datasetID ? '?indicator_id='+datasetID : ''}`}
+        href={`/api/dojo/indicators/annotations/file-template${datasetID ? `?indicator_id=${datasetID}` : ''}`}
         color="primary"
       >
         Download template
@@ -76,4 +76,3 @@ export default ({
     </DialogActions>
   </Dialog>
 );
-

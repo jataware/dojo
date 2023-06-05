@@ -12,16 +12,14 @@ import { withStyles } from '@material-ui/core/styles';
 import TablePagination from '@material-ui/core/TablePagination';
 import Alert from '@material-ui/lab/Alert';
 
-import ExpandableDataGridCell from './ExpandableDataGridCell';
-import LoadingOverlay from './LoadingOverlay';
-
 import LinearProgress from '@material-ui/core/LinearProgress';
 import CancelIcon from '@material-ui/icons/Cancel';
 import OpenInNewIcon from '@material-ui/icons/OpenInNew';
 import IconButton from '@material-ui/core/IconButton';
 import InputAdornment from '@material-ui/core/InputAdornment';
 import TextField from '@material-ui/core/TextField';
-
+import LoadingOverlay from './LoadingOverlay';
+import ExpandableDataGridCell from './ExpandableDataGridCell';
 
 const expandableCell = ({ value, colDef }) => (
   <ExpandableDataGridCell
@@ -33,7 +31,7 @@ const expandableCell = ({ value, colDef }) => (
 const MATCH_TYPE = {
   semantic: 'semantic',
   hybrid: 'hybrid'
-}
+};
 
 /**
  * Maytch % confidence bar
@@ -57,15 +55,14 @@ export const ConfidenceBar = withStyles((theme) => ({
     backgroundColor: 'rgb(142,114,233)' // rgb(68,81,225)
   }
 }))(({ matchType, classes, ...props }) => {
-
   let overrides = {};
 
-  const {semanticBar, hybridBar, ...supportedClasses} = classes;
+  const { semanticBar, hybridBar, ...supportedClasses } = classes;
 
   if (matchType === MATCH_TYPE.semantic) {
-    overrides = {bar: semanticBar};
+    overrides = { bar: semanticBar };
   } else if (matchType === MATCH_TYPE.hybrid) {
-    overrides = {bar: hybridBar};
+    overrides = { bar: hybridBar };
   }
 
   return (
@@ -79,8 +76,8 @@ export const ConfidenceBar = withStyles((theme) => ({
   );
 });
 
-const semanticSearchFeatures = async(query) => {
-  let url = `/api/dojo/features/search?query=${query}&size=50`;
+const semanticSearchFeatures = async (query) => {
+  const url = `/api/dojo/features/search?query=${query}&size=50`;
   const response = await axios.get(url);
   return response.data;
 };
@@ -93,7 +90,7 @@ const fetchFeatures = async (
 ) => {
   setFeaturesLoading(true);
 
-  let url = `/api/dojo/features?size=2000`;
+  let url = '/api/dojo/features?size=2000';
   if (scrollId) {
     url += `&scroll_id=${scrollId}`;
   }
@@ -106,17 +103,15 @@ const fetchFeatures = async (
   );
 
   featuresRequest.then((featuresData) => {
-    setFeatures((prev) => {
-      return !scrollId ? featuresData.results : prev.concat(featuresData.results);
-    });
+    setFeatures((prev) => (!scrollId ? featuresData.results : prev.concat(featuresData.results)));
   })
     .catch((error) => {
       console.log('error:', error);
       setFeaturesError(true);
     })
-  .finally(() => {
+    .finally(() => {
       setFeaturesLoading(false);
-  });
+    });
 };
 
 /**
@@ -127,22 +122,19 @@ const fetchFeatures = async (
  */
 // Reverted Many count per implementation changes.
 // Leaving CustomTablePagination in to assess action after feedback.
-const CustomTablePagination = props => {
-
+const CustomTablePagination = (props) => {
   const { state, apiRef } = useGridSlotComponentProps();
 
   return (
     <TablePagination
-      labelDisplayedRows={({from, to, count}) => {
+      labelDisplayedRows={({ from, to, count }) => {
         // const displayCount = count > 500 ? 'Many' : count;
         const displayCount = count;
         return `${from}-${to} of ${displayCount}`;
       }}
       {...props}
       page={state.pagination.page}
-      onPageChange={(event, value) => {
-        return apiRef.current.setPage(value);
-      }}
+      onPageChange={(event, value) => apiRef.current.setPage(value)}
       rowsPerPage={100}
       count={state.pagination.rowCount}
     />
@@ -166,15 +158,16 @@ function CustomLoadingOverlay() {
 /**
  *
  **/
-const Legend = ({color, label}) => {
-  return (
-    <div style={{display: 'flex', alignItems: 'center'}}>
-      <div style={{width: 14, height: 14, backgroundColor: color, display: 'block', border: 'darkgray'}}></div>
+const Legend = ({ color, label }) => (
+  <div style={{ display: 'flex', alignItems: 'center' }}>
+    <div style={{
+      width: 14, height: 14, backgroundColor: color, display: 'block', border: 'darkgray'
+    }}
+    />
       &nbsp;
-      <span>{label}</span>
-    </div>
-  );
-};
+    <span>{label}</span>
+  </div>
+);
 
 /**
  *
@@ -187,14 +180,13 @@ const ViewFeatures = withStyles((theme) => ({
   },
   aboveTableWrapper: {
     display: 'flex',
-    maxWidth: "100vw",
+    maxWidth: '100vw',
     justifyContent: 'space-between',
     alignItems: 'flex-end',
     flexWrap: 'wrap',
     marginBottom: '1rem',
   }
-}))(({classes}) => {
-
+}))(({ classes }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchTermValue, setSearchTermValue] = useState('');
   const updateSearchTerm = useCallback(debounce(setSearchTerm, 500), []);
@@ -230,7 +222,6 @@ const ViewFeatures = withStyles((theme) => ({
       field: 'match_score',
       headerName: 'Match %',
       renderCell: (rowParent) => {
-
         const matchScore = rowParent?.row?.metadata?.match_score;
         if (!matchScore) {
           return null;
@@ -240,28 +231,28 @@ const ViewFeatures = withStyles((theme) => ({
 
         const isSemanticResult = maxSearchScore < 1;
 
-        let maxScore = isHybridSemanticResult ? 1.3 : isSemanticResult ? 1 : maxSearchScore;
+        const maxScore = isHybridSemanticResult ? 1.3 : isSemanticResult ? 1 : maxSearchScore;
 
-        let op = isSemanticResult||isHybridSemanticResult ? Math.sqrt : identity;
+        const op = isSemanticResult || isHybridSemanticResult ? Math.sqrt : identity;
 
-        const value = op(matchScore/maxScore) * 100;
+        const value = op(matchScore / maxScore) * 100;
 
         const matchArray = rowParent?.row?.metadata?.matched_queries;
 
-        let matchType = "keyword";
+        let matchType = 'keyword';
 
-        if (matchArray.length === 1 && matchArray.includes("semantic_search")) {
+        if (matchArray.length === 1 && matchArray.includes('semantic_search')) {
           matchType = MATCH_TYPE.semantic;
-        } else if (matchArray.length > 1 && matchArray.includes("semantic_search")) {
+        } else if (matchArray.length > 1 && matchArray.includes('semantic_search')) {
           matchType = MATCH_TYPE.hybrid;
         }
 
         return (
-          <div style={{width: '100%'}}>
+          <div style={{ width: '100%' }}>
             <ConfidenceBar
               matchType={matchType}
               value={value}
-              variant='determinate'
+              variant="determinate"
             />
           </div>
         );
@@ -283,10 +274,10 @@ const ViewFeatures = withStyles((theme) => ({
       disableColumnMenu: true,
       renderCell: ({ row }) => (
         <Button
-          component='a'
+          component="a"
           href={`/dataset_summary?dataset=${row.owner_dataset.id}`}
-          target='_blank'
-          variant='outlined'
+          target="_blank"
+          variant="outlined"
         >
           Parent Dataset
           <OpenInNewIcon />
@@ -296,13 +287,11 @@ const ViewFeatures = withStyles((theme) => ({
     }
   ];
 
-
   useEffect(() => {
     updateSearchTerm(searchTermValue);
   }, [searchTermValue]);
 
   const performSearch = () => {
-
     if (!searchTerm) {
       fetchFeatures(setFeatures, setFeaturesLoading, setFeaturesError);
       return;
@@ -361,7 +350,7 @@ const ViewFeatures = withStyles((theme) => ({
           />
         </div>
         {Boolean(searchTerm) && (
-          <div style={{display: 'flex', justifyContent: 'space-evenly', alignItems: 'bottom'}}>
+          <div style={{ display: 'flex', justifyContent: 'space-evenly', alignItems: 'bottom' }}>
             <Typography variant="h6">Match Legend</Typography>
             &nbsp;
             &nbsp;

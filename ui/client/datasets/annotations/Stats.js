@@ -43,14 +43,13 @@ function formatStatNumber(value, sigFigures) {
     }
 
     return Number.isInteger(parsed) ? parsed : parsed.toFixed(sigFigures);
-  } catch(e) {
+  } catch (e) {
     console.error('Error formatting stat number, e:', e);
     return '-';
   }
 }
 
 function loadConfig(labels, datasets) {
-
   return {
     data: {
       labels, // All labels per each tick
@@ -70,7 +69,7 @@ function loadConfig(labels, datasets) {
       // Nearest/x/intersect Important to easily hover any bar/bin with low values
       interaction: {
         intersect: false,
-        mode: "nearest",
+        mode: 'nearest',
         axis: 'x',
       },
 
@@ -103,7 +102,7 @@ function loadConfig(labels, datasets) {
             display: true,
             drawOnChartArea: true,
             // grid color:
-            color: "lightgray",
+            color: 'lightgray',
           },
           ticks: {
             suggestedMin: 0,
@@ -145,7 +144,7 @@ function loadConfig(labels, datasets) {
           },
           // Yes Label:
           ticks: {
-            callback: function(val, index) {
+            callback(val, index) {
               const label = this.getLabelForValue(val);
               return formatStatNumber(label, 2);
             },
@@ -153,7 +152,7 @@ function loadConfig(labels, datasets) {
             font: {
               size: 11,
               weight: 400,
-              style: "normal",
+              style: 'normal',
             },
           }
         }
@@ -184,9 +183,10 @@ export default React.memo(withStyles((theme) => ({
   colorHint: {
     color: theme.palette.secondary.main
   }
-}))(({ classes, statistics={}, histogramData, ...props }) => {
-
-  const { data=[], labels=[] } = histogramData;
+}))(({
+  classes, statistics = {}, histogramData, ...props
+}) => {
+  const { data = [], labels = [] } = histogramData;
   const canvasRef = React.useRef(null);
   const chartRef = React.useRef();
   const hasData = !isEmpty(data) && !isEmpty(labels);
@@ -197,14 +197,13 @@ export default React.memo(withStyles((theme) => ({
     if (!canvasRef.current || !hasData) { return; }
 
     const ctx = canvasRef.current;
-    const config = loadConfig(labels, {data, label: 'Count'});
+    const config = loadConfig(labels, { data, label: 'Count' });
 
-    chartRef.current= new ChartJS(ctx, {
+    chartRef.current = new ChartJS(ctx, {
       type: 'bar',
       data: config.data,
       options: config.options,
     });
-
   };
 
   const destroyChart = () => {
@@ -225,14 +224,14 @@ export default React.memo(withStyles((theme) => ({
       <Paper
         elevation={1}
         className={classes.chartContainer}
-        style={{display: hasData ? 'block' : 'none'}}
+        style={{ display: hasData ? 'block' : 'none' }}
       >
         <canvas
           ref={canvasRef}
-          role='img'
+          role="img"
           {...props}
         >
-          {'Loading...'}
+          Loading...
         </canvas>
       </Paper>
 
@@ -255,37 +254,36 @@ export default React.memo(withStyles((theme) => ({
         spacing={2}
       >
         {statKeys
-         .map(statName => (
-           <Grid
-             item
-             xs={6}
-             key={`${statName}-${statistics[statName]}`}
-           >
-             <Card>
-               <CardContent className={classes.cardContent}>
-                 <Typography
-                   gutterBottom
-                   color="textSecondary"
-                 >
-                   {statName}
-                 </Typography>
+          .map((statName) => (
+            <Grid
+              item
+              xs={6}
+              key={`${statName}-${statistics[statName]}`}
+            >
+              <Card>
+                <CardContent className={classes.cardContent}>
+                  <Typography
+                    gutterBottom
+                    color="textSecondary"
+                  >
+                    {statName}
+                  </Typography>
 
-                 <Typography
-                   className={classes.cardTextValue}
-                   variant="h5"
-                   component="h5"
-                 >
-                   {formatStatNumber(statistics[statName], 4)}
-                 </Typography>
+                  <Typography
+                    className={classes.cardTextValue}
+                    variant="h5"
+                    component="h5"
+                  >
+                    {formatStatNumber(statistics[statName], 4)}
+                  </Typography>
 
-               </CardContent>
-             </Card>
-           </Grid>
-         ))}
+                </CardContent>
+              </Card>
+            </Grid>
+          ))}
 
       </Grid>
 
     </div>
   );
 }));
-

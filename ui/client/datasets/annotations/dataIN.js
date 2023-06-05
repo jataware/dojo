@@ -85,7 +85,7 @@ function formatAnnotationIn(obj) {
     data['date.multi-column'] = true;
 
     delete data.associated_columns;
-  } else if (obj.type === 'geo' ) {
+  } else if (obj.type === 'geo') {
     data.gadm_level = obj.gadm_level;
 
     if (obj.is_geo_pair) {
@@ -110,7 +110,6 @@ function formatAnnotationIn(obj) {
 export function formatMultiPartDataIn(derivedData) {
   // values are the rest of the columns in the multipart relationship (other than base)
   return mapValues(derivedData, (value, key) => {
-
     const baseColumn = head(
       difference(key.split(' + '), value)
     );

@@ -2,9 +2,9 @@ import React, { useEffect } from 'react';
 import FormControl from '@material-ui/core/FormControl';
 import FormGroup from '@material-ui/core/FormGroup';
 import Grid from '@material-ui/core/Grid';
+import invert from 'lodash/invert';
 import { FormAwareSelect } from '../FormFields';
 import { GEO_ADMINS } from './constants';
-import invert from 'lodash/invert';
 
 const mapAdminValueNumbers = invert(GEO_ADMINS);
 
@@ -12,7 +12,7 @@ const mapAdminValueNumbers = invert(GEO_ADMINS);
  *
  * */
 const MultiColumnGeoSelector = ({
-  columns, editingColumn, setFieldValue, disabled=false
+  columns, editingColumn, setFieldValue, disabled = false
 }) => {
   const columnOptions = columns.map((column) => ({
     value: column.field,

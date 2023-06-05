@@ -9,33 +9,31 @@ import Typography from '@material-ui/core/Typography';
  **/
 export default withStyles((theme) => ({
   root: {
-    padding: "1rem",
-    height: "100%"
+    padding: '1rem',
+    height: '100%'
   }
-}))(({ classes, file }) => {
-
-  return (
-    <Paper
-      elevation={0}
-      className={
+}))(({ classes, file }) => (
+  <Paper
+    elevation={0}
+    className={
         clsx({
           [classes.root]: true
         })
       }
+  >
+    <Typography
+      variant="h6"
+      gutterBottom
     >
-      <Typography
-        variant="h6"
-        gutterBottom
-      >
-        {file.name}
-      </Typography>
+      {file.name}
+    </Typography>
 
-      <embed
-        src={file.blobUrl}
-        type="application/pdf"
-        height="95%"
-        width="100%" />
+    <embed
+      src={file.blobUrl}
+      type="application/pdf"
+      height="95%"
+      width="100%"
+    />
 
-    </Paper>
-  );
-});
+  </Paper>
+));

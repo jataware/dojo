@@ -10,16 +10,16 @@ import Typography from '@material-ui/core/Typography';
 import BasicAlert from '../../components/BasicAlert';
 
 const extensionMap = {
-  'pdf':{
+  pdf: {
     'application/pdf': ['.pdf'],
   },
-  'csv':{
+  csv: {
     'text/csv': ['.csv'],
   },
-  'xls': {
+  xls: {
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xls']
   },
-  'xlsx': {
+  xlsx: {
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx']
   }
 };
@@ -33,7 +33,7 @@ export function formatExtensionForDropZone(extensionsArray) {
   }, {});
 }
 
-export const FileDropSelector = withStyles((theme => ({
+export const FileDropSelector = withStyles(((theme) => ({
   root: {
     margin: '1rem 0 1rem 0',
     padding: '2rem',
@@ -135,7 +135,7 @@ export const FileDropSelector = withStyles((theme => ({
       );
     }
 
-    return CTA || `Drag ${acceptExtensions.map(i => i.toUpperCase()+'s').join(',')} here. Click to select up to ten files.`;
+    return CTA || `Drag ${acceptExtensions.map((i) => `${i.toUpperCase()}s`).join(',')} here. Click to select up to ten files.`;
   };
 
   return (
@@ -148,15 +148,15 @@ export const FileDropSelector = withStyles((theme => ({
       {...getRootProps()}
     >
       <IconButton
-        style={{pointerEvents: mini ? 'none' : 'unset'}}
+        style={{ pointerEvents: mini ? 'none' : 'unset' }}
         size={mini ? 'medium' : 'small'}
-        color={isDragActive ? "primary" : "default"}
+        color={isDragActive ? 'primary' : 'default'}
         disabled={disableSelector}
       >
-        <InboxIcon className={mini ? '' : classes.dropIcon}  />
+        <InboxIcon className={mini ? '' : classes.dropIcon} />
       </IconButton>
 
-      <input {...getInputProps()} /> {/*is hidden*/}
+      <input {...getInputProps()} /> {/* is hidden*/}
 
       <Typography
         variant={mini ? 'caption' : 'h6'}
