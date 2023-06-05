@@ -1,4 +1,4 @@
-name: UI: Cypress Integration, e2e Tests
+name: UI Cypress Integration, e2e Tests
 
 on:
   pull_request:

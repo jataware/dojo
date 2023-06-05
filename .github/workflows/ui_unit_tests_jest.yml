@@ -1,4 +1,4 @@
-name: UI: Unit Tests - Jest
+name: UI Unit Tests - Jest
 
 on:
   pull_request:

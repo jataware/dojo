@@ -1,4 +1,4 @@
-name: UI: Cypress Component Tests
+name: UI Cypress Component Tests
 
 on:
   pull_request:
