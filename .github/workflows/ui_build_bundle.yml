@@ -33,5 +33,5 @@ jobs:
         working-directory: ./ui
         run: npm ci
 
-      - name: Build Containers
-        run: make docker_build
+      - name: Build UI
+        run: npm run build
