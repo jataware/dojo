@@ -12,6 +12,7 @@ import { withStyles } from '@material-ui/core/styles';
 
 import PreviewTransformation from './PreviewTransformation';
 import { generateProcessGeoResArgs } from './dataTransformationHelpers';
+import { ExternalLink } from '../../components/Links';
 
 const aggregationFunctions = [
   'CONSERVATIVE',
@@ -143,6 +144,12 @@ export default withStyles((theme) => ({
                   Please select an aggregation function
                 </FormHelperText>
               )}
+              <ExternalLink
+                style={{ marginTop: '8px' }}
+                href="https://www.dojo-modeling.com/data-registration.html#adjust-geospatial-resolution"
+              >
+                Function Reference
+              </ExternalLink>
             </FormControl>
             <FormControl variant="outlined" className={classes.selectWrapper}>
               <InputLabel>Resolution</InputLabel>
