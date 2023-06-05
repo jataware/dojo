@@ -58,7 +58,6 @@ export default withStyles(({ spacing }) => ({
   datasetInfo, stepTitle, rawFileName,
   annotations, setAnnotations, onSubmit,
   addingAnnotationsAllowed = true, useFilepath = false,
-  modelInfo,
   fieldsConfig = () => ({})
 }) => {
   const [internalAnnotations, setInternalAnnotations] = useState({});

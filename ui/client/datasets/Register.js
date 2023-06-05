@@ -11,9 +11,6 @@ import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 
-import get from 'lodash/get';
-import isEmpty from 'lodash/isEmpty';
-
 import { Navigation } from '.';
 
 import {
@@ -47,12 +44,12 @@ export default withStyles(({ spacing }) => ({
   }
 }))(({
   classes, datasetInfo, stepTitle, setDatasetInfo, setAnnotations,
-  annotations, handleNext, handleBack, rawFileName, uploadedFilesData, ...props
+  handleNext, rawFileName, uploadedFilesData
 }) => {
   // This is the file metadata as we fill in the form (not the one stored in services):
   const [fileMetadata, setFileMetadata] = useState({});
 
-  const back = (event) => {}; // Do nothing
+  const back = (/* event*/) => {}; // Do nothing
 
   /**
    * Creates or updates a dataset (indicator) resource in the backend

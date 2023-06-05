@@ -3,8 +3,18 @@ module.exports = {
   "extends": ["airbnb", "plugin:react-hooks/recommended", "plugin:storybook/recommended"],
   "env": {
     "browser": true,
-    "node": true
+    "node": true,
   },
+  "overrides": [
+    {
+      "files": [
+        "**/*.test.js",
+      ],
+      "env": {
+        "jest": true
+      }
+    }
+  ],
   "rules": {
     "no-console": "off",
     "comma-dangle": "off",
@@ -27,6 +37,21 @@ module.exports = {
       "ignoreDeclarationSort": true,
       "ignoreMemberSort": true,
       "allowSeparatedGroups": true
-    }]
+    }],
+
+    "react/jsx-no-bind": "off",
+    "no-prototype-builtins": "off",
+
+    "react/jsx-no-duplicate-props": ["error", { "ignoreCase": false }],
+
+    "no-unused-vars": ["error", {
+      "vars": "all",
+      "args": "after-used",
+      "ignoreRestSiblings": true,
+      "varsIgnorePattern": "_"
+    }],
+
+    "jsx-a11y/alt-text": "off"
+
   }
 };

@@ -174,7 +174,6 @@ function ViewDatasets() {
   };
 
   const isModeDatasets = mode === 'datasets';
-  const isModeFeatures = mode === 'features';
 
   useEffect(() => {
     // only do this once when the page loads

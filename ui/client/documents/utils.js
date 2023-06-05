@@ -1,9 +1,4 @@
 import React from 'react';
-import axios from 'axios';
-import snakeCase from 'lodash/snakeCase';
-import mapKeys from 'lodash/mapKeys';
-import reduce from 'lodash/reduce';
-import flow from 'lodash/flow';
 
 // Includes English stopwords that don't add any semantic meaning to matches:
 const DISALLOWED_HIGHLIGHTS = ['ourselves', 'hers', 'between', 'yourself', 'but', 'again', 'there', 'about', 'once', 'during', 'out', 'very', 'having', 'with', 'they', 'own', 'an', 'be', 'some', 'for', 'do', 'its', 'yours', 'such', 'into', 'of', 'most', 'itself', 'other', 'off', 'is', 's', 'am', 'or', 'who', 'as', 'from', 'him', 'each', 'the', 'themselves', 'until', 'below', 'are', 'we', 'these', 'your', 'his', 'through', 'don', 'nor', 'me', 'were', 'her', 'more', 'himself', 'this', 'down', 'should', 'our', 'their', 'while', 'above', 'both', 'up', 'to', 'ours', 'had', 'she', 'all', 'no', 'when', 'at', 'any', 'before', 'them', 'same', 'and', 'been', 'have', 'in', 'will', 'on', 'does', 'yourselves', 'then', 'that', 'because', 'what', 'over', 'why', 'so', 'can', 'did', 'not', 'now', 'under', 'he', 'you', 'herself', 'has', 'just', 'where', 'too', 'only', 'myself', 'which', 'those', 'i', 'after', 'few', 'whom', 't', 'being', 'if', 'theirs', 'my', 'against', 'a', 'by', 'doing', 'it', 'how', 'further', 'was', 'here', 'than'];
@@ -84,52 +79,10 @@ export function readFile(file) {
  * TODO check if we had this fn in project
  **/
 export function formatBytes(bytes, decimals) {
-  if (bytes == 0) return '0 Bytes';
+  if (bytes === 0) return '0 Bytes';
   const k = 1024;
   const dm = decimals || 2;
   const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
-}
-
-/**
- * Below setup to transform metadata for readyness of form and API shapes.
- **/
-
-const defaultValues = {
-  title: '',
-  author: '',
-  description: '',
-  publisher: '',
-  producer: '',
-  original_language: 'en',
-  stated_genre: 'news-article',
-  type: 'article',
-  classification: 'unclassified',
-  creation_date: ''
-};
-
-const invalidProducers = ['pdf-lib', 'pdf-lib (https://github.com/Hopding/pdf-lib)'];
-
-const keysMappings = {
-  page_count: 'pages'
-};
-
-const valueTransforms = {
-  pages: Number
-};
-
-function renameKeys(key) {
-  return keysMappings[key] || key;
-}
-
-function transformValues(key, value) {
-  if (valueTransforms[key]) {
-    return valueTransforms[key](value);
-  }
-  return value;
-}
-
-function formatKey(key) {
-  return flow(snakeCase, renameKeys)(key);
+  return `${parseFloat((bytes / (k ** i)).toFixed(dm))} ${sizes[i]}`;
 }

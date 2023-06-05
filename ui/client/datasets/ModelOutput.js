@@ -70,7 +70,7 @@ const Section = withStyles(() => ({
  *
  * */
 const BaseData = ({
-  formik, datasetInfo, setDatasetInfo, fileMetadata, setFileMetadata
+  formik, fileMetadata, setFileMetadata
 }) => (
   <Section title="Data Information">
     <FormAwareTextField
@@ -132,13 +132,11 @@ export default withStyles(({ spacing }) => ({
   classes, datasetInfo, setDatasetInfo, stepTitle, handleNext, handleBack, modelId,
   annotations, setAnnotations, ...props
 }) => {
-  const history = useHistory();
-  const [file, setFile] = useState(null);
   const [fileMetadata, setFileMetadata] = useState({
     filename: null,
   });
 
-  const back = (event) => {}; // Do nothing
+  const back = (/* event*/) => {}; // Do nothing
 
   useEffect(async () => {
     setDatasetInfo({

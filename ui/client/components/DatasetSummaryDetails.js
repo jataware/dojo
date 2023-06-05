@@ -33,8 +33,6 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const options = ['Long', 'Wide'];
-
 function DatasetSummaryDetails({ dataset }) {
   const classes = useStyles();
   const [wideFormat, setWideFormat] = React.useState('false');
@@ -45,7 +43,7 @@ function DatasetSummaryDetails({ dataset }) {
   const handleMenuItemClick = (event, index) => {
     setSelectedIndex(index);
 
-    if (index == 1) {
+    if (index === 1) {
       setWideFormat('true');
     } else {
       setWideFormat('false');

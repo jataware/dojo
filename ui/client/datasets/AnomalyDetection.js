@@ -81,12 +81,12 @@ const RunJob = withStyles(({ spacing }) => ({
     if (jobData === null) {
       // Run right away on page load
       updateJobData();
-    } else if (jobData.status == 'finished') {
+    } else if (jobData.status === 'finished') {
       console.log('done');
 
       // setJobData(null);
       // handleNext();
-    } else if (jobData.status == 'failed') {
+    } else if (jobData.status === 'failed') {
       console.log('failed');
     } else {
       setTimeout(updateJobData, 1500);
@@ -126,7 +126,8 @@ const RunJob = withStyles(({ spacing }) => ({
                 <div className={classes.spinner} />
                 <br />
                 <Typography variant="caption">
-                  Scanning file blocks, analyzing whitespace, string, and numeric data for viability.
+                  Scanning file blocks, analyzing whitespace, string, and
+                  numeric data for viability.
                 </Typography>
                 {/* <Typography style={{ textTransform: 'capitalize' }}>
                   {jobData?.status}

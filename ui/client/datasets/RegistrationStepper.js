@@ -117,11 +117,11 @@ function getRawFileNameFromLocation(location) {
  * Given we're in the Dataset Update Metadata flow, we should
  * find and use the first raw file uploaded (which may vary by extension).
  *
- * NOTE Only potential "bug" (user error?) being, if the user first uploads 1 file, then somehow does
- * not finish registration and uses this ID to navigate to append flow, we might
- * _append_ a second file, then go through register flow using the second file,
- * which would mean the update flow would be borked (since it wants to use the first file, not the second.)
- * TODO verify note above.
+ * NOTE Only potential "bug" (user error?) being, if the user first uploads 1
+ * file, then somehow does not finish registration and uses this ID to navigate
+ * to append flow, we might _append_ a second file, then go through register
+ * flow using the second file, which would mean the update flow would be borked
+ * (since it wants to use the first file, not the second.) * TODO verify note.
  **/
 function getUpdateRawFileName(uploadedRawFileNames) {
   // raw_data. dot is important. Other appended files continue as "raw_data_#.<extension>"
@@ -136,7 +136,7 @@ function getUpdateRawFileName(uploadedRawFileNames) {
 
 const HorizontalLinearStepper = ({ match, updateLocation, ...props }) => {
   const { flowslug, step, datasetId } = match?.params;
-  updateLocation = updateLocation == undefined ? true : Boolean(updateLocation);
+  const shouldUpdateLocation = updateLocation === undefined ? true : Boolean(updateLocation);
 
   // Return "404" immediately if the flow slug doesn't exist
   if (!flows.hasOwnProperty(flowslug)) {
@@ -190,7 +190,7 @@ const HorizontalLinearStepper = ({ match, updateLocation, ...props }) => {
     }
 
     if (datasetId) {
-      const result = axios({
+      axios({
         method: 'get',
         url: `/api/dojo/indicators/${datasetId}/verbose`,
       }).then((result) => {
@@ -258,9 +258,7 @@ const HorizontalLinearStepper = ({ match, updateLocation, ...props }) => {
     }
   }, [activeStep]); // We fetch once either on page load, or once we move to a different step to get freshest data
 
-  const steps = getSteps(flow);
-
-  const handleBack = (values) => {
+  const handleBack = () => {
     let prevStep = flow.steps[activeStep - 1];
     if (prevStep.component.SKIP) {
       prevStep = flow.steps[activeStep - 2];
@@ -268,7 +266,7 @@ const HorizontalLinearStepper = ({ match, updateLocation, ...props }) => {
 
     const newPath = `/datasets/${flowslug}/${prevStep.slug}/${datasetInfo.id}`;
 
-    if (updateLocation) {
+    if (shouldUpdateLocation) {
       history.push(newPath + history.location.search);
     } else {
       setActiveStep(activeStep - 1);
@@ -276,7 +274,7 @@ const HorizontalLinearStepper = ({ match, updateLocation, ...props }) => {
   };
 
   const handleNext = ({
-    dataset, filename, filepath, ...props
+    dataset, filename, filepath
   } = {}) => {
     const currentStep = flow.steps[activeStep];
     const nextStep = flow.steps[activeStep + 1];
@@ -291,7 +289,7 @@ const HorizontalLinearStepper = ({ match, updateLocation, ...props }) => {
       setRawFileName(filename);
     }
 
-    if (updateLocation) {
+    if (shouldUpdateLocation) {
       if (currentStep.component.SKIP) {
         history.replace(newPath);
       } else {

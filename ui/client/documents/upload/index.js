@@ -116,7 +116,7 @@ const CustomLoading = withStyles((theme) => ({
  * Submit button is not type=submit for now, since pressing enter
  * causes issues on inconvenient input boxes.
  **/
-const UploadDocumentForm = withStyles((theme) => ({
+const UploadDocumentForm = withStyles(() => ({
   root: {
     padding: '3rem',
     height: '100%',
@@ -139,7 +139,7 @@ const UploadDocumentForm = withStyles((theme) => ({
     justifyContent: 'space-between',
     padding: '1rem'
   }
-}))(({ title, children, classes }) => {
+}))(({ classes }) => {
   const [files, setFiles] = useState([]);
   const [allPDFMetadata, setAllPDFMetadata] = useState([]);
   const [selectedFileIndex, setSelectedFileIndex] = useState(0);
@@ -189,7 +189,7 @@ const UploadDocumentForm = withStyles((theme) => ({
         // both outside and inside async promise handler:
         setAllPDFMetadata((prevMetadata) => [...prevMetadata, ...allPdfData]);
         setFiles((prevFiles) => [...prevFiles, ...formattedFiles]);
-        setSelectedFileIndex((selectedFileIndex) => selectedFileIndex || 0);
+        setSelectedFileIndex((prevSelectedFileIndex) => prevSelectedFileIndex || 0);
 
         setLoading(false);
 
@@ -221,7 +221,8 @@ const UploadDocumentForm = withStyles((theme) => ({
       const metadataClone = { ...allPDFMetadata[idx] };
       metadataClone.creation_date = formatDate(metadataClone.creation_date);
 
-      const documentsPromise = axios({
+      // TODO await on this promise, display a dialog, help the user..
+      axios({
         method: 'post',
         url: '/api/dojo/documents',
         data: metadataClone,

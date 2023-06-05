@@ -64,9 +64,8 @@ export default withStyles(({ spacing }) => ({
       });
   }
 
-  // function PublishModelOutput({datasetInfo, annotations, handleNext, defaultHandleNext, ...props}={}) {
   function PublishModelOutput({
-    datasetInfo, annotations, onSubmit, ...props
+    datasetInfo, annotations, onSubmit
   } = {}) {
     const { file_uuid } = annotations.metadata;
     const [output_directory, path] = splitOnWildCard(annotations.metadata.filename);
@@ -83,7 +82,8 @@ export default withStyles(({ spacing }) => ({
 
     const isQualifier = (annotation) => (Boolean(annotation.qualify?.length || annotation.qualifies?.length || annotation.qualifier_outputs?.length));
     const isPrimary = (annotation) => (Boolean(annotation.primary_date === true || annotation.primary_geo === true));
-    // An annotation is a feature if it doesn't qualify anything and is not a primary date or primary geo
+    // An annotation is a feature if it doesn't qualify anything and is not a
+    //  primary date or primary geo
     const isFeature = (annotation) => (!(isQualifier(annotation) || isPrimary(annotation)));
 
     const outputs = (datasetInfo?.outputs || []).filter((output) => (output.uuid !== file_uuid));
@@ -115,7 +115,8 @@ export default withStyles(({ spacing }) => ({
       name: annotation.name,
       display_name: annotation.display_name,
       description: annotation.description,
-      type: typeRemapper[annotation.feature_type] || annotation.feature_type, // OutputType
+      // OutputType:
+      type: typeRemapper[annotation.feature_type] || annotation.feature_type,
       unit: annotation.units,
       unit_description: annotation.units_description,
       is_primary: false,
@@ -170,7 +171,7 @@ export default withStyles(({ spacing }) => ({
       })),
     );
 
-    const updates = Promise.all([
+    Promise.all([
       axios.post('/api/dojo/dojo/outputfile', outputPayload),
       axios.patch(`/api/dojo/models/${datasetInfo.id}`,
         {

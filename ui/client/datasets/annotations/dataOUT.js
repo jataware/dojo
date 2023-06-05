@@ -126,7 +126,7 @@ function formatDateAnnotationOUT(localAnnotation, outgoingAnnotationBase) {
       .forEach((item) => { collectedOutgoingAnnotations.push(item); });
   }
 
-  if (localAnnotation.date_type == 'epoch') {
+  if (localAnnotation.date_type === 'epoch') {
     // fix for cartwrights/geotimeclassify inserting time_format for epochs, which is not needed
     // also helps with csv dictionary annotation
     outgoingAnnotation.time_format = '';
