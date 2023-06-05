@@ -32,7 +32,7 @@ const MATCH_TYPE = {
 /**
  * Maytch % confidence bar
  **/
-export const ConfidenceBar = withStyles((theme) => ({
+export const ConfidenceBar = withStyles(() => ({
   root: {
     height: 15,
   },
@@ -118,24 +118,24 @@ const fetchFeatures = async (
  */
 // Reverted Many count per implementation changes.
 // Leaving CustomTablePagination in to assess action after feedback.
-const CustomTablePagination = (props) => {
-  const { state, apiRef } = useGridSlotComponentProps();
+// const CustomTablePagination = (props) => {
+//   const { state, apiRef } = useGridSlotComponentProps();
 
-  return (
-    <TablePagination
-      labelDisplayedRows={({ from, to, count }) => {
-        // const displayCount = count > 500 ? 'Many' : count;
-        const displayCount = count;
-        return `${from}-${to} of ${displayCount}`;
-      }}
-      {...props}
-      page={state.pagination.page}
-      onPageChange={(event, value) => apiRef.current.setPage(value)}
-      rowsPerPage={100}
-      count={state.pagination.rowCount}
-    />
-  );
-};
+//   return (
+//     <TablePagination
+//       labelDisplayedRows={({ from, to, count }) => {
+//         // const displayCount = count > 500 ? 'Many' : count;
+//         const displayCount = count;
+//         return `${from}-${to} of ${displayCount}`;
+//       }}
+//       {...props}
+//       page={state.pagination.page}
+//       onPageChange={(event, value) => apiRef.current.setPage(value)}
+//       rowsPerPage={100}
+//       count={state.pagination.rowCount}
+//     />
+//   );
+// };
 
 /**
  * Blue linear loading animation displayed when table loading/searching of
@@ -168,7 +168,7 @@ const Legend = ({ color, label }) => (
 /**
  *
  */
-const ViewFeatures = withStyles((theme) => ({
+const ViewFeatures = withStyles(() => ({
   root: {
     flex: 1,
     display: 'flex',

@@ -51,7 +51,7 @@ describe('calculateHighlightTargets', () => {
 // "Pages" : 41,
 // "Creator" : ""
 // "Type" : "article",
-// "Description" : "Sectors Material relief assistance and services (072010): 100% March 2015 - Ethiopia faces a wide variety of humanitarian challenges, including the effects of chronic drought in many areas of the country, widespread food insecurity, an ongoing low to medium intensity conflict in its south-eastern Somali region, and the impact of hosting a growing population of Eritrean, Somali, South Sudanese, and Sudanese refugees on its soil.",
+// "Description" : "Some long text",
 // "OriginalLanguage" : "en",
 // "Classification" : "UNCLASSIFIED",
 // "Title" : "Ethiopia - Humanitarian Response for South Sudanese Refugees in Gambella - MSF 2015",

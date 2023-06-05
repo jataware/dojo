@@ -1,4 +1,3 @@
-/* eslint-disable no-undef */
 import { formatAliasesOUT, formatAnnotationsOUT } from './dataOUT';
 
 describe('formatAnnotationsOUT', () => {

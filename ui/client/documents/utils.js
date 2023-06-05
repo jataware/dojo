@@ -1,8 +1,5 @@
 import React from 'react';
-import axios from 'axios';
 import snakeCase from 'lodash/snakeCase';
-import mapKeys from 'lodash/mapKeys';
-import reduce from 'lodash/reduce';
 import flow from 'lodash/flow';
 
 // Includes English stopwords that don't add any semantic meaning to matches:
@@ -84,12 +81,12 @@ export function readFile(file) {
  * TODO check if we had this fn in project
  **/
 export function formatBytes(bytes, decimals) {
-  if (bytes == 0) return '0 Bytes';
+  if (bytes === 0) return '0 Bytes';
   const k = 1024;
   const dm = decimals || 2;
   const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
   const i = Math.floor(Math.log(bytes) / Math.log(k));
-  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+  return `${parseFloat((bytes / (k ** i)).toFixed(dm))} ${sizes[i]}`;
 }
 
 /**

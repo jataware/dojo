@@ -33,8 +33,6 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const options = ['Long', 'Wide'];
-
 function DatasetSummaryDetails({ dataset }) {
   const classes = useStyles();
   const [wideFormat, setWideFormat] = React.useState('false');

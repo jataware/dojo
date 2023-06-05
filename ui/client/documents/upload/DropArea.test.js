@@ -1,4 +1,3 @@
-import React from 'react';
 import { formatExtensionForDropZone } from './DropArea';
 
 describe('formatExtensionForDropZone', () => {

@@ -1,14 +1,7 @@
-import React, { useState } from 'react';
-import { Form, Formik } from 'formik';
+import React from 'react';
 
 import isEmpty from 'lodash/isEmpty';
-import Accordion from '@material-ui/core/Accordion';
-import AccordionDetails from '@material-ui/core/AccordionDetails';
-import AccordionSummary from '@material-ui/core/AccordionSummary';
 import axios from 'axios';
-import Container from '@material-ui/core/Container';
-import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
-import Grid from '@material-ui/core/Grid';
 import Typography from '@material-ui/core/Typography';
 
 import * as yup from 'yup';
@@ -17,16 +10,9 @@ import get from 'lodash/get';
 import { withStyles } from '@material-ui/core/styles';
 import { DomainsAutocomplete } from '../components/ModelDetailForm';
 
-import { Navigation } from '.';
 import { FormAwareTextField, FormAwareSelect } from './FormFields';
 
 import { FileSelector } from './FileSelector';
-
-/**
- * Uses already-defined validation schema to derive if a field is required
- * Used in this file by FormAwareTextField
- * */
-const checkRequired = (fieldName) => get(formSchema, `fields.${fieldName}.exclusiveTests.required`, false);
 
 /**
  *
@@ -57,6 +43,12 @@ export const formSchema = yup.object({
     .string('Select a filename to process.')
     .required('Registering a Dataset requires selecting a file.')
 });
+
+/**
+ * Uses already-defined validation schema to derive if a field is required
+ * Used in this file by FormAwareTextField
+ * */
+const checkRequired = (fieldName) => get(formSchema, `fields.${fieldName}.exclusiveTests.required`, false);
 
 export const genRegisterDefaultValues = (datasetInfo) => ({
   name: datasetInfo?.name || '',
