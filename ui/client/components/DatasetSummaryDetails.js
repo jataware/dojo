@@ -2,8 +2,6 @@ import React from 'react';
 
 import Button from '@material-ui/core/Button';
 import Grid from '@material-ui/core/Grid';
-import MenuItem from '@material-ui/core/MenuItem';
-import MenuList from '@material-ui/core/MenuList';
 import Typography from '@material-ui/core/Typography';
 
 import { makeStyles } from '@material-ui/core/styles';
@@ -35,22 +33,22 @@ const useStyles = makeStyles((theme) => ({
   },
 }));
 
-const options = ['Long','Wide'];
+const options = ['Long', 'Wide'];
 
 function DatasetSummaryDetails({ dataset }) {
   const classes = useStyles();
-  const [wideFormat, setWideFormat] = React.useState("false");
+  const [wideFormat, setWideFormat] = React.useState('false');
   const [open, setOpen] = React.useState(false);
   const anchorRef = React.useRef(null);
   const [selectedIndex, setSelectedIndex] = React.useState(0);
-  
+
   const handleMenuItemClick = (event, index) => {
     setSelectedIndex(index);
-   
-    if(index==1){
-        setWideFormat("true")
-    }else{
-        setWideFormat("false")    
+
+    if (index == 1) {
+      setWideFormat('true');
+    } else {
+      setWideFormat('false');
     }
 
     setOpen(false);

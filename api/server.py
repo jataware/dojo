@@ -175,6 +175,9 @@ def setup_elasticsearch_indexes():
             },
             "mappings": {
                 "properties": {
+                    "creation_date": {
+                        "type": "date"
+                    },
                     "uploaded_at": {
                         "type": "date"
                     },

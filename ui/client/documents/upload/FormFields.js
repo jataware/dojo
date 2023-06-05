@@ -6,9 +6,10 @@ import TextField from '@material-ui/core/TextField';
  * optimizing re-renders. Does not use formik, as the parent controls its value
  * for the selected file.
  **/
-export const ManagedTextField = ({label, InputProps, inputProps, placeholder, onChange, value, ...props}) => {
-
-  const [internalValue, setInternalValue] = useState("");
+export const ManagedTextField = ({
+  label, InputProps, inputProps, placeholder, onChange, value, ...props
+}) => {
+  const [internalValue, setInternalValue] = useState('');
 
   const displayValue = internalValue || value;
 
@@ -42,4 +43,3 @@ export const ManagedTextField = ({label, InputProps, inputProps, placeholder, on
     />
   );
 };
-

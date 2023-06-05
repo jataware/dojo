@@ -13,18 +13,16 @@ const DISALLOWED_HIGHLIGHTS = ['ourselves', 'hers', 'between', 'yourself', 'but'
  * Easier for testing (see unit test).
  **/
 export function calculateHighlightTargets(text, highlights) {
+  const partSplitBoundaries = highlights.toLowerCase().split(' ').map((h) => `\\b${h}\\b`);
 
-  const partSplitBoundaries = highlights.toLowerCase().split(" ").map(h => `\\b${h}\\b`);
-
-  const parts = text.split(new RegExp(`(${partSplitBoundaries.join("|")})`, 'gi'));
+  const parts = text.split(new RegExp(`(${partSplitBoundaries.join('|')})`, 'gi'));
 
   const highlightWords = highlights
-        .toLowerCase()
-        .split(" ")
-        .map(i => i.trim());
+    .toLowerCase()
+    .split(' ')
+    .map((i) => i.trim());
 
   const highlighted = parts.map((part) => {
-
     const normalizedPart = part && part.toLowerCase().trim();
     const isDisallowed = DISALLOWED_HIGHLIGHTS.includes(normalizedPart);
 
@@ -32,7 +30,6 @@ export function calculateHighlightTargets(text, highlights) {
       text: part,
       highlight: !isDisallowed && highlightWords.includes(normalizedPart)
     };
-
   });
 
   return highlighted;
@@ -55,9 +52,9 @@ export function highlightText(text, highlights) {
       {highlightData.map((partInfo, idx) => (
         <span
           key={idx}
-          style={partInfo.highlight ?
-                 {fontWeight: 'bold', background: 'yellow'} :
-                 {}}
+          style={partInfo.highlight
+            ? { fontWeight: 'bold', background: 'yellow' }
+            : {}}
         >
           {partInfo.text}
         </span>
@@ -83,17 +80,16 @@ export function readFile(file) {
   });
 }
 
-
 /**
  * TODO check if we had this fn in project
  **/
-export function formatBytes(bytes,decimals) {
-  if(bytes == 0) return '0 Bytes';
-  var k = 1024,
-      dm = decimals || 2,
-      sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'],
-      i = Math.floor(Math.log(bytes) / Math.log(k));
-  return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+export function formatBytes(bytes, decimals) {
+  if (bytes == 0) return '0 Bytes';
+  const k = 1024;
+  const dm = decimals || 2;
+  const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
 }
 
 /**

@@ -51,7 +51,7 @@ function formatDate(date) {
 function getFormattedPDFMetadata(pdfDoc) {
   return PDF_ATTR_GETTERS.reduce(
     (acc, pdfLibAttr) => {
-      let propertyValue = pdfDoc[pdfLibAttr]();
+      const propertyValue = pdfDoc[pdfLibAttr]();
 
       if (propertyValue === undefined) {
         return acc;
@@ -67,9 +67,9 @@ function getFormattedPDFMetadata(pdfDoc) {
       acc[key] = propertyValue;
 
       return acc;
-
     },
-    {...defaultValues});
+    { ...defaultValues }
+  );
 }
 
 const CustomLoading = withStyles((theme) => ({
@@ -89,30 +89,28 @@ const CustomLoading = withStyles((theme) => ({
   circle: {
     strokeLinecap: 'round',
   }
-}))(({classes, ...props}) => {
-  return (
-    <div className={classes.root}>
-      <CircularProgress
-        variant="determinate"
-        className={classes.bottom}
-        size={30}
-        thickness={4}
-        {...props}
-        value={100}
-      />
-      <CircularProgress
-        variant="indeterminate"
-        className={classes.top}
-        classes={{
-          circle: classes.circle,
-        }}
-        size={30}
-        thickness={4}
-        {...props}
-      />
-    </div>
-  );
-});
+}))(({ classes, ...props }) => (
+  <div className={classes.root}>
+    <CircularProgress
+      variant="determinate"
+      className={classes.bottom}
+      size={30}
+      thickness={4}
+      {...props}
+      value={100}
+    />
+    <CircularProgress
+      variant="indeterminate"
+      className={classes.top}
+      classes={{
+        circle: classes.circle,
+      }}
+      size={30}
+      thickness={4}
+      {...props}
+    />
+  </div>
+));
 
 /**
  * Submit button is not type=submit for now, since pressing enter
@@ -126,9 +124,9 @@ const UploadDocumentForm = withStyles((theme) => ({
     flexDirection: 'column'
   },
   mainContent: {
-    width: "100%",
-    flex: "1 1 auto",
-    margin: "auto",
+    width: '100%',
+    flex: '1 1 auto',
+    margin: 'auto',
     display: 'flex',
     flexDirection: 'column'
   },
@@ -142,7 +140,6 @@ const UploadDocumentForm = withStyles((theme) => ({
     padding: '1rem'
   }
 }))(({ title, children, classes }) => {
-
   const [files, setFiles] = useState([]);
   const [allPDFMetadata, setAllPDFMetadata] = useState([]);
   const [selectedFileIndex, setSelectedFileIndex] = useState(0);
@@ -158,28 +155,25 @@ const UploadDocumentForm = withStyles((theme) => ({
   const history = useHistory();
 
   const handleFileSelect = (acceptedFiles) => {
-
     setLoading(true);
-    setAcceptedFilesCount(current => acceptedFiles.length + current);
+    setAcceptedFilesCount((current) => acceptedFiles.length + current);
 
     const byteData = {};
 
-    const pdfData = acceptedFiles.map((pdfFile) => {
-      return readFile(pdfFile)
-        .then(bytes => {
-          // Some side-effects on a map fn...
-          const blob = new Blob([ bytes ], {type: "application/pdf"});
-          const docUrl = URL.createObjectURL(blob);
-          byteData[pdfFile.path] = docUrl;
+    const pdfData = acceptedFiles.map((pdfFile) => readFile(pdfFile)
+      .then((bytes) => {
+        // Some side-effects on a map fn...
+        const blob = new Blob([bytes], { type: 'application/pdf' });
+        const docUrl = URL.createObjectURL(blob);
+        byteData[pdfFile.path] = docUrl;
 
-          return PDFDocument.load(bytes)
-            .then(pdf => {
-              setAcceptedFilesParsed(current => current + 1);
-              return pdf;
-            })
-            .then(pdf => getFormattedPDFMetadata(pdf));
-        });
-    });
+        return PDFDocument.load(bytes)
+          .then((pdf) => {
+            setAcceptedFilesParsed((current) => current + 1);
+            return pdf;
+          })
+          .then((pdf) => getFormattedPDFMetadata(pdf));
+      }));
 
     Promise.all(pdfData)
       .then((allPdfData) => {
@@ -193,9 +187,9 @@ const UploadDocumentForm = withStyles((theme) => ({
         // Let's update the state all together when we have everything available.
         // It's hard to trust and coordinate batch updates when performing updates
         // both outside and inside async promise handler:
-        setAllPDFMetadata(prevMetadata => [...prevMetadata, ...allPdfData]);
-        setFiles(prevFiles => [...prevFiles, ...formattedFiles]);
-        setSelectedFileIndex(selectedFileIndex => selectedFileIndex || 0);
+        setAllPDFMetadata((prevMetadata) => [...prevMetadata, ...allPdfData]);
+        setFiles((prevFiles) => [...prevFiles, ...formattedFiles]);
+        setSelectedFileIndex((selectedFileIndex) => selectedFileIndex || 0);
 
         setLoading(false);
 
@@ -239,9 +233,10 @@ const UploadDocumentForm = withStyles((theme) => ({
         return uploadFile(file, `/api/dojo/documents/${doc.id}/upload`, {});
       }).catch((e) => {
         console.log('Error uploading files', e);
-      }).then(() => {
-        history.push('/documents');
-      });
+      })
+        .then(() => {
+          history.push('/documents');
+        });
     });
   };
 

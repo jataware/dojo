@@ -9,9 +9,8 @@ import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 
 import axios from 'axios';
-import { Navigation } from '.';
-
 import { useLocation } from 'react-router-dom';
+import { Navigation } from '.';
 
 const RunJobs = withStyles(({ spacing }) => ({
   root: {
@@ -60,7 +59,7 @@ const RunJobs = withStyles(({ spacing }) => ({
   const [jobData, setJobData] = useState(null);
   const [jobIndex, setJobIndex] = useState(0);
 
-  const updateJobData = ({firstRun, ...args} = {}) => {
+  const updateJobData = ({ firstRun, ...args } = {}) => {
     const job = jobs[jobIndex];
     // const job_id = job.id;
     const url = `/api/dojo/job/${datasetInfo.id}/${job.id}`;
@@ -69,15 +68,15 @@ const RunJobs = withStyles(({ spacing }) => ({
       context = {
         uuid: datasetInfo.id,
         dataset: datasetInfo,
-        annotations: annotations,
-      }
+        annotations,
+      };
     }
     const payload = {
-      context: context,
+      context,
       ...job.args,
       filename: rawFileName,
       force_restart: firstRun,
-    }
+    };
     axios({
       method: 'post',
       url,
@@ -88,7 +87,6 @@ const RunJobs = withStyles(({ spacing }) => ({
   };
 
   useEffect(() => {
-
     let timeoutHandle;
 
     if (!(datasetInfo?.id)) {
@@ -97,7 +95,7 @@ const RunJobs = withStyles(({ spacing }) => ({
 
     if (jobData === null) {
       // Run right away on page load
-      updateJobData({firstRun: true});
+      updateJobData({ firstRun: true });
     } else if (jobData.status === 'finished') {
       const newJobIndex = jobIndex + 1;
       const job = jobs[jobIndex];
@@ -131,7 +129,7 @@ const RunJobs = withStyles(({ spacing }) => ({
     //  (eg navigating out of RunJob page by pressing back button)
     //  in order to remove the setTimeout and updateJobData fn invocation.
     return function cleanup() {
-        clearTimeout(timeoutHandle);
+      clearTimeout(timeoutHandle);
     };
   }, [jobData, datasetInfo.id]);
 
@@ -157,11 +155,13 @@ const RunJobs = withStyles(({ spacing }) => ({
           <>
             <FailedIcon
               color="secondary"
-              className={classes.failedIcon} />
+              className={classes.failedIcon}
+            />
 
             <Chip
               className={classes.failedChipMessage}
-              label="FAILED" />
+              label="FAILED"
+            />
 
             <pre className={classes.preformattedOutput}>
               {jobData.errorDisplay || jobData.job_error}

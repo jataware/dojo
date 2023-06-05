@@ -61,6 +61,17 @@ function mockHttpRequests() {
     method: 'PUT',
     url: '/api/dojo/indicators/*/publish*'
   }, {});
+
+  cy.intercept(
+    'POST',
+    '/api/dojo/job/test-guid/elwood_processors.scale_features*',
+    {
+      "id": "test-guid_elwood_processors.scale_features",
+      "created_at": "2022-08-17T15:18:27.474601",
+      "enqueued_at": "2022-08-17T15:18:27.475190",
+      "started_at": "2022-08-17T15:18:27.518462",
+      "status": "finished"
+    });
 }
 
 

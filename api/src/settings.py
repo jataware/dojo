@@ -25,11 +25,11 @@ class Settings(BaseSettings):
     DOCKERHUB_PWD: str = ""
     DOCKERHUB_ORG: str = "jataware"
 
-    DATASET_STORAGE_BASE_URL: str = "file:///datasets/"
+    DATASET_STORAGE_BASE_URL: str = "s3://datasets/"
 
-    DOCUMENT_STORAGE_BASE_URL: str = "file:///documents/"
+    DOCUMENT_STORAGE_BASE_URL: str = "s3://documents/"
 
-    CONFIG_STORAGE_BASE: str = "file:///dojo/configs/"
+    CONFIG_STORAGE_BASE: str = "s3://dojo/configs/"
 
     UVICORN_RELOAD: bool = False
 

@@ -257,7 +257,7 @@ export const DateControls = ({
       )}
 
       {requiresFormatting && (
-        <div style={{paddingTop: '0.5rem'}}>
+        <div style={{ paddingTop: '0.5rem' }}>
           <FormatValidationInput
             name="time_format"
             required={requiresFormatting}

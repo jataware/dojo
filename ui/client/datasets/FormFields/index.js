@@ -33,7 +33,7 @@ export const FormAwareTextField = withStyles((theme) => ({
     }
   },
 }))(({
-  classes, name, label, requiredFn, placeholder, inputProps={}, InputProps={}, required, ...props
+  classes, name, label, requiredFn, placeholder, inputProps = {}, InputProps = {}, required, ...props
 }) => {
   const [field, meta] = useField({ ...props, name });
 
@@ -134,7 +134,9 @@ export const FormAwareCheckBox = (props) => (
 /**
  *
  * */
-export const FormAwareSelect = ({ InputProps = {}, InputLabelProps = {}, inputProps={}, ...props }) => (
+export const FormAwareSelect = ({
+  InputProps = {}, InputLabelProps = {}, inputProps = {}, ...props
+}) => (
   <Field
     {...props}
     margin="dense"

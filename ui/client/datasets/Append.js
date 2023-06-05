@@ -25,7 +25,6 @@ import {
 
 const skipValidation = false;
 
-
 /**
  * Dataset Append file landing page (fileMetadata, file upload).
  **/
@@ -81,25 +80,23 @@ export default withStyles(({ spacing }) => ({
         initialValues={defaultValues}
         validationSchema={!skipValidation && formSchema}
         enableReinitialize
-        onSubmit={ async (values, { setSubmitting }) => {
-
+        onSubmit={async (values, { setSubmitting }) => {
           setSubmitting(true);
 
           const isFileUploaded = datasetInfo.fileData?.raw?.uploaded;
           let rawFileNameToUse = rawFileName;
 
           if (!isFileUploaded || isUpdatingUploadedFile) {
-            const uploadResponse = await uploadFile(formRef.current, datasetInfo.id, {append: true, filename: rawFileName});
+            const uploadResponse = await uploadFile(formRef.current, datasetInfo.id, { append: true, filename: rawFileName });
 
             rawFileNameToUse = uploadResponse.data.filename;
 
-            const fileMetadataData = {...fileMetadata, rawFileName: rawFileNameToUse};
+            const fileMetadataData = { ...fileMetadata, rawFileName: rawFileNameToUse };
 
             await updateMetadata(datasetInfo.id, fileMetadataData, setAnnotations);
-
           }
 
-          handleNext({dataset: datasetInfo, filename: rawFileNameToUse});
+          handleNext({ dataset: datasetInfo, filename: rawFileNameToUse });
         }}
       >
         {(formik) => (

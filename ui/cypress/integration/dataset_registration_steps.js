@@ -73,6 +73,11 @@ function mockHttpRequests() {
     url: '/api/dojo/indicators/*/publish*'
   }, {});
 
+  cy.intercept({
+    method: 'POST',
+    url: '/api/dojo/indicators/validate_date'
+  }, {valid: true});
+
   cy.intercept(
     'PUT',
     '/api/dojo/indicators',
@@ -87,6 +92,32 @@ function mockHttpRequests() {
     url:'/api/dojo/indicators/*/verbose*',
     method: 'GET'
   }, {fixture: 'indicators_verbose_get.json'});
+
+  cy.intercept(
+    'POST',
+    '/api/dojo/job/test-guid/transformation_processors.*',
+    {});
+
+  cy.intercept(
+    'POST',
+    '/api/dojo/job/test-guid/resolution_processors.*',
+    {});
+
+  cy.intercept(
+    'POST',
+    'api/dojo/job/fetch/undefined',
+    {});
+
+  cy.intercept(
+    'POST',
+    '/api/dojo/job/test-guid/elwood_processors.scale_features*',
+    {
+      "id": "test-guid_elwood_processors.scale_features",
+      "created_at": "2022-08-17T15:18:27.474601",
+      "enqueued_at": "2022-08-17T15:18:27.475190",
+      "started_at": "2022-08-17T15:18:27.518462",
+      "status": "finished"
+    });
 
 }
 
@@ -150,13 +181,16 @@ describe('Dataset Register Flow', function () {
     // Annotate page selectors
     cy.findAllByRole('button', {name: /Annotate/i}).as('AnnotateButtons');
 
+    // Annotate page selectors
+    cy.findAllByRole('button', {name: /Edit/i}).as('EditButtons');
 
     // Annotate page actions
 
     // ====== Annotate the date column ==============
-    cy.findByText('date').click();
+    cy.get('@EditButtons').eq(0)
+      .click();
 
-    cy.findAllByRole('button', {name: /type/i}).click();
+    cy.findAllByRole('button', {name: /^Type/i}).click();
 
     cy.findByRole('option', {name: /Date/i}).click();
 
@@ -169,13 +203,7 @@ describe('Dataset Register Flow', function () {
 
     // ========== Annotate the value column as feature =============
 
-    cy.findByText('value').as('ValueColumnLabel');
-
-    cy
-      .get('@ValueColumnLabel')
-      .siblings('div')
-      .findByText('inferred')
-      .should('exist');
+    cy.get('@AnnotateButtons').eq(1).as('ValueColumnLabel');
 
     cy.get('@ValueColumnLabel')
       .click();
@@ -196,8 +224,10 @@ describe('Dataset Register Flow', function () {
 
     cy.findAllByRole('button', {name: /^Next$/i}).click();
 
+    cy.wait(200)
 
-    cy.url().should('match', /datasets\/register\/process\/.+\?filename=raw_data.csv/);
+    // Skip Transformation Steps
+    cy.findAllByRole('button', {name: /^Next$/i}).click();
 
     cy.url().should('match', /datasets\/register\/preview\/.+\?filename=raw_data.csv/);
 

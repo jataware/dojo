@@ -495,13 +495,7 @@
                     "display_name": "",
                     "type": "feature"
                 }
-            ],
-            "meta": {
-                "date": "09-09-99",
-                "ftype": "csv",
-                "sheet": "sheet1",
-                "band": "hey"
-            }
+            ]
         }
     }
 }

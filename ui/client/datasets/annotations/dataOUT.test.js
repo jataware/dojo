@@ -58,9 +58,7 @@ describe('formatAnnotationsOUT', () => {
     }]);
   });
 
-
   test('Setting isQualifies + qualifies fields array formats it out to the backend', () => {
-
     const input = {
       value: {
         aliases: [{ current: 'a', new: 'b' }],
@@ -114,12 +112,9 @@ describe('formatAnnotationsOUT', () => {
         a: 'b'
       }
     }]);
-
-
   });
 
   test('Disabling back "qualifies" toggle clears the list of columns it qualifies when submitting', () => {
-
     const input = {
       value: {
         aliases: [{ current: 'a', new: 'b' }],
@@ -173,8 +168,6 @@ describe('formatAnnotationsOUT', () => {
         a: 'b'
       }
     }]);
-
-
   });
 
   test('groups date with relevant information', () => {
@@ -556,7 +549,6 @@ describe('formatAnnotationsOUT', () => {
   });
 
   test('gadm_level is not set when working with a non-primary geo column', () => {
-
     const input = {
       somegeo: {
         aliases: [],
@@ -600,8 +592,6 @@ describe('formatAnnotationsOUT', () => {
   });
 
   test('gadm_level is not set when working with a primary non-coordinate geo column', () => {
-
-
     const input = {
       somegeo: {
         aliases: [],
@@ -1002,7 +992,7 @@ describe('formatAnnotationsOUT', () => {
 
   test('multi column geo: multiple admin columns with only 1 column selected', () => {
     const input = {
-      'admin0': {
+      admin0: {
         aliases: [],
 
         category: 'geo',
@@ -1056,10 +1046,9 @@ describe('formatAnnotationsOUT', () => {
       ]);
   });
 
-
-test('regular admin0 geo is forced to resolve_to_gadm=true', () => {
+  test('regular admin0 geo is forced to resolve_to_gadm=true', () => {
     const input = {
-      'admin0': {
+      admin0: {
         aliases: [],
 
         category: 'geo',
@@ -1086,7 +1075,6 @@ test('regular admin0 geo is forced to resolve_to_gadm=true', () => {
         time_format: '',
         'date.multi-column': false,
 
-        multiPartBase: 'admin0',
         annotated: true
       }
     };
@@ -1113,6 +1101,60 @@ test('regular admin0 geo is forced to resolve_to_gadm=true', () => {
       ]);
   });
 
+  test('date format is removed for timestamp/epoch fields', () => {
+    const input = {
+      timestamp: {
+        aliases: [],
+
+        category: 'time',
+        display_name: 'my epoch ts',
+        description: 'date format is not used so it will be removed',
+
+        isQualifies: false,
+        qualifierrole: 'breakdown',
+        qualifies: [],
+
+        geo_type: '',
+        primary: true,
+        gadm_level: '',
+        'geo.coordinate-pair': false,
+
+        'geo.multi-column': false,
+
+        'geo.multi-column.admin0': '',
+        'geo.multi-column.admin1': '',
+        'geo.multi-column.admin2': '',
+        'geo.multi-column.admin3': '',
+
+        date_type: 'epoch',
+        time_format: 'unix_time', // what helped us discover this bug; cartwrights format annotaition
+        'date.multi-column': false,
+
+        annotated: true
+      }
+    };
+
+    const output = formatAnnotationsOUT(input);
+
+    expect(output.date)
+      .toEqual([
+        {
+          name: 'timestamp',
+          type: 'date',
+
+          date_type: 'epoch',
+          time_format: '',
+
+          description: 'date format is not used so it will be removed',
+          display_name: 'my epoch ts',
+          primary_date: true,
+
+          aliases: {},
+          qualifies: [],
+          qualifierrole: 'breakdown'
+        },
+      ]);
+  });
 });
 
 describe('formatAliasesOUT', () => {

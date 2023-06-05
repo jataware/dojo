@@ -18,7 +18,6 @@ import RunningJobIcon from '@material-ui/icons/PlayCircleFilledWhite';
 import { withStyles } from '@material-ui/core/styles';
 import { useRun } from './SWRHooks';
 
-import CSVDownload from './CSVDownload';
 import { ExternalLink, InternalTab } from './Links';
 import LoadingOverlay from './LoadingOverlay';
 import { parseDatetimeString, formatDatetime } from '../utils';
@@ -202,7 +201,10 @@ const RunSummary = ({ classes }) => {
   }
 
   const {
-    parameters, pre_gen_output_paths: preGenOutputPaths, created_at: createdAt
+    parameters,
+    pre_gen_output_paths: preGenOutputPaths,
+    created_at: createdAt,
+    data_paths: dataPaths
   } = run;
 
   const outputPaths = preGenOutputPaths || [];
@@ -274,7 +276,6 @@ const RunSummary = ({ classes }) => {
                   <Label>Completed on</Label>
                   <Value title="Completed On Value">{finishedDatetime}</Value>
                 </Grid>
-
               </Grid>
 
               <Button
@@ -288,16 +289,16 @@ const RunSummary = ({ classes }) => {
                 View Logs
               </Button>
               {/*
-                Model run download is currently broken, removing this until the issue is resolved
-                {get(run, 'attributes.status') === 'success' && (
-                  <div style={{ marginTop: '16px' }}>
-                    <CSVDownload
-                      resource={run}
-                      index="runs"
-                    />
-                  </div>
-                )}
-              */}
+                 Model run download is currently broken, removing this until the issue is resolved
+                 {get(run, 'attributes.status') === 'success' && (
+                 <div style={{ marginTop: '16px' }}>
+                 <CSVDownload
+                 resource={run}
+                 index="runs"
+                 />
+                 </div>
+                 )}
+               */}
             </SectionGridItem>
 
             <SectionGridItem
@@ -315,6 +316,25 @@ const RunSummary = ({ classes }) => {
                     <Typography variant="h6">
                       {value}
                     </Typography>
+                  </li>
+                ))}
+              </ul>
+            </SectionGridItem>
+
+            <SectionGridItem
+              title="Data Paths"
+              empty={isEmpty(dataPaths)}
+              md={12}
+            >
+              <ul>
+                {dataPaths.map((path) => (
+                  <li key={path}>
+                    <Value
+                      href={path}
+                      title="Data Path Value"
+                    >
+                      {path}
+                    </Value>
                   </li>
                 ))}
               </ul>
