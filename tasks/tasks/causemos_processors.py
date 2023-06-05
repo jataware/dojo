@@ -13,8 +13,8 @@ from sklearn.preprocessing import StandardScaler
 import numpy
 
 api_url = os.environ.get("DOJO_HOST")
-download_endpoint = "download/csv/"
-indicator_endpoint = "indicators/"
+download_endpoint = "/dojo/download/csv/"
+indicator_endpoint = "/indicators/"
 
 
 def generate_index_model_weights(
