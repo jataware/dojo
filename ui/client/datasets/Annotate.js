@@ -1,4 +1,4 @@
-import React, { useEffect, useState, SetStateAction } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import axios from 'axios';
 import isEmpty from 'lodash/isEmpty';
@@ -11,7 +11,6 @@ import { withStyles } from '@material-ui/core/styles';
 import AnnotationsSubmitPrompt from './annotations/AnnotationsSubmitPrompt';
 import Instructions from './Instructions';
 import { Navigation } from '.';
-import Progress from './Progress';
 import TableAnnotation from './annotations/Table';
 import { formatAnnotationsIN } from './annotations/dataIN';
 import { formatAnnotationsOUT } from './annotations/dataOUT';
@@ -26,7 +25,7 @@ export function formatFileUploadValidationError(json) {
     const value = json[0].input_value[property];
 
     return `A validation error has occured on the file provided: The field \`${field}\` has no valid \`${property}\` value. Value provided: \`${value}\`.`;
-  } catch(e) {
+  } catch (e) {
     return json;
   }
 }
@@ -37,7 +36,7 @@ export function formatFileUploadValidationError(json) {
 function prepareColumns(objData) {
   return Object
     .keys(objData)
-    .filter(item => item !== '__id')
+    .filter((item) => item !== '__id')
     .map((name) => ({ field: name }));
 }
 
@@ -58,9 +57,9 @@ export default withStyles(({ spacing }) => ({
   classes, handleNext, handleBack,
   datasetInfo, stepTitle, rawFileName,
   annotations, setAnnotations, onSubmit,
-  addingAnnotationsAllowed=true, useFilepath=false,
+  addingAnnotationsAllowed = true, useFilepath = false,
   modelInfo,
-  fieldsConfig=()=>({})
+  fieldsConfig = () => ({})
 }) => {
   const [internalAnnotations, setInternalAnnotations] = useState({});
   const [multiPartData, setMultiPartData] = useState({});
@@ -81,7 +80,7 @@ export default withStyles(({ spacing }) => ({
 
   function formatAndSetAnnotations(serverAnnotations, knownColumns) {
     if (serverAnnotations) {
-      const annotationsToLoad = knownFieldAnnotations(serverAnnotations, knownColumns)
+      const annotationsToLoad = knownFieldAnnotations(serverAnnotations, knownColumns);
       const formattedIn = formatAnnotationsIN(annotationsToLoad);
 
       setInternalAnnotations(formattedIn.annotations);
@@ -105,7 +104,7 @@ export default withStyles(({ spacing }) => ({
       return;
     }
 
-    const fileArg = (useFilepath ? "filepath" : "filename");
+    const fileArg = (useFilepath ? 'filepath' : 'filename');
     const previewUrl = `/api/dojo/indicators/${datasetInfo.id}/preview/raw${rawFileName ? `?${fileArg}=${rawFileName}` : ''}`;
 
     const getAnnotations = async () => {
@@ -113,12 +112,11 @@ export default withStyles(({ spacing }) => ({
       // Model Output condition: We store STATE in memory (no backing indicator created)
       // So we need to ensure we return the data received from props, and not do a new fetch
       if (annotations?.metadata?.geotime_classify) {
-        return {data: annotations};
+        return { data: annotations };
       }
-      else {
-        // Load annotations from API, which also includes other data unavailable if we don't call this
-        return axios.get(`/api/dojo/indicators/${datasetInfo.id}/annotations`);
-      }
+
+      // Load annotations from API, which also includes other data unavailable if we don't call this
+      return axios.get(`/api/dojo/indicators/${datasetInfo.id}/annotations`);
     };
 
     Promise
@@ -130,7 +128,7 @@ export default withStyles(({ spacing }) => ({
         const { metadata } = serverAnnotationData.data;
 
         const inferred = metadata.geotime_classify;
-        const stats = {histograms: metadata.histograms, statistics: metadata.column_statistics};
+        const stats = { histograms: metadata.histograms, statistics: metadata.column_statistics };
 
         const parsedColumns = prepareColumns(preview.data[0]);
         const { annotations: serverAnnotations } = serverAnnotationData.data;
@@ -173,14 +171,13 @@ export default withStyles(({ spacing }) => ({
 
     if (!isEmpty(newErrors) || !isEmpty(newWarnings)) {
       setPreviewPromptOpen(true);
+    } else if (onSubmit) {
+      const formattedAnnotations = formatAnnotationsOUT(internalAnnotations);
+      onSubmit({
+        annotations, formattedAnnotations, setAnnotations, handleNext
+      });
     } else {
-      if (onSubmit) {
-        const formattedAnnotations = formatAnnotationsOUT(internalAnnotations);
-        onSubmit({annotations, formattedAnnotations, setAnnotations, handleNext});
-
-      } else {
-        submitToBackend();
-      }
+      submitToBackend();
     }
   }
 
@@ -207,17 +204,14 @@ export default withStyles(({ spacing }) => ({
     }
   }
 
-  const handleUploadAnnotations = (file) => {
+  const handleUploadAnnotations = (file) => uploadFile(file, `/api/dojo/indicators/${datasetInfo.id}/annotations/file`)
+    .then(refreshAnnotations)
+    .catch((e) => {
+      const json = e.response?.data?.detail;
+      const message = formatFileUploadValidationError(json);
 
-    return uploadFile(file, `/api/dojo/indicators/${datasetInfo.id}/annotations/file`)
-      .then(refreshAnnotations)
-      .catch((e) => {
-        const json = e.response?.data?.detail;
-        const message = formatFileUploadValidationError(json);
-
-        throw new Error(message || 'Your file contains an incorrect format and our application has not accepted it. Please verify and correct your CSV file annotations.');
-      });
-  };
+      throw new Error(message || 'Your file contains an incorrect format and our application has not accepted it. Please verify and correct your CSV file annotations.');
+    });
 
   return (
     <Container
@@ -262,7 +256,7 @@ export default withStyles(({ spacing }) => ({
         errors={errors}
         warnings={warnings}
         onDecline={() => setPreviewPromptOpen(false)}
-        onAccept={() => {if (onSubmit) {onSubmit({annotations, setAnnotations, handleNext})} else {submitToBackend()};}}
+        onAccept={() => { if (onSubmit) { onSubmit({ annotations, setAnnotations, handleNext }); } else { submitToBackend(); } }}
       />
 
       <Prompt

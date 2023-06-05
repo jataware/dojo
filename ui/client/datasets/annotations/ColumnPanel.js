@@ -88,7 +88,7 @@ function mergeSkipNull(initialValue, hintValue) {
 /**
  *
  * */
-export function genInitialValues(inferred, columns=[]) {
+export function genInitialValues(inferred, columns = []) {
   if (!inferred) { return initialColumnValues; }
 
   const hint = { ...inferred }; // Copy, evade mutations
@@ -104,7 +104,7 @@ export function genInitialValues(inferred, columns=[]) {
   if (hint.category === CATEGORIES.geo) {
     try {
       hint.geo_type = hint.subcategory && hint.subcategory.toLowerCase();
-    } catch(e) {
+    } catch (e) {
       console.error('Geo Inferred data: subcategory not a string, skipping', e);
     }
 
@@ -113,18 +113,15 @@ export function genInitialValues(inferred, columns=[]) {
       const pairSubcategory = difference(['latitude', 'longitude'], [hint.subcategory])[0];
 
       const pairMatch = LATLON_MAPPINGS[pairSubcategory]
-            .find(commonSubcategoryName => {
-              return columns
-                .find(columnData => columnData
-                      .field
-                      .toLowerCase() === commonSubcategoryName.toLowerCase());
-            });
+        .find((commonSubcategoryName) => columns
+          .find((columnData) => columnData
+            .field
+            .toLowerCase() === commonSubcategoryName.toLowerCase()));
 
       if (pairMatch) {
         hint['geo.coordinate-pair-column'] = pairMatch;
       }
     }
-
   } else if (hint.category === CATEGORIES.time) {
     hint.date_type = hint.subcategory;
     hint.time_format = hint.format;

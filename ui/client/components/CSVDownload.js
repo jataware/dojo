@@ -23,10 +23,10 @@ const useStyles = makeStyles((theme) => ({
     marginLeft: theme.spacing(3),
   },
   radioGroup: {
-    'flexDirection': 'row',
+    flexDirection: 'row',
     gap: theme.spacing(2),
   },
-}))
+}));
 
 function CSVDownload({ resource, index = 'indicators' }) {
   const [openDownload, setDownload] = useState(false);
@@ -56,32 +56,32 @@ function CSVDownload({ resource, index = 'indicators' }) {
       <Collapse in={formOpen} timeout={theme.transitions.duration.shortest}>
         <div className={classes.leftIndent}>
           <form>
-          <RadioGroup
-            aria-label="csvValue"
-            name="csvValue"
-            value={csvChoice}
-            onChange={handleChange}
-            className={classes.radioGroup}
-          >
-            <FormControlLabel value="wide" control={<Radio />} label="Wide" />
-            <FormControlLabel value="long" control={<Radio />} label="Long" />
-          </RadioGroup>
-
-          <Typography variant="body2">
-            <Button
-              variant="contained"
-              disableElevation
-              color="primary"
-              href={`/api/dojo/dojo/download/csv/${index}/${resource.id}?wide_format=${csvChoice === 'wide' ? true : false}`}
-              download={name}
-              type="text/csv"
-              onClick={() => setDownload(true)}
-              disabled={openDownload ? true : undefined}
-              className={classes.leftIndent}
+            <RadioGroup
+              aria-label="csvValue"
+              name="csvValue"
+              value={csvChoice}
+              onChange={handleChange}
+              className={classes.radioGroup}
             >
-              Download
-            </Button>
-          </Typography>
+              <FormControlLabel value="wide" control={<Radio />} label="Wide" />
+              <FormControlLabel value="long" control={<Radio />} label="Long" />
+            </RadioGroup>
+
+            <Typography variant="body2">
+              <Button
+                variant="contained"
+                disableElevation
+                color="primary"
+                href={`/api/dojo/dojo/download/csv/${index}/${resource.id}?wide_format=${csvChoice === 'wide'}`}
+                download={name}
+                type="text/csv"
+                onClick={() => setDownload(true)}
+                disabled={openDownload ? true : undefined}
+                className={classes.leftIndent}
+              >
+                Download
+              </Button>
+            </Typography>
           </form>
           <BasicAlert
             alert={

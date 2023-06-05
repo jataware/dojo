@@ -58,7 +58,9 @@ export const detailValidationSchema = yup.object({
   }),
 });
 
-export const DomainsAutocomplete = ({ formik, label = 'Model Domain(s)', disabled, textFieldProps }) => {
+export const DomainsAutocomplete = ({
+  formik, label = 'Model Domain(s)', disabled, textFieldProps
+}) => {
   const [domainList, setDomainList] = React.useState([]);
 
   useEffect(() => {

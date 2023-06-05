@@ -13,7 +13,7 @@ import FormatValidationInput from '../FormFields/FormatValidationInput';
  * */
 const MultiColumnDateSelector = ({
   columns, editingColumn, setFieldValue,
-  validateDateFormat, values, disabled=false
+  validateDateFormat, values, disabled = false
 }) => {
   const columnOptions = columns.map((column) => ({
     value: column.field,

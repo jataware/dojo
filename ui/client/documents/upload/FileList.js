@@ -101,7 +101,7 @@ export const SelectedFileList = withStyles(() => ({
     className={classes.root}
   >
     <RadioGroup
-      value={selectedIndex+""}
+      value={`${selectedIndex}`}
     >
 
       <List
@@ -117,9 +117,9 @@ export const SelectedFileList = withStyles(() => ({
             onDelete={() => onDelete(index)}
             selected={index === selectedIndex}
             onClick={() => onItemClick(index)}
-            value={index+""}
+            value={`${index}`}
             file={file}
-            key={file.path+file.size}
+            key={file.path + file.size}
           />
         ))}
       </List>

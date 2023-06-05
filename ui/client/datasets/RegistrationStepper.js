@@ -107,7 +107,7 @@ const defaultDatasetState = {
  *
  **/
 function getRawFileNameFromLocation(location) {
-  let params = new URLSearchParams(location.search);
+  const params = new URLSearchParams(location.search);
   const filename = params.get('filename');
 
   return filename;
@@ -124,12 +124,11 @@ function getRawFileNameFromLocation(location) {
  * TODO verify note above.
  **/
 function getUpdateRawFileName(uploadedRawFileNames) {
-
   // raw_data. dot is important. Other appended files continue as "raw_data_#.<extension>"
-  const firstFileMatch = uploadedRawFileNames.find(fileName => fileName.startsWith('raw_data.'));
+  const firstFileMatch = uploadedRawFileNames.find((fileName) => fileName.startsWith('raw_data.'));
 
   if (!firstFileMatch) {
-    throw(new Error('Unable to update a Dataset without a previously uploaded file.'));
+    throw (new Error('Unable to update a Dataset without a previously uploaded file.'));
   }
 
   return firstFileMatch;
@@ -143,12 +142,12 @@ const HorizontalLinearStepper = ({ match, updateLocation, ...props }) => {
   if (!flows.hasOwnProperty(flowslug)) {
     // TODO: Standardize 404 not found handling
     return <h2>404 Not Found</h2>;
-  };
+  }
 
   const history = useHistory();
   const classes = useStyles();
   const location = useLocation();
-  let flow = flows[flowslug]
+  const flow = flows[flowslug];
 
   const [activeStep, setActiveStep] = React.useState(() => {
     // Start at step as defined by url path
@@ -191,15 +190,13 @@ const HorizontalLinearStepper = ({ match, updateLocation, ...props }) => {
     }
 
     if (datasetId) {
-
       const result = axios({
         method: 'get',
         url: `/api/dojo/indicators/${datasetId}/verbose`,
       }).then((result) => {
-
         /* Set loaded dataset info, uploaded files data, and annotations */
 
-        const uploadedFiles = get(result, `data.annotations.metadata.files`, {});
+        const uploadedFiles = get(result, 'data.annotations.metadata.files', {});
 
         if (!rawFileNameToUse) {
           const allRawFileNames = Object.keys(uploadedFiles);
@@ -239,9 +236,7 @@ const HorizontalLinearStepper = ({ match, updateLocation, ...props }) => {
         });
 
         setAnnotations(result.data.annotations);
-
       }).catch((e) => {
-
         const { response } = e;
 
         if (response.status === 404) {
@@ -259,7 +254,6 @@ const HorizontalLinearStepper = ({ match, updateLocation, ...props }) => {
         }
 
         setDisplayError(true);
-
       });
     }
   }, [activeStep]); // We fetch once either on page load, or once we move to a different step to get freshest data
@@ -267,7 +261,6 @@ const HorizontalLinearStepper = ({ match, updateLocation, ...props }) => {
   const steps = getSteps(flow);
 
   const handleBack = (values) => {
-
     let prevStep = flow.steps[activeStep - 1];
     if (prevStep.component.SKIP) {
       prevStep = flow.steps[activeStep - 2];
@@ -277,13 +270,14 @@ const HorizontalLinearStepper = ({ match, updateLocation, ...props }) => {
 
     if (updateLocation) {
       history.push(newPath + history.location.search);
-    }
-    else {
+    } else {
       setActiveStep(activeStep - 1);
     }
   };
 
-  const handleNext = ({dataset, filename, filepath, ...props}={}) => {
+  const handleNext = ({
+    dataset, filename, filepath, ...props
+  } = {}) => {
     const currentStep = flow.steps[activeStep];
     const nextStep = flow.steps[activeStep + 1];
     const datasetId_ = datasetInfo.id || dataset?.id;
@@ -303,8 +297,7 @@ const HorizontalLinearStepper = ({ match, updateLocation, ...props }) => {
       } else {
         history.push(newPath);
       }
-    }
-    else {
+    } else {
       setActiveStep(activeStep + 1);
     }
   };

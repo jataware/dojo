@@ -51,7 +51,6 @@ describe('formatAnnotationsIN', () => {
   });
 
   test('loads server annotation data of gadm_level into field, when present on geo column', () => {
-
     const input = {
       geo: [{
         name: 'sample-geo',
@@ -349,7 +348,6 @@ describe('formatAnnotationsIN', () => {
           'date.multi-column.month.format': '%m',
           'date.multi-column.day.format': '%d',
 
-
           annotated: true,
           multiPartBase: 'date-year'
         }
@@ -451,7 +449,6 @@ describe('formatAnnotationsIN', () => {
         }
       });
   });
-
 
   test('Given server\'s annotation shape for multiple non-primary geo columns, loads annotations as separate', () => {
     // Sanity check that non-primary geos won't load as multi-part admin geos (build a geo)

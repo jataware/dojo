@@ -154,8 +154,8 @@ function formatGeoAnnotationOUT(localAnnotation, outgoingAnnotationBase) {
 
   // Resolve GADM is only relevant with categorical places (e.g. country, admin1-3)
   if ([GEO_ADMINS.admin0, GEO_ADMINS.admin1,
-       GEO_ADMINS.admin2, GEO_ADMINS.admin3]
-      .includes(localAnnotation.geo_type)) {
+    GEO_ADMINS.admin2, GEO_ADMINS.admin3]
+    .includes(localAnnotation.geo_type)) {
     outgoingAnnotation.resolve_to_gadm = true;
   }
 
@@ -166,7 +166,7 @@ function formatGeoAnnotationOUT(localAnnotation, outgoingAnnotationBase) {
     if (localAnnotation['geo.multi-column']) {
       const otherColumnNames = getGeoMultiPartMembers(localAnnotation)
       // Filter out unselected build-geo columns; eg empty, no columns selected
-            .filter(Boolean);
+        .filter(Boolean);
 
       genGeoMultiPartMemberAnnotation(otherColumnNames, localAnnotation, outgoingAnnotation)
         .forEach((item) => { collectedOutgoingAnnotations.push(item); });

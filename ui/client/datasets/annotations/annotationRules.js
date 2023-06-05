@@ -206,9 +206,7 @@ export function verifyConditionalRequiredFields(annotation) {
 export const knownFieldAnnotations = (serverAnnotations, columns) => reduce(
   serverAnnotations,
   (acc, annotations, property) => {
-    let valid = annotations.filter((annotation) =>
-      columns.find(col => col.field === annotation.name)
-    );
+    let valid = annotations.filter((annotation) => columns.find((col) => col.field === annotation.name));
 
     // For now, addressing and fixing scenario we ran into, for dates, in UI:
     if (property === 'date') {
@@ -217,7 +215,7 @@ export const knownFieldAnnotations = (serverAnnotations, columns) => reduce(
           const associated = values(annotation.associated_columns);
 
           const foreignAssociations = associated
-                .filter(k => columns.find(col => col.field === k));
+            .filter((k) => columns.find((col) => col.field === k));
 
           if (foreignAssociations.length !== associated.length) {
             // For now reset foreign associated_columns

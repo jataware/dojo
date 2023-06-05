@@ -26,7 +26,7 @@ export const Navigation = withStyles(({ spacing }) => ({
       variant="contained"
       disableElevation
       disabled={disabled}
-      onClick={() => {handleNext({handleNext, ...props})}}
+      onClick={() => { handleNext({ handleNext, ...props }); }}
     >
       {label || 'Next'}
     </Button>

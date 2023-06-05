@@ -22,8 +22,7 @@ export const getCellId = (cell) => `${cell.id}-${cell.colDef.field}`;
  * Moves annotated columns to the left/top side of table for visibility,
  * as well as groups annotated columns together (which are also annotated!)
  **/
-export function groupColumns(columns, multiPartData, annotations={}) {
-
+export function groupColumns(columns, multiPartData, annotations = {}) {
   if (!isEmpty(columns) && !isEmpty(annotations)) {
     const acc = [];
     const seen = {};
@@ -31,19 +30,17 @@ export function groupColumns(columns, multiPartData, annotations={}) {
     Object
       .keys(annotations)
       .forEach((annotatedColumnName) => {
-
         const multiPartEntry = multiPartData[annotatedColumnName];
 
         if (multiPartEntry) {
-
           const baseColumnData = columns
-                .find((column) => column.field === multiPartEntry.baseColumn);
+            .find((column) => column.field === multiPartEntry.baseColumn);
           acc.push(baseColumnData);
           seen[baseColumnData.field] = true;
 
           // The rest of the associated columns, without the baseColumn name
           const restColumns = multiPartEntry.members
-                .filter((columnName) => columnName !== multiPartEntry.baseColumn);
+            .filter((columnName) => columnName !== multiPartEntry.baseColumn);
 
           // Add each of those associated columns to accumulator
           restColumns.forEach((remainingColumnName) => {
@@ -51,7 +48,6 @@ export function groupColumns(columns, multiPartData, annotations={}) {
             acc.push(colData);
             seen[remainingColumnName] = true;
           });
-
         } else if (annotations[annotatedColumnName].annotated && !seen[annotatedColumnName]) {
           const baseColumnData = columns.find((column) => column.field === annotatedColumnName);
 
@@ -74,4 +70,4 @@ export function groupColumns(columns, multiPartData, annotations={}) {
   }
 
   return columns;
-};
+}

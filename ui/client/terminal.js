@@ -236,16 +236,16 @@ const CenteredGrid = ({ model }) => {
 
       <FullScreenDialog
         open={isModelOutputOpen && (annotationInfo.hasOwnProperty('pattern'))}
-        setOpen={() => {setIsModelOutputOpen(false)}}
+        setOpen={() => { setIsModelOutputOpen(false); }}
         onSave={() => {}}
         showSave={false}
         title={`${modelOutputFile?.name || modelOutputFile}`}
       >
         <RegistrationStepper
-          onSave={() => {setOpen(false)}}
+          onSave={() => { setOpen(false); }}
           match={{
             params: {
-              flowslug: "model",
+              flowslug: 'model',
               step: null,
               datasetId: null,
             }

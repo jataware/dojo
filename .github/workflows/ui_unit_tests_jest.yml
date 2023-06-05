@@ -1,18 +1,20 @@
-name: Lint
+name: UI Unit Tests - Jest
 
 on:
   pull_request:
     types: [ opened, synchronize ]
+    paths:
+      - ui/client/**
 
 jobs:
-  lint:
+  unit-tests:
     runs-on: ubuntu-20.04
 
     steps:
-      - name: Checkout Repo
+      - name: Checkout
         uses: actions/checkout@v3
 
-      - name: Setup node
+      - name: Setup Node Version Pin
         uses: actions/setup-node@v3
         with:
           node-version: '15'
@@ -26,10 +28,10 @@ jobs:
           path: ./ui/node_modules
           key: ${{ runner.os }}-node-${{ hashFiles('./ui/package-lock.json') }}
 
-      - name: Npm Install
+      - name: Install npm dependencies
         working-directory: ./ui
         run: npm install
 
-      - name: Lint
+      - name: Runs unit tests with jest
         working-directory: ./ui
-        run: npm run lint
+        run: npm run test:ci

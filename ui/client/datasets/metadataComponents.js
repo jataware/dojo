@@ -22,14 +22,11 @@ import { FormAwareTextField, FormAwareSelect } from './FormFields';
 
 import { FileSelector } from './FileSelector';
 
-
-
 /**
  * Uses already-defined validation schema to derive if a field is required
  * Used in this file by FormAwareTextField
  * */
-const checkRequired = (fieldName) =>
-      get(formSchema, `fields.${fieldName}.exclusiveTests.required`, false);
+const checkRequired = (fieldName) => get(formSchema, `fields.${fieldName}.exclusiveTests.required`, false);
 
 /**
  *
@@ -81,8 +78,7 @@ export const genRegisterDefaultValues = (datasetInfo) => ({
  * Uploads a file to the backend service.
  * Receives a form dom reference, datasetId, and optional params.
  **/
-export const uploadFile = async (form, datasetID, params={}) => {
-
+export const uploadFile = async (form, datasetID, params = {}) => {
   const uploadData = new window.FormData();
   const formfile = form.file;
   const file = formfile.files[0];
@@ -93,13 +89,12 @@ export const uploadFile = async (form, datasetID, params={}) => {
     method: 'post',
     url: `/api/dojo/indicators/${datasetID}/upload`,
     data: uploadData,
-    params: params
+    params
   });
   return response;
 };
 
 export const updateMetadata = async (datasetId, fileMetadataData, storeAnnotations) => {
-
   const payload = {
     metadata: {
       files: {
@@ -139,12 +134,10 @@ const Section = withStyles(() => ({
   </section>
 ));
 
-
 /**
  *
  * */
 export const BaseData = (props) => {
-
   const {
     formik, error, isReadOnlyMode,
     datasetInfo, setDatasetInfo, fileMetadata, setFileMetadata,
@@ -154,60 +147,61 @@ export const BaseData = (props) => {
   const displayUploadedFile = Boolean(datasetInfo?.fileData?.raw?.uploaded);
 
   return (
-  <Section title="Data Information">
-    <FormAwareTextField
-      name="name"
-      requiredFn={checkRequired}
-      label="Name"
-      placeholder="Dataset Name"
-      disabled={isReadOnlyMode}
-    />
-
-    <FormAwareTextField
-      name="description"
-      requiredFn={checkRequired}
-      label="Description"
-      placeholder="Provide a description of the dataset"
-      multiline
-      minRows="2"
-      disabled={isReadOnlyMode}
-    />
-
-    <div style={{ margin: '0.5rem 0' }}>
-      <DomainsAutocomplete
-        formik={formik}
-        label="Domains"
-        textFieldProps={{
-          placeholder: isEmpty(formik.values.domains) ? 'Select as many as appropriate' : '',
-          InputLabelProps: { shrink: true }
-        }}
+    <Section title="Data Information">
+      <FormAwareTextField
+        name="name"
+        requiredFn={checkRequired}
+        label="Name"
+        placeholder="Dataset Name"
         disabled={isReadOnlyMode}
       />
-    </div>
 
-    <FileSelector
-      formik={formik}
-      disabled={Boolean(error)}
-      name="file"
-      label="File Upload"
-      requiredFn={checkRequired}
-      datasetInfo={datasetInfo}
-      setDatasetInfo={setDatasetInfo}
-      fileMetadata={fileMetadata}
-      setFileMetadata={setFileMetadata}
-      displayUploadedFile={displayUploadedFile}
-      isUpdatingUploadedFile={isUpdatingUploadedFile}
-      setUpdatingUploadedFile={setUpdatingUploadedFile}
-      uploadedFilesData={uploadedFilesData}
-    />
+      <FormAwareTextField
+        name="description"
+        requiredFn={checkRequired}
+        label="Description"
+        placeholder="Provide a description of the dataset"
+        multiline
+        minRows="2"
+        disabled={isReadOnlyMode}
+      />
 
-  </Section>
-)};
+      <div style={{ margin: '0.5rem 0' }}>
+        <DomainsAutocomplete
+          formik={formik}
+          label="Domains"
+          textFieldProps={{
+            placeholder: isEmpty(formik.values.domains) ? 'Select as many as appropriate' : '',
+            InputLabelProps: { shrink: true }
+          }}
+          disabled={isReadOnlyMode}
+        />
+      </div>
+
+      <FileSelector
+        formik={formik}
+        disabled={Boolean(error)}
+        name="file"
+        label="File Upload"
+        requiredFn={checkRequired}
+        datasetInfo={datasetInfo}
+        setDatasetInfo={setDatasetInfo}
+        fileMetadata={fileMetadata}
+        setFileMetadata={setFileMetadata}
+        displayUploadedFile={displayUploadedFile}
+        isUpdatingUploadedFile={isUpdatingUploadedFile}
+        setUpdatingUploadedFile={setUpdatingUploadedFile}
+        uploadedFilesData={uploadedFilesData}
+      />
+
+    </Section>
+  );
+};
 
 /**
  *
  * */
-export const ContactInformation = ({isReadOnlyMode}) => (
+export const ContactInformation = ({ isReadOnlyMode }) => (
   <Section title="Your Contact Information">
     <FormAwareTextField
       name="registerer-name"
@@ -246,7 +240,7 @@ export const ContactInformation = ({isReadOnlyMode}) => (
 /**
  *
  * */
-export const Resolution = ({isReadOnlyMode}) => (
+export const Resolution = ({ isReadOnlyMode }) => (
   <Section title="Resolution">
 
     <FormAwareSelect
@@ -284,7 +278,7 @@ export const Resolution = ({isReadOnlyMode}) => (
 /**
  *
  * */
-export const DataQualitySensitivity = ({isReadOnlyMode}) => (
+export const DataQualitySensitivity = ({ isReadOnlyMode }) => (
   <Section title="Data Quality and Sensitivity">
     <FormAwareTextField
       name="data_sensitivity"
@@ -305,4 +299,3 @@ export const DataQualitySensitivity = ({isReadOnlyMode}) => (
     />
   </Section>
 );
-

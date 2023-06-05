@@ -1,48 +1,48 @@
 export default [{
-  "latitude": {
-    "count": 2757,
-    "mean": 11.1297331157,
-    "std": 2.4310898314,
-    "min": 3.5391,
-    "25%": 9.3591,
-    "50%": 11.5712,
-    "75%": 13.4021,
-    "max": 14.6953
+  latitude: {
+    count: 2757,
+    mean: 11.1297331157,
+    std: 2.4310898314,
+    min: 3.5391,
+    '25%': 9.3591,
+    '50%': 11.5712,
+    '75%': 13.4021,
+    max: 14.6953
   },
-  "longitude": {
-    "count": 2757,
-    "mean": 38.6739202394,
-    "std": 1.6955735087,
-    "min": 33.2187,
-    "25%": 37.7696,
-    "50%": 38.9232,
-    "75%": 39.6333,
-    "max": 45.3408
+  longitude: {
+    count: 2757,
+    mean: 38.6739202394,
+    std: 1.6955735087,
+    min: 33.2187,
+    '25%': 37.7696,
+    '50%': 38.9232,
+    '75%': 39.6333,
+    max: 45.3408
   },
-  "value": {
-    "count": 2757,
-    "mean": 4.8650707291,
-    "std": 20.0152319202,
-    "min": 0,
-    "25%": 0,
-    "50%": 0,
-    "75%": 3,
-    "max": 600
+  value: {
+    count: 2757,
+    mean: 4.8650707291,
+    std: 20.0152319202,
+    min: 0,
+    '25%': 0,
+    '50%': 0,
+    '75%': 3,
+    max: 600
   },
-  "date_year": {
-    "count": 2757,
-    "mean": 2020.6079071454,
-    "std": 0.6146339561,
-    "min": 2019,
-    "25%": 2020,
-    "50%": 2021,
-    "75%": 2021,
-    "max": 2021
+  date_year: {
+    count: 2757,
+    mean: 2020.6079071454,
+    std: 0.6146339561,
+    min: 2019,
+    '25%': 2020,
+    '50%': 2021,
+    '75%': 2021,
+    max: 2021
   }
 }, {
-  "event_date": null,
-  "latitude": {
-    "values": [
+  event_date: null,
+  latitude: {
+    values: [
       15,
       81,
       74,
@@ -54,7 +54,7 @@ export default [{
       445,
       542
     ],
-    "bins": [
+    bins: [
       3.5391,
       4.65472,
       5.77034,
@@ -68,8 +68,8 @@ export default [{
       14.6953
     ]
   },
-  "longitude": {
-    "values": [
+  longitude: {
+    values: [
       4,
       168,
       254,
@@ -81,7 +81,7 @@ export default [{
       9,
       10
     ],
-    "bins": [
+    bins: [
       33.2187,
       34.43091,
       35.64312,
@@ -95,9 +95,9 @@ export default [{
       45.3408
     ]
   },
-  "event_type": null,
-  "value": {
-    "values": [
+  event_type: null,
+  value: {
+    values: [
       2725,
       18,
       8,
@@ -109,7 +109,7 @@ export default [{
       0,
       1
     ],
-    "bins": [
+    bins: [
       0,
       60,
       120,
@@ -123,11 +123,11 @@ export default [{
       600
     ]
   },
-  "actor1": null,
-  "source": null,
-  "notes": null,
-  "date_year": {
-    "values": [
+  actor1: null,
+  source: null,
+  notes: null,
+  date_year: {
+    values: [
       192,
       0,
       0,
@@ -139,7 +139,7 @@ export default [{
       0,
       1868
     ],
-    "bins": [
+    bins: [
       2019,
       2019.2,
       2019.4,
