@@ -3,6 +3,8 @@ name: UI Cypress Integration, e2e Tests
 on:
   pull_request:
     types: [ opened, synchronize ]
+    paths:
+      - ui/**
 
 jobs:
   cypress-run:

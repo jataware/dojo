@@ -3,6 +3,8 @@ name: UI Unit Tests - Jest
 on:
   pull_request:
     types: [ opened, synchronize ]
+    paths:
+      - ui/client/**
 
 jobs:
   unit-tests:

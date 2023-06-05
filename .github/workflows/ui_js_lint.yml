@@ -3,6 +3,8 @@ name: UI Lint
 on:
   pull_request:
     types: [ opened, synchronize ]
+    paths:
+      - ui/client/**
 
 jobs:
   lint:
