@@ -1,11 +1,13 @@
-name: Unit Tests - Jest
+name: UI Cypress Component Tests
 
 on:
   pull_request:
     types: [ opened, synchronize ]
+    paths:
+      - ui/**
 
 jobs:
-  unit-tests:
+  cypress-run:
     runs-on: ubuntu-20.04
 
     steps:
@@ -19,17 +21,10 @@ jobs:
           cache: 'npm'
           cache-dependency-path: ui/package-lock.json
 
-      - name: Cache npm dependencies
-        uses: actions/cache@v3
-        id: npm-cache
-        with:
-          path: ./ui/node_modules
-          key: ${{ runner.os }}-node-${{ hashFiles('./ui/package-lock.json') }}
-
       - name: Install npm dependencies
         working-directory: ./ui
-        run: npm install
+        run: npm ci
 
-      - name: Runs unit tests with jest
+      - name: Cypress run
         working-directory: ./ui
-        run: npm run test:ci
+        run: npx cypress run-ct

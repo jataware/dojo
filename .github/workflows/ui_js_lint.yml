@@ -1,18 +1,20 @@
-name: Cypress Integration Tests
+name: UI Lint
 
 on:
   pull_request:
     types: [ opened, synchronize ]
+    paths:
+      - ui/client/**
 
 jobs:
-  cypress-run:
+  lint:
     runs-on: ubuntu-20.04
 
     steps:
-      - name: Checkout
+      - name: Checkout Repo
         uses: actions/checkout@v3
 
-      - name: Setup Node Version Pin
+      - name: Setup node
         uses: actions/setup-node@v3
         with:
           node-version: '15'
@@ -26,15 +28,10 @@ jobs:
           path: ./ui/node_modules
           key: ${{ runner.os }}-node-${{ hashFiles('./ui/package-lock.json') }}
 
-      - name: Install npm dependencies
+      - name: Npm Install
         working-directory: ./ui
         run: npm install
 
-      - name: Cypress run
-        uses: cypress-io/github-action@v4
-        with:
-          working-directory: ./ui
-          config: video=false,videoUploadOnPasses=false,keystrokeDelay=1,retries=2,ignoreTestFiles=model_spec.js
-          start: npm run dev
-          wait-on: 'http://127.0.0.1:8080'
-          wait-on-timeout: 160
+      - name: Lint
+        working-directory: ./ui
+        run: npm run lint

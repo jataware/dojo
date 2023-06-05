@@ -4,7 +4,7 @@ import React, {
 
 import axios from 'axios';
 import debounce from 'lodash/debounce';
-import { format } from 'date-fns'
+import { format } from 'date-fns';
 
 import Button from '@material-ui/core/Button';
 import { GridOverlay, DataGrid } from '@material-ui/data-grid';

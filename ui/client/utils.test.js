@@ -23,7 +23,7 @@ describe('matchFileNameExtension', () => {
       'hello'
     ];
 
-    const outputs = inputs.map(i => {
+    const outputs = inputs.map((i) => {
       const match = matchFileNameExtension(i);
       return match && match[0];
     });
@@ -42,12 +42,10 @@ describe('matchFileNameExtension', () => {
   });
 });
 
-
 describe('formatDateOnly', () => {
   test('formats ts to date, without time', () => {
     const result = formatDateOnly(1660656870);
 
     expect(result).toBe('1970-01-20');
-
   });
 });

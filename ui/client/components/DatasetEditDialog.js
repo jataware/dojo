@@ -14,7 +14,6 @@ import ListItemText from '@material-ui/core/ListItemText';
 import Typography from '@material-ui/core/Typography';
 
 import AddCircleIcon from '@material-ui/icons/AddCircle';
-import SwapHorizontalCircleIcon from '@material-ui/icons/SwapHorizontalCircle';
 import UpdateIcon from '@material-ui/icons/Update';
 
 import { makeStyles } from '@material-ui/core/styles';

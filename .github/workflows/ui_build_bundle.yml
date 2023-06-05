@@ -1,6 +1,10 @@
-name: Build
+name: UI Build bundle
 
-on: [pull_request]
+on:
+  pull_request:
+    types: [ opened, synchronize ]
+    paths:
+      - ui/**
 
 jobs:
   test:
@@ -29,5 +33,6 @@ jobs:
         working-directory: ./ui
         run: npm ci
 
-      - name: Build Containers
-        run: make docker_build
+      - name: Build UI
+        working-directory: ./ui
+        run: npm run build

@@ -11,7 +11,6 @@ import CheckCircleIcon from '@material-ui/icons/CheckCircleRounded';
 import ErrorCircleIcon from '@material-ui/icons/ErrorRounded';
 import identity from 'lodash/identity';
 
-
 /**
  * Accepts a validate function and memoizes the validation logic,
  * as well as displays the Formik's form validation errors.
@@ -27,9 +26,8 @@ export default withStyles(() => ({
     color: 'red'
   }
 }))(({
-  classes, validateFormat=identity, parentName, InputProps, ...props
+  classes, validateFormat = identity, parentName, InputProps, ...props
 }) => {
-
   // Would run on each form context change, blur, and render
   function validateAlways(value) {
     if (parentName) {
@@ -42,7 +40,7 @@ export default withStyles(() => ({
   // Formik form errors will be added by Field, while our custom backend
   // validate will be added by useField
   const [field, meta, helpers] = useField(props.name);
-  const valid = !Boolean(meta?.error);
+  const valid = !meta?.error;
 
   /**
    * We need to both memoize individual input values with `memoize`, as well
@@ -52,9 +50,10 @@ export default withStyles(() => ({
    * b) So that, when memoizing, we don't create new memoize function on each run and waste memory
    */
   const validate = React
-        .useCallback(
-          memoize(validateAlways),
-          [parentName, field.value, field.name]);
+    .useCallback(
+      memoize(validateAlways),
+      [parentName, field.value, field.name]
+    );
 
   // Run validate on mount
   React.useEffect(() => {
@@ -98,5 +97,4 @@ export default withStyles(() => ({
       {...props}
     />
   );
-
 });

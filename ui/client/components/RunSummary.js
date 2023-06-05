@@ -18,7 +18,6 @@ import RunningJobIcon from '@material-ui/icons/PlayCircleFilledWhite';
 import { withStyles } from '@material-ui/core/styles';
 import { useRun } from './SWRHooks';
 
-import CSVDownload from './CSVDownload';
 import { ExternalLink, InternalTab } from './Links';
 import LoadingOverlay from './LoadingOverlay';
 import { parseDatetimeString, formatDatetime } from '../utils';
@@ -367,7 +366,7 @@ const RunSummary = ({ classes }) => {
         ) : (
           <Typography>Unexpected Error. No Run found.</Typography>
         )}
-    </Grid>
+      </Grid>
 
     </Container>
   );

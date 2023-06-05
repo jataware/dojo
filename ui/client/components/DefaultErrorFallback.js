@@ -6,20 +6,22 @@ import Button from '@material-ui/core/Button';
 /**
  *
  **/
-export function DefaultErrorFallback({ error, resetErrorBoundary }) {
-
+export function DefaultErrorFallback({ resetErrorBoundary }) {
   // TODO Send errors to backend to track without user action
 
   return (
     <Container
-      style={{display: 'flex',
-              flexDirection: 'column',
-              marginTop: '0.5rem',
-              padding: '2rem',
-              border: '6px solid #DDDDDD33',
-              height: 'fit-content',
-              textAlign: 'left'}}
-      maxWidth="sm">
+      style={{
+        display: 'flex',
+        flexDirection: 'column',
+        marginTop: '0.5rem',
+        padding: '2rem',
+        border: '6px solid #DDDDDD33',
+        height: 'fit-content',
+        textAlign: 'left'
+      }}
+      maxWidth="sm"
+    >
 
       <Typography
         variant="h3"
@@ -40,8 +42,9 @@ export function DefaultErrorFallback({ error, resetErrorBoundary }) {
         color="primary"
         size="large"
         variant="outlined"
-        style={{width: "50%", alignSelf: 'center'}}
-        onClick={resetErrorBoundary}>
+        style={{ width: '50%', alignSelf: 'center' }}
+        onClick={resetErrorBoundary}
+      >
         Or, Retry
       </Button>
 

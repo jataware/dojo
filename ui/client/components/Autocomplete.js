@@ -7,7 +7,7 @@ import TextField from '@material-ui/core/TextField';
  *
  * */
 const Autocomplete = ({
-  values, setValues, options, label, textFieldProps, disabled=false
+  values, setValues, options, label, textFieldProps, disabled = false
 }) => (options.length > 0
   ? (
     <MuiAutocomplete

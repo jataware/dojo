@@ -1,5 +1,5 @@
 import React from 'react';
-import { formatExtensionForDropZone } from "./DropArea";
+import { formatExtensionForDropZone } from './DropArea';
 
 describe('formatExtensionForDropZone', () => {
   test('Properly formats extension characters into an object with ext:content type mappings', () => {
@@ -7,8 +7,8 @@ describe('formatExtensionForDropZone', () => {
     const output = formatExtensionForDropZone(input);
 
     expect(output).toEqual({
-      'text/csv': [ '.csv' ],
-      'application/pdf': [ '.pdf' ]
+      'text/csv': ['.csv'],
+      'application/pdf': ['.pdf']
     });
   });
 });

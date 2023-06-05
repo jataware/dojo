@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 
@@ -6,7 +6,7 @@ import Button from '@material-ui/core/Button';
 import ToggleButton from '@material-ui/lab/ToggleButton';
 import ToggleButtonGroup from '@material-ui/lab/ToggleButtonGroup';
 import Container from '@material-ui/core/Container';
-import { GridOverlay, DataGrid, useGridSlotComponentProps } from '@material-ui/data-grid';
+import { DataGrid } from '@material-ui/data-grid';
 import Typography from '@material-ui/core/Typography';
 import { darken, makeStyles } from '@material-ui/core/styles';
 import ExpandableDataGridCell from './ExpandableDataGridCell';
@@ -15,14 +15,13 @@ import SearchDatasets from './SearchDatasets';
 
 import ViewFeatures from './ViewFeatures';
 
-
 const useStyles = makeStyles((theme) => ({
   root: {
     padding: [[theme.spacing(8), theme.spacing(2), theme.spacing(2)]],
   },
   gridContainer: {
-    display: "flex",
-    flexDirection: "column",
+    display: 'flex',
+    flexDirection: 'column',
     flex: 1,
     maxWidth: '2000px',
     minWidth: '900px',
@@ -63,77 +62,77 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const expandableCell = ({ value, colDef }) => (
-    <ExpandableDataGridCell
-      value={value}
-      width={colDef.computedWidth}
-    />
+  <ExpandableDataGridCell
+    value={value}
+    width={colDef.computedWidth}
+  />
 );
 
 const columns = [
-    {
-      field: 'name',
-      headerName: 'Name',
-      renderCell: expandableCell,
-      minWidth: 200,
-      flex: 1,
-      valueGetter: (params) => (
-        params.getValue(params.id, 'deprecated')
-          ? `DEPRECATED - ${params.row.name}` : params.row.name
+  {
+    field: 'name',
+    headerName: 'Name',
+    renderCell: expandableCell,
+    minWidth: 200,
+    flex: 1,
+    valueGetter: (params) => (
+      params.getValue(params.id, 'deprecated')
+        ? `DEPRECATED - ${params.row.name}` : params.row.name
+    )
+  },
+  {
+    field: 'id',
+    headerName: 'ID',
+    minWidth: 250,
+    flex: 1,
+  },
+  {
+    field: 'maintainer.name',
+    headerName: 'Maintainer',
+    minWidth: 140,
+    flex: 1,
+    valueGetter: (params) => params.row?.maintainer.name,
+  },
+  {
+    field: 'created_at',
+    headerName: 'Created At',
+    valueFormatter: (params) => (
+      new Date(params.value).toLocaleDateString(
+        'en-US',
+        {
+          timeZone: 'utc',
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric'
+        },
       )
-    },
-    {
-      field: 'id',
-      headerName: 'ID',
-      minWidth: 250,
-      flex: 1,
-    },
-    {
-      field: 'maintainer.name',
-      headerName: 'Maintainer',
-      minWidth: 140,
-      flex: 1,
-      valueGetter: (params) => params.row?.maintainer.name,
-    },
-    {
-      field: 'created_at',
-      headerName: 'Created At',
-      valueFormatter: (params) => (
-        new Date(params.value).toLocaleDateString(
-          'en-US',
-          {
-            timeZone: 'utc',
-            day: '2-digit',
-            month: '2-digit',
-            year: 'numeric'
-          },
-        )
-      ),
-      minWidth: 140,
-      flex: 1,
-    },
-    {
-      field: 'description',
-      headerName: 'Description',
-      renderCell: expandableCell,
-      minWidth: 200,
-      flex: 1,
-    },
-    {
-      field: 'link',
-      headerName: ' ',
-      sortable: false,
-      disableColumnMenu: true,
-      renderCell: ({ row }) => (
-        <Button
-          href={`/dataset_summary?dataset=${row.id}`}
-          variant="outlined"
-        >
-          View Dataset
-        </Button>
-      ),
-      minWidth: 210,
-    },
-  ];
+    ),
+    minWidth: 140,
+    flex: 1,
+  },
+  {
+    field: 'description',
+    headerName: 'Description',
+    renderCell: expandableCell,
+    minWidth: 200,
+    flex: 1,
+  },
+  {
+    field: 'link',
+    headerName: ' ',
+    sortable: false,
+    disableColumnMenu: true,
+    renderCell: ({ row }) => (
+      <Button
+        href={`/dataset_summary?dataset=${row.id}`}
+        variant="outlined"
+      >
+        View Dataset
+      </Button>
+    ),
+    minWidth: 210,
+  },
+];
 
 const getDatasets = (setDatasets, setDatasetsError, setDatasetsLoading) => {
   // only do this for the first call to getDatasets, when we don't have a scrollId
@@ -156,8 +155,6 @@ const getDatasets = (setDatasets, setDatasetsError, setDatasetsLoading) => {
     });
 };
 
-
-
 /**
  *
  */
@@ -170,14 +167,14 @@ function ViewDatasets() {
   const [displayDeprecated, setDisplayDeprecated] = useState(false);
   const [displayedDatasets, setDisplayedDatasets] = useState([]);
 
-  const [mode, setMode] = useState("datasets");
+  const [mode, setMode] = useState('datasets');
 
   const handleMode = (event, newMode) => {
     setMode(newMode);
   };
 
-  const isModeDatasets = mode === "datasets";
-  const isModeFeatures = mode === "features";
+  const isModeDatasets = mode === 'datasets';
+  const isModeFeatures = mode === 'features';
 
   useEffect(() => {
     // only do this once when the page loads
@@ -227,7 +224,10 @@ function ViewDatasets() {
       component="main"
       maxWidth="xl"
     >
-      <div style={{display: "flex", flexDirection: "column", width: "100%", flex: "1 0 100%"}}>
+      <div style={{
+        display: 'flex', flexDirection: 'column', width: '100%', flex: '1 0 100%'
+      }}
+      >
         <Typography
           className={classes.header}
           component="h3"
@@ -237,7 +237,7 @@ function ViewDatasets() {
           All Datasets & Features
         </Typography>
 
-        <div style={{display: "flex", alignItems: "center"}}>
+        <div style={{ display: 'flex', alignItems: 'center' }}>
           <Typography variant="h6">
             Browse By
           </Typography>

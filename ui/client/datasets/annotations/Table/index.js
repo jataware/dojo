@@ -58,7 +58,10 @@ const HEADER_HEIGHT = 80;
 function CustomLoadingOverlay() {
   return (
     <GridOverlay>
-      <div style={{ position: 'absolute', top: 0, width: '100%', zIndex: 15 }}>
+      <div style={{
+        position: 'absolute', top: 0, width: '100%', zIndex: 15
+      }}
+      >
         <LinearProgress style={{ height: 3 }} />
       </div>
     </GridOverlay>
@@ -406,7 +409,7 @@ export default withStyles(({ palette }) => ({
         handleClose={cancelUploadAnnotations}
         handleFileSelect={handleFileSelect}
         errorMessage={fileDictionaryError}
-        clearErrorMessage={()=>{setfileDictionaryError(null);}}
+        clearErrorMessage={() => { setfileDictionaryError(null); }}
         loading={dictionaryUploadLoading}
         datasetID={datasetID}
       />

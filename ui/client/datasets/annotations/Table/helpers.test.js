@@ -99,7 +99,7 @@ describe('groupColumns', () => {
     };
 
     const annotations = {
-      'col3': {
+      col3: {
         display_name: 'hi',
         description: 'required',
         annotated: true
@@ -114,5 +114,4 @@ describe('groupColumns', () => {
         { field: 'col4' },
       ]);
   });
-
 });

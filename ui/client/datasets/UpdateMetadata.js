@@ -25,7 +25,6 @@ import {
 
 const skipValidation = false;
 
-
 /**
  * Dataset Update Metadata file landing page (fileMetadata changes only).
  **/
@@ -53,7 +52,6 @@ export default withStyles(({ spacing }) => ({
   const [fileMetadata, setFileMetadata] = useState({});
 
   const updateDataset = async (validatedData, id) => {
-
     const payload = {
       id,
       name: validatedData.name,
@@ -104,17 +102,17 @@ export default withStyles(({ spacing }) => ({
         initialValues={defaultValues}
         validationSchema={!skipValidation && formSchema}
         enableReinitialize
-        onSubmit={ async (values, { setSubmitting }) => {
+        onSubmit={async (values, { setSubmitting }) => {
           const datasetId = datasetInfo?.id;
           if (!datasetId) {
-            throw(new Error('Unable to update metadata for an invalid Dataset.'));
+            throw (new Error('Unable to update metadata for an invalid Dataset.'));
           }
 
           setSubmitting(true);
 
           updateDataset(values, datasetId)
             .then(() => {
-              handleNext({dataset: datasetInfo, filename: rawFileName});
+              handleNext({ dataset: datasetInfo, filename: rawFileName });
             });
         }}
       >

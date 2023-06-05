@@ -29,7 +29,6 @@ const skipValidation = false;
  * Dataset Registration landing page (fileMetadata, file upload).
  * */
 
-
 /**
  *
  * */
@@ -58,8 +57,7 @@ export default withStyles(({ spacing }) => ({
   /**
    * Creates or updates a dataset (indicator) resource in the backend
    **/
-  const updateDataset = async (validatedData, { method='post', id }) => {
-
+  const updateDataset = async (validatedData, { method = 'post', id }) => {
     const payload = {
       id,
       name: validatedData.name,
@@ -79,7 +77,7 @@ export default withStyles(({ spacing }) => ({
 
     const response = await axios({
       method,
-      url: `/api/dojo/indicators${method === 'PATCH' ? '?indicator_id=' + id : ''}`,
+      url: `/api/dojo/indicators${method === 'PATCH' ? `?indicator_id=${id}` : ''}`,
       data: payload,
     });
     return response.data;
@@ -107,12 +105,11 @@ export default withStyles(({ spacing }) => ({
         initialValues={defaultValues}
         validationSchema={!skipValidation && formSchema}
         validate={(values) => {
-
           const bothResolutionsSet = Boolean(values['x-resolution'] && values['y-resolution']);
           const eitherResSet = values['x-resolution'] || values['y-resolution'];
 
-          return !bothResolutionsSet && eitherResSet ?
-            {
+          return !bothResolutionsSet && eitherResSet
+            ? {
               'x-resolution': 'You must enter either both or none x/y resolution values',
               'y-resolution': 'You must enter either both or none x/y resolution values'
             } : {};
@@ -120,7 +117,6 @@ export default withStyles(({ spacing }) => ({
         enableReinitialize
 
         onSubmit={(values, { setSubmitting }) => {
-
           setSubmitting(true);
 
           if (values['x-resolution'] && values['y-resolution']) {
@@ -133,11 +129,10 @@ export default withStyles(({ spacing }) => ({
           const isUpdate = Boolean(datasetInfo?.id);
 
           async function createAndUploadDataset() {
-
             const httpMethod = isUpdate ? 'PATCH' : 'POST';
             // TODO try/catch promise error handling
             // Creates or updates a dataset. Update returns no data
-            const dataset = await updateDataset(values, {method: httpMethod, id: datasetInfo.id});
+            const dataset = await updateDataset(values, { method: httpMethod, id: datasetInfo.id });
 
             const latestDatasetData = isUpdate ? datasetInfo : dataset;
             const datasetId = latestDatasetData.id;
@@ -146,18 +141,16 @@ export default withStyles(({ spacing }) => ({
             if (datasetId && (!isFileUploaded || isUpdatingUploadedFile)) {
               const uploadResponse = await uploadFile(formRef.current, datasetId);
               const newRawFileName = uploadResponse.data.filename;
-              const fileMetadataData = {...fileMetadata, rawFileName: newRawFileName};
+              const fileMetadataData = { ...fileMetadata, rawFileName: newRawFileName };
               await updateMetadata(datasetId, fileMetadataData, setAnnotations);
 
               return { dataset: latestDatasetData, rawFileName: newRawFileName };
-            } else {
-              return { dataset: latestDatasetData, rawFileName };
             }
-
+            return { dataset: latestDatasetData, rawFileName };
           }
 
           createAndUploadDataset()
-            .then(({dataset, rawFileName}) => handleNext({dataset: dataset, filename: rawFileName}));
+            .then(({ dataset, rawFileName }) => handleNext({ dataset, filename: rawFileName }));
         }}
       >
         {(formik) => (

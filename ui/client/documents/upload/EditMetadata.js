@@ -28,11 +28,11 @@ import { ManagedTextField } from './FormFields';
  * Simple helper
  **/
 const arrayToDOMOptions = (optionsArray) => optionsArray
-      .map(({value, label}) =>(
-        <option value={value} key={value}>
-          {label}
-        </option>
-      ));
+  .map(({ value, label }) => (
+    <option value={value} key={value}>
+      {label}
+    </option>
+  ));
 
 /**
  *
@@ -45,8 +45,9 @@ export default withStyles((theme) => ({
   filename: {
     color: theme.palette.primary.main
   }
-}))(({ classes, metadata, filename, onSave }) => {
-
+}))(({
+  classes, metadata, filename, onSave
+}) => {
   const sharedTextFieldProps = (fieldName) => ({
     name: fieldName,
     label: startCase(fieldName),
@@ -84,7 +85,7 @@ export default withStyles((theme) => ({
           <ManagedTextField
             required
             placeholder="Document Title"
-            {...sharedTextFieldProps("title")}
+            {...sharedTextFieldProps('title')}
           />
         </Grid>
 
@@ -93,7 +94,7 @@ export default withStyles((theme) => ({
             placeholder="Provide a description of the Document"
             multiline
             minRows="2"
-            {...sharedTextFieldProps("description")}
+            {...sharedTextFieldProps('description')}
           />
         </Grid>
 
@@ -101,7 +102,7 @@ export default withStyles((theme) => ({
           {...gridItemProps}
         >
           <ManagedTextField
-            {...sharedTextFieldProps("author")}
+            {...sharedTextFieldProps('author')}
           />
         </Grid>
 
@@ -109,7 +110,7 @@ export default withStyles((theme) => ({
           {...gridItemProps}
         >
           <ManagedTextField
-            {...sharedTextFieldProps("publisher")}
+            {...sharedTextFieldProps('publisher')}
           />
         </Grid>
 
@@ -117,7 +118,7 @@ export default withStyles((theme) => ({
           {...gridItemProps}
         >
           <ManagedTextField
-            {...sharedTextFieldProps("producer")}
+            {...sharedTextFieldProps('producer')}
           />
         </Grid>
 
@@ -140,7 +141,7 @@ export default withStyles((theme) => ({
                 component={KeyboardDatePicker}
                 inputVariant="outlined"
                 placeholder="mm/dd/yyyy"
-                {...sharedTextFieldProps("creation_date")}
+                {...sharedTextFieldProps('creation_date')}
               />
             </MuiPickersUtilsProvider>
           </Formik>
@@ -149,9 +150,9 @@ export default withStyles((theme) => ({
         <Grid
           item
           xs={12}
-          style={{marginTop: 0, paddingTop: 0}}
+          style={{ marginTop: 0, paddingTop: 0 }}
         >
-          <fieldset style={{padding: "1rem", width: "100%", border: "1px solid #e9e9e9"}}>
+          <fieldset style={{ padding: '1rem', width: '100%', border: '1px solid #e9e9e9' }}>
 
             <legend>Additional Attributes</legend>
 
@@ -164,7 +165,7 @@ export default withStyles((theme) => ({
                 {...gridItemProps}
               >
                 <ManagedTextField
-                  {...sharedSelectFieldProps("original_language")}
+                  {...sharedSelectFieldProps('original_language')}
                 >
                   {arrayToDOMOptions([
                     { value: 'en', label: 'English' },
@@ -177,7 +178,7 @@ export default withStyles((theme) => ({
                 {...gridItemProps}
               >
                 <ManagedTextField
-                  {...sharedSelectFieldProps("type")}
+                  {...sharedSelectFieldProps('type')}
                 >
                   {arrayToDOMOptions([
                     { value: 'article', label: 'Article' },
@@ -190,7 +191,7 @@ export default withStyles((theme) => ({
                 {...gridItemProps}
               >
                 <ManagedTextField
-                  {...sharedSelectFieldProps("stated_genre")}
+                  {...sharedSelectFieldProps('stated_genre')}
                 >
                   {arrayToDOMOptions([{ value: 'news-article', label: 'News Article' }])}
                 </ManagedTextField>
@@ -200,7 +201,7 @@ export default withStyles((theme) => ({
                 {...gridItemProps}
               >
                 <ManagedTextField
-                  {...sharedSelectFieldProps("classification")}
+                  {...sharedSelectFieldProps('classification')}
                 >
                   {arrayToDOMOptions([{ value: 'unclassified', label: 'Unclassified' }])}
                 </ManagedTextField>
