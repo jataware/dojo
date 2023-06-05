@@ -1,4 +1,4 @@
-name: Build
+name: UI: Build bundle
 
 on: [pull_request]
 

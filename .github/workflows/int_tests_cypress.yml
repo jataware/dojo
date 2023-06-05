@@ -1,11 +1,11 @@
-name: Unit Tests - Jest
+name: UI: Cypress Integration, e2e Tests
 
 on:
   pull_request:
     types: [ opened, synchronize ]
 
 jobs:
-  unit-tests:
+  cypress-run:
     runs-on: ubuntu-20.04
 
     steps:
@@ -30,6 +30,11 @@ jobs:
         working-directory: ./ui
         run: npm install
 
-      - name: Runs unit tests with jest
-        working-directory: ./ui
-        run: npm run test:ci
+      - name: Cypress run
+        uses: cypress-io/github-action@v4
+        with:
+          working-directory: ./ui
+          config: video=false,videoUploadOnPasses=false,keystrokeDelay=1,retries=2,ignoreTestFiles=model_spec.js
+          start: npm run dev
+          wait-on: 'http://127.0.0.1:8080'
+          wait-on-timeout: 160
