@@ -7,7 +7,7 @@ import Typography from '@material-ui/core/Typography';
 /**
  *
  **/
-export default withStyles((theme) => ({
+export default withStyles(() => ({
   root: {
     padding: '1rem',
     height: '100%'

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Form, Formik } from 'formik';
 import axios from 'axios';
 
@@ -8,17 +8,12 @@ import AccordionSummary from '@material-ui/core/AccordionSummary';
 import Container from '@material-ui/core/Container';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import Grid from '@material-ui/core/Grid';
-import { useHistory } from 'react-router-dom';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 
-import get from 'lodash/get';
-import isEmpty from 'lodash/isEmpty';
-
 import { Navigation } from '.';
 import {
-  uploadFile,
-  updateMetadata, genRegisterDefaultValues,
+  genRegisterDefaultValues,
   formSchema, BaseData, ContactInformation,
   Resolution, DataQualitySensitivity
 } from './metadataComponents';
@@ -43,13 +38,9 @@ export default withStyles(({ spacing }) => ({
   }
 }))(({
   classes, datasetInfo, error, stepTitle, setDatasetInfo,
-  annotations, setAnnotations, handleNext, handleBack,
-  rawFileName, uploadedFilesData,
-  ...props
+  handleNext, rawFileName, uploadedFilesData
 }) => {
-  const history = useHistory();
-  const [file, setFile] = useState(null);
-  const [fileMetadata, setFileMetadata] = useState({});
+  const fileMetadata = {};
 
   const updateDataset = async (validatedData, id) => {
     const payload = {
@@ -79,10 +70,9 @@ export default withStyles(({ spacing }) => ({
 
   const formRef = React.useRef();
 
-  const back = (event) => {}; // Do nothing
+  const back = (/* event*/) => {}; // Do nothing
 
   const defaultValues = genRegisterDefaultValues(datasetInfo);
-  const [isUpdatingUploadedFile, setUpdatingUploadedFile] = useState(false);
 
   return (
     <Container

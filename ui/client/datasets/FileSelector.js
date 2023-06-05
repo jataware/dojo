@@ -27,7 +27,7 @@ const NullGeotiffTooltip = ({ ...props }) => (
 );
 
 export const ExtraInput = ({
-  formik, fileMetadata, setFileMetadata, ...props
+  formik, fileMetadata, setFileMetadata
 }) => {
   // TODO This metadata is set on user file select etc, not on loading a previously
   // uploaded file. We'll check if we can populate
@@ -85,7 +85,6 @@ export const ExtraInput = ({
     );
   }
   if (fileMetadata.filetype === 'geotiff') {
-    const name = 'geotiff_info';
     if (fileMetadata.geotiff_band_count > 1) {
       return (
         <>
@@ -118,53 +117,58 @@ export const ExtraInput = ({
           </div>
 
           {fileMetadata.geotiff_band_type === 'category' && (
-          <>
-            <div style={{
-              display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: '0.5em', rowGap: '0.5em',
-            }}
-            >
-              <TextField
-                name="geotiff_value"
-                variant="outlined"
-                label="Enter dataset date"
-                helperText="YYYY-MM-DD"
-                onChange={(evt) => {
-                  const { value } = evt.target;
-                  setFileMetadata({ ...fileMetadata, geotiff_value: value });
-                }}
-              />
-              <NullGeotiffTooltip>
+            <>
+              <div style={{
+                display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: '0.5em', rowGap: '0.5em',
+              }}
+              >
                 <TextField
-                  name="geotiff_Null_Val"
+                  name="geotiff_value"
                   variant="outlined"
-                  label="Geotiff Null Value"
+                  label="Enter dataset date"
+                  helperText="YYYY-MM-DD"
                   onChange={(evt) => {
                     const { value } = evt.target;
-                    setFileMetadata({ ...fileMetadata, geotiff_null_value: value });
+                    setFileMetadata({ ...fileMetadata, geotiff_value: value });
                   }}
                 />
-              </NullGeotiffTooltip>
-            </div>
-
-            <div style={{
-              display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: '0.5em', rowGap: '0.5em',
-            }}
-            >
-              {/* This generates a numbered TextField input for each band in the geotiff to allow labeling */}
-              {Array.from(Array(fileMetadata.geotiff_band_count).keys()).map((i) => {
-                const band_num = i + 1;
-                return (
+                <NullGeotiffTooltip>
                   <TextField
-                    key={`band_${band_num}`}
-                    name="bands"
+                    name="geotiff_Null_Val"
                     variant="outlined"
-                    label={`Band ${band_num} Name`}
-                    onChange={(evt) => setBand(evt, band_num)}
+                    label="Geotiff Null Value"
+                    onChange={(evt) => {
+                      const { value } = evt.target;
+                      setFileMetadata({ ...fileMetadata, geotiff_null_value: value });
+                    }}
                   />
-                );
-              })}
-            </div>
-          </>
+                </NullGeotiffTooltip>
+              </div>
+
+              <div
+                style={{
+                  display: 'grid',
+                  gridTemplateColumns: '1fr 1fr',
+                  columnGap: '0.5em',
+                  rowGap: '0.5em',
+                }}
+              >
+                {/* This generates a numbered TextField input for each band in the geotiff to allow labeling */}
+                {Array.from(Array(fileMetadata.geotiff_band_count).keys())
+                  .map((i) => {
+                    const band_num = i + 1;
+                    return (
+                      <TextField
+                        key={`band_${band_num}`}
+                        name="bands"
+                        variant="outlined"
+                        label={`Band ${band_num} Name`}
+                        onChange={(evt) => setBand(evt, band_num)}
+                      />
+                    );
+                  })}
+              </div>
+            </>
           )}
           {fileMetadata.geotiff_band_type === 'temporal' && (
           <>
@@ -350,6 +354,7 @@ export const FileSelector = withStyles(({ spacing, palette }) => ({
   } = allProps;
 
   const [message, setMessage] = useState(null);
+  // TODO handle processing..
   const [processing, setProcessing] = useState(false);
 
   const analyzeExcel = (file, metadata) => {

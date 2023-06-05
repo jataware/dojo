@@ -31,7 +31,7 @@ export const Aliases = withStyles(() => ({
     alignItems: 'center'
   }
 }))(({
-  classes, aliases, disabled, ...props
+  classes, aliases, disabled
 }) => (
   <FieldArray
     name="aliases"

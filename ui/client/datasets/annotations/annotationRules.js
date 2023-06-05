@@ -20,10 +20,10 @@ export const removeSelf = (columns, editingColumnName) => columns
  * irrelevant validation errors.
  * TBD , will probably need to do more data cleanups here
  * */
-export function cleanUnusedFields(values) {
+export function cleanUnusedFields(vals) {
   return {
-    ...values,
-    primary: (values.category === CATEGORIES.feature) ? false : values.primary
+    ...vals,
+    primary: (vals.category === CATEGORIES.feature) ? false : vals.primary
   };
 }
 
@@ -206,7 +206,9 @@ export function verifyConditionalRequiredFields(annotation) {
 export const knownFieldAnnotations = (serverAnnotations, columns) => reduce(
   serverAnnotations,
   (acc, annotations, property) => {
-    let valid = annotations.filter((annotation) => columns.find((col) => col.field === annotation.name));
+    let valid = annotations
+      .filter((annotation) => columns
+        .find((col) => col.field === annotation.name));
 
     // For now, addressing and fixing scenario we ran into, for dates, in UI:
     if (property === 'date') {

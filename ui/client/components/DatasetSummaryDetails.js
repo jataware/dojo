@@ -43,7 +43,7 @@ function DatasetSummaryDetails({ dataset }) {
   const handleMenuItemClick = (event, index) => {
     setSelectedIndex(index);
 
-    if (index == 1) {
+    if (index === 1) {
       setWideFormat('true');
     } else {
       setWideFormat('false');

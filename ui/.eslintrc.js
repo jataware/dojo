@@ -52,5 +52,7 @@ module.exports = {
       "varsIgnorePattern": "_"
     }],
 
+    "jsx-a11y/alt-text": "off"
+
   }
 };

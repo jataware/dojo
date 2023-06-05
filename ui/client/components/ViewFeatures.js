@@ -5,10 +5,10 @@ import debounce from 'lodash/debounce';
 import identity from 'lodash/identity';
 
 import Button from '@material-ui/core/Button';
-import { GridOverlay, DataGrid, useGridSlotComponentProps } from '@material-ui/data-grid';
+import { GridOverlay, DataGrid } from '@material-ui/data-grid';
+// useGridSlotComponentProps
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
-import TablePagination from '@material-ui/core/TablePagination';
 import LinearProgress from '@material-ui/core/LinearProgress';
 import CancelIcon from '@material-ui/icons/Cancel';
 import OpenInNewIcon from '@material-ui/icons/OpenInNew';

@@ -38,7 +38,7 @@ function formatStatNumber(value, sigFigures) {
 
     const parsed = Number(value);
 
-    if (isNaN(parsed)) {
+    if (Number.isNaN(parsed)) {
       return value;
     }
 
@@ -76,8 +76,7 @@ function loadConfig(labels, datasets) {
       plugins: {
         tooltip: {
           callbacks: {
-            title: (datasets) => {
-              const dataset = datasets[0];
+            title: ([dataset]) => {
               const currentIdx = dataset.dataIndex;
               const currentLabel = dataset.label;
               const nextLabel = labels[currentIdx + 1];
@@ -144,7 +143,7 @@ function loadConfig(labels, datasets) {
           },
           // Yes Label:
           ticks: {
-            callback(val, index) {
+            callback(val) {
               const label = this.getLabelForValue(val);
               return formatStatNumber(label, 2);
             },
@@ -243,8 +242,10 @@ export default React.memo(withStyles((theme) => ({
             No statistics available for this column
           </Typography>
           <Typography variant="caption">
-            This may be a multi-part annotated column, which contains + in its name. Multi-part columns
-            don't show any statistics yet. You may <span className={classes.colorHint}>clear</span> the annotation in order to view individual column statistics.
+            This may be a multi-part annotated column, which contains + in its name.
+            Multi-part columns don't show any statistics yet.
+            You may <span className={classes.colorHint}>clear</span> the
+            annotation in order to view individual column statistics.
           </Typography>
         </>
       )}
