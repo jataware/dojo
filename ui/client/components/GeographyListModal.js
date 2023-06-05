@@ -52,7 +52,7 @@ function GeographyListModal({ geography }) {
 
   return (
     <div>
-      <div>
+      <div align="right">
         <Button
           className={classes.buttons}
           onClick={() => setOpen(true)}
