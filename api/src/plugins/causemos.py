@@ -24,11 +24,7 @@ class CausemosPlugin(PluginInterface):
             # On the notification step only, we want to include any previous versions so that they can be deprecated
             previous_versions = model_versions(data["id"])["prev_versions"]
 
-            logger.info(f">>> previous_versions: {previous_versions}")
-
             notify_data["deprecatesIDs"] = previous_versions
-
-            logger.info(f">>> notify_data: {notify_data}")
 
             # Notify causemos of the new model
             self.notify_causemos(data=notify_data, entity_type="model")
