@@ -11,22 +11,53 @@ import pandas
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 import numpy
+import logging
+from pathlib import Path
+import pprint
+from os.path import join as path_join
+from functools import partial, reduce
+
+logging.basicConfig()
+logging.getLogger().setLevel(logging.DEBUG)
 
 api_url = os.environ.get("DOJO_HOST")
 download_endpoint = "/dojo/download/csv/"
 indicator_endpoint = "/indicators/"
 
+root_dir = Path(__file__).resolve().parent.parent
+test_data_dir = path_join(root_dir, "test-data")
+datasets_cache_dir = path_join(test_data_dir, "datasets")
+
+
+roundToTwo = partial(round, ndigits=3)
+
+
+def calc_percents(numbers_list):
+    total = sum(numbers_list)
+    # print(f"sum of all numbers in list: {total}")
+
+    percents = []
+    for value in numbers_list:
+        percents.append(value / total)
+
+    return percents
+
 
 def generate_index_model_weights(
-    context, filename=None, on_success_endpoint=None, *args, **kwargs
+    context={}, filename=None, on_success_endpoint=None, *args, **kwargs
 ):
+
+    logging.info("generate index model weights called.")
+
     # Generate Tree and File Retrieval object
 
     retrieval_dictionary = {}
     tree = None
     payload = kwargs.get("json_payload")
     index_model_object = json.loads(json.dumps(payload))
-    # print(index_model_object)
+
+    logging.debug(f"index_model_object: {index_model_object}")
+
     retrieval_dictionary = iteration_func(index_model_object)
     tree = build_tree(index_model_object["state"]["index"])
 
@@ -43,10 +74,10 @@ def generate_index_model_weights(
     session.auth = (WM_USER, WM_PASS)
 
     for key, value in retrieval_dictionary.items():
-        if not os.path.exists("/pca/datasets/"):
-            os.makedirs("/pca/datasets/")
-        if os.path.isfile(f"/pca/datasets/{key}.csv"):
-            print(f"dataset file for {key} already downloaded, skipping")
+        if not os.path.exists(datasets_cache_dir):
+            os.makedirs(datasets_cache_dir)
+        if os.path.isfile(f"{datasets_cache_dir}/{key}.csv"):
+            logging.info(f"Dataset file for {key} already downloaded, skipping.")
         else:
             # else we download the dataset
             url = (
@@ -55,17 +86,19 @@ def generate_index_model_weights(
             print(url)
             file_obj = session.get(url)
 
-            with open(f"/pca/datasets/{key}.csv", "w") as f:
+            with open(f"{datasets_cache_dir}/{key}.csv", "w") as f:
                 writer = csv.writer(f)
                 for line in file_obj.iter_lines():
                     writer.writerow(line.decode("utf-8").split(","))
                 f.close()
 
-            print("Done downloading or checking files.")
+            logging.info("Done downloading or checking files.")
         original_dataset = pandas.read_csv(
-            f"/pca/datasets/{key}.csv", on_bad_lines="skip"
+            f"{datasets_cache_dir}/{key}.csv", on_bad_lines="skip"
         )
-        print(f"Looking for: {value}")
+
+        logging.debug(f"Looking for: {value}")
+
         # Use info extracted from model to get info out of the dataset.
         target_columns = []
         rename_dict = {}
@@ -101,13 +134,12 @@ def generate_index_model_weights(
             master_frame = dataset
             continue
         master_frame = pandas.merge(master_frame, dataset, on=same_columns, how="outer")
-    # print(master_frame)
-    # master_frame.to_csv("/pca/datasets/ND_gain_synthetic_model.csv")
 
     # RUN PCA
 
     same_columns = ["timestamp", "country"]
     master_frame = master_frame.drop(columns=same_columns)
+
     # Handle missing values
     master_frame.fillna(master_frame.mean(), inplace=True)
 
@@ -121,37 +153,47 @@ def generate_index_model_weights(
 
     pca_components_list = abs(pca.components_)
 
-    # DO WEIGHT CALCULATIONS
 
-    weighted_sums = {}
+###############################################################################
+#                   !! START PCA_WEIGHT CALCULATIONS !!
+###############################################################################
+
+    logging.debug(f">> Number of PCA components: {pca.n_components_}")
+
+    highest_variance_ratios = list(filter(lambda x: x > 0.04, map(roundToTwo, pca.explained_variance_ratio_)))
+    weight_matrix = [[0] * pca.n_components_ for i in range(0, len(highest_variance_ratios))]
+
     for pc_index, principle_component in enumerate(pca_components_list):
-        # [0.####, 0.##### ...]
         for feature_index, value in enumerate(principle_component):
-            weighted_sums[feature_index] = weighted_sums.get(feature_index, 0) + (
-                value * pca.explained_variance_ratio_[pc_index]
-            )
-    print(weighted_sums)
+            relative_value = value * pca.explained_variance_ratio_[pc_index]
 
-    total_sums = 0
-    for key, value in weighted_sums.items():
-        total_sums += value
+            if pc_index < len(highest_variance_ratios):
+                weights_row = weight_matrix[pc_index]
+                weights_row[feature_index] = weights_row[feature_index] + relative_value
 
-    result_percent = {}
-    for key, value in weighted_sums.items():
-        result_percent[key] = value / total_sums
+    logging.info("\n\nWeighted Matrix for relevant PCs:")
+    logging.info(weight_matrix)
 
-    print(result_percent)
+    matrix_percents = list(map(calc_percents, weight_matrix))
+    logging.info(f"Matrix percents:\n{matrix_percents}")
+
+    amount_relevant = len(highest_variance_ratios)
+    matrix_averages = [round((sum(v)/amount_relevant)*100, 2) for i, v in enumerate(zip(*matrix_percents))]
+
+    logging.info(f"Final Matrix Averages: {matrix_averages}")
+
+###############################################################################
+#                   !! END PCA_WEIGHT CALCULATIONS !!
+###############################################################################
+
 
     result_leaf_weights = {}
-    for key, value in result_percent.items():
-        feature_name = master_frame.columns[key]
-        if value is None or value == 0:
-            print(f"-> None or 0 value: {feature_name} {value}")
-        if result_leaf_weights.get(feature_name, None):
-            print(f"-> Same Key: {feature_name} {value}")
+    for index, val in enumerate(matrix_averages):
+        value = val / 100
+        feature_name = master_frame.columns[index]
         result_leaf_weights[feature_name] = value
         feature_percent = round(value * 100, 2)
-        print(f"{feature_name}: {feature_percent} %")
+        logging.info(f"{feature_name}: {feature_percent} %")
 
     # SOLVE TREE WITH WEIGHTS
 
@@ -162,7 +204,7 @@ def generate_index_model_weights(
     # GENERATE THE PAYLOAD UNCHARTED EXPECTS
 
     output = generate_output_payload(tree)
-    print(output)
+    # print(output)
 
     response = {"final_percentages": output}
 
@@ -306,3 +348,15 @@ def generate_output_payload(node):
     cycle_tree(node)
 
     return output_payload
+
+
+if __name__ == '__main__':
+
+    sample_ND_JSON_PATH = path_join(test_data_dir, 'ND-GAIN.json')
+
+    with open(sample_ND_JSON_PATH) as file:
+        index_model_object = json.load(file)
+
+    out = generate_index_model_weights(json_payload=index_model_object)
+
+    print(f"-->>Out Model weights:\n\n{out}")
