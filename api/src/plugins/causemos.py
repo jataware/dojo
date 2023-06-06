@@ -9,58 +9,57 @@ from src.ontologies import get_ontologies
 from src.plugins import PluginInterface
 from validation import ModelSchema
 
+from src.settings import settings
+from src.models import model_versions
+
 
 class CausemosPlugin(PluginInterface):
     def publish(self, data, type):
+        if settings.DEBUG:
+            return
+
         if type == "model":
-
-            from src.settings import settings
-
-            from .models import model_versions
-
-            if settings.DEBUG:
-                return
-
-            notify_data = deepcopy(data)
-            notify_data = convert_to_causemos_format(notify_data)
+            notify_data = convert_to_causemos_format(data)
 
             # On the notification step only, we want to include any previous versions so that they can be deprecated
             previous_versions = model_versions(data["id"])["prev_versions"]
+
+            logger.info(f">>> previous_versions: {previous_versions}")
+
             notify_data["deprecatesIDs"] = previous_versions
 
+            logger.info(f">>> notify_data: {notify_data}")
+
             # Notify causemos of the new model
-            self.notify_causemos(data=notify_data, type="model")
+            self.notify_causemos(data=notify_data, entity_type="model")
 
             # Send CauseMos a default run
-            logger.info("Submitting defualt run to CauseMos")
+            logger.info("Submitting default run to CauseMos")
             self.submit_run(notify_data)
+
         if type == "indicator":
-            from src.settings import settings
-
-            if settings.DEBUG:
-                return
-
             # Notify causemos of the new indicator
             # logger.info("causemos indicator", json.dumps(data, indent=2))
-            self.notify_causemos(data=data, type="indicator")
+            self.notify_causemos(data=data, entity_type="indicator")
 
-    def notify_causemos(self, data, type="indicator"):
+
+    def notify_causemos(self, data, entity_type="indicator"):
         """
         A function to notify Causemos that a new indicator or model has been created.
 
-        If type is "indicator":
+        If entity_type is "indicator":
             POST https://causemos.uncharted.software/api/maas/indicators/post-process
             // Request body: indicator metadata
 
-        If type is "model":
+        If entity_type is "model":
             POST https://causemos.uncharted.software/api/maas/datacubes
             // Request body: model metadata
         """
         headers = {"accept": "application/json", "Content-Type": "application/json"}
 
-        if type == "indicator":
+        if entity_type == "indicator":
             endpoint = "indicators/post-process"
-        elif type == "model":
+        elif entity_type == "model":
             endpoint = "datacubes"
 
         url = f'{os.getenv("CAUSEMOS_IND_URL")}/{endpoint}'
@@ -73,7 +72,7 @@ class CausemosPlugin(PluginInterface):
                 logger.info("CauseMos debug mode: no need to notify Uncharted")
                 return
             else:
-                logger.info(f"Notifying CauseMos of {type} creation...")
+                logger.info(f"Notifying CauseMos of {entity_type} creation...")
                 response = requests.post(
                     url,
                     headers={"Content-Type": "application/json"},
@@ -86,6 +85,7 @@ class CausemosPlugin(PluginInterface):
         except Exception as e:
             logger.error(f"Encountered problems communicating with Causemos: {e}")
             logger.exception(e)
+
 
     def submit_run(self, model):
         """
@@ -145,6 +145,7 @@ class CausemosPlugin(PluginInterface):
             logger.error(f"Encountered problems communicating with Causemos: {e}")
             logger.exception(e)
 
+
     def post_update(self, data, type):
 
         from ..indicators import get_indicators
@@ -156,13 +157,7 @@ class CausemosPlugin(PluginInterface):
                 publish(data, type="model")
 
 
-def convert_to_causemos_format(self, model):
-    """
-    Transforms model from internal representation to the representation
-    accepted by Cauesmos.
-    """
-
-    def to_parameter(annot):
+def to_parameter(annot):
         """
         Transform Dojo annotation into a Causemos parameter.
         """
@@ -184,6 +179,12 @@ def convert_to_causemos_format(self, model):
             "max": float(annot["max"]) if annot["max"] != "" else None,
         }
 
+
+def convert_to_causemos_format(model):
+    """
+    Transforms model from internal representation to the representation
+    accepted by Cauesmos.
+    """
     causemos_model = deepcopy(model)
     causemos_model["parameters"] = [
         to_parameter(parameters["annotation"])
