@@ -35,8 +35,8 @@ from redis import Redis
 from rq.exceptions import NoSuchJobError
 from rq import job
 
-from src.embedder_engine import embedder
-from src.semantic_highlighter import highlighter
+from src.embedder_engine import get_embedder
+from src.semantic_highlighter import get_highlighter
 
 from pydantic import BaseModel
 
@@ -119,6 +119,7 @@ def semantic_highlight_paragraphs(payload: HighlightData):
 
     data = payload.dict()
 
+    highlighter = get_highlighter()
     highlights = highlighter.highlight_multiple(data["query"], data["matches"])
 
     return {
@@ -137,6 +138,8 @@ def semantic_search_paragraphs(query: str,
     Uses query to perform a Semantic Search on paragraphs; where LLM embeddings
     are used to compare a text query to items stored.
     """
+
+    embedder = get_embedder()
 
     clean_query = clean_and_decode_str(query)
 
@@ -193,6 +196,7 @@ def semantic_search_paragraphs(query: str,
     hits = results["hits"]["hits"]
 
     if highlight:
+        highlighter = get_highlighter()
         text_vec = list(map(lambda x: x.get('_source').get('text'), hits))
         highlights = highlighter.highlight_multiple(clean_query, text_vec)
 

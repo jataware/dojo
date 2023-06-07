@@ -32,5 +32,13 @@ class __Embedder__:
 
         return [e for e in embeddings]  # convert to list
 
-embedder = __Embedder__()
 
+print(f"Transformers cache dir: {os.environ.get('TRANSFORMERS_CACHE', 'DEFAULT')}")
+
+embedder = None
+
+def get_embedder():
+    global embedder
+    if not embedder:
+        embedder = __Embedder__()
+    return embedder

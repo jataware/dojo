@@ -25,6 +25,7 @@ services:
         hard: -1
     volumes:
       - dojo_esdata:/usr/share/elasticsearch/data
+      - ./big_models_data_cache:/api/big_models_data_cache
     ports:
       - 9200:9200
     networks:

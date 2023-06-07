@@ -1,4 +1,4 @@
-from src.embedder_engine import embedder
+from src.embedder_engine import get_embedder
 
 
 def keyword_query_v2(term):
@@ -73,6 +73,7 @@ def keyword_query_v2(term):
 
 def semantic_search_query(term):
 
+    embedder = get_embedder()
     embedding = embedder.embed([term])[0]
 
     query = {
@@ -96,6 +97,7 @@ def semantic_search_query(term):
 
 def hybrid_query_v1(term):
 
+    embedder = get_embedder()
     embedding = embedder.embed([term])[0]
 
     features_query = keyword_query_v2(term)
@@ -159,6 +161,7 @@ def keyword_query_v1(term):
 
 def hybrid_query_v0(query):
 
+    embedder = get_embedder
     embedding = embedder.embed([query])[0]
 
     features_query = keyword_query_v1(query)

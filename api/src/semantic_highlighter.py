@@ -235,6 +235,11 @@ def terminal_highlight_print(highlight_list:List[Highlight], background='bright_
             print(chunk, end='')
     print()
 
+highlighter = None
 
-# This is slow to init, exporting singleton once:
-highlighter = Highlighter()
+def get_highlighter():
+    global highlighter
+    if not highlighter:
+        highlighter = Highlighter()
+
+    return highlighter
