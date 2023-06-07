@@ -131,15 +131,9 @@ function getUpdateRawFileName(uploadedRawFileNames) {
   return firstFileMatch;
 }
 
-const HorizontalLinearStepper = ({ match, updateLocation, ...props }) => {
+const InnerStepper = ({ match, updateLocation, ...props }) => {
   const { flowslug, step, datasetId } = match?.params;
   const shouldUpdateLocation = updateLocation === undefined ? true : Boolean(updateLocation);
-
-  // Return "404" immediately if the flow slug doesn't exist
-  if (!flows.hasOwnProperty(flowslug)) {
-    // TODO: Standardize 404 not found handling
-    return <h2>404 Not Found</h2>;
-  }
 
   const history = useHistory();
   const classes = useStyles();
@@ -366,6 +360,17 @@ const HorizontalLinearStepper = ({ match, updateLocation, ...props }) => {
 
     </div>
   );
+};
+
+const HorizontalLinearStepper = ({ match, updateLocation, ...props }) => {
+  const { flowslug } = match?.params;
+  // Return "404" immediately if the flow slug doesn't exist
+  if (!flows.hasOwnProperty(flowslug)) {
+    // TODO: Standardize 404 not found handling
+    return <h2>404 Not Found</h2>;
+  }
+
+  return <InnerStepper match={match} updateLocation={updateLocation} {...props} />;
 };
 
 export default HorizontalLinearStepper;

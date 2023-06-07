@@ -38,6 +38,10 @@ module.exports = {
       "ignoreMemberSort": true,
       "allowSeparatedGroups": true
     }],
+    "prefer-destructuring": ["error", {
+      "array": false,
+      "object": true
+    }],
 
     "react/jsx-no-bind": "off",
     "no-prototype-builtins": "off",
@@ -51,7 +55,7 @@ module.exports = {
       "varsIgnorePattern": "_"
     }],
 
-    "jsx-a11y/alt-text": "off"
-
+    "jsx-a11y/alt-text": "off",
+    "react-hooks/exhaustive-deps": ["error"],
   }
 };
