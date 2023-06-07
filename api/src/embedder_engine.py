@@ -1,5 +1,6 @@
 import torch
 from sentence_transformers import SentenceTransformer
+import os
 
 
 class __Embedder__:
