@@ -25,6 +25,7 @@ for key, embedding in engine:
              body={
                  "text": paragraph,
                  "document_id": document_id,
-                 "embeddings": embedding.tolist()
+                 "embeddings": embedding.tolist(),
+                 "length": len(paragraph)
              },
              id=p_id)
