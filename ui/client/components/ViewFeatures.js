@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import axios from 'axios';
 import debounce from 'lodash/debounce';
@@ -185,7 +185,6 @@ const ViewFeatures = withStyles(() => ({
 }))(({ classes }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchTermValue, setSearchTermValue] = useState('');
-  const updateSearchTerm = useCallback(debounce(setSearchTerm, 500), []);
 
   const [features, setFeatures] = useState([]);
   const [featuresError, setFeaturesError] = useState(false);
@@ -284,27 +283,29 @@ const ViewFeatures = withStyles(() => ({
   ];
 
   useEffect(() => {
+    const updateSearchTerm = debounce(setSearchTerm, 500);
+
     updateSearchTerm(searchTermValue);
   }, [searchTermValue]);
 
-  const performSearch = () => {
-    if (!searchTerm) {
-      fetchFeatures(setFeatures, setFeaturesLoading, setFeaturesError);
-      return;
-    }
-
-    setFeaturesLoading(true);
-    semanticSearchFeatures(searchTerm)
-      .then((newFeatures) => {
-        setMaxSearchScore(newFeatures.max_score);
-        setFeatures(newFeatures.results);
-      })
-      .finally(() => {
-        setFeaturesLoading(false);
-      });
-  };
-
   useEffect(() => {
+    const performSearch = () => {
+      if (!searchTerm) {
+        fetchFeatures(setFeatures, setFeaturesLoading, setFeaturesError);
+        return;
+      }
+
+      setFeaturesLoading(true);
+      semanticSearchFeatures(searchTerm)
+        .then((newFeatures) => {
+          setMaxSearchScore(newFeatures.max_score);
+          setFeatures(newFeatures.results);
+        })
+        .finally(() => {
+          setFeaturesLoading(false);
+        });
+    };
+
     performSearch();
   }, [searchTerm]);
 

@@ -1,8 +1,6 @@
 import axios from 'axios';
-import { useState } from 'react';
 import Register from './Register';
 import Annotate from './Annotate';
-import AnomalyDetection from './AnomalyDetection';
 import Append from './Append';
 import DataTransformation from './DataTransformation/DataTransformation';
 import UpdateMetadata from './UpdateMetadata';
@@ -10,7 +8,6 @@ import ModelOutput from './ModelOutput';
 import Preview from './Preview';
 import SubmitSuccessPage from './SubmitSuccessPage';
 import RunJobs from './RunJobs';
-import { GeoControls } from './annotations/ColumnAnnotation';
 
 const updateFlowDisabledFields = [
   'feature_type', 'geo_type',
@@ -93,7 +90,7 @@ const BasicRegistrationFlow = {
             id: 'elwood_processors.run_elwood',
             send_context: true,
             handler: async ({
-              result, annotations, setAnnotations, datasetInfo, setDatasetInfo, ...extra
+              result, datasetInfo, setDatasetInfo
             }) => {
               const updatedDataset = {
                 ...datasetInfo,
@@ -113,7 +110,7 @@ const BasicRegistrationFlow = {
             id: 'elwood_processors.scale_features',
             send_context: true,
             handler: async ({
-              result, annotations, setAnnotations, datasetInfo, setDatasetInfo, ...extra
+              result, datasetInfo, setDatasetInfo
             }) => {
               const updatedDataset = {
                 ...datasetInfo,
@@ -172,8 +169,9 @@ const ModelOutputFlow = {
             id: 'geotime_processors.model_output_geotime_classify',
             send_context: true,
             handler: ({
-              result, annotations, setAnnotations, ...extra
+              result, annotations, setAnnotations,
             }) => {
+              // eslint-disable-next-line no-param-reassign
               annotations.metadata.geotime_classify = result;
               setAnnotations(annotations);
             }
@@ -189,8 +187,9 @@ const ModelOutputFlow = {
       options: {
         useFilepath: true,
         onSubmit: ({
-          annotations, formattedAnnotations, setAnnotations, handleNext, ...extra
+          annotations, formattedAnnotations, setAnnotations, handleNext
         }) => {
+          // eslint-disable-next-line no-param-reassign
           annotations.annotations = formattedAnnotations;
           setAnnotations(annotations);
           handleNext();
@@ -208,8 +207,9 @@ const ModelOutputFlow = {
             id: 'elwood_processors.run_model_elwood',
             send_context: true,
             handler: async ({
-              result, annotations, setAnnotations, datasetInfo, setDatasetInfo, ...extra
+              result, annotations, setAnnotations
             }) => {
+              // eslint-disable-next-line no-param-reassign
               annotations.metadata.mixmasterAnnotations = result.mixmaster_annotations;
               setAnnotations(annotations);
             }
@@ -261,7 +261,7 @@ const AppendFlow = {
           {
             id: 'elwood_processors.run_elwood',
             handler: async ({
-              result, annotations, setAnnotations, datasetInfo, setDatasetInfo, ...extra
+              result, datasetInfo, setDatasetInfo
             }) => {
               const updatedDataset = {
                 ...datasetInfo,
@@ -277,7 +277,7 @@ const AppendFlow = {
             id: 'elwood_processors.scale_features',
             send_context: true,
             handler: async ({
-              result, annotations, setAnnotations, datasetInfo, setDatasetInfo, ...extra
+              result, datasetInfo, setDatasetInfo
             }) => {
               const updatedDataset = {
                 ...datasetInfo,

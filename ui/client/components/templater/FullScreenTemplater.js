@@ -185,7 +185,7 @@ const FullScreenTemplater = withStyles((theme) => ({
         <Container maxWidth="xl">
           <div className={classes.allContentWrapper}>
             <div className={classes.upperWrapper}>
-              <div classes={classes.textWrapper}>
+              <div className={classes.textWrapper}>
                 <Typography variant="h6" className={classes.headerText}>
                   Instructions
                 </Typography>

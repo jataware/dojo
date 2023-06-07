@@ -212,6 +212,14 @@ export default withStyles(({ spacing }) => ({
       throw new Error(message || 'Your file contains an incorrect format and our application has not accepted it. Please verify and correct your CSV file annotations.');
     });
 
+  const handleAccept = () => {
+    if (onSubmit) {
+      onSubmit({ annotations, setAnnotations, handleNext });
+    } else {
+      submitToBackend();
+    }
+  };
+
   return (
     <Container
       className={classes.root}
@@ -255,7 +263,7 @@ export default withStyles(({ spacing }) => ({
         errors={errors}
         warnings={warnings}
         onDecline={() => setPreviewPromptOpen(false)}
-        onAccept={() => { if (onSubmit) { onSubmit({ annotations, setAnnotations, handleNext }); } else { submitToBackend(); } }}
+        onAccept={() => handleAccept()}
       />
 
       <Prompt

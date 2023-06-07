@@ -98,7 +98,10 @@ export default withStyles((theme) => ({
               During our analysis process, we attempted to automatically infer feature
               types, detect geographic information, and identify temporal information.
             </p>
-            <p>Upload a data-dictionary annotations file and continue updating annotations on this page.</p>
+            <p>
+              Upload a data-dictionary annotations file
+              and continue updating annotations on this page.
+            </p>
 
             <Typography variant="h6">
               Legend
