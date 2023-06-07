@@ -45,6 +45,7 @@ redis = Redis(
 )
 q = Queue(connection=redis, default_timeout=-1)
 
+
 # For created_at times in epoch milliseconds
 def current_milli_time():
     return round(time.time() * 1000)
@@ -414,7 +415,6 @@ def post_annotation(payload: MetadataSchema.MetaModel, indicator_id: str):
         Response: Returns a response with the status code of 201 and the location of the annotation.
     """
     try:
-
         body = json.loads(payload.json())
 
         es.index(index="annotations", body=body, id=indicator_id)
@@ -444,7 +444,6 @@ def put_annotation(payload: MetadataSchema.MetaModel, indicator_id: str):
         Response: Response object with status code, informational messages, and content.
     """
     try:
-
         body = json.loads(payload.json())
 
         es.index(index="annotations", body=body, id=indicator_id)
@@ -475,7 +474,6 @@ def patch_annotation(payload: MetadataSchema.MetaModel, indicator_id: str):
         Response: Response object with status code, informational messages, and content.
     """
     try:
-
         body = json.loads(payload.json(exclude_unset=True))
 
         # Handles datasets being regsitered with no date.
@@ -489,6 +487,16 @@ def patch_annotation(payload: MetadataSchema.MetaModel, indicator_id: str):
                 )
                 date_annotation = add_date_to_dataset(path=rawfile_path)
                 body["annotations"]["date"] = [date_annotation]
+
+            # Check if there is a primary date
+            primary_set = False
+            for date in body.get("annotations").get("date"):
+                if date.get("primary_date"):
+                    primary_set = True
+                    break
+            # If there isn't set the first date to primary
+            if not primary_set:
+                body["annotations"]["date"][0]["primary_date"] = True
 
         es.update(index="annotations", body={"doc": body}, id=indicator_id)
 
@@ -791,7 +799,6 @@ async def upload_data_dictionary_file(indicator_id: str, file: UploadFile = File
 
 @router.get("/indicators/annotations/file-template")
 def download_data_dictionary_template_file(indicator_id=None, filetype="xlsx"):
-
     if filetype == "csv":
         file_name = "dataset_annotate_template.template_csv"
         headers = {
