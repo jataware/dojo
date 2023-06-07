@@ -1,6 +1,5 @@
 import torch
 from sentence_transformers import SentenceTransformer
-import os
 
 
 class __Embedder__:
@@ -33,8 +32,6 @@ class __Embedder__:
 
         return [e for e in embeddings]  # convert to list
 
-
-print(f"Transformers cache dir: {os.environ.get('TRANSFORMERS_CACHE', 'DEFAULT')}")
 
 embedder = None
 

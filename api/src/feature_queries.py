@@ -161,7 +161,7 @@ def keyword_query_v1(term):
 
 def hybrid_query_v0(query):
 
-    embedder = get_embedder
+    embedder = get_embedder()
     embedding = embedder.embed([query])[0]
 
     features_query = keyword_query_v1(query)
