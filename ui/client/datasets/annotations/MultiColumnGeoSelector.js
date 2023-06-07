@@ -23,12 +23,16 @@ const MultiColumnGeoSelector = ({
   // we hardcode the column's value (adminX option) to the columName being edited
   // and even disable that field (see disabled prop on the react tree below).
   useEffect(() => {
+    // TODO: I can't figure out how to hit even the console.log outside of the if statement
+    // Does this ever run?
+    console.log('RENDERING OUTSIDE THE DISABLED');
     if (!disabled) {
+      console.log('RENDERING INSIDE THE DISABLED');
       // If we allow editing, we auto-set the "base" column name as its default geo_type
       const target = editingColumn.name;
       setFieldValue([`geo.multi-column.${mapAdminValueNumbers[editingColumn.geo_type]}`], target);
     }
-  }, [editingColumn.geo_type]);
+  }, [editingColumn.geo_type, editingColumn.name, disabled, setFieldValue]);
 
   return (
     <FormControl>
