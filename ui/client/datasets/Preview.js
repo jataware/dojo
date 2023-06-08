@@ -33,6 +33,142 @@ const HintTooltip = withStyles(() => ({
   </Tooltip>
 ));
 
+function PublishDataset({ datasetInfo, handleError, handleNext }) {
+  axios.put(`/api/dojo/indicators/${datasetInfo.id}/publish`)
+    .then(handleNext)
+    .catch(() => {
+      handleError();
+    });
+}
+
+function PublishModelOutput({
+  datasetInfo, annotations, onSubmit
+} = {}) {
+  const { file_uuid } = annotations.metadata;
+  const [output_directory, path] = splitOnWildCard(annotations.metadata.filename);
+  const outputPayload = [{
+    id: file_uuid,
+    model_id: datasetInfo.id,
+    name: datasetInfo.name,
+    output_directory,
+    path,
+    file_type: annotations.metadata.mixmasterAnnotations?.meta?.ftype,
+    transform: annotations.metadata.mixmasterAnnotations,
+    prev_id: null,
+  }];
+
+  const isQualifier = (annotation) => (Boolean(
+    annotation.qualify?.length
+    || annotation.qualifies?.length
+    || annotation.qualifier_outputs?.length
+  ));
+  const isPrimary = (annotation) => (Boolean(
+    annotation.primary_date === true
+    || annotation.primary_geo === true
+  ));
+  // An annotation is a feature if it doesn't qualify anything and is not a
+  //  primary date or primary geo
+  const isFeature = (annotation) => (!(isQualifier(annotation) || isPrimary(annotation)));
+
+  const outputs = (datasetInfo?.outputs || []).filter((output) => (output.uuid !== file_uuid));
+  const qualifier_outputs = (datasetInfo?.qualifier_outputs || [])
+    .filter((output) => (output.uuid !== file_uuid));
+
+  const column_index = Object.fromEntries([].concat(...Object.values(annotations.annotations))
+    .map((obj) => ([obj.name, obj])));
+
+  const resolution = {};
+  if (datasetInfo.temporal_resolution) {
+    resolution.temporal_resolution = datasetInfo.temporal_resolution;
+  }
+  if (datasetInfo['x-resolution'] && datasetInfo['y-resolution']) {
+    resolution.spatial_resolution = [
+      datasetInfo['x-resolution'],
+      datasetInfo['y-resolution']
+    ];
+  }
+
+  const typeRemapper = {
+    date: 'datetime',
+    string: 'str',
+    binary: 'boolean',
+    latitude: 'lat',
+    longitude: 'lng',
+  };
+
+  const model_outputs = annotations.annotations.feature.filter(isFeature).map((annotation) => ({
+    uuid: file_uuid,
+    name: annotation.name,
+    display_name: annotation.display_name,
+    description: annotation.description,
+    // OutputType:
+    type: typeRemapper[annotation.feature_type] || annotation.feature_type,
+    unit: annotation.units,
+    unit_description: annotation.units_description,
+    is_primary: false,
+    data_resolution: resolution, // Resolution
+    alias: column_index[annotation.name]?.aliases,
+    choices: null,
+    min: null,
+    max: null,
+    ontologies: null,
+  }));
+  const model_qualifier_outputs = [].concat(
+    // Primary date column(s)
+    annotations.annotations.date.map((annotation) => ({
+      uuid: file_uuid,
+      name: annotation.name,
+      display_name: annotation.display_name,
+      description: annotation.description,
+      // annotation.date_type, // OutputType
+      type: typeRemapper[annotation.date_type] || annotation.date_type,
+      unit: null, // annotation.units,
+      unit_description: null, // annotation.units_description,
+      related_features: [],
+      qualifier_role: 'breakdown',
+      alias: {},
+    })),
+
+    // Primary geo column(s)
+    annotations.annotations.geo.map((annotation) => ({
+      uuid: file_uuid,
+      name: annotation.name,
+      display_name: annotation.display_name,
+      description: annotation.description,
+      // annotation.geo_type, // OutputType
+      type: typeRemapper[annotation.geo_type] || annotation.geo_type,
+      unit: null, // annotation.units,
+      unit_description: null, // annotation.units_description,
+      related_features: [],
+      qualifier_role: 'breakdown',
+      alias: {},
+    })),
+
+    // Qualifier features
+    annotations.annotations.feature.filter(isQualifier).map((annotation) => ({
+      uuid: file_uuid,
+      name: annotation.name,
+      display_name: annotation.display_name,
+      description: annotation.description,
+      type: typeRemapper[annotation.feature_type] || annotation.feature_type, // OutputType
+      unit: annotation.units,
+      unit_description: annotation.units_description,
+      related_features: annotation.qualifies,
+      qualifier_role: annotation.qualifierrole,
+      alias: column_index[annotation.name]?.aliases,
+    })),
+  );
+
+  Promise.all([
+    axios.post('/api/dojo/dojo/outputfile', outputPayload),
+    axios.patch(`/api/dojo/models/${datasetInfo.id}`,
+      {
+        outputs: outputs.concat(model_outputs),
+        qualifier_outputs: qualifier_outputs.concat(model_qualifier_outputs),
+      }),
+  ]).then(onSubmit());
+}
+
 /**
  *
  * */
@@ -55,142 +191,6 @@ export default withStyles(({ spacing }) => ({
 
   const [columns, setColumns] = useState([]);
   const [previewData, setPreviewData] = useState([]);
-
-  function PublishDataset({ datasetInformation }) {
-    axios.put(`/api/dojo/indicators/${datasetInformation.id}/publish`)
-      .then(handleNext)
-      .catch(() => {
-        setPromptMessage('Error submitting data to Dojo. Please contact the Dojo team.');
-      });
-  }
-
-  function PublishModelOutput({
-    datasetInformation, annotations, onSubmit
-  } = {}) {
-    const { file_uuid } = annotations.metadata;
-    const [output_directory, path] = splitOnWildCard(annotations.metadata.filename);
-    const outputPayload = [{
-      id: file_uuid,
-      model_id: datasetInformation.id,
-      name: datasetInformation.name,
-      output_directory,
-      path,
-      file_type: annotations.metadata.mixmasterAnnotations?.meta?.ftype,
-      transform: annotations.metadata.mixmasterAnnotations,
-      prev_id: null,
-    }];
-
-    const isQualifier = (annotation) => (Boolean(
-      annotation.qualify?.length
-      || annotation.qualifies?.length
-      || annotation.qualifier_outputs?.length
-    ));
-    const isPrimary = (annotation) => (Boolean(
-      annotation.primary_date === true
-      || annotation.primary_geo === true
-    ));
-    // An annotation is a feature if it doesn't qualify anything and is not a
-    //  primary date or primary geo
-    const isFeature = (annotation) => (!(isQualifier(annotation) || isPrimary(annotation)));
-
-    const outputs = (datasetInfo?.outputs || []).filter((output) => (output.uuid !== file_uuid));
-    const qualifier_outputs = (datasetInfo?.qualifier_outputs || [])
-      .filter((output) => (output.uuid !== file_uuid));
-
-    const column_index = Object.fromEntries([].concat(...Object.values(annotations.annotations))
-      .map((obj) => ([obj.name, obj])));
-
-    const resolution = {};
-    if (datasetInfo.temporal_resolution) {
-      resolution.temporal_resolution = datasetInfo.temporal_resolution;
-    }
-    if (datasetInfo['x-resolution'] && datasetInfo['y-resolution']) {
-      resolution.spatial_resolution = [
-        datasetInfo['x-resolution'],
-        datasetInfo['y-resolution']
-      ];
-    }
-
-    const typeRemapper = {
-      date: 'datetime',
-      string: 'str',
-      binary: 'boolean',
-      latitude: 'lat',
-      longitude: 'lng',
-    };
-
-    const model_outputs = annotations.annotations.feature.filter(isFeature).map((annotation) => ({
-      uuid: file_uuid,
-      name: annotation.name,
-      display_name: annotation.display_name,
-      description: annotation.description,
-      // OutputType:
-      type: typeRemapper[annotation.feature_type] || annotation.feature_type,
-      unit: annotation.units,
-      unit_description: annotation.units_description,
-      is_primary: false,
-      data_resolution: resolution, // Resolution
-      alias: column_index[annotation.name]?.aliases,
-      choices: null,
-      min: null,
-      max: null,
-      ontologies: null,
-    }));
-    const model_qualifier_outputs = [].concat(
-      // Primary date column(s)
-      annotations.annotations.date.map((annotation) => ({
-        uuid: file_uuid,
-        name: annotation.name,
-        display_name: annotation.display_name,
-        description: annotation.description,
-        // annotation.date_type, // OutputType
-        type: typeRemapper[annotation.date_type] || annotation.date_type,
-        unit: null, // annotation.units,
-        unit_description: null, // annotation.units_description,
-        related_features: [],
-        qualifier_role: 'breakdown',
-        alias: {},
-      })),
-
-      // Primary geo column(s)
-      annotations.annotations.geo.map((annotation) => ({
-        uuid: file_uuid,
-        name: annotation.name,
-        display_name: annotation.display_name,
-        description: annotation.description,
-        // annotation.geo_type, // OutputType
-        type: typeRemapper[annotation.geo_type] || annotation.geo_type,
-        unit: null, // annotation.units,
-        unit_description: null, // annotation.units_description,
-        related_features: [],
-        qualifier_role: 'breakdown',
-        alias: {},
-      })),
-
-      // Qualifier features
-      annotations.annotations.feature.filter(isQualifier).map((annotation) => ({
-        uuid: file_uuid,
-        name: annotation.name,
-        display_name: annotation.display_name,
-        description: annotation.description,
-        type: typeRemapper[annotation.feature_type] || annotation.feature_type, // OutputType
-        unit: annotation.units,
-        unit_description: annotation.units_description,
-        related_features: annotation.qualifies,
-        qualifier_role: annotation.qualifierrole,
-        alias: column_index[annotation.name]?.aliases,
-      })),
-    );
-
-    Promise.all([
-      axios.post('/api/dojo/dojo/outputfile', outputPayload),
-      axios.patch(`/api/dojo/models/${datasetInfo.id}`,
-        {
-          outputs: outputs.concat(model_outputs),
-          qualifier_outputs: qualifier_outputs.concat(model_qualifier_outputs),
-        }),
-    ]).then(onSubmit());
-  }
 
   const nextHandlers = {
     PublishDataset,
@@ -261,7 +261,13 @@ export default withStyles(({ spacing }) => ({
 
       <Navigation
         label="Submit to Dojo"
-        handleNext={() => nextHandlers[handleNextFunc]({ datasetInfo, rawFileName, ...props })}
+        handleNext={() => nextHandlers[handleNextFunc]({
+          datasetInfo,
+          rawFileName,
+          handleError: () => setPromptMessage('Error submitting data to Dojo. Please contact the Dojo team.'),
+          handleNext,
+          ...props
+        })}
         handleBack={handleBack}
       />
 
