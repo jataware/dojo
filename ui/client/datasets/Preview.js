@@ -230,7 +230,7 @@ export default withStyles(({ spacing }) => ({
         setPromptMessage('Error loading preview data.');
       })
       .finally(() => { setLoading(false); });
-  }, [datasetInfo]);
+  }, [datasetInfo, rawFileName, useFilepath]);
 
   return (
 
