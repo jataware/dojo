@@ -118,17 +118,17 @@ class SyncPlugin(PluginInterface):
                 # Append
                 qualifier_outputs.append(qualifier_output)
 
-        response = {
-            "id": uuid,
-            "name": context["dataset"]["name"],
-            "description": context["dataset"]["description"],
-            "maintainer": context["dataset"]["maintainer"],
-            "outputs": outputs,
-            "qualifier_outputs": qualifier_outputs,
-            "feature_names": feature_names,
-            "published": True,
-        }
+            response = {
+                "id": uuid,
+                "name": context["dataset"]["name"],
+                "description": context["dataset"]["description"],
+                "maintainer": context["dataset"]["maintainer"],
+                "outputs": outputs,
+                "qualifier_outputs": qualifier_outputs,
+                "feature_names": feature_names,
+                "published": True,
+            }
 
-        schema = IndicatorSchema.IndicatorMetadataSchema.parse_obj(response)
+            schema = IndicatorSchema.IndicatorMetadataSchema.parse_obj(response)
 
-        patch_indicator(schema, uuid)
+            patch_indicator(schema, uuid)
