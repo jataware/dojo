@@ -120,9 +120,8 @@ def semantic_highlight_paragraphs(payload: HighlightData):
     data = payload.dict()
 
     clean_query = clean_and_decode_str(data["query"])
-    clean_matches = list(map(clean_and_decode_str, data["matches"]))
 
-    highlights = highlighter.highlight_multiple(clean_query, clean_matches)
+    highlights = highlighter.highlight_multiple(clean_query, data["matches"])
 
     return {
         "highlights": highlights
@@ -197,8 +196,7 @@ def semantic_search_paragraphs(query: str,
 
     if highlight:
         text_vec = list(map(lambda x: x.get('_source').get('text'), hits))
-        clean_matches = map(clean_and_decode_str, text_vec)
-        highlights = highlighter.highlight_multiple(clean_query, clean_matches)
+        highlights = highlighter.highlight_multiple(clean_query, text_vec)
 
     result_len = len(hits)
 
