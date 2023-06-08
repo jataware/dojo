@@ -99,7 +99,7 @@ export default withStyles(({ spacing }) => ({
   };
 
   useEffect(() => {
-    if (!isLoading || (isLoading && !datasetInfo?.id)) {
+    if (!isLoading || (isLoading && !datasetInfo?.id) || isEmpty(annotations?.metadata)) {
       return;
     }
 
@@ -144,7 +144,7 @@ export default withStyles(({ spacing }) => ({
         console.error('Error fetching geoclassify or raw preview:', e);
       })
       .finally(() => { setLoading(false); });
-  }, [datasetInfo, isLoading]);
+  }, [datasetInfo, isLoading, annotations, rawFileName, useFilepath]);
 
   function submitToBackend() {
     setSubmitLoading(true);
