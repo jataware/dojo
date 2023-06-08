@@ -65,19 +65,19 @@ const RunJob = withStyles(({ spacing }) => ({
 }) => {
   const [jobData, setJobData] = useState(null);
 
-  const updateJobData = () => {
-    const url = `/api/dojo/job/${datasetInfo.id}/${job_id}`;
-    console.log(url);
-    axios({
-      method: 'post',
-      url,
-      data: props?.args || {},
-    }).then((response) => {
-      setJobData(response.data);
-    });
-  };
-
   useEffect(() => {
+    const updateJobData = () => {
+      const url = `/api/dojo/job/${datasetInfo.id}/${job_id}`;
+      console.log(url);
+      axios({
+        method: 'post',
+        url,
+        data: props?.args || {},
+      }).then((response) => {
+        setJobData(response.data);
+      });
+    };
+
     if (jobData === null) {
       // Run right away on page load
       updateJobData();
@@ -91,7 +91,7 @@ const RunJob = withStyles(({ spacing }) => ({
     } else {
       setTimeout(updateJobData, 1500);
     }
-  }, [jobData]);
+  }, [jobData, datasetInfo.id, job_id, props?.args]);
 
   return (
     <Container

@@ -221,6 +221,7 @@ export const knownFieldAnnotations = (serverAnnotations, columns) => reduce(
 
           if (foreignAssociations.length !== associated.length) {
             // For now reset foreign associated_columns
+            // eslint-disable-next-line no-param-reassign
             annotation.associated_columns = null;
           }
         }
