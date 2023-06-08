@@ -14,7 +14,8 @@ def test_clean_and_decode_str():
               "test % test",
               # weird technique of encoding spaces with `+` scenario
               "Population+per+3km+square+resolution",
-              "I am a paragraph with punctuation; actually, I'm a sentence."
+              "I am a paragraph with punctuation; actually, I'm a sentence.",
+              "woody%20species%20diversity",
               ]
 
     outputs = ["Hello World",
@@ -33,7 +34,8 @@ def test_clean_and_decode_str():
                # Replaces + with spaces, does not remove them
                "Population per 3km square resolution",
                # Looks bad, but semantic search performs better(!):
-               "I am a paragraph with punctuation actually Im a sentence"
+               "I am a paragraph with punctuation actually Im a sentence",
+               "woody species diversity",
                ]
 
     for idx, item in enumerate(inputs):
