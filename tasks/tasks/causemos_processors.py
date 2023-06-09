@@ -29,6 +29,14 @@ test_data_dir = path_join(root_dir, "test-data")
 datasets_cache_dir = path_join(test_data_dir, "datasets")
 
 
+"""
+Definitions & Abbreviations:
+
+1. syn_dataset => synthetic dataset, originally defined as master_frame
+
+"""
+
+
 roundToTwo = partial(round, ndigits=3)
 
 
@@ -41,6 +49,63 @@ def calc_percents(numbers_list):
         percents.append(value / total)
 
     return percents
+
+
+def download_datasets(index_definition: json):
+    pass
+
+
+def build_synthetic_dataset():
+    """
+    Use all downloaded datasets and build a synthetic dataset without filling
+    NaNs nor removing extranous columns
+    """
+    pass
+
+
+def normalize_synthetic_dataset():
+    """
+    Should receive raw synthetic dataset and fill NaNs and remove columns
+    not relevant to our analysis
+    """
+    pass
+
+
+def cache_dataset():
+    pass
+
+
+def load_cached_dataset():
+    pass
+
+
+def perform_pca(syn_dataset):
+    pass
+
+
+def pca_to_weights_v1():
+    """
+    Original pca-to-weights algorithm
+    """
+    pass
+
+
+def pca_to_weights_v2():
+    """
+    Joel's odd average pca-weights-algorithm
+    """
+    pass
+
+
+def pca_to_weights_v3():
+    """
+    Third version (mix of v1 and v2) with some enhancements.
+    """
+    pass
+
+
+def build_final_hierarchy_weights():
+    pass
 
 
 def generate_index_model_weights(
