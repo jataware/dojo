@@ -7,17 +7,21 @@ import csv
 
 from io import BytesIO
 
+from datetime import datetime
+import warnings
+
 import pandas
 from sklearn.decomposition import PCA
 from sklearn.preprocessing import StandardScaler
 import numpy
 import logging
 from pathlib import Path
-# import pprint
 from os.path import join as path_join
 from functools import partial, reduce
 
 from typing import Dict, List, Tuple
+
+warnings.filterwarnings('ignore')
 
 logging.basicConfig()
 logging.getLogger().setLevel(logging.DEBUG)
@@ -32,19 +36,25 @@ datasets_cache_dir = path_join(test_data_dir, "datasets")
 
 
 """
-Definitions & Abbreviations:
+Definitions:
 
-1. syn_dataset => synthetic dataset, originally defined as master_frame
+1. synthetic dataset:
+     Dataset built by merging select individual features/columns/
+     variables from every dataset refered to in the input index.
+     Originally defined as master_frame.
+
+2. pca-to-weight:
+     The idea of using PCA's output to derive some weight percentages that
+     describe the patterns on the features within the synthetic frame.
 
 """
 
 
-roundToTwo = partial(round, ndigits=3)
+roundToThree = partial(round, ndigits=3)
 
 
 def calc_percents(numbers_list):
     total = sum(numbers_list)
-    # print(f"sum of all numbers in list: {total}")
 
     percents = []
     for value in numbers_list:
@@ -53,7 +63,7 @@ def calc_percents(numbers_list):
     return percents
 
 
-def download_datasets(index_datasets_features: Dict) -> List:
+def download_datasets(index_datasets_features: Dict) -> List[str]:
     """
     """
 
@@ -74,7 +84,7 @@ def download_datasets(index_datasets_features: Dict) -> List:
             url = (
                 api_url + download_endpoint + "indicators/" + key + "?wide_format=true"
             )  # GET NORMALIZED DATA and pivot.
-            print(url)
+            logging.info(url)
             file_obj = session.get(url)
 
             with open(f"{datasets_cache_dir}/{key}.csv", "w") as f:
@@ -91,12 +101,29 @@ def download_datasets(index_datasets_features: Dict) -> List:
 SHARED_COLUMNS = ["timestamp", "country"]
 
 
-def build_synthetic_dataset(dataset_ids: List, index_datasets_features: Dict) -> pandas.core.frame.DataFrame:
+# Option A Impl: TODO
+    # def calc_highest_ratios_4pc_ea(explained_variance_ratios: List):
+    #     pass
+
+    # # Option B Impl: TODO
+    # def calc_highest_ratios_90pc_total(explained_variance_ratios: List):
+    #     pass
+
+
+def save_synthetic_dataset(dataframe: pandas.DataFrame):
+    """
+    Optional tool for debugging purposes
+    """
+    now = datetime.now()
+    date_time = now.strftime("%d-%m-%Y_%H-%M-%S")
+
+    dataframe.to_csv(path_join(test_data_dir, f"synthetic_dataframe_{date_time}.csv"))
+
+
+def build_synthetic_dataset(dataset_ids: List, index_datasets_features: Dict) -> pandas.DataFrame:
     """
     Use all downloaded datasets and build a synthetic dataset without filling
     NaNs nor removing extranous columns
-
-    TODO rename master_frame to synthetic_dataset
 
     TODO instead of creating an intermediary data_list and then merging,
     create the synthetic frame directly
@@ -149,7 +176,7 @@ def build_synthetic_dataset(dataset_ids: List, index_datasets_features: Dict) ->
 
 
 
-def normalize_synthetic_dataset(synthetic_dataset: pandas.core.frame.DataFrame) -> pandas.core.frame.DataFrame:
+def normalize_synthetic_dataset(synthetic_dataset: pandas.DataFrame) -> pandas.core.frame.DataFrame:
     """
     Should receive raw synthetic dataset and fill NaNs and remove columns
     not relevant to our analysis
@@ -167,16 +194,7 @@ def normalize_synthetic_dataset(synthetic_dataset: pandas.core.frame.DataFrame) 
     return normalized_synthetic_dataset
 
 
-
-# def cache_dataset():
-#     pass
-
-
-# def load_cached_dataset():
-#     pass
-
-
-def perform_pca(synthetic_dataset: pandas.core.frame.DataFrame) -> Tuple:
+def perform_pca(synthetic_dataset: pandas.DataFrame) -> Tuple:
     # Standardize the data
     scaler = StandardScaler()
     scaled_data = scaler.fit_transform(synthetic_dataset)
@@ -196,16 +214,33 @@ def pca_to_weights_v1(pca_details: Tuple):
     """
     Original pca-to-weights algorithm
     """
-    pass
+    weighted_sums = {}
+    for pc_index, principle_component in enumerate(pca_components_list):
+        # [0.####, 0.##### ...]
+        for feature_index, value in enumerate(principle_component):
+            weighted_sums[feature_index] = weighted_sums.get(feature_index, 0) + (
+                value * pca.explained_variance_ratio_[pc_index]
+            )
+
+    total_sums = 0
+    for key, value in weighted_sums.items():
+        total_sums += value
+
+    result_percent = {}
+    for key, value in weighted_sums.items():
+        result_percent[key] = value / total_sums
+
+    return result_percent
 
 
 def pca_to_weights_v2(pca_details: Tuple):
     """
     Joel's Average pca-weights-algorithm
+    as described in doc: `PCA: Feature Contributions Using Control Dataset`
     """
     (pca_components_list, pca_components_count, pca_explained_ratios) = pca_details
 
-    highest_variance_ratios = list(filter(lambda x: x > 0.04, map(roundToTwo, pca_explained_ratios)))
+    highest_variance_ratios = list(filter(lambda x: x > 0.04, map(roundToThree, pca_explained_ratios)))
     weight_matrix = [[0] * pca_components_count for i in range(0, len(highest_variance_ratios))]
     amount_relevant = len(highest_variance_ratios)
 
@@ -218,14 +253,14 @@ def pca_to_weights_v2(pca_details: Tuple):
                 weights_row[feature_index] = weights_row[feature_index] + relative_value
 
     matrix_percents = list(map(calc_percents, weight_matrix))
-    matrix_averages = [round((sum(v)/amount_relevant)*100, 2) for i, v in enumerate(zip(*matrix_percents))]
+    matrix_averages = [(sum(v)/amount_relevant) for i, v in enumerate(zip(*matrix_percents))]
 
     return matrix_averages
 
 
 def pca_to_weights_v3(pca_details: Tuple, target_pca_explained_sum=0.7):
     """
-    Third version (mix of v1 and v2) with some improvements.
+    Third version (mix of v1 and v2) with some changes.
     """
 
     (pca_components_list, pca_components_count, pca_explained_ratios) = pca_details
@@ -234,18 +269,21 @@ def pca_to_weights_v3(pca_details: Tuple, target_pca_explained_sum=0.7):
     # The closer this is to 1, the more PCs required
     # E.g. target_sum = 1; n_PCs = n_Features
     target_sum = target_pca_explained_sum    # eg 70% , TODO make an endpoint argument
-    cumulative_sum = np.cumsum(pca_explained_ratios)  # Calculate the cumulative sum
+    cumulative_sum = numpy.cumsum(pca_explained_ratios)  # Calculate the cumulative sum
 
     # Find the index where the cumulative sum exceeds or reaches the target sum
-    index = np.argmax(cumulative_sum >= target_sum)
+    index = numpy.argmax(cumulative_sum >= target_sum)
 
     # Calculate the number of items needed to reach the target sum
     items_needed = index + 1
 
+    logging.info(f"Using this target cumumative explained variance across relevant PCs: {target_pca_explained_sum * 100}%")
+    logging.info(f"Using {items_needed} PCs out of a total of {pca_components_count}")
+
     # absolute value feature contributions to each PC
     # transpose to get one feature per row
     # eg. row 1 has contributions of feature 1 to the n selected PCs
-    arr_2d = np.abs(pca_components_list.T[:,:items_needed])
+    arr_2d = numpy.abs(pca_components_list.T[:,:items_needed])
 
     # weight by variance in data explained by each PC
     # e.g. PC_1 is "worth more"
@@ -255,22 +293,24 @@ def pca_to_weights_v3(pca_details: Tuple, target_pca_explained_sum=0.7):
     results = weighted.sum(axis=1)
 
     # Rescale results to sum to 1
-    results_scaled = results / np.sum(results)
-    print(results_scaled)
+    results_scaled = results / numpy.sum(results)
 
     return results_scaled
 
 
 # TODO refactor some more
-def build_final_hierarchy_weights(normalized_synthethic_dataset, flat_feature_weights):
+def build_final_hierarchy_weights(
+        dataframe_columns: List[str], flat_feature_weights: List[float], tree
+):
 
     result_leaf_weights = {}
 
-    for index, val in enumerate(flat_feature_weights):
-        value = val / 100
-        feature_name = normalized_synthethic_dataset.columns[index]
+    logging.info(" --- ")
+
+    for index, value in enumerate(flat_feature_weights):
+        feature_name = dataframe_columns[index]
         result_leaf_weights[feature_name] = value
-        feature_percent = round(value * 100, 2)
+        feature_percent = round(value * 100, 3)
         logging.info(f"{feature_name}: {feature_percent} %")
 
     # SOLVE TREE WITH WEIGHTS
@@ -286,173 +326,44 @@ def build_final_hierarchy_weights(normalized_synthethic_dataset, flat_feature_we
     return response
 
 
-# TODO use the split functions above instead
 def generate_index_model_weights(
     context={}, filename=None, on_success_endpoint=None, *args, **kwargs
 ):
-
-    logging.info("generate index model weights called.")
-
-    # Generate Tree and File Retrieval object
 
     retrieval_dictionary = {}
     tree = None
     payload = kwargs.get("json_payload")
     index_model_object = json.loads(json.dumps(payload))
 
-    logging.debug(f"index_model_object: {index_model_object}")
+    index_datasets_features = iteration_func(index_model_object)
 
-    retrieval_dictionary = iteration_func(index_model_object)
+    logging.info(" -> Downloading datasets")
+    dataset_ids = download_datasets(index_datasets_features)
+
+    logging.info(" --- ")
+
+    logging.info(" -> Creating synthetic dataset")
+    synthetic_dataset = build_synthetic_dataset(dataset_ids, index_datasets_features)
+
+    normalized_synthetic_dataset = normalize_synthetic_dataset(synthetic_dataset)
+
+    columns = list(normalized_synthetic_dataset.columns)
+
+    logging.info(" -> Applying PCA")
+    pca_tuple_outputs = perform_pca(normalized_synthetic_dataset)
+
+    logging.info(" -> PCA-to-Weights algorithm v3 running")
+    weights = pca_to_weights_v3(pca_tuple_outputs, target_pca_explained_sum=0.7)
+
+    logging.info(" -> Building tree")
     tree = build_tree(index_model_object["state"]["index"])
 
-    # Grab all the files and generate synthetic dataset.
+    logging.info(" -> Building final hierarchical weights for tree")
+    index_component_weights_out = build_final_hierarchy_weights(columns, weights, tree)
 
-    data_list = []
-    same_columns = ["timestamp", "country"]
-    geo_columns = ["country"]
-
-    WM_USER = os.getenv("WM_USER")
-    WM_PASS = os.getenv("WM_PASS")
-
-    session = requests.Session()
-    session.auth = (WM_USER, WM_PASS)
-
-    for key, value in retrieval_dictionary.items():
-        if not os.path.exists(datasets_cache_dir):
-            os.makedirs(datasets_cache_dir)
-        if os.path.isfile(f"{datasets_cache_dir}/{key}.csv"):
-            logging.info(f"Dataset file for {key} already downloaded, skipping.")
-        else:
-            # else we download the dataset
-            url = (
-                api_url + download_endpoint + "indicators/" + key + "?wide_format=true"
-            )  # GET NORMALIZED DATA and pivot.
-            print(url)
-            file_obj = session.get(url)
-
-            with open(f"{datasets_cache_dir}/{key}.csv", "w") as f:
-                writer = csv.writer(f)
-                for line in file_obj.iter_lines():
-                    writer.writerow(line.decode("utf-8").split(","))
-                f.close()
-
-            logging.info("Done downloading or checking files.")
-        original_dataset = pandas.read_csv(
-            f"{datasets_cache_dir}/{key}.csv", on_bad_lines="skip"
-        )
-
-        logging.debug(f"Looking for: {value}")
-
-        # Use info extracted from model to get info out of the dataset.
-        target_columns = []
-        rename_dict = {}
-        aggregation = ""
-        for dictionary in value:
-            target_columns.append(dictionary["source_column"])
-            rename_dict[dictionary["source_column"]] = dictionary["name_in_model"]
-            aggregation = dictionary["aggregation"]
-        relevant_data = original_dataset[["timestamp", "country", *target_columns]]
-
-        #     for v in value: CHECK APPLY MAP FOR HERE (but also we will have outlier robust in the future precomputed)
-        #         relevant_data[v] = numpy.log(relevant_data[v].values)
-
-        # print(relevant_data.shape()[0]) #CHECK SHAPES FOR LENGTH
-
-        relevant_data["timestamp"] = pandas.to_datetime(
-            relevant_data["timestamp"], unit="ms"
-        )
-
-        relevant_data.rename(columns=rename_dict, inplace=True)
-
-        dataframe = relevant_data.set_index(geo_columns)
-
-        dataframe = dataframe.groupby(geo_columns)
-
-        scaled_frame = dataframe.resample("Y", on="timestamp").agg(aggregation)
-        scaled_frame.reset_index(inplace=True)
-        data_list.append(scaled_frame)
-
-    master_frame = None
-    for dataset in data_list:
-        if master_frame is None:
-            master_frame = dataset
-            continue
-        master_frame = pandas.merge(master_frame, dataset, on=same_columns, how="outer")
-
-    # RUN PCA
-
-    same_columns = ["timestamp", "country"]
-    master_frame = master_frame.drop(columns=same_columns)
-
-    # Handle missing values
-    master_frame.fillna(master_frame.mean(), inplace=True)
-
-    # Standardize the data
-    scaler = StandardScaler()
-    scaled_data = scaler.fit_transform(master_frame)
-
-    # Perform PCA
-    pca = PCA()
-    pca.fit(scaled_data)
-
-    pca_components_list = abs(pca.components_)
+    return index_component_weights_out
 
 
-###############################################################################
-#                   !! START PCA_WEIGHT CALCULATIONS !!
-###############################################################################
-
-    logging.debug(f">> Number of PCA components: {pca.n_components_}")
-
-    highest_variance_ratios = list(filter(lambda x: x > 0.04, map(roundToTwo, pca.explained_variance_ratio_)))
-    weight_matrix = [[0] * pca.n_components_ for i in range(0, len(highest_variance_ratios))]
-
-    for pc_index, principle_component in enumerate(pca_components_list):
-        for feature_index, value in enumerate(principle_component):
-            relative_value = value * pca.explained_variance_ratio_[pc_index]
-
-            if pc_index < len(highest_variance_ratios):
-                weights_row = weight_matrix[pc_index]
-                weights_row[feature_index] = weights_row[feature_index] + relative_value
-
-    logging.info("\n\nWeighted Matrix for relevant PCs:")
-    logging.info(weight_matrix)
-
-    matrix_percents = list(map(calc_percents, weight_matrix))
-    logging.info(f"Matrix percents:\n{matrix_percents}")
-
-    amount_relevant = len(highest_variance_ratios)
-    matrix_averages = [round((sum(v)/amount_relevant)*100, 2) for i, v in enumerate(zip(*matrix_percents))]
-
-    logging.info(f"Final Matrix Averages: {matrix_averages}")
-
-###############################################################################
-#                   !! END PCA_WEIGHT CALCULATIONS !!
-###############################################################################
-
-
-    result_leaf_weights = {}
-    for index, val in enumerate(matrix_averages):
-        value = val / 100
-        feature_name = master_frame.columns[index]
-        result_leaf_weights[feature_name] = value
-        feature_percent = round(value * 100, 2)
-        logging.info(f"{feature_name}: {feature_percent} %")
-
-    # SOLVE TREE WITH WEIGHTS
-
-    update_leaf_weights(result_leaf_weights, tree)
-    compute_weights(tree)
-    compute_edge_percent(tree)
-
-    # GENERATE THE PAYLOAD UNCHARTED EXPECTS
-
-    output = generate_output_payload(tree)
-    # print(output)
-
-    response = {"final_percentages": output}
-
-    return response
 
 
 # FEATURE + DATASET LIST GENERATION
@@ -504,7 +415,6 @@ def iteration_func(data):
 
 # INDEX MODEL TREE TRAVERSAL
 
-
 class Node:  # Node class for the tree.
     def __init__(self, name, children=[], parent=None):
         self.name = name
@@ -553,7 +463,6 @@ def update_leaf_weights(
 def sum_of_leaves(node):  # Sums all leaves under a node to get a node's weight
     total_weight = 0
     if not node.children:
-        #         print(f"{node.name} : {node.weight}")
         total_weight += node.weight
     else:
         for child in node.children:
@@ -596,7 +505,11 @@ def generate_output_payload(node):
     return output_payload
 
 
+
 if __name__ == '__main__':
+
+    import pprint
+    pp = pprint.PrettyPrinter(indent=2)
 
     sample_ND_JSON_PATH = path_join(test_data_dir, 'ND-GAIN.json')
 
@@ -605,4 +518,4 @@ if __name__ == '__main__':
 
     out = generate_index_model_weights(json_payload=index_model_object)
 
-    print(f"-->>Out Model weights:\n\n{out}")
+    pp.pprint(f"-->>Out Model weights:\n\n{out}")
