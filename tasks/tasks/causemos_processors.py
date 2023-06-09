@@ -101,15 +101,6 @@ def download_datasets(index_datasets_features: Dict) -> List[str]:
 SHARED_COLUMNS = ["timestamp", "country"]
 
 
-# Option A Impl: TODO
-    # def calc_highest_ratios_4pc_ea(explained_variance_ratios: List):
-    #     pass
-
-    # # Option B Impl: TODO
-    # def calc_highest_ratios_90pc_total(explained_variance_ratios: List):
-    #     pass
-
-
 def save_synthetic_dataset(dataframe: pandas.DataFrame):
     """
     Optional tool for debugging purposes
@@ -232,13 +223,28 @@ def pca_to_weights_v1(pca_details: Tuple):
     for key, value in weighted_sums.items():
         result_percent[key] = value / total_sums
 
-    return result_percent
+    return result_percent.values()
+
+
+# FOr v2 maybe later:
+# Option A Impl: TODO
+    # def calc_highest_ratios_4pc_ea(explained_variance_ratios: List):
+    #     pass
+
+    # # Option B Impl: TODO
+    # def calc_highest_ratios_90pc_total(explained_variance_ratios: List):
+    #     pass
 
 
 def pca_to_weights_v2(pca_details: Tuple):
     """
     Joel's Average pca-weights-algorithm
     as described in doc: `PCA: Feature Contributions Using Control Dataset`
+
+    This is using a Option A above (filters out any PC with explained variance less than 4%)
+    which has disadvantages under even-PC-explained-variance scenarios
+
+    Option B would use the same approach as what v3 uses, but has not been implemented here.
     """
     (pca_components_list, pca_components_count, pca_explained_ratios) = pca_details
 
@@ -300,7 +306,6 @@ def pca_to_weights_v3(pca_details: Tuple, target_pca_explained_sum=0.7):
     return results_scaled
 
 
-# TODO refactor some more
 def build_final_hierarchy_weights(
         dataframe_columns: List[str], flat_feature_weights: List[float], tree
 ):

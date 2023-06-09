@@ -14,10 +14,11 @@ from typing import Dict, List, Tuple
 
 from tasks.causemos_processors import (
     build_synthetic_dataset,
-    # normalize_synthetic_dataset,
+    normalize_synthetic_dataset,
     perform_pca,
     pca_to_weights_v3,
-    # pca_to_weights_v2,
+    pca_to_weights_v2,
+    pca_to_weights_v1,
     iteration_func,
     # build_tree,
     download_datasets
@@ -37,10 +38,10 @@ with open(sample_ND_JSON_PATH) as file:
 
 
 # Some of these tests are integration+side-effecty-slow
-# NOTE Run pytest with:
+# NOTE Run pytest with if you wish to run only unit tests or CI?:
 # $ pytest -m "not integration"
 
-# Or, from tasks proj dir run like:
+# Or, to run all, from tasks proj dir:
 # python -m pytest -vvs tasks/causemos_processors_test.py
 
 
@@ -167,7 +168,7 @@ def test_perform_pca():
 
 
 @pytest.mark.integration
-def test_pca_to_weights_v3_70():
+def test_pca_to_weights_v3_70_control_data():
 
     pca_details = (
         numpy.array(
@@ -202,7 +203,7 @@ def test_pca_to_weights_v3_70():
 
 
 @pytest.mark.integration
-def test_pca_to_weights_v3_90():
+def test_pca_to_weights_v3_90_control_data():
 
     pca_details = (
         numpy.array(
@@ -233,4 +234,182 @@ def test_pca_to_weights_v3_90():
     assert rounded == [0.2434, 0.2565, 0.25, 0.25, 0.0]
 
     assert sum(rounded) > 0.99
+
+
+@pytest.mark.integration
+def test_pca_to_weights_v3_70_explained_sum_real_index_datasets():
+
+    rd = iteration_func(index_model_object)
+    datasets_ids = download_datasets(rd)
+
+    out = build_synthetic_dataset(datasets_ids, rd)
+
+    normalized = normalize_synthetic_dataset(out)
+
+    pca_details = perform_pca(normalized)
+
+    weights = pca_to_weights_v3(pca_details)
+
+    rounded_as_percent = list(map(lambda i: f"{roundToFour(i) * 100}%", weights.tolist()))
+
+    assert rounded_as_percent == ['5.87%', '6.59%', '6.4399999999999995%', '4.5%', '4.78%', '4.590000000000001%', '0.0%', '4.9799999999999995%', '5.319999999999999%', '4.47%', '4.62%', '2.02%', '5.1499999999999995%', '5.12%', '5.58%', '5.08%', '4.44%', '3.16%', '3.64%', '6.87%', '6.79%']
+
+
+@pytest.mark.integration
+def test_pca_to_weights_v3_90_explained_sum_real_index_datasets():
+
+    rd = iteration_func(index_model_object)
+    datasets_ids = download_datasets(rd)
+
+    out = build_synthetic_dataset(datasets_ids, rd)
+
+    normalized = normalize_synthetic_dataset(out)
+
+    pca_details = perform_pca(normalized)
+
+    weights = pca_to_weights_v3(pca_details, target_pca_explained_sum=0.9)
+
+    rounded_as_percent = list(map(lambda i: f"{roundToFour(i) * 100}%", weights.tolist()))
+
+    assert rounded_as_percent == ['4.73%', '5.7700000000000005%', '5.62%', '5.8999999999999995%', '4.07%', '5.66%', '0.0%', '4.65%', '5.47%', '5.140000000000001%', '5.0%', '3.53%', '4.4799999999999995%', '4.47%', '4.68%', '4.91%', '5.029999999999999%', '4.8500000000000005%', '4.9799999999999995%', '5.45%', '5.609999999999999%']
+
+
+@pytest.mark.integration
+def test_pca_to_weights_v2_control_data():
+
+    pca_details = (
+        numpy.array(
+            [[1.13900827e-03, 4.01488796e-02, 7.06536188e-01,
+              7.06536188e-01, 0.00000000e+00],
+             [7.13923827e-01, 6.99690962e-01, 1.93044911e-02,
+              1.93044911e-02, 0.00000000e+00],
+             [7.00222444e-01, 7.13316638e-01, 2.08315041e-02,
+              2.08315041e-02, 0.00000000e+00],
+             [2.11047685e-17, 2.19081849e-17, 7.07106781e-01,
+              7.07106781e-01, 0.00000000e+00],
+             [0.00000000e+00, 0.00000000e+00, 0.00000000e+00,
+              0.00000000e+00, 1.00000000e+00]]
+        ),
+
+        5,
+
+        numpy.array(
+            [5.00405570e-01, 2.60246340e-01, 2.39348091e-01,
+             2.51310581e-32, 0.00000000e+00]
+        )
+    )
+
+    weights = pca_to_weights_v2(pca_details)
+
+    rounded_as_percent = list(map(lambda i: f"{roundToFour(i) * 100}%", weights))
+
+    assert rounded_as_percent == ['32.45%', '33.32%', '17.11%', '17.11%', '0.0%']
+
+
+
+@pytest.mark.integration
+def test_pca_to_weights_v2_control_data():
+
+    pca_details = (
+        numpy.array(
+            [[1.13900827e-03, 4.01488796e-02, 7.06536188e-01,
+              7.06536188e-01, 0.00000000e+00],
+             [7.13923827e-01, 6.99690962e-01, 1.93044911e-02,
+              1.93044911e-02, 0.00000000e+00],
+             [7.00222444e-01, 7.13316638e-01, 2.08315041e-02,
+              2.08315041e-02, 0.00000000e+00],
+             [2.11047685e-17, 2.19081849e-17, 7.07106781e-01,
+              7.07106781e-01, 0.00000000e+00],
+             [0.00000000e+00, 0.00000000e+00, 0.00000000e+00,
+              0.00000000e+00, 1.00000000e+00]]
+        ),
+
+        5,
+
+        numpy.array(
+            [5.00405570e-01, 2.60246340e-01, 2.39348091e-01,
+             2.51310581e-32, 0.00000000e+00]
+        )
+    )
+
+    weights = pca_to_weights_v2(pca_details)
+
+    rounded_as_percent = list(map(lambda i: f"{roundToFour(i) * 100}%", weights))
+
+    assert rounded_as_percent == ['32.45%', '33.32%', '17.11%', '17.11%', '0.0%']
+
+
+
+@pytest.mark.integration
+def test_pca_to_weights_v2_real_index_data():
+
+    rd = iteration_func(index_model_object)
+    datasets_ids = download_datasets(rd)
+
+    out = build_synthetic_dataset(datasets_ids, rd)
+
+    normalized = normalize_synthetic_dataset(out)
+
+    pca_details = perform_pca(normalized)
+
+    weights = pca_to_weights_v2(pca_details)
+
+    rounded_as_percent = list(map(lambda i: f"{roundToFour(i) * 100}%", weights))
+
+    assert rounded_as_percent == ['2.76%', '3.88%', '3.65%', '5.82%', '5.53%', '5.8500000000000005%', '0.0%', '3.6799999999999997%', '6.7299999999999995%', '5.35%', '6.63%', '5.33%', '3.44%', '3.4000000000000004%', '6.18%', '6.09%', '6.99%', '6.13%', '5.55%', '3.2800000000000002%', '3.71%']
+
+
+@pytest.mark.integration
+def test_pca_to_weights_v1_control_data():
+
+    pca_details = (
+        numpy.array(
+            [[1.13900827e-03, 4.01488796e-02, 7.06536188e-01,
+              7.06536188e-01, 0.00000000e+00],
+             [7.13923827e-01, 6.99690962e-01, 1.93044911e-02,
+              1.93044911e-02, 0.00000000e+00],
+             [7.00222444e-01, 7.13316638e-01, 2.08315041e-02,
+              2.08315041e-02, 0.00000000e+00],
+             [2.11047685e-17, 2.19081849e-17, 7.07106781e-01,
+              7.07106781e-01, 0.00000000e+00],
+             [0.00000000e+00, 0.00000000e+00, 0.00000000e+00,
+              0.00000000e+00, 1.00000000e+00]]
+        ),
+
+        5,
+
+        numpy.array(
+            [5.00405570e-01, 2.60246340e-01, 2.39348091e-01,
+             2.51310581e-32, 0.00000000e+00]
+        )
+    )
+
+    weights = pca_to_weights_v1(pca_details)
+
+    rounded_as_percent = list(map(lambda i: f"{roundToFour(i) * 100}%", weights))
+
+    assert rounded_as_percent == ['24.34%', '25.650000000000002%', '25.0%', '25.0%', '0.0%']
+
+
+
+@pytest.mark.integration
+@pytest.mark.target
+def test_pca_to_weights_v1_real_index_data():
+
+    rd = iteration_func(index_model_object)
+    datasets_ids = download_datasets(rd)
+
+    out = build_synthetic_dataset(datasets_ids, rd)
+
+    normalized = normalize_synthetic_dataset(out)
+
+    pca_details = perform_pca(normalized)
+
+    weights = pca_to_weights_v1(pca_details)
+
+    rounded_as_percent = list(map(lambda i: f"{roundToFour(i) * 100}%", weights))
+
+    assert rounded_as_percent == [
+        '5.0200000000000005%', '5.84%', '5.62%', '5.99%', '3.84%', '5.55%', '0.0%', '5.47%', '5.18%', '5.34%', '4.760000000000001%', '3.35%', '4.5%', '4.4799999999999995%', '4.42%', '4.760000000000001%', '4.75%', '4.82%', '5.04%', '5.4%', '5.8500000000000005%'
+    ]
 
