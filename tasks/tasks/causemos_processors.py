@@ -214,12 +214,14 @@ def pca_to_weights_v1(pca_details: Tuple):
     """
     Original pca-to-weights algorithm
     """
+
+    (pca_components_list, pca_components_count, pca_explained_ratios) = pca_details
+
     weighted_sums = {}
     for pc_index, principle_component in enumerate(pca_components_list):
-        # [0.####, 0.##### ...]
         for feature_index, value in enumerate(principle_component):
             weighted_sums[feature_index] = weighted_sums.get(feature_index, 0) + (
-                value * pca.explained_variance_ratio_[pc_index]
+                value * pca_explained_ratios[pc_index]
             )
 
     total_sums = 0
