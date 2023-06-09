@@ -159,7 +159,10 @@ const InnerStepper = ({ match, updateLocation, ...props }) => {
       if (stepNum < 0) stepNum = 0;
     }
     setActiveStep(stepNum);
-  }, [location]);
+
+    // Set activeStep every time the page changes (because it doesn't function as a SPA
+    // so we can't rely on state to persist)
+  }, [location, datasetId, flow.steps, step]);
 
   const [datasetInfo, setDatasetInfo] = useState(() => cloneDeep(defaultDatasetState));
 
@@ -247,8 +250,9 @@ const InnerStepper = ({ match, updateLocation, ...props }) => {
         setDisplayError(true);
       });
     }
-  // We fetch once either on page load, or once we move to a different step to get freshest data
-  }, [activeStep]);
+  // Fetch data & update the page every time we change location
+  // activeStep changes too late and will cause this to run twice
+  }, [datasetId, flowslug, location]);
 
   const handleBack = () => {
     let prevStep = flow.steps[activeStep - 1];
