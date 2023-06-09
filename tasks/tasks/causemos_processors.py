@@ -13,9 +13,11 @@ from sklearn.preprocessing import StandardScaler
 import numpy
 import logging
 from pathlib import Path
-import pprint
+# import pprint
 from os.path import join as path_join
 from functools import partial, reduce
+
+from typing import Dict, List, Tuple
 
 logging.basicConfig()
 logging.getLogger().setLevel(logging.DEBUG)
@@ -51,63 +53,240 @@ def calc_percents(numbers_list):
     return percents
 
 
-def download_datasets(index_definition: json):
-    pass
+def download_datasets(index_datasets_features: Dict) -> List:
+    """
+    """
+
+    WM_USER = os.getenv("WM_USER", "whitehat")
+    WM_PASS = os.getenv("WM_PASS", "password123wink")
+
+    session = requests.Session()
+    session.auth = (WM_USER, WM_PASS)
+
+    for key, value in index_datasets_features.items():
+        if not os.path.exists(datasets_cache_dir):
+            os.makedirs(datasets_cache_dir)
+
+        if os.path.isfile(f"{datasets_cache_dir}/{key}.csv"):
+            logging.info(f"Dataset file for {key} already downloaded, skipping.")
+        else:
+            # else we download the dataset
+            url = (
+                api_url + download_endpoint + "indicators/" + key + "?wide_format=true"
+            )  # GET NORMALIZED DATA and pivot.
+            print(url)
+            file_obj = session.get(url)
+
+            with open(f"{datasets_cache_dir}/{key}.csv", "w") as f:
+                writer = csv.writer(f)
+                for line in file_obj.iter_lines():
+                    writer.writerow(line.decode("utf-8").split(","))
+                f.close()
+
+            logging.info("Done downloading or checking files.")
+
+    return index_datasets_features.keys()
 
 
-def build_synthetic_dataset():
+SHARED_COLUMNS = ["timestamp", "country"]
+
+
+def build_synthetic_dataset(dataset_ids: List, index_datasets_features: Dict) -> pandas.core.frame.DataFrame:
     """
     Use all downloaded datasets and build a synthetic dataset without filling
     NaNs nor removing extranous columns
+
+    TODO rename master_frame to synthetic_dataset
+
+    TODO instead of creating an intermediary data_list and then merging,
+    create the synthetic frame directly
     """
-    pass
+
+    same_columns = SHARED_COLUMNS
+    geo_columns = ["country"]
+    data_list = []
+
+    for dataset_id in dataset_ids:
+        original_dataset = pandas.read_csv(
+            f"{datasets_cache_dir}/{dataset_id}.csv", on_bad_lines="skip"
+        )
+
+        # Use info extracted from model to get info out of the dataset.
+        target_columns = []
+        rename_dict = {}
+        aggregation = ""
+
+        features_in_dataset = index_datasets_features[dataset_id]
+
+        for features_dict in features_in_dataset:
+            target_columns.append(features_dict["source_column"])
+            rename_dict[features_dict["source_column"]] = features_dict["name_in_model"]
+            aggregation = features_dict["aggregation"]
+
+        relevant_data = original_dataset[["timestamp", "country", *target_columns]]
+
+        relevant_data["timestamp"] = pandas.to_datetime(
+            relevant_data["timestamp"], unit="ms"
+        )
+
+        relevant_data.rename(columns=rename_dict, inplace=True)
+
+        dataframe = relevant_data.set_index(geo_columns)
+        dataframe = dataframe.groupby(geo_columns)
+
+        scaled_frame = dataframe.resample("Y", on="timestamp").agg(aggregation)
+        scaled_frame.reset_index(inplace=True)
+        data_list.append(scaled_frame)
+
+    synthetic_dataset = None
+    for dataset in data_list:
+        if synthetic_dataset is None:
+            synthetic_dataset = dataset
+            continue
+        synthetic_dataset = pandas.merge(synthetic_dataset, dataset, on=same_columns, how="outer")
+
+    return synthetic_dataset
 
 
-def normalize_synthetic_dataset():
+
+def normalize_synthetic_dataset(synthetic_dataset: pandas.core.frame.DataFrame) -> pandas.core.frame.DataFrame:
     """
     Should receive raw synthetic dataset and fill NaNs and remove columns
     not relevant to our analysis
     """
-    pass
+    columns_to_remove = SHARED_COLUMNS + [ '0', 'Unnamed: 0']
+
+    normalized_synthetic_dataset = synthetic_dataset.copy()
+
+    for item in columns_to_remove:
+        if item in list(synthetic_dataset.columns):
+            normalized_synthetic_dataset = normalized_synthetic_dataset.drop(columns=[item])
+
+    normalized_synthetic_dataset.fillna(normalized_synthetic_dataset.mean(), inplace=True)
+
+    return normalized_synthetic_dataset
 
 
-def cache_dataset():
-    pass
+
+# def cache_dataset():
+#     pass
 
 
-def load_cached_dataset():
-    pass
+# def load_cached_dataset():
+#     pass
 
 
-def perform_pca(syn_dataset):
-    pass
+def perform_pca(synthetic_dataset: pandas.core.frame.DataFrame) -> Tuple:
+    # Standardize the data
+    scaler = StandardScaler()
+    scaled_data = scaler.fit_transform(synthetic_dataset)
+
+    # Perform PCA
+    pca = PCA()
+    pca.fit(scaled_data)
+
+    pca_components_list = abs(pca.components_)
+    pca_components_count = pca.n_components_
+    pca_explained_ratios = pca.explained_variance_ratio_
+
+    return (pca_components_list, pca_components_count, pca_explained_ratios)
 
 
-def pca_to_weights_v1():
+def pca_to_weights_v1(pca_details: Tuple):
     """
     Original pca-to-weights algorithm
     """
     pass
 
 
-def pca_to_weights_v2():
+def pca_to_weights_v2(pca_details: Tuple):
     """
-    Joel's odd average pca-weights-algorithm
+    Joel's Average pca-weights-algorithm
     """
-    pass
+    (pca_components_list, pca_components_count, pca_explained_ratios) = pca_details
+
+    highest_variance_ratios = list(filter(lambda x: x > 0.04, map(roundToTwo, pca_explained_ratios)))
+    weight_matrix = [[0] * pca_components_count for i in range(0, len(highest_variance_ratios))]
+    amount_relevant = len(highest_variance_ratios)
+
+    for pc_index, principle_component in enumerate(pca_components_list):
+        for feature_index, value in enumerate(principle_component):
+            relative_value = value * pca_explained_ratios[pc_index]
+
+            if pc_index < amount_relevant:
+                weights_row = weight_matrix[pc_index]
+                weights_row[feature_index] = weights_row[feature_index] + relative_value
+
+    matrix_percents = list(map(calc_percents, weight_matrix))
+    matrix_averages = [round((sum(v)/amount_relevant)*100, 2) for i, v in enumerate(zip(*matrix_percents))]
+
+    return matrix_averages
 
 
-def pca_to_weights_v3():
+def pca_to_weights_v3(pca_details: Tuple, target_pca_explained_sum=0.7):
     """
-    Third version (mix of v1 and v2) with some enhancements.
+    Third version (mix of v1 and v2) with some improvements.
     """
-    pass
+
+    (pca_components_list, pca_components_count, pca_explained_ratios) = pca_details
+
+    # Target sum of variance explained by PCA
+    # The closer this is to 1, the more PCs required
+    # E.g. target_sum = 1; n_PCs = n_Features
+    target_sum = target_pca_explained_sum    # eg 70% , TODO make an endpoint argument
+    cumulative_sum = np.cumsum(pca_explained_ratios)  # Calculate the cumulative sum
+
+    # Find the index where the cumulative sum exceeds or reaches the target sum
+    index = np.argmax(cumulative_sum >= target_sum)
+
+    # Calculate the number of items needed to reach the target sum
+    items_needed = index + 1
+
+    # absolute value feature contributions to each PC
+    # transpose to get one feature per row
+    # eg. row 1 has contributions of feature 1 to the n selected PCs
+    arr_2d = np.abs(pca_components_list.T[:,:items_needed])
+
+    # weight by variance in data explained by each PC
+    # e.g. PC_1 is "worth more"
+    weighted = arr_2d * pca_explained_ratios[:items_needed]
+
+    # Sum the contribution of each feature to each of the selected PCs
+    results = weighted.sum(axis=1)
+
+    # Rescale results to sum to 1
+    results_scaled = results / np.sum(results)
+    print(results_scaled)
+
+    return results_scaled
 
 
-def build_final_hierarchy_weights():
-    pass
+# TODO refactor some more
+def build_final_hierarchy_weights(normalized_synthethic_dataset, flat_feature_weights):
+
+    result_leaf_weights = {}
+
+    for index, val in enumerate(flat_feature_weights):
+        value = val / 100
+        feature_name = normalized_synthethic_dataset.columns[index]
+        result_leaf_weights[feature_name] = value
+        feature_percent = round(value * 100, 2)
+        logging.info(f"{feature_name}: {feature_percent} %")
+
+    # SOLVE TREE WITH WEIGHTS
+    update_leaf_weights(result_leaf_weights, tree)
+    compute_weights(tree)
+    compute_edge_percent(tree)
+
+    # GENERATE THE PAYLOAD UNCHARTED EXPECTS
+    output = generate_output_payload(tree)
+
+    response = {"final_percentages": output}
+
+    return response
 
 
+# TODO use the split functions above instead
 def generate_index_model_weights(
     context={}, filename=None, on_success_endpoint=None, *args, **kwargs
 ):
@@ -285,6 +464,7 @@ found_values = {}
 # Creates a structure of:
 # {<dataset id in dojo>: [{"source_column": <dataset column name>, "name_in_model": <name of component in index model>}]}
 def iteration_func(data):
+
     for key, value in data.items():
         if type(value) == type(dict()):
             iteration_func(value)
@@ -318,6 +498,7 @@ def iteration_func(data):
                     pass
                 else:
                     iteration_func(val)
+
     return found_values
 
 
