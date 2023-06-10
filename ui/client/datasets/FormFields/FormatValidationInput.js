@@ -54,6 +54,7 @@ export default withStyles(() => ({
 
   // // Run validate on mount
   React.useEffect(() => {
+    // TODO: this initial validate is currently unnecessary because it still loses the errors when switching between form Types
     const initialValidate = (value) => {
       if (parentName) {
         return validateFormat(parentName, value);
