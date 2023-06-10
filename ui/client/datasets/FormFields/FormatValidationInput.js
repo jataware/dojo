@@ -2,8 +2,6 @@ import React from 'react';
 import { withStyles } from '@material-ui/core/styles';
 import { Field, useField } from 'formik';
 
-import memoize from 'lodash/memoize';
-
 import { TextField } from 'material-ui-formik-components/TextField';
 
 import InputAdornment from '@material-ui/core/InputAdornment';
@@ -28,49 +26,56 @@ export default withStyles(() => ({
 }))(({
   classes, validateFormat = identity, parentName, InputProps, ...props
 }) => {
-  // Would run on each form context change, blur, and render
-  function validateAlways(value) {
+  const [field, meta, helpers] = useField(props.name);
+  const valid = !meta?.error;
+  const [prevValue, setPrevValue] = React.useState(field.value);
+
+  // // Would run on each form context change, blur, and render
+  const validateAlways = (value) => {
     if (parentName) {
       return validateFormat(parentName, value);
     }
     return '';
-  }
+  };
 
-  // Redundant access to field data in order to create custom errors, too
-  // Formik form errors will be added by Field, while our custom backend
-  // validate will be added by useField
-  const [field, meta, helpers] = useField(props.name);
-  const valid = !meta?.error;
+  const validate = (value) => {
+    // if we haven't changed the value and it's still invalid, then keep our error
+    // otherwise it gets wiped when we revalidate on blur/change unless we re-run our backend
+    // validation with every other field change
+    if (value === prevValue && !valid) {
+      return meta.error;
+    }
+    // only run the backend validation if the value has changed
+    if (value !== prevValue) {
+      setPrevValue(value);
+      return validateAlways(value);
+    }
+  };
 
-  /**
-   * We need to both memoize individual input values with `memoize`, as well
-   * as "cache" the function using useCallback, so that it doesn't re-initialize and
-   * lose the memoized values. We do this for 2 reasons:
-   * a) So that we don't call the backend http validation unnecessarily
-   * b) So that, when memoizing, we don't create new memoize function on each run and waste memory
-   */
-  const validate = React
-    .useCallback(
-      memoize(validateAlways),
-      [parentName, field.value, field.name]
-    );
-
-  // Run validate on mount
+  // // Run validate on mount
   React.useEffect(() => {
-    // validate returns a promise
-    const validationResult = validate(field.value);
+    const initialValidate = (value) => {
+      if (parentName) {
+        return validateFormat(parentName, value);
+      }
+      return '';
+    };
 
     // Also set touched to force error on mount:
-    helpers.setTouched(true, true);
+    if (!meta.touched) {
+      helpers.setTouched(true, true);
 
-    Promise
-      .resolve(validationResult)
-      .then((invalid) => {
-        if (invalid) {
-          helpers.setError(invalid);
-        }
-      });
-  }, []);
+      const initialValidationResult = initialValidate(field.value);
+
+      Promise
+        .resolve(initialValidationResult)
+        .then((invalid) => {
+          if (invalid) {
+            helpers.setError(invalid);
+          }
+        });
+    }
+  }, [helpers, meta, field.value, parentName, validateFormat]);
 
   return (
     <Field
