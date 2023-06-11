@@ -163,7 +163,7 @@ function loadConfig(labels, datasets) {
 /**
  *
  * */
-export default React.memo(withStyles((theme) => ({
+export default withStyles((theme) => ({
   cardContent: {
     [theme.breakpoints.down('sm')]: {
       padding: theme.spacing(0.5)
@@ -192,30 +192,29 @@ export default React.memo(withStyles((theme) => ({
 
   const statKeys = Object.keys(statistics);
 
-  const renderChart = () => {
-    if (!canvasRef.current || !hasData) { return; }
-
-    const ctx = canvasRef.current;
-    const config = loadConfig(labels, { data, label: 'Count' });
-
-    chartRef.current = new ChartJS(ctx, {
-      type: 'bar',
-      data: config.data,
-      options: config.options,
-    });
-  };
-
-  const destroyChart = () => {
-    if (chartRef.current) {
-      chartRef.current.destroy();
-      chartRef.current = null;
-    }
-  };
-
   React.useEffect(() => {
+    const renderChart = () => {
+      if (!canvasRef.current || !hasData) { return; }
+
+      const ctx = canvasRef.current;
+      const config = loadConfig(labels, { data, label: 'Count' });
+
+      chartRef.current = new ChartJS(ctx, {
+        type: 'bar',
+        data: config.data,
+        options: config.options,
+      });
+    };
+
+    const destroyChart = () => {
+      if (chartRef.current) {
+        chartRef.current.destroy();
+        chartRef.current = null;
+      }
+    };
     renderChart();
     return destroyChart;
-  }, []);
+  }, [data, hasData, labels]);
 
   return (
     <div>
@@ -227,6 +226,7 @@ export default React.memo(withStyles((theme) => ({
       >
         <canvas
           ref={canvasRef}
+          // eslint-disable-next-line jsx-a11y/no-interactive-element-to-noninteractive-role
           role="img"
           {...props}
         >
@@ -287,4 +287,4 @@ export default React.memo(withStyles((theme) => ({
 
     </div>
   );
-}));
+});
