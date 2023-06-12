@@ -101,7 +101,14 @@ def test_iteration_func():
 
 
 @pytest.mark.slow
+@pytest.mark.integration
+@pytest.mark.skip
 def test_build_synthetic_dataset():
+    """
+    You'll need actual datasets for the sample nd-gain in order to populate
+    the test_data/datasets/* folder and for this integration test to pass.
+    Test skipped for now.
+    """
 
     rd = index_retrieval_dict_stub
 
