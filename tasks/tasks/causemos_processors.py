@@ -65,6 +65,12 @@ def calc_percents(numbers_list):
     return percents
 
 
+class DatasetNotFoundError(Exception):
+    def __init__(self, dataset_id, message="Dataset not found."):
+        self.dataset_id = dataset_id
+        self.message = message
+        super().__init__(self.message)
+
 def download_datasets(index_datasets_features: Dict) -> List[str]:
     """
     """
@@ -88,6 +94,9 @@ def download_datasets(index_datasets_features: Dict) -> List[str]:
             )  # GET NORMALIZED DATA and pivot.
             logging.info(url)
             file_obj = session.get(url)
+
+            if file_obj.status_code == 404:
+                raise DatasetNotFoundError(key)
 
             with open(f"{datasets_cache_dir}/{key}.csv", "w") as f:
                 writer = csv.writer(f)
