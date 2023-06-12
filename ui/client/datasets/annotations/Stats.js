@@ -160,10 +160,7 @@ function loadConfig(labels, datasets) {
   };
 }
 
-/**
- *
- * */
-export default withStyles((theme) => ({
+const styles = (theme) => ({
   cardContent: {
     [theme.breakpoints.down('sm')]: {
       padding: theme.spacing(0.5)
@@ -182,7 +179,12 @@ export default withStyles((theme) => ({
   colorHint: {
     color: theme.palette.secondary.main
   }
-}))(({
+});
+
+/**
+ *
+ * */
+const Stats = ({
   classes, statistics = {}, histogramData, ...props
 }) => {
   const { data = [], labels = [] } = histogramData;
@@ -243,7 +245,7 @@ export default withStyles((theme) => ({
           </Typography>
           <Typography variant="caption">
             This may be a multi-part annotated column, which contains + in its name.
-            Multi-part columns don't show any statistics yet.
+            Multi-part columns don&apos;t show any statistics yet.
             You may <span className={classes.colorHint}>clear</span> the
             annotation in order to view individual column statistics.
           </Typography>
@@ -287,4 +289,6 @@ export default withStyles((theme) => ({
 
     </div>
   );
-});
+};
+
+export default withStyles(styles)(React.memo(Stats));
