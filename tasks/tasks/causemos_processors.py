@@ -33,7 +33,8 @@ indicator_endpoint = "/indicators/"
 
 root_dir = Path(__file__).resolve().parent.parent
 test_data_dir = path_join(root_dir, "test_data")
-datasets_cache_dir = path_join(test_data_dir, "datasets")
+
+datasets_cache_dir = "./pca-datasets"
 
 
 """
@@ -343,7 +344,6 @@ def build_final_hierarchy_weights(
 def generate_index_model_weights(
     context={}, filename=None, on_success_endpoint=None, *args, **kwargs
 ):
-
 
     retrieval_dictionary = {}
     tree = None
