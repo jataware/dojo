@@ -21,7 +21,8 @@ from functools import partial
 
 from typing import Dict, List, Tuple
 
-warnings.filterwarnings('ignore')
+# TODO check which are ignorable and which are true
+# warnings.filterwarnings('ignore')
 
 logging.basicConfig()
 logging.getLogger().setLevel(logging.DEBUG)
@@ -126,7 +127,9 @@ def build_synthetic_dataset(dataset_ids: List, index_datasets_features: Dict) ->
 
     for dataset_id in dataset_ids:
         original_dataset = pandas.read_csv(
-            f"{datasets_cache_dir}/{dataset_id}.csv", on_bad_lines="skip"
+            f"{datasets_cache_dir}/{dataset_id}.csv",
+            on_bad_lines="skip",
+            low_memory=False
         )
 
         # Use info extracted from model to get info out of the dataset.
