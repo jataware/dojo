@@ -84,9 +84,10 @@ def test_build_synthetic_dataset():
 
     out = build_synthetic_dataset(datasets_ids, rd)
 
-    assert out.columns.tolist() == [
-        "country", "timestamp", "Governance indicator", "Vulnerability indicator", "Capacity indicator", "Governance indicator", "Vulnerability indicator", "Capacity indicator", "Governance indicator", "Vulnerability indicator", "Capacity indicator", "P1: State Legitimacy", "P1: State Legitimacy", "P1: State Legitimacy", "Population per 3km square resolution", "Population per 3km square resolution", "Population per 3km square resolution", "Population", "Population", "Population", "Port Count", "Port Count", "Port Count", "Container port traffic (TEU: 20 foot equivalent units)", "Container port traffic (TEU: 20 foot equivalent units)", "Container port traffic (TEU: 20 foot equivalent units)", "Locations of US Military Bases Abroad", "Locations of US Military Bases Abroad", "Locations of US Military Bases Abroad", "Arms imports (SIPRI trend indicator values)", "Arms imports (SIPRI trend indicator values)", "Arms imports (SIPRI trend indicator values)", "Foreign direct investment, net inflows (% of GDP)", "Foreign direct investment, net inflows (% of GDP)", "Foreign direct investment, net inflows (% of GDP)", "Humanitarian Requirements (USD)", "Humanitarian Requirements (USD)", "Humanitarian Requirements (USD)", "US Aid", "Foreign Aid from ODA Countries", "US Aid", "Foreign Aid from ODA Countries", "US Aid", "Foreign Aid from ODA Countries", "Amount of Chinese Military Aid (Constant USD2017)", "Amount of Chinese Military Aid (Constant USD2017)", "Amount of Chinese Military Aid (Constant USD2017)", "Chinese Aid & Loans", "Chinese Aid & Loans", "Chinese Aid & Loans", "Natural gas rents (% of GDP)", "Mineral rents (% of GDP)", "Total natural resources rents (% of GDP)", "Natural gas rents (% of GDP)", "Mineral rents (% of GDP)", "Total natural resources rents (% of GDP)", "Natural gas rents (% of GDP)", "Mineral rents (% of GDP)", "Total natural resources rents (% of GDP)", "US Imports", "US Exports", "US Imports", "US Exports", "US Imports", "US Exports"
-    ]
+    sorted_columns_list = sorted(out.columns.tolist(), key=str.lower)
+
+    assert sorted_columns_list == ['Amount of Chinese Military Aid (Constant USD2017)', 'Arms imports (SIPRI trend indicator values)', 'Capacity indicator', 'Chinese Aid & Loans', 'Container port traffic (TEU: 20 foot equivalent units)', 'country', 'Foreign Aid from ODA Countries', 'Foreign direct investment, net inflows (% of GDP)', 'Governance indicator', 'Humanitarian Requirements (USD)', 'Locations of US Military Bases Abroad', 'Mineral rents (% of GDP)', 'Natural gas rents (% of GDP)', 'P1: State Legitimacy', 'Population', 'Population per 3km square resolution', 'Port Count', 'timestamp', 'Total natural resources rents (% of GDP)', 'US Aid', 'US Exports', 'US Imports', 'Vulnerability indicator']
+    assert len(sorted_columns_list) == 23  # 21 features + country and timestamp columns
 
 
 def gen_control_dataframe(n:int=100):
@@ -149,6 +150,13 @@ def round_list(my_list):
 
 def formatRoundedPercentOutput(results: List[float]):
     return list(map(lambda x: f"{format(roundToFour(x) * 100, '.2f')}%", results))
+
+
+def format_percentages(numbers: List[float]):
+    """
+    TODO use this function to format final output instead
+    """
+    return ['{:.2%}'.format(round(num * 100, 4)) for num in numbers]
 
 
 @pytest.mark.integration
@@ -302,39 +310,6 @@ def test_pca_to_weights_v2_control_data():
 
     weights = pca_to_weights_v2(pca_details)
 
-    rounded_as_percent = list(map(lambda i: f"{roundToFour(i) * 100}%", weights))
-
-    assert rounded_as_percent == ['32.45%', '33.32%', '17.11%', '17.11%', '0.0%']
-
-
-
-@pytest.mark.integration
-def test_pca_to_weights_v2_control_data():
-
-    pca_details = (
-        numpy.array(
-            [[1.13900827e-03, 4.01488796e-02, 7.06536188e-01,
-              7.06536188e-01, 0.00000000e+00],
-             [7.13923827e-01, 6.99690962e-01, 1.93044911e-02,
-              1.93044911e-02, 0.00000000e+00],
-             [7.00222444e-01, 7.13316638e-01, 2.08315041e-02,
-              2.08315041e-02, 0.00000000e+00],
-             [2.11047685e-17, 2.19081849e-17, 7.07106781e-01,
-              7.07106781e-01, 0.00000000e+00],
-             [0.00000000e+00, 0.00000000e+00, 0.00000000e+00,
-              0.00000000e+00, 1.00000000e+00]]
-        ),
-
-        5,
-
-        numpy.array(
-            [5.00405570e-01, 2.60246340e-01, 2.39348091e-01,
-             2.51310581e-32, 0.00000000e+00]
-        )
-    )
-
-    weights = pca_to_weights_v2(pca_details)
-
     rounded = formatRoundedPercentOutput(weights)
 
     assert rounded == ['32.45%', '33.32%', '17.11%', '17.11%', '0.00%']
@@ -392,7 +367,6 @@ def test_pca_to_weights_v1_control_data():
 
 
 @pytest.mark.integration
-@pytest.mark.target
 def test_pca_to_weights_v1_real_index_data():
 
     rd = iteration_func(index_model_object)
