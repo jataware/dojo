@@ -17,7 +17,7 @@ import numpy
 import logging
 from pathlib import Path
 from os.path import join as path_join
-from functools import partial, reduce
+from functools import partial
 
 from typing import Dict, List, Tuple
 
@@ -201,7 +201,7 @@ def perform_pca(synthetic_dataset: pandas.DataFrame) -> Tuple:
     return (pca_components_list, pca_components_count, pca_explained_ratios)
 
 
-def pca_to_weights_v1(pca_details: Tuple):
+def pca_to_weights_v1(pca_details: Tuple) -> List[float]:
     """
     Original pca-to-weights algorithm
     """

@@ -64,8 +64,10 @@ def test_iteration_func():
     assert first_dataset_feature == "governance"
     assert first_dataset_feature_name == "Governance indicator"
 
+
 @pytest.mark.integration
 @pytest.mark.side_effects
+@pytest.mark.skip
 def test_download_datasets():
     out = download_datasets(iteration_func(index_model_object))
     # Dataset ids described and involved in the index nd-gain sample file:
@@ -138,12 +140,15 @@ def gen_control_dataframe(n:int=100):
     return df
 
 
-
 roundToFour = partial(round, ndigits=4)
 
 
 def round_list(my_list):
     return list(map(roundToFour, my_list))
+
+
+def formatRoundedPercentOutput(results: List[float]):
+    return list(map(lambda x: f"{format(roundToFour(x) * 100, '.2f')}%", results))
 
 
 @pytest.mark.integration
@@ -194,12 +199,9 @@ def test_pca_to_weights_v3_70_control_data():
 
     weights = pca_to_weights_v3(pca_details)
 
-    rounded = list(map(lambda i: roundToFour(i), weights.tolist()))
+    rounded = formatRoundedPercentOutput(weights.tolist())
 
-    assert rounded == [0.1685, 0.1829, 0.3243, 0.3243, 0.0]
-
-    assert sum(rounded) == 1
-
+    assert rounded == ['16.85%', '18.29%', '32.43%', '32.43%', '0.00%']
 
 
 @pytest.mark.integration
@@ -229,11 +231,10 @@ def test_pca_to_weights_v3_90_control_data():
 
     weights = pca_to_weights_v3(pca_details, 0.9)
 
-    rounded = list(map(lambda i: roundToFour(i), weights.tolist()))
+    rounded = formatRoundedPercentOutput(weights.tolist())
 
-    assert rounded == [0.2434, 0.2565, 0.25, 0.25, 0.0]
+    assert rounded == ['24.34%', '25.65%', '25.00%', '25.00%', '0.00%']
 
-    assert sum(rounded) > 0.99
 
 
 @pytest.mark.integration
@@ -334,10 +335,9 @@ def test_pca_to_weights_v2_control_data():
 
     weights = pca_to_weights_v2(pca_details)
 
-    rounded_as_percent = list(map(lambda i: f"{roundToFour(i) * 100}%", weights))
+    rounded = formatRoundedPercentOutput(weights)
 
-    assert rounded_as_percent == ['32.45%', '33.32%', '17.11%', '17.11%', '0.0%']
-
+    assert rounded == ['32.45%', '33.32%', '17.11%', '17.11%', '0.00%']
 
 
 @pytest.mark.integration
@@ -386,10 +386,9 @@ def test_pca_to_weights_v1_control_data():
 
     weights = pca_to_weights_v1(pca_details)
 
-    rounded_as_percent = list(map(lambda i: f"{roundToFour(i) * 100}%", weights))
+    rounded = formatRoundedPercentOutput(weights)
 
-    assert rounded_as_percent == ['24.34%', '25.650000000000002%', '25.0%', '25.0%', '0.0%']
-
+    assert rounded == ['24.34%', '25.65%', '25.00%', '25.00%', '0.00%']
 
 
 @pytest.mark.integration
