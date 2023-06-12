@@ -197,6 +197,7 @@ def perform_pca(synthetic_dataset: pandas.DataFrame) -> Tuple:
     pca = PCA()
     pca.fit(scaled_data)
 
+    # Gather pca outputs to be used on our weighting algorithm
     pca_components_list = abs(pca.components_)
     pca_components_count = pca.n_components_
     pca_explained_ratios = pca.explained_variance_ratio_
@@ -343,10 +344,16 @@ def generate_index_model_weights(
     context={}, filename=None, on_success_endpoint=None, *args, **kwargs
 ):
 
+
     retrieval_dictionary = {}
     tree = None
     payload = kwargs.get("json_payload")
     index_model_object = json.loads(json.dumps(payload))
+
+    explained_variance_threshold = kwargs.get("explained_variance_threshold", 0.7)
+
+    if type(explained_variance_threshold) == str:
+        explained_variance_threshold = float(explained_variance_threshold)
 
     index_datasets_features = iteration_func(index_model_object)
 
@@ -366,7 +373,10 @@ def generate_index_model_weights(
     pca_tuple_outputs = perform_pca(normalized_synthetic_dataset)
 
     logging.info(" -> PCA-to-Weights algorithm v3 running")
-    weights = pca_to_weights_v3(pca_tuple_outputs, target_pca_explained_sum=0.7)
+    weights = pca_to_weights_v3(
+        pca_tuple_outputs,
+        target_pca_explained_sum=explained_variance_threshold
+    )
 
     logging.info(" -> Building tree")
     tree = build_tree(index_model_object["state"]["index"])
