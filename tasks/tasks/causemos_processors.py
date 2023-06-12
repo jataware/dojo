@@ -32,7 +32,7 @@ download_endpoint = "/dojo/download/csv/"
 indicator_endpoint = "/indicators/"
 
 root_dir = Path(__file__).resolve().parent.parent
-test_data_dir = path_join(root_dir, "test-data")
+test_data_dir = path_join(root_dir, "test_data")
 datasets_cache_dir = path_join(test_data_dir, "datasets")
 
 
@@ -102,14 +102,14 @@ def download_datasets(index_datasets_features: Dict) -> List[str]:
 SHARED_COLUMNS = ["timestamp", "country"]
 
 
-def save_synthetic_dataset(dataframe: pandas.DataFrame):
+def save_synthetic_dataset(dataframe: pandas.DataFrame, file_prefix: str = "synthetic_dataframe"):
     """
     Optional tool for debugging purposes
     """
     now = datetime.now()
     date_time = now.strftime("%d-%m-%Y_%H-%M-%S")
 
-    dataframe.to_csv(path_join(test_data_dir, f"synthetic_dataframe_{date_time}.csv"))
+    dataframe.to_csv(path_join(test_data_dir, f"{file_prefix}_{date_time}.csv"))
 
 
 def build_synthetic_dataset(dataset_ids: List, index_datasets_features: Dict) -> pandas.DataFrame:
@@ -276,6 +276,9 @@ def pca_to_weights_v3(pca_details: Tuple, target_pca_explained_sum=0.7):
 
     (pca_components_list, pca_components_count, pca_explained_ratios) = pca_details
 
+    if type(pca_components_list) == list:
+        pca_components_list = numpy.array(pca_components_list)
+
     # Target sum of variance explained by PCA
     # The closer this is to 1, the more PCs required
     # E.g. target_sum = 1; n_PCs = n_Features
@@ -378,24 +381,30 @@ def generate_index_model_weights(
 
 # FEATURE + DATASET LIST GENERATION
 
-found_values = {}
+
+def iteration_func(data):
+    found_values = {}
+
+    iteration_func_helper(data, found_values)
+
+    return found_values
 
 
 # Takes the ND_gain.json model and finds all datasets we need to download.
 # Creates a structure of:
 # {<dataset id in dojo>: [{"source_column": <dataset column name>, "name_in_model": <name of component in index model>}]}
-def iteration_func(data):
+def iteration_func_helper(data, accumulator):
 
     for key, value in data.items():
         if type(value) == type(dict()):
-            iteration_func(value)
+            iteration_func_helper(value, accumulator)
         elif type(value) == type(list()):
             if key == "inputs":
                 for val in value:
                     data_id = val.get("datasetId", None)
                     if data_id is not None:
-                        if found_values.get(data_id, None):
-                            found_values.get(data_id).append(
+                        if accumulator.get(data_id, None):
+                            accumulator.get(data_id).append(
                                 {
                                     "source_column": val.get("outputVariable"),
                                     "name_in_model": val.get("name"),
@@ -403,7 +412,7 @@ def iteration_func(data):
                                 }
                             )
                         else:
-                            found_values[data_id] = [
+                            accumulator[data_id] = [
                                 {
                                     "source_column": val.get("outputVariable"),
                                     "name_in_model": val.get("name"),
@@ -418,9 +427,9 @@ def iteration_func(data):
                 elif type(val) == type(list()):
                     pass
                 else:
-                    iteration_func(val)
+                    iteration_func_helper(val, accumulator)
 
-    return found_values
+    return accumulator
 
 
 # INDEX MODEL TREE TRAVERSAL
