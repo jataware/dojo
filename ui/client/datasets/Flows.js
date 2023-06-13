@@ -265,9 +265,9 @@ const AppendFlow = {
             }) => {
               const updatedDataset = {
                 ...datasetInfo,
-                data_paths: Array.concat(datasetInfo.data_paths, result.data_files),
-                geography: result.geography,
-                period: result.period,
+                data_paths: Array.concat(datasetInfo.data_paths, result?.data_files),
+                geography: result?.geography,
+                period: result?.period,
               };
               setDatasetInfo(updatedDataset);
               await axios.put('/api/dojo/indicators', updatedDataset);
