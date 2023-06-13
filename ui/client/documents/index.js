@@ -195,69 +195,68 @@ const ViewDocumentsGrid = withStyles(() => ({
   const [searchTerm, setSearchTerm] = useState('');
   const [searchTermValue, setSearchTermValue] = useState('');
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const updateSearchTerm = useCallback(debounce(setSearchTerm, 1000), []);
+
   const [searchLoading, setSearchLoading] = useState(false);
   const [docParagraphResults, setDocParagraphResults] = useState(null);
   const [highlights, setHighlights] = useState(null);
 
   const [openedDocument, setOpenedDocument] = useState(null);
 
-  useEffect(() => {
-    const updateSearchTerm = debounce(setSearchTerm, 1000);
-    updateSearchTerm(searchTermValue);
-  }, [searchTermValue]);
+  const performSearch = () => {
+    if (!searchTerm) {
+      setDocParagraphResults(null);
+      return;
+    }
 
-  useEffect(() => {
-    const performSearch = () => {
-      if (!searchTerm) {
-        setDocParagraphResults(null);
-        return;
-      }
+    setSearchLoading(true);
+    setHighlights(null);
 
-      setSearchLoading(true);
-      setHighlights(null);
+    semanticSearchParagraphs(searchTerm)
+      .then((results) => {
+        const allParagraphs = results.results;
 
-      semanticSearchParagraphs(searchTerm)
-        .then((results) => {
-          const allParagraphs = results.results;
+        // for each, fetch their parent document's in order to append its
+        // title and publisher
+        const allDocPromises = allParagraphs.map((paragraph, idx) => {
+          const documentPromise = fetchDocument(paragraph.document_id);
 
-          // for each, fetch their parent document's in order to append its
-          // title and publisher
-          const allDocPromises = allParagraphs.map((paragraph, idx) => {
-            const documentPromise = fetchDocument(paragraph.document_id);
-
-            documentPromise.then((doc) => {
-              allParagraphs[idx].parent_document = doc;
-            });
-
-            return documentPromise;
+          documentPromise.then((doc) => {
+            allParagraphs[idx].parent_document = doc;
           });
 
-          Promise.all(allDocPromises).then(() => {
-            setDocParagraphResults(allParagraphs);
-
-            if (process.env.DISABLE_SEMANTIC_HIGHLIGHT !== 'true') {
-              // fetch all highlights for results
-              const matches = map(allParagraphs, 'text');
-              const query = searchTerm;
-
-              const url = '/api/dojo/paragraphs/highlight';
-
-              return axios.post(url, {
-                query,
-                matches
-              }).then((response) => {
-                setHighlights(response.data.highlights);
-              });
-            }
-            console.info('Semantic Highlighter disabled.');
-          });
-        })
-        .finally(() => {
-          setSearchLoading(false);
+          return documentPromise;
         });
-    };
 
+        Promise.all(allDocPromises).then(() => {
+          setDocParagraphResults(allParagraphs);
+
+          if (process.env.DISABLE_SEMANTIC_HIGHLIGHT !== 'true') {
+            // fetch all highlights for results
+            const matches = map(allParagraphs, 'text');
+            const query = searchTerm;
+
+            const url = '/api/dojo/paragraphs/highlight';
+
+            return axios.post(url, {
+              query,
+              matches
+            }).then((response) => {
+              setHighlights(response.data.highlights);
+            });
+          }
+          console.info('Semantic Highlighter disabled.');
+        });
+      })
+      .finally(() => {
+        setSearchLoading(false);
+      });
+  };
+
+  useEffect(() => {
     performSearch();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm]);
 
   const clearSearch = () => {
@@ -272,6 +271,7 @@ const ViewDocumentsGrid = withStyles(() => ({
       return;
     }
     setSearchTermValue(value);
+    updateSearchTerm(value);
   };
 
   const displayableColumns = documentColumns;

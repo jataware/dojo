@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 
 import axios from 'axios';
 import debounce from 'lodash/debounce';
@@ -186,6 +186,9 @@ const ViewFeatures = withStyles(() => ({
   const [searchTerm, setSearchTerm] = useState('');
   const [searchTermValue, setSearchTermValue] = useState('');
 
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  const updateSearchTerm = useCallback(debounce(setSearchTerm, 500), []);
+
   const [features, setFeatures] = useState([]);
   const [featuresError, setFeaturesError] = useState(false);
   const [featuresLoading, setFeaturesLoading] = useState(false);
@@ -282,31 +285,26 @@ const ViewFeatures = withStyles(() => ({
     }
   ];
 
+  const performSearch = () => {
+    if (!searchTerm) {
+      fetchFeatures(setFeatures, setFeaturesLoading, setFeaturesError);
+      return;
+    }
+
+    setFeaturesLoading(true);
+    semanticSearchFeatures(searchTerm)
+      .then((newFeatures) => {
+        setMaxSearchScore(newFeatures.max_score);
+        setFeatures(newFeatures.results);
+      })
+      .finally(() => {
+        setFeaturesLoading(false);
+      });
+  };
+
   useEffect(() => {
-    const updateSearchTerm = debounce(setSearchTerm, 500);
-
-    updateSearchTerm(searchTermValue);
-  }, [searchTermValue]);
-
-  useEffect(() => {
-    const performSearch = () => {
-      if (!searchTerm) {
-        fetchFeatures(setFeatures, setFeaturesLoading, setFeaturesError);
-        return;
-      }
-
-      setFeaturesLoading(true);
-      semanticSearchFeatures(searchTerm)
-        .then((newFeatures) => {
-          setMaxSearchScore(newFeatures.max_score);
-          setFeatures(newFeatures.results);
-        })
-        .finally(() => {
-          setFeaturesLoading(false);
-        });
-    };
-
     performSearch();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm]);
 
   const clearSearch = () => {
@@ -321,6 +319,7 @@ const ViewFeatures = withStyles(() => ({
       return;
     }
     setSearchTermValue(value);
+    updateSearchTerm(value);
   };
 
   return featuresError ? (
