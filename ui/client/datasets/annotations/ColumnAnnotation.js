@@ -85,7 +85,7 @@ export const GeoControls = ({
     if (isMultiColumn) {
       setFieldValue('primary', true);
     }
-  }, [isMultiColumn, values.category]);
+  }, [isMultiColumn, values.category, setFieldValue]);
 
   return (
     <>

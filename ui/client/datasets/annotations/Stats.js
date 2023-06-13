@@ -160,10 +160,7 @@ function loadConfig(labels, datasets) {
   };
 }
 
-/**
- *
- * */
-export default React.memo(withStyles((theme) => ({
+const styles = (theme) => ({
   cardContent: {
     [theme.breakpoints.down('sm')]: {
       padding: theme.spacing(0.5)
@@ -182,7 +179,12 @@ export default React.memo(withStyles((theme) => ({
   colorHint: {
     color: theme.palette.secondary.main
   }
-}))(({
+});
+
+/**
+ *
+ * */
+const Stats = ({
   classes, statistics = {}, histogramData, ...props
 }) => {
   const { data = [], labels = [] } = histogramData;
@@ -192,30 +194,29 @@ export default React.memo(withStyles((theme) => ({
 
   const statKeys = Object.keys(statistics);
 
-  const renderChart = () => {
-    if (!canvasRef.current || !hasData) { return; }
-
-    const ctx = canvasRef.current;
-    const config = loadConfig(labels, { data, label: 'Count' });
-
-    chartRef.current = new ChartJS(ctx, {
-      type: 'bar',
-      data: config.data,
-      options: config.options,
-    });
-  };
-
-  const destroyChart = () => {
-    if (chartRef.current) {
-      chartRef.current.destroy();
-      chartRef.current = null;
-    }
-  };
-
   React.useEffect(() => {
+    const renderChart = () => {
+      if (!canvasRef.current || !hasData) { return; }
+
+      const ctx = canvasRef.current;
+      const config = loadConfig(labels, { data, label: 'Count' });
+
+      chartRef.current = new ChartJS(ctx, {
+        type: 'bar',
+        data: config.data,
+        options: config.options,
+      });
+    };
+
+    const destroyChart = () => {
+      if (chartRef.current) {
+        chartRef.current.destroy();
+        chartRef.current = null;
+      }
+    };
     renderChart();
     return destroyChart;
-  }, []);
+  }, [data, hasData, labels]);
 
   return (
     <div>
@@ -227,6 +228,7 @@ export default React.memo(withStyles((theme) => ({
       >
         <canvas
           ref={canvasRef}
+          // eslint-disable-next-line jsx-a11y/no-interactive-element-to-noninteractive-role
           role="img"
           {...props}
         >
@@ -243,7 +245,7 @@ export default React.memo(withStyles((theme) => ({
           </Typography>
           <Typography variant="caption">
             This may be a multi-part annotated column, which contains + in its name.
-            Multi-part columns don't show any statistics yet.
+            Multi-part columns don&apos;t show any statistics yet.
             You may <span className={classes.colorHint}>clear</span> the
             annotation in order to view individual column statistics.
           </Typography>
@@ -287,4 +289,6 @@ export default React.memo(withStyles((theme) => ({
 
     </div>
   );
-}));
+};
+
+export default withStyles(styles)(React.memo(Stats));

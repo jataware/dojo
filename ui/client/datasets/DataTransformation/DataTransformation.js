@@ -510,6 +510,7 @@ export default withStyles(({ spacing }) => ({
     setShowSpinner(false);
   }, [datasetInfo.id]);
 
+  // eslint-disable-next-line no-unused-vars
   const { data: fileRestored, error: fileRestoredError } = useElwoodData({
     datasetId: datasetInfo.id,
     annotations,

@@ -9,7 +9,6 @@ import axios from 'axios';
 import Container from '@material-ui/core/Container';
 import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
 import Grid from '@material-ui/core/Grid';
-import { useHistory } from 'react-router-dom';
 import Typography from '@material-ui/core/Typography';
 
 import * as yup from 'yup';
@@ -135,42 +134,58 @@ export default withStyles(({ spacing }) => ({
   const [fileMetadata, setFileMetadata] = useState({
     filename: null,
   });
+  const [loading, setLoading] = useState(false);
 
   const back = (/* event*/) => {}; // Do nothing
 
-  useEffect(async () => {
-    setDatasetInfo({
-      ...datasetInfo,
-      id: modelId,
+  // set up the dataset info & basic metadata/annotations objects
+  useEffect(() => {
+    // Only do this if we aren't already fetching and we haven't loaded the dataset id
+    if (!loading && !datasetInfo.id) {
+      setLoading(true);
+      setDatasetInfo({
+        ...datasetInfo,
+        id: modelId,
 
-    });
-    setAnnotations({
-      metadata: fileMetadata,
-      annotations: {},
-    });
-
-    const terminal_ready_filepath = props.request_path;
-    const url = `/api/dojo/job/${modelId}/tasks.model_output_analysis`;
-    await axios({
-      method: 'post',
-      url,
-      data: {
-        model_id: modelId,
-        fileurl: terminal_ready_filepath,
-        filepath: props?.file_path || '',
-        synchronous: true,
-        context: {},
-      },
-    }).then((result) => {
-      const jobResult = result.data.result;
-      setFileMetadata({
-        ...fileMetadata,
-        ...jobResult,
-        fileurl: terminal_ready_filepath,
-        filepath: props?.file_path || '',
       });
-    });
-  }, []);
+      setAnnotations({
+        metadata: fileMetadata,
+        annotations: {},
+      });
+
+      const terminal_ready_filepath = props.request_path;
+      const url = `/api/dojo/job/${modelId}/tasks.model_output_analysis`;
+      axios({
+        method: 'post',
+        url,
+        data: {
+          model_id: modelId,
+          fileurl: terminal_ready_filepath,
+          filepath: props?.file_path || '',
+          synchronous: true,
+          context: {},
+        },
+      }).then((result) => {
+        setLoading(false);
+        const jobResult = result.data.result;
+        setFileMetadata({
+          ...fileMetadata,
+          ...jobResult,
+          fileurl: terminal_ready_filepath,
+          filepath: props?.file_path || '',
+        });
+      });
+    }
+  }, [
+    datasetInfo,
+    fileMetadata,
+    modelId,
+    props?.file_path,
+    props?.request_path,
+    setAnnotations,
+    setDatasetInfo,
+    loading
+  ]);
 
   const defaultValues = {
     name: datasetInfo?.name || '',

@@ -29,7 +29,13 @@ const MultiColumnDateSelector = ({
       const target = editingColumn.name;
       setFieldValue([`date.multi-column.${editingColumn.date_type}`], target);
     }
-  }, [editingColumn.date_type, values.multiPartBase]);
+  }, [
+    editingColumn.date_type,
+    editingColumn.name,
+    values.multiPartBase,
+    setFieldValue,
+    disabled
+  ]);
 
   const formatProps = {
     validateFormat: validateDateFormat,

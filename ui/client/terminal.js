@@ -242,7 +242,7 @@ const CenteredGrid = ({ model }) => {
         title={`${modelOutputFile?.name || modelOutputFile}`}
       >
         <RegistrationStepper
-          onSave={() => { setOpen(false); }}
+          onSave={() => { setIsModelOutputOpen(false); }}
           match={{
             params: {
               flowslug: 'model',

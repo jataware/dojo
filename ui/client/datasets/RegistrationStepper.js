@@ -8,7 +8,6 @@ import Typography from '@material-ui/core/Typography';
 
 import cloneDeep from 'lodash/cloneDeep';
 import get from 'lodash/get';
-import map from 'lodash/map';
 
 import { makeStyles } from '@material-ui/core/styles';
 import { useHistory, useLocation } from 'react-router-dom';
@@ -73,8 +72,6 @@ const useStyles = makeStyles(({ spacing, breakpoints }) => ({
   }
 }));
 
-const getSteps = (flow) => map(flow.steps, 'label');
-
 const defaultDatasetState = {
   id: null,
   name: '',
@@ -134,15 +131,9 @@ function getUpdateRawFileName(uploadedRawFileNames) {
   return firstFileMatch;
 }
 
-const HorizontalLinearStepper = ({ match, updateLocation, ...props }) => {
+const InnerStepper = ({ match, updateLocation, ...props }) => {
   const { flowslug, step, datasetId } = match?.params;
   const shouldUpdateLocation = updateLocation === undefined ? true : Boolean(updateLocation);
-
-  // Return "404" immediately if the flow slug doesn't exist
-  if (!flows.hasOwnProperty(flowslug)) {
-    // TODO: Standardize 404 not found handling
-    return <h2>404 Not Found</h2>;
-  }
 
   const history = useHistory();
   const classes = useStyles();
@@ -168,17 +159,20 @@ const HorizontalLinearStepper = ({ match, updateLocation, ...props }) => {
       if (stepNum < 0) stepNum = 0;
     }
     setActiveStep(stepNum);
-  }, [location]);
 
-  const [datasetInfo, setDatasetInfo] = React.useState(() => cloneDeep(defaultDatasetState));
+    // Set activeStep every time the page changes (because it doesn't function as a SPA
+    // so we can't rely on state to persist)
+  }, [location, datasetId, flow.steps, step]);
 
-  const [annotations, setAnnotations] = React.useState({
+  const [datasetInfo, setDatasetInfo] = useState(() => cloneDeep(defaultDatasetState));
+
+  const [annotations, setAnnotations] = useState({
     metadata: {},
     annotations: {},
   });
 
-  const [error, setError] = React.useState(null);
-  const [displayError, setDisplayError] = React.useState(false);
+  const [error, setError] = useState(null);
+  const [displayError, setDisplayError] = useState(false);
 
   useEffect(() => {
     document.title = 'Dataset Registration - Dojo';
@@ -204,9 +198,9 @@ const HorizontalLinearStepper = ({ match, updateLocation, ...props }) => {
            * which means we should display the previously uploaded file
            * (we only upload files when a created dataset exists). If there's
            * no query param, there should be AT LEAST 1 uploaded file.
-           * If there is only one uploaded file, we can safely assume and help the user by displaying the
-           * file. If there's more than 1 file, we have no way to know which file they should work
-           * with, except if in the `filename` url search param.
+           * If there is only one uploaded file, we can safely assume and help the user by
+           * displaying the file. If there's more than 1 file, we have no way to know which
+           * file they should work with, except if in the `filename` url search param.
            * In the future we could prompt the user to select which previously uploaded
            * file they wish to work with.
            */
@@ -256,7 +250,9 @@ const HorizontalLinearStepper = ({ match, updateLocation, ...props }) => {
         setDisplayError(true);
       });
     }
-  }, [activeStep]); // We fetch once either on page load, or once we move to a different step to get freshest data
+  // Fetch data & update the page every time we change location
+  // activeStep changes too late and will cause this to run twice
+  }, [datasetId, flowslug, location]);
 
   const handleBack = () => {
     let prevStep = flow.steps[activeStep - 1];
@@ -274,7 +270,7 @@ const HorizontalLinearStepper = ({ match, updateLocation, ...props }) => {
   };
 
   const handleNext = ({
-    dataset, filename, filepath
+    dataset, filename
   } = {}) => {
     const currentStep = flow.steps[activeStep];
     const nextStep = flow.steps[activeStep + 1];
@@ -331,19 +327,19 @@ const HorizontalLinearStepper = ({ match, updateLocation, ...props }) => {
 
         <div className={classes.stepperWrapper}>
           <Stepper activeStep={activeStep}>
-            {flow.steps.map((step, index) => (
+            {flow.steps.map((mappedStep, index) => (
               <Tooltip
                 classes={{
                   tooltip: classes.stepperTooltip,
                   popper: classes.stepperTooltipWraper
                 }}
-                key={step.label}
-                title={step.label}
+                key={mappedStep.label}
+                title={mappedStep.label}
               >
                 <Step completed={index < activeStep}>
                   <StepLabel>
                     <Typography variant="h5">
-                      {step.label}
+                      {mappedStep.label}
                     </Typography>
                   </StepLabel>
                 </Step>
@@ -368,6 +364,17 @@ const HorizontalLinearStepper = ({ match, updateLocation, ...props }) => {
 
     </div>
   );
+};
+
+const HorizontalLinearStepper = ({ match, updateLocation, ...props }) => {
+  const { flowslug } = match?.params;
+  // Return "404" immediately if the flow slug doesn't exist
+  if (!flows.hasOwnProperty(flowslug)) {
+    // TODO: Standardize 404 not found handling
+    return <h2>404 Not Found</h2>;
+  }
+
+  return <InnerStepper match={match} updateLocation={updateLocation} {...props} />;
 };
 
 export default HorizontalLinearStepper;

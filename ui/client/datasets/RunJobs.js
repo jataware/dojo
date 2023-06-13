@@ -58,6 +58,8 @@ const RunJobs = withStyles(({ spacing }) => ({
   const [jobData, setJobData] = useState(null);
   const [jobIndex, setJobIndex] = useState(0);
 
+  /* eslint-disable */
+
   const updateJobData = ({ firstRun } = {}) => {
     const job = jobs[jobIndex];
     // const job_id = job.id;
@@ -131,6 +133,7 @@ const RunJobs = withStyles(({ spacing }) => ({
       clearTimeout(timeoutHandle);
     };
   }, [jobData, datasetInfo.id]);
+  /* eslint-enable */
 
   return (
     <Container

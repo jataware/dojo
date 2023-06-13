@@ -93,6 +93,7 @@ export const ParagraphTile = withStyles(() => ({
             <dd>{(highlights || calculateHighlightTargets(paragraph.text, query))
               .map((partInfo, idx) => (
                 <span
+                  // eslint-disable-next-line react/no-array-index-key
                   key={idx}
                   style={partInfo.highlight
                     ? { fontWeight: 'bold', background: 'yellow' }

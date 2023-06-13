@@ -194,6 +194,8 @@ const ViewDocumentsGrid = withStyles(() => ({
 
   const [searchTerm, setSearchTerm] = useState('');
   const [searchTermValue, setSearchTermValue] = useState('');
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const updateSearchTerm = useCallback(debounce(setSearchTerm, 1000), []);
 
   const [searchLoading, setSearchLoading] = useState(false);
@@ -201,10 +203,6 @@ const ViewDocumentsGrid = withStyles(() => ({
   const [highlights, setHighlights] = useState(null);
 
   const [openedDocument, setOpenedDocument] = useState(null);
-
-  useEffect(() => {
-    updateSearchTerm(searchTermValue);
-  }, [searchTermValue]);
 
   const performSearch = () => {
     if (!searchTerm) {
@@ -258,6 +256,7 @@ const ViewDocumentsGrid = withStyles(() => ({
 
   useEffect(() => {
     performSearch();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm]);
 
   const clearSearch = () => {
@@ -272,6 +271,7 @@ const ViewDocumentsGrid = withStyles(() => ({
       return;
     }
     setSearchTermValue(value);
+    updateSearchTerm(value);
   };
 
   const displayableColumns = documentColumns;

@@ -28,7 +28,7 @@ const MultiColumnGeoSelector = ({
       const target = editingColumn.name;
       setFieldValue([`geo.multi-column.${mapAdminValueNumbers[editingColumn.geo_type]}`], target);
     }
-  }, [editingColumn.geo_type]);
+  }, [editingColumn.geo_type, editingColumn.name, disabled, setFieldValue]);
 
   return (
     <FormControl>

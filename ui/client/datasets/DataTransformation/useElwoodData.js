@@ -28,7 +28,6 @@ const useElwoodData = ({
     };
 
     const runElwoodJob = ({ requestArgs, onFailure }) => {
-      console.log('runElwoodJob has been called at the top level');
       let count = 0;
 
       const repeatFetch = (jobId) => {
@@ -92,8 +91,9 @@ const useElwoodData = ({
         }
       }
     }
-    // The linter is complaining about cleanupRef missing here because it doesn't understand
-    // that this is a reference to a ref, which both won't and shouldn't trigger a rerender
+  // The linter is complaining about cleanupRef missing here because it doesn't understand
+  // that this is a reference to a ref, which both won't and shouldn't trigger a rerender
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     datasetId,
     annotations,

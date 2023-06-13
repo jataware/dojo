@@ -90,7 +90,7 @@ describe('Dataset Append Flow', function () {
     );
   });
 
-  it('Happy path: Goes through from Metadata page to success page wich mocked requests', function () {
+  it('Happy path: Goes through from Metadata page to success page with mocked requests', function () {
 
     mockHttpRequests();
 
@@ -105,6 +105,8 @@ describe('Dataset Append Flow', function () {
 
     cy
       .findByTestId('file-upload-input', { timeout: 1000 })
+      // click to set selector as touched so it won't fail as a required & incomplete field
+      .click()
       .selectFile({
         contents: 'cypress/fixtures/dummy.csv',
         fileName: 'dummy.csv'
@@ -114,7 +116,7 @@ describe('Dataset Append Flow', function () {
       .get('@NextButton')
       .click();
 
-    cy.wait(50);
+    cy.wait(1500);
 
     cy.url().should('match', /datasets\/append\/preview\/.+\?filename=raw_data_3.csv/);
 
@@ -146,7 +148,7 @@ it('Starts from Preview page from previously uplaoded file, navigates back, then
 
   cy.url().should('match', /datasets\/append\/upload\/.+\?filename=raw_data.csv/);
 
-  // also find uplaoed file
+  // also find uploaded file
   cy.findByText(/uploaded filename/i);
   cy.findByText(/output_0.9/i);
 

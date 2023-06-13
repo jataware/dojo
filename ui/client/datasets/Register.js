@@ -117,6 +117,7 @@ export default withStyles(({ spacing }) => ({
           setSubmitting(true);
 
           if (values['x-resolution'] && values['y-resolution']) {
+            // eslint-disable-next-line no-param-reassign
             values.spatial_resolution = [
               values['x-resolution'],
               values['y-resolution']
@@ -141,13 +142,13 @@ export default withStyles(({ spacing }) => ({
               const fileMetadataData = { ...fileMetadata, rawFileName: newRawFileName };
               await updateMetadata(datasetId, fileMetadataData, setAnnotations);
 
-              return { dataset: latestDatasetData, rawFileName: newRawFileName };
+              return { dataset: latestDatasetData, filename: newRawFileName };
             }
-            return { dataset: latestDatasetData, rawFileName };
+            return { dataset: latestDatasetData, filename: rawFileName };
           }
 
           createAndUploadDataset()
-            .then(({ dataset, rawFileName }) => handleNext({ dataset, filename: rawFileName }));
+            .then(({ dataset, filename }) => handleNext({ dataset, filename }));
         }}
       >
         {(formik) => (

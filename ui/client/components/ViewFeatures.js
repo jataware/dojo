@@ -185,6 +185,8 @@ const ViewFeatures = withStyles(() => ({
 }))(({ classes }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [searchTermValue, setSearchTermValue] = useState('');
+
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   const updateSearchTerm = useCallback(debounce(setSearchTerm, 500), []);
 
   const [features, setFeatures] = useState([]);
@@ -283,10 +285,6 @@ const ViewFeatures = withStyles(() => ({
     }
   ];
 
-  useEffect(() => {
-    updateSearchTerm(searchTermValue);
-  }, [searchTermValue]);
-
   const performSearch = () => {
     if (!searchTerm) {
       fetchFeatures(setFeatures, setFeaturesLoading, setFeaturesError);
@@ -306,6 +304,7 @@ const ViewFeatures = withStyles(() => ({
 
   useEffect(() => {
     performSearch();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchTerm]);
 
   const clearSearch = () => {
@@ -320,6 +319,7 @@ const ViewFeatures = withStyles(() => ({
       return;
     }
     setSearchTermValue(value);
+    updateSearchTerm(value);
   };
 
   return featuresError ? (

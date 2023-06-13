@@ -21,14 +21,16 @@ export const Navigation = withStyles(({ spacing }) => ({
     >
       Back
     </Button>
-    <Button
-      color="primary"
-      variant="contained"
-      disableElevation
-      disabled={disabled}
-      onClick={() => { handleNext({ handleNext, ...props }); }}
-    >
-      {label || 'Next'}
-    </Button>
+    {handleNext && (
+      <Button
+        color="primary"
+        variant="contained"
+        disableElevation
+        disabled={disabled}
+        onClick={() => { handleNext({ handleNext, ...props }); }}
+      >
+        {label || 'Next'}
+      </Button>
+    )}
   </div>
 ));

@@ -33,7 +33,15 @@ export const FormAwareTextField = withStyles((theme) => ({
     }
   },
 }))(({
-  classes, name, label, requiredFn, placeholder, inputProps = {}, InputProps = {}, required, ...props
+  classes,
+  name,
+  label,
+  requiredFn,
+  placeholder,
+  inputProps = {},
+  InputProps = {},
+  required,
+  ...props
 }) => {
   const [field, meta] = useField({ ...props, name });
 

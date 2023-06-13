@@ -46,6 +46,7 @@ export function highlightText(text, highlights) {
     <span>
       {highlightData.map((partInfo, idx) => (
         <span
+          // eslint-disable-next-line react/no-array-index-key
           key={idx}
           style={partInfo.highlight
             ? { fontWeight: 'bold', background: 'yellow' }
