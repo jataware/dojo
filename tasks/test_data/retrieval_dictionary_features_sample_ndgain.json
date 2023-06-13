@@ -1,0 +1,137 @@
+{
+  "82e418bd-35e1-46df-86ba-75e33cb423ca": [
+    {
+      "source_column": "governance",
+      "name_in_model": "Governance indicator",
+      "aggregation": "mean"
+    },
+    {
+      "source_column": "vulnerability",
+      "name_in_model": "Vulnerability indicator",
+      "aggregation": "mean"
+    },
+    {
+      "source_column": "capacity",
+      "name_in_model": "Capacity indicator",
+      "aggregation": "mean"
+    }
+  ],
+  "a92764c2-a667-415d-9d58-ec8466a84dc7": [
+    {
+      "source_column": "P1: State Legitimacy",
+      "name_in_model": "P1: State Legitimacy",
+      "aggregation": "mean"
+    }
+  ],
+  "a3b9431c-ae5c-4efe-aad9-eb4bdc2d9d95": [
+    {
+      "source_column": "PopulationPer3kmResolution",
+      "name_in_model": "Population per 3km square resolution",
+      "aggregation": "mean"
+    }
+  ],
+  "53004696-8ca3-41a7-957d-d9f73cc10ef4": [
+    {
+      "source_column": "POP",
+      "name_in_model": "Population",
+      "aggregation": "mean"
+    }
+  ],
+  "08199584-2e10-48c1-889e-f0e6911d9893": [
+    {
+      "source_column": "port_count",
+      "name_in_model": "Port Count",
+      "aggregation": "mean"
+    }
+  ],
+  "962c458a-5e76-4f87-a739-d8ae0b70deb7": [
+    {
+      "source_column": "IS.SHP.GOOD.TU",
+      "name_in_model": "Container port traffic (TEU: 20 foot equivalent units)",
+      "aggregation": "mean"
+    }
+  ],
+  "499aed27-9b9c-4d05-97ec-65fd956521cf": [
+    {
+      "source_column": "Total U.S. Military Bases",
+      "name_in_model": "Locations of US Military Bases Abroad",
+      "aggregation": "mean"
+    }
+  ],
+  "e5057175-34d7-4c01-803a-17309e996264": [
+    {
+      "source_column": "MS.MIL.MPRT.KD",
+      "name_in_model": "Arms imports (SIPRI trend indicator values)",
+      "aggregation": "mean"
+    }
+  ],
+  "a318111e-587d-4c89-8993-431d5fb0c973": [
+    {
+      "source_column": "BX.KLT.DINV.WD.GD.ZS",
+      "name_in_model": "Foreign direct investment, net inflows (% of GDP)",
+      "aggregation": "mean"
+    }
+  ],
+  "f90cb3d6-47d4-4cf6-8a0e-fd9a15b2f469": [
+    {
+      "source_column": "Requirements (US$)",
+      "name_in_model": "Humanitarian Requirements (USD)",
+      "aggregation": "mean"
+    }
+  ],
+  "e49d8b28-2618-4874-ac92-88fa25714372": [
+    {
+      "source_column": "US Aid Total (Current USD Millions)",
+      "name_in_model": "US Aid",
+      "aggregation": "mean"
+    },
+    {
+      "source_column": "ODA Aid Total (Current Prices in USD millions)",
+      "name_in_model": "Foreign Aid from ODA Countries",
+      "aggregation": "mean"
+    }
+  ],
+  "db48c2bb-9080-41d6-a5b9-916c0c6871f1": [
+    {
+      "source_column": "Amount (Constant USD2017)",
+      "name_in_model": "Amount of Chinese Military Aid (Constant USD2017)",
+      "aggregation": "mean"
+    }
+  ],
+  "9e9da0d0-8494-4a1e-a312-45eb1b0a77be": [
+    {
+      "source_column": "Amount (Constant USD2017)",
+      "name_in_model": "Chinese Aid & Loans",
+      "aggregation": "mean"
+    }
+  ],
+  "62fcdd55-1459-41c8-b815-e5fd90e06587": [
+    {
+      "source_column": "NY.GDP.NGAS.RT.ZS",
+      "name_in_model": "Natural gas rents (% of GDP)",
+      "aggregation": "mean"
+    },
+    {
+      "source_column": "NY.GDP.MINR.RT.ZS",
+      "name_in_model": "Mineral rents (% of GDP)",
+      "aggregation": "mean"
+    },
+    {
+      "source_column": "NY.GDP.TOTL.RT.ZS",
+      "name_in_model": "Total natural resources rents (% of GDP)",
+      "aggregation": "mean"
+    }
+  ],
+  "371ca304-a94c-4c67-ae28-6933c7493e9a": [
+    {
+      "source_column": "imports",
+      "name_in_model": "US Imports",
+      "aggregation": "mean"
+    },
+    {
+      "source_column": "exports",
+      "name_in_model": "US Exports",
+      "aggregation": "mean"
+    }
+  ]
+}

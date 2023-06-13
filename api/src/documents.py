@@ -119,7 +119,9 @@ def semantic_highlight_paragraphs(payload: HighlightData):
 
     data = payload.dict()
 
-    highlights = highlighter.highlight_multiple(data["query"], data["matches"])
+    clean_query = clean_and_decode_str(data["query"])
+
+    highlights = highlighter.highlight_multiple(clean_query, data["matches"])
 
     return {
         "highlights": highlights

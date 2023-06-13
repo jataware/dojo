@@ -1,47 +1,39 @@
 from __future__ import annotations
 
+import codecs
+import csv
 import io
+import json
 import os
 import re
 import time
 import uuid
 from datetime import datetime
-from typing import List, Optional
-import json
-import csv
-import codecs
 from functools import partial
-import pandas as pd
+from typing import List, Optional
 
 import openpyxl
+import pandas as pd
+from elasticsearch import Elasticsearch
+from fastapi import APIRouter, File, HTTPException, Query, Response, UploadFile, status
+from fastapi.logger import logger
+from fastapi.responses import FileResponse
 from openpyxl.styles import Font
 from openpyxl.workbook import Workbook
 from openpyxl.worksheet.datavalidation import DataValidation
-
-from elasticsearch import Elasticsearch
-from fastapi import APIRouter, HTTPException, Query, Response, status, UploadFile, File
-from fastapi.logger import logger
-from fastapi.responses import FileResponse
+from pydantic import ValidationError
 from redis import Redis
 from rq import Queue
-
-from pydantic import ValidationError
-
-from validation import IndicatorSchema, DojoSchema, MetadataSchema
-from src.data import get_context
-
-from src.settings import settings
-
-from src.dojo import search_and_scroll
-from src.ontologies import get_ontologies
-from src.causemos import notify_causemos
-from src.causemos import deprecate_dataset
-from src.utils import put_rawfile, get_rawfile, list_files
-from src.plugins import plugin_action
-
+from src.causemos import deprecate_dataset, notify_causemos
 from src.csv_annotation_parser import format_annotations, xls_to_annotations
-
-from src.feature_queries import keyword_query_v1, hybrid_query_v1
+from src.data import get_context
+from src.dojo import search_and_scroll
+from src.feature_queries import hybrid_query_v1, keyword_query_v1
+from src.ontologies import get_ontologies
+from src.plugins import plugin_action
+from src.settings import settings
+from src.utils import add_date_to_dataset, get_rawfile, list_files, put_rawfile
+from validation import DojoSchema, IndicatorSchema, MetadataSchema
 
 router = APIRouter()
 es = Elasticsearch([settings.ELASTICSEARCH_URL], port=settings.ELASTICSEARCH_PORT)
@@ -52,6 +44,7 @@ redis = Redis(
     int(os.environ.get("REDIS_PORT", 6379)),
 )
 q = Queue(connection=redis, default_timeout=-1)
+
 
 # For created_at times in epoch milliseconds
 def current_milli_time():
@@ -422,7 +415,6 @@ def post_annotation(payload: MetadataSchema.MetaModel, indicator_id: str):
         Response: Returns a response with the status code of 201 and the location of the annotation.
     """
     try:
-
         body = json.loads(payload.json())
 
         es.index(index="annotations", body=body, id=indicator_id)
@@ -452,7 +444,6 @@ def put_annotation(payload: MetadataSchema.MetaModel, indicator_id: str):
         Response: Response object with status code, informational messages, and content.
     """
     try:
-
         body = json.loads(payload.json())
 
         es.index(index="annotations", body=body, id=indicator_id)
@@ -483,13 +474,34 @@ def patch_annotation(payload: MetadataSchema.MetaModel, indicator_id: str):
         Response: Response object with status code, informational messages, and content.
     """
     try:
-
         body = json.loads(payload.json(exclude_unset=True))
+
+        # Handles datasets being regsitered with no date.
+        if body.get("annotations"):
+            if not body.get("annotations").get("date", []):
+                logger.info("No Date Annotated, making one.")
+                rawfile_path = os.path.join(
+                    settings.DATASET_STORAGE_BASE_URL,
+                    indicator_id,
+                    f"raw_data.csv",
+                )
+                date_annotation = add_date_to_dataset(path=rawfile_path)
+                body["annotations"]["date"] = [date_annotation]
+
+            # Check if there is a primary date
+            primary_set = False
+            for date in body.get("annotations").get("date"):
+                if date.get("primary_date"):
+                    primary_set = True
+                    break
+            # If there isn't set the first date to primary
+            if not primary_set:
+                body["annotations"]["date"][0]["primary_date"] = True
 
         es.update(index="annotations", body={"doc": body}, id=indicator_id)
 
         return Response(
-            status_code=status.HTTP_201_CREATED,
+            status_code=status.HTTP_200_OK,
             headers={"location": f"/api/annotations/{indicator_id}"},
             content=f"Updated annotation with id = {indicator_id}",
         )
@@ -787,7 +799,6 @@ async def upload_data_dictionary_file(indicator_id: str, file: UploadFile = File
 
 @router.get("/indicators/annotations/file-template")
 def download_data_dictionary_template_file(indicator_id=None, filetype="xlsx"):
-
     if filetype == "csv":
         file_name = "dataset_annotate_template.template_csv"
         headers = {

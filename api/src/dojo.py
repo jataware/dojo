@@ -581,7 +581,11 @@ def get_csv(index: str, obj_id: str, request: Request, wide_format: str = "false
 
 
 @router.post("/dojo/index_model_weight/generate")
-async def generate_index_model_weights(request: Request):
+async def generate_index_model_weights(
+        request: Request,
+        explained_variance_threshold=0.7
+):
+
     from src.data import job
 
     json_payload = await request.json()
@@ -589,7 +593,10 @@ async def generate_index_model_weights(request: Request):
     uuid = json_payload.get("id")
 
     job_string = "causemos_processors.generate_index_model_weights"
-    options = {"json_payload": json_payload}
+    options = {
+        "json_payload": json_payload,
+        "explained_variance_threshold": explained_variance_threshold
+    }
 
     resp = job(uuid=uuid, job_string=job_string, options=options)
 

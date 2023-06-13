@@ -1,19 +1,20 @@
+import csv
 import os
+import re
 import tempfile
 import time
-import csv
-import re
 from collections import namedtuple
-from urllib.parse import urlparse
+from datetime import date
 from io import BytesIO, StringIO
 from typing import Optional
+from urllib.parse import urlparse
 from zlib import compressobj
-from fastapi.logger import logger
-import pandas as pd
-from elasticsearch import Elasticsearch
+
 import boto3
 import botocore
-
+import pandas as pd
+from elasticsearch import Elasticsearch
+from fastapi.logger import logger
 from src.settings import settings
 from validation import ModelSchema
 
@@ -46,10 +47,10 @@ def delete_matching_records_from_model(model_id, record_key, record_test):
         they should be deleted. record_test() should return True if this record is to be deleted
     """
 
-    from src.models import (
+    from src.models import (  # import at runtime to avoid circular import error
         get_model,
         modify_model,
-    )  # import at runtime to avoid circular import error
+    )
 
     record_count = 0
 
@@ -75,8 +76,8 @@ def run_model_with_defaults(model_id):
     This function takes in a model and submits a default run to test that model's functionality
     """
 
-    from src.models import get_model
     from src.dojo import get_parameters
+    from src.models import get_model
     from src.runs import create_run, current_milli_time
     from validation.RunSchema import ModelRunSchema
 
@@ -117,24 +118,33 @@ def run_model_with_defaults(model_id):
     return run_id
 
 
-S3FileInfo = namedtuple("FileInfo", field_names=["bucket", "path", "region"], defaults=[None])
+S3FileInfo = namedtuple(
+    "FileInfo", field_names=["bucket", "path", "region"], defaults=[None]
+)
+
+
 def s3_url(self):
     return f"s3://{self.bucket}/{self.path}"
+
+
 S3FileInfo.s3_url = property(s3_url)
 
 
 def normalize_file_info(url: str) -> Optional[S3FileInfo]:
-    """
-    """
+    """ """
     url_info = urlparse(url)
     path = url_info.path.lstrip("/")
     if url_info.scheme == "file":
         return S3FileInfo(bucket=url_info.netloc, path=path)
     elif url_info.scheme == "https":
-        match = re.match(r'https://(?P<bucket>.+)\.s3.(?P<region>.+\.)?amazonaws.com', url)
+        match = re.match(
+            r"https://(?P<bucket>.+)\.s3.(?P<region>.+\.)?amazonaws.com", url
+        )
         if not match:
             return None
-        return S3FileInfo(bucket=match.group("bucket"), path=path, region=match.group("region"))
+        return S3FileInfo(
+            bucket=match.group("bucket"), path=path, region=match.group("region")
+        )
     elif url_info.scheme == "s3":
         return S3FileInfo(bucket=url_info.netloc, path=path)
     else:
@@ -207,8 +217,7 @@ async def stream_csv_from_data_paths(data_paths, wide_format="false"):
     # Build single dataframe
     df = pd.concat(
         pd.read_parquet(
-            file,
-            storage_options=None if file.startswith('http') else storage_options
+            file, storage_options=None if file.startswith("http") else storage_options
         )
         for file in data_paths
     )
@@ -253,3 +262,42 @@ async def compress_stream(content):
     async for buff in content:
         yield compressor.compress(buff.encode())
     yield compressor.flush()
+
+
+def add_date_to_dataset(path):
+    # Read file in
+    storage_options = {
+        "key": os.getenv("AWS_ACCESS_KEY_ID"),
+        "secret": os.getenv("AWS_SECRET_ACCESS_KEY"),
+        "token": None,
+        "client_kwargs": {"endpoint_url": None},
+    }
+    # dataframe = pd.read_csv(
+    #     path, storage_options=None if path.startswith("http") else storage_options
+    # )
+    file = get_rawfile(path)
+    dataframe = pd.read_csv(file)
+    time_format = "%Y-%m-%d"
+
+    # Add date column
+    dataframe["date"] = date.today().strftime(time_format)
+
+    # Put data back
+    csv_buffer = BytesIO()
+    dataframe.to_csv(csv_buffer, index=False)
+    csv_buffer.seek(0)
+    put_rawfile(path, csv_buffer)
+
+    # Return annotation for date column in dataset
+    return {
+        "name": "date",
+        "display_name": "",
+        "description": "Automatically generated date column",
+        "type": "date",
+        "date_type": "date",
+        "primary_date": True,
+        "time_format": time_format,
+        "associated_columns": None,
+        "qualifies": [],
+        "aliases": {},
+    }
