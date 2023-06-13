@@ -255,8 +255,7 @@ const AppendFlow = {
       options: {
         jobs: [
           {
-            id: 'file_processors.file_conversion',
-            args: {},
+            id: 'file_processors.file_conversion'
           },
           {
             id: 'elwood_processors.run_elwood',

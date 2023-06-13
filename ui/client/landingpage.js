@@ -256,6 +256,7 @@ const LandingPage = () => {
                 <div>
                   <ComputerIcon className={classes.bigIcon} />
                   <Typography
+                    data-test="landingPageViewModels"
                     component={RouterLink}
                     to="/models"
                     variant="h5"

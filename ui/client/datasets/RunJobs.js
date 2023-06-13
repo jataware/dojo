@@ -58,34 +58,36 @@ const RunJobs = withStyles(({ spacing }) => ({
   const [jobData, setJobData] = useState(null);
   const [jobIndex, setJobIndex] = useState(0);
 
-  useEffect(() => {
-    const updateJobData = ({ firstRun } = {}) => {
-      const job = jobs[jobIndex];
-      // const job_id = job.id;
-      const url = `/api/dojo/job/${datasetInfo.id}/${job.id}`;
-      let context;
-      if (job.send_context) {
-        context = {
-          uuid: datasetInfo.id,
-          dataset: datasetInfo,
-          annotations,
-        };
-      }
-      const payload = {
-        context,
-        ...job.args,
-        filename: rawFileName,
-        force_restart: firstRun,
-      };
-      axios({
-        method: 'post',
-        url,
-        data: payload,
-      }).then((response) => {
-        setJobData(response.data);
-      }); // TODO catch , finally
-    };
+  /* eslint-disable */
 
+  const updateJobData = ({ firstRun } = {}) => {
+    const job = jobs[jobIndex];
+    // const job_id = job.id;
+    const url = `/api/dojo/job/${datasetInfo.id}/${job.id}`;
+    let context;
+    if (job.send_context) {
+      context = {
+        uuid: datasetInfo.id,
+        dataset: datasetInfo,
+        annotations,
+      };
+    }
+    const payload = {
+      context,
+      ...job.args,
+      filename: rawFileName,
+      force_restart: firstRun,
+    };
+    axios({
+      method: 'post',
+      url,
+      data: payload,
+    }).then((response) => {
+      setJobData(response.data);
+    }); // TODO catch , finally
+  };
+
+  useEffect(() => {
     let timeoutHandle;
 
     if (!(datasetInfo?.id)) {
@@ -130,19 +132,8 @@ const RunJobs = withStyles(({ spacing }) => ({
     return function cleanup() {
       clearTimeout(timeoutHandle);
     };
-  }, [
-    jobData,
-    datasetInfo.id,
-    annotations,
-    datasetInfo,
-    handleNext,
-    jobIndex,
-    jobs,
-    rawFileName,
-    setAnnotations,
-    setDatasetInfo,
-    props,
-  ]);
+  }, [jobData, datasetInfo.id]);
+  /* eslint-enable */
 
   return (
     <Container
