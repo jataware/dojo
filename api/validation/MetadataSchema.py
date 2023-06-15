@@ -174,6 +174,12 @@ class ClipTime(BaseModel):
 
 Transformation = Union[RegridGeo, ScaleTime, ClipGeo, ClipTime]
 
+class Metadata(BaseModel):
+    class Config:
+        extra = Extra.allow
+
+    transformations: Optional[Dict[str, Transformation]]
+
 class AnnotationSchema(BaseModel):
     class Config:
         extra = Extra.allow
@@ -181,9 +187,7 @@ class AnnotationSchema(BaseModel):
     geo: Optional[List[GeoAnnotation]]
     date: Optional[List[DateAnnotation]]
     feature: Optional[List[FeatureAnnotation]]
-    transformations: Optional[Dict[str, Transformation]]
-
 
 class MetaModel(BaseModel):
-    metadata: Optional[Dict[str, Any]] = {}
+    metadata: Optional[Metadata] = None
     annotations: Optional[AnnotationSchema] = None

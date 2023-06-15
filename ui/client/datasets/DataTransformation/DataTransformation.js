@@ -367,14 +367,17 @@ const DataTransformation = withStyles(() => ({
       }
 
       // If there are transformations, we want to store the data transformation decisions
-      const clonedAnnotations = cloneDeep(annotations.annotations);
+      const clonedMetadata = cloneDeep(annotations.metadata);
       // add all the args that we sent to the elwood jobs and stored in our ref
-      // to our cloned annotations object
-      clonedAnnotations.transformations = transformationsRef.current;
-
+      // to our cloned metadata object
+      clonedMetadata.transformations = transformationsRef.current;
       // and PATCH that to the dataset's annotations
+      // along with the existing annotations so it doesn't overwrite anything
       axios.patch(
-        `/api/dojo/indicators/${datasetInfo.id}/annotations`, { annotations: clonedAnnotations }
+        `/api/dojo/indicators/${datasetInfo.id}/annotations`, {
+          annotations: annotations.annotations,
+          metadata: clonedMetadata
+        }
       ).then(() => {
         // Only handleNext once we've updated the annotations
         handleNext();
