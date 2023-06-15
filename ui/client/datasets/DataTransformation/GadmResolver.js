@@ -277,32 +277,21 @@ const GadmResolverTable = withStyles(() => ({
     maxHeight: '100%'
   },
   tableHeader: {
-    // dojo gradient
-    // backgroundColor: '#06B8EF',
-    // backgroundImage: 'linear-gradient(to right, #06B8EF, #A11BDA)',
-
     // light blue
-    backgroundColor: '#f0f8ff'
+    // backgroundColor: '#f0f8ff'
   },
   tableHeaderCell: {
-    backgroundColor: 'transparent',
-
-    // For Dojo Gradient Contrast
-    // color:"white",
-
+    backgroundColor: '#f0f8ff',
     padding: '1rem',
-    // paddingBottom: "1rem"
   },
   tableCell: {
-    padding: '1rem',
+    padding: '0.8rem',
     borderColor: 'aliceblue',
   },
   tableRow: {
   },
   selectRoot: {
     width: '100%'
-    // borderRadius: 0,
-    // borderColor: 'red'
   },
   outlined: {
     borderRadius: 0,
@@ -313,11 +302,11 @@ const GadmResolverTable = withStyles(() => ({
   }
 }))(({classes, rows}) => {
 
-  // stickyHeader
   return (
         <Table
           className={classes.table}
           aria-label="Gadm Resolver Table"
+          stickyHeader
         >
           <TableHead>
             <TableRow className={classes.tableHeader}>
@@ -409,7 +398,7 @@ export const GadmResolver = withStyles(() => ({
     right: 0
   },
   tableContainer: {
-    // border: '1px dashed red',
+    border: '1px solid #d7d7d7',
     width: '100%',
     maxHeight: '100%',
     overflowY: 'auto'
@@ -423,14 +412,7 @@ export const GadmResolver = withStyles(() => ({
   }
 }))(({ classes, gadmRowData, primaryCountryField }) => {
 
-  const [isOpen, setOpen] = React.useState(false);
-
-  const handleRowClick = () => {
-    setOpen(true);
-  };
-
   return (
-
       <div
         className={classes.root}
         style={{ minHeight: 500 }}
@@ -445,15 +427,42 @@ export const GadmResolver = withStyles(() => ({
             classes={{standardInfo: classes.alert}}
             severity="info"
           >
-            These GADM mappings for the primary country field <span style={{backgroundColor: '#f1f1f1', padding: 2}}>{primaryCountryField}</span> have been identified with lower confidence. Adjust as needed.
+            The following GADM mappings for primary country <span style={{backgroundColor: '#f1f1f1', padding: 2}}>{primaryCountryField}</span> have been identified with lower confidence. Adjust as needed.
           </MuiAlert>
         </div>
 
         <div className={classes.tableFlexer}>
           <div className={classes.tableFlexerAutoHeight}>
-            <Paper className={classes.tableContainer}>
+            <Paper
+              className={classes.tableContainer}
+              elevation={0}
+              >
               <GadmResolverTable rows={gadmRowData} />
             </Paper>
+          </div>
+        </div>
+
+        <div style={{width: '100%', display: 'flex', justifyContent: 'flex-end'}}>
+          <div
+            style={{
+              textAlign: 'right',
+              padding: '1.5rem 0 0.5rem 0',
+              width: '12rem',
+              display: 'flex',
+              justifyContent: 'space-between'
+            }}
+          >
+            <Button
+              variant="outlined"
+              color="default">
+              Cancel
+            </Button>
+            <Button
+              variant="outlined"
+              type="submit"
+              color="primary">
+              Save
+            </Button>
           </div>
         </div>
 
