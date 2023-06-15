@@ -11,6 +11,7 @@ import AspectRatioIcon from '@material-ui/icons/AspectRatio';
 import TodayIcon from '@material-ui/icons/Today';
 import GridOnIcon from '@material-ui/icons/GridOn';
 import MapIcon from '@material-ui/icons/Map';
+import GlobeIcon from '@material-ui/icons/Public';
 
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Container from '@material-ui/core/Container';
@@ -33,6 +34,12 @@ import {
   generateProcessGeoCovArgs,
   generateProcessTempCovArgs,
 } from './dataTransformationHelpers';
+
+import { GadmResolver } from './GadmResolver';
+
+import rcountry from 'random-country'; // TODO remove package dependency and this
+import random from 'lodash/random';
+import times from 'lodash/times';
 
 // for development purposes
 // const mapResolution = 111.00000000000014;
@@ -100,6 +107,37 @@ import {
 //   // timeBoundsError
 // ] = [false, false, false, false,];
 
+
+/**
+ *
+ **/
+const mockGadmResolutionAlternatives = [
+  {
+    id: 'korea123',
+    raw_value: 'Korea',
+    gadm_resolved: 'Republic of Korea',
+    alternatives: [
+      'Republic of Korea',
+      'Democratic People\'s Republic of Korea'
+    ]
+  }
+];
+
+for (let moreCountries = 0; moreCountries < 8; moreCountries++) {
+
+  let country = rcountry({ full: true });
+
+  mockGadmResolutionAlternatives.push({
+    id: country + random(0,2),
+    raw_value: country.replace('e','').replace('a','i'),
+    gadm_resolved: country,
+    alternatives: times(random(1,10), () => rcountry({full: true}))
+  })
+}
+
+/**
+ *
+ **/
 const DataTransformation = withStyles(() => ({
   transformationRoot: {
     display: 'flex',
@@ -439,6 +477,13 @@ const DataTransformation = withStyles(() => ({
             cleanupRef={cleanupRef}
           />
         );
+      case 'gadmResolutionReview':
+        return (
+          <GadmResolver
+            gadmRowData={mockGadmResolutionAlternatives}
+            primaryCountryField={'mockCountryField'}
+          />
+        )
       default:
         return (
           <Typography align="center" variant="h5">
@@ -451,6 +496,14 @@ const DataTransformation = withStyles(() => ({
   return (
     <div className={classes.transformationRoot}>
       <List>
+        <TransformationButton
+          isComplete={true}
+          Icon={GlobeIcon}
+          title="GADM Resolution Review"
+          onClick={() => handleDrawerOpen('gadmResolutionReview')}
+          loading={false}
+          error={false}
+        />
         <TransformationButton
           isComplete={!!savedMapResolution}
           Icon={GridOnIcon}
