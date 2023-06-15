@@ -449,12 +449,12 @@ const DataTransformation = withStyles(() => ({
           />
         );
       case 'gadmResolutionReview':
-        return (
-          <GadmResolver
-            gadmRowData={mockGadmResolutionAlternatives}
-            primaryCountryField={'mockCountryField'}
-          />
-        )
+      return (
+        <GadmResolver
+          gadmRowData={mockGadmResolutionAlternatives}
+          primaryCountryField={'mockCountryField'}
+        />
+      )
       default:
         return (
           <Typography align="center" variant="h5">
@@ -468,12 +468,13 @@ const DataTransformation = withStyles(() => ({
     <div className={classes.transformationRoot}>
       <List>
         <TransformationButton
-          isComplete={true}
+          isComplete={false}
           Icon={GlobeIcon}
           title="GADM Resolution Review"
           onClick={() => handleDrawerOpen('gadmResolutionReview')}
           loading={false}
           error={false}
+          required
         />
         <TransformationButton
           isComplete={!!savedMapResolution}
