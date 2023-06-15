@@ -317,7 +317,7 @@ const GadmResolverTable = withStyles(() => ({
                   align={column.align}
                   style={{ minWidth: column.minWidth }}
                 >
-                  <Typography variant="h5">
+                  <Typography variant="h5" style={{fontSize: '1.3rem'}}>
                     {column.label}
                   </Typography>
                 </TableCell>
@@ -398,7 +398,7 @@ export const GadmResolver = withStyles(() => ({
     right: 0
   },
   tableContainer: {
-    border: '1px solid #d7d7d7',
+    border: '1px solid rgba(224, 224, 224, 1)',
     width: '100%',
     maxHeight: '100%',
     overflowY: 'auto'
