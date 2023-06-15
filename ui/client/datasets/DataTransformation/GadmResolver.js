@@ -272,35 +272,23 @@ const gadmResolverColumns = [
  *
  **/
 const GadmResolverTable = withStyles(() => ({
-  // root: {
-  //   width: '100%',
-  //   // flex: 1,
-  //   display: 'flex',
-  //   height: '100%'
-  // },
-  // container: {
-  //   height: '100%',
-  //   display: 'flex',
-  //   flex: 1,
-  //   // height: 'calc(100% - 6rem)',
-  // },
   table: {
     // flex: 1
     maxHeight: '100%'
   },
   tableHeader: {
     // dojo gradient
-    backgroundColor: '#06B8EF',
-    backgroundImage: 'linear-gradient(to right, #06B8EF, #A11BDA)',
+    // backgroundColor: '#06B8EF',
+    // backgroundImage: 'linear-gradient(to right, #06B8EF, #A11BDA)',
 
     // light blue
-    // backgroundColor: '#f0f8ff'
+    backgroundColor: '#f0f8ff'
   },
   tableHeaderCell: {
     backgroundColor: 'transparent',
 
     // For Dojo Gradient Contrast
-    color:"white",
+    // color:"white",
 
     padding: '1rem',
     // paddingBottom: "1rem"
@@ -325,12 +313,10 @@ const GadmResolverTable = withStyles(() => ({
   }
 }))(({classes, rows}) => {
 
-  console.log('rows', rows);
-
+  // stickyHeader
   return (
         <Table
           className={classes.table}
-          stickyHeader
           aria-label="Gadm Resolver Table"
         >
           <TableHead>
