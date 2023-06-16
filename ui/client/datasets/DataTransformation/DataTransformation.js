@@ -4,6 +4,9 @@ import React, {
 
 import axios from 'axios';
 
+import cloneDeep from 'lodash/cloneDeep';
+import isEmpty from 'lodash/isEmpty';
+
 import AspectRatioIcon from '@material-ui/icons/AspectRatio';
 import TodayIcon from '@material-ui/icons/Today';
 import GridOnIcon from '@material-ui/icons/GridOn';
@@ -124,6 +127,8 @@ const DataTransformation = withStyles(() => ({
   const [savedAggregation, setSavedAggregation] = useState(null);
 
   const [savedTimeBounds, setSavedTimeBounds] = useState(null);
+
+  const transformationsRef = useRef({});
 
   // until we get the list of timeresoptions from the backend:
   if (!timeResolutionOptions.length) {
@@ -301,6 +306,8 @@ const DataTransformation = withStyles(() => ({
   const processAdjustGeo = () => {
     if (savedMapResolution) {
       const args = generateProcessGeoResArgs(annotations, savedMapResolution, mapResolution);
+      // save the args to a ref so we can store them on the annotations object
+      transformationsRef.current.regrid_geo = args;
       return startElwoodJob(datasetInfo.id, args, 'transformation_processors.regrid_geo');
     }
   };
@@ -308,6 +315,7 @@ const DataTransformation = withStyles(() => ({
   const processMapClippings = () => {
     if (savedDrawings.length > 0) {
       const args = generateProcessGeoCovArgs(annotations, savedDrawings);
+      transformationsRef.current.clip_geo = args;
       return startElwoodJob(datasetInfo.id, args, 'transformation_processors.clip_geo');
     }
   };
@@ -319,6 +327,7 @@ const DataTransformation = withStyles(() => ({
         start: savedTimeBounds[0],
         end: savedTimeBounds[savedTimeBounds.length - 1],
       });
+      transformationsRef.current.clip_time = args;
       return startElwoodJob(datasetInfo.id, args, 'transformation_processors.clip_time');
     }
   };
@@ -326,6 +335,7 @@ const DataTransformation = withStyles(() => ({
   const processAdjustTime = () => {
     if (savedTimeResolution) {
       const args = generateProcessTempResArgs(annotations, savedTimeResolution, savedAggregation);
+      transformationsRef.current.scale_time = args;
       return startElwoodJob(datasetInfo.id, args, 'transformation_processors.scale_time');
     }
   };
@@ -335,18 +345,43 @@ const DataTransformation = withStyles(() => ({
     const clipMap = processMapClippings();
     const adjustTime = processAdjustTime();
     const clipTime = processClipTime();
+    // Only do all of the below when we've done all of the selected transformations
+    // any untouched transformations won't return a promise and thus won't delay this
     Promise.all([adjustGeo, clipMap, adjustTime, clipTime]).then((responses) => {
       let modified;
       responses.forEach((resp) => {
         // if any are truthy (an untouched transformation will be undefined)
         if (resp) modified = true;
       });
+
       if (modified) {
+        // This lets us know that we need to show the spinner when the restore_raw_file job
+        // is running when revisiting this page in the registration flow
         localStorage.setItem(`dataTransformation-${datasetInfo.id}`, true);
       }
-      // only do the next step after we've kicked off the jobs
-      // and heard back that they have started
-      handleNext();
+
+      // If there are no transformations, skip updating the annotations object
+      if (isEmpty(transformationsRef.current)) {
+        handleNext();
+        return;
+      }
+
+      // If there are transformations, we want to store the data transformation decisions
+      const clonedMetadata = cloneDeep(annotations.metadata);
+      // add all the args that we sent to the elwood jobs and stored in our ref
+      // to our cloned metadata object
+      clonedMetadata.transformations = transformationsRef.current;
+      // and PATCH that to the dataset's annotations
+      // along with the existing annotations so it doesn't overwrite anything
+      axios.patch(
+        `/api/dojo/indicators/${datasetInfo.id}/annotations`, {
+          annotations: annotations.annotations,
+          metadata: clonedMetadata
+        }
+      ).then(() => {
+        // Only handleNext once we've updated the annotations
+        handleNext();
+      });
     });
   };
 
