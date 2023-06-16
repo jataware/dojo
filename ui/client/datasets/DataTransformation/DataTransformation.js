@@ -37,9 +37,9 @@ import {
 
 import { GadmResolver } from './GadmResolver';
 
-import rcountry from 'random-country'; // TODO remove package dependency and this
-import random from 'lodash/random';
-import times from 'lodash/times';
+// import rcountry from 'random-country'; // TODO remove package dependency and this
+// import random from 'lodash/random';
+// import times from 'lodash/times';
 
 // for development purposes
 // const mapResolution = 111.00000000000014;
@@ -111,29 +111,29 @@ import times from 'lodash/times';
 /**
  *
  **/
-const mockGadmResolutionAlternatives = [
-  {
-    id: 'korea123',
-    raw_value: 'Korea',
-    gadm_resolved: 'Republic of Korea',
-    alternatives: [
-      'Republic of Korea',
-      'Democratic People\'s Republic of Korea'
-    ]
-  }
-];
+// const mockGadmResolutionAlternatives = [
+//   {
+//     id: 'korea123',
+//     raw_value: 'Korea',
+//     gadm_resolved: 'Republic of Korea',
+//     alternatives: [
+//       'Republic of Korea',
+//       'Democratic People\'s Republic of Korea'
+//     ]
+//   }
+// ];
 
-for (let moreCountries = 0; moreCountries < 8; moreCountries++) {
+// for (let moreCountries = 0; moreCountries < 8; moreCountries++) {
 
-  let country = rcountry({ full: true });
+//   let country = rcountry({ full: true });
 
-  mockGadmResolutionAlternatives.push({
-    id: country + random(0,2),
-    raw_value: country.replace('e','').replace('a','i'),
-    gadm_resolved: country,
-    alternatives: times(random(1,10), () => rcountry({full: true}))
-  })
-}
+//   mockGadmResolutionAlternatives.push({
+//     id: country + random(0,2),
+//     raw_value: country.replace('e','').replace('a','i'),
+//     gadm_resolved: country,
+//     alternatives: times(random(1,10), () => rcountry({full: true}))
+//   });
+// }
 
 /**
  *
@@ -160,6 +160,8 @@ const DataTransformation = withStyles(() => ({
   const [savedDrawings, setSavedDrawings] = useState([]);
 
   const [savedMapResolution, setSavedMapResolution] = useState(null);
+
+  const [savedGADMResolution, setSavedGADMResolution] = useState(null);
 
   const [timeResolutionOptions, setTimeResolutionOptions] = useState([]);
   const [savedTimeResolution, setSavedTimeResolution] = useState(null);
@@ -265,6 +267,15 @@ const DataTransformation = withStyles(() => ({
     setDataLoading(false);
   }, []);
 
+  const onGadmResSuccess = useCallback((resp, setData, setDataError, setDataLoading) => {
+    if (resp) {
+      setData(resp);
+    } else {
+      setDataError(resp.message ? resp.message : true);
+    }
+    setDataLoading(false);
+  }, []);
+
   const onGetDatesSuccess = useCallback((resp, setData, setDataError, setDataLoading) => {
     if (resp.unique_dates.length) {
       setData(resp.unique_dates);
@@ -287,6 +298,19 @@ const DataTransformation = withStyles(() => ({
     generateArgs: generateFetchGeoResArgs,
     cleanupRef,
     onSuccess: onGeoResSuccess,
+  });
+
+  // fetch resolution for AdjustGeoResolution
+  const {
+    data: gadmResolution,
+    error: gadmResolutionError
+  } = useElwoodData({
+    datasetId: datasetInfo.id,
+    annotations,
+    jobString: 'gadm_processors.resolution_alternatives',
+    generateArgs: () => {},
+    // cleanupRef,
+    onSuccess: onGadmResSuccess,
   });
 
   // fetch boundary for ClipMap component
@@ -480,8 +504,11 @@ const DataTransformation = withStyles(() => ({
       case 'gadmResolutionReview':
       return (
         <GadmResolver
-          gadmRowData={mockGadmResolutionAlternatives}
+          gadmRowData={gadmResolution}
           primaryCountryField={'mockCountryField'}
+          onSave={() => { setSavedGADMResolution(); handleDrawerClose(); }}
+          onCancel={handleDrawerClose}
+          cleanupRef={cleanupRef}
         />
       )
       default:
@@ -497,12 +524,12 @@ const DataTransformation = withStyles(() => ({
     <div className={classes.transformationRoot}>
       <List>
         <TransformationButton
-          isComplete={false}
+          isComplete={Boolean(savedGADMResolution)}
           Icon={GlobeIcon}
-          title="GADM Resolution Review"
+          title="Review GADM Resolution"
           onClick={() => handleDrawerOpen('gadmResolutionReview')}
-          loading={false}
-          error={false}
+          loading={!gadmResolution && !gadmResolutionError}
+          error={gadmResolutionError}
           required
         />
         <TransformationButton

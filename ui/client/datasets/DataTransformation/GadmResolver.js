@@ -410,7 +410,7 @@ export const GadmResolver = withStyles(() => ({
     backgroundColor: 'white',
     alignItems: 'center',
   }
-}))(({ classes, gadmRowData, primaryCountryField }) => {
+}))(({ classes, gadmRowData, primaryCountryField, onSave, onCancel }) => {
 
   return (
       <div
@@ -454,10 +454,12 @@ export const GadmResolver = withStyles(() => ({
           >
             <Button
               variant="outlined"
+              onClick={onCancel}
               color="default">
               Cancel
             </Button>
             <Button
+              onClick={onSave}
               variant="outlined"
               type="submit"
               color="primary">
