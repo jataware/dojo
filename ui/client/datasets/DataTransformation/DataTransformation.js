@@ -34,8 +34,9 @@ import {
 } from './dataTransformationHelpers';
 
 // for development purposes
-// const mapResolution = 111.00000000000014;
-// const mapResolutionOptions = [
+const mapResolution = null;//111.00000000000014;
+const mapResolutionOptions = null;
+// [
 //   222.00000000000028,
 //   333.00000000000045,
 //   444.00000000000057,
@@ -56,48 +57,67 @@ import {
 //   2109.0000000000027,
 //   2220.0000000000027
 // ];
-// const mapBounds = [[10.5619, 42.0864], [12.595, 43.2906]];
-// const timeResolution = {
-//   uniformity: 'PERFECT',
-//   unit: 'day',
-//   resolution: 1,
-//   error: 0
-// };
+const mapBounds = [[10.5619, 42.0864], [12.595, 43.2906]];
+const timeResolution = {
+  uniformity: 'PERFECT',
+  unit: 'day',
+  resolution: 1,
+  error: 0
+};
 
-// const unique_dates = [
-//   '1997-09-01',
-//   '1998-03-22',
-//   '1998-03-23',
-//   '1999-03-28',
-//   '1999-04-13',
-//   '1999-04-15',
-//   '1999-04-27',
-//   '2009-06-06',
-//   '2009-06-07',
-//   '2009-08-31',
-//   '2013-01-17',
-//   '2013-02-25',
-//   '2013-02-26',
-//   '2020-07-03',
-//   '2020-07-05',
-//   '2020-07-06',
-//   '2020-07-10',
-//   '2021-01-23',
-//   '2021-01-31',
-//   '2021-02-09',
-//   '2021-02-18',
-//   '2021-02-25',
-//   '2021-03-03',
-//   '2021-03-26'
-// ];
-// const timeBounds = unique_dates;
+const unique_dates = [
+  '1997-09-01',
+  '1998-03-22',
+  '1998-03-23',
+  '1999-03-28',
+  '1999-04-13',
+  '1999-04-15',
+  '1999-04-27',
+  '2009-06-06',
+  '2009-06-07',
+  '2009-08-31',
+  '2013-01-17',
+  '2013-02-25',
+  '2013-02-26',
+  '2020-07-03',
+  '2020-07-05',
+  '2020-07-06',
+  '2020-07-10',
+  '2021-01-23',
+  '2021-01-31',
+  '2021-02-09',
+  '2021-02-18',
+  '2021-02-25',
+  '2021-03-03',
+  '2021-03-26'
+];
+const timeBounds = unique_dates;
 
-// const [
-//   mapResolutionError,
-//   mapBoundsError,
-//   timeResolutionError,
-//   // timeBoundsError
-// ] = [false, false, false, false,];
+const [
+  mapResolutionError,
+  mapBoundsError,
+  timeResolutionError,
+  timeBoundsError
+] = [true, false, false, false,];
+
+const isLatLngAnnotated = (annotations) => {
+  if (!annotations?.annotations?.geo) return false;
+  let hasLatAndLng = false;
+
+  // check that we have both latitude and longitude primary fields annotated
+  const latCount = annotations.annotations.geo.filter(
+    (obj) => obj.geo_type === 'latitude' && obj.primary_geo === true
+  ).length;
+  const lngCount = annotations.annotations.geo.filter(
+    (obj) => obj.geo_type === 'longitude' && obj.primary_geo === true
+  ).length;
+
+  // if we have 1 of each, then return true
+  if (latCount === 1 && lngCount === 1) {
+    hasLatAndLng = true;
+  }
+  return hasLatAndLng;
+};
 
 const DataTransformation = withStyles(() => ({
   transformationRoot: {
@@ -130,6 +150,7 @@ const DataTransformation = withStyles(() => ({
 
   const transformationsRef = useRef({});
 
+  const latLngAnnotated = isLatLngAnnotated(annotations);
   // until we get the list of timeresoptions from the backend:
   if (!timeResolutionOptions.length) {
     setTimeResolutionOptions([
@@ -244,48 +265,48 @@ const DataTransformation = withStyles(() => ({
   }, []);
 
   // fetch resolution for AdjustGeoResolution
-  const {
-    data: mapResolution,
-    options: mapResolutionOptions,
-    error: mapResolutionError
-  } = useElwoodData({
-    datasetId: datasetInfo.id,
-    annotations,
-    jobString: 'resolution_processors.calculate_geographical_resolution',
-    generateArgs: generateFetchGeoResArgs,
-    cleanupRef,
-    onSuccess: onGeoResSuccess,
-  });
+  // const {
+  //   data: mapResolution,
+  //   options: mapResolutionOptions,
+  //   error: mapResolutionError
+  // } = useElwoodData({
+  //   datasetId: datasetInfo.id,
+  //   annotations,
+  //   jobString: 'resolution_processors.calculate_geographical_resolution',
+  //   generateArgs: generateFetchGeoResArgs,
+  //   cleanupRef,
+  //   onSuccess: onGeoResSuccess,
+  // });
 
-  // fetch boundary for ClipMap component
-  const { data: mapBounds, error: mapBoundsError } = useElwoodData({
-    datasetId: datasetInfo.id,
-    annotations,
-    jobString: 'transformation_processors.get_boundary_box',
-    generateArgs: generateFetchGeoBoundaryArgs,
-    cleanupRef,
-    onSuccess: onGeoBoundarySuccess,
-  });
+  // // fetch boundary for ClipMap component
+  // const { data: mapBounds, error: mapBoundsError } = useElwoodData({
+  //   datasetId: datasetInfo.id,
+  //   annotations,
+  //   jobString: 'transformation_processors.get_boundary_box',
+  //   generateArgs: generateFetchGeoBoundaryArgs,
+  //   cleanupRef,
+  //   onSuccess: onGeoBoundarySuccess,
+  // });
 
-  // fetch resolution for AdjustTemporalResolution component
-  const { data: timeResolution, error: timeResolutionError } = useElwoodData({
-    datasetId: datasetInfo.id,
-    annotations,
-    jobString: 'resolution_processors.calculate_temporal_resolution',
-    generateArgs: generateFetchTemporalArgs,
-    cleanupRef,
-    onSuccess: onTemporalResSuccess,
-  });
+  // // fetch resolution for AdjustTemporalResolution component
+  // const { data: timeResolution, error: timeResolutionError } = useElwoodData({
+  //   datasetId: datasetInfo.id,
+  //   annotations,
+  //   jobString: 'resolution_processors.calculate_temporal_resolution',
+  //   generateArgs: generateFetchTemporalArgs,
+  //   cleanupRef,
+  //   onSuccess: onTemporalResSuccess,
+  // });
 
-  // fetch time bounds for ClipTime component
-  const { data: timeBounds, error: timeBoundsError } = useElwoodData({
-    datasetId: datasetInfo.id,
-    annotations,
-    jobString: 'transformation_processors.get_unique_dates',
-    generateArgs: generateFetchTemporalArgs,
-    cleanupRef,
-    onSuccess: onGetDatesSuccess,
-  });
+  // // fetch time bounds for ClipTime component
+  // const { data: timeBounds, error: timeBoundsError } = useElwoodData({
+  //   datasetId: datasetInfo.id,
+  //   annotations,
+  //   jobString: 'transformation_processors.get_unique_dates',
+  //   generateArgs: generateFetchTemporalArgs,
+  //   cleanupRef,
+  //   onSuccess: onGetDatesSuccess,
+  // });
 
   const handleDrawerClose = (bool, event) => {
     // prevent clicking outside the drawer to close
@@ -398,6 +419,7 @@ const DataTransformation = withStyles(() => ({
             jobString="transformation_processors.regrid_geo"
             datasetId={datasetInfo.id}
             annotations={annotations}
+            latLngAnnotated={latLngAnnotated}
             cleanupRef={cleanupRef}
           />
         );
@@ -463,7 +485,8 @@ const DataTransformation = withStyles(() => ({
           title="Adjust Geospatial Resolution"
           onClick={() => handleDrawerOpen('regridMap')}
           loading={!mapResolution && !mapResolutionError}
-          error={mapResolutionError}
+          // Only show the error state if we don't have lat & lng columns
+          error={mapResolutionError && !latLngAnnotated}
         />
         <TransformationButton
           isComplete={!!savedDrawings.length}
