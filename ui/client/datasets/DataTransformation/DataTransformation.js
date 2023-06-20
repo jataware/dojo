@@ -151,7 +151,6 @@ const DataTransformation = withStyles(() => ({
 
   const transformationsRef = useRef({});
 
-  const latLngAnnotated = isLatLngAnnotated(annotations);
   // until we get the list of timeresoptions from the backend:
   if (!timeResolutionOptions.length) {
     setTimeResolutionOptions([
@@ -214,6 +213,11 @@ const DataTransformation = withStyles(() => ({
       || resp.resolution_result?.uniformity === 'UNIFORM') {
       setData(resp.scale_km);
     } else {
+      if (isLatLngAnnotated(annotations)) {
+        // as long as we have lat/lng annotated, set this string as our default geo resolution
+        setData('Non-uniform/event data');
+        return;
+      }
       // TODO: handle error case in geo res component & data transformation
       let message = 'Resolution not detectable';
       // if we have a uniformity that is not handled above, change the message to:
@@ -225,7 +229,7 @@ const DataTransformation = withStyles(() => ({
       setOptions(resp.multiplier_samples);
     }
     setDataLoading(false);
-  }, []);
+  }, [annotations]);
 
   const onGeoBoundarySuccess = useCallback((resp, setData, setDataError, setDataLoading) => {
     if (resp?.boundary_box) {
@@ -306,7 +310,7 @@ const DataTransformation = withStyles(() => ({
     cleanupRef,
     onSuccess: onGetDatesSuccess,
   });
-console.log('THIS KIS TEMPORAL RESOLUTION', timeResolution, timeResolutionError, annotations)
+
   const handleDrawerClose = (bool, event) => {
     // prevent clicking outside the drawer to close
     if (event?.target.className === 'MuiBackdrop-root') return;
@@ -328,14 +332,15 @@ console.log('THIS KIS TEMPORAL RESOLUTION', timeResolution, timeResolutionError,
       const args = generateProcessGeoResArgs(
         annotations,
         savedMapResolution,
-        mapResolution || 'Non-uniform / event data'
+        mapResolution
       );
       // save the args to a ref so we can store them on the annotations object
       transformationsRef.current.regrid_geo = args;
       // If we have an error, then we never found a resolution so we can't do a transformation
-      if (!mapResolutionError) {
+  // TODO: remove this once we've confirmed we can do this transformation for nonuniform
+      // if (!mapResolutionError) {
         return startElwoodJob(datasetInfo.id, args, 'transformation_processors.regrid_geo');
-      }
+      // }
     }
   };
 
@@ -368,12 +373,7 @@ console.log('THIS KIS TEMPORAL RESOLUTION', timeResolution, timeResolutionError,
   };
 
   const handleNextStep = () => {
-    // if we have annotated lat lng columns but no detectable resolution
-    // don't run the transformation (even though savedTimeResolution may exist)
-    // let adjustGeo;
-    // if (mapResolutionError && !latLngAnnotated) {
-      const adjustGeo = processAdjustGeo();
-    // }
+    const adjustGeo = processAdjustGeo();
     const clipMap = processMapClippings();
     const adjustTime = processAdjustTime();
     const clipTime = processClipTime();
@@ -431,7 +431,6 @@ console.log('THIS KIS TEMPORAL RESOLUTION', timeResolution, timeResolutionError,
             jobString="transformation_processors.regrid_geo"
             datasetId={datasetInfo.id}
             annotations={annotations}
-            latLngAnnotated={latLngAnnotated}
             cleanupRef={cleanupRef}
           />
         );
@@ -497,8 +496,7 @@ console.log('THIS KIS TEMPORAL RESOLUTION', timeResolution, timeResolutionError,
           title="Adjust Geospatial Resolution"
           onClick={() => handleDrawerOpen('regridMap')}
           loading={!mapResolution && !mapResolutionError}
-          // Only show the error state if we don't have lat & lng columns
-          error={mapResolutionError && !latLngAnnotated}
+          error={mapResolutionError}
         />
         <TransformationButton
           isComplete={!!savedDrawings.length}
