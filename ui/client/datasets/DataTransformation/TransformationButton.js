@@ -54,7 +54,7 @@ const TransformationButton = withStyles(({ palette }) => ({
   };
 
   // If no message is supplied from the backend, we default to true, so use a default message
-  const tooltipText = error.length ? error : 'This data is not available for transformation';
+  const tooltipText = error?.length ? error : 'This data is not available for transformation';
 
   return (
     <Tooltip
