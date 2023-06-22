@@ -27,6 +27,7 @@ import AdjustGeoResolution from './AdjustGeoResolution';
 import TransformationButton from './TransformationButton';
 import useElwoodData from './useElwoodData';
 import {
+  areLatLngAnnotated,
   generateProcessGeoResArgs,
   generateProcessTempResArgs,
   generateProcessGeoCovArgs,
@@ -34,29 +35,29 @@ import {
 } from './dataTransformationHelpers';
 
 // for development purposes
-// const mapResolution = null;//111.00000000000014;
-// const mapResolutionOptions = null;
-// // [
-// //   222.00000000000028,
-// //   333.00000000000045,
-// //   444.00000000000057,
-// //   555.0000000000007,
-// //   666.0000000000009,
-// //   777.000000000001,
-// //   888.0000000000011,
-// //   999.0000000000013,
-// //   1110.0000000000014,
-// //   1221.0000000000016,
-// //   1332.0000000000018,
-// //   1443.0000000000018,
-// //   1554.000000000002,
-// //   1665.000000000002,
-// //   1776.0000000000023,
-// //   1887.0000000000025,
-// //   1998.0000000000025,
-// //   2109.0000000000027,
-// //   2220.0000000000027
-// // ];
+// const mapResolution = 111.00000000000014;//'Non-uniform/event data';
+// const mapResolutionOptions //= null;
+// = [
+//   222.00000000000028,
+//   333.00000000000045,
+//   444.00000000000057,
+//   555.0000000000007,
+//   666.0000000000009,
+//   777.000000000001,
+//   888.0000000000011,
+//   999.0000000000013,
+//   1110.0000000000014,
+//   1221.0000000000016,
+//   1332.0000000000018,
+//   1443.0000000000018,
+//   1554.000000000002,
+//   1665.000000000002,
+//   1776.0000000000023,
+//   1887.0000000000025,
+//   1998.0000000000025,
+//   2109.0000000000027,
+//   2220.0000000000027
+// ];
 // const mapBounds = [[10.5619, 42.0864], [12.595, 43.2906]];
 // const timeResolution = null;
 // // {
@@ -96,29 +97,12 @@ import {
 
 // const [
 //   mapResolutionError,
-//   mapBoundsError,
-//   timeResolutionError,
-//   timeBoundsError
-// ] = [true, false, true, false,];
+  // mapBoundsError,
+  // timeResolutionError,
+  // timeBoundsError
+// ] = [false], false, true, false,];
 
-const isLatLngAnnotated = (annotations) => {
-  if (!annotations?.annotations?.geo) return false;
-  let hasLatAndLng = false;
 
-  // check that we have both latitude and longitude primary fields annotated
-  const latCount = annotations.annotations.geo.filter(
-    (obj) => obj.geo_type === 'latitude' && obj.primary_geo === true
-  ).length;
-  const lngCount = annotations.annotations.geo.filter(
-    (obj) => obj.geo_type === 'longitude' && obj.primary_geo === true
-  ).length;
-
-  // if we have 1 of each, then return true
-  if (latCount === 1 && lngCount === 1) {
-    hasLatAndLng = true;
-  }
-  return hasLatAndLng;
-};
 
 const DataTransformation = withStyles(() => ({
   transformationRoot: {
@@ -217,7 +201,7 @@ const DataTransformation = withStyles(() => ({
         setOptions(resp.multiplier_samples);
       }
     } else {
-      if (isLatLngAnnotated(annotations)) {
+      if (areLatLngAnnotated(annotations)) {
         // as long as we have lat/lng annotated, set this string as our default geo resolution
         setData('Non-uniform/event data');
         return;

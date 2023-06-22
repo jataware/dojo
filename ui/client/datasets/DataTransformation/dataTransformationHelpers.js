@@ -36,3 +36,22 @@ export const generateProcessTempCovArgs = ({ annotations, start, end }) => (
     time_ranges: [{ start, end }],
   }
 );
+
+export const areLatLngAnnotated = (annotations) => {
+  if (!annotations?.annotations?.geo) return false;
+  let hasLatAndLng = false;
+
+  // check that we have both latitude and longitude primary fields annotated
+  const latCount = annotations.annotations.geo.filter(
+    (obj) => obj.geo_type === 'latitude' && obj.primary_geo === true
+  ).length;
+  const lngCount = annotations.annotations.geo.filter(
+    (obj) => obj.geo_type === 'longitude' && obj.primary_geo === true
+  ).length;
+
+  // if we have 1 of each, then return true
+  if (latCount === 1 && lngCount === 1) {
+    hasLatAndLng = true;
+  }
+  return hasLatAndLng;
+};
