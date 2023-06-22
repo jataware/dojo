@@ -212,6 +212,10 @@ const DataTransformation = withStyles(() => ({
     if (resp.resolution_result?.uniformity === 'PERFECT'
       || resp.resolution_result?.uniformity === 'UNIFORM') {
       setData(resp.scale_km);
+
+      if (resp.multiplier_samples) {
+        setOptions(resp.multiplier_samples);
+      }
     } else {
       if (isLatLngAnnotated(annotations)) {
         // as long as we have lat/lng annotated, set this string as our default geo resolution
@@ -225,9 +229,6 @@ const DataTransformation = withStyles(() => ({
       setDataError(message);
     }
 
-    if (resp.multiplier_samples) {
-      setOptions(resp.multiplier_samples);
-    }
     setDataLoading(false);
   }, [annotations]);
 
@@ -311,6 +312,11 @@ const DataTransformation = withStyles(() => ({
     onSuccess: onGetDatesSuccess,
   });
 
+  const mapResolutionLoading = !mapResolution && !mapResolutionError;
+  const mapBoundsLoading = !mapBounds && !mapBoundsError;
+  const timeResolutionLoading = !timeResolution && !timeResolutionError;
+  const timeBoundsLoading = !timeBounds && !timeBoundsError;
+
   const handleDrawerClose = (bool, event) => {
     // prevent clicking outside the drawer to close
     if (event?.target.className === 'MuiBackdrop-root') return;
@@ -325,6 +331,30 @@ const DataTransformation = withStyles(() => ({
   const handleDrawerOpen = (name) => {
     setDrawerOpen(true);
     setDrawerName(name);
+  };
+
+  const disableNext = () => {
+    if (
+      mapResolutionLoading
+      || mapBoundsLoading
+      || timeResolutionLoading
+      || timeBoundsLoading
+    ) {
+      // disable if any of the transformations are loading
+      return true;
+    }
+
+    if (!mapResolutionError && !savedMapResolution) {
+      // disable if we are requiring a map resolution to be chosen and it hasn't been
+      return true;
+    }
+
+    if (!timeResolutionError && !savedTimeResolution) {
+      // disable if we are requiring a time resolution to be set and it hasn't been
+      return true;
+    }
+
+    return false;
   };
 
   const processAdjustGeo = () => {
@@ -391,14 +421,13 @@ const DataTransformation = withStyles(() => ({
         // is running when revisiting this page in the registration flow
         localStorage.setItem(`dataTransformation-${datasetInfo.id}`, true);
       }
-      console.log('THIS IS TRANSFORMATIONSREF', transformationsRef.current)
+
       // If there are no transformations, skip updating the annotations object
       if (isEmpty(transformationsRef.current)) {
-        console.log('NOTHING FOUND')
         handleNext();
         return;
       }
-      console.log('WE DOING THE SAVE')
+
       // If there are transformations, we want to store the data transformation decisions
       const clonedMetadata = cloneDeep(annotations.metadata);
       // add all the args that we sent to the elwood jobs and stored in our ref
@@ -495,15 +524,16 @@ const DataTransformation = withStyles(() => ({
           Icon={GridOnIcon}
           title="Adjust Geospatial Resolution"
           onClick={() => handleDrawerOpen('regridMap')}
-          loading={!mapResolution && !mapResolutionError}
+          loading={mapResolutionLoading}
           error={mapResolutionError}
+          required={!mapResolutionError}
         />
         <TransformationButton
           isComplete={!!savedDrawings.length}
           Icon={MapIcon}
           title="Select Geospatial Coverage"
           onClick={() => handleDrawerOpen('clipMap')}
-          loading={!mapBounds && !mapBoundsError}
+          loading={mapBoundsLoading}
           error={mapBoundsError}
         />
         <TransformationButton
@@ -511,15 +541,16 @@ const DataTransformation = withStyles(() => ({
           Icon={AspectRatioIcon}
           title="Adjust Temporal Resolution"
           onClick={() => handleDrawerOpen('scaleTime')}
-          loading={!timeResolution && !timeResolutionError}
+          loading={timeResolutionLoading}
           error={timeResolutionError}
+          required={!timeResolutionError}
         />
         <TransformationButton
           isComplete={!!savedTimeBounds}
           Icon={TodayIcon}
           title="Select Temporal Coverage"
           onClick={() => handleDrawerOpen('clipTime')}
-          loading={!timeBounds && !timeBoundsError}
+          loading={timeBoundsLoading}
           error={timeBoundsError}
         />
       </List>
@@ -527,6 +558,7 @@ const DataTransformation = withStyles(() => ({
         label="Next"
         handleNext={handleNextStep}
         handleBack={handleBack}
+        disabled={disableNext()}
       />
 
       <Drawer
@@ -544,6 +576,13 @@ const DataTransformation = withStyles(() => ({
   );
 });
 
+/**
+ * This component mounts specifically to run the restore_raw_file data transformation before any
+ * of the other useElwoodData jobs run, as we need to confirm that the file is in its original
+ * state before the other ones can run.
+ * It also holds onto the cleanupRef that will prevent the various useElwoodData calls from
+ * repeating forever if we navigate away
+ **/
 export default withStyles(({ spacing }) => ({
   root: {
     padding: [[spacing(4), spacing(4), spacing(2), spacing(4)]],
@@ -569,6 +608,9 @@ export default withStyles(({ spacing }) => ({
   handleBack,
   annotations,
 }) => {
+  // this ref keeps track of when the page is mounted so that we can avoid useElwoodData running
+  // endlessly if we navigate away while it's still going
+  // it should be passed into every use of useElwoodData
   const cleanupRef = useRef(null);
   const [showSpinner, setShowSpinner] = useState(true);
 

@@ -23,6 +23,9 @@ const TransformationButton = withStyles(({ palette }) => ({
   close: {
     color: palette.info.light,
   },
+  required: {
+    color: palette.warning.light,
+  },
   disabled: {
     color: palette.text.disabled,
   },
@@ -37,6 +40,7 @@ const TransformationButton = withStyles(({ palette }) => ({
   title,
   onClick,
   loading,
+  required,
   error,
 }) => {
   const displayIcon = () => {
@@ -48,19 +52,29 @@ const TransformationButton = withStyles(({ palette }) => ({
       return <CircularProgress thickness={4.5} size={25} />;
     }
 
+    if (required && !isComplete && !error) {
+      return <InfoIcon className={classes.required} fontSize="large" />;
+    }
+
     if (error !== false) {
       return <InfoIcon className={classes.close} fontSize="large" />;
     }
   };
 
-  // If no message is supplied from the backend, we default to true, so use a default message
-  const tooltipText = error?.length ? error : 'This data is not available for transformation';
+  const displayTooltipText = () => {
+    if (error && error.length) return error;
+    if (error) return 'This data is not available for transformation';
+    if (required && !isComplete && !error) {
+      return 'Please review this transformation before continuing';
+    }
+    return '';
+  };
 
   return (
     <Tooltip
       arrow
       placement="right"
-      title={error ? tooltipText : ''}
+      title={displayTooltipText()}
     >
       <span style={{ position: 'relative' }}>
         <ListItem
