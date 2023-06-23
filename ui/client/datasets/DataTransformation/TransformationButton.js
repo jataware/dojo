@@ -62,9 +62,13 @@ const TransformationButton = withStyles(({ palette }) => ({
   };
 
   const displayTooltipText = () => {
+    // don't show a tooltip if the job is still loading
+    if (loading) return '';
     if (error && error.length) return error;
+    // if it doesn't come with an error message, use this default
     if (error) return 'This data is not available for transformation';
     if (required && !isComplete && !error) {
+      // if it's required and not complete
       return 'Please review this transformation before continuing';
     }
     return '';

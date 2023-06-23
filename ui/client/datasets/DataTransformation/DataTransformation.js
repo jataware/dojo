@@ -59,13 +59,13 @@ import {
 //   2220.0000000000027
 // ];
 // const mapBounds = [[10.5619, 42.0864], [12.595, 43.2906]];
-// const timeResolution = null;
-// // {
-// //   uniformity: 'PERFECT',
-// //   unit: 'day',
-// //   resolution: 1,
-// //   error: 0
-// // };
+// const timeResolution =//  null;
+// {
+//   uniformity: 'PERFECT',
+//   unit: 'month',
+//   resolution: 1,
+//   error: 0
+// };
 
 // const unique_dates = [
 //   '1997-09-01',
@@ -96,13 +96,11 @@ import {
 // const timeBounds = unique_dates;
 
 // const [
-//   mapResolutionError,
-  // mapBoundsError,
-  // timeResolutionError,
-  // timeBoundsError
-// ] = [false], false, true, false,];
-
-
+// mapResolutionError,
+// mapBoundsError,
+// timeResolutionError,
+// timeBoundsError
+// ] = [false, false, true, false];
 
 const DataTransformation = withStyles(() => ({
   transformationRoot: {
@@ -233,10 +231,22 @@ const DataTransformation = withStyles(() => ({
 
   const onTemporalResSuccess = useCallback((resp, setData, setDataError, setDataLoading) => {
     if (resp.resolution_result?.unit) {
-      setData(resp.resolution_result);
+      if (
+        resp.uniformity === 'PERFECT'
+        || resp.resolution_result.uniformity === 'UNIFORM'
+        || resp.resolution_result.uniformity === 'PERFECTLY_UNIFORM'
+      ) {
+        setData(resp.resolution_result);
+      } else {
+        // If it isn't one of the three uniform types above, default to 'day'
+        // because we don't actually know the temporal resolution no matter what we get back
+        setData('day');
+      }
     } else {
       // display this string as the starting point for non-uniform data
+      // this only happens for datasets without an annotated date column
       setData('Non-uniform/event data');
+      // we may want to handle errors if there is no annotated date, tbd
       // setDataError(resp.message ? resp.message : true);
     }
     setDataLoading(false);

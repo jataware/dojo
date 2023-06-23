@@ -57,6 +57,9 @@ export default withStyles((theme) => ({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  resolutionText: {
+    fontWeight: '350',
+  },
 }))(({
   classes,
   closeDrawer,
@@ -78,12 +81,17 @@ export default withStyles((theme) => ({
   // this is to remove all options below the current time bucket
   // just for uniform datasets
   const limitOptions = () => {
-    // if it doesn't have a unit, we didn't get a resolution and set the Non-uniform string
+    // if it doesn't have a unit, we don't have a uniform resolution and will show the entire list
     if (!oldResolution.unit) return 0;
     let firstOption;
     if (resolutionOptions
-      && (oldResolution.uniformity === 'PERFECT' || oldResolution.uniformity === 'PERFECTLY_UNIFORM')
+      && (
+        oldResolution.uniformity === 'PERFECT'
+        || oldResolution.uniformity === 'UNIFORM'
+        || oldResolution.uniformity === 'PERFECTLY_UNIFORM'
+      )
     ) {
+      // otherwise just show the larger options than our current resolution
       firstOption = resolutionOptions.findIndex((opt) => (
         opt.description.includes(oldResolution.unit)
       ));
@@ -123,7 +131,7 @@ export default withStyles((theme) => ({
       <div className={classes.oldToNew}>
         <div className={classes.textWrapper}>
           <Typography variant="h6" align="center">current resolution</Typography>
-          <Typography variant="h4" align="center">
+          <Typography variant="h6" className={classes.resolutionText} align="center">
             {oldResolution.unit ? oldResolution.unit.toUpperCase() : oldResolution}
           </Typography>
         </div>
@@ -132,7 +140,7 @@ export default withStyles((theme) => ({
         </div>
         <div className={classes.textWrapper}>
           <Typography variant="h6" align="center">new resolution</Typography>
-          <Typography variant="h4" align="center">
+          <Typography variant="h6" className={classes.resolutionText} align="center">
             {
               selectedResolution.description ? selectedResolution.description.toUpperCase() : ''
             }
