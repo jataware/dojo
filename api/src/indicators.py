@@ -28,11 +28,11 @@ from src.causemos import deprecate_dataset, notify_causemos
 from src.csv_annotation_parser import format_annotations, xls_to_annotations
 from src.data import get_context
 from src.dojo import search_and_scroll
-from src.feature_queries import hybrid_query_v1, keyword_query_v1
+from src.feature_queries import keyword_query_v1, hybrid_query_v2
 from src.ontologies import get_ontologies
 from src.plugins import plugin_action
 from src.settings import settings
-from src.utils import add_date_to_dataset, get_rawfile, list_files, put_rawfile
+from src.utils import add_date_to_dataset, get_rawfile, list_files, put_rawfile, alternate_lists
 from validation import DojoSchema, IndicatorSchema, MetadataSchema
 
 router = APIRouter()
@@ -137,38 +137,45 @@ def patch_indicator(
     )
 
 
+def add_matched_queries_keyword(hit):
+    hit["matched_queries"] = ["keyword_search"]
+    return hit
+
+def add_matched_queries_semantic(hit):
+    hit["matched_queries"] = ["semantic_search"]
+    return hit
+
+
 @router.get(
     "/features/search", response_model=IndicatorSchema.FeaturesSemanticSearchSchema
 )
 def semantic_search_features(
-    query: Optional[str], size=10, scroll_id: Optional[str] = None
+    query: str, size=10 # , scroll_id: Optional[str] = None
 ):
     """
     Given a text query, uses semantic search engine to search for features that
     match the query semantically. Query is a sentence that can be interpreted
     to be related to a concept, such as:
-    'number of people who have been vaccinated'
+    'number of people who have been vaccinated'. Shorter queries, including
+    single words, are supported.
     """
 
-    if scroll_id:
-        results = es.scroll(scroll_id=scroll_id, scroll="2m")
-    else:
-        # Retrieve first item in output, since it returns an array output
-        # that matches its input, and we provide only one- query.
-        features_query = hybrid_query_v1(query)
+    (keyword_query, semantic_query) = hybrid_query_v2(query)
 
-        results = es.search(
-            index="features", body=features_query, scroll="2m", size=size
-        )
+    keyword_results = es.search(index="features", body=keyword_query, scroll="2m", size=size)
+    semantic_results = es.search(index="features", body=semantic_query, scroll="2m", size=size)
 
-    items_in_page = len(results["hits"]["hits"])
+    total_hits = semantic_results["hits"]["total"]["value"]
 
-    if items_in_page < int(size):
-        scroll_id = None
-    else:
-        scroll_id = results.get("_scroll_id", None)
+    semantic_max_score = semantic_results["hits"]["max_score"]
+    keyword_max_score = keyword_results["hits"]["max_score"]
 
-    max_score = results["hits"]["max_score"]
+    keyword_results = list(map(add_matched_queries_keyword, keyword_results["hits"]["hits"]))
+    semantic_results = list(map(add_matched_queries_semantic, semantic_results["hits"]["hits"]))
+
+    results = alternate_lists(keyword_results, semantic_results, id_property="_id")
+
+    items_in_page = len(results)
 
     def formatOneResult(r):
         r["_source"]["metadata"] = {}
@@ -178,11 +185,11 @@ def semantic_search_features(
         return r["_source"]
 
     return {
-        "hits": results["hits"]["total"]["value"],
+        "hits": total_hits,
         "items_in_page": items_in_page,
-        "max_score": max_score,
-        "results": [formatOneResult(i) for i in results["hits"]["hits"]],
-        "scroll_id": scroll_id,
+        "max_score": max(keyword_max_score or 0, semantic_max_score or 0),
+        "results": [formatOneResult(i) for i in results],
+        "scroll_id": None
     }
 
 

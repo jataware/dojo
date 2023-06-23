@@ -364,7 +364,6 @@ const ViewFeatures = withStyles(() => ({
           LoadingOverlay: CustomLoadingOverlay
         }}
         loading={featuresLoading}
-        getRowId={(row) => `${row.owner_dataset.id}-${row.name}`}
         columns={featureColumns}
         rows={features}
       />

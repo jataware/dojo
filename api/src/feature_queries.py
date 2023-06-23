@@ -1,5 +1,36 @@
 from src.embedder_engine import embedder
 
+def keyword_query_v3(phrase):
+    """
+    """
+    q = {
+        "query": {
+            "bool": {
+                "should": [
+                    {
+                        "match_phrase": {
+                            "name": phrase
+                        }
+                    },
+                    {
+                        "match_phrase": {
+                            "display_name": phrase
+                        }
+                    },
+                    {
+                        "match_phrase": {
+                            "description": phrase
+                        }
+                    }
+                ]
+            }
+        },
+        "_source": {
+            "excludes": "embeddings"
+        }
+    }
+    return q
+
 
 def keyword_query_v2(term):
     q = {
@@ -177,3 +208,17 @@ def hybrid_query_v0(query):
         }
     })
     return features_query
+
+
+def hybrid_query_v2(query):
+    """
+    """
+    embedding = embedder.embed([query])[0]
+
+    keyword_query = keyword_query_v3(query)
+
+    semantic_query = semantic_search_query(query)
+
+    return (keyword_query, semantic_query)
+
+
