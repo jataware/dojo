@@ -325,7 +325,7 @@ def alternate_lists(list1, list2, id_property=None):
     """
 
     if id_property:
-        list2 = get_unique_items(list1, list2)
+        list2 = get_unique_items(list1, list2, id_property)
     
     # Determine the length of the longest list
     max_length = max(len(list1), len(list2))
