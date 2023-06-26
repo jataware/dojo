@@ -28,6 +28,7 @@ import AdjustGeoResolution from './AdjustGeoResolution';
 import TransformationButton from './TransformationButton';
 import useElwoodData from './useElwoodData';
 import {
+  areLatLngAnnotated,
   generateProcessGeoResArgs,
   generateProcessTempResArgs,
   generateProcessGeoCovArgs,
@@ -41,8 +42,9 @@ import { GadmResolver } from './GadmResolver';
 // import times from 'lodash/times';
 
 // for development purposes
-// const mapResolution = 111.00000000000014;
-// const mapResolutionOptions = [
+// const mapResolution = 111.00000000000014;//'Non-uniform/event data';
+// const mapResolutionOptions //= null;
+// = [
 //   222.00000000000028,
 //   333.00000000000045,
 //   444.00000000000057,
@@ -64,9 +66,10 @@ import { GadmResolver } from './GadmResolver';
 //   2220.0000000000027
 // ];
 // const mapBounds = [[10.5619, 42.0864], [12.595, 43.2906]];
-// const timeResolution = {
+// const timeResolution =//  null;
+// {
 //   uniformity: 'PERFECT',
-//   unit: 'day',
+//   unit: 'month',
 //   resolution: 1,
 //   error: 0
 // };
@@ -100,11 +103,11 @@ import { GadmResolver } from './GadmResolver';
 // const timeBounds = unique_dates;
 
 // const [
-//   mapResolutionError,
-//   mapBoundsError,
-//   timeResolutionError,
-//   // timeBoundsError
-// ] = [false, false, false, false,];
+// mapResolutionError,
+// mapBoundsError,
+// timeResolutionError,
+// timeBoundsError
+// ] = [false, false, true, false];
 
 
 /**
@@ -173,10 +176,6 @@ const DataTransformation = withStyles(() => ({
   // until we get the list of timeresoptions from the backend:
   if (!timeResolutionOptions.length) {
     setTimeResolutionOptions([
-      { alias: 'L', description: 'milliseconds' },
-      { alias: 'S', description: 'secondly' },
-      { alias: 'T', description: 'minutely' },
-      { alias: 'H', description: 'hourly' },
       { alias: 'D', description: 'day' },
       { alias: 'W', description: 'weekly' },
       { alias: 'M', description: 'month end' },
@@ -235,7 +234,16 @@ const DataTransformation = withStyles(() => ({
     if (resp.resolution_result?.uniformity === 'PERFECT'
       || resp.resolution_result?.uniformity === 'UNIFORM') {
       setData(resp.scale_km);
+
+      if (resp.multiplier_samples) {
+        setOptions(resp.multiplier_samples);
+      }
     } else {
+      if (areLatLngAnnotated(annotations)) {
+        // as long as we have lat/lng annotated, set this string as our default geo resolution
+        setData('Non-uniform/event data');
+        return;
+      }
       // TODO: handle error case in geo res component & data transformation
       let message = 'Resolution not detectable';
       // if we have a uniformity that is not handled above, change the message to:
@@ -243,11 +251,8 @@ const DataTransformation = withStyles(() => ({
       setDataError(message);
     }
 
-    if (resp.multiplier_samples) {
-      setOptions(resp.multiplier_samples);
-    }
     setDataLoading(false);
-  }, []);
+  }, [annotations]);
 
   const onGeoBoundarySuccess = useCallback((resp, setData, setDataError, setDataLoading) => {
     if (resp?.boundary_box) {
@@ -266,9 +271,23 @@ const DataTransformation = withStyles(() => ({
 
   const onTemporalResSuccess = useCallback((resp, setData, setDataError, setDataLoading) => {
     if (resp.resolution_result?.unit) {
-      setData(resp.resolution_result);
+      if (
+        resp.uniformity === 'PERFECT'
+        || resp.resolution_result.uniformity === 'UNIFORM'
+        || resp.resolution_result.uniformity === 'PERFECTLY_UNIFORM'
+      ) {
+        setData(resp.resolution_result);
+      } else {
+        // If it isn't one of the three uniform types above, default to 'day'
+        // because we don't actually know the temporal resolution no matter what we get back
+        setData('day');
+      }
     } else {
-      setDataError(resp.message ? resp.message : true);
+      // display this string as the starting point for non-uniform data
+      // this only happens for datasets without an annotated date column
+      setData('Non-uniform/event data');
+      // we may want to handle errors if there is no annotated date, tbd
+      // setDataError(resp.message ? resp.message : true);
     }
     setDataLoading(false);
   }, []);
@@ -349,6 +368,11 @@ const DataTransformation = withStyles(() => ({
     onSuccess: onGetDatesSuccess,
   });
 
+  const mapResolutionLoading = !mapResolution && !mapResolutionError;
+  const mapBoundsLoading = !mapBounds && !mapBoundsError;
+  const timeResolutionLoading = !timeResolution && !timeResolutionError;
+  const timeBoundsLoading = !timeBounds && !timeBoundsError;
+
   const handleDrawerClose = (bool, event) => {
     // prevent clicking outside the drawer to close
     if (event?.target.className === 'MuiBackdrop-root') return;
@@ -365,12 +389,44 @@ const DataTransformation = withStyles(() => ({
     setDrawerName(name);
   };
 
+  const disableNext = () => {
+    if (
+      mapResolutionLoading
+      || mapBoundsLoading
+      || timeResolutionLoading
+      || timeBoundsLoading
+    ) {
+      // disable if any of the transformations are loading
+      return true;
+    }
+
+    if (!mapResolutionError && !savedMapResolution) {
+      // disable if we are requiring a map resolution to be chosen and it hasn't been
+      return true;
+    }
+
+    if (!timeResolutionError && !savedTimeResolution) {
+      // disable if we are requiring a time resolution to be set and it hasn't been
+      return true;
+    }
+
+    return false;
+  };
+
   const processAdjustGeo = () => {
     if (savedMapResolution) {
-      const args = generateProcessGeoResArgs(annotations, savedMapResolution, mapResolution);
+      const args = generateProcessGeoResArgs(
+        annotations,
+        savedMapResolution,
+        mapResolution
+      );
       // save the args to a ref so we can store them on the annotations object
       transformationsRef.current.regrid_geo = args;
-      return startElwoodJob(datasetInfo.id, args, 'transformation_processors.regrid_geo');
+      // If we have an error, then we never found a resolution so we can't do a transformation
+  // TODO: remove this once we've confirmed we can do this transformation for nonuniform
+      // if (!mapResolutionError) {
+        return startElwoodJob(datasetInfo.id, args, 'transformation_processors.regrid_geo');
+      // }
     }
   };
 
@@ -543,15 +599,16 @@ const DataTransformation = withStyles(() => ({
           Icon={GridOnIcon}
           title="Adjust Geospatial Resolution"
           onClick={() => handleDrawerOpen('regridMap')}
-          loading={!mapResolution && !mapResolutionError}
+          loading={mapResolutionLoading}
           error={mapResolutionError}
+          required={!mapResolutionError}
         />
         <TransformationButton
           isComplete={!!savedDrawings.length}
           Icon={MapIcon}
           title="Select Geospatial Coverage"
           onClick={() => handleDrawerOpen('clipMap')}
-          loading={!mapBounds && !mapBoundsError}
+          loading={mapBoundsLoading}
           error={mapBoundsError}
         />
         <TransformationButton
@@ -559,15 +616,16 @@ const DataTransformation = withStyles(() => ({
           Icon={AspectRatioIcon}
           title="Adjust Temporal Resolution"
           onClick={() => handleDrawerOpen('scaleTime')}
-          loading={!timeResolution && !timeResolutionError}
+          loading={timeResolutionLoading}
           error={timeResolutionError}
+          required={!timeResolutionError}
         />
         <TransformationButton
           isComplete={!!savedTimeBounds}
           Icon={TodayIcon}
           title="Select Temporal Coverage"
           onClick={() => handleDrawerOpen('clipTime')}
-          loading={!timeBounds && !timeBoundsError}
+          loading={timeBoundsLoading}
           error={timeBoundsError}
         />
       </List>
@@ -575,6 +633,7 @@ const DataTransformation = withStyles(() => ({
         label="Next"
         handleNext={handleNextStep}
         handleBack={handleBack}
+        disabled={disableNext()}
       />
 
       <Drawer
@@ -592,6 +651,13 @@ const DataTransformation = withStyles(() => ({
   );
 });
 
+/**
+ * This component mounts specifically to run the restore_raw_file data transformation before any
+ * of the other useElwoodData jobs run, as we need to confirm that the file is in its original
+ * state before the other ones can run.
+ * It also holds onto the cleanupRef that will prevent the various useElwoodData calls from
+ * repeating forever if we navigate away
+ **/
 export default withStyles(({ spacing }) => ({
   root: {
     padding: [[spacing(4), spacing(4), spacing(2), spacing(4)]],
@@ -617,6 +683,9 @@ export default withStyles(({ spacing }) => ({
   handleBack,
   annotations,
 }) => {
+  // this ref keeps track of when the page is mounted so that we can avoid useElwoodData running
+  // endlessly if we navigate away while it's still going
+  // it should be passed into every use of useElwoodData
   const cleanupRef = useRef(null);
   const [showSpinner, setShowSpinner] = useState(true);
 
