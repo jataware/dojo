@@ -1,93 +1,85 @@
-import io
 import logging
-import io
-import json
-import os
-import re
+import pandas as pd
+from utils import job_setup
 
-import sys
-
-# from base_annotation import BaseProcessor
-# from settings import settings
+from elwood import elwood
 
 
-
-def resolution_alternatives(context):
-
+def resolution_alternatives(context, filename=None, **kwargs):
     logging.info("Called GADM resolution alternatives processor.")
 
-    # uuid = context["uuid"]
+    # Pre bake
+    file, filename, rawfile_path = job_setup(context=context, filename=filename)
+    original_dataframe = pd.read_csv(file, delimiter=",")
+
+    admin_level = kwargs.get("admin_level", "country")
+
+    geo_column = ""
+    for geo in context.get("annotations").get("annotations").get("geo"):
+        if geo.get("primary_geo", False):
+            geo_column = geo.get("name")
+
+    # Run job
+    gadm_response = elwood.get_gadm_matches(original_dataframe, geo_column, admin_level)
 
     # Return hardcoded response in job
     # provide gadm alternatives
-    mock_gadm_alternatives = [
-        {
-            "raw_value": "Korea",
-            "gadm_resolved": "Republic of Korea",
-            "alternatives": [
-                "Republic of Korea",
-                "Democratic People's Republic of Korea"
-            ]
-        },
-        {
-            "raw_value": "dominica",
-            "gadm_resolved": "Dominica",
-            "alternatives": [
-                "Dominica",
-                "Dominican Republic"
-            ]
-        },
-        {
-            "raw_value": "congo",
-            "gadm_resolved": "Democratic Republic of the Congo",
-            "alternatives": [
-                "Democratic Republic of the Congo",
-                "Republic of the Congo"
-            ]
-        },
-        {
-            "raw_value": "Niger",
-            "gadm_resolved": "Niger",
-            "alternatives": [
-                "Niger",
-                "Nigeria"
-            ]
-        },
-        {
-            "raw_value": "gunea",
-            "gadm_resolved": "Guinea",
-            "alternatives": [
-                "Guinea",
-                "Guinea-Bissau",
-                "Equatorial Guinea",
-                "Guyana",
-                "Ghana"
-            ]
-        },
-        {
-            "raw_value": "Virgin Islands",
-            "gadm_resolved": "US Virgin Islands",
-            "alternatives": [
-                "US Virgin Islands",
-                "British Virgin Islands"
-            ]
-        },
-        {
-            "raw_value": "Samoa",
-            "gadm_resolved": "Samoa",
-            "alternatives": [
-                "Samoa",
-                "American Samoa"
-            ]
-        }
-    ];
+    # mock_gadm_alternatives = [
+    #     {
+    #         "raw_value": "Korea",
+    #         "gadm_resolved": "Republic of Korea",
+    #         "alternatives": [
+    #             "Republic of Korea",
+    #             "Democratic People's Republic of Korea",
+    #         ],
+    #     },
+    #     {
+    #         "raw_value": "dominica",
+    #         "gadm_resolved": "Dominica",
+    #         "alternatives": ["Dominica", "Dominican Republic"],
+    #     },
+    #     {
+    #         "raw_value": "congo",
+    #         "gadm_resolved": "Democratic Republic of the Congo",
+    #         "alternatives": [
+    #             "Democratic Republic of the Congo",
+    #             "Republic of the Congo",
+    #         ],
+    #     },
+    #     {
+    #         "raw_value": "Niger",
+    #         "gadm_resolved": "Niger",
+    #         "alternatives": ["Niger", "Nigeria"],
+    #     },
+    #     {
+    #         "raw_value": "gunea",
+    #         "gadm_resolved": "Guinea",
+    #         "alternatives": [
+    #             "Guinea",
+    #             "Guinea-Bissau",
+    #             "Equatorial Guinea",
+    #             "Guyana",
+    #             "Ghana",
+    #         ],
+    #     },
+    #     {
+    #         "raw_value": "Virgin Islands",
+    #         "gadm_resolved": "US Virgin Islands",
+    #         "alternatives": ["US Virgin Islands", "British Virgin Islands"],
+    #     },
+    #     {
+    #         "raw_value": "Samoa",
+    #         "gadm_resolved": "Samoa",
+    #         "alternatives": ["Samoa", "American Samoa"],
+    #     },
+    # ]
 
-    return mock_gadm_alternatives
+    return gadm_response
 
 
-if __name__ == '__main__':
-
+if __name__ == "__main__":
     import pprint
+
     pp = pprint.PrettyPrinter(indent=2)
 
     out = resolution_alternatives(context={})
