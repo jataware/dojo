@@ -10,6 +10,7 @@ import InputLabel from '@material-ui/core/InputLabel';
 import MenuItem from '@material-ui/core/MenuItem';
 import Select from '@material-ui/core/Select';
 import TextField from '@material-ui/core/TextField';
+import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 
@@ -104,12 +105,12 @@ export default withStyles((theme) => ({
     if (!selectedResolution || selectedResolution === '') return '';
     if (nonUniform) {
       if (validNumber(selectedResolution)) {
-        return `${selectedResolution} km`;
+        return `${selectedResolution} deg`;
       }
 
       return '';
     }
-    return `${selectedResolution.toFixed(2)} km`;
+    return `${selectedResolution.toFixed(2)} deg`;
   };
 
   const disableButton = () => {
@@ -129,7 +130,7 @@ export default withStyles((theme) => ({
           value={selectedResolution}
           onChange={handleChangeResolution}
           variant="outlined"
-          label="Resolution (km)"
+          label="Resolution (deg)"
           error={error}
           helperText={error ? 'Please enter a valid number' : ''}
         />
@@ -144,10 +145,18 @@ export default withStyles((theme) => ({
           onChange={handleChangeResolution}
           label="Resolution"
         >
-          {/* we want to allow users to not change their resolution, so put the previous
-            resolution at the start of the select array */}
-          {[oldResolution].concat(resolutionOptions).map((option) => (
-            <MenuItem key={option} value={option}>{option.toFixed(2)} km</MenuItem>
+          {resolutionOptions.deg.map((option, index) => (
+            <MenuItem key={option} value={option}>
+              <Tooltip
+                placement="bottom-end"
+                arrow
+                title={
+                  resolutionOptions.km[index] ? `${resolutionOptions.km[index].toFixed(2)} km` : ''
+                }
+              >
+                <span style={{ width: '100%' }}>{`${option.toFixed(2)} deg`}</span>
+              </Tooltip>
+            </MenuItem>
           ))}
         </Select>
       </>
@@ -163,7 +172,7 @@ export default withStyles((theme) => ({
             <div className={classes.textWrapper}>
               <Typography variant="h6" align="center">current resolution</Typography>
               <Typography variant="h6" className={classes.resolutionText} align="center">
-                {nonUniform ? oldResolution : `${oldResolution.toFixed(2)} km`}
+                {nonUniform ? oldResolution : `${oldResolution.toFixed(2)} deg`}
               </Typography>
             </div>
             <div className={classes.arrowIcon}>

@@ -36,7 +36,6 @@ const useElwoodData = ({
             if (response.status === 200) {
               // keep track of how long it takes (for dev purposes)
               count += 1;
-              // console.log(`${count}: response from job string: ${jobString}:`, response);
               if (response.data) {
                 console.log(`success! ${jobString} took ${count * 500}ms`, response.data);
                 // setOptions currently just used for onGeoResSuccess
