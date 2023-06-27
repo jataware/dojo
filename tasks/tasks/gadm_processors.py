@@ -20,67 +20,68 @@ def resolution_alternatives(context):
 
     # Return hardcoded response in job
     # provide gadm alternatives
-    mock_gadm_alternatives = [
-        {
-            "raw_value": "Korea",
-            "gadm_resolved": "Republic of Korea",
-            "alternatives": [
-                "Republic of Korea",
-                "Democratic People's Republic of Korea"
-            ]
-        },
-        {
-            "raw_value": "dominica",
-            "gadm_resolved": "Dominica",
-            "alternatives": [
-                "Dominica",
-                "Dominican Republic"
-            ]
-        },
-        {
-            "raw_value": "congo",
-            "gadm_resolved": "Democratic Republic of the Congo",
-            "alternatives": [
-                "Democratic Republic of the Congo",
-                "Republic of the Congo"
-            ]
-        },
-        {
-            "raw_value": "Niger",
-            "gadm_resolved": "Niger",
-            "alternatives": [
-                "Niger",
-                "Nigeria"
-            ]
-        },
-        {
-            "raw_value": "gunea",
-            "gadm_resolved": "Guinea",
-            "alternatives": [
-                "Guinea",
-                "Guinea-Bissau",
-                "Equatorial Guinea",
-                "Guyana",
-                "Ghana"
-            ]
-        },
-        {
-            "raw_value": "Virgin Islands",
-            "gadm_resolved": "US Virgin Islands",
-            "alternatives": [
-                "US Virgin Islands",
-                "British Virgin Islands"
-            ]
-        },
-        {
-            "raw_value": "Samoa",
-            "gadm_resolved": "Samoa",
-            "alternatives": [
-                "Samoa",
-                "American Samoa"
-            ]
-        }
-    ];
+    mock_gadm_alternatives = {
+        "field": "CountryMockityMocked",
+        "fuzzy_match": [
+            {
+                "raw_value": "Korea",
+                "gadm_resolved": "Republic of Korea",
+                "confidence": 85,
+                "alternatives": [
+                    "Republic of Korea",
+                    "Democratic People's Republic of Korea"
+                ]
+            },
+            {
+                "raw_value": "dominica",
+                "gadm_resolved": "Dominica",
+                "confidence": 85,
+                "alternatives": [
+                    "Dominica",
+                    "Dominican Republic"
+                ]
+            },
+            {
+                "raw_value": "congo",
+                "gadm_resolved": "Democratic Republic of the Congo",
+                "confidence": 85,
+                "alternatives": [
+                    "Democratic Republic of the Congo",
+                    "Republic of the Congo"
+                ]
+            },
+            {
+                "raw_value": "gunea",
+                "gadm_resolved": "Guinea",
+                "confidence": 85,
+                "alternatives": [
+                    "Guinea",
+                    "Guinea-Bissau",
+                    "Equatorial Guinea",
+                    "Guyana",
+                    "Ghana"
+                ]
+            },
+            {
+                "raw_value": "Virgin Islands",
+                "gadm_resolved": "US Virgin Islands",
+                "confidence": 85,
+                "alternatives": [
+                    "US Virgin Islands",
+                    "British Virgin Islands"
+                ]
+            },
+            {
+                "raw_value": "Samoa",
+                "gadm_resolved": "Samoa",
+                "confidence": 85,
+                "alternatives": [
+                    "Samoa",
+                    "American Samoa"
+                ]
+            }
+        ]
+    }
 
     return mock_gadm_alternatives
 

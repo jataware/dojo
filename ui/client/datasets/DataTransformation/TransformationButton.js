@@ -42,7 +42,6 @@ const TransformationButton = withStyles(({ palette }) => ({
   loading,
   required,
   error,
-  required
 }) => {
   const displayIcon = () => {
     if (isComplete) {
