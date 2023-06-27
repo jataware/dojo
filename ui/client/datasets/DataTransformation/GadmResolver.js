@@ -4,6 +4,7 @@ import { withStyles } from '@material-ui/core/styles';
 
 import random from 'lodash/random';
 import keyBy from 'lodash/keyBy';
+import reduce from 'lodash/reduce';
 import rcountry from 'random-country'; // TODO remove package dependency and this
 
 import { GridOverlay, DataGrid } from '@material-ui/data-grid';
@@ -256,19 +257,7 @@ const GadmResolverTable = withStyles(() => ({
   innerInputOutlined: {
     padding: 10
   }
-}))(({classes, rows}) => {
-
-  const [gadmResolutionValues, setGadmResolutionValues] = React.useState(keyBy(rows, 'raw_value'));
-
-  const updateGadmResolutionValues = (rawCountryName, newSelection) => {
-    setGadmResolutionValues(prev => ({
-      ...prev,
-      [rawCountryName]: {
-        ...prev[rawCountryName],
-        override: newSelection
-      }
-    }));
-  };
+}))(({classes, rows, gadmValues, onGadmChange }) => {
 
   return (
     <Table
@@ -314,9 +303,9 @@ const GadmResolverTable = withStyles(() => ({
                   multiple={false}
                   options={row.alternatives}
                   values={
-                    gadmResolutionValues[row.raw_value].override || row.gadm_resolved
+                    gadmValues[row.raw_value].override || row.gadm_resolved
                   }
-                  setValues={(newValue) => updateGadmResolutionValues(row.raw_value, newValue)}
+                  setValues={(newValue) => onGadmChange(row.raw_value, newValue)}
                 />
               </TableCell>
             </TableRow>
@@ -370,6 +359,31 @@ export const GadmResolver = withStyles(() => ({
 
   const lowConfidenceRows = gadmRowData.fuzzy_match;
   const primaryField = gadmRowData.field;
+  const [gadmResolutionValues, setGadmResolutionValues] = React.useState(keyBy(lowConfidenceRows, 'raw_value'));
+
+  const updateGadmResolutionValues = (rawCountryName, newSelection) => {
+    setGadmResolutionValues(prev => ({
+      ...prev,
+      [rawCountryName]: {
+        ...prev[rawCountryName],
+        override: newSelection
+      }
+    }));
+  };
+
+  const handleSave = () => {
+    const formatted = reduce(gadmResolutionValues, (acc, value, key) => {
+
+      if (value.override) {
+        acc[key] = value.override;
+      }
+
+      return acc;
+
+    }, {});
+
+    onSave({[primaryField]: formatted});
+  };
 
   return (
       <div
@@ -396,7 +410,11 @@ export const GadmResolver = withStyles(() => ({
               className={classes.tableContainer}
               elevation={0}
               >
-              <GadmResolverTable rows={lowConfidenceRows} />
+              <GadmResolverTable
+                rows={lowConfidenceRows}
+                onGadmChange={updateGadmResolutionValues}
+                gadmValues={gadmResolutionValues}
+              />
             </Paper>
           </div>
         </div>
@@ -418,7 +436,7 @@ export const GadmResolver = withStyles(() => ({
               Cancel
             </Button>
             <Button
-              onClick={onSave}
+              onClick={handleSave}
               variant="outlined"
               type="submit"
               color="primary">

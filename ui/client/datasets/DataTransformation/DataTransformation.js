@@ -37,7 +37,6 @@ import {
 
 import { GadmResolver } from './GadmResolver';
 
-// import rcountry from 'random-country'; // TODO remove package dependency and this
 // import random from 'lodash/random';
 // import times from 'lodash/times';
 
@@ -107,13 +106,14 @@ import { GadmResolver } from './GadmResolver';
 // mapBoundsError,
 // timeResolutionError,
 // timeBoundsError
+// gadmResolutionError
 // ] = [false, false, true, false];
 
 
 /**
  *
  **/
-// const mockGadmResolutionAlternatives = [
+// const gadmResolution = [
 //   {
 //     id: 'korea123',
 //     raw_value: 'Korea',
@@ -127,13 +127,13 @@ import { GadmResolver } from './GadmResolver';
 
 // for (let moreCountries = 0; moreCountries < 8; moreCountries++) {
 
-//   let country = rcountry({ full: true });
+//   let country = 'jspan';
 
-//   mockGadmResolutionAlternatives.push({
+//   gadmResolution.push({
 //     id: country + random(0,2),
 //     raw_value: country.replace('e','').replace('a','i'),
 //     gadm_resolved: country,
-//     alternatives: times(random(1,10), () => rcountry({full: true}))
+//     alternatives: times(random(1,10), () => 'Japan')
 //   });
 // }
 
@@ -163,7 +163,7 @@ const DataTransformation = withStyles(() => ({
 
   const [savedMapResolution, setSavedMapResolution] = useState(null);
 
-  const [savedGADMResolution, setSavedGADMResolution] = useState(null);
+  const [savedGADMOverrides, setSavedGADMOverrides] = useState(null);
 
   const [timeResolutionOptions, setTimeResolutionOptions] = useState([]);
   const [savedTimeResolution, setSavedTimeResolution] = useState(null);
@@ -334,7 +334,7 @@ const DataTransformation = withStyles(() => ({
     annotations,
     jobString: 'gadm_processors.resolution_alternatives',
     generateArgs: () => {},
-    // cleanupRef,
+    cleanupRef,
     onSuccess: onGadmResSuccess,
   });
 
@@ -423,7 +423,7 @@ const DataTransformation = withStyles(() => ({
       // save the args to a ref so we can store them on the annotations object
       transformationsRef.current.regrid_geo = args;
       // If we have an error, then we never found a resolution so we can't do a transformation
-  // TODO: remove this once we've confirmed we can do this transformation for nonuniform
+      // TODO: remove this once we've confirmed we can do this transformation for nonuniform
       // if (!mapResolutionError) {
         return startElwoodJob(datasetInfo.id, args, 'transformation_processors.regrid_geo');
       // }
@@ -458,11 +458,18 @@ const DataTransformation = withStyles(() => ({
     }
   };
 
+  const processGadmOverrides = () => {
+    transformationsRef.current.gadm_overrides = savedGADMOverrides;
+  };
+
   const handleNextStep = () => {
     const adjustGeo = processAdjustGeo();
     const clipMap = processMapClippings();
     const adjustTime = processAdjustTime();
     const clipTime = processClipTime();
+
+    processGadmOverrides();
+
     // Only do all of the below when we've done all of the selected transformations
     // any untouched transformations won't return a promise and thus won't delay this
     Promise.all([adjustGeo, clipMap, adjustTime, clipTime]).then((responses) => {
@@ -564,14 +571,14 @@ const DataTransformation = withStyles(() => ({
           />
         );
       case 'gadmResolutionReview':
-      return (
-        <GadmResolver
-          gadmRowData={gadmResolution}
-          onSave={() => { setSavedGADMResolution(); handleDrawerClose(); }}
-          onCancel={handleDrawerClose}
-          cleanupRef={cleanupRef}
-        />
-      )
+        return (
+          <GadmResolver
+            gadmRowData={gadmResolution}
+            onSave={(data) => { setSavedGADMOverrides(data); handleDrawerClose(); }}
+            onCancel={handleDrawerClose}
+            cleanupRef={cleanupRef}
+          />
+        );
       default:
         return (
           <Typography align="center" variant="h5">
@@ -585,7 +592,7 @@ const DataTransformation = withStyles(() => ({
     <div className={classes.transformationRoot}>
       <List>
         <TransformationButton
-          isComplete={Boolean(savedGADMResolution)}
+          isComplete={Boolean(savedGADMOverrides)}
           Icon={GlobeIcon}
           title="Review Administrative Area Detection"
           onClick={() => handleDrawerOpen('gadmResolutionReview')}
