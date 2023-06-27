@@ -4,7 +4,6 @@ import { GadmResolverV1 } from '../client/datasets/DataTransformation/GadmResolv
 import { ThemeProvider } from '@material-ui/core/styles';
 import CssBaseline from '@material-ui/core/CssBaseline';
 
-import rcountry from 'random-country'; // TODO remove package dependency and this
 import random from 'lodash/random';
 
 import theme from '../client/theme';
@@ -34,7 +33,7 @@ const mockData = [{
 }];
 
 for (let i = 0; i < mockRowCount; i++) {
-  let country = rcountry({ full: true });
+  let country = 'japan';
   mockData
     .push({
       id: random(1, 10000),
@@ -42,8 +41,6 @@ for (let i = 0; i < mockRowCount; i++) {
       gadm_resolved: country, adjusted: '-'
     });
 }
-
-console.log('mockData', mockData);
 
 export const Basic = {
   args: {
