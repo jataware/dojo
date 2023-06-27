@@ -51,10 +51,6 @@ const TransformationButton = withStyles(({ palette }) => ({
     if (error !== false) {
       return <InfoIcon className={classes.close} fontSize="large" />;
     }
-
-    if (required) {
-      return <span style={{color: '#ff6654e6', fontSize: '2rem'}}>✱</span>
-    }
   };
 
   // If no message is supplied from the backend, we default to true, so use a default message
