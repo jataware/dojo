@@ -1,16 +1,20 @@
 import React, { useCallback, useState } from 'react';
 
+import isFinite from 'lodash/isFinite';
+import trim from 'lodash/trim';
+
 import ArrowForwardIcon from '@material-ui/icons/ArrowForward';
 import Button from '@material-ui/core/Button';
 import FormControl from '@material-ui/core/FormControl';
 import InputLabel from '@material-ui/core/InputLabel';
 import MenuItem from '@material-ui/core/MenuItem';
 import Select from '@material-ui/core/Select';
+import TextField from '@material-ui/core/TextField';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 
 import PreviewTransformation from './PreviewTransformation';
-import { generateProcessGeoResArgs } from './dataTransformationHelpers';
+import { areLatLngAnnotated, generateProcessGeoResArgs } from './dataTransformationHelpers';
 
 export default withStyles((theme) => ({
   selectWrapper: {
@@ -34,11 +38,15 @@ export default withStyles((theme) => ({
   },
   button: {
     minWidth: '160px',
+    height: '56px',
   },
   arrowIcon: {
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
+  },
+  resolutionText: {
+    fontWeight: '350',
   },
 }))(({
   classes,
@@ -53,6 +61,13 @@ export default withStyles((theme) => ({
   cleanupRef,
 }) => {
   const [selectedResolution, setSelectedResolution] = useState(savedResolution || '');
+  const [error, setError] = useState(false);
+
+  const nonUniform = oldResolution === 'Non-uniform/event data';
+
+  const validNumber = (value) => (
+    value !== '' && isFinite(Number(value))
+  );
 
   const handleSaveClick = () => {
     if (selectedResolution !== '') setSavedResolution(selectedResolution);
@@ -61,7 +76,22 @@ export default withStyles((theme) => ({
   };
 
   const handleChangeResolution = (event) => {
-    setSelectedResolution(event.target.value);
+    // nonUniform has a textfield input, so we need to ensure we just receive numbers
+    if (nonUniform) {
+      // remove leading and trailing whitespace, as we only want valid numbers
+      const trimmedValue = trim(event.target.value);
+      setSelectedResolution(trimmedValue);
+
+      // When we have the text input, validate that it's a number
+      if (validNumber(trimmedValue)) {
+        setError(false);
+      } else {
+        setError(true);
+      }
+    } else {
+      // uniform have a select with pre-set options
+      setSelectedResolution(event.target.value);
+    }
   };
 
   const createPreviewArgs = useCallback((argsAnnotations) => {
@@ -70,16 +100,70 @@ export default withStyles((theme) => ({
     return args;
   }, [selectedResolution, oldResolution]);
 
+  const formatNewResolution = () => {
+    if (!selectedResolution || selectedResolution === '') return '';
+    if (nonUniform) {
+      if (validNumber(selectedResolution)) {
+        return `${selectedResolution} km`;
+      }
+
+      return '';
+    }
+    return `${selectedResolution.toFixed(2)} km`;
+  };
+
+  const disableButton = () => {
+    if (nonUniform) {
+      if (!validNumber(selectedResolution)) return true;
+    }
+
+    if (!selectedResolution) return true;
+
+    return false;
+  };
+
+  const switchInput = () => {
+    if (nonUniform) {
+      return (
+        <TextField
+          value={selectedResolution}
+          onChange={handleChangeResolution}
+          variant="outlined"
+          label="Resolution (km)"
+          error={error}
+          helperText={error ? 'Please enter a valid number' : ''}
+        />
+      );
+    }
+
+    return (
+      <>
+        <InputLabel>Resolution</InputLabel>
+        <Select
+          value={selectedResolution}
+          onChange={handleChangeResolution}
+          label="Resolution"
+        >
+          {/* we want to allow users to not change their resolution, so put the previous
+            resolution at the start of the select array */}
+          {[oldResolution].concat(resolutionOptions).map((option) => (
+            <MenuItem key={option} value={option}>{option.toFixed(2)} km</MenuItem>
+          ))}
+        </Select>
+      </>
+    );
+  };
+
   return (
     <div>
       <Typography align="center" variant="h5">Adjust Geospatial Resolution</Typography>
-      {oldResolution ? (
+      {areLatLngAnnotated(annotations) ? (
         <>
           <div className={classes.oldToNew}>
             <div className={classes.textWrapper}>
               <Typography variant="h6" align="center">current resolution</Typography>
-              <Typography variant="h6" align="center">
-                {oldResolution.toFixed(2)} km
+              <Typography variant="h6" className={classes.resolutionText} align="center">
+                {nonUniform ? oldResolution : `${oldResolution.toFixed(2)} km`}
               </Typography>
             </div>
             <div className={classes.arrowIcon}>
@@ -87,23 +171,14 @@ export default withStyles((theme) => ({
             </div>
             <div className={classes.textWrapper}>
               <Typography variant="h6" align="center">new resolution</Typography>
-              <Typography variant="h6" align="center">
-                {selectedResolution !== '' && `${selectedResolution.toFixed(2)} km`}
+              <Typography variant="h6" className={classes.resolutionText} align="center">
+                {formatNewResolution()}
               </Typography>
             </div>
           </div>
           <div className={classes.bottomWrapper}>
             <FormControl variant="outlined" className={classes.selectWrapper}>
-              <InputLabel>Resolution</InputLabel>
-              <Select
-                value={selectedResolution}
-                onChange={handleChangeResolution}
-                label="Resolution"
-              >
-                {resolutionOptions.map((option) => (
-                  <MenuItem key={option} value={option}>{option.toFixed(2)} km</MenuItem>
-                ))}
-              </Select>
+              {switchInput()}
             </FormControl>
             <Button
               color="primary"
@@ -111,6 +186,7 @@ export default withStyles((theme) => ({
               disableElevation
               onClick={handleSaveClick}
               className={classes.button}
+              disabled={disableButton()}
             >
               Save Resolution
             </Button>
@@ -121,12 +197,13 @@ export default withStyles((theme) => ({
             annotations={annotations}
             cleanupRef={cleanupRef}
             createPreviewArgs={createPreviewArgs}
-            disabled={!selectedResolution}
+            disabled={disableButton()}
           />
         </>
       ) : (
         <Typography align="center" variant="h6" style={{ marginTop: '64px' }}>
-          This dataset does not have a useable geospatial resolution
+          Geospatial resolution cannot be adjusted without annotated
+          latitude and longitude columns
         </Typography>
       )}
     </div>

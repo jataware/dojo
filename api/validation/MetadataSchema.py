@@ -1,6 +1,7 @@
-from typing import Optional, List, Dict, Any
+from typing import Optional, List, Dict, Any, Union
 from enum import Enum
 from pydantic import BaseModel, Field, Extra
+from datetime import date
 
 
 # Metadata Model Used to store annotation data along with any other metadata we may need inside of a dictionary with string keys and any type of data.
@@ -142,6 +143,47 @@ class FeatureAnnotation(BaseModel):
     qualifierrole: Optional[str]
     aliases: Dict[str, str] = {}
 
+# All the data transformations
+class LatLong(BaseModel):
+    lng: float
+    lat: float
+
+class TimeRange(BaseModel):
+    start: date
+    end: date
+
+class RegridGeo(BaseModel):
+    datetime_column: List[str]
+    geo_columns: List[str]
+    scale: Union[float, str]
+    scale_multi: float
+
+class ScaleTime(BaseModel):
+    datetime_bucket: str
+    datetime_column: str
+    geo_columns: List[str]
+    aggregation_function_list: List[str]
+
+class ClipGeo(BaseModel):
+    geo_columns: List[str]
+    map_shapes: List[List[LatLong]]
+
+class ClipTime(BaseModel):
+    time_ranges: List[TimeRange]
+    datetime_column: str
+
+class GadmOverrides(BaseModel):
+    pass
+
+
+Transformation = Union[RegridGeo, ScaleTime, ClipGeo, ClipTime, GadmOverrides]
+
+
+class Metadata(BaseModel):
+    class Config:
+        extra = Extra.allow
+
+    transformations: Optional[Dict[str, Transformation]]
 
 class AnnotationSchema(BaseModel):
     class Config:
@@ -151,7 +193,6 @@ class AnnotationSchema(BaseModel):
     date: Optional[List[DateAnnotation]]
     feature: Optional[List[FeatureAnnotation]]
 
-
 class MetaModel(BaseModel):
-    metadata: Optional[Dict[str, Any]] = {}
+    metadata: Optional[Metadata] = None
     annotations: Optional[AnnotationSchema] = None

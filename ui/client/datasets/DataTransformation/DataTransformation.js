@@ -4,6 +4,9 @@ import React, {
 
 import axios from 'axios';
 
+import cloneDeep from 'lodash/cloneDeep';
+import isEmpty from 'lodash/isEmpty';
+
 import AspectRatioIcon from '@material-ui/icons/AspectRatio';
 import TodayIcon from '@material-ui/icons/Today';
 import GridOnIcon from '@material-ui/icons/GridOn';
@@ -25,6 +28,7 @@ import AdjustGeoResolution from './AdjustGeoResolution';
 import TransformationButton from './TransformationButton';
 import useElwoodData from './useElwoodData';
 import {
+  areLatLngAnnotated,
   generateProcessGeoResArgs,
   generateProcessTempResArgs,
   generateProcessGeoCovArgs,
@@ -33,13 +37,13 @@ import {
 
 import { GadmResolver } from './GadmResolver';
 
-// import rcountry from 'random-country'; // TODO remove package dependency and this
 // import random from 'lodash/random';
 // import times from 'lodash/times';
 
 // for development purposes
-// const mapResolution = 111.00000000000014;
-// const mapResolutionOptions = [
+// const mapResolution = 111.00000000000014;//'Non-uniform/event data';
+// const mapResolutionOptions //= null;
+// = [
 //   222.00000000000028,
 //   333.00000000000045,
 //   444.00000000000057,
@@ -61,9 +65,10 @@ import { GadmResolver } from './GadmResolver';
 //   2220.0000000000027
 // ];
 // const mapBounds = [[10.5619, 42.0864], [12.595, 43.2906]];
-// const timeResolution = {
+// const timeResolution =//  null;
+// {
 //   uniformity: 'PERFECT',
-//   unit: 'day',
+//   unit: 'month',
 //   resolution: 1,
 //   error: 0
 // };
@@ -97,17 +102,18 @@ import { GadmResolver } from './GadmResolver';
 // const timeBounds = unique_dates;
 
 // const [
-//   mapResolutionError,
-//   mapBoundsError,
-//   timeResolutionError,
-//   // timeBoundsError
-// ] = [false, false, false, false,];
+// mapResolutionError,
+// mapBoundsError,
+// timeResolutionError,
+// timeBoundsError
+// gadmResolutionError
+// ] = [false, false, true, false];
 
 
 /**
  *
  **/
-// const mockGadmResolutionAlternatives = [
+// const gadmResolution = [
 //   {
 //     id: 'korea123',
 //     raw_value: 'Korea',
@@ -121,13 +127,13 @@ import { GadmResolver } from './GadmResolver';
 
 // for (let moreCountries = 0; moreCountries < 8; moreCountries++) {
 
-//   let country = rcountry({ full: true });
+//   let country = 'jspan';
 
-//   mockGadmResolutionAlternatives.push({
+//   gadmResolution.push({
 //     id: country + random(0,2),
 //     raw_value: country.replace('e','').replace('a','i'),
 //     gadm_resolved: country,
-//     alternatives: times(random(1,10), () => rcountry({full: true}))
+//     alternatives: times(random(1,10), () => 'Japan')
 //   });
 // }
 
@@ -157,7 +163,7 @@ const DataTransformation = withStyles(() => ({
 
   const [savedMapResolution, setSavedMapResolution] = useState(null);
 
-  const [savedGADMResolution, setSavedGADMResolution] = useState(null);
+  const [savedGADMOverrides, setSavedGADMOverrides] = useState(null);
 
   const [timeResolutionOptions, setTimeResolutionOptions] = useState([]);
   const [savedTimeResolution, setSavedTimeResolution] = useState(null);
@@ -165,13 +171,11 @@ const DataTransformation = withStyles(() => ({
 
   const [savedTimeBounds, setSavedTimeBounds] = useState(null);
 
+  const transformationsRef = useRef({});
+
   // until we get the list of timeresoptions from the backend:
   if (!timeResolutionOptions.length) {
     setTimeResolutionOptions([
-      { alias: 'L', description: 'milliseconds' },
-      { alias: 'S', description: 'secondly' },
-      { alias: 'T', description: 'minutely' },
-      { alias: 'H', description: 'hourly' },
       { alias: 'D', description: 'day' },
       { alias: 'W', description: 'weekly' },
       { alias: 'M', description: 'month end' },
@@ -230,7 +234,16 @@ const DataTransformation = withStyles(() => ({
     if (resp.resolution_result?.uniformity === 'PERFECT'
       || resp.resolution_result?.uniformity === 'UNIFORM') {
       setData(resp.scale_km);
+
+      if (resp.multiplier_samples) {
+        setOptions(resp.multiplier_samples);
+      }
     } else {
+      if (areLatLngAnnotated(annotations)) {
+        // as long as we have lat/lng annotated, set this string as our default geo resolution
+        setData('Non-uniform/event data');
+        return;
+      }
       // TODO: handle error case in geo res component & data transformation
       let message = 'Resolution not detectable';
       // if we have a uniformity that is not handled above, change the message to:
@@ -238,11 +251,8 @@ const DataTransformation = withStyles(() => ({
       setDataError(message);
     }
 
-    if (resp.multiplier_samples) {
-      setOptions(resp.multiplier_samples);
-    }
     setDataLoading(false);
-  }, []);
+  }, [annotations]);
 
   const onGeoBoundarySuccess = useCallback((resp, setData, setDataError, setDataLoading) => {
     if (resp?.boundary_box) {
@@ -261,9 +271,23 @@ const DataTransformation = withStyles(() => ({
 
   const onTemporalResSuccess = useCallback((resp, setData, setDataError, setDataLoading) => {
     if (resp.resolution_result?.unit) {
-      setData(resp.resolution_result);
+      if (
+        resp.uniformity === 'PERFECT'
+        || resp.resolution_result.uniformity === 'UNIFORM'
+        || resp.resolution_result.uniformity === 'PERFECTLY_UNIFORM'
+      ) {
+        setData(resp.resolution_result);
+      } else {
+        // If it isn't one of the three uniform types above, default to 'day'
+        // because we don't actually know the temporal resolution no matter what we get back
+        setData('day');
+      }
     } else {
-      setDataError(resp.message ? resp.message : true);
+      // display this string as the starting point for non-uniform data
+      // this only happens for datasets without an annotated date column
+      setData('Non-uniform/event data');
+      // we may want to handle errors if there is no annotated date, tbd
+      // setDataError(resp.message ? resp.message : true);
     }
     setDataLoading(false);
   }, []);
@@ -310,7 +334,7 @@ const DataTransformation = withStyles(() => ({
     annotations,
     jobString: 'gadm_processors.resolution_alternatives',
     generateArgs: () => {},
-    // cleanupRef,
+    cleanupRef,
     onSuccess: onGadmResSuccess,
   });
 
@@ -344,6 +368,11 @@ const DataTransformation = withStyles(() => ({
     onSuccess: onGetDatesSuccess,
   });
 
+  const mapResolutionLoading = !mapResolution && !mapResolutionError;
+  const mapBoundsLoading = !mapBounds && !mapBoundsError;
+  const timeResolutionLoading = !timeResolution && !timeResolutionError;
+  const timeBoundsLoading = !timeBounds && !timeBoundsError;
+
   const handleDrawerClose = (bool, event) => {
     // prevent clicking outside the drawer to close
     if (event?.target.className === 'MuiBackdrop-root') return;
@@ -360,16 +389,51 @@ const DataTransformation = withStyles(() => ({
     setDrawerName(name);
   };
 
+  const disableNext = () => {
+    if (
+      mapResolutionLoading
+      || mapBoundsLoading
+      || timeResolutionLoading
+      || timeBoundsLoading
+    ) {
+      // disable if any of the transformations are loading
+      return true;
+    }
+
+    if (!mapResolutionError && !savedMapResolution) {
+      // disable if we are requiring a map resolution to be chosen and it hasn't been
+      return true;
+    }
+
+    if (!timeResolutionError && !savedTimeResolution) {
+      // disable if we are requiring a time resolution to be set and it hasn't been
+      return true;
+    }
+
+    return false;
+  };
+
   const processAdjustGeo = () => {
     if (savedMapResolution) {
-      const args = generateProcessGeoResArgs(annotations, savedMapResolution, mapResolution);
-      return startElwoodJob(datasetInfo.id, args, 'transformation_processors.regrid_geo');
+      const args = generateProcessGeoResArgs(
+        annotations,
+        savedMapResolution,
+        mapResolution
+      );
+      // save the args to a ref so we can store them on the annotations object
+      transformationsRef.current.regrid_geo = args;
+      // If we have an error, then we never found a resolution so we can't do a transformation
+      // TODO: remove this once we've confirmed we can do this transformation for nonuniform
+      // if (!mapResolutionError) {
+        return startElwoodJob(datasetInfo.id, args, 'transformation_processors.regrid_geo');
+      // }
     }
   };
 
   const processMapClippings = () => {
     if (savedDrawings.length > 0) {
       const args = generateProcessGeoCovArgs(annotations, savedDrawings);
+      transformationsRef.current.clip_geo = args;
       return startElwoodJob(datasetInfo.id, args, 'transformation_processors.clip_geo');
     }
   };
@@ -381,6 +445,7 @@ const DataTransformation = withStyles(() => ({
         start: savedTimeBounds[0],
         end: savedTimeBounds[savedTimeBounds.length - 1],
       });
+      transformationsRef.current.clip_time = args;
       return startElwoodJob(datasetInfo.id, args, 'transformation_processors.clip_time');
     }
   };
@@ -388,8 +453,13 @@ const DataTransformation = withStyles(() => ({
   const processAdjustTime = () => {
     if (savedTimeResolution) {
       const args = generateProcessTempResArgs(annotations, savedTimeResolution, savedAggregation);
+      transformationsRef.current.scale_time = args;
       return startElwoodJob(datasetInfo.id, args, 'transformation_processors.scale_time');
     }
+  };
+
+  const processGadmOverrides = () => {
+    transformationsRef.current.gadm_overrides = savedGADMOverrides;
   };
 
   const handleNextStep = () => {
@@ -397,18 +467,46 @@ const DataTransformation = withStyles(() => ({
     const clipMap = processMapClippings();
     const adjustTime = processAdjustTime();
     const clipTime = processClipTime();
+
+    processGadmOverrides();
+
+    // Only do all of the below when we've done all of the selected transformations
+    // any untouched transformations won't return a promise and thus won't delay this
     Promise.all([adjustGeo, clipMap, adjustTime, clipTime]).then((responses) => {
       let modified;
       responses.forEach((resp) => {
         // if any are truthy (an untouched transformation will be undefined)
         if (resp) modified = true;
       });
+
       if (modified) {
+        // This lets us know that we need to show the spinner when the restore_raw_file job
+        // is running when revisiting this page in the registration flow
         localStorage.setItem(`dataTransformation-${datasetInfo.id}`, true);
       }
-      // only do the next step after we've kicked off the jobs
-      // and heard back that they have started
-      handleNext();
+
+      // If there are no transformations, skip updating the annotations object
+      if (isEmpty(transformationsRef.current)) {
+        handleNext();
+        return;
+      }
+
+      // If there are transformations, we want to store the data transformation decisions
+      const clonedMetadata = cloneDeep(annotations.metadata);
+      // add all the args that we sent to the elwood jobs and stored in our ref
+      // to our cloned metadata object
+      clonedMetadata.transformations = transformationsRef.current;
+      // and PATCH that to the dataset's annotations
+      // along with the existing annotations so it doesn't overwrite anything
+      axios.patch(
+        `/api/dojo/indicators/${datasetInfo.id}/annotations`, {
+          annotations: annotations.annotations,
+          metadata: clonedMetadata
+        }
+      ).then(() => {
+        // Only handleNext once we've updated the annotations
+        handleNext();
+      });
     });
   };
 
@@ -473,15 +571,14 @@ const DataTransformation = withStyles(() => ({
           />
         );
       case 'gadmResolutionReview':
-      return (
-        <GadmResolver
-          gadmRowData={gadmResolution}
-          primaryCountryField={'mockCountryField'}
-          onSave={() => { setSavedGADMResolution(); handleDrawerClose(); }}
-          onCancel={handleDrawerClose}
-          cleanupRef={cleanupRef}
-        />
-      )
+        return (
+          <GadmResolver
+            gadmRowData={gadmResolution}
+            onSave={(data) => { setSavedGADMOverrides(data); handleDrawerClose(); }}
+            onCancel={handleDrawerClose}
+            overrides={savedGADMOverrides}
+          />
+        );
       default:
         return (
           <Typography align="center" variant="h5">
@@ -495,9 +592,9 @@ const DataTransformation = withStyles(() => ({
     <div className={classes.transformationRoot}>
       <List>
         <TransformationButton
-          isComplete={Boolean(savedGADMResolution)}
+          isComplete={Boolean(savedGADMOverrides)}
           Icon={GlobeIcon}
-          title="Review GADM Resolution"
+          title="Review Administrative Area Detection"
           onClick={() => handleDrawerOpen('gadmResolutionReview')}
           loading={!gadmResolution && !gadmResolutionError}
           error={gadmResolutionError}
@@ -508,15 +605,16 @@ const DataTransformation = withStyles(() => ({
           Icon={GridOnIcon}
           title="Adjust Geospatial Resolution"
           onClick={() => handleDrawerOpen('regridMap')}
-          loading={!mapResolution && !mapResolutionError}
+          loading={mapResolutionLoading}
           error={mapResolutionError}
+          required={!mapResolutionError}
         />
         <TransformationButton
           isComplete={!!savedDrawings.length}
           Icon={MapIcon}
           title="Select Geospatial Coverage"
           onClick={() => handleDrawerOpen('clipMap')}
-          loading={!mapBounds && !mapBoundsError}
+          loading={mapBoundsLoading}
           error={mapBoundsError}
         />
         <TransformationButton
@@ -524,15 +622,16 @@ const DataTransformation = withStyles(() => ({
           Icon={AspectRatioIcon}
           title="Adjust Temporal Resolution"
           onClick={() => handleDrawerOpen('scaleTime')}
-          loading={!timeResolution && !timeResolutionError}
+          loading={timeResolutionLoading}
           error={timeResolutionError}
+          required={!timeResolutionError}
         />
         <TransformationButton
           isComplete={!!savedTimeBounds}
           Icon={TodayIcon}
           title="Select Temporal Coverage"
           onClick={() => handleDrawerOpen('clipTime')}
-          loading={!timeBounds && !timeBoundsError}
+          loading={timeBoundsLoading}
           error={timeBoundsError}
         />
       </List>
@@ -540,6 +639,7 @@ const DataTransformation = withStyles(() => ({
         label="Next"
         handleNext={handleNextStep}
         handleBack={handleBack}
+        disabled={disableNext()}
       />
 
       <Drawer
@@ -557,6 +657,13 @@ const DataTransformation = withStyles(() => ({
   );
 });
 
+/**
+ * This component mounts specifically to run the restore_raw_file data transformation before any
+ * of the other useElwoodData jobs run, as we need to confirm that the file is in its original
+ * state before the other ones can run.
+ * It also holds onto the cleanupRef that will prevent the various useElwoodData calls from
+ * repeating forever if we navigate away
+ **/
 export default withStyles(({ spacing }) => ({
   root: {
     padding: [[spacing(4), spacing(4), spacing(2), spacing(4)]],
@@ -582,6 +689,9 @@ export default withStyles(({ spacing }) => ({
   handleBack,
   annotations,
 }) => {
+  // this ref keeps track of when the page is mounted so that we can avoid useElwoodData running
+  // endlessly if we navigate away while it's still going
+  // it should be passed into every use of useElwoodData
   const cleanupRef = useRef(null);
   const [showSpinner, setShowSpinner] = useState(true);
 

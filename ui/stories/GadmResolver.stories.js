@@ -4,7 +4,6 @@ import { GadmResolver } from '../client/datasets/DataTransformation/GadmResolver
 import { ThemeProvider } from '@material-ui/core/styles';
 import CssBaseline from '@material-ui/core/CssBaseline';
 
-import rcountry from 'random-country'; // TODO remove package dependency and this
 import random from 'lodash/random';
 import times from 'lodash/times';
 
@@ -39,21 +38,21 @@ const mockData = [{
 }];
 
 for (let i = 0; i < mockRowCount; i++) {
-  let country = rcountry({ full: true });
+  let country = 'japan';
   mockData
     .push({
       id: country+random(1, 100),
-      raw_value: country.replace('e','').replace('a','i'),
+      raw_value: country.replace('a','').replace('p','i'),
       gadm_resolved: country,
-      alternatives: times(random(1,10), () => rcountry({full: true})),
+      alternatives: times(random(1,10), () => 'japan'),
     });
 }
 
-console.log('mockData', mockData);
-
 export const Basic = {
   args: {
-    gadmRowData: mockData,
-    primaryCountryField: 'eventCountry'
+    gadmRowData: {
+      fuzzy_match: mockData,
+      field: 'eventCountry'
+    }
   }
 };

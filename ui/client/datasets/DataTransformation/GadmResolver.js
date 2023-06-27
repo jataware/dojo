@@ -3,7 +3,8 @@ import React from 'react';
 import { withStyles } from '@material-ui/core/styles';
 
 import random from 'lodash/random';
-import rcountry from 'random-country'; // TODO remove package dependency and this
+import keyBy from 'lodash/keyBy';
+import reduce from 'lodash/reduce';
 
 import { GridOverlay, DataGrid } from '@material-ui/data-grid';
 import Dialog from '@material-ui/core/Dialog';
@@ -12,7 +13,6 @@ import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 import DialogActions from '@material-ui/core/DialogActions';
 import Divider from '@material-ui/core/Divider';
-
 
 import Paper from '@material-ui/core/Paper';
 import Table from '@material-ui/core/Table';
@@ -32,6 +32,8 @@ import NativeSelect from '@material-ui/core/NativeSelect';
 
 import MuiAlert from '@material-ui/lab/Alert';
 
+import Autocomplete from '../../components/Autocomplete';
+
 
 const columns = [
   {
@@ -49,17 +51,16 @@ const columns = [
   {
     field: 'adjusted',
     headerName: 'User Adjusted',
-    // renderCell: expandableCell,
     flex: 1
   }
 ];
 
+/**
+ * Unused. Part of previous implementation.
+ **/
 const AdjustGadmDialog = ({ open, onClose }) => {
 
-  // value={}
-  // onChange={}
-
-  const mockCountry = rcountry({full: true})
+  const mockCountry = 'japan';
   const mockRaw = mockCountry.replace('e', '').replace('a', 'i');
 
   return (
@@ -109,7 +110,7 @@ const AdjustGadmDialog = ({ open, onClose }) => {
         >
           {Array(10).fill(0).map((option) => (
             <option key={random(1,15000)} value={option}>
-              {rcountry({full: true})}
+              'ajpan'
             </option>
           ))}
         </TextField>
@@ -137,10 +138,8 @@ const AdjustGadmDialog = ({ open, onClose }) => {
   );
 };
 
-
-
 /**
- *
+ * Unused - previous implementation.
  **/
 export const GadmResolverV1 = withStyles(() => ({
   root: {
@@ -219,66 +218,23 @@ const gadmResolverColumns = [
   {
     id: 'raw_value',
     label: 'Raw Value',
-    // flex: 1,
     minWidth: 25,
   },
   {
     id: 'gadm_resolved',
     label: 'GADM Resolved',
-    // flex: 1,
     minWidth: 50,
   }
 ];
-
-
-// <TextField
-//   variant="outlined"
-//   select
-//   SelectProps={{
-//     native: true,
-//   }}
-// >
-//   {row['alternatives'].map((option) => (
-//     <option
-//       key={option}
-//       value={option}
-//     >
-//       {option}
-//     </option>
-//   ))}
-// </TextField>
-
-//    <Select
-//      classes={{root: classes.selectRoot, nativeInput: classes.nativeInput}}
-//      variant="outlined"
-//      displayEmpty
-//      InputProps={{classes: {root: classes.selectInput}}}
-//      native
-//      defaultValue={[row['gadm_resolved']]}
-//    >
-//      {row['alternatives'].map((option) => (
-//        <option
-//          key={option}
-//          value={option}
-//        >
-//          {option}
-//        </option>
-//      ))}
-//    </Select>
-
-
 
 /**
  *
  **/
 const GadmResolverTable = withStyles(() => ({
   table: {
-    // flex: 1
     maxHeight: '100%'
   },
   tableHeader: {
-    // light blue
-    // backgroundColor: '#f0f8ff'
   },
   tableHeaderCell: {
     backgroundColor: '#f0f8ff',
@@ -300,74 +256,62 @@ const GadmResolverTable = withStyles(() => ({
   innerInputOutlined: {
     padding: 10
   }
-}))(({classes, rows}) => {
+}))(({classes, rows, gadmValues, onGadmChange }) => {
 
   return (
-        <Table
-          className={classes.table}
-          aria-label="Gadm Resolver Table"
-          stickyHeader
-        >
-          <TableHead>
-            <TableRow className={classes.tableHeader}>
-              {gadmResolverColumns.map((column) => (
-                <TableCell
-                  className={classes.tableHeaderCell}
-                  key={column.id}
-                  align={column.align}
-                  style={{ minWidth: column.minWidth }}
-                >
-                  <Typography variant="h5" style={{fontSize: '1.3rem'}}>
-                    {column.label}
-                  </Typography>
-                </TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {rows.map((row) => {
-              return (
-                <TableRow
-                  className={classes.tableRow}
-                  hover
-                  role="checkbox"
-                  tabIndex={-1}
-                  key={row.id}
-                >
-                  <TableCell className={classes.tableCell}>
-                    {row['raw_value']}
-                  </TableCell>
+    <Table
+      className={classes.table}
+      aria-label="Gadm Resolver Table"
+      stickyHeader
+    >
+      <TableHead>
+        <TableRow className={classes.tableHeader}>
+          {gadmResolverColumns.map((column) => (
+            <TableCell
+              className={classes.tableHeaderCell}
+              key={column.id}
+              align={column.align}
+              style={{ minWidth: column.minWidth }}
+            >
+              <Typography
+                variant="h5"
+                style={{fontSize: '1.1rem'}}
+              >
+                {column.label}
+              </Typography>
+            </TableCell>
+          ))}
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        {rows.map((row) => {
+          return (
+            <TableRow
+              className={classes.tableRow}
+              hover
+              role="checkbox"
+              tabIndex={-1}
+              key={row.raw_value}
+            >
+              <TableCell className={classes.tableCell}>
+                {row.raw_value}
+              </TableCell>
 
-                  <TableCell className={classes.tableCell}>
-                    <TextField
-                      variant="outlined"
-                      select
-                      className={classes.selectRoot}
-                      InputProps={{
-                        classes: {
-                          root: classes.outlined,
-                          input: classes.innerInputOutlined
-                        }
-                      }}
-                      SelectProps={{
-                        native: true,
-                      }}
-                    >
-                      {row['alternatives'].map((option) => (
-                        <option
-                          key={option}
-                          value={option}
-                        >
-                          {option}
-                        </option>
-                      ))}
-                    </TextField>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
+              <TableCell className={classes.tableCell}>
+                <Autocomplete
+                  multiple={false}
+                  options={row.alternatives}
+                  values={
+                    gadmValues[row.raw_value].override || row.gadm_resolved
+                  }
+                  setValues={(newValue) => onGadmChange(row.raw_value, newValue)}
+                />
+              </TableCell>
+            </TableRow>
+          );
+        })}
+      </TableBody>
+    </Table>
   );
  });
 
@@ -410,7 +354,48 @@ export const GadmResolver = withStyles(() => ({
     backgroundColor: 'white',
     alignItems: 'center',
   }
-}))(({ classes, gadmRowData, primaryCountryField, onSave, onCancel }) => {
+}))(({ classes, gadmRowData, onSave, onCancel, overrides }) => {
+
+  const lowConfidenceRows = gadmRowData.fuzzy_match;
+  const primaryField = gadmRowData.field;
+
+  const formattedOverrides = overrides ? overrides[primaryField] : {};
+
+  const gadmRowsKeyed = keyBy(lowConfidenceRows, 'raw_value');
+
+  const addOverrides = (gadmRowsKeyedObject, savedOverrides) => {
+    Object.keys(savedOverrides).forEach((country_name, idx) => {
+      gadmRowsKeyedObject[country_name].override = savedOverrides[country_name];
+    });
+
+    return gadmRowsKeyedObject;
+  };
+
+  const [gadmResolutionValues, setGadmResolutionValues] = React.useState(addOverrides(gadmRowsKeyed, formattedOverrides));
+
+  const updateGadmResolutionValues = (rawCountryName, newSelection) => {
+    setGadmResolutionValues(prev => ({
+      ...prev,
+      [rawCountryName]: {
+        ...prev[rawCountryName],
+        override: newSelection
+      }
+    }));
+  };
+
+  const handleSave = () => {
+    const formatted = reduce(gadmResolutionValues, (acc, value, key) => {
+
+      if (value.override) {
+        acc[key] = value.override;
+      }
+
+      return acc;
+
+    }, {});
+
+    onSave({[primaryField]: formatted});
+  };
 
   return (
       <div
@@ -427,7 +412,7 @@ export const GadmResolver = withStyles(() => ({
             classes={{standardInfo: classes.alert}}
             severity="info"
           >
-            The following GADM mappings for primary country <span style={{backgroundColor: '#f1f1f1', padding: 2}}>{primaryCountryField}</span> have been identified with lower confidence. Adjust as needed.
+            The following GADM mappings for primary country <span style={{color: '#2488ff', backgroundColor: '#f1f1f1', padding: 2}}>{primaryField}</span> have been identified with lower confidence. Adjust as needed.
           </MuiAlert>
         </div>
 
@@ -437,7 +422,11 @@ export const GadmResolver = withStyles(() => ({
               className={classes.tableContainer}
               elevation={0}
               >
-              <GadmResolverTable rows={gadmRowData} />
+              <GadmResolverTable
+                rows={lowConfidenceRows}
+                onGadmChange={updateGadmResolutionValues}
+                gadmValues={gadmResolutionValues}
+              />
             </Paper>
           </div>
         </div>
@@ -459,7 +448,7 @@ export const GadmResolver = withStyles(() => ({
               Cancel
             </Button>
             <Button
-              onClick={onSave}
+              onClick={handleSave}
               variant="outlined"
               type="submit"
               color="primary">
