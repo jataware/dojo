@@ -505,7 +505,6 @@ const DataTransformation = withStyles(() => ({
       return (
         <GadmResolver
           gadmRowData={gadmResolution}
-          primaryCountryField={'mockCountryField'}
           onSave={() => { setSavedGADMResolution(); handleDrawerClose(); }}
           onCancel={handleDrawerClose}
           cleanupRef={cleanupRef}
@@ -526,7 +525,7 @@ const DataTransformation = withStyles(() => ({
         <TransformationButton
           isComplete={Boolean(savedGADMResolution)}
           Icon={GlobeIcon}
-          title="Review GADM Resolution"
+          title="Review Administrative Area Detection"
           onClick={() => handleDrawerOpen('gadmResolutionReview')}
           loading={!gadmResolution && !gadmResolutionError}
           error={gadmResolutionError}
