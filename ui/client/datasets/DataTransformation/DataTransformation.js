@@ -576,7 +576,7 @@ const DataTransformation = withStyles(() => ({
             gadmRowData={gadmResolution}
             onSave={(data) => { setSavedGADMOverrides(data); handleDrawerClose(); }}
             onCancel={handleDrawerClose}
-            cleanupRef={cleanupRef}
+            overrides={savedGADMOverrides}
           />
         );
       default:
