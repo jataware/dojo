@@ -5,7 +5,6 @@ import { withStyles } from '@material-ui/core/styles';
 import random from 'lodash/random';
 import keyBy from 'lodash/keyBy';
 import reduce from 'lodash/reduce';
-import rcountry from 'random-country'; // TODO remove package dependency and this
 
 import { GridOverlay, DataGrid } from '@material-ui/data-grid';
 import Dialog from '@material-ui/core/Dialog';
@@ -57,11 +56,11 @@ const columns = [
 ];
 
 /**
- *
+ * Unused. Part of previous implementation.
  **/
 const AdjustGadmDialog = ({ open, onClose }) => {
 
-  const mockCountry = rcountry({full: true});
+  const mockCountry = 'japan';
   const mockRaw = mockCountry.replace('e', '').replace('a', 'i');
 
   return (
@@ -111,7 +110,7 @@ const AdjustGadmDialog = ({ open, onClose }) => {
         >
           {Array(10).fill(0).map((option) => (
             <option key={random(1,15000)} value={option}>
-              {rcountry({full: true})}
+              'ajpan'
             </option>
           ))}
         </TextField>
@@ -140,7 +139,7 @@ const AdjustGadmDialog = ({ open, onClose }) => {
 };
 
 /**
- *
+ * Unused - previous implementation.
  **/
 export const GadmResolverV1 = withStyles(() => ({
   root: {
@@ -355,11 +354,24 @@ export const GadmResolver = withStyles(() => ({
     backgroundColor: 'white',
     alignItems: 'center',
   }
-}))(({ classes, gadmRowData, onSave, onCancel }) => {
+}))(({ classes, gadmRowData, onSave, onCancel, overrides }) => {
 
   const lowConfidenceRows = gadmRowData.fuzzy_match;
   const primaryField = gadmRowData.field;
-  const [gadmResolutionValues, setGadmResolutionValues] = React.useState(keyBy(lowConfidenceRows, 'raw_value'));
+
+  const formattedOverrides = overrides ? overrides[primaryField] : {};
+
+  const gadmRowsKeyed = keyBy(lowConfidenceRows, 'raw_value');
+
+  const addOverrides = (gadmRowsKeyedObject, savedOverrides) => {
+    Object.keys(savedOverrides).forEach((country_name, idx) => {
+      gadmRowsKeyedObject[country_name].override = savedOverrides[country_name];
+    });
+
+    return gadmRowsKeyedObject;
+  };
+
+  const [gadmResolutionValues, setGadmResolutionValues] = React.useState(addOverrides(gadmRowsKeyed, formattedOverrides));
 
   const updateGadmResolutionValues = (rawCountryName, newSelection) => {
     setGadmResolutionValues(prev => ({
