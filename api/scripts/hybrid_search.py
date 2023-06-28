@@ -42,7 +42,9 @@ from src.feature_queries import (
     semantic_search_query,
     hybrid_query_v1,
     keyword_query_v1,
-    hybrid_query_v0
+    hybrid_query_v0,
+    hybrid_query_v2,
+    keyword_query_v3,
 )
 
 import collections
@@ -61,7 +63,7 @@ parser.add_argument("-q", "--query",
 
 parser.add_argument("-s", "--size",
                     help="es scroll page result size",
-                    type=int, default=10)
+                    type=int, default=100)
 
 
 if __name__ == "__main__":
@@ -69,12 +71,15 @@ if __name__ == "__main__":
     es = Elasticsearch(f"http://{args.es_host}")
     print(es.info())
 
+
 QUERIES = [
     keyword_query_v2,
     semantic_search_query,
     hybrid_query_v1,
     keyword_query_v1,
-    hybrid_query_v0
+    hybrid_query_v0,
+    hybrid_query_v2,
+    keyword_query_v3
 ]
 
 def search(query):
@@ -90,7 +95,6 @@ def search(query):
 pp = pprint.PrettyPrinter(indent=2)
 
 
-# TODO Get targets and sample queries from MITRE
 test_inputs = [
     # {"target_id": "b1a6c625-69a1-4399-b3cb-68cf484826a7-TX.VAL.TRAN.ZS.WT",
     #  "queries": ["TX.VAL.TRAN.ZS.WT", "Transport", "Transport services", "Service for all transport types",
@@ -104,6 +108,16 @@ test_inputs = [
     #              "women enrolled in education programs",
     #              "Education indicators female", "female"]
     #  },
+
+    # TODO add query for rain / drain
+    {
+        "target_id": "8b2f4931-0da0-45b6-88f7-187bc6f36c86-Long term average annual precipitation",
+
+        "queries": [
+            "rain",
+            "drain"
+                ]
+    },
 
     {
         "target_id": "db48c2bb-9080-41d6-a5b9-916c0c6871f1-Amount (Constant USD2017)",
@@ -129,6 +143,7 @@ test_inputs = [
 
 ]
 
+
 def test_one_query(query_dict, target_id, fn):
 
     query = fn(query_dict)
@@ -145,7 +160,6 @@ def test_one_query(query_dict, target_id, fn):
             found_index = index
 
     return found_index, took
-
 
 
 
@@ -170,10 +184,10 @@ def average_values(input_dict):
             if 'took' in prop:
                 took_sum += prop['took']
                 took_count += 1
-                        
+
     index_avg = round(index_sum / index_count)
     took_avg = round(took_sum / took_count)
-    
+
     return {'index_avg': index_avg, 'took_avg': took_avg, 'none_count': index_none_count}
 
 
@@ -188,8 +202,8 @@ def generate_report(results_dict):
     return acc
 
 
-if __name__ == "__main__":
 
+def main_all_queries_report():
     found_indeces = recursive_dict()
 
     for index, test in enumerate(test_inputs):
@@ -210,5 +224,9 @@ if __name__ == "__main__":
     print("\n\n >>>>> Report:")
 
     pp.pprint(report)
+
+
+if __name__ == "__main__":
+    main_all_queries_report()
 
     exit(0)

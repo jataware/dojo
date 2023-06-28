@@ -301,3 +301,69 @@ def add_date_to_dataset(path):
         "qualifies": [],
         "aliases": {},
     }
+
+
+def get_unique_items(list1, list2, id_property="_id"):
+    ids_list1 = set(item[id_property] for item in list1)
+    unique_items = [item for item in list2 if item[id_property] not in ids_list1]
+    return unique_items
+
+
+def alternate_lists(list1, list2, id_property=None):
+    """
+    Given to lists:
+    - a) ["k1", "k2", "k3", "k4", "k5", "k6", "k7", "k8"]
+    - b) ["s1", "s2", "s3", "s4", "s5", "s6", "s7", "s8"]
+
+    returns a new list of length max_lenght(a, b) and alternates items
+    stepping by 3. Example output:
+
+    ["k1", "k2", "k3", "s1", "s2", "s3", "k4", "k5", "k6", "s4"]
+
+    If id_property is provided, it is presumed the lists contain dictionaries,
+    and the duplicates are removed by checking the id_property in the dictionary
+    """
+
+    if id_property:
+        list2 = get_unique_items(list1, list2, id_property)
+
+    # Determine the length of the longest list
+    max_length = max(len(list1), len(list2))
+
+    # Create an empty list to hold the final result
+    result = []
+
+    # Iterate over the range from 0 to the max length, stepping by 3
+    for i in range(0, max_length, 3):
+        # Extend result with next three elements from each list if they exist
+        result.extend(list1[i:i+3])
+        result.extend(list2[i:i+3])
+    return result
+
+
+keyword_query_names = [
+    "keyword_name",
+    "keyword_display_name",
+    "keyword_description"
+]
+
+def group_by_query(data_list):
+    grouped_dict = {
+        "keyword": [],
+        "semantic": [],
+    }
+    for item in data_list:
+        # at least one matched_queries contains keyword element/aspect
+        if any(i in keyword_query_names for i in item.get("matched_queries")):
+            grouped_dict["keyword"].append(item)
+        else:
+            grouped_dict["semantic"].append(item)
+
+    return (grouped_dict["keyword"], grouped_dict["semantic"])
+
+
+def format_hybrid_results(all_results):
+    keyword_results, semantic_results = group_by_query(all_results)
+    alternated = alternate_lists(keyword_results, semantic_results)
+
+    return alternated

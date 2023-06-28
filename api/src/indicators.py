@@ -28,11 +28,14 @@ from src.causemos import deprecate_dataset, notify_causemos
 from src.csv_annotation_parser import format_annotations, xls_to_annotations
 from src.data import get_context
 from src.dojo import search_and_scroll
-from src.feature_queries import hybrid_query_v1, keyword_query_v1
+from src.feature_queries import keyword_query_v1, hybrid_query_v2
 from src.ontologies import get_ontologies
 from src.plugins import plugin_action
 from src.settings import settings
-from src.utils import add_date_to_dataset, get_rawfile, list_files, put_rawfile
+from src.utils import (
+    add_date_to_dataset, get_rawfile, list_files,
+    put_rawfile, format_hybrid_results
+)
 from validation import DojoSchema, IndicatorSchema, MetadataSchema
 
 router = APIRouter()
@@ -137,6 +140,14 @@ def patch_indicator(
     )
 
 
+def format_one_result(r):
+        r["_source"]["metadata"] = {}
+        r["_source"]["metadata"]["match_score"] = r["_score"]
+        r["_source"]["id"] = r["_id"]
+        r["_source"]["metadata"]["matched_queries"] = r["matched_queries"]
+        return r["_source"]
+
+
 @router.get(
     "/features/search", response_model=IndicatorSchema.FeaturesSemanticSearchSchema
 )
@@ -155,7 +166,7 @@ def semantic_search_features(
     else:
         # Retrieve first item in output, since it returns an array output
         # that matches its input, and we provide only one- query.
-        features_query = hybrid_query_v1(query)
+        features_query = hybrid_query_v2(query)
 
         results = es.search(
             index="features", body=features_query, scroll="2m", size=size
@@ -170,18 +181,15 @@ def semantic_search_features(
 
     max_score = results["hits"]["max_score"]
 
-    def formatOneResult(r):
-        r["_source"]["metadata"] = {}
-        r["_source"]["metadata"]["match_score"] = r["_score"]
-        r["_source"]["id"] = r["_id"]
-        r["_source"]["metadata"]["matched_queries"] = r["matched_queries"]
-        return r["_source"]
+    first = results["hits"]["hits"][0]
+
+    alternated = format_hybrid_results(results["hits"]["hits"])
 
     return {
         "hits": results["hits"]["total"]["value"],
         "items_in_page": items_in_page,
         "max_score": max_score,
-        "results": [formatOneResult(i) for i in results["hits"]["hits"]],
+        "results": [format_one_result(i) for i in alternated],
         "scroll_id": scroll_id,
     }
 

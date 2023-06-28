@@ -30,7 +30,7 @@ const MATCH_TYPE = {
 };
 
 /**
- * Maytch % confidence bar
+ * Used in Match % column when searching
  **/
 export const ConfidenceBar = withStyles(() => ({
   root: {
@@ -364,7 +364,6 @@ const ViewFeatures = withStyles(() => ({
           LoadingOverlay: CustomLoadingOverlay
         }}
         loading={featuresLoading}
-        getRowId={(row) => `${row.owner_dataset.id}-${row.name}`}
         columns={featureColumns}
         rows={features}
       />
