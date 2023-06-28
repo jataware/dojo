@@ -363,10 +363,7 @@ def group_by_query(data_list):
 
 
 def format_hybrid_results(all_results):
-    grouped = group_by_query(all_results)
-
-    keyword_results, semantic_results = grouped
-
+    keyword_results, semantic_results = group_by_query(all_results)
     alternated = alternate_lists(keyword_results, semantic_results)
 
     return alternated

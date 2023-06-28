@@ -183,8 +183,6 @@ def semantic_search_features(
 
     first = results["hits"]["hits"][0]
 
-    logger.info(f"First hybrid response:\n{first}")
-
     alternated = format_hybrid_results(results["hits"]["hits"])
 
     return {
