@@ -365,11 +365,11 @@ const DataTransformation = withStyles(() => ({
       );
       // save the args to a ref so we can store them on the annotations object
       transformationsRef.current.regrid_geo = args;
-      // If we have an error, then we never found a resolution so we can't do a transformation
-  // TODO: remove this once we've confirmed we can do this transformation for nonuniform
-      // if (!mapResolutionError) {
-        return startElwoodJob(datasetInfo.id, args, 'transformation_processors.regrid_geo');
-      // }
+
+      // If non-uniform is selected, don't run the transformation
+      if (savedMapResolution === 'Non-uniform/event data') return;
+
+      return startElwoodJob(datasetInfo.id, args, 'transformation_processors.regrid_geo');
     }
   };
 

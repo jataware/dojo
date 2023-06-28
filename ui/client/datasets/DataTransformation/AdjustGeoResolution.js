@@ -26,9 +26,10 @@ export default withStyles((theme) => ({
   bottomWrapper: {
     display: 'flex',
     justifyContent: 'center',
-    alignItems: 'flex-end',
+    alignItems: 'flex-start',
     gap: theme.spacing(6),
-    margin: [[theme.spacing(6), 0]],
+    width: '100%',
+    margin: [[theme.spacing(8), 0]],
   },
   textWrapper: {
     backgroundColor: theme.palette.grey[200],
@@ -114,6 +115,7 @@ export default withStyles((theme) => ({
     if (event.target.checked) {
       // when checked is true, set current resolution to Non-uniform/event data
       setSelectedResolution(oldResolution);
+      setError(false);
     } else {
       // clear it if unchecked
       setSelectedResolution('');
@@ -156,29 +158,15 @@ export default withStyles((theme) => ({
   const switchInput = () => {
     if (nonUniform) {
       return (
-        <>
-          <FormControlLabel
-            control={(
-              <Checkbox
-                checked={nonUniformChecked}
-                onChange={handleNonUniformCheckboxChange}
-              />
-            )}
-            label={(
-              <Typography variant="caption">Use non-uniform data</Typography>
-            )}
-            style={{ marginBottom: '8px' }}
-          />
-          <TextField
-            value={selectedResolution}
-            onChange={handleChangeResolution}
-            variant="outlined"
-            label="Resolution (deg)"
-            error={error}
-            helperText={error ? 'Please enter a valid number' : ''}
-            disabled={nonUniformChecked}
-          />
-        </>
+        <TextField
+          value={selectedResolution}
+          onChange={handleChangeResolution}
+          variant="outlined"
+          label="Resolution (deg)"
+          error={error}
+          helperText={error ? 'Please enter a valid number' : ''}
+          disabled={nonUniformChecked}
+        />
       );
     }
 
@@ -230,6 +218,26 @@ export default withStyles((theme) => ({
               </Typography>
             </div>
           </div>
+          {nonUniform && (
+            <Tooltip
+              title="We weren't able to detect a geospatial resolution.
+                Check if you want to leave your resolution as non-uniform/event data,
+                or input a number to adjust it to below."
+            >
+              <FormControlLabel
+                control={(
+                  <Checkbox
+                    checked={nonUniformChecked}
+                    onChange={handleNonUniformCheckboxChange}
+                  />
+                )}
+                label={(
+                  <Typography variant="caption">Leave data as non-uniform</Typography>
+                )}
+                style={{ marginLeft: '8px' }}
+              />
+            </Tooltip>
+          )}
           <div className={classes.bottomWrapper}>
             <FormControl variant="outlined" className={classes.selectWrapper}>
               {switchInput()}
