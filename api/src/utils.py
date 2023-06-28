@@ -326,7 +326,7 @@ def alternate_lists(list1, list2, id_property=None):
 
     if id_property:
         list2 = get_unique_items(list1, list2, id_property)
-    
+
     # Determine the length of the longest list
     max_length = max(len(list1), len(list2))
 
@@ -340,3 +340,33 @@ def alternate_lists(list1, list2, id_property=None):
         result.extend(list2[i:i+3])
     return result
 
+
+keyword_query_names = [
+    "keyword_name",
+    "keyword_display_name",
+    "keyword_description"
+]
+
+def group_by_query(data_list):
+    grouped_dict = {
+        "keyword": [],
+        "semantic": [],
+    }
+    for item in data_list:
+        # at least one matched_queries contains keyword element/aspect
+        if any(i in keyword_query_names for i in item.get("matched_queries")):
+            grouped_dict["keyword"].append(item)
+        else:
+            grouped_dict["semantic"].append(item)
+
+    return (grouped_dict["keyword"], grouped_dict["semantic"])
+
+
+def format_hybrid_results(all_results):
+    grouped = group_by_query(all_results)
+
+    keyword_results, semantic_results = grouped
+
+    alternated = alternate_lists(keyword_results, semantic_results)
+
+    return alternated

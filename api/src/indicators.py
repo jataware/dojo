@@ -32,7 +32,10 @@ from src.feature_queries import keyword_query_v1, hybrid_query_v2
 from src.ontologies import get_ontologies
 from src.plugins import plugin_action
 from src.settings import settings
-from src.utils import add_date_to_dataset, get_rawfile, list_files, put_rawfile, alternate_lists
+from src.utils import (
+    add_date_to_dataset, get_rawfile, list_files,
+    put_rawfile, format_hybrid_results
+)
 from validation import DojoSchema, IndicatorSchema, MetadataSchema
 
 router = APIRouter()
@@ -137,59 +140,59 @@ def patch_indicator(
     )
 
 
-def add_matched_queries_keyword(hit):
-    hit["matched_queries"] = ["keyword_search"]
-    return hit
-
-def add_matched_queries_semantic(hit):
-    hit["matched_queries"] = ["semantic_search"]
-    return hit
-
-
-@router.get(
-    "/features/search", response_model=IndicatorSchema.FeaturesSemanticSearchSchema
-)
-def semantic_search_features(
-    query: str, size=10 # , scroll_id: Optional[str] = None
-):
-    """
-    Given a text query, uses semantic search engine to search for features that
-    match the query semantically. Query is a sentence that can be interpreted
-    to be related to a concept, such as:
-    'number of people who have been vaccinated'. Shorter queries, including
-    single words, are supported.
-    """
-
-    (keyword_query, semantic_query) = hybrid_query_v2(query)
-
-    keyword_results = es.search(index="features", body=keyword_query, scroll="2m", size=size)
-    semantic_results = es.search(index="features", body=semantic_query, scroll="2m", size=size)
-
-    total_hits = semantic_results["hits"]["total"]["value"]
-
-    semantic_max_score = semantic_results["hits"]["max_score"]
-    keyword_max_score = keyword_results["hits"]["max_score"]
-
-    keyword_results = list(map(add_matched_queries_keyword, keyword_results["hits"]["hits"]))
-    semantic_results = list(map(add_matched_queries_semantic, semantic_results["hits"]["hits"]))
-
-    results = alternate_lists(keyword_results, semantic_results, id_property="_id")
-
-    items_in_page = len(results)
-
-    def formatOneResult(r):
+def format_one_result(r):
         r["_source"]["metadata"] = {}
         r["_source"]["metadata"]["match_score"] = r["_score"]
         r["_source"]["id"] = r["_id"]
         r["_source"]["metadata"]["matched_queries"] = r["matched_queries"]
         return r["_source"]
 
+
+@router.get(
+    "/features/search", response_model=IndicatorSchema.FeaturesSemanticSearchSchema
+)
+def semantic_search_features(
+    query: Optional[str], size=10, scroll_id: Optional[str] = None
+):
+    """
+    Given a text query, uses semantic search engine to search for features that
+    match the query semantically. Query is a sentence that can be interpreted
+    to be related to a concept, such as:
+    'number of people who have been vaccinated'
+    """
+
+    if scroll_id:
+        results = es.scroll(scroll_id=scroll_id, scroll="2m")
+    else:
+        # Retrieve first item in output, since it returns an array output
+        # that matches its input, and we provide only one- query.
+        features_query = hybrid_query_v2(query)
+
+        results = es.search(
+            index="features", body=features_query, scroll="2m", size=size
+        )
+
+    items_in_page = len(results["hits"]["hits"])
+
+    if items_in_page < int(size):
+        scroll_id = None
+    else:
+        scroll_id = results.get("_scroll_id", None)
+
+    max_score = results["hits"]["max_score"]
+
+    first = results["hits"]["hits"][0]
+
+    logger.info(f"First hybrid response:\n{first}")
+
+    alternated = format_hybrid_results(results["hits"]["hits"])
+
     return {
-        "hits": total_hits,
+        "hits": results["hits"]["total"]["value"],
         "items_in_page": items_in_page,
-        "max_score": max(keyword_max_score or 0, semantic_max_score or 0),
-        "results": [formatOneResult(i) for i in results],
-        "scroll_id": None
+        "max_score": max_score,
+        "results": [format_one_result(i) for i in alternated],
+        "scroll_id": scroll_id,
     }
 
 

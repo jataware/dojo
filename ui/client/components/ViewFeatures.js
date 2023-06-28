@@ -30,7 +30,7 @@ const MATCH_TYPE = {
 };
 
 /**
- * Maytch % confidence bar
+ * Used in Match % column when searching
  **/
 export const ConfidenceBar = withStyles(() => ({
   root: {
