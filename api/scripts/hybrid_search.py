@@ -78,12 +78,10 @@ QUERIES = [
     hybrid_query_v1,
     keyword_query_v1,
     hybrid_query_v0,
-    # hybrid_query_v2,
+    hybrid_query_v2,
     keyword_query_v3
 ]
 
-# TODO expand so that query is queries (list) and we call all of them if needed
-#      then also receive an additional post_op function that applies some operation to the results of all queries
 def search(query):
 
     # NOTE this is all hacked up but Ok for now; args.size would fail
