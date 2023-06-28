@@ -5,7 +5,9 @@ import trim from 'lodash/trim';
 
 import ArrowForwardIcon from '@material-ui/icons/ArrowForward';
 import Button from '@material-ui/core/Button';
+import Checkbox from '@material-ui/core/Checkbox';
 import FormControl from '@material-ui/core/FormControl';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
 import InputLabel from '@material-ui/core/InputLabel';
 import MenuItem from '@material-ui/core/MenuItem';
 import Select from '@material-ui/core/Select';
@@ -24,6 +26,7 @@ export default withStyles((theme) => ({
   bottomWrapper: {
     display: 'flex',
     justifyContent: 'center',
+    alignItems: 'flex-end',
     gap: theme.spacing(6),
     margin: [[theme.spacing(6), 0]],
   },
@@ -63,6 +66,9 @@ export default withStyles((theme) => ({
 }) => {
   const [selectedResolution, setSelectedResolution] = useState(savedResolution || '');
   const [error, setError] = useState(false);
+  const [nonUniformChecked, setNonUniformChecked] = useState(
+    savedResolution === 'Non-uniform/event data' || false
+  );
 
   const nonUniform = oldResolution === 'Non-uniform/event data';
 
@@ -79,6 +85,13 @@ export default withStyles((theme) => ({
   const handleChangeResolution = (event) => {
     // nonUniform has a textfield input, so we need to ensure we just receive numbers
     if (nonUniform) {
+      // We also have the special case where the checkbox sets the resolution
+      if (selectedResolution === oldResolution) {
+        // don't show any errors and stop the validation
+        setError(false);
+        // the input is disabled so no need to continue with the state setters
+        return;
+      }
       // remove leading and trailing whitespace, as we only want valid numbers
       const trimmedValue = trim(event.target.value);
       setSelectedResolution(trimmedValue);
@@ -92,6 +105,18 @@ export default withStyles((theme) => ({
     } else {
       // uniform have a select with pre-set options
       setSelectedResolution(event.target.value);
+    }
+  };
+
+  const handleNonUniformCheckboxChange = (event) => {
+    setNonUniformChecked(event.target.checked);
+
+    if (event.target.checked) {
+      // when checked is true, set current resolution to Non-uniform/event data
+      setSelectedResolution(oldResolution);
+    } else {
+      // clear it if unchecked
+      setSelectedResolution('');
     }
   };
 
@@ -114,10 +139,15 @@ export default withStyles((theme) => ({
   };
 
   const disableButton = () => {
+    // handle disabling when the textField input is on screen
     if (nonUniform) {
+      // don't disable the button if non-uniform is selected via checkbox
+      if (selectedResolution === oldResolution) return false;
+      // do disable if an invalid input is entered (not a number)
       if (!validNumber(selectedResolution)) return true;
     }
 
+    // if there's no resolution chosen, disable the button
     if (!selectedResolution) return true;
 
     return false;
@@ -126,14 +156,29 @@ export default withStyles((theme) => ({
   const switchInput = () => {
     if (nonUniform) {
       return (
-        <TextField
-          value={selectedResolution}
-          onChange={handleChangeResolution}
-          variant="outlined"
-          label="Resolution (deg)"
-          error={error}
-          helperText={error ? 'Please enter a valid number' : ''}
-        />
+        <>
+          <FormControlLabel
+            control={(
+              <Checkbox
+                checked={nonUniformChecked}
+                onChange={handleNonUniformCheckboxChange}
+              />
+            )}
+            label={(
+              <Typography variant="caption">Use non-uniform data</Typography>
+            )}
+            style={{ marginBottom: '8px' }}
+          />
+          <TextField
+            value={selectedResolution}
+            onChange={handleChangeResolution}
+            variant="outlined"
+            label="Resolution (deg)"
+            error={error}
+            helperText={error ? 'Please enter a valid number' : ''}
+            disabled={nonUniformChecked}
+          />
+        </>
       );
     }
 
@@ -206,7 +251,8 @@ export default withStyles((theme) => ({
             annotations={annotations}
             cleanupRef={cleanupRef}
             createPreviewArgs={createPreviewArgs}
-            disabled={disableButton()}
+            // an extra disabled check here because we don't want to run previews in this case
+            disabled={disableButton() || selectedResolution === oldResolution}
           />
         </>
       ) : (
