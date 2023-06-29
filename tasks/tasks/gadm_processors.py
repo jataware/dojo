@@ -1,8 +1,9 @@
+import json
 import logging
-import pandas as pd
-from utils import job_setup
 
+import pandas as pd
 from elwood import elwood
+from utils import job_setup
 
 
 def resolution_alternatives(context, filename=None, **kwargs):
@@ -88,6 +89,18 @@ def resolution_alternatives(context, filename=None, **kwargs):
     }
 
     return gadm_response
+
+
+def all_gadm_values(context, filename=None, **kwargs):
+    admin_level = kwargs.get("admin_level", "country")
+
+    gadm_list = elwood.gadm_list_all(admin_level)
+
+    response = {"gadm_entries": gadm_list.tolist()}
+
+    print(gadm_list)
+
+    return json.loads(json.dumps(response))
 
 
 if __name__ == "__main__":
