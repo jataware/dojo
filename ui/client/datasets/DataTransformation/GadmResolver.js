@@ -35,184 +35,6 @@ import MuiAlert from '@material-ui/lab/Alert';
 import Autocomplete from '../../components/Autocomplete';
 
 
-const columns = [
-  {
-    field: 'raw_value',
-    headerName: 'Raw Value',
-    flex: 1,
-    minWidth: 200,
-  },
-  {
-    field: 'gadm_resolved',
-    headerName: 'GADM Resolved',
-    flex: 1,
-    minWidth: 200,
-  },
-  {
-    field: 'adjusted',
-    headerName: 'User Adjusted',
-    flex: 1
-  }
-];
-
-/**
- * Unused. Part of previous implementation.
- **/
-const AdjustGadmDialog = ({ open, onClose }) => {
-
-  const mockCountry = 'japan';
-  const mockRaw = mockCountry.replace('e', '').replace('a', 'i');
-
-  return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="md"
-    >
-      <DialogTitle
-        disableTypography
-        style={{
-          color:"white",
-          backgroundColor: '#06B8EF',
-          backgroundImage: 'linear-gradient(to right, #06B8EF, #A11BDA)',
-          paddingBottom: "1rem"
-        }}>
-        <Typography variant="h5">
-          Manual GADM Adjustment
-        </Typography>
-      </DialogTitle>
-
-      <DialogContent>
-        <div style={{width: "80%", padding: "1rem"}}>
-
-          <table>
-            <tbody>
-              <tr>
-                <td><Typography component="span" color="textSecondary">Raw Value</Typography></td>
-                <td><Typography component="span" >{mockRaw}</Typography></td>
-              </tr>
-              <tr>
-                <td><Typography component="span" color="textSecondary">GADM Resolved</Typography></td>
-                <td><Typography component="span" style={{fontWeight: "bold"}}>{mockCountry}</Typography></td>
-              </tr>
-            </tbody>
-          </table>
-
-          <br />
-
-        <TextField
-          select
-          label="GADM Alternatives"
-          SelectProps={{
-            native: true,
-          }}
-          helperText="Override the auto-detected GADM resolved by our system."
-        >
-          {Array(10).fill(0).map((option) => (
-            <option key={random(1,15000)} value={option}>
-              'ajpan'
-            </option>
-          ))}
-        </TextField>
-          </div>
-
-      </DialogContent>
-
-      <DialogActions>
-        <Button
-          variant="outlined"
-          onClick={onClose}
-          color="default">
-          Cancel
-        </Button>
-        <Button
-          onClick={onClose}
-          variant="outlined"
-          type="submit"
-          color="primary">
-          Save
-        </Button>
-      </DialogActions>
-
-    </Dialog>
-  );
-};
-
-/**
- * Unused - previous implementation.
- **/
-export const GadmResolverV1 = withStyles(() => ({
-  root: {
-    // maxWidth: "75%",
-    // padding: "1rem",
-    margin: 'auto',
-    marginTop: '7rem',
-    display: 'flex',
-    flexDirection: 'column',
-    // flex: 1
-  },
-  table: {
-    flex: 1
-    // width: 700
-  },
-  gridHeader: {
-    backgroundColor: '#f0f8ff'
-  },
-  row: {
-    cursor: 'pointer'
-  },
-  alert: {
-    backgroundColor: 'white',
-    alignItems: 'center',
-  }
-}))(({ classes, gadmRowData, primaryCountryField }) => {
-
-  const [isOpen, setOpen] = React.useState(false);
-
-  const handleRowClick = () => {
-    setOpen(true);
-  };
-
-  return (
-
-      <div
-        className={classes.root}
-        style={{ minHeight: 500, width: 700 }}
-      >
-
-        <Typography variant="h5" gutterBottom>
-          Review Administrative Area Detection
-        </Typography>
-
-        <MuiAlert
-          classes={{standardInfo: classes.alert}}
-          severity="info"
-        >
-          Dojo has automatically resolved GADM mappings for the primary date country field <span style={{backgroundColor: '#f1f1f1', padding: 2}}>{primaryCountryField}</span>.
-          The following country Administrative areas have been identified with a lower confidence level. Review and adjust as needed.
-        </MuiAlert>
-
-        <br />
-
-        <DataGrid
-          autoPageSize
-          className={classes.table}
-          classes={{root: classes.table, columnHeader: classes.gridHeader, row: classes.row}}
-          disableSelectionOnClick
-          disablePagination
-          disableColumnMenu
-          disableColumnFilter
-          onRowClick={handleRowClick}
-          columns={columns}
-          rows={gadmRowData}
-        />
-
-        <AdjustGadmDialog open={isOpen} onClose={() => setOpen(false)}/>
-
-      </div>
-  );
-});
-
 
 const gadmResolverColumns = [
   {
@@ -256,7 +78,7 @@ const GadmResolverTable = withStyles(() => ({
   innerInputOutlined: {
     padding: 10
   }
-}))(({classes, rows, gadmValues, onGadmChange }) => {
+}))(({classes, rows, gadmValues, onGadmChange, countries }) => {
 
   return (
     <Table
@@ -300,7 +122,7 @@ const GadmResolverTable = withStyles(() => ({
               <TableCell className={classes.tableCell}>
                 <Autocomplete
                   multiple={false}
-                  options={row.alternatives}
+                  options={[...row.alternatives, ...countries.filter(c => !row.alternatives.includes(c))]}
                   values={
                     gadmValues[row.raw_value].override || row.gadm_resolved
                   }
@@ -354,7 +176,7 @@ export const GadmResolver = withStyles(() => ({
     backgroundColor: 'white',
     alignItems: 'center',
   }
-}))(({ classes, gadmRowData, onSave, onCancel, overrides }) => {
+}))(({ classes, gadmRowData, onSave, onCancel, overrides, countries }) => {
 
   const lowConfidenceRows = gadmRowData.fuzzy_match;
   const primaryField = gadmRowData.field;
@@ -423,6 +245,7 @@ export const GadmResolver = withStyles(() => ({
               elevation={0}
               >
               <GadmResolverTable
+                countries={countries.gadm_entries}
                 rows={lowConfidenceRows}
                 onGadmChange={updateGadmResolutionValues}
                 gadmValues={gadmResolutionValues}
