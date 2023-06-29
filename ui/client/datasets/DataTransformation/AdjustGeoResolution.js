@@ -5,11 +5,14 @@ import trim from 'lodash/trim';
 
 import ArrowForwardIcon from '@material-ui/icons/ArrowForward';
 import Button from '@material-ui/core/Button';
+import Checkbox from '@material-ui/core/Checkbox';
 import FormControl from '@material-ui/core/FormControl';
+import FormControlLabel from '@material-ui/core/FormControlLabel';
 import InputLabel from '@material-ui/core/InputLabel';
 import MenuItem from '@material-ui/core/MenuItem';
 import Select from '@material-ui/core/Select';
 import TextField from '@material-ui/core/TextField';
+import Tooltip from '@material-ui/core/Tooltip';
 import Typography from '@material-ui/core/Typography';
 import { withStyles } from '@material-ui/core/styles';
 
@@ -23,8 +26,10 @@ export default withStyles((theme) => ({
   bottomWrapper: {
     display: 'flex',
     justifyContent: 'center',
+    alignItems: 'flex-start',
     gap: theme.spacing(6),
-    margin: [[theme.spacing(6), 0]],
+    width: '100%',
+    margin: [[theme.spacing(8), 0]],
   },
   textWrapper: {
     backgroundColor: theme.palette.grey[200],
@@ -62,6 +67,9 @@ export default withStyles((theme) => ({
 }) => {
   const [selectedResolution, setSelectedResolution] = useState(savedResolution || '');
   const [error, setError] = useState(false);
+  const [nonUniformChecked, setNonUniformChecked] = useState(
+    savedResolution === 'Non-uniform/event data' || false
+  );
 
   const nonUniform = oldResolution === 'Non-uniform/event data';
 
@@ -78,6 +86,13 @@ export default withStyles((theme) => ({
   const handleChangeResolution = (event) => {
     // nonUniform has a textfield input, so we need to ensure we just receive numbers
     if (nonUniform) {
+      // We also have the special case where the checkbox sets the resolution
+      if (selectedResolution === oldResolution) {
+        // don't show any errors and stop the validation
+        setError(false);
+        // the input is disabled so no need to continue with the state setters
+        return;
+      }
       // remove leading and trailing whitespace, as we only want valid numbers
       const trimmedValue = trim(event.target.value);
       setSelectedResolution(trimmedValue);
@@ -94,6 +109,19 @@ export default withStyles((theme) => ({
     }
   };
 
+  const handleNonUniformCheckboxChange = (event) => {
+    setNonUniformChecked(event.target.checked);
+
+    if (event.target.checked) {
+      // when checked is true, set current resolution to Non-uniform/event data
+      setSelectedResolution(oldResolution);
+      setError(false);
+    } else {
+      // clear it if unchecked
+      setSelectedResolution('');
+    }
+  };
+
   const createPreviewArgs = useCallback((argsAnnotations) => {
     const args = generateProcessGeoResArgs(argsAnnotations, selectedResolution, oldResolution);
     args.preview_run = true;
@@ -104,19 +132,24 @@ export default withStyles((theme) => ({
     if (!selectedResolution || selectedResolution === '') return '';
     if (nonUniform) {
       if (validNumber(selectedResolution)) {
-        return `${selectedResolution} km`;
+        return `${selectedResolution} deg`;
       }
 
       return '';
     }
-    return `${selectedResolution.toFixed(2)} km`;
+    return `${selectedResolution.toFixed(2)} deg`;
   };
 
   const disableButton = () => {
+    // handle disabling when the textField input is on screen
     if (nonUniform) {
+      // don't disable the button if non-uniform is selected via checkbox
+      if (selectedResolution === oldResolution) return false;
+      // do disable if an invalid input is entered (not a number)
       if (!validNumber(selectedResolution)) return true;
     }
 
+    // if there's no resolution chosen, disable the button
     if (!selectedResolution) return true;
 
     return false;
@@ -129,9 +162,10 @@ export default withStyles((theme) => ({
           value={selectedResolution}
           onChange={handleChangeResolution}
           variant="outlined"
-          label="Resolution (km)"
+          label="Resolution (deg)"
           error={error}
           helperText={error ? 'Please enter a valid number' : ''}
+          disabled={nonUniformChecked}
         />
       );
     }
@@ -144,10 +178,18 @@ export default withStyles((theme) => ({
           onChange={handleChangeResolution}
           label="Resolution"
         >
-          {/* we want to allow users to not change their resolution, so put the previous
-            resolution at the start of the select array */}
-          {[oldResolution].concat(resolutionOptions).map((option) => (
-            <MenuItem key={option} value={option}>{option.toFixed(2)} km</MenuItem>
+          {resolutionOptions.deg.map((option, index) => (
+            <MenuItem key={option} value={option}>
+              <Tooltip
+                placement="bottom-end"
+                arrow
+                title={
+                  resolutionOptions.km[index] ? `${resolutionOptions.km[index].toFixed(2)} km` : ''
+                }
+              >
+                <span style={{ width: '100%' }}>{`${option.toFixed(2)} deg`}</span>
+              </Tooltip>
+            </MenuItem>
           ))}
         </Select>
       </>
@@ -163,7 +205,7 @@ export default withStyles((theme) => ({
             <div className={classes.textWrapper}>
               <Typography variant="h6" align="center">current resolution</Typography>
               <Typography variant="h6" className={classes.resolutionText} align="center">
-                {nonUniform ? oldResolution : `${oldResolution.toFixed(2)} km`}
+                {nonUniform ? oldResolution : `${oldResolution.toFixed(2)} deg`}
               </Typography>
             </div>
             <div className={classes.arrowIcon}>
@@ -176,6 +218,26 @@ export default withStyles((theme) => ({
               </Typography>
             </div>
           </div>
+          {nonUniform && (
+            <Tooltip
+              title="We weren't able to detect a geospatial resolution.
+                Check if you want to leave your resolution as non-uniform/event data,
+                or input a number to adjust it to below."
+            >
+              <FormControlLabel
+                control={(
+                  <Checkbox
+                    checked={nonUniformChecked}
+                    onChange={handleNonUniformCheckboxChange}
+                  />
+                )}
+                label={(
+                  <Typography variant="caption">Leave data as non-uniform</Typography>
+                )}
+                style={{ marginLeft: '8px' }}
+              />
+            </Tooltip>
+          )}
           <div className={classes.bottomWrapper}>
             <FormControl variant="outlined" className={classes.selectWrapper}>
               {switchInput()}
@@ -197,7 +259,8 @@ export default withStyles((theme) => ({
             annotations={annotations}
             cleanupRef={cleanupRef}
             createPreviewArgs={createPreviewArgs}
-            disabled={disableButton()}
+            // an extra disabled check here because we don't want to run previews in this case
+            disabled={disableButton() || selectedResolution === oldResolution}
           />
         </>
       ) : (

@@ -44,29 +44,31 @@ import PromptDialog from '../PromptDialog';
 // import times from 'lodash/times';
 
 // for development purposes
-// const mapResolution = 111.00000000000014;//'Non-uniform/event data';
+// const mapResolution = 1.0000000000000013;//'Non-uniform/event data';
 // const mapResolutionOptions //= null;
-// = [
-//   222.00000000000028,
-//   333.00000000000045,
-//   444.00000000000057,
-//   555.0000000000007,
-//   666.0000000000009,
-//   777.000000000001,
-//   888.0000000000011,
-//   999.0000000000013,
-//   1110.0000000000014,
-//   1221.0000000000016,
-//   1332.0000000000018,
-//   1443.0000000000018,
-//   1554.000000000002,
-//   1665.000000000002,
-//   1776.0000000000023,
-//   1887.0000000000025,
-//   1998.0000000000025,
-//   2109.0000000000027,
-//   2220.0000000000027
-// ];
+// = {
+//  deg: [
+//     1.0000000000000013,
+//     2.0000000000000027,
+//     3.000000000000004,
+//     4.000000000000005,
+//     5.000000000000007,
+//     6.000000000000008,
+//     7.000000000000009,
+//     8.00000000000001,
+//     9.000000000000012,
+//  ],
+//  km: [
+//       111.00000000000014,
+//       222.00000000000028,
+//       333.00000000000045,
+//       444.00000000000057,
+//       555.0000000000007,
+//       666.0000000000009,
+//       777.000000000001,
+//       888.0000000000011,
+//       999.0000000000013,
+// ]};
 // const mapBounds = [[10.5619, 42.0864], [12.595, 43.2906]];
 // const timeResolution =//  null;
 // {
@@ -249,10 +251,13 @@ const DataTransformation = withStyles(() => ({
   ) => {
     if (resp.resolution_result?.uniformity === 'PERFECT'
       || resp.resolution_result?.uniformity === 'UNIFORM') {
-      setData(resp.scale_km);
+      setData(resp.scale_deg);
 
-      if (resp.multiplier_samples) {
-        setOptions(resp.multiplier_samples);
+      if (resp.multiplier_samples_deg) {
+        setOptions({
+          deg: resp.multiplier_samples_deg,
+          km: resp.multiplier_samples_km,
+        });
       }
     } else {
       if (areLatLngAnnotated(annotations)) {
@@ -453,11 +458,10 @@ const DataTransformation = withStyles(() => ({
       );
       // save the args to a ref so we can store them on the annotations object
       transformationsRef.current.regrid_geo = args;
-      // If we have an error, then we never found a resolution so we can't do a transformation
-      // TODO: remove this once we've confirmed we can do this transformation for nonuniform
-      // if (!mapResolutionError) {
-        return startElwoodJob(datasetInfo.id, args, 'transformation_processors.regrid_geo');
-      // }
+      // If non-uniform is selected, don't run the transformation
+      if (savedMapResolution === 'Non-uniform/event data') return;
+
+      return startElwoodJob(datasetInfo.id, args, 'transformation_processors.regrid_geo');
     }
   };
 
