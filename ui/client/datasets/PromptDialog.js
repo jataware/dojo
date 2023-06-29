@@ -7,26 +7,31 @@ import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 
 export default ({
-  open, title, message, handleClose
-}) => (
-  <Dialog
-    open={open}
-    onClose={handleClose}
-  >
-    <DialogTitle>
-      {title}
-    </DialogTitle>
+  open, title, message, handleClose, maxWidth='sm'
+}) => {
+  return (
+    <Dialog
+      open={open}
+      onClose={handleClose}
+      maxWidth={maxWidth}
+    >
+      {title && (
+        <DialogTitle>
+          {title}
+        </DialogTitle>
+      )}
 
-    <DialogContent>
-      <DialogContentText>
-        {message}
-      </DialogContentText>
-    </DialogContent>
+      <DialogContent>
+        <DialogContentText>
+          {message}
+        </DialogContentText>
+      </DialogContent>
 
-    <DialogActions>
-      <Button onClick={handleClose} color="primary">
-        Ok
-      </Button>
-    </DialogActions>
-  </Dialog>
-);
+      <DialogActions>
+        <Button onClick={handleClose} color="primary">
+          Ok
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+};

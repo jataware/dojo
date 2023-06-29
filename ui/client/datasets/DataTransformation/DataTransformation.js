@@ -37,6 +37,9 @@ import {
 
 import { GadmResolver } from './GadmResolver';
 
+import PromptDialog from '../PromptDialog';
+
+
 // import random from 'lodash/random';
 // import times from 'lodash/times';
 
@@ -170,6 +173,19 @@ const DataTransformation = withStyles(() => ({
 
   const transformationsRef = useRef({});
 
+  const [promptTitle, setPromptTitle] = useState('');
+  const [promptMessage, setPromptMessage] = useState('');
+
+  const onBackendFailure = (stack_message) => {
+    setPromptTitle('Something went wrong');
+    setPromptMessage(stack_message);
+  };
+
+  const closePrompt = () => {
+    setPromptTitle('');
+    setPromptMessage('');
+  };
+
   // until we get the list of timeresoptions from the backend:
   if (!timeResolutionOptions.length) {
     setTimeResolutionOptions([
@@ -268,9 +284,13 @@ const DataTransformation = withStyles(() => ({
 
   const onGadmResSuccess = useCallback((resp, setData, setDataError, setDataLoading) => {
     if (resp) {
-      setData(resp);
+      if (resp.fuzzy_match && resp.fuzzy_match.length) {
+        setData(resp);
+      } else {
+        setDataError('Nothing to review.');
+      }
     } else {
-      setDataError(resp.message ? resp.message : true);
+      setDataError('Something went wrong. Please contact Jataware for assitance.');
     }
     setDataLoading(false);
   }, []);
@@ -297,6 +317,7 @@ const DataTransformation = withStyles(() => ({
     generateArgs: generateFetchGeoResArgs,
     cleanupRef,
     onSuccess: onGeoResSuccess,
+    onBackendFailure: onBackendFailure
   });
 
   // fetch resolution for AdjustGeoResolution
@@ -310,6 +331,7 @@ const DataTransformation = withStyles(() => ({
     generateArgs: () => {},
     cleanupRef,
     onSuccess: onGadmResSuccess,
+    onBackendFailure: onBackendFailure
   });
 
   // fetch boundary for ClipMap component
@@ -320,6 +342,7 @@ const DataTransformation = withStyles(() => ({
     generateArgs: generateFetchGeoBoundaryArgs,
     cleanupRef,
     onSuccess: onGeoBoundarySuccess,
+    onBackendFailure: onBackendFailure
   });
 
   // fetch resolution for AdjustTemporalResolution component
@@ -330,6 +353,7 @@ const DataTransformation = withStyles(() => ({
     generateArgs: generateFetchTemporalArgs,
     cleanupRef,
     onSuccess: onTemporalResSuccess,
+    onBackendFailure: onBackendFailure
   });
 
   // fetch time bounds for ClipTime component
@@ -340,7 +364,14 @@ const DataTransformation = withStyles(() => ({
     generateArgs: generateFetchTemporalArgs,
     cleanupRef,
     onSuccess: onGetDatesSuccess,
+    onBackendFailure: onBackendFailure
   });
+
+  const mapResolutionLoading = !mapResolution && !mapResolutionError;
+  const mapBoundsLoading = !mapBounds && !mapBoundsError;
+  const timeResolutionLoading = !timeResolution && !timeResolutionError;
+  const timeBoundsLoading = !timeBounds && !timeBoundsError;
+  const gadmResolutionLoading = !gadmResolution && !gadmResolutionError;
 
   const handleDrawerClose = (bool, event) => {
     // prevent clicking outside the drawer to close
@@ -356,6 +387,35 @@ const DataTransformation = withStyles(() => ({
   const handleDrawerOpen = (name) => {
     setDrawerOpen(true);
     setDrawerName(name);
+  };
+
+  const disableNext = () => {
+    if (
+      mapResolutionLoading
+      || mapBoundsLoading
+      || timeResolutionLoading
+      || timeBoundsLoading
+      || gadmResolutionLoading
+    ) {
+      // disable if any of the transformations are loading
+      return true;
+    }
+
+    if (!mapResolutionError && !savedMapResolution) {
+      // disable if we are requiring a map resolution to be chosen and it hasn't been
+      return true;
+    }
+
+    if (!timeResolutionError && !savedTimeResolution) {
+      // disable if we are requiring a time resolution to be set and it hasn't been
+      return true;
+    }
+
+    if (!gadmResolutionError && !savedGADMOverrides) {
+      return true;
+    }
+
+    return false;
   };
 
   const processAdjustGeo = () => {
@@ -525,6 +585,8 @@ const DataTransformation = withStyles(() => ({
     }
   };
 
+  const isGadmStepRequired = gadmResolutionLoading && !savedGADMOverrides;
+
   return (
     <div className={classes.transformationRoot}>
       <List>
@@ -533,9 +595,9 @@ const DataTransformation = withStyles(() => ({
           Icon={GlobeIcon}
           title="Review Administrative Area Detection"
           onClick={() => handleDrawerOpen('gadmResolutionReview')}
-          loading={!gadmResolution && !gadmResolutionError}
+          loading={gadmResolutionLoading}
           error={gadmResolutionError}
-          required
+          required={!gadmResolutionError}
         />
         <TransformationButton
           isComplete={!!savedMapResolution}
@@ -574,6 +636,7 @@ const DataTransformation = withStyles(() => ({
         label="Next"
         handleNext={handleNextStep}
         handleBack={handleBack}
+        disableNext={disableNext()}
       />
 
       <Drawer
@@ -587,6 +650,13 @@ const DataTransformation = withStyles(() => ({
       >
         {drawerInner()}
       </Drawer>
+      <PromptDialog
+        maxWidth='md'
+        title={promptTitle}
+        message={promptMessage}
+        open={Boolean(promptMessage)}
+        handleClose={closePrompt}
+      />
     </div>
   );
 });
