@@ -295,6 +295,15 @@ const DataTransformation = withStyles(() => ({
     setDataLoading(false);
   }, []);
 
+  const onGadmCountriesSuccess = useCallback((resp, setData, setDataError, setDataLoading) => {
+    if (resp) {
+        setData(resp);
+    } else {
+      setDataError('Something went wrong. Please contact Jataware for assitance.');
+    }
+    setDataLoading(false);
+  }, []);
+
   const onGetDatesSuccess = useCallback((resp, setData, setDataError, setDataLoading) => {
     if (resp.unique_dates.length) {
       setData(resp.unique_dates);
@@ -320,7 +329,6 @@ const DataTransformation = withStyles(() => ({
     onBackendFailure: onBackendFailure
   });
 
-  // fetch resolution for AdjustGeoResolution
   const {
     data: gadmResolution,
     error: gadmResolutionError
@@ -331,6 +339,19 @@ const DataTransformation = withStyles(() => ({
     generateArgs: () => {},
     cleanupRef,
     onSuccess: onGadmResSuccess,
+    onBackendFailure: onBackendFailure
+  });
+
+  const {
+    data: gadmCountries,
+    error: gadmCountriesError
+  } = useElwoodData({
+    datasetId: datasetInfo.id,
+    annotations,
+    jobString: 'gadm_processors.all_gadm_values',
+    generateArgs: () => {},
+    cleanupRef,
+    onSuccess: onGadmCountriesSuccess,
     onBackendFailure: onBackendFailure
   });
 
@@ -372,6 +393,7 @@ const DataTransformation = withStyles(() => ({
   const timeResolutionLoading = !timeResolution && !timeResolutionError;
   const timeBoundsLoading = !timeBounds && !timeBoundsError;
   const gadmResolutionLoading = !gadmResolution && !gadmResolutionError;
+  const gadmCountriesLoading = !gadmCountries && !gadmCountriesError;
 
   const handleDrawerClose = (bool, event) => {
     // prevent clicking outside the drawer to close
@@ -574,6 +596,7 @@ const DataTransformation = withStyles(() => ({
             onSave={(data) => { setSavedGADMOverrides(data); handleDrawerClose(); }}
             onCancel={handleDrawerClose}
             overrides={savedGADMOverrides}
+            countries={gadmCountries}
           />
         );
       default:
@@ -595,7 +618,7 @@ const DataTransformation = withStyles(() => ({
           Icon={GlobeIcon}
           title="Review Administrative Area Detection"
           onClick={() => handleDrawerOpen('gadmResolutionReview')}
-          loading={gadmResolutionLoading}
+          loading={gadmResolutionLoading || gadmCountriesLoading}
           error={gadmResolutionError}
           required={!gadmResolutionError}
         />
