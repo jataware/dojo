@@ -39,7 +39,6 @@ import { GadmResolver } from './GadmResolver';
 
 import PromptDialog from '../PromptDialog';
 
-
 // import random from 'lodash/random';
 // import times from 'lodash/times';
 
@@ -113,7 +112,6 @@ import PromptDialog from '../PromptDialog';
 // timeBoundsError
 // gadmResolutionError
 // ] = [false, false, true, false];
-
 
 /**
  *
@@ -328,7 +326,7 @@ const DataTransformation = withStyles(() => ({
 
   const onGadmCountriesSuccess = useCallback((resp, setData, setDataError, setDataLoading) => {
     if (resp) {
-        setData(resp);
+      setData(resp);
     } else {
       setDataError('Something went wrong. Please contact Jataware for assitance.');
     }
@@ -357,7 +355,7 @@ const DataTransformation = withStyles(() => ({
     generateArgs: generateFetchGeoResArgs,
     cleanupRef,
     onSuccess: onGeoResSuccess,
-    onBackendFailure: onBackendFailure
+    onBackendFailure
   });
 
   const {
@@ -370,7 +368,7 @@ const DataTransformation = withStyles(() => ({
     generateArgs: () => {},
     cleanupRef,
     onSuccess: onGadmResSuccess,
-    onBackendFailure: onBackendFailure
+    onBackendFailure
   });
 
   const {
@@ -383,7 +381,7 @@ const DataTransformation = withStyles(() => ({
     generateArgs: () => {},
     cleanupRef,
     onSuccess: onGadmCountriesSuccess,
-    onBackendFailure: onBackendFailure
+    onBackendFailure
   });
 
   // fetch boundary for ClipMap component
@@ -394,7 +392,7 @@ const DataTransformation = withStyles(() => ({
     generateArgs: generateFetchGeoBoundaryArgs,
     cleanupRef,
     onSuccess: onGeoBoundarySuccess,
-    onBackendFailure: onBackendFailure
+    onBackendFailure
   });
 
   // fetch resolution for AdjustTemporalResolution component
@@ -405,7 +403,7 @@ const DataTransformation = withStyles(() => ({
     generateArgs: generateFetchTemporalArgs,
     cleanupRef,
     onSuccess: onTemporalResSuccess,
-    onBackendFailure: onBackendFailure
+    onBackendFailure
   });
 
   // fetch time bounds for ClipTime component
@@ -416,7 +414,7 @@ const DataTransformation = withStyles(() => ({
     generateArgs: generateFetchTemporalArgs,
     cleanupRef,
     onSuccess: onGetDatesSuccess,
-    onBackendFailure: onBackendFailure
+    onBackendFailure
   });
 
   const mapResolutionLoading = !mapResolution && !mapResolutionError;
@@ -646,8 +644,6 @@ const DataTransformation = withStyles(() => ({
     }
   };
 
-  const isGadmStepRequired = gadmResolutionLoading && !savedGADMOverrides;
-
   return (
     <div className={classes.transformationRoot}>
       <List>
@@ -714,7 +710,7 @@ const DataTransformation = withStyles(() => ({
         {drawerInner()}
       </Drawer>
       <PromptDialog
-        maxWidth='md'
+        maxWidth="md"
         title={promptTitle}
         message={promptMessage}
         open={Boolean(promptMessage)}

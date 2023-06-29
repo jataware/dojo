@@ -68,11 +68,20 @@ const useElwoodData = ({
         startElwoodJob({ requestArgs })
           .then((jobData) => {
             if (jobData.result) {
-              onSuccess(jobData.result, setData, setDataError, setDataLoading, setOptions);
+              onSuccess(jobData.result, setData,
+                setDataError, setDataLoading, setOptions);
             } else if (jobData.job_error) {
               setDataError('An unexpected error occured while starting the job.');
-              let displayable_jobName = /_(.+)/.exec(jobData.id)[1];
-              onBackendFailure(<div>An unexpected system error occured while running job {displayable_jobName}:<br /><pre>{jobData.job_error}</pre><br />Contact Jataware for assistance.</div>);
+              const displayable_jobName = /_(.+)/.exec(jobData.id)[1];
+              onBackendFailure(
+                <div>
+                  An unexpected system error occured while running job
+                  {displayable_jobName}:<br />
+                  <pre>{jobData.job_error}</pre>
+                  <br />
+                  Contact Jataware for assistance.
+                </div>
+              );
               setDataLoading(false);
             } else {
               repeatFetch(jobData.id);
