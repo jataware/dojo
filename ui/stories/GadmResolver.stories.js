@@ -50,6 +50,9 @@ for (let i = 0; i < mockRowCount; i++) {
 
 export const Basic = {
   args: {
+    countries: {
+      gadm_entries: ['extra']
+    },
     gadmRowData: {
       fuzzy_match: mockData,
       field: 'eventCountry'
