@@ -671,7 +671,6 @@ const DataTransformation = withStyles(() => ({
         {drawerInner()}
       </Drawer>
       <PromptDialog
-        maxWidth="md"
         title={promptTitle}
         message={promptMessage}
         open={Boolean(promptMessage)}

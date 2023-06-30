@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 // Hook that handles all the data fetching from Elwood
@@ -76,13 +76,12 @@ const useElwoodData = ({
               const displayable_jobName = /_(.+)/.exec(jobData.id)[1];
               onBackendFailure(
                 <div>
-                  An unexpected system error occured while running job
-                  {displayable_jobName}:<br />
-                  <pre>{jobData.job_error}</pre>
-                  <br />
-                  Contact Jataware for assistance.
+                  An unexpected system error occured while running job&nbsp;
+                  <span style={{color: '#99223398'}}>{displayable_jobName}</span>.
+                  <br />Contact Jataware for assistance.
                 </div>
               );
+              console.error(jobData.job_error);
               setDataLoading(false);
             } else {
               repeatFetch(jobData.id);
