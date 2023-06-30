@@ -18,6 +18,10 @@ def resolution_alternatives(context, filename=None, **kwargs):
     geo_column = ""
     for geo in context.get("annotations").get("annotations").get("geo"):
         if geo.get("primary_geo", False):
+            geo_type = admin_level_to_geo_type(admin_level=admin_level)
+            if geo.get("geo_type") == geo_type:
+                geo_column = geo.get("name")
+                break
             geo_column = geo.get("name")
 
     # Run job
@@ -101,6 +105,17 @@ def all_gadm_values(context, filename=None, **kwargs):
     print(gadm_list)
 
     return json.loads(json.dumps(response))
+
+
+def admin_level_to_geo_type(admin_level):
+    if admin_level == "country":
+        return "country"
+    if admin_level == "admin1":
+        return "state/territory"
+    if admin_level == "admin2":
+        return "county/district"
+    if admin_level == "admin3":
+        return "municipality/town"
 
 
 if __name__ == "__main__":
