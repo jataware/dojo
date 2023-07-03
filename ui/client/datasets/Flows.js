@@ -74,7 +74,7 @@ const BasicRegistrationFlow = {
     },
     {
       slug: 'transform',
-      title: 'Transform Data',
+      title: 'Tranform & Manage Data',
       label: 'Transformation',
       component: DataTransformation,
       options: {}
