@@ -141,6 +141,7 @@ export default withStyles((theme) => ({
             value={selectedAggregation}
             onChange={handleChangeAggregation}
             label="Aggregation Function"
+            data-testid="transform-select-temporal-resolution-aggregation-function"
             error={saveAttempt && !selectedAggregation}
           >
             {aggregationFunctions.map((funct) => (
@@ -158,6 +159,7 @@ export default withStyles((theme) => ({
             Resolution
           </InputLabel>
           <Select
+            data-testid="transform-select-temporal-resolution-resolution"
             value={selectedResolution}
             onChange={handleChangeResolution}
             label="Resolution"

@@ -77,7 +77,7 @@ const useElwoodData = ({
               onBackendFailure(
                 <div>
                   An unexpected system error occured while running job&nbsp;
-                  <span style={{color: '#99223398'}}>{displayable_jobName}</span>.
+                  <span style={{ color: '#99223398' }}>{displayable_jobName}</span>.
                   <br />Contact Jataware for assistance.
                 </div>
               );
