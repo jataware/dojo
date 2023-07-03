@@ -22,7 +22,8 @@ export default ({
 
     <DialogContent>
       <DialogContentText
-        component={typeof message === 'string' ? "p" : "div"}>
+        component={typeof message === 'string' ? 'p' : 'div'}
+      >
         {message}
       </DialogContentText>
     </DialogContent>
