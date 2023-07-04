@@ -29,13 +29,16 @@ export const generateProcessTempResArgs = (annotations, resolution, aggregation)
   return args;
 };
 
-export const generateProcessGeoResArgs = (annotations, newMapResolution, oldMapResolution) => {
+export const generateProcessGeoResArgs = (
+  annotations, newMapResolution, oldMapResolution, aggregation
+) => {
   const geoColumns = getPrimaryLatLonColumns(annotations.annotations.geo);
   const args = {
     datetime_column: [annotations?.annotations.date[0].name],
     // TODO: does this lat/lon order mess things up?
     geo_columns: [geoColumns?.lat_column, geoColumns?.lon_column],
     scale_multi: newMapResolution,
+    aggregation_function_list: [aggregation],
     scale: oldMapResolution,
   };
   return args;

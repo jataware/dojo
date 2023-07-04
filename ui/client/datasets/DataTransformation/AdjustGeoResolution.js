@@ -8,6 +8,7 @@ import Button from '@material-ui/core/Button';
 import Checkbox from '@material-ui/core/Checkbox';
 import FormControl from '@material-ui/core/FormControl';
 import FormControlLabel from '@material-ui/core/FormControlLabel';
+import FormHelperText from '@material-ui/core/FormHelperText';
 import InputLabel from '@material-ui/core/InputLabel';
 import MenuItem from '@material-ui/core/MenuItem';
 import Select from '@material-ui/core/Select';
@@ -18,10 +19,23 @@ import { withStyles } from '@material-ui/core/styles';
 
 import PreviewTransformation from './PreviewTransformation';
 import { areLatLngAnnotated, generateProcessGeoResArgs } from './dataTransformationHelpers';
+import { ExternalLink } from '../../components/Links';
+
+const aggregationFunctions = [
+  'CONSERVATIVE',
+  'SUM',
+  'MINIMUM',
+  'MAXIMUM',
+  'MEDIAN',
+  'AVERAGE',
+  'BILINEAR',
+  'BICUBIC',
+  'NEAREST_NEIGHBOR',
+];
 
 export default withStyles((theme) => ({
   selectWrapper: {
-    width: '180px',
+    width: '200px',
   },
   bottomWrapper: {
     display: 'flex',
@@ -30,6 +44,7 @@ export default withStyles((theme) => ({
     gap: theme.spacing(6),
     width: '100%',
     margin: [[theme.spacing(8), 0]],
+    flexWrap: 'wrap',
   },
   textWrapper: {
     backgroundColor: theme.palette.grey[200],
@@ -60,12 +75,16 @@ export default withStyles((theme) => ({
   resolutionOptions,
   setSavedResolution,
   savedResolution,
+  savedAggregation,
+  setSavedAggregation,
   jobString,
   datasetId,
   annotations,
   cleanupRef,
 }) => {
   const [selectedResolution, setSelectedResolution] = useState(savedResolution || '');
+  const [selectedAggregation, setSelectedAggregation] = useState(savedAggregation || '');
+  const [saveAttempt, setSaveAttempt] = useState(false);
   const [error, setError] = useState(false);
   const [nonUniformChecked, setNonUniformChecked] = useState(
     savedResolution === 'Non-uniform/event data' || false
@@ -78,9 +97,22 @@ export default withStyles((theme) => ({
   );
 
   const handleSaveClick = () => {
-    if (selectedResolution !== '') setSavedResolution(selectedResolution);
-
-    closeDrawer();
+    if (nonUniform) {
+      if (selectedResolution !== '') {
+        setSavedResolution(selectedResolution);
+        closeDrawer();
+      }
+    } else {
+      // toggle saveAttempt to show our errors if either select hasn't been chosen
+      // though this shouldn't be possible with the button disabled
+      setSaveAttempt(true);
+      if (selectedResolution !== '' && selectedAggregation !== '') {
+        setSavedResolution(selectedResolution);
+        setSavedAggregation(selectedAggregation);
+        setSaveAttempt(false);
+        closeDrawer();
+      }
+    }
   };
 
   const handleChangeResolution = (event) => {
@@ -109,6 +141,10 @@ export default withStyles((theme) => ({
     }
   };
 
+  const handleChangeAggregation = (event) => {
+    setSelectedAggregation(event.target.value);
+  };
+
   const handleNonUniformCheckboxChange = (event) => {
     setNonUniformChecked(event.target.checked);
 
@@ -122,11 +158,14 @@ export default withStyles((theme) => ({
     }
   };
 
+  // Generate the arguments to pass into the preview component that runs the useElwoodData hook
   const createPreviewArgs = useCallback((argsAnnotations) => {
-    const args = generateProcessGeoResArgs(argsAnnotations, selectedResolution, oldResolution);
+    const args = generateProcessGeoResArgs(
+      argsAnnotations, selectedResolution, oldResolution, selectedAggregation
+    );
     args.preview_run = true;
     return args;
-  }, [selectedResolution, oldResolution]);
+  }, [selectedResolution, oldResolution, selectedAggregation]);
 
   const formatNewResolution = () => {
     if (!selectedResolution || selectedResolution === '') return '';
@@ -149,8 +188,11 @@ export default withStyles((theme) => ({
       if (!validNumber(selectedResolution)) return true;
     }
 
-    // if there's no resolution chosen, disable the button
+    // disable if there's no resolution
     if (!selectedResolution) return true;
+
+    // disable if we're showing the selects (uniform data) & no aggregation function chosen
+    if (!nonUniform && !selectedAggregation) return true;
 
     return false;
   };
@@ -158,40 +200,79 @@ export default withStyles((theme) => ({
   const switchInput = () => {
     if (nonUniform) {
       return (
-        <TextField
-          value={selectedResolution}
-          onChange={handleChangeResolution}
-          variant="outlined"
-          label="Resolution (deg)"
-          error={error}
-          helperText={error ? 'Please enter a valid number' : ''}
-          disabled={nonUniformChecked}
-        />
+        <FormControl variant="outlined" className={classes.selectWrapper}>
+          <TextField
+            value={selectedResolution}
+            onChange={handleChangeResolution}
+            variant="outlined"
+            label="Resolution (deg)"
+            error={error}
+            helperText={error ? 'Please enter a valid number' : ''}
+            disabled={nonUniformChecked}
+          />
+        </FormControl>
       );
     }
 
     return (
       <>
-        <InputLabel>Resolution</InputLabel>
-        <Select
-          value={selectedResolution}
-          onChange={handleChangeResolution}
-          label="Resolution"
-        >
-          {resolutionOptions.deg.map((option, index) => (
-            <MenuItem key={option} value={option}>
-              <Tooltip
-                placement="bottom-end"
-                arrow
-                title={
-                  resolutionOptions.km[index] ? `${resolutionOptions.km[index].toFixed(2)} km` : ''
-                }
-              >
-                <span style={{ width: '100%' }}>{`${option.toFixed(2)} deg`}</span>
-              </Tooltip>
-            </MenuItem>
-          ))}
-        </Select>
+        <FormControl variant="outlined" className={classes.selectWrapper}>
+          <InputLabel error={saveAttempt && !selectedAggregation}>
+            Aggregation Function
+          </InputLabel>
+          <Select
+            value={selectedAggregation}
+            onChange={handleChangeAggregation}
+            label="Aggregation Function"
+            error={saveAttempt && !selectedAggregation}
+          >
+            {aggregationFunctions.map((funct) => (
+              <MenuItem key={funct} value={funct}>
+                {funct.toLowerCase().replaceAll('_', ' ')}
+              </MenuItem>
+            ))}
+          </Select>
+          {saveAttempt && !selectedAggregation && (
+            <FormHelperText error={saveAttempt && !selectedAggregation}>
+              Please select an aggregation function
+            </FormHelperText>
+          )}
+          <ExternalLink
+            style={{ marginTop: '8px' }}
+            href="https://www.dojo-modeling.com/data-registration.html#adjust-geospatial-resolution"
+          >
+            Function Reference
+          </ExternalLink>
+        </FormControl>
+
+        <FormControl variant="outlined" className={classes.selectWrapper}>
+          <InputLabel>Resolution</InputLabel>
+          <Select
+            value={selectedResolution}
+            onChange={handleChangeResolution}
+            label="Resolution"
+            error={saveAttempt && !selectedResolution}
+          >
+            {resolutionOptions.deg.map((option, index) => (
+              <MenuItem key={option} value={option}>
+                <Tooltip
+                  placement="bottom-end"
+                  arrow
+                  title={
+                    resolutionOptions.km[index] ? `${resolutionOptions.km[index].toFixed(2)} km` : ''
+                  }
+                >
+                  <span style={{ width: '100%' }}>{`${option.toFixed(2)} deg`}</span>
+                </Tooltip>
+              </MenuItem>
+            ))}
+          </Select>
+          {saveAttempt && !selectedResolution && (
+            <FormHelperText error={saveAttempt && !selectedResolution}>
+              Please select a resolution
+            </FormHelperText>
+          )}
+        </FormControl>
       </>
     );
   };
@@ -239,9 +320,7 @@ export default withStyles((theme) => ({
             </Tooltip>
           )}
           <div className={classes.bottomWrapper}>
-            <FormControl variant="outlined" className={classes.selectWrapper}>
-              {switchInput()}
-            </FormControl>
+            {switchInput()}
             <Button
               color="primary"
               variant="contained"
