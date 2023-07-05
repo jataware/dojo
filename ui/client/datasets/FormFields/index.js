@@ -41,9 +41,10 @@ export const FormAwareTextField = withStyles((theme) => ({
   inputProps = {},
   InputProps = {},
   required,
+  validate,
   ...props
 }) => {
-  const [field, meta] = useField({ ...props, name });
+  const [field, meta] = useField({ ...props, name, validate });
 
   return (
     <TextField
