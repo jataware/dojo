@@ -17,7 +17,7 @@ import {
   uploadFile, genRegisterDefaultValues,
   formSchema, updateMetadata,
   BaseData, ContactInformation,
-  Resolution, DataQualitySensitivity
+  DataQualitySensitivity
 } from './metadataComponents';
 
 const skipValidation = false;
