@@ -16,61 +16,110 @@ const useElwoodData = ({
   const [dataError, setDataError] = useState(false);
 
   useEffect(() => {
+    // Kicks off the elwood job
     const startElwoodJob = async ({ requestArgs }) => {
-      console.log('these are the requestArgs when starting ', jobString, requestArgs);
       const jobQueueResp = await axios.post(
         `/api/dojo/job/${datasetId}/${jobString}`, requestArgs
       );
 
       if (jobQueueResp.status === 200) {
-        return jobQueueResp.data?.id;
+        return jobQueueResp.data;
       }
     };
 
-    const runElwoodJob = ({ requestArgs, onFailure }) => {
-      let count = 0;
-
-      const repeatFetch = (jobId) => {
-        setTimeout(() => {
-          axios.post(`/api/dojo/job/fetch/${jobId}`).then((response) => {
-            if (response.status === 200) {
-              // keep track of how long it takes (for dev purposes)
-              count += 1;
-              // console.log(`${count}: response from job string: ${jobString}:`, response);
-              if (response.data) {
-                console.log(`success! ${jobString} took ${count * 500}ms`, response.data);
-                // setOptions currently just used for onGeoResSuccess
-                onSuccess(response.data, setData, setDataError, setDataLoading, setOptions);
-                return;
-              }
-              if (cleanupRef.current) {
-                // if no data and the component is mounted, try the fetch again
-                repeatFetch(jobId);
-              }
+    // repeatedly calls /job/fetch/jobId until it gets the job results
+    const repeatFetch = (jobId, requestArgs, onFailure) => {
+      setTimeout(() => {
+        axios.post(`/api/dojo/job/fetch/${jobId}`).then((response) => {
+          if (response.status === 200) {
+            if (response.data) {
+              // setOptions currently just used for onGeoResSuccess
+              onSuccess(response.data, setData, setDataError, setDataLoading, setOptions);
+              return;
             }
-          }).catch((err) => {
-            // we get a 404 immediately - there is some sort of bug, this accounts for that
-            if (count < 2 && cleanupRef.current) {
-              // and the component is mounted
-              console.log('repeating job call');
-              startElwoodJob({ requestArgs }).then((resp) => {
-                repeatFetch(resp);
-              });
+            if (cleanupRef.current) {
+              // if no data and the component is mounted, try the fetch again
+              repeatFetch(jobId, requestArgs, onFailure);
+            }
+          }
+        }).catch(() => {
+          if (cleanupRef.current) {
+            // only do this if the parent component (cleanupRef) is still mounted
+            startElwoodJob({ requestArgs }).then((resp) => {
+              repeatFetch(resp, requestArgs, onFailure);
+            });
+          } else {
+            onFailure();
+          }
+        });
+      }, 500);
+    };
+
+    // the jobId is always this format so we can create it here
+    const jobId = `${datasetId}_${jobString}`;
+    // check if the job is already running or finished when we first hit the page
+    const checkExistingJob = async () => {
+      try {
+        const response = await axios.post(`/api/dojo/job/fetch/${jobId}`);
+        if (response.status === 200 && response.data === null) {
+          return { state: 'running' };
+        }
+
+        if (response.status === 200) {
+          return { state: 'finished', data: response.data };
+        }
+
+        return { state: 'not_started' };
+      } catch (error) {
+        // if we get a 404, then we haven't started the job yet
+        return { state: 'not_started' };
+      }
+    };
+
+    // the initial kickoff flow if we haven't started the job
+    const runElwoodJob = ({ requestArgs, onFailure }) => {
+      if (datasetId) {
+        startElwoodJob({ requestArgs })
+          .then((jobData) => {
+            if (jobData.result) {
+              onSuccess(jobData.result, setData,
+                setDataError, setDataLoading, setOptions);
+            } else if (jobData.job_error) {
+              // TODO: setup error handling
+              setDataLoading(false);
             } else {
-              console.log(`failure! ${jobString} took ${count * 500}ms`, err);
-              onFailure();
+              repeatFetch(jobData.id, requestArgs, onFailure);
             }
           });
-        }, 500);
-      };
+      }
+    };
 
-      if (datasetId) {
-        startElwoodJob({ requestArgs }).then((jobId) => repeatFetch(jobId));
+    // The function that runs when we hit the page
+    const startJob = async (args, onFailure) => {
+      const jobCheckResult = await checkExistingJob();
+      switch (jobCheckResult.state) {
+        case 'running':
+          // if running, repeatedly fetch until we get the results
+          repeatFetch(jobId, args, onFailure);
+          break;
+        case 'finished':
+          // if finished, return the results to the requesting component
+          onSuccess(jobCheckResult.data, setData, setDataError, setDataLoading, setOptions);
+          break;
+        case 'not_started':
+        default:
+          // if not started, kick off the job
+          runElwoodJob({
+            requestArgs: args,
+            onFailure,
+          });
+          break;
       }
     };
 
     if (!data && !dataError && !dataLoading && annotations?.annotations !== null) {
-      // annotations.annotations is populated with empty objects before it is fully populated
+      // ensure that nothing is empty or falsy before we start
+      // annotations.annotations is populated with an empty object before it is fully populated
       if (Object.keys(annotations?.annotations).length) {
         setDataLoading(true);
         const args = generateArgs(annotations);
@@ -84,17 +133,12 @@ const useElwoodData = ({
           setDataError(args);
           setDataLoading(false);
         } else {
-          runElwoodJob({
-            requestArgs: args,
-            onFailure,
-          });
+          startJob(args, onFailure);
         }
       }
     }
-  // The linter is complaining about cleanupRef missing here because it doesn't understand
-  // that this is a reference to a ref, which both won't and shouldn't trigger a rerender
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
+    cleanupRef,
     datasetId,
     annotations,
     jobString,
