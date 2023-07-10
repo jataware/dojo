@@ -514,7 +514,7 @@ const DataTransformation = withStyles(() => ({
   };
 
   const processGadmOverrides = () => {
-    transformationsRef.current.gadm_overrides = savedGADMOverrides;
+    transformationsRef.current.gadm = {overrides: savedGADMOverrides};
   };
 
   const handleNextStep = () => {

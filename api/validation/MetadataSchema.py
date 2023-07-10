@@ -172,11 +172,12 @@ class ClipTime(BaseModel):
     time_ranges: List[TimeRange]
     datetime_column: str
 
-class GadmOverrides(BaseModel):
-    pass
+
+class Gadm(BaseModel):
+    overrides: Optional[Dict[str, Dict]]
 
 
-Transformation = Union[RegridGeo, ScaleTime, ClipGeo, ClipTime, GadmOverrides]
+Transformation = Union[RegridGeo, ScaleTime, ClipGeo, ClipTime, Gadm]
 
 
 class Metadata(BaseModel):
