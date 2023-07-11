@@ -22,6 +22,8 @@ from resolution_processors import (
 from base_annotation import BaseProcessor
 from settings import settings
 
+logging.basicConfig()
+logging.getLogger().setLevel(logging.DEBUG)
 
 def build_elwood_meta_from_context(context, filename=None):
     metadata = context["annotations"]["metadata"]
