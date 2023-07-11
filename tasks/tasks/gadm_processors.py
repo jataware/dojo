@@ -5,6 +5,8 @@ import pandas as pd
 from elwood import elwood
 from utils import job_setup
 
+logging.basicConfig()
+logging.getLogger().setLevel(logging.DEBUG)
 
 def resolution_alternatives(context, filename=None, **kwargs):
     logging.info("Called GADM resolution alternatives processor.")
