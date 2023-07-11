@@ -112,7 +112,7 @@ class ElwoodProcessor(BaseProcessor):
             mapper_fp,
             admin_level,
             mix_output_path,
-            overrides=dict_get("annotations.metadata.transformations.overrides", {})
+            overrides=dict_get(context, "annotations.metadata.transformations.overrides", {})
         )
 
         ret.to_csv(f"{output_path}/elwood_processed_df.csv", index=False)
