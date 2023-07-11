@@ -156,6 +156,7 @@ const DataTransformation = withStyles(() => ({
   handleNext,
   handleBack,
   annotations,
+  setAnnotations,
   cleanupRef,
 }) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -559,7 +560,13 @@ const DataTransformation = withStyles(() => ({
           metadata: clonedMetadata
         }
       ).then(() => {
-        // Only handleNext once we've updated the annotations
+        // Ensure annotations with potential gadm resolver updates are stored
+        // To pass in to next step / jobs:
+        setAnnotations({
+          annotations: annotations.annotations,
+          metadata: clonedMetadata
+        });
+
         handleNext();
       });
     });
@@ -749,6 +756,7 @@ export default withStyles(({ spacing }) => ({
   stepTitle,
   handleNext,
   handleBack,
+  setAnnotations,
   annotations,
 }) => {
   // this ref keeps track of when the page is mounted so that we can avoid useElwoodData running
@@ -817,6 +825,7 @@ export default withStyles(({ spacing }) => ({
           handleNext={handleNext}
           handleBack={handleBack}
           annotations={annotations}
+          setAnnotations={setAnnotations}
           cleanupRef={cleanupRef}
         />
       )}
