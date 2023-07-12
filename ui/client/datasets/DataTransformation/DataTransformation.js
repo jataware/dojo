@@ -27,6 +27,7 @@ import AdjustGeoResolution from './AdjustGeoResolution';
 import TransformationButton from './TransformationButton';
 import useElwoodData from './useElwoodData';
 import {
+  getPrimaryLatLonColumns,
   generateProcessGeoResArgs,
   generateProcessTempResArgs,
   generateProcessGeoCovArgs,
@@ -156,27 +157,20 @@ const DataTransformation = withStyles(() => ({
   };
 
   const generateFetchGeoResArgs = useCallback((argsAnnotations) => {
-    const args = {};
-    argsAnnotations.annotations.geo.forEach((geo) => {
-      if (geo.geo_type === 'latitude') {
-        args.lat_column = geo.name;
-      } else {
-        args.lon_column = geo.name;
-      }
-    });
-    if (args.lat_column && args.lon_column) {
-      return args;
+    const geoColumns = getPrimaryLatLonColumns(argsAnnotations.annotations.geo);
+    if (geoColumns) {
+      return geoColumns;
     }
-    return 'Geospatial resolution cannot be transformed without annotated lat/lon columns';
+    return 'Geospatial resolution cannot be transformed without annotated lat/lng columns marked as primary geo';
   }, []);
 
   const generateFetchGeoBoundaryArgs = useCallback((argsAnnotations) => {
-    const args = { geo_columns: [] };
-    argsAnnotations.annotations.geo.forEach((geo) => args.geo_columns.push(geo.name));
-    if (args.geo_columns.length < 2) {
-      return 'Geospatial coverage cannot be transformed without annotated lat/lon columns';
+    const geoColumns = getPrimaryLatLonColumns(argsAnnotations.annotations.geo);
+
+    if (geoColumns) {
+      return { geo_columns: geoColumns };
     }
-    return args;
+    return 'Geospatial coverage cannot be transformed without annotated lat/lng columns marked as primary geo';
   }, []);
 
   const generateFetchTemporalArgs = useCallback((argsAnnotations) => {

@@ -23,9 +23,9 @@ def clip_geo(context, filename=None, **kwargs):
 
     # Main Call
     shape_list = kwargs.get("map_shapes", [])
-    geo_columns = kwargs.get("geo_columns", [])
+    geo_columns = kwargs.get("geo_columns", {})
 
-    if shape_list and geo_columns:
+    if shape_list and geo_columns and 'lat_column' in geo_columns and 'lon_column' in geo_columns:
         clipped_df = elwood.clip_geo(
             dataframe=original_dataframe,
             geo_columns=geo_columns,
@@ -258,7 +258,7 @@ def regrid_geo(context, filename=None, **kwargs):
 
     response = {
         "message": "Geography not rescaled, some information was not provided (geo_columns, scale_multiplier).",
-        "dataframe": json.loads(json.dumps(original_dataframe)),
+        "dataframe": original_dataframe.to_json(),
     }
     return response
 
@@ -269,9 +269,9 @@ def get_boundary_box(context, filename=None, **kwargs):
     original_dataframe = pd.read_csv(file, delimiter=",")
 
     # Main Call
-    geo_columns = kwargs.get("geo_columns", [])
+    geo_columns = kwargs.get("geo_columns", {})
 
-    if geo_columns:
+    if geo_columns and 'lat_column' in geo_columns and 'lon_column' in geo_columns:
         boundary_dict = elwood.get_boundary_box(
             dataframe=original_dataframe,
             geo_columns=geo_columns,
