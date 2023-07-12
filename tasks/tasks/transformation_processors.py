@@ -131,7 +131,7 @@ def clip_time(context, filename=None, **kwargs):
 
     response = {
         "message": "Time values not clipped, some information was not provided (time column or time range list).",
-        "dataframe": json.loads(json.dumps(original_dataframe)),
+        "dataframe": original_dataframe.to_json(),
     }
     return response
 
@@ -150,13 +150,20 @@ def scale_time(context, filename=None, **kwargs):
     geo_columns = kwargs.get("geo_columns", None)
 
     if time_column and time_bucket and aggregation_list:
-        clipped_df = elwood.rescale_dataframe_time(
-            dataframe=original_dataframe,
-            time_column=time_column,
-            time_bucket=time_bucket,
-            aggregation_functions=aggregation_list,
-            geo_columns=geo_columns,
-        )
+        try:
+            clipped_df = elwood.rescale_dataframe_time(
+                dataframe=original_dataframe,
+                time_column=time_column,
+                time_bucket=time_bucket,
+                aggregation_functions=aggregation_list,
+                geo_columns=geo_columns,
+            )
+        except ValueError as e:
+            response = {
+                "message": f"Time not rescaled due to error: {str(e)}",
+                "dataframe": original_dataframe.to_json(),
+            }
+            return response
 
         json_dataframe_preview = clipped_df.head(100).to_json(default_handler=str)
         rows_post_clip = len(clipped_df.index)
@@ -195,7 +202,7 @@ def scale_time(context, filename=None, **kwargs):
 
     response = {
         "message": "Time not rescaled, some information was not provided (time column, time bucket, or aggregation function list).",
-        "dataframe": json.loads(json.dumps(original_dataframe)),
+        "dataframe": original_dataframe.to_json(),
     }
     return response
 

@@ -25,7 +25,7 @@ export const generateProcessTempResArgs = (annotations, resolution, aggregation)
     aggregation_function_list: [aggregation],
     // TODO: the order of these shouldn't matter, as these are just columns that we skip
     // for temporal resolution scaling?
-    geo_columns: [geoColumns?.lat_column, geoColumns?.lon_column],
+    geo_columns: geoColumns,
   };
 
   return args;
