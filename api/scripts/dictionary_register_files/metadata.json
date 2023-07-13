@@ -1,0 +1,11 @@
+{
+  "name": "Test Dataset One-Stop-Shop",
+  "description": "First manual test to register a dataset using API-only endpoint.",
+  "domains": ["Logic"],
+  "maintainer": {
+    "name": "Joel",
+    "email": "joel@jataware.com",
+    "organization": "Jataware",
+    "website": "jataware.com"
+  }
+}

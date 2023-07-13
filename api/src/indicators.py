@@ -678,8 +678,6 @@ def rescale_indicator(indicator_id: str):
     return resp
 
 
-# TODO Add/use csv data dictionary file, Finish after UI-dictionary-file work.
-# @router.post("/indicators/definition")
 """
 The following function is the start of implementing an endpoint that registers
 a dataset end-to-end from one API call (for developers, services).
@@ -694,77 +692,79 @@ acknowledge that the dataset registration is in process. The API and workers wou
 continue the registration process end-to-end. This is an alternative to the Dojo UI,
 where a gui requests the user separate data accross multiple steps.
 
-This is a work in progress, and thus has not been registered to the Dojo API yet.
-It currently does register a dataset end-to-end if uncommen this the router.post
-line above, but only supports annotations using the old elwood format within
-the metadata file, as well as only supporting csv datasets.
-
+Use like:
+curl -v -H "Content-Type:multipart/form-data" -F "metadata=@metadata.json" -F "data=@data.csv" -F "dictionary=@dictionary.csv" http://localhost:8000/indicators/register
 """
-
-
+@router.post("/indicators/register")
 def dataset_register_files(
-    data: UploadFile = File(...), metadata: UploadFile = File(...)
+        data: UploadFile = File(...),
+        metadata: UploadFile = File(...),
+        dictionary: UploadFile = File(...)
 ):
     """
-    Fields (not columns). Define fields (not annotations?)
-    See what we'll do with filename
-    """
-    json_data = json.load(metadata.file)
+    Endpoint that register a dataset using one API call. This is different than
+    the rest of the endpoints, which provide multiple steps for an API caller
+    in order to register a dataset, and more knowledge on the information and
+    order needed in order to accomplish full dataset registration.
 
-    indicator_error = []
-    annotations_error = []
+    `Metadata` is a json file which contains dataset name, maintainer, etc.
+    `data` is the actual original dataset file (csv, xls, etc)
+    `dictionary` is a xls or csv file that describes/annotates the data's content
+    """
+
+    # logger.info(f"metadata file: {metadata.file}")
+
+    metadata_contents = json.load(metadata.file)
 
     # Step 1: Create indicator
-    try:
-        indicator = IndicatorSchema.IndicatorMetadataSchema.parse_obj(json_data)
-    except ValidationError as e:
-        indicator_error = json.loads(e.json())
-
-    try:
-        annotations = MetadataSchema.MetaModel.parse_obj(json_data)
-    except ValidationError as e:
-        annotations_error = json.loads(e.json())
-
-    merged_possible_errors = indicator_error + annotations_error
-
-    if len(merged_possible_errors):
-        raise HTTPException(status_code=422, detail=merged_possible_errors)
-
+    indicator = IndicatorSchema.IndicatorMetadataSchema.parse_obj(metadata_contents)
     create_response = create_indicator(indicator)
     response = json.loads(create_response.body)
-
     indicator_id = response["id"]
 
-    # Step 2: Upload file to S3
+    # Step 2: Upload dictionary file. If this fails we'll have to decide what to do...
+    #         since TODO we'll have a leftover/ghost dataset that we may not use again.
+    upload_data_dictionary_file(indicator_id=indicator_id, dictionary=dictionary)
+
+    # Step 3: Upload raw data file to S3, before converting to xls or anything else
+    # (so that rqworker can download and continue the process)
     upload_file(indicator_id=indicator_id, file=data)
 
-    # Step 3: POST annotations
-    post_annotation(payload=annotations, indicator_id=indicator_id)
+    # TODO START RQ WORKER JOB that does the rest
+    job_context = get_context(indicator_id)
+    # TODO do the rest
+
+    # NOW RETURN TO USER, SINCE WE HAVE TO DO A COUPLE OF JOBS
+    # TODO augnment create_response with a way to check registration progress
+    return create_response
+
 
     # TODO Step 4.alpha Transform raw File to csv. Later.
     # NOTE Q: what's the filename of real raw .xlsx vs converted .csv?
     # file_processors.file_conversion
+    # TODO these steps that need file conversion, etc, need to occur on rqworker, as the
+    # API needs to return immediately from here and not wait for jobs.
 
     # Step 4: Call job for mixmasta to normalize. It should then call step 5 (publish)
 
-    job_string = "elwood_processors.run_elwood"
-    job_id = f"{indicator_id}_{job_string}"
+    # job_string = "elwood_processors.run_elwood"
+    # job_id = f"{indicator_id}_{job_string}"
 
-    context = get_context(indicator_id)
+    # context = get_context(indicator_id)
 
-    q.enqueue_call(
-        func=job_string,
-        args=[context],
-        kwargs={
-            "on_success_endpoint": {
-                "verb": "PUT",
-                "url": f"{settings.DOJO_URL}/indicators/{indicator_id}/publish",
-            }
-        },
-        job_id=job_id,
-    )
+    # q.enqueue_call(
+    #     func=job_string,
+    #     args=[context],
+    #     kwargs={
+    #         "on_success_endpoint": {
+    #             "verb": "PUT",
+    #             "url": f"{settings.DOJO_URL}/indicators/{indicator_id}/publish",
+    #         }
+    #     },
+    #     job_id=job_id,
+    # )
 
-    return create_response
+    # return create_response
 
 
 def bytes_to_csv(file):
