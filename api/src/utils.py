@@ -211,7 +211,7 @@ async def stream_csv_from_data_paths(data_paths, wide_format="false"):
         "key": os.getenv("AWS_ACCESS_KEY_ID"),
         "secret": os.getenv("AWS_SECRET_ACCESS_KEY"),
         "token": None,
-        "client_kwargs": {"endpoint_url": None},
+        "client_kwargs": {"endpoint_url": os.getenv("STORATE_HOST") or None},
     }
 
     # Build single dataframe
