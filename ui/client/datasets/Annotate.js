@@ -172,7 +172,7 @@ export default withStyles(({ spacing }) => ({
       setPreviewPromptOpen(true);
     } else {
       try {
-        const clearJobs = await axios.post(`/api/dojo/job/clear/${datasetInfo.id}`);
+        await axios.post(`/api/dojo/job/clear/${datasetInfo.id}`);
       } catch (error) {
         console.info(error?.response?.data);
       }
