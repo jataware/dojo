@@ -678,6 +678,29 @@ def rescale_indicator(indicator_id: str):
     return resp
 
 
+def dict_get(nested, path, fallback=None):
+    """
+    Receives a nested dictionary and a string describing a dictionary path,
+    and returns the corresponding value.
+    [Optional]`fallback` if path doesn't exists, defaults to None.
+    `path`: str describing the nested dictionary deep path.
+            Each key in the path is separated by a dot ('.').
+            eg for {'a': {'b': {'c': 42}}}, `path` 'a.b.c' returns 42.
+    """
+
+    if not type(nested) == dict:
+        return fallback
+
+    keys = path.split('.')
+    value = nested
+    try:
+        for key in keys:
+            value = value[key]
+        return value
+    except (KeyError, TypeError):
+        return fallback
+
+
 """
 The following function is the start of implementing an endpoint that registers
 a dataset end-to-end from one API call (for developers, services).
@@ -696,7 +719,7 @@ Use like:
 curl -v -H "Content-Type:multipart/form-data" -F "metadata=@metadata.json" -F "data=@data.csv" -F "dictionary=@dictionary.csv" http://localhost:8000/indicators/register
 """
 @router.post("/indicators/register")
-def dataset_register_files(
+async def dataset_register_files(
         data: UploadFile = File(...),
         metadata: UploadFile = File(...),
         dictionary: UploadFile = File(...)
@@ -724,11 +747,44 @@ def dataset_register_files(
 
     # Step 2: Upload dictionary file. If this fails we'll have to decide what to do...
     #         since TODO we'll have a leftover/ghost dataset that we may not use again.
-    upload_data_dictionary_file(indicator_id=indicator_id, dictionary=dictionary)
+    # TODO test a failure scenario for the next line (dictionary format/values bad)
+    await upload_data_dictionary_file(indicator_id=indicator_id, file=dictionary)
 
     # Step 3: Upload raw data file to S3, before converting to xls or anything else
     # (so that rqworker can download and continue the process)
     upload_file(indicator_id=indicator_id, file=data)
+
+    if metadata_contents.get("file_metadata"):
+        # TODO check format to add raw_data.extension
+        patch_annotation(indicator_id=indicator_id, metadata=metadata_contents.get("file_metadata"))
+        # TODO Parse using pydantic schema?
+        # just try to call PATCH on annotations passing in cloned metadata
+        # ensure not to overwrite annotations.annotations in the process
+
+"""
+TODO patch annotations-> metadata. csv is default, but useful to explicitly
+     state if annotation.metadata.file={filename, etc} and annotation.metadata.filetype="netcdf"
+
+
+annotations=
+{
+    "annotations: {...},
+    "metadata": {
+        "files": {
+            "raw_data.xlsx": { # <- derive filename from uploaded stuff?
+                "filetype": "excel",
+                "filename": "acled_2022.xlsx",
+                "rawFileName": "raw_data.xlsx",
+                "excel_sheets": [
+                    "2019-06-18-2022-06-21-Eastern_A"
+                ],
+# TODO this needs to be provided by user
+                "excel_sheet": "2019-06-18-2022-06-21-Eastern_A"
+            }
+        }
+    }
+}
+"""
 
     # TODO START RQ WORKER JOB that does the rest
     job_context = get_context(indicator_id)
