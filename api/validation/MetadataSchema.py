@@ -154,18 +154,18 @@ class TimeRange(BaseModel):
 
 class RegridGeo(BaseModel):
     datetime_column: List[str]
-    geo_columns: List[str]
+    geo_columns: Dict[str, str]
     scale: float
     scale_multi: float
 
 class ScaleTime(BaseModel):
     datetime_bucket: str
     datetime_column: str
-    geo_columns: List[str]
+    geo_columns: Dict[str, str]
     aggregation_function_list: List[str]
 
 class ClipGeo(BaseModel):
-    geo_columns: List[str]
+    geo_columns: Dict[str, str]
     map_shapes: List[List[LatLong]]
 
 class ClipTime(BaseModel):
