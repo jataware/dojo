@@ -18,8 +18,6 @@ class CausemosPlugin(PluginInterface):
         if settings.DEBUG:
             return
 
-        logger.info(f"\n ===== CausemosPlugin `publish` method running with data: {data}")
-
         if type == "model":
             notify_data = convert_to_causemos_format(data)
 
