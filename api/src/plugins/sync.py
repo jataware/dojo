@@ -21,10 +21,6 @@ class SyncPlugin(PluginInterface):
             outputs = []
             feature_names = []
 
-            logger.info(f"\n ===== SyncPlugin `publish` method running with id: {uuid}")
-
-            logger.info(f"SyncPlugin run with the following indicator context:\n{context}")
-
             for feature in context["annotations"]["annotations"]["feature"]:
 
                 feature_names.append(
