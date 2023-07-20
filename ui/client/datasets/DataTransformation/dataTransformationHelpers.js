@@ -1,32 +1,53 @@
+// this helps generate the lat/lon column arguments for all our geo elwood calls
+export const getPrimaryLatLonColumns = (geoAnnotations) => {
+  let lat_column = null;
+  let lon_column = null;
+  geoAnnotations.forEach((geo) => {
+    // only include the columns if they are primary and lat/lon
+    if (geo.primary_geo === true) {
+      if (geo.geo_type === 'latitude') {
+        lat_column = geo.name;
+      }
+      if (geo.geo_type === 'longitude') {
+        lon_column = geo.name;
+      }
+    }
+  });
+  // Only return anything if we have both, otherwise return null
+  return (lat_column && lon_column) ? { lat_column, lon_column } : null;
+};
+
 export const generateProcessTempResArgs = (annotations, resolution, aggregation) => {
+  const geoColumns = getPrimaryLatLonColumns(annotations.annotations.geo);
   const args = {
     datetime_column: annotations.annotations.date[0].name,
     datetime_bucket: resolution.alias,
     aggregation_function_list: [aggregation],
-    geo_columns: [],
+    // TODO: the order of these shouldn't matter, as these are just columns that we skip
+    // for temporal resolution scaling?
+    geo_columns: geoColumns,
   };
-  annotations.annotations.geo.forEach((geo) => args.geo_columns.push(geo.name));
 
   return args;
 };
 
 export const generateProcessGeoResArgs = (annotations, newMapResolution, oldMapResolution) => {
+  const geoColumns = getPrimaryLatLonColumns(annotations.annotations.geo);
   const args = {
     datetime_column: [annotations?.annotations.date[0].name],
-    geo_columns: [],
+    geo_columns: geoColumns,
     scale_multi: newMapResolution,
     scale: oldMapResolution,
   };
-  annotations.annotations.geo.forEach((geo) => args.geo_columns.push(geo.name));
   return args;
 };
 
 export const generateProcessGeoCovArgs = (annotations, drawings) => {
+  const geoColumns = getPrimaryLatLonColumns(annotations.annotations.geo);
   const args = {
     map_shapes: drawings,
-    geo_columns: [],
+    geo_columns: geoColumns,
   };
-  annotations.annotations.geo.forEach((geo) => args.geo_columns.push(geo.name));
   return args;
 };
 

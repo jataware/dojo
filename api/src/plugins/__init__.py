@@ -47,9 +47,9 @@ class PluginHandler:
 
 class PluginInterface:
     """
-        Interface 
+        Interface
     """
-    
+
     def before_create(self, data, type):
         pass
 
@@ -88,7 +88,6 @@ class PluginInterface:
 
     def post_run_model(self, model, run_id):
         pass
-
 
     def on_run_success(self, model, run_id):
         pass

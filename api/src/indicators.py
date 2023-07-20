@@ -349,9 +349,8 @@ def publish_indicator(indicator_id: str):
         # Update indicator model with ontologies from UAZ
         indicator = es.get(index="indicators", id=indicator_id)["_source"]
         indicator["published"] = True
-        data = get_ontologies(indicator, type="indicator")
-        logger.info(f"Sent indicator to UAZ")
-        es.index(index="indicators", body=data, id=indicator_id)
+        # data = get_ontologies(indicator, type="indicator")
+        # es.index(index="indicators", body=data, id=indicator_id)
 
         # Notify Causemos that an indicator was created
         plugin_action("before_publish", data=indicator, type="indicator")

@@ -4,19 +4,112 @@
  **/
 function mockHttpRequests() {
 
+  /**
+   *
+   **/
+  const gadmResolution = {
+    id: 'mock-test-guid_gadm_processors.resolution_alternatives',
+    result: {
+      field: 'mockCountry',
+      exact_match: [],
+      fuzzy_match: [],
+    }
+  };
+
+  cy.intercept({
+    method: 'POST',
+    url: '/api/dojo/job/*/gadm_processors.resolution_alternatives'
+  }, gadmResolution).as('POST_job_gadm_resolution_alternatives');
+
+  cy.intercept({
+    method: 'POST',
+    url: '/api/dojo/job/*/transformation_processors.restore_raw_file'
+  }, {
+    id: 'mock_test_guid_transformation_processors.restore_raw_file',
+    result: {
+      "message": "File not found, nothing was changed",
+      "transformed": false
+    }
+  }).as('POST_job_restore_raw_file');
+
+  cy.intercept({
+    method: 'POST',
+    url: '/api/dojo/job/*/resolution_processors.calculate_temporal_resolution'
+  }, {
+    id: 'mock-test-guid_resolution_processors.calculate_temporal_resolution',
+    result: {
+      "message": "Resolution calculated successfully",
+      "resolution_result": {
+        uniformity: 'PERFECT',
+        "unit": "day",
+        "resolution": 1,
+        "error": 0
+      }
+    }
+  }).as('POST_job_calculate_temporal_resolution');
+
+
+  cy.intercept({
+    method: 'POST',
+    url: '/api/dojo/job/*/transformation_processors.get_unique_dates'
+  }, {
+    id: 'mock-test-guid_transformation_processors.get_unique_dates',
+    result: {
+      "message": "Unique dates list generated",
+      "unique_dates": [
+        2022
+      ]
+    }
+  }).as('POST_job_get_unique_dates');
+
+
+  cy.intercept({
+    method: 'POST',
+    url: '/api/dojo/job/*/transformation_processors.get_boundary_box'
+  }, {
+    id: 'mock-test-guid_transformation_processors.get_boundary_box',
+    result: {
+      "message": "Boundary box generated successfully",
+      "boundary_box": {
+        "xmin": -26.0423,
+        "xmax": 15.3333,
+        "ymin": 26.3539,
+        "ymax": 57.7956
+      }
+    }
+  }).as('POST_job_get_boundary_box');
+
+  cy.intercept({
+    method: 'POST',
+    url: '/api/dojo/job/*/resolution_processors.calculate_geographical_resolution'
+  }, {
+    result: {
+        "message": "Resolution calculated successfully",
+        "resolution_result": {
+          "uniformity": "uniform",
+          "unit": "country"
+        }
+      }
+  }).as('POST_job_calculate_geographical_resolution');
+
+  cy.intercept({
+    method: 'POST',
+    url: '/api/dojo/job/*/gadm_processors.all_gadm_values'
+  }, {result: ['mocked_countries']}).as('POST_job_all_gadm_values');
+
   cy.intercept({
     method: 'GET',
     url: '/api/dojo/*/domains*'
   }, {
     fixture: 'domains_get.json'
-  });
+  }).as('GET_domains');
 
   cy.intercept({
     method: 'POST',
     url: '/api/dojo/indicators'
   }, {
     fixture: 'indicators_post.json'
-  });
+  }).as('POST_indicator');
 
   cy.intercept({
     method: 'POST',
@@ -24,24 +117,25 @@ function mockHttpRequests() {
   }, {
     "id": "test-guid",
     "filename": "raw_data.csv"
-  });
+  }).as('POST_file_upload');
 
   cy.intercept({
     method: 'PATCH',
     url: '/api/dojo/indicators/*/annotations'
-  }, "Updated annotation with id = test-guid");
+  }, "Updated annotation with id = [mock] test-guid").as('PATCH_annotations');
 
   cy.intercept({
     method: 'POST',
     url: '/api/dojo/job/*/file_processors.file_conversion*'
   }, {
     fixture: 'file_conversion_post.json'
-  });
+  }).as('POST_job_file_converstion');
 
   cy.intercept({
     method: 'POST',
     url: '/api/dojo/job/*/geotime_processors.geotime_classify*'
-  }, {fixture: 'geotime_classify_post.json'});
+  }, {fixture: 'geotime_classify_post.json'})
+    .as('POST_job_geotime_classify');
 
   cy.intercept({
     method: 'GET',
@@ -95,18 +189,8 @@ function mockHttpRequests() {
 
   cy.intercept(
     'POST',
-    '/api/dojo/job/test-guid/transformation_processors.*',
-    {});
-
-  cy.intercept(
-    'POST',
-    '/api/dojo/job/test-guid/resolution_processors.*',
-    {});
-
-  cy.intercept(
-    'POST',
     'api/dojo/job/fetch/undefined',
-    {});
+    {}).as('POST_undefined_missing_mock_jobs_PLEASE_DEBUG');
 
   cy.intercept(
     'POST',
@@ -221,12 +305,26 @@ describe('Dataset Register Flow', function () {
     cy.findAllByRole('button', {name: /save/i}).click();
 
     // READY TO SUBMIT ANNOTATE step
-
     cy.findAllByRole('button', {name: /^Next$/i}).click();
 
     cy.wait(200)
 
-    // Skip Transformation Steps
+    cy.findAllByRole('button', {name: /Adjust Temporal Resolution/i}).as('temporalResolutionButton');
+
+    cy.get('@temporalResolutionButton').click();
+
+    cy.findByTestId(/transform-select-temporal-resolution-aggregation-function/i).click();
+    cy.findAllByRole('option').eq(0).click();
+
+    cy.findByTestId(/transform-select-temporal-resolution-resolution/i).click();
+    cy.findAllByRole('option').eq(0).click();
+
+    cy.findAllByRole('button', {name: /save resolution/i}).click();
+
+
+    cy.wait(100)
+
+    // proceed after confirming Transformations:
     cy.findAllByRole('button', {name: /^Next$/i}).click();
 
     cy.url().should('match', /datasets\/register\/preview\/.+\?filename=raw_data.csv/);
