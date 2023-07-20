@@ -121,7 +121,7 @@ const useElwoodData = ({
     dataLoading,
     generateArgs,
     onSuccess,
-    cleanupRef
+    cleanupRef,
     onBackendFailure
   ]);
 
