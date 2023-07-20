@@ -133,6 +133,7 @@ export const GadmResolver = withStyles(() => ({
     flexDirection: 'column',
     alignItems: 'center',
     height: '100%',
+    minHeight: 500
   },
   tableFlexer: {
     marginTop: '0.25rem',
@@ -208,11 +209,7 @@ export const GadmResolver = withStyles(() => ({
   };
 
   return (
-    <div
-      className={classes.root}
-      style={{ minHeight: 500 }}
-    >
-
+    <div className={classes.root}>
       <div>
         <Typography variant="h5" gutterBottom>
           Review Administrative Area Detection

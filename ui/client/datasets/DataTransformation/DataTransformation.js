@@ -290,7 +290,7 @@ const DataTransformation = withStyles(() => ({
         setDataError('Nothing to review.');
       }
     } else {
-      setDataError('Something went wrong. Please contact Jataware for assitance.');
+      setDataError('Something went wrong. Please contact Jataware for assistance.');
     }
     setDataLoading(false);
   }, []);
@@ -299,7 +299,7 @@ const DataTransformation = withStyles(() => ({
     if (resp) {
       setData(resp);
     } else {
-      setDataError('Something went wrong. Please contact Jataware for assitance.');
+      setDataError('Something went wrong. Please contact Jataware for assistance.');
     }
     setDataLoading(false);
   }, []);
@@ -413,25 +413,26 @@ const DataTransformation = withStyles(() => ({
 
   const disableNext = () => {
     if (
-      mapResolutionLoading
-      || mapBoundsLoading
-      || timeResolutionLoading
-      || timeBoundsLoading
-      || gadmResolutionLoading
+      // mapResolutionLoading
+      // || mapBoundsLoading
+      // || timeResolutionLoading
+      // || timeBoundsLoading
+      // ||
+        gadmResolutionLoading
     ) {
       // disable if any of the transformations are loading
       return true;
     }
 
-    if (!mapResolutionError && !savedMapResolution) {
-      // disable if we are requiring a map resolution to be chosen and it hasn't been
-      return true;
-    }
+    // if (!mapResolutionError && !savedMapResolution) {
+    //   // disable if we are requiring a map resolution to be chosen and it hasn't been
+    //   return true;
+    // }
 
-    if (!timeResolutionError && !savedTimeResolution) {
-      // disable if we are requiring a time resolution to be set and it hasn't been
-      return true;
-    }
+    // if (!timeResolutionError && !savedTimeResolution) {
+    //   // disable if we are requiring a time resolution to be set and it hasn't been
+    //   return true;
+    // }
 
     if (!gadmResolutionError && !savedGADMOverrides) {
       return true;
