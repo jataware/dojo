@@ -7,18 +7,23 @@ import DialogContentText from '@material-ui/core/DialogContentText';
 import DialogTitle from '@material-ui/core/DialogTitle';
 
 export default ({
-  open, title, message, handleClose
+  open, title, message, handleClose, maxWidth = 'sm'
 }) => (
   <Dialog
     open={open}
     onClose={handleClose}
+    maxWidth={maxWidth}
   >
+    {title && (
     <DialogTitle>
       {title}
     </DialogTitle>
+    )}
 
     <DialogContent>
-      <DialogContentText>
+      <DialogContentText
+        component={typeof message === 'string' ? 'p' : 'div'}
+      >
         {message}
       </DialogContentText>
     </DialogContent>
