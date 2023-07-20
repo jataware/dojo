@@ -388,10 +388,10 @@ const DataTransformation = withStyles(() => ({
     onBackendFailure
   });
 
-  const mapResolutionLoading = !mapResolution && !mapResolutionError;
-  const mapBoundsLoading = !mapBounds && !mapBoundsError;
-  const timeResolutionLoading = !timeResolution && !timeResolutionError;
-  const timeBoundsLoading = !timeBounds && !timeBoundsError;
+  // const mapResolutionLoading = !mapResolution && !mapResolutionError;
+  // const mapBoundsLoading = !mapBounds && !mapBoundsError;
+  // const timeResolutionLoading = !timeResolution && !timeResolutionError;
+  // const timeBoundsLoading = !timeBounds && !timeBoundsError;
   const gadmResolutionLoading = !gadmResolution && !gadmResolutionError;
   const gadmCountriesLoading = !gadmCountries && !gadmCountriesError;
 
@@ -418,7 +418,7 @@ const DataTransformation = withStyles(() => ({
       // || timeResolutionLoading
       // || timeBoundsLoading
       // ||
-        gadmResolutionLoading
+      gadmResolutionLoading
     ) {
       // disable if any of the transformations are loading
       return true;
@@ -479,7 +479,7 @@ const DataTransformation = withStyles(() => ({
   };
 
   const processGadmOverrides = () => {
-    transformationsRef.current.overrides = {gadm: savedGADMOverrides};
+    transformationsRef.current.overrides = { gadm: savedGADMOverrides };
   };
 
   const handleNextStep = () => {
