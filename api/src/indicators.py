@@ -734,69 +734,85 @@ async def dataset_register_files(
     # TODO Future: Allow multiple dataset data files at once
     """
 
-    metadata_contents = json.load(metadata.file)
+    completed = []
 
-    indicator_metadata = {k: metadata_contents[k] for k in metadata_contents.keys() - {'file_metadata'}}
+    try:
+        # TODO rollback the dataset/annotation creation
 
-    # Step 1: Create indicator
-    indicator = IndicatorSchema.IndicatorMetadataSchema.parse_obj(indicator_metadata)
-    create_response = create_indicator(indicator)
-    indicator_body = json.loads(create_response.body)
-    indicator_id = indicator_body["id"]
+        metadata_contents = json.load(metadata.file)
 
-    # Step 2: Upload dictionary file. If this fails we'll have to decide what to do...
-    # TODO test a failure scenario for the next line (dictionary format/values bad)
-    # I think we can rollback the dataset (delete it if some of these steps fail)
-    await upload_data_dictionary_file(indicator_id=indicator_id, file=dictionary)
+        indicator_metadata = {k: metadata_contents[k] for k in metadata_contents.keys() - {'file_metadata'}}
 
-    # Step 3: Upload raw data file to S3, before converting to xls or anything else
-    # (so that rqworker can download and continue the process)
-    upload_file(indicator_id=indicator_id, file=data)
+        # Step 1: Create indicator
+        indicator = IndicatorSchema.IndicatorMetadataSchema.parse_obj(indicator_metadata)
+        create_response = create_indicator(indicator)
+        indicator_body = json.loads(create_response.body)
+        indicator_id = indicator_body["id"]
 
-    if metadata_contents.get("file_metadata"):
-        logger.info("metadata contents has file_metadata")
-        ext_mapping = {
-            "xls": "excel",
-            "xlsx": "excel",
-            "nc": "netcdf",
-            "csv": "csv",
-            "tif": "geotiff",
-        }
+        completed.append("created")
 
-        extension = get_file_extension(data.filename)
-        raw_filename = f"raw_data.{extension}"
+        # Step 2: Upload dictionary file. If this fails we'll have to decide what to do...
+        await upload_data_dictionary_file(indicator_id=indicator_id, file=dictionary)
 
-        annotation_payload = MetadataSchema.MetaModel(metadata={
-            "files": {
-                raw_filename: {
-                    **{
-                        "rawFileName": raw_filename,
-                        "filetype": ext_mapping[extension]
-                    },
-                    **metadata_contents.get("file_metadata"),
-                }
+        completed.append("annotated")
+
+        # Step 3: Upload raw data file to S3, before converting to xls or anything else
+        # (so that rqworker can download and continue the process)
+        upload_file(indicator_id=indicator_id, file=data)
+
+        completed.append("s3")
+
+        if metadata_contents.get("file_metadata"):
+            logger.info("metadata contents has file_metadata")
+            ext_mapping = {
+                "xls": "excel",
+                "xlsx": "excel",
+                "nc": "netcdf",
+                "csv": "csv",
+                "tif": "geotiff",
             }
-        })
-        metadata_patch_response = patch_annotation(
-            indicator_id=indicator_id,
-            payload=annotation_payload
+
+            extension = get_file_extension(data.filename)
+            raw_filename = f"raw_data.{extension}"
+
+            annotation_payload = MetadataSchema.MetaModel(metadata={
+                "files": {
+                    raw_filename: {
+                        **{
+                            "rawFileName": raw_filename,
+                            "filetype": ext_mapping[extension]
+                        },
+                        **metadata_contents.get("file_metadata"),
+                    }
+                }
+            })
+            metadata_patch_response = patch_annotation(
+                indicator_id=indicator_id,
+                payload=annotation_payload
+            )
+
+        job_string = "dataset_register_processors.finish_dataset_registration"
+        job_id = f"{indicator_id}_{job_string}"
+
+        context = get_context(indicator_id)
+
+        job_data = q.enqueue_call(
+            func=job_string,
+            args=[context],
+            kwargs={"filename": raw_filename},
+            job_id=job_id,
         )
 
-    job_string = "dataset_register_processors.finish_dataset_registration"
-    job_id = f"{indicator_id}_{job_string}"
+        completed.append("register_processor")
 
-    context = get_context(indicator_id)
+        job_status_url = f"/job/{job_id}"
 
-    job_data = q.enqueue_call(
-        func=job_string,
-        args=[context],
-        kwargs={"filename": raw_filename},
-        job_id=job_id,
-    )
+        job_status = job(uuid=indicator_id, job_string=job_string)
 
-    job_status_url = f"/job/{job_id}"
-
-    job_status = job(uuid=indicator_id, job_string=job_string)
+        completed.append("job_status")
+    except Exception as e:
+        # TODO rollback unused data if it failed, return sensible errors to user
+        return {"error": "e"}
 
     return {**indicator_body, "job": {**job_status, "progress_url": job_status_url}}
 
