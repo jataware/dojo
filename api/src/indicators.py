@@ -26,7 +26,7 @@ from redis import Redis
 from rq import Queue
 from src.causemos import deprecate_dataset, notify_causemos
 from src.csv_annotation_parser import format_annotations, xls_to_annotations
-from src.data import get_context
+from src.data import get_context, job
 from src.dojo import search_and_scroll
 from src.feature_queries import keyword_query_v1, hybrid_query_v2
 from src.ontologies import get_ontologies
@@ -700,23 +700,17 @@ def dict_get(nested, path, fallback=None):
         return fallback
 
 
-"""
-The following function is the start of implementing an endpoint that registers
-a dataset end-to-end from one API call (for developers, services).
-This endpoint will accept multiple files:
-- The dataset data file (presumable a csv, xlsx, netcdf, etc files we support)
-- A dataset metadata json file: contains the dataset name, organization, etc
-- A dictionary file describing the contents of the data and their types.
-  We call this "annotations" under Dojo API (xlsx or csv).
+def get_file_extension(filename):
+    # Match the extension part of the filename using a regex pattern
+    match = re.search(r'\.([^.]+)$', filename)
 
-With all of the three above files, the user would immediately receive an
-acknowledge that the dataset registration is in process. The API and workers would
-continue the registration process end-to-end. This is an alternative to the Dojo UI,
-where a gui requests the user separate data accross multiple steps.
+    # If there's a match, return the extension; otherwise, return None
+    if match:
+        return match.group(1)
+    else:
+        return None
 
-Use like:
-curl -v -H "Content-Type:multipart/form-data" -F "metadata=@metadata.json" -F "data=@data.csv" -F "dictionary=@dictionary.csv" http://localhost:8000/indicators/register
-"""
+
 @router.post("/indicators/register")
 async def dataset_register_files(
         data: UploadFile = File(...),
@@ -724,29 +718,35 @@ async def dataset_register_files(
         dictionary: UploadFile = File(...)
 ):
     """
-    Endpoint that register a dataset using one API call. This is different than
-    the rest of the endpoints, which provide multiple steps for an API caller
-    in order to register a dataset, and more knowledge on the information and
+    Endpoint to register a dataset using one API call. This is different than
+    the rest of the endpoints, which provides multiple steps for an API caller
+    in order to register a dataset, and requires knowledge on the information and
     order needed in order to accomplish full dataset registration.
 
+    Inputs:
     `Metadata` is a json file which contains dataset name, maintainer, etc.
     `data` is the actual original dataset file (csv, xls, etc)
     `dictionary` is a xls or csv file that describes/annotates the data's content
-    """
 
-    # logger.info(f"metadata file: {metadata.file}")
+    Example curl:
+    curl -v -H "Content-Type:multipart/form-data" -F "metadata=@metadata.json" -F "data=@data.csv" -F "dictionary=@dictionary.csv" http://dojo-api-host/indicators/register
+
+    # TODO Future: Allow multiple dataset data files at once
+    """
 
     metadata_contents = json.load(metadata.file)
 
+    indicator_metadata = {k: metadata_contents[k] for k in metadata_contents.keys() - {'file_metadata'}}
+
     # Step 1: Create indicator
-    indicator = IndicatorSchema.IndicatorMetadataSchema.parse_obj(metadata_contents)
+    indicator = IndicatorSchema.IndicatorMetadataSchema.parse_obj(indicator_metadata)
     create_response = create_indicator(indicator)
-    response = json.loads(create_response.body)
-    indicator_id = response["id"]
+    indicator_body = json.loads(create_response.body)
+    indicator_id = indicator_body["id"]
 
     # Step 2: Upload dictionary file. If this fails we'll have to decide what to do...
-    #         since TODO we'll have a leftover/ghost dataset that we may not use again.
     # TODO test a failure scenario for the next line (dictionary format/values bad)
+    # I think we can rollback the dataset (delete it if some of these steps fail)
     await upload_data_dictionary_file(indicator_id=indicator_id, file=dictionary)
 
     # Step 3: Upload raw data file to S3, before converting to xls or anything else
@@ -754,72 +754,51 @@ async def dataset_register_files(
     upload_file(indicator_id=indicator_id, file=data)
 
     if metadata_contents.get("file_metadata"):
-        # TODO check format to add raw_data.extension
-        patch_annotation(indicator_id=indicator_id, metadata=metadata_contents.get("file_metadata"))
-        # TODO Parse using pydantic schema?
-        # just try to call PATCH on annotations passing in cloned metadata
-        # ensure not to overwrite annotations.annotations in the process
-
-"""
-TODO patch annotations-> metadata. csv is default, but useful to explicitly
-     state if annotation.metadata.file={filename, etc} and annotation.metadata.filetype="netcdf"
-
-
-annotations=
-{
-    "annotations: {...},
-    "metadata": {
-        "files": {
-            "raw_data.xlsx": { # <- derive filename from uploaded stuff?
-                "filetype": "excel",
-                "filename": "acled_2022.xlsx",
-                "rawFileName": "raw_data.xlsx",
-                "excel_sheets": [
-                    "2019-06-18-2022-06-21-Eastern_A"
-                ],
-# TODO this needs to be provided by user
-                "excel_sheet": "2019-06-18-2022-06-21-Eastern_A"
-            }
+        logger.info("metadata contents has file_metadata")
+        ext_mapping = {
+            "xls": "excel",
+            "xlsx": "excel",
+            "nc": "netcdf",
+            "csv": "csv",
+            "tif": "geotiff",
         }
-    }
-}
-"""
 
-    # TODO START RQ WORKER JOB that does the rest
-    job_context = get_context(indicator_id)
-    # TODO do the rest
+        extension = get_file_extension(data.filename)
+        raw_filename = f"raw_data.{extension}"
 
-    # NOW RETURN TO USER, SINCE WE HAVE TO DO A COUPLE OF JOBS
-    # TODO augnment create_response with a way to check registration progress
-    return create_response
+        annotation_payload = MetadataSchema.MetaModel(metadata={
+            "files": {
+                raw_filename: {
+                    **{
+                        "rawFileName": raw_filename,
+                        "filetype": ext_mapping[extension]
+                    },
+                    **metadata_contents.get("file_metadata"),
+                }
+            }
+        })
+        metadata_patch_response = patch_annotation(
+            indicator_id=indicator_id,
+            payload=annotation_payload
+        )
 
+    job_string = "dataset_register_processors.finish_dataset_registration"
+    job_id = f"{indicator_id}_{job_string}"
 
-    # TODO Step 4.alpha Transform raw File to csv. Later.
-    # NOTE Q: what's the filename of real raw .xlsx vs converted .csv?
-    # file_processors.file_conversion
-    # TODO these steps that need file conversion, etc, need to occur on rqworker, as the
-    # API needs to return immediately from here and not wait for jobs.
+    context = get_context(indicator_id)
 
-    # Step 4: Call job for mixmasta to normalize. It should then call step 5 (publish)
+    job_data = q.enqueue_call(
+        func=job_string,
+        args=[context],
+        kwargs={"filename": raw_filename},
+        job_id=job_id,
+    )
 
-    # job_string = "elwood_processors.run_elwood"
-    # job_id = f"{indicator_id}_{job_string}"
+    job_status_url = f"/job/{job_id}"
 
-    # context = get_context(indicator_id)
+    job_status = job(uuid=indicator_id, job_string=job_string)
 
-    # q.enqueue_call(
-    #     func=job_string,
-    #     args=[context],
-    #     kwargs={
-    #         "on_success_endpoint": {
-    #             "verb": "PUT",
-    #             "url": f"{settings.DOJO_URL}/indicators/{indicator_id}/publish",
-    #         }
-    #     },
-    #     job_id=job_id,
-    # )
-
-    # return create_response
+    return {**indicator_body, "job": {**job_status, "progress_url": job_status_url}}
 
 
 def bytes_to_csv(file):
