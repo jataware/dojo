@@ -7,12 +7,12 @@ import TextField from '@material-ui/core/TextField';
  *
  * */
 const Autocomplete = ({
-  values, setValues, options, label, textFieldProps, disabled = false
+  values, setValues, options, label, textFieldProps, disabled = false, multiple = true
 }) => (options.length > 0
   ? (
     <MuiAutocomplete
       disabled={disabled}
-      multiple
+      multiple={multiple}
       value={values}
       options={options}
       onChange={(evt, val) => {

@@ -12,7 +12,7 @@ export const Navigation = withStyles(({ spacing }) => ({
     marginTop: spacing(2)
   },
 }))(({
-  classes, handleNext, handleBack, label, disabled, ...props
+  classes, handleNext, handleBack, label, disabled, disableNext, ...props
 }) => (
   <div className={classes.buttonContainer}>
     <Button
@@ -26,7 +26,7 @@ export const Navigation = withStyles(({ spacing }) => ({
         color="primary"
         variant="contained"
         disableElevation
-        disabled={disabled}
+        disabled={disabled || disableNext}
         onClick={() => { handleNext({ handleNext, ...props }); }}
       >
         {label || 'Next'}

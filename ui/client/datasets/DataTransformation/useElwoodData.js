@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 
 // Hook that handles all the data fetching from Elwood
@@ -9,6 +9,7 @@ const useElwoodData = ({
   generateArgs,
   jobString,
   cleanupRef,
+  onBackendFailure
 }) => {
   const [data, setData] = useState(null);
   const [options, setOptions] = useState(null);
@@ -17,13 +18,13 @@ const useElwoodData = ({
 
   useEffect(() => {
     const startElwoodJob = async ({ requestArgs }) => {
-      console.log('these are the requestArgs when starting ', jobString, requestArgs);
+      // console.log('these are the requestArgs when starting ', jobString, requestArgs);
       const jobQueueResp = await axios.post(
         `/api/dojo/job/${datasetId}/${jobString}`, requestArgs
       );
 
       if (jobQueueResp.status === 200) {
-        return jobQueueResp.data?.id;
+        return jobQueueResp.data;
       }
     };
 
@@ -52,9 +53,9 @@ const useElwoodData = ({
             // we get a 404 immediately - there is some sort of bug, this accounts for that
             if (count < 2 && cleanupRef.current) {
               // and the component is mounted
-              console.log('repeating job call');
+              // console.log('repeating job call');
               startElwoodJob({ requestArgs }).then((resp) => {
-                repeatFetch(resp);
+                repeatFetch(resp.id);
               });
             } else {
               console.log(`failure! ${jobString} took ${count * 500}ms`, err);
@@ -65,7 +66,27 @@ const useElwoodData = ({
       };
 
       if (datasetId) {
-        startElwoodJob({ requestArgs }).then((jobId) => repeatFetch(jobId));
+        startElwoodJob({ requestArgs })
+          .then((jobData) => {
+            if (jobData.result) {
+              onSuccess(jobData.result, setData,
+                setDataError, setDataLoading, setOptions);
+            } else if (jobData.job_error) {
+              setDataError('An unexpected error occured while starting the job.');
+              const displayable_jobName = /_(.+)/.exec(jobData.id)[1];
+              onBackendFailure(
+                <div>
+                  An unexpected system error occured while running job&nbsp;
+                  <span style={{ color: '#99223398' }}>{displayable_jobName}</span>.
+                  <br />Contact Jataware for assistance.
+                </div>
+              );
+              console.error(jobData.job_error);
+              setDataLoading(false);
+            } else {
+              repeatFetch(jobData.id);
+            }
+          });
       }
     };
 
@@ -91,9 +112,6 @@ const useElwoodData = ({
         }
       }
     }
-  // The linter is complaining about cleanupRef missing here because it doesn't understand
-  // that this is a reference to a ref, which both won't and shouldn't trigger a rerender
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     datasetId,
     annotations,
@@ -103,6 +121,8 @@ const useElwoodData = ({
     dataLoading,
     generateArgs,
     onSuccess,
+    cleanupRef,
+    onBackendFailure
   ]);
 
   return { data, options, error: dataError };

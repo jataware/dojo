@@ -22,6 +22,8 @@ from resolution_processors import (
 from base_annotation import BaseProcessor
 from settings import settings
 
+logging.basicConfig()
+logging.getLogger().setLevel(logging.DEBUG)
 
 def build_elwood_meta_from_context(context, filename=None):
     metadata = context["annotations"]["metadata"]
@@ -62,6 +64,29 @@ def build_elwood_meta_from_context(context, filename=None):
     return elwood_meta
 
 
+def dict_get(nested, path, fallback=None):
+    """
+    Receives a nested dictionary and a string describing a dictionary path,
+    and returns the corresponding value.
+    [Optional]`fallback` if path doesn't exists, defaults to None.
+    `path`: str describing the nested dictionary deep path.
+            Each key in the path is separated by a dot ('.').
+            eg for {'a': {'b': {'c': 42}}}, `path` 'a.b.c' returns 42.
+    """
+
+    if not type(nested) == dict:
+        return fallback
+
+    keys = path.split('.')
+    value = nested
+    try:
+        for key in keys:
+            value = value[key]
+        return value
+    except (KeyError, TypeError):
+        return fallback
+
+
 class ElwoodProcessor(BaseProcessor):
     @staticmethod
     def run(context, datapath, filename) -> pd.DataFrame:
@@ -82,8 +107,15 @@ class ElwoodProcessor(BaseProcessor):
 
         # Elwood output path (it needs the filename attached to write parquets, and the file name is the uuid)
         mix_output_path = f"{output_path}/{uuid}"
+
         # Main elwood processing call
-        ret, rename = mix.process(raw_data_fp, mapper_fp, admin_level, mix_output_path)
+        ret, rename = mix.process(
+            raw_data_fp,
+            mapper_fp,
+            admin_level,
+            mix_output_path,
+            overrides=dict_get(context, "annotations.metadata.transformations.overrides", {})
+        )
 
         ret.to_csv(f"{output_path}/elwood_processed_df.csv", index=False)
 
