@@ -732,26 +732,31 @@ async def full_dataset_register(
     curl -v -F "metadata=@metadata.json" -F "data=@data.csv" -F "dictionary=@dictionary.csv" http://dojo-api-host/indicators/register
     """
 
-    # TODO Future: Allow multiple dataset data files at once
-
     completed = []
+    indicator_id = None
 
     try:
-        # TODO rollback the dataset/annotation creation
-
         metadata_contents = json.load(metadata.file)
 
         indicator_metadata = {k: metadata_contents[k] for k in metadata_contents.keys() - {'file_metadata'}}
 
-        # Step 1: Create indicator
+        # Step 1: Create or Update indicator
         indicator = IndicatorSchema.IndicatorMetadataSchema.parse_obj(indicator_metadata)
-        create_response = create_indicator(indicator)
-        indicator_body = json.loads(create_response.body)
+
+        is_updating = bool(indicator_metadata.get("id"))
+
+        if is_updating:
+            update_indicator(indicator)
+            indicator_body = get_indicators(indicator_id=indicator_metadata.get("id"))
+            completed.append("updated")
+        else:
+            create_response = create_indicator(indicator)
+            indicator_body = json.loads(create_response.body)
+            completed.append("created")
+
         indicator_id = indicator_body["id"]
 
-        completed.append("created")
-
-        # Step 2: Upload dictionary file. If this fails we'll have to decide what to do...
+        # Step 2: Upload dictionary file.
         await upload_data_dictionary_file(indicator_id=indicator_id, file=dictionary)
 
         completed.append("dictionary")
@@ -804,39 +809,30 @@ async def full_dataset_register(
 
         completed.append("register_processor")
 
-        job_status_url = f"/job/{job_id}"
-
         job_status = job(uuid=indicator_id, job_string=job_string)
         completed.append("job_status")
 
     except KeyError as e:
         logger.error(f"Error parsing dictionary file. Attribute: {e}")
-        # TODO rollback unused data if it failed, return sensible errors to user
-        return {"errors": [f"Dictionary file contains an invalid value: {e}"]}
+        errors = {"errors": [f"Dictionary file contains an invalid value: {e}"]}
+        if indicator_id:
+            errors["dataset_ID"] = indicator_id
+            errors["detail"] = "Please fix the above errors and reissue the request, this time by adding the new `id` property and value to the metadata json file."
+        return errors
     except HTTPException as e:
-        logger.error(f"Generic Error: {e}")
-        # logger.error(f"Generic Error: {type(e)}") # HTTPException duh
-        logger.error(f"Generic Error: {dir(e)}")
-        logger.error(f"Generic Error: {e.status_code}")
-        logger.error(f"Generic Error: {e.__cause__}")
-        # traceback.print_exc() # useful, how to extract actual validation error? __cause__??
-
-        try:
-            logger.error(f"Generic Error: {e.body}")
-            logger.error(f"Generic Error: {e.json()}")
-            logger.error(f"Generic Error: {e.details}")
-        except Exception as ex:
-            logger.error(f"Failed to log error.. {ex}")
-            pass
-
-        return {"errors": [f"{e}"]}
+        logger.error(f"HTTPException (possible validation error) while running dataset register endpoint:\n{e}")
+        errors = {"errors": [f"{e.__cause__}"]}
+        if indicator_id:
+            errors["dataset_ID"] = indicator_id
+            errors["detail"] = "Please fix the above errors and reissue the request, this time by adding the new `id` property and value to the metadata json file."
+        return errors
     except Exception as ex_all:
         logger.error(f"Unexpected Exception while running dataset register endpoint:\n{ex_all}")
-        return {"errors": [f"{ex_all}"]}
-
-        # logger.error(f"Generic Error: {e.details}")
-        # logger.error(f"Generic Error: {e.args}")
-        # TODO rollback unused data if it failed, return sensible errors to user
+        errors = {"errors": [f"{ex_all}"]}
+        if indicator_id:
+            errors["dataset_ID"] = indicator_id
+            errors["detail"] = "Please fix the above errors and reissue the request, this time by adding the new `id` property and value to the metadata json file."
+        return errors
     finally:
         logger.info(f"Completed the following dataset register tasks: {completed}")
 
@@ -846,7 +842,7 @@ async def full_dataset_register(
         **indicator_body,
         "job": {
             **job_status,
-            "status_message": "Your dataset is being processed. Initial metadata has been uploaded, but additional processing time may be required for larger files. Use the indicator endpoint using the new dataset ID provided, and verify that the <published> property is set to <true>, which will indicate processing completion."
+            "details": "Your dataset is being processed. Initial metadata has been uploaded, but additional processing time may be required for larger files. Use the indicator endpoint using the new dataset ID provided, and verify that the <published> property is set to <true>, which will indicate processing completion."
         }
     }
 
