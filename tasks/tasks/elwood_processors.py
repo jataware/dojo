@@ -132,7 +132,13 @@ def run_elwood(context, filename=None, on_success_endpoint=None):
     # Should probably change elwood down the road to accept filepath AND annotations objects.
     mm_ready_annotations = context["annotations"]["annotations"]
     print(f"ELWOOD ANNOTATIONS: {mm_ready_annotations}")
-    mm_ready_annotations["meta"] = {"ftype": "csv"}
+
+    metadata = context["annotations"]["metadata"]
+    if "files" in metadata:
+        metadata = metadata["files"][filename]
+
+    ftype = metadata.get("filetype", "csv")
+    mm_ready_annotations["meta"] = {"ftype": ftype}
     with open(f"{datapath}/elwood_ready_annotations.json", "w") as f:
         f.write(json.dumps(mm_ready_annotations))
     f.close()
@@ -208,7 +214,6 @@ def run_elwood(context, filename=None, on_success_endpoint=None):
     outputs = []
     feature_names = []
     for feature in context["annotations"]["annotations"]["feature"]:
-
         feature_names.append(feature["name"])  # Used for the primary qualifier outputs.
         output = dict(
             name=feature["name"],
@@ -410,7 +415,13 @@ def run_model_elwood(context, *args, **kwargs):
     # Writing out the annotations because elwood needs a filepath to this data.
     # Should probably change elwood down the road to accept filepath AND annotations objects.
     mm_ready_annotations = context["annotations"]["annotations"]
-    mm_ready_annotations["meta"] = {"ftype": "csv"}
+
+    metadata = context["annotations"]["metadata"]
+    if "files" in metadata:
+        metadata = metadata["files"][filename]
+
+    ftype = metadata.get("filetype", "csv")
+    mm_ready_annotations["meta"] = {"ftype": ftype}
     import pprint
 
     logging.warn(pprint.pformat(mm_ready_annotations))
@@ -616,7 +627,6 @@ def new_min_max_values_found(old_mapping, new_mapping):
 
 
 def generate_files_list(data_paths_not_str, normalized_paths_list, target_suffix):
-
     files_list = [
         path
         for path in data_paths_not_str
