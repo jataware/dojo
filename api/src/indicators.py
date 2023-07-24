@@ -37,6 +37,7 @@ from src.utils import (
     put_rawfile, format_hybrid_results
 )
 from validation import DojoSchema, IndicatorSchema, MetadataSchema
+# import traceback
 
 router = APIRouter()
 es = Elasticsearch([settings.ELASTICSEARCH_URL], port=settings.ELASTICSEARCH_PORT)
@@ -754,7 +755,7 @@ async def dataset_register_files(
         # Step 2: Upload dictionary file. If this fails we'll have to decide what to do...
         await upload_data_dictionary_file(indicator_id=indicator_id, file=dictionary)
 
-        completed.append("annotated")
+        completed.append("dictionary")
 
         # Step 3: Upload raw data file to S3, before converting to xls or anything else
         # (so that rqworker can download and continue the process)
@@ -762,34 +763,33 @@ async def dataset_register_files(
 
         completed.append("s3")
 
-        if metadata_contents.get("file_metadata"):
-            logger.info("metadata contents has file_metadata")
-            ext_mapping = {
-                "xls": "excel",
-                "xlsx": "excel",
-                "nc": "netcdf",
-                "csv": "csv",
-                "tif": "geotiff",
-            }
+        ext_mapping = {
+            "xls": "excel",
+            "xlsx": "excel",
+            "nc": "netcdf",
+            "csv": "csv",
+            "tif": "geotiff",
+        }
 
-            extension = get_file_extension(data.filename)
-            raw_filename = f"raw_data.{extension}"
+        extension = get_file_extension(data.filename)
+        raw_filename = f"raw_data.{extension}"
 
-            annotation_payload = MetadataSchema.MetaModel(metadata={
-                "files": {
-                    raw_filename: {
-                        **{
-                            "rawFileName": raw_filename,
-                            "filetype": ext_mapping[extension]
+        annotation_payload = MetadataSchema.MetaModel(metadata={
+            "files": {
+                raw_filename: {
+                    **{
+                        "rawFileName": raw_filename,
+                        "filetype": ext_mapping[extension]
                         },
-                        **metadata_contents.get("file_metadata"),
-                    }
+                    **metadata_contents.get("file_metadata", {}),
                 }
-            })
-            metadata_patch_response = patch_annotation(
-                indicator_id=indicator_id,
-                payload=annotation_payload
-            )
+            }
+        })
+        metadata_patch_response = patch_annotation(
+            indicator_id=indicator_id,
+            payload=annotation_payload
+        )
+        completed.append("file_metadata")
 
         job_string = "dataset_register_processors.finish_dataset_registration"
         job_id = f"{indicator_id}_{job_string}"
@@ -808,13 +808,45 @@ async def dataset_register_files(
         job_status_url = f"/job/{job_id}"
 
         job_status = job(uuid=indicator_id, job_string=job_string)
-
         completed.append("job_status")
-    except Exception as e:
-        # TODO rollback unused data if it failed, return sensible errors to user
-        return {"error": "e"}
 
-    return {**indicator_body, "job": {**job_status, "progress_url": job_status_url}}
+    except KeyError as e:
+        logger.error(f"Error parsing dictionary file. Attribute: {e}")
+        # TODO rollback unused data if it failed, return sensible errors to user
+        return {"errors": [f"Dictionary file contains an invalid value: {e}"]}
+    except HTTPException as e:
+        logger.error(f"Generic Error: {e}")
+        # logger.error(f"Generic Error: {type(e)}") # HTTPException duh
+        logger.error(f"Generic Error: {dir(e)}")
+        logger.error(f"Generic Error: {e.status_code}")
+        logger.error(f"Generic Error: {e.__cause__}")
+        # traceback.print_exc() # useful, how to extract actual validation error? __cause__??
+
+        try:
+            logger.error(f"Generic Error: {e.body}")
+            logger.error(f"Generic Error: {e.json()}")
+            logger.error(f"Generic Error: {e.details}")
+        except Exception as ex:
+            logger.error(f"Failed to log error.. {ex}")
+            pass
+
+        return {"errors": [f"{e}"]}
+    except Exception as ex_all:
+        logger.error(f"Unexpected Exception while running dataset register endpoint:\n{ex_all}")
+        return {"errors": [f"{ex_all}"]}
+
+        # logger.error(f"Generic Error: {e.details}")
+        # logger.error(f"Generic Error: {e.args}")
+        # TODO rollback unused data if it failed, return sensible errors to user
+    finally:
+        logger.info(f"Completed the following dataset register tasks: {completed}")
+
+    return {
+        **indicator_body,
+        "job": {
+            **job_status, "progress_url": job_status_url
+        }
+    }
 
 
 def bytes_to_csv(file):
@@ -848,7 +880,7 @@ async def upload_data_dictionary_file(indicator_id: str, file: UploadFile = File
             pass
 
         full_data[0]["message"] = str(e)
-        raise HTTPException(status_code=422, detail=full_data)
+        raise HTTPException(status_code=422, detail=full_data) from e
 
     annotation_payload = MetadataSchema.MetaModel(annotations=formatted)
 
