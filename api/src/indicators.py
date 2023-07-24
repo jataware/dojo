@@ -841,10 +841,13 @@ async def dataset_register_files(
     finally:
         logger.info(f"Completed the following dataset register tasks: {completed}")
 
+    del job_status["id"]
+
     return {
         **indicator_body,
         "job": {
-            **job_status, "progress_url": job_status_url
+            **job_status,
+            "status_message": "Your dataset is being processed. Initial metadata has been uploaded, but additional processing time may be required for larger files. Use the indicator endpoint using the new dataset ID provided, and verify that the <published> property is set to <true>, which will indicate processing completion."
         }
     }
 
