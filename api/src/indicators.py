@@ -694,16 +694,18 @@ def augment_errors(errors, indicator_id=None):
     """
     if indicator_id:
         errors["dataset_id"] = indicator_id
-        errors["actions"] = "Please fix the errors and reissue the request with an `id` property on the metadata JSON file, in order to continue registering your new dataset."
+        errors["actions"] = "Please fix the errors and reissue the request by appending the dataset_id from the error detail to the request url. New URL Example: /indicators/register/<uuid>."
 
     raise HTTPException(status_code=400, detail=errors)
 
 
 @router.post("/indicators/register")
+@router.post("/indicators/register/{indicator_id}")
 async def full_dataset_register(
         data: UploadFile = File(...),
         metadata: UploadFile = File(...),
-        dictionary: UploadFile = File(...)
+        dictionary: UploadFile = File(...),
+        indicator_id: Optional[str] = None,
 ):
     """
     Endpoint to register a dataset using one API call. This is different than
@@ -715,33 +717,36 @@ async def full_dataset_register(
     - _data_ is the actual original dataset file (csv, xls, netcdf, geotiff)
     - _dictionary_ is a xls or csv file that describes/annotates the data's content
 
-    Example curl:
+    Example create curl:
     curl -v -F "metadata=@metadata.json" -F "data=@data.csv" -F "dictionary=@dictionary.csv" http://dojo-api-host/indicators/register
+
+    If you run into errors and receive a dataset_id on the error details, you may use the id to continue the process after fixing erros:
+    curl -v -F "metadata=@metadata.json" -F "data=@data.csv" -F "dictionary=@dictionary.csv" http://dojo-api-host/indicators/register/<uuid-from-error>
+    This will help ensure there are no dangling datasets and registration is finished.
     """
 
     completed = []
-    indicator_id = None
 
     try:
-        metadata_contents = json.load(metadata.file)
-
-        indicator_metadata = {k: metadata_contents[k] for k in metadata_contents.keys() - {'file_metadata'}}
-
         # Step 1: Create or Update indicator
-        indicator = IndicatorSchema.IndicatorMetadataSchema.parse_obj(indicator_metadata)
-
-        is_updating = bool(indicator_metadata.get("id"))
+        metadata_contents = json.load(metadata.file)
+        indicator_metadata = {k: metadata_contents[k] for k in metadata_contents.keys() - {'file_metadata'}}
+        is_updating = bool(indicator_id)
 
         if is_updating:
+            indicator = IndicatorSchema.IndicatorMetadataSchema.parse_obj({
+                **indicator_metadata,
+                "id": indicator_id
+            })
             update_indicator(indicator)
-            indicator_body = get_indicators(indicator_id=indicator_metadata.get("id"))
+            indicator_body = get_indicators(indicator_id=indicator_id)
             completed.append("updated")
         else:
+            indicator = IndicatorSchema.IndicatorMetadataSchema.parse_obj(indicator_metadata)
             create_response = create_indicator(indicator)
             indicator_body = json.loads(create_response.body)
+            indicator_id = indicator_body["id"]
             completed.append("created")
-
-        indicator_id = indicator_body["id"]
 
         # Step 2: Upload dictionary file.
         await upload_data_dictionary_file(indicator_id=indicator_id, file=dictionary)
