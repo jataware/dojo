@@ -694,8 +694,9 @@ def augment_errors(errors, indicator_id=None):
     """
     if indicator_id:
         errors["dataset_id"] = indicator_id
-        errors["detail"] = "Please fix the errors and reissue the request with an `id` property on the metadata JSON file, in order to continue registering your new dataset."
-    return errors
+        errors["actions"] = "Please fix the errors and reissue the request with an `id` property on the metadata JSON file, in order to continue registering your new dataset."
+
+    raise HTTPException(status_code=400, detail=errors)
 
 
 @router.post("/indicators/register")
