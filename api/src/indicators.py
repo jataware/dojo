@@ -713,27 +713,26 @@ def get_file_extension(filename):
 
 
 @router.post("/indicators/register")
-async def dataset_register_files(
+async def full_dataset_register(
         data: UploadFile = File(...),
         metadata: UploadFile = File(...),
         dictionary: UploadFile = File(...)
 ):
     """
     Endpoint to register a dataset using one API call. This is different than
-    the rest of the endpoints, which provides multiple steps for an API caller
-    in order to register a dataset, and requires knowledge on the information and
-    order needed in order to accomplish full dataset registration.
+    the rest of the endpoints, which requires multiple steps for an API caller
+    in order to register a normalized dataset.
 
     Inputs:
-    `Metadata` is a json file which contains dataset name, maintainer, etc.
-    `data` is the actual original dataset file (csv, xls, etc)
-    `dictionary` is a xls or csv file that describes/annotates the data's content
+    - _Metadata_ is a json file which contains dataset name, maintainer, etc.
+    - _data_ is the actual original dataset file (csv, xls, netcdf, geotiff)
+    - _dictionary_ is a xls or csv file that describes/annotates the data's content
 
     Example curl:
-    curl -v -H "Content-Type:multipart/form-data" -F "metadata=@metadata.json" -F "data=@data.csv" -F "dictionary=@dictionary.csv" http://dojo-api-host/indicators/register
+    curl -v -F "metadata=@metadata.json" -F "data=@data.csv" -F "dictionary=@dictionary.csv" http://dojo-api-host/indicators/register
+    """
 
     # TODO Future: Allow multiple dataset data files at once
-    """
 
     completed = []
 
