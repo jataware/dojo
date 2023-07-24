@@ -694,18 +694,17 @@ def augment_errors(errors, indicator_id=None):
     """
     if indicator_id:
         errors["dataset_id"] = indicator_id
-        errors["actions"] = "Please fix the errors and reissue the request by appending the dataset_id from the error detail to the request url. New URL Example: /indicators/register/<uuid>."
+        errors["actions"] = "Please fix all problems and reissue the request by appending the dataset_id from this error detail as an id query parameter. New URL Example: /indicators/register?id=<uuid>."
 
     raise HTTPException(status_code=400, detail=errors)
 
 
 @router.post("/indicators/register")
-@router.post("/indicators/register/{indicator_id}")
 async def full_dataset_register(
         data: UploadFile = File(...),
         metadata: UploadFile = File(...),
         dictionary: UploadFile = File(...),
-        indicator_id: Optional[str] = None,
+        id: Optional[str] = Query(None, description="Dataset ID to continue previous failed register attempts."),
 ):
     """
     Endpoint to register a dataset using one API call. This is different than
@@ -721,7 +720,7 @@ async def full_dataset_register(
     curl -v -F "metadata=@metadata.json" -F "data=@data.csv" -F "dictionary=@dictionary.csv" http://dojo-api-host/indicators/register
 
     If you run into errors and receive a dataset_id on the error details, you may use the id to continue the process after fixing erros:
-    curl -v -F "metadata=@metadata.json" -F "data=@data.csv" -F "dictionary=@dictionary.csv" http://dojo-api-host/indicators/register/<uuid-from-error>
+    curl -v -F "metadata=@metadata.json" -F "data=@data.csv" -F "dictionary=@dictionary.csv" http://dojo-api-host/indicators/register?id=<uuid-from-error>
     This will help ensure there are no dangling datasets and registration is finished.
     """
 
@@ -731,15 +730,16 @@ async def full_dataset_register(
         # Step 1: Create or Update indicator
         metadata_contents = json.load(metadata.file)
         indicator_metadata = {k: metadata_contents[k] for k in metadata_contents.keys() - {'file_metadata'}}
-        is_updating = bool(indicator_id)
+        is_updating = bool(id)
 
         if is_updating:
             indicator = IndicatorSchema.IndicatorMetadataSchema.parse_obj({
                 **indicator_metadata,
-                "id": indicator_id
+                "id": id
             })
             update_indicator(indicator)
-            indicator_body = get_indicators(indicator_id=indicator_id)
+            indicator_body = get_indicators(indicator_id=id)
+            indicator_id = id
             completed.append("updated")
         else:
             indicator = IndicatorSchema.IndicatorMetadataSchema.parse_obj(indicator_metadata)
@@ -810,7 +810,7 @@ async def full_dataset_register(
         return augment_errors(errors, indicator_id)
     except HTTPException as e:
         logger.error(f"HTTPException (possible validation error) while running dataset register endpoint:\n{e}")
-        errors = {"errors": [f"{e.__cause__}"]}
+        errors = {"errors": [f"Dictionary file problem: {e.__cause__}"]}
         return augment_errors(errors, indicator_id)
     except Exception as ex_all:
         logger.error(f"Unexpected Exception while running dataset register endpoint:\n{ex_all}")
