@@ -37,7 +37,6 @@ from src.utils import (
     put_rawfile, format_hybrid_results
 )
 from validation import DojoSchema, IndicatorSchema, MetadataSchema
-# import traceback
 
 router = APIRouter()
 es = Elasticsearch([settings.ELASTICSEARCH_URL], port=settings.ELASTICSEARCH_PORT)
@@ -678,29 +677,6 @@ def rescale_indicator(indicator_id: str):
     return resp
 
 
-def dict_get(nested, path, fallback=None):
-    """
-    Receives a nested dictionary and a string describing a dictionary path,
-    and returns the corresponding value.
-    [Optional]`fallback` if path doesn't exists, defaults to None.
-    `path`: str describing the nested dictionary deep path.
-            Each key in the path is separated by a dot ('.').
-            eg for {'a': {'b': {'c': 42}}}, `path` 'a.b.c' returns 42.
-    """
-
-    if not type(nested) == dict:
-        return fallback
-
-    keys = path.split('.')
-    value = nested
-    try:
-        for key in keys:
-            value = value[key]
-        return value
-    except (KeyError, TypeError):
-        return fallback
-
-
 def get_file_extension(filename):
     # Match the extension part of the filename using a regex pattern
     match = re.search(r'\.([^.]+)$', filename)
@@ -710,6 +686,16 @@ def get_file_extension(filename):
         return match.group(1)
     else:
         return None
+
+
+def augment_errors(errors, indicator_id=None):
+    """
+    Helper Error Fn for full_dataset_register
+    """
+    if indicator_id:
+        errors["dataset_id"] = indicator_id
+        errors["detail"] = "Please fix the above errors and reissue the request, this time by adding the new `id` property and value to the metadata json file."
+    return errors
 
 
 @router.post("/indicators/register")
@@ -815,24 +801,15 @@ async def full_dataset_register(
     except KeyError as e:
         logger.error(f"Error parsing dictionary file. Attribute: {e}")
         errors = {"errors": [f"Dictionary file contains an invalid value: {e}"]}
-        if indicator_id:
-            errors["dataset_ID"] = indicator_id
-            errors["detail"] = "Please fix the above errors and reissue the request, this time by adding the new `id` property and value to the metadata json file."
-        return errors
+        return augment_errors(errors, indicator_id)
     except HTTPException as e:
         logger.error(f"HTTPException (possible validation error) while running dataset register endpoint:\n{e}")
         errors = {"errors": [f"{e.__cause__}"]}
-        if indicator_id:
-            errors["dataset_ID"] = indicator_id
-            errors["detail"] = "Please fix the above errors and reissue the request, this time by adding the new `id` property and value to the metadata json file."
-        return errors
+        return augment_errors(errors, indicator_id)
     except Exception as ex_all:
         logger.error(f"Unexpected Exception while running dataset register endpoint:\n{ex_all}")
         errors = {"errors": [f"{ex_all}"]}
-        if indicator_id:
-            errors["dataset_ID"] = indicator_id
-            errors["detail"] = "Please fix the above errors and reissue the request, this time by adding the new `id` property and value to the metadata json file."
-        return errors
+        return augment_errors(errors, indicator_id)
     finally:
         logger.info(f"Completed the following dataset register tasks: {completed}")
 
