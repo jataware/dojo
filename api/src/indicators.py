@@ -694,7 +694,7 @@ def augment_errors(errors, indicator_id=None):
     """
     if indicator_id:
         errors["dataset_id"] = indicator_id
-        errors["detail"] = "Please fix the above errors and reissue the request, this time by adding the new `id` property and value to the metadata json file."
+        errors["detail"] = "Please fix the errors and reissue the request with an `id` property on the metadata JSON file, in order to continue registering your new dataset."
     return errors
 
 
