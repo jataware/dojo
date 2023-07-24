@@ -11,11 +11,12 @@ import uuid
 from datetime import datetime
 from functools import partial
 from typing import List, Optional
+from urllib.parse import urlparse
 
 import openpyxl
 import pandas as pd
 from elasticsearch import Elasticsearch
-from fastapi import APIRouter, File, HTTPException, Query, Response, UploadFile, status
+from fastapi import APIRouter, File, HTTPException, Query, Response, UploadFile, status, Request
 from fastapi.logger import logger
 from fastapi.responses import FileResponse
 from openpyxl.styles import Font
@@ -52,6 +53,19 @@ q = Queue(connection=redis, default_timeout=-1)
 # For created_at times in epoch milliseconds
 def current_milli_time():
     return round(time.time() * 1000)
+
+
+def extract_protocol_host_port(url):
+    parsed_url = urlparse(url)
+    protocol = parsed_url.scheme
+    host = parsed_url.hostname
+    port = parsed_url.port
+
+    # Include the port in the result if it's present in the URL
+    if port:
+        return f"{protocol}://{host}:{port}"
+    else:
+        return f"{protocol}://{host}"
 
 
 def enqueue_indicator_feature(indicator_id, indicator_dict):
@@ -688,19 +702,26 @@ def get_file_extension(filename):
         return None
 
 
-def augment_errors(errors, indicator_id=None):
+def augment_errors(errors, indicator_id=None, host="http://localhost:8000"):
     """
     Helper Error Fn for full_dataset_register
     """
+    errors["doc"] = {
+        "dictionary_template_url": f"{host}/indicators/annotations/file-template"
+    }
     if indicator_id:
         errors["dataset_id"] = indicator_id
         errors["actions"] = "Please fix all problems and reissue the request by appending the dataset_id from this error detail as an id query parameter. New URL Example: /indicators/register?id=<uuid>."
+        errors["doc"] = {
+            "dictionary_template_url": f"{host}/indicators/annotations/file-template?id={indicator_id}"
+        }
 
     raise HTTPException(status_code=400, detail=errors)
 
 
 @router.post("/indicators/register")
 async def full_dataset_register(
+        request: Request,
         data: UploadFile = File(...),
         metadata: UploadFile = File(...),
         dictionary: UploadFile = File(...),
@@ -725,6 +746,7 @@ async def full_dataset_register(
     """
 
     completed = []
+    api_url = extract_protocol_host_port(str(request.url))
 
     try:
         # Step 1: Create or Update indicator
@@ -807,15 +829,15 @@ async def full_dataset_register(
     except KeyError as e:
         logger.error(f"Error parsing dictionary file. Attribute: {e}")
         errors = {"errors": [f"Dictionary file contains an invalid value: {e}"]}
-        return augment_errors(errors, indicator_id)
+        return augment_errors(errors, indicator_id, api_url)
     except HTTPException as e:
         logger.error(f"HTTPException (possible validation error) while running dataset register endpoint:\n{e}")
         errors = {"errors": [f"Dictionary file problem: {e.__cause__}"]}
-        return augment_errors(errors, indicator_id)
+        return augment_errors(errors, indicator_id, api_url)
     except Exception as ex_all:
         logger.error(f"Unexpected Exception while running dataset register endpoint:\n{ex_all}")
         errors = {"errors": [f"{ex_all}"]}
-        return augment_errors(errors, indicator_id)
+        return augment_errors(errors, indicator_id, api_url)
     finally:
         logger.info(f"Completed the following dataset register tasks: {completed}")
 
