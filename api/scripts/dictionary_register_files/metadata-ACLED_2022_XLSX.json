@@ -1,5 +1,5 @@
 {
-  "name": "Test Dataset One-Stop-Shop XLS",
+  "name": "Test Dataset API Register - XLS",
   "description": "XLS manual test to register a dataset using API-only endpoint.",
   "domains": ["Logic"],
   "maintainer": {
