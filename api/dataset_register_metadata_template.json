@@ -9,6 +9,13 @@
     "website": ""
   },
   "file_metadata": {
-    "filetype": ""
+    "filetype": "",
+    "excel_sheet": "",
+    "geotiff_band_count": 1,
+    "geotiff_band_type": "category",
+    "geotiff_bands" : {"1": "geo", "2": "tiff"},
+    "geotiff_null_value": 0,
+    "geotiff_value" : "flood-data"
   }
 }
+

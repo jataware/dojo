@@ -814,7 +814,8 @@ async def full_dataset_register(
                 raw_filename: {
                     **{
                         "rawFileName": raw_filename,
-                        "filetype": ext_mapping[extension]
+                        "filetype": ext_mapping[extension],
+                        "filename": data.filename,
                         },
                     **metadata_contents.get("file_metadata", {}),
                 }
@@ -873,7 +874,7 @@ async def full_dataset_register(
 def download_metadata_template_file():
     file_name = "dataset_register_metadata_template.json"
     headers = {
-        "Content-Disposition": f"attachment; filename={file_name}"
+        "Content-Disposition": f"attachment; filename=dataset_metadata_template.json"
     }
     return FileResponse(file_name, headers=headers)
 
