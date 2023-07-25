@@ -25,6 +25,7 @@ from settings import settings
 logging.basicConfig()
 logging.getLogger().setLevel(logging.DEBUG)
 
+
 def build_elwood_meta_from_context(context, filename=None):
     metadata = context["annotations"]["metadata"]
     if "files" in metadata:
@@ -77,7 +78,7 @@ def dict_get(nested, path, fallback=None):
     if not type(nested) == dict:
         return fallback
 
-    keys = path.split('.')
+    keys = path.split(".")
     value = nested
     try:
         for key in keys:
@@ -114,7 +115,9 @@ class ElwoodProcessor(BaseProcessor):
             mapper_fp,
             admin_level,
             mix_output_path,
-            overrides=dict_get(context, "annotations.metadata.transformations.overrides", {})
+            overrides=dict_get(
+                context, "annotations.metadata.transformations.overrides", {}
+            ),
         )
 
         ret.to_csv(f"{output_path}/elwood_processed_df.csv", index=False)
@@ -169,7 +172,12 @@ def run_elwood(context, filename=None, on_success_endpoint=None):
     if "files" in metadata:
         metadata = metadata["files"][filename]
 
-    ftype = metadata.get("filetype", "csv")
+    if "filetype" in metadata:
+        ftype = metadata["filetype"]
+    elif "filename" in metadata:
+        ftype = metadata["filename"].split(".")[-1]
+    else:
+        ftype = "csv"
     mm_ready_annotations["meta"] = {"ftype": ftype}
     with open(f"{datapath}/elwood_ready_annotations.json", "w") as f:
         f.write(json.dumps(mm_ready_annotations))
@@ -452,7 +460,12 @@ def run_model_elwood(context, *args, **kwargs):
     if "files" in metadata:
         metadata = metadata["files"][filename]
 
-    ftype = metadata.get("filetype", "csv")
+    if "filetype" in metadata:
+        ftype = metadata["filetype"]
+    elif "filename" in metadata:
+        ftype = metadata["filename"].split(".")[-1]
+    else:
+        ftype = "csv"
     mm_ready_annotations["meta"] = {"ftype": ftype}
     import pprint
 
