@@ -11,6 +11,7 @@ import AspectRatioIcon from '@material-ui/icons/AspectRatio';
 import TodayIcon from '@material-ui/icons/Today';
 import GridOnIcon from '@material-ui/icons/GridOn';
 import MapIcon from '@material-ui/icons/Map';
+import GlobeIcon from '@material-ui/icons/Public';
 
 import CircularProgress from '@material-ui/core/CircularProgress';
 import Container from '@material-ui/core/Container';
@@ -27,11 +28,19 @@ import AdjustGeoResolution from './AdjustGeoResolution';
 import TransformationButton from './TransformationButton';
 import useElwoodData from './useElwoodData';
 import {
+  getPrimaryLatLonColumns,
   generateProcessGeoResArgs,
   generateProcessTempResArgs,
   generateProcessGeoCovArgs,
   generateProcessTempCovArgs,
 } from './dataTransformationHelpers';
+
+import { GadmResolver } from './GadmResolver';
+
+import PromptDialog from '../PromptDialog';
+
+// import random from 'lodash/random';
+// import times from 'lodash/times';
 
 // for development purposes
 // const mapResolution = 111.00000000000014;
@@ -93,12 +102,43 @@ import {
 // const timeBounds = unique_dates;
 
 // const [
-//   mapResolutionError,
-//   mapBoundsError,
-//   timeResolutionError,
-//   // timeBoundsError
-// ] = [false, false, false, false,];
+// mapResolutionError,
+// mapBoundsError,
+// timeResolutionError,
+// timeBoundsError
+// gadmResolutionError
+// ] = [false, false, false, false, false];
 
+/**
+ *
+ **/
+// const gadmResolution = [
+//   {
+//     id: 'korea123',
+//     raw_value: 'Korea',
+//     gadm_resolved: 'Republic of Korea',
+//     alternatives: [
+//       'Republic of Korea',
+//       'Democratic People\'s Republic of Korea'
+//     ]
+//   }
+// ];
+
+// for (let moreCountries = 0; moreCountries < 8; moreCountries++) {
+
+//   let country = 'jspan';
+
+//   gadmResolution.push({
+//     id: country + random(0,2),
+//     raw_value: country.replace('e','').replace('a','i'),
+//     gadm_resolved: country,
+//     alternatives: times(random(1,10), () => 'Japan')
+//   });
+// }
+
+/**
+ *
+ **/
 const DataTransformation = withStyles(() => ({
   transformationRoot: {
     display: 'flex',
@@ -112,6 +152,7 @@ const DataTransformation = withStyles(() => ({
   handleNext,
   handleBack,
   annotations,
+  setAnnotations,
   cleanupRef,
 }) => {
   const [drawerOpen, setDrawerOpen] = useState(false);
@@ -122,6 +163,8 @@ const DataTransformation = withStyles(() => ({
 
   const [savedMapResolution, setSavedMapResolution] = useState(null);
 
+  const [savedGADMOverrides, setSavedGADMOverrides] = useState(null);
+
   const [timeResolutionOptions, setTimeResolutionOptions] = useState([]);
   const [savedTimeResolution, setSavedTimeResolution] = useState(null);
   const [savedAggregation, setSavedAggregation] = useState(null);
@@ -129,6 +172,44 @@ const DataTransformation = withStyles(() => ({
   const [savedTimeBounds, setSavedTimeBounds] = useState(null);
 
   const transformationsRef = useRef({});
+
+  // all for the useElwoodData failure dialog
+  const [promptTitle, setPromptTitle] = useState('');
+  const [promptMessage, setPromptMessage] = useState('');
+  // keep track of the failed jobs separately from the message so we can show them all
+  // We do actually use this, just never directly by name - see onBackendFailure
+  // eslint-disable-next-line no-unused-vars
+  const [failedJobs, setFailedJobs] = useState([]);
+
+  const onBackendFailure = (jobString) => {
+    setFailedJobs((prevJobs) => {
+      // all of the following needs to happen within setFailedJobs or it won't update in
+      // PromptDialog because of render cycle & closure btw useElwoodData/DataTransformation etc
+      const newFailedJobs = [...prevJobs, jobString];
+
+      setPromptTitle('Something went wrong');
+      setPromptMessage(
+        <div>
+          An unexpected system error occurred while running job(s):
+          <ul>
+            {newFailedJobs.map((job, index) => (
+              // eslint-disable-next-line react/no-array-index-key
+              <li key={index} style={{ color: '#99223398' }}>{job}</li>
+            ))}
+          </ul>
+          <br />Contact Jataware for assistance.
+        </div>
+      );
+
+      return newFailedJobs;
+    });
+  };
+
+  const closePrompt = () => {
+    setPromptTitle('');
+    setPromptMessage('');
+    setFailedJobs([]);
+  };
 
   // until we get the list of timeresoptions from the backend:
   if (!timeResolutionOptions.length) {
@@ -156,27 +237,20 @@ const DataTransformation = withStyles(() => ({
   };
 
   const generateFetchGeoResArgs = useCallback((argsAnnotations) => {
-    const args = {};
-    argsAnnotations.annotations.geo.forEach((geo) => {
-      if (geo.geo_type === 'latitude') {
-        args.lat_column = geo.name;
-      } else {
-        args.lon_column = geo.name;
-      }
-    });
-    if (args.lat_column && args.lon_column) {
-      return args;
+    const geoColumns = getPrimaryLatLonColumns(argsAnnotations.annotations.geo);
+    if (geoColumns) {
+      return geoColumns;
     }
-    return 'Geospatial resolution cannot be transformed without annotated lat/lon columns';
+    return 'Geospatial resolution cannot be transformed without annotated lat/lng columns marked as primary geo';
   }, []);
 
   const generateFetchGeoBoundaryArgs = useCallback((argsAnnotations) => {
-    const args = { geo_columns: [] };
-    argsAnnotations.annotations.geo.forEach((geo) => args.geo_columns.push(geo.name));
-    if (args.geo_columns.length < 2) {
-      return 'Geospatial coverage cannot be transformed without annotated lat/lon columns';
+    const geoColumns = getPrimaryLatLonColumns(argsAnnotations.annotations.geo);
+
+    if (geoColumns) {
+      return { geo_columns: geoColumns };
     }
-    return args;
+    return 'Geospatial coverage cannot be transformed without annotated lat/lng columns marked as primary geo';
   }, []);
 
   const generateFetchTemporalArgs = useCallback((argsAnnotations) => {
@@ -233,6 +307,28 @@ const DataTransformation = withStyles(() => ({
     setDataLoading(false);
   }, []);
 
+  const onGadmResSuccess = useCallback((resp, setData, setDataError, setDataLoading) => {
+    if (resp) {
+      if (resp.fuzzy_match && resp.fuzzy_match.length) {
+        setData(resp);
+      } else {
+        setDataError('Nothing to review.');
+      }
+    } else {
+      setDataError('Something went wrong. Please contact Jataware for assistance.');
+    }
+    setDataLoading(false);
+  }, []);
+
+  const onGadmCountriesSuccess = useCallback((resp, setData, setDataError, setDataLoading) => {
+    if (resp) {
+      setData(resp);
+    } else {
+      setDataError('Something went wrong. Please contact Jataware for assistance.');
+    }
+    setDataLoading(false);
+  }, []);
+
   const onGetDatesSuccess = useCallback((resp, setData, setDataError, setDataLoading) => {
     if (resp.unique_dates.length) {
       setData(resp.unique_dates);
@@ -255,6 +351,33 @@ const DataTransformation = withStyles(() => ({
     generateArgs: generateFetchGeoResArgs,
     cleanupRef,
     onSuccess: onGeoResSuccess,
+    onBackendFailure
+  });
+
+  const {
+    data: gadmResolution,
+    error: gadmResolutionError
+  } = useElwoodData({
+    datasetId: datasetInfo.id,
+    annotations,
+    jobString: 'gadm_processors.resolution_alternatives',
+    generateArgs: () => {},
+    cleanupRef,
+    onSuccess: onGadmResSuccess,
+    onBackendFailure
+  });
+
+  const {
+    data: gadmCountries,
+    error: gadmCountriesError
+  } = useElwoodData({
+    datasetId: datasetInfo.id,
+    annotations,
+    jobString: 'gadm_processors.all_gadm_values',
+    generateArgs: () => {},
+    cleanupRef,
+    onSuccess: onGadmCountriesSuccess,
+    onBackendFailure
   });
 
   // fetch boundary for ClipMap component
@@ -265,6 +388,7 @@ const DataTransformation = withStyles(() => ({
     generateArgs: generateFetchGeoBoundaryArgs,
     cleanupRef,
     onSuccess: onGeoBoundarySuccess,
+    onBackendFailure
   });
 
   // fetch resolution for AdjustTemporalResolution component
@@ -275,6 +399,7 @@ const DataTransformation = withStyles(() => ({
     generateArgs: generateFetchTemporalArgs,
     cleanupRef,
     onSuccess: onTemporalResSuccess,
+    onBackendFailure
   });
 
   // fetch time bounds for ClipTime component
@@ -285,7 +410,15 @@ const DataTransformation = withStyles(() => ({
     generateArgs: generateFetchTemporalArgs,
     cleanupRef,
     onSuccess: onGetDatesSuccess,
+    onBackendFailure
   });
+
+  // const mapResolutionLoading = !mapResolution && !mapResolutionError;
+  // const mapBoundsLoading = !mapBounds && !mapBoundsError;
+  // const timeResolutionLoading = !timeResolution && !timeResolutionError;
+  // const timeBoundsLoading = !timeBounds && !timeBoundsError;
+  const gadmResolutionLoading = !gadmResolution && !gadmResolutionError;
+  const gadmCountriesLoading = !gadmCountries && !gadmCountriesError;
 
   const handleDrawerClose = (bool, event) => {
     // prevent clicking outside the drawer to close
@@ -301,6 +434,36 @@ const DataTransformation = withStyles(() => ({
   const handleDrawerOpen = (name) => {
     setDrawerOpen(true);
     setDrawerName(name);
+  };
+
+  const disableNext = () => {
+    if (
+      // mapResolutionLoading
+      // || mapBoundsLoading
+      // || timeResolutionLoading
+      // || timeBoundsLoading
+      // ||
+      gadmResolutionLoading
+    ) {
+      // disable if any of the transformations are loading
+      return true;
+    }
+
+    // if (!mapResolutionError && !savedMapResolution) {
+    //   // disable if we are requiring a map resolution to be chosen and it hasn't been
+    //   return true;
+    // }
+
+    // if (!timeResolutionError && !savedTimeResolution) {
+    //   // disable if we are requiring a time resolution to be set and it hasn't been
+    //   return true;
+    // }
+
+    if (!gadmResolutionError && !savedGADMOverrides) {
+      return true;
+    }
+
+    return false;
   };
 
   const processAdjustGeo = () => {
@@ -340,11 +503,18 @@ const DataTransformation = withStyles(() => ({
     }
   };
 
+  const processGadmOverrides = () => {
+    transformationsRef.current.overrides = { gadm: savedGADMOverrides };
+  };
+
   const handleNextStep = () => {
     const adjustGeo = processAdjustGeo();
     const clipMap = processMapClippings();
     const adjustTime = processAdjustTime();
     const clipTime = processClipTime();
+
+    processGadmOverrides();
+
     // Only do all of the below when we've done all of the selected transformations
     // any untouched transformations won't return a promise and thus won't delay this
     Promise.all([adjustGeo, clipMap, adjustTime, clipTime]).then((responses) => {
@@ -379,7 +549,13 @@ const DataTransformation = withStyles(() => ({
           metadata: clonedMetadata
         }
       ).then(() => {
-        // Only handleNext once we've updated the annotations
+        // Ensure annotations with potential gadm resolver updates are stored
+        // To pass in to next step / jobs:
+        setAnnotations({
+          annotations: annotations.annotations,
+          metadata: clonedMetadata
+        });
+
         handleNext();
       });
     });
@@ -445,6 +621,16 @@ const DataTransformation = withStyles(() => ({
             cleanupRef={cleanupRef}
           />
         );
+      case 'gadmResolutionReview':
+        return (
+          <GadmResolver
+            gadmRowData={gadmResolution}
+            onSave={(data) => { setSavedGADMOverrides(data); handleDrawerClose(); }}
+            onCancel={handleDrawerClose}
+            overrides={savedGADMOverrides}
+            countries={gadmCountries}
+          />
+        );
       default:
         return (
           <Typography align="center" variant="h5">
@@ -457,6 +643,15 @@ const DataTransformation = withStyles(() => ({
   return (
     <div className={classes.transformationRoot}>
       <List>
+        <TransformationButton
+          isComplete={Boolean(savedGADMOverrides)}
+          Icon={GlobeIcon}
+          title="Review Administrative Area Detection"
+          onClick={() => handleDrawerOpen('gadmResolutionReview')}
+          loading={gadmResolutionLoading || gadmCountriesLoading}
+          error={gadmResolutionError}
+          required={!gadmResolutionError}
+        />
         <TransformationButton
           isComplete={!!savedMapResolution}
           Icon={GridOnIcon}
@@ -494,6 +689,7 @@ const DataTransformation = withStyles(() => ({
         label="Next"
         handleNext={handleNextStep}
         handleBack={handleBack}
+        disableNext={disableNext()}
       />
 
       <Drawer
@@ -507,6 +703,12 @@ const DataTransformation = withStyles(() => ({
       >
         {drawerInner()}
       </Drawer>
+      <PromptDialog
+        title={promptTitle}
+        message={promptMessage}
+        open={Boolean(promptMessage)}
+        handleClose={closePrompt}
+      />
     </div>
   );
 });
@@ -534,6 +736,7 @@ export default withStyles(({ spacing }) => ({
   stepTitle,
   handleNext,
   handleBack,
+  setAnnotations,
   annotations,
 }) => {
   const cleanupRef = useRef(null);
@@ -553,6 +756,7 @@ export default withStyles(({ spacing }) => ({
     generateArgs: () => ({}),
     cleanupRef,
     onSuccess,
+    onBackendFailure: () => {},
   });
 
   useEffect(() => {
@@ -599,6 +803,7 @@ export default withStyles(({ spacing }) => ({
           handleNext={handleNext}
           handleBack={handleBack}
           annotations={annotations}
+          setAnnotations={setAnnotations}
           cleanupRef={cleanupRef}
         />
       )}

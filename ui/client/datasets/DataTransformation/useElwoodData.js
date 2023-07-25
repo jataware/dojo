@@ -9,6 +9,7 @@ const useElwoodData = ({
   generateArgs,
   jobString,
   cleanupRef,
+  onBackendFailure
 }) => {
   const [data, setData] = useState(null);
   const [options, setOptions] = useState(null);
@@ -16,6 +17,12 @@ const useElwoodData = ({
   const [dataError, setDataError] = useState(false);
 
   useEffect(() => {
+    const handleFailure = () => {
+      setDataError('An unexpected error occurred while starting the job.');
+      onBackendFailure(jobString);
+      setDataLoading(false);
+    };
+
     // Kicks off the elwood job
     const startElwoodJob = async ({ requestArgs }) => {
       const jobQueueResp = await axios.post(
@@ -37,6 +44,7 @@ const useElwoodData = ({
               onSuccess(response.data, setData, setDataError, setDataLoading, setOptions);
               return;
             }
+
             if (cleanupRef.current) {
               // if no data and the component is mounted, try the fetch again
               repeatFetch(jobId, requestArgs, onFailure);
@@ -44,11 +52,14 @@ const useElwoodData = ({
           }
         }).catch(() => {
           if (cleanupRef.current) {
+            // If our initial fetch failed, then we haven't started a job yet
             // only do this if the parent component (cleanupRef) is still mounted
             startElwoodJob({ requestArgs }).then((resp) => {
               repeatFetch(resp, requestArgs, onFailure);
             });
           } else {
+            // we only get here if the component is unmounted, otherwise we keep trying to restart
+            // this may be something to reconsider
             onFailure();
           }
         });
@@ -85,12 +96,12 @@ const useElwoodData = ({
               onSuccess(jobData.result, setData,
                 setDataError, setDataLoading, setOptions);
             } else if (jobData.job_error) {
-              // TODO: setup error handling
-              setDataLoading(false);
+              handleFailure();
             } else {
               repeatFetch(jobData.id, requestArgs, onFailure);
             }
-          });
+          })
+          .catch(() => handleFailure());
       }
     };
 
@@ -147,6 +158,7 @@ const useElwoodData = ({
     dataLoading,
     generateArgs,
     onSuccess,
+    onBackendFailure
   ]);
 
   return { data, options, error: dataError };

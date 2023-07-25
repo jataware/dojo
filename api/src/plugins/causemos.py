@@ -11,7 +11,7 @@ from validation import ModelSchema
 
 from src.settings import settings
 from src.models import model_versions
-
+from src.data import get_context
 
 class CausemosPlugin(PluginInterface):
     def publish(self, data, type):
@@ -34,9 +34,10 @@ class CausemosPlugin(PluginInterface):
             self.submit_run(notify_data)
 
         if type == "indicator":
+            uuid = data["id"]
+            full_context = get_context(uuid)
             # Notify causemos of the new indicator
-            # logger.info("causemos indicator", json.dumps(data, indent=2))
-            self.notify_causemos(data=data, entity_type="indicator")
+            self.notify_causemos(data=full_context["dataset"], entity_type="indicator")
 
 
     def notify_causemos(self, data, entity_type="indicator"):
