@@ -25,7 +25,6 @@ from settings import settings
 logging.basicConfig()
 logging.getLogger().setLevel(logging.DEBUG)
 
-
 def build_elwood_meta_from_context(context, filename=None):
     metadata = context["annotations"]["metadata"]
     if "files" in metadata:
@@ -78,7 +77,7 @@ def dict_get(nested, path, fallback=None):
     if not type(nested) == dict:
         return fallback
 
-    keys = path.split(".")
+    keys = path.split('.')
     value = nested
     try:
         for key in keys:
@@ -115,9 +114,7 @@ class ElwoodProcessor(BaseProcessor):
             mapper_fp,
             admin_level,
             mix_output_path,
-            overrides=dict_get(
-                context, "annotations.metadata.transformations.overrides", {}
-            ),
+            overrides=dict_get(context, "annotations.metadata.transformations.overrides", {})
         )
 
         ret.to_csv(f"{output_path}/elwood_processed_df.csv", index=False)
@@ -172,12 +169,7 @@ def run_elwood(context, filename=None, on_success_endpoint=None):
     if "files" in metadata:
         metadata = metadata["files"][filename]
 
-    if "filetype" in metadata:
-        ftype = metadata["filetype"]
-    elif "filename" in metadata:
-        ftype = metadata["filename"].split(".")[-1]
-    else:
-        ftype = "csv"
+    ftype = metadata.get("filetype", "csv")
     mm_ready_annotations["meta"] = {"ftype": ftype}
     with open(f"{datapath}/elwood_ready_annotations.json", "w") as f:
         f.write(json.dumps(mm_ready_annotations))
@@ -454,19 +446,35 @@ def run_model_elwood(context, *args, **kwargs):
 
     # Writing out the annotations because elwood needs a filepath to this data.
     # Should probably change elwood down the road to accept filepath AND annotations objects.
+    # TODO: this is a hack to handle the model outputs which don't have the double nesting
+    if "annotations" in context and not "annotations" in context["annotations"]:
+        context["annotations"] = {"annotations": context["annotations"]}
+
     mm_ready_annotations = context["annotations"]["annotations"]
 
     metadata = context["annotations"]["metadata"]
     if "files" in metadata:
         metadata = metadata["files"][filename]
-
-    if "filetype" in metadata:
-        ftype = metadata["filetype"]
-    elif "filename" in metadata:
-        ftype = metadata["filename"].split(".")[-1]
+    
+    if 'filetype' in metadata:
+        ftype = metadata['filetype']        
+    elif 'filename' in metadata:
+        ftype = metadata['filename'].split('.')[-1]
     else:
-        ftype = "csv"
-    mm_ready_annotations["meta"] = {"ftype": ftype}
+        ftype = 'csv'
+    
+    if ftype == 'nc':
+        ftype = 'netcdf'
+    elif ftype == 'tiff':
+        ftype = 'geotiff'
+    elif ftype == 'tif':
+        ftype = 'geotiff'
+    elif ftype == 'xlsx':
+        ftype = 'excel'
+
+    # TODO: this is a big hack to allow the preview to continue
+    # in model output annotation to use the raw csv
+    mm_ready_annotations["meta"] = {"ftype": "csv"}
     import pprint
 
     logging.warn(pprint.pformat(mm_ready_annotations))
@@ -490,6 +498,8 @@ def run_model_elwood(context, *args, **kwargs):
     # Final cleanup of temp directory
     shutil.rmtree(localpath)
 
+    # TODO: hacky fix to put back in the correct file type
+    mm_ready_annotations["meta"] = {"ftype": ftype}
     response = {"mixmaster_annotations": mm_ready_annotations}
     return response
 
