@@ -334,6 +334,23 @@ def search_indicators(
         return indicator_data
 
 
+# Comes before the /indicators/{indicator_id} endpoint so that the `register`
+# path here isn't captured by {indicator_id}
+@router.get("/indicators/register")
+def full_dataset_register_help(request: Request):
+    """
+    Help for dataset registration endpoint.
+    """
+    api_url = extract_protocol_host_port(str(request.url))
+
+    return {
+        "message": "Use the following URIs to download metadata and dictionary templates.",
+        "metadata_template_url": f"{api_url}/indicators/register/template",
+        "dictionary_template_url": f"{api_url}/indicators/annotations/file-template",
+        "docs": "https://www.dojo-modeling.com/data-registration.html"
+    }
+
+
 @router.get(
     "/indicators/{indicator_id}", response_model=IndicatorSchema.IndicatorMetadataSchema
 )
@@ -850,6 +867,15 @@ async def full_dataset_register(
             "details": "Your dataset is being processed. Initial metadata has been uploaded, but additional processing time may be required for larger files. Use the indicator endpoint using the new dataset ID provided, and verify that the <published> property is set to <true>, which will indicate processing completion."
         }
     }
+
+
+@router.get("/indicators/register/template")
+def download_metadata_template_file():
+    file_name = "dataset_register_metadata_template.json"
+    headers = {
+        "Content-Disposition": f"attachment; filename={file_name}"
+    }
+    return FileResponse(file_name, headers=headers)
 
 
 def bytes_to_csv(file):
