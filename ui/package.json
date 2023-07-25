@@ -9,7 +9,6 @@
     "test": "jest --watchAll",
     "test:ci": "jest",
     "cypress:open": "cypress open",
-    "cypress:component": "cypress open-ct",
     "dev-client": "webpack serve --config ./webpack.config.js --mode development --content-base client --hot",
     "prod-client": "webpack serve --config ./webpack.config.js --mode production --content-base client --hot",
     "dev": "concurrently npm:dev-*",

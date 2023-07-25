@@ -11,18 +11,5 @@ module.exports = defineConfig({
       return require("./cypress/plugins/index.js")(on, config);
     },
     baseUrl: "http://localhost:8080",
-  },
-
-  component: {
-    setupNodeEvents(on, config) {},
-    viewportHeight: 1200,
-    viewportWidth: 1000,
-  },
-
-  component: {
-    devServer: {
-      framework: "react",
-      bundler: "webpack",
-    },
-  },
+  }
 });
