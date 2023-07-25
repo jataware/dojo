@@ -11,11 +11,12 @@ import uuid
 from datetime import datetime
 from functools import partial
 from typing import List, Optional
+from urllib.parse import urlparse
 
 import openpyxl
 import pandas as pd
 from elasticsearch import Elasticsearch
-from fastapi import APIRouter, File, HTTPException, Query, Response, UploadFile, status
+from fastapi import APIRouter, File, HTTPException, Query, Response, UploadFile, status, Request
 from fastapi.logger import logger
 from fastapi.responses import FileResponse
 from openpyxl.styles import Font
@@ -26,7 +27,7 @@ from redis import Redis
 from rq import Queue
 from src.causemos import deprecate_dataset, notify_causemos
 from src.csv_annotation_parser import format_annotations, xls_to_annotations
-from src.data import get_context
+from src.data import get_context, job
 from src.dojo import search_and_scroll
 from src.feature_queries import keyword_query_v1, hybrid_query_v2
 from src.ontologies import get_ontologies
@@ -52,6 +53,19 @@ q = Queue(connection=redis, default_timeout=-1)
 # For created_at times in epoch milliseconds
 def current_milli_time():
     return round(time.time() * 1000)
+
+
+def extract_protocol_host_port(url):
+    parsed_url = urlparse(url)
+    protocol = parsed_url.scheme
+    host = parsed_url.hostname
+    port = parsed_url.port
+
+    # Include the port in the result if it's present in the URL
+    if port:
+        return f"{protocol}://{host}:{port}"
+    else:
+        return f"{protocol}://{host}"
 
 
 def enqueue_indicator_feature(indicator_id, indicator_dict):
@@ -318,6 +332,23 @@ def search_indicators(
                 indicator["geography"]["admin3"] = []
 
         return indicator_data
+
+
+# Comes before the /indicators/{indicator_id} endpoint so that the `register`
+# path here isn't captured by {indicator_id}
+@router.get("/indicators/register")
+def full_dataset_register_help(request: Request):
+    """
+    Help for dataset registration endpoint.
+    """
+    api_url = extract_protocol_host_port(str(request.url))
+
+    return {
+        "message": "Use the following URIs to download metadata and dictionary templates.",
+        "metadata_template_url": f"{api_url}/indicators/register/template",
+        "dictionary_template_url": f"{api_url}/indicators/annotations/file-template",
+        "docs": "https://www.dojo-modeling.com/data-registration.html"
+    }
 
 
 @router.get(
@@ -677,93 +708,175 @@ def rescale_indicator(indicator_id: str):
     return resp
 
 
-# TODO Add/use csv data dictionary file, Finish after UI-dictionary-file work.
-# @router.post("/indicators/definition")
-"""
-The following function is the start of implementing an endpoint that registers
-a dataset end-to-end from one API call (for developers, services).
-This endpoint will accept multiple files:
-- The dataset data file (presumable a csv, xlsx, netcdf, etc files we support)
-- A dataset metadata json file: contains the dataset name, organization, etc
-- A dictionary file describing the contents of the data and their types.
-  We call this "annotations" under Dojo API (xlsx or csv).
+def get_file_extension(filename):
+    # Match the extension part of the filename using a regex pattern
+    match = re.search(r'\.([^.]+)$', filename)
 
-With all of the three above files, the user would immediately receive an
-acknowledge that the dataset registration is in process. The API and workers would
-continue the registration process end-to-end. This is an alternative to the Dojo UI,
-where a gui requests the user separate data accross multiple steps.
-
-This is a work in progress, and thus has not been registered to the Dojo API yet.
-It currently does register a dataset end-to-end if uncommen this the router.post
-line above, but only supports annotations using the old elwood format within
-the metadata file, as well as only supporting csv datasets.
-
-"""
+    # If there's a match, return the extension; otherwise, return None
+    if match:
+        return match.group(1)
+    else:
+        return None
 
 
-def dataset_register_files(
-    data: UploadFile = File(...), metadata: UploadFile = File(...)
+def augment_errors(errors, indicator_id=None, host="http://localhost:8000"):
+    """
+    Helper Error Fn for full_dataset_register
+    """
+    errors["doc"] = {
+        "dictionary_template_url": f"{host}/indicators/annotations/file-template"
+    }
+    if indicator_id:
+        errors["dataset_id"] = indicator_id
+        errors["actions"] = "Please fix all problems and reissue the request by appending the dataset_id from this error detail as an id query parameter. New URL Example: /indicators/register?id=<uuid>."
+        errors["doc"] = {
+            "dictionary_template_url": f"{host}/indicators/annotations/file-template?id={indicator_id}"
+        }
+
+    raise HTTPException(status_code=400, detail=errors)
+
+
+@router.post("/indicators/register")
+async def full_dataset_register(
+        request: Request,
+        data: UploadFile = File(...),
+        metadata: UploadFile = File(...),
+        dictionary: UploadFile = File(...),
+        id: Optional[str] = Query(None, description="Dataset ID to continue previous failed register attempts."),
 ):
     """
-    Fields (not columns). Define fields (not annotations?)
-    See what we'll do with filename
+    Endpoint to register a dataset using one API call. This is different than
+    the rest of the endpoints, which requires multiple steps for an API caller
+    in order to register a normalized dataset.
+
+    Inputs:
+    - _Metadata_ is a json file which contains dataset name, maintainer, etc.
+    - _data_ is the actual original dataset file (csv, xls, netcdf, geotiff)
+    - _dictionary_ is a xls or csv file that describes/annotates the data's content
+
+    Example create curl:
+    curl -v -F "metadata=@metadata.json" -F "data=@data.csv" -F "dictionary=@dictionary.csv" http://dojo-api-host/indicators/register
+
+    If you run into errors and receive a dataset_id on the error details, you may use the id to continue the process after fixing erros:
+    curl -v -F "metadata=@metadata.json" -F "data=@data.csv" -F "dictionary=@dictionary.csv" http://dojo-api-host/indicators/register?id=<uuid-from-error>
+    This will help ensure there are no dangling datasets and registration is finished.
     """
-    json_data = json.load(metadata.file)
 
-    indicator_error = []
-    annotations_error = []
-
-    # Step 1: Create indicator
-    try:
-        indicator = IndicatorSchema.IndicatorMetadataSchema.parse_obj(json_data)
-    except ValidationError as e:
-        indicator_error = json.loads(e.json())
+    completed = []
+    api_url = extract_protocol_host_port(str(request.url))
 
     try:
-        annotations = MetadataSchema.MetaModel.parse_obj(json_data)
-    except ValidationError as e:
-        annotations_error = json.loads(e.json())
+        # Step 1: Create or Update indicator
+        metadata_contents = json.load(metadata.file)
+        indicator_metadata = {k: metadata_contents[k] for k in metadata_contents.keys() - {'file_metadata'}}
+        is_updating = bool(id)
 
-    merged_possible_errors = indicator_error + annotations_error
+        if is_updating:
+            indicator = IndicatorSchema.IndicatorMetadataSchema.parse_obj({
+                **indicator_metadata,
+                "id": id
+            })
+            update_indicator(indicator)
+            indicator_body = get_indicators(indicator_id=id)
+            indicator_id = id
+            completed.append("updated")
+        else:
+            indicator = IndicatorSchema.IndicatorMetadataSchema.parse_obj(indicator_metadata)
+            create_response = create_indicator(indicator)
+            indicator_body = json.loads(create_response.body)
+            indicator_id = indicator_body["id"]
+            completed.append("created")
 
-    if len(merged_possible_errors):
-        raise HTTPException(status_code=422, detail=merged_possible_errors)
+        # Step 2: Upload dictionary file.
+        await upload_data_dictionary_file(indicator_id=indicator_id, file=dictionary)
 
-    create_response = create_indicator(indicator)
-    response = json.loads(create_response.body)
+        completed.append("dictionary")
 
-    indicator_id = response["id"]
+        # Step 3: Upload raw data file to S3, before converting to xls or anything else
+        # (so that rqworker can download and continue the process)
+        upload_file(indicator_id=indicator_id, file=data)
 
-    # Step 2: Upload file to S3
-    upload_file(indicator_id=indicator_id, file=data)
+        completed.append("s3")
 
-    # Step 3: POST annotations
-    post_annotation(payload=annotations, indicator_id=indicator_id)
+        ext_mapping = {
+            "xls": "excel",
+            "xlsx": "excel",
+            "nc": "netcdf",
+            "csv": "csv",
+            "tif": "geotiff",
+        }
 
-    # TODO Step 4.alpha Transform raw File to csv. Later.
-    # NOTE Q: what's the filename of real raw .xlsx vs converted .csv?
-    # file_processors.file_conversion
+        extension = get_file_extension(data.filename)
+        raw_filename = f"raw_data.{extension}"
 
-    # Step 4: Call job for mixmasta to normalize. It should then call step 5 (publish)
-
-    job_string = "elwood_processors.run_elwood"
-    job_id = f"{indicator_id}_{job_string}"
-
-    context = get_context(indicator_id)
-
-    q.enqueue_call(
-        func=job_string,
-        args=[context],
-        kwargs={
-            "on_success_endpoint": {
-                "verb": "PUT",
-                "url": f"{settings.DOJO_URL}/indicators/{indicator_id}/publish",
+        annotation_payload = MetadataSchema.MetaModel(metadata={
+            "files": {
+                raw_filename: {
+                    **{
+                        "rawFileName": raw_filename,
+                        "filetype": ext_mapping[extension],
+                        "filename": data.filename,
+                        },
+                    **metadata_contents.get("file_metadata", {}),
+                }
             }
-        },
-        job_id=job_id,
-    )
+        })
+        metadata_patch_response = patch_annotation(
+            indicator_id=indicator_id,
+            payload=annotation_payload
+        )
+        completed.append("file_metadata")
 
-    return create_response
+        job_string = "dataset_register_processors.finish_dataset_registration"
+        job_id = f"{indicator_id}_{job_string}"
+
+        context = get_context(indicator_id)
+
+        job_data = q.enqueue_call(
+            func=job_string,
+            args=[context],
+            kwargs={"filename": raw_filename},
+            job_id=job_id,
+        )
+
+        completed.append("register_processor")
+
+        job_status = job(uuid=indicator_id, job_string=job_string)
+        completed.append("job_status")
+
+    except KeyError as e:
+        logger.error(f"Error parsing dictionary file. Attribute: {e}")
+        errors = {"errors": [f"Dictionary file contains an invalid value: {e}"]}
+        return augment_errors(errors, indicator_id, api_url)
+    except HTTPException as e:
+        logger.error(f"HTTPException (possible validation error) while running dataset register endpoint:\n{e}")
+        errors = {"errors": [f"Dictionary file problem: {e.__cause__}"]}
+        return augment_errors(errors, indicator_id, api_url)
+    except Exception as ex_all:
+        logger.error(f"Unexpected Exception while running dataset register endpoint:\n{ex_all}")
+        errors = {"errors": [f"{ex_all}"]}
+        return augment_errors(errors, indicator_id, api_url)
+    finally:
+        logger.info(f"Completed the following dataset register tasks: {completed}")
+
+    del job_status["id"]
+
+    return {
+        **indicator_body,
+        "job": {
+            **job_status,
+            "details": "Your dataset is being processed. Initial metadata has been uploaded, but additional processing time may be required for larger files. Use the indicator endpoint using the new dataset ID provided, and verify that the <published> property is set to <true>, which will indicate processing completion."
+        }
+    }
+
+
+@router.get("/indicators/register/template")
+def download_metadata_template_file():
+    file_name = "dataset_register_metadata_template.json"
+    headers = {
+        "Content-Disposition": f"attachment; filename=dataset_metadata_template.json"
+    }
+    return FileResponse(file_name, headers=headers)
 
 
 def bytes_to_csv(file):
@@ -797,7 +910,7 @@ async def upload_data_dictionary_file(indicator_id: str, file: UploadFile = File
             pass
 
         full_data[0]["message"] = str(e)
-        raise HTTPException(status_code=422, detail=full_data)
+        raise HTTPException(status_code=422, detail=full_data) from e
 
     annotation_payload = MetadataSchema.MetaModel(annotations=formatted)
 

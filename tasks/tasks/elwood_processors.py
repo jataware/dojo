@@ -140,9 +140,9 @@ def run_elwood(context, filename=None, on_success_endpoint=None):
     if not os.path.isdir(datapath):
         os.makedirs(datapath)
 
+    # TODO Could change elwood to accept file-like objects as well as filepaths.
     # Copy raw data file into rq-worker
-    # Could change elwood to accept file-like objects as well as filepaths.
-    # To save processing time, always re-use the converted CSV file
+    # Here we always use the converted CSV file to save time
     if filename is None:
         filename = "raw_data.csv"
         file_suffix = ""
