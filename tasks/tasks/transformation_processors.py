@@ -408,6 +408,6 @@ def post_transformation_message(context, message, prefix):
         "maintainer": context["dataset"]["maintainer"],
     }
 
-    api_url = os.environ.get("DOJO_HOST")
+    api_url = settings.DOJO_URL
     response = requests.patch(f"{api_url}/indicators?indicator_id={uuid}", json=payload)
     print(f"Description updated: {response.content}")
