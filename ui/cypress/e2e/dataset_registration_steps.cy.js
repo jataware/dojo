@@ -1,53 +1,40 @@
 
-/**
- *
- **/
-function mockHttpRequests() {
+const dataset_id = 'mock-test-guid';
 
-  /**
-   *
-   **/
-  const gadmResolution = {
-    id: 'mock-test-guid_gadm_processors.resolution_alternatives',
-    result: {
-      field: 'mockCountry',
-      exact_match: [],
-      fuzzy_match: [],
-    }
-  };
+function get_tranform_intercepts(jobName, result) {
+  const method = 'POST';
+  return [[
+    {
+      method: method,
+      url: `/api/dojo/job/fetch/*_${jobName}`
+    },
+    result,
+    `${method}_${jobName}_fetch`
+  ], [
+    {
+      method: method,
+      url: `/api/dojo/job/*/${jobName}`
+    },
+    {id: `${dataset_id}_${jobName}`, result},
+    `${method}_${jobName}_start`
+  ]];
+}
 
-  cy.intercept({
-    method: 'POST',
-    url: '/job/clear/*'
-  }, {})
+const transformPairs = [
+    ['gadm_processors.resolution_alternatives', {
+      id: `${dataset_id}_gadm_processors.resolution_alternatives`,
+      result: {
+        field: 'mockCountry',
+        exact_match: [],
+        fuzzy_match: [],
+      }
+    }],
 
-  cy.intercept({
-    method: 'POST',
-    url: '/job/fetch/*'
-  }, {})
-
-  cy.intercept({
-    method: 'POST',
-    url: '/api/dojo/job/*/gadm_processors.resolution_alternatives'
-  }, gadmResolution).as('POST_job_gadm_resolution_alternatives');
-
-  cy.intercept({
-    method: 'POST',
-    url: '/api/dojo/job/*/transformation_processors.restore_raw_file'
-  }, {
-    id: 'mock_test_guid_transformation_processors.restore_raw_file',
-    result: {
+    ['transformation_processors.restore_raw_file', {
       "message": "File not found, nothing was changed",
-      "transformed": false
-    }
-  }).as('POST_job_restore_raw_file');
-
-  cy.intercept({
-    method: 'POST',
-    url: '/api/dojo/job/*/resolution_processors.calculate_temporal_resolution'
-  }, {
-    id: 'mock-test-guid_resolution_processors.calculate_temporal_resolution',
-    result: {
+      "transformed":false
+    }],
+    ['resolution_processors.calculate_temporal_resolution', {
       "message": "Resolution calculated successfully",
       "resolution_result": {
         uniformity: 'PERFECT',
@@ -55,30 +42,14 @@ function mockHttpRequests() {
         "resolution": 1,
         "error": 0
       }
-    }
-  }).as('POST_job_calculate_temporal_resolution');
-
-
-  cy.intercept({
-    method: 'POST',
-    url: '/api/dojo/job/*/transformation_processors.get_unique_dates'
-  }, {
-    id: 'mock-test-guid_transformation_processors.get_unique_dates',
-    result: {
+    }],
+    ['transformation_processors.get_unique_dates', {
       "message": "Unique dates list generated",
       "unique_dates": [
         2022
       ]
-    }
-  }).as('POST_job_get_unique_dates');
-
-
-  cy.intercept({
-    method: 'POST',
-    url: '/api/dojo/job/*/transformation_processors.get_boundary_box'
-  }, {
-    id: 'mock-test-guid_transformation_processors.get_boundary_box',
-    result: {
+    }],
+    ['transformation_processors.get_boundary_box', {
       "message": "Boundary box generated successfully",
       "boundary_box": {
         "xmin": -26.0423,
@@ -86,26 +57,28 @@ function mockHttpRequests() {
         "ymin": 26.3539,
         "ymax": 57.7956
       }
-    }
-  }).as('POST_job_get_boundary_box');
-
-  cy.intercept({
-    method: 'POST',
-    url: '/api/dojo/job/*/resolution_processors.calculate_geographical_resolution'
-  }, {
-    result: {
-        "message": "Resolution calculated successfully",
-        "resolution_result": {
-          "uniformity": "uniform",
-          "unit": "country"
-        }
+    }],
+    ['resolution_processors.calculate_geographical_resolution', {
+      "message": "Resolution calculated successfully",
+      "resolution_result": {
+        "uniformity": "uniform",
+        "unit": "country"
       }
-  }).as('POST_job_calculate_geographical_resolution');
+    }],
+    ['gadm_processors.all_gadm_values', ['mocked_countries']],
+  ];
 
-  cy.intercept({
-    method: 'POST',
-    url: '/api/dojo/job/*/gadm_processors.all_gadm_values'
-  }, {result: ['mocked_countries']}).as('POST_job_all_gadm_values');
+/**
+ *
+ **/
+function mockHttpRequests() {
+
+  // Generate pair of jobs for transform jobname,result as defined above this fn
+  transformPairs.forEach((testData, index) => {
+    const [fetch_job, start_job] = get_tranform_intercepts.apply(null, testData);
+    cy.intercept(fetch_job[0], fetch_job[1]).as(fetch_job[2]);
+    cy.intercept(start_job[0], start_job[1]).as(start_job[2]);
+  });
 
   cy.intercept({
     method: 'GET',
@@ -125,14 +98,14 @@ function mockHttpRequests() {
     method: 'POST',
     url: '/api/dojo/indicators/*/upload*'
   }, {
-    "id": "test-guid",
+    "id": "mock-test-guid",
     "filename": "raw_data.csv"
   }).as('POST_file_upload');
 
   cy.intercept({
     method: 'PATCH',
     url: '/api/dojo/indicators/*/annotations'
-  }, "Updated annotation with id = [mock] test-guid").as('PATCH_annotations');
+  }, "Updated annotation with id = mock-test-guid").as('PATCH_annotations');
 
   cy.intercept({
     method: 'POST',
@@ -204,9 +177,9 @@ function mockHttpRequests() {
 
   cy.intercept(
     'POST',
-    '/api/dojo/job/test-guid/elwood_processors.scale_features*',
+    '/api/dojo/job/mock-test-guid/elwood_processors.scale_features*',
     {
-      "id": "test-guid_elwood_processors.scale_features",
+      "id": "mock-test-guid_elwood_processors.scale_features",
       "created_at": "2022-08-17T15:18:27.474601",
       "enqueued_at": "2022-08-17T15:18:27.475190",
       "started_at": "2022-08-17T15:18:27.518462",
@@ -364,7 +337,6 @@ describe('Dataset Register Flow', function () {
         // This SHOULD NOT BE CALLED (no create, but update)
 
         assert.equal(req.method, 'POST');
-        // assert.equal(req.body.id, 'test-guid');
 
         createDatasetSpy();
 
@@ -381,7 +353,7 @@ describe('Dataset Register Flow', function () {
       (req) => {
         // This should be called
         assert.equal(req.method, 'PATCH');
-        assert.equal(req.body.id, 'test-guid');
+        assert.equal(req.body.id, 'mock-test-guid');
 
         updateDatasetSpy();
 
@@ -399,12 +371,12 @@ describe('Dataset Register Flow', function () {
         uploadFileSpy();
 
         return {
-          "id": "test-guid",
+          "id": "mock-test-guid",
           "filename": "raw_data.csv"
         };
       });
 
-    cy.visit('/datasets/register/annotate/test-guid?filename=raw_data.csv');
+    cy.visit('/datasets/register/annotate/mock-test-guid?filename=raw_data.csv');
 
     cy.findAllByRole('button', {name: /^Back$/i}).click();
 
@@ -457,7 +429,7 @@ describe('Dataset Register Flow', function () {
       (req) => {
         // This should be called
         assert.equal(req.method, 'PATCH');
-        assert.equal(req.body.id, 'test-guid');
+        assert.equal(req.body.id, 'mock-test-guid');
 
         updateDatasetSpy(req.body.name);
 
@@ -475,12 +447,12 @@ describe('Dataset Register Flow', function () {
         uploadFileSpy(req.body.includes('dummy.csv'));
 
         return {
-          "id": "test-guid",
+          "id": "mock-test-guid",
           "filename": "raw_data1.csv"
         };
       });
 
-    cy.visit('/datasets/register/register/test-guid?filename=raw_data.csv');
+    cy.visit('/datasets/register/register/mock-test-guid?filename=raw_data.csv');
 
     cy.findByRole('textbox', {name: /^Name/i}).as('DatasetNameField');
 

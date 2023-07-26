@@ -1,6 +1,6 @@
 {
     "indicators": {
-        "id": "test-guid",
+        "id": "mock-test-guid",
         "name": "A better name",
         "family_name": null,
       "description": "A description, yo!",
