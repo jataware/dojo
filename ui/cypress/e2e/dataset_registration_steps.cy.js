@@ -18,6 +18,16 @@ function mockHttpRequests() {
 
   cy.intercept({
     method: 'POST',
+    url: '/job/clear/*'
+  }, {})
+
+  cy.intercept({
+    method: 'POST',
+    url: '/job/fetch/*'
+  }, {})
+
+  cy.intercept({
+    method: 'POST',
     url: '/api/dojo/job/*/gadm_processors.resolution_alternatives'
   }, gadmResolution).as('POST_job_gadm_resolution_alternatives');
 
