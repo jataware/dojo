@@ -2,19 +2,19 @@ import React, { useEffect, useState } from 'react';
 import { Form, Formik } from 'formik';
 
 import isEmpty from 'lodash/isEmpty';
-import Accordion from '@material-ui/core/Accordion';
-import AccordionDetails from '@material-ui/core/AccordionDetails';
-import AccordionSummary from '@material-ui/core/AccordionSummary';
+import Accordion from '@mui/material/Accordion';
+import AccordionDetails from '@mui/material/AccordionDetails';
+import AccordionSummary from '@mui/material/AccordionSummary';
 import axios from 'axios';
-import Container from '@material-ui/core/Container';
-import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
-import Grid from '@material-ui/core/Grid';
-import Typography from '@material-ui/core/Typography';
+import Container from '@mui/material/Container';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import Grid from '@mui/material/Grid';
+import Typography from '@mui/material/Typography';
 
 import * as yup from 'yup';
 import get from 'lodash/get';
 
-import { withStyles } from '@material-ui/core/styles';
+import { withStyles } from '@mui/material/styles';
 import { DomainsAutocomplete } from '../components/ModelDetailForm';
 
 import { Navigation } from '.';

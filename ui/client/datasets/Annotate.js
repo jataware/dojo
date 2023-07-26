@@ -4,9 +4,9 @@ import axios from 'axios';
 import isEmpty from 'lodash/isEmpty';
 import map from 'lodash/map';
 
-import Container from '@material-ui/core/Container';
-import Typography from '@material-ui/core/Typography';
-import { withStyles } from '@material-ui/core/styles';
+import Container from '@mui/material/Container';
+import Typography from '@mui/material/Typography';
+import { withStyles } from '@mui/material/styles';
 
 import AnnotationsSubmitPrompt from './annotations/AnnotationsSubmitPrompt';
 import Instructions from './Instructions';

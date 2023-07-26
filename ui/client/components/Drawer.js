@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 
-import { withStyles } from '@material-ui/core/styles';
+import { withStyles } from '@mui/material/styles';
 
-import CloseIcon from '@material-ui/icons/Close';
-import Drawer from '@material-ui/core/Drawer';
-import IconButton from '@material-ui/core/IconButton';
+import CloseIcon from '@mui/icons-material/Close';
+import Drawer from '@mui/material/Drawer';
+import IconButton from '@mui/material/IconButton';
 
 import ConfirmDialog from './ConfirmDialog';
 

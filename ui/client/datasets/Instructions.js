@@ -1,16 +1,16 @@
 import React, { useState } from 'react';
-import { withStyles } from '@material-ui/core/styles';
-import IconButton from '@material-ui/core/IconButton';
+import { withStyles } from '@mui/material/styles';
+import IconButton from '@mui/material/IconButton';
 
-import Grid from '@material-ui/core/Grid';
+import Grid from '@mui/material/Grid';
 
-import InfoIcon from '@material-ui/icons/Info';
-import TimelineIcon from '@material-ui/icons/Timeline'; // feature
-import LanguageIcon from '@material-ui/icons/Language'; // geo
-import EventIcon from '@material-ui/icons/Event'; // date
+import InfoIcon from '@mui/icons-material/Info';
+import TimelineIcon from '@mui/icons-material/Timeline'; // feature
+import LanguageIcon from '@mui/icons-material/Language'; // geo
+import EventIcon from '@mui/icons-material/Event'; // date
 
-import Popover from '@material-ui/core/Popover';
-import Typography from '@material-ui/core/Typography';
+import Popover from '@mui/material/Popover';
+import Typography from '@mui/material/Typography';
 
 export default withStyles((theme) => ({
   popoverContent: {

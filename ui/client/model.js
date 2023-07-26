@@ -1,9 +1,9 @@
 import React, { useEffect } from 'react';
 
-import Container from '@material-ui/core/Container';
-import Typography from '@material-ui/core/Typography';
+import Container from '@mui/material/Container';
+import Typography from '@mui/material/Typography';
 
-import { makeStyles } from '@material-ui/core/styles';
+import { makeStyles } from '@mui/material/styles';
 import { useLocation } from 'react-router-dom';
 
 import { HorizontalLinearStepper } from './components/ModelFormStepper';

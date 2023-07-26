@@ -4,17 +4,17 @@ import axios from 'axios';
 import debounce from 'lodash/debounce';
 import identity from 'lodash/identity';
 
-import Button from '@material-ui/core/Button';
+import Button from '@mui/material/Button';
 import { GridOverlay, DataGrid } from '@material-ui/data-grid';
 // useGridSlotComponentProps
-import Typography from '@material-ui/core/Typography';
-import { withStyles } from '@material-ui/core/styles';
-import LinearProgress from '@material-ui/core/LinearProgress';
-import CancelIcon from '@material-ui/icons/Cancel';
-import OpenInNewIcon from '@material-ui/icons/OpenInNew';
-import IconButton from '@material-ui/core/IconButton';
-import InputAdornment from '@material-ui/core/InputAdornment';
-import TextField from '@material-ui/core/TextField';
+import Typography from '@mui/material/Typography';
+import { withStyles } from '@mui/material/styles';
+import LinearProgress from '@mui/material/LinearProgress';
+import CancelIcon from '@mui/icons-material/Cancel';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import IconButton from '@mui/material/IconButton';
+import InputAdornment from '@mui/material/InputAdornment';
+import TextField from '@mui/material/TextField';
 import ExpandableDataGridCell from './ExpandableDataGridCell';
 
 const expandableCell = ({ value, colDef }) => (

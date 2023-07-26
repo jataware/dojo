@@ -1,5 +1,5 @@
 import React from 'react';
-import { ThemeProvider } from '@material-ui/core/styles';
+import { ThemeProvider } from '@mui/material/styles';
 import { addDecorator } from "@storybook/react";
 import { MemoryRouter } from 'react-router-dom';
 

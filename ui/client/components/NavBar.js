@@ -2,12 +2,12 @@ import React, { useContext } from 'react';
 
 import { Link } from 'react-router-dom';
 
-import AppBar from '@material-ui/core/AppBar';
-import Button from '@material-ui/core/Button';
-import IconButton from '@material-ui/core/IconButton';
-import Toolbar from '@material-ui/core/Toolbar';
-import Tooltip from '@material-ui/core/Tooltip';
-import { lighten, makeStyles } from '@material-ui/core/styles';
+import AppBar from '@mui/material/AppBar';
+import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
+import Toolbar from '@mui/material/Toolbar';
+import Tooltip from '@mui/material/Tooltip';
+import { lighten, makeStyles } from '@mui/material/styles';
 
 import { ThemeContext } from './ThemeContextProvider';
 

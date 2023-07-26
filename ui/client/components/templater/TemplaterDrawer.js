@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from 'react';
 
-import Typography from '@material-ui/core/Typography';
+import Typography from '@mui/material/Typography';
 
-import { withStyles } from '@material-ui/core/styles';
+import { withStyles } from '@mui/material/styles';
 
 import ConfirmDialog from '../ConfirmDialog';
 import Drawer from '../Drawer';

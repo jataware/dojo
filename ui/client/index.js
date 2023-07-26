@@ -2,7 +2,7 @@ import React from 'react';
 
 import './style.css';
 
-import CssBaseline from '@material-ui/core/CssBaseline';
+import CssBaseline from '@mui/material/CssBaseline';
 import ReactDOM from 'react-dom';
 import {
   Route,
@@ -10,7 +10,7 @@ import {
   Switch,
 } from 'react-router-dom';
 
-import { ThemeProvider } from '@material-ui/core/styles';
+import { ThemeProvider } from '@mui/material/styles';
 
 import NavBar from './components/NavBar';
 import ThemeContextProvider from './components/ThemeContextProvider';

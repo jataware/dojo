@@ -7,17 +7,17 @@ import axios from 'axios';
 import cloneDeep from 'lodash/cloneDeep';
 import isEmpty from 'lodash/isEmpty';
 
-import AspectRatioIcon from '@material-ui/icons/AspectRatio';
-import TodayIcon from '@material-ui/icons/Today';
-import GridOnIcon from '@material-ui/icons/GridOn';
-import MapIcon from '@material-ui/icons/Map';
-import GlobeIcon from '@material-ui/icons/Public';
+import AspectRatioIcon from '@mui/icons-material/AspectRatio';
+import TodayIcon from '@mui/icons-material/Today';
+import GridOnIcon from '@mui/icons-material/GridOn';
+import MapIcon from '@mui/icons-material/Map';
+import GlobeIcon from '@mui/icons-material/Public';
 
-import CircularProgress from '@material-ui/core/CircularProgress';
-import Container from '@material-ui/core/Container';
-import List from '@material-ui/core/List';
-import Typography from '@material-ui/core/Typography';
-import { withStyles } from '@material-ui/core/styles';
+import CircularProgress from '@mui/material/CircularProgress';
+import Container from '@mui/material/Container';
+import List from '@mui/material/List';
+import Typography from '@mui/material/Typography';
+import { withStyles } from '@mui/material/styles';
 
 import ClipMap from './ClipMap';
 import ClipTime from './ClipTime';

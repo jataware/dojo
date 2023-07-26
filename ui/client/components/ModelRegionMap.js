@@ -12,12 +12,12 @@ import * as yup from 'yup';
 
 import { FormikProvider, useFormik } from 'formik';
 
-import { makeStyles } from '@material-ui/core/styles';
+import { makeStyles } from '@mui/material/styles';
 import {
   Box,
   Button,
   Typography,
-} from '@material-ui/core';
+} from '@mui/material';
 
 import FormikTextField from './FormikTextField';
 

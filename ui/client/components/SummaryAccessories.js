@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 
-import DeleteIcon from '@material-ui/icons/Delete';
-import Typography from '@material-ui/core/Typography';
+import DeleteIcon from '@mui/icons-material/Delete';
+import Typography from '@mui/material/Typography';
 
 import DeletionDialog from './DeletionDialog';
 import FileCardList from './FileCardList';

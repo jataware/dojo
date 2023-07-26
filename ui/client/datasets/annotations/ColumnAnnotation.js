@@ -4,9 +4,9 @@ import _values from 'lodash/values';
 
 import { RadioGroup } from 'material-ui-formik-components/RadioGroup';
 import { Switch } from 'material-ui-formik-components/Switch';
-import { withStyles } from '@material-ui/core/styles';
+import { withStyles } from '@mui/material/styles';
 import { Field } from 'formik';
-import Typography from '@material-ui/core/Typography';
+import Typography from '@mui/material/Typography';
 
 import { Aliases } from './Aliases';
 import Autocomplete from '../../components/Autocomplete';

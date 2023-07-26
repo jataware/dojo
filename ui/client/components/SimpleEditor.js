@@ -1,11 +1,11 @@
 import React, { useEffect, useRef, useState } from 'react';
 
-import Container from '@material-ui/core/Container';
-import Divider from '@material-ui/core/Divider';
-import Paper from '@material-ui/core/Paper';
-import TextField from '@material-ui/core/TextField';
+import Container from '@mui/material/Container';
+import Divider from '@mui/material/Divider';
+import Paper from '@mui/material/Paper';
+import TextField from '@mui/material/TextField';
 
-import { makeStyles } from '@material-ui/core/styles';
+import { makeStyles } from '@mui/material/styles';
 
 // we need these to be consistent in multiple places
 // so the line numbers and text lines match up

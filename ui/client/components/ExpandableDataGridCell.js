@@ -1,9 +1,9 @@
 import React, { useRef, useState } from 'react';
 
-import Paper from '@material-ui/core/Paper';
-import Popper from '@material-ui/core/Popper';
-import Typography from '@material-ui/core/Typography';
-import { makeStyles } from '@material-ui/core/styles';
+import Paper from '@mui/material/Paper';
+import Popper from '@mui/material/Popper';
+import Typography from '@mui/material/Typography';
+import { makeStyles } from '@mui/material/styles';
 
 const useStyles = makeStyles(() => ({
   root: {

@@ -1,6 +1,6 @@
 import React from 'react';
 
-import Typography from '@material-ui/core/Typography';
+import Typography from '@mui/material/Typography';
 
 import Drawer from '../Drawer';
 import RunnerForm from './RunnerForm';

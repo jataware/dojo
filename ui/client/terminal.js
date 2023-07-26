@@ -2,10 +2,10 @@ import React, { useContext, useEffect, useState } from 'react';
 
 import axios from 'axios';
 
-import Fab from '@material-ui/core/Fab';
-import Grid from '@material-ui/core/Grid';
+import Fab from '@mui/material/Fab';
+import Grid from '@mui/material/Grid';
 
-import { makeStyles } from '@material-ui/core/styles';
+import { makeStyles } from '@mui/material/styles';
 
 import { useHistory, useParams } from 'react-router-dom';
 

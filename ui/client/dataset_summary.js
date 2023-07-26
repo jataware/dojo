@@ -2,15 +2,15 @@ import React, { useEffect, useState } from 'react';
 
 import axios from 'axios';
 
-import CloseIcon from '@material-ui/icons/Close';
-import Container from '@material-ui/core/Container';
-import Fab from '@material-ui/core/Fab';
-import Grid from '@material-ui/core/Grid';
-import IconButton from '@material-ui/core/IconButton';
-import Typography from '@material-ui/core/Typography';
-import useMediaQuery from '@material-ui/core/useMediaQuery';
+import CloseIcon from '@mui/icons-material/Close';
+import Container from '@mui/material/Container';
+import Fab from '@mui/material/Fab';
+import Grid from '@mui/material/Grid';
+import IconButton from '@mui/material/IconButton';
+import Typography from '@mui/material/Typography';
+import useMediaQuery from '@mui/material/useMediaQuery';
 
-import { makeStyles, useTheme } from '@material-ui/core/styles';
+import { makeStyles, useTheme } from '@mui/material/styles';
 
 import { useLocation } from 'react-router-dom';
 

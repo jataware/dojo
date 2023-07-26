@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
 
-import Button from '@material-ui/core/Button';
-import CloseIcon from '@material-ui/icons/Close';
-import IconButton from '@material-ui/core/IconButton';
-import Typography from '@material-ui/core/Typography';
+import Button from '@mui/material/Button';
+import CloseIcon from '@mui/icons-material/Close';
+import IconButton from '@mui/material/IconButton';
+import Typography from '@mui/material/Typography';
 
 import BasicAlert from './BasicAlert';
 

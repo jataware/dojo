@@ -3,16 +3,16 @@ import clsx from 'clsx';
 import { Form, Formik } from 'formik';
 import * as yup from 'yup';
 
-import { withStyles } from '@material-ui/core/styles';
+import { withStyles } from '@mui/material/styles';
 
-import Button from '@material-ui/core/Button';
-import CloseIcon from '@material-ui/icons/Close';
-import InfoRoundedIcon from '@material-ui/icons/InfoRounded';
-import EqualizerIcon from '@material-ui/icons/Equalizer';
-import Drawer from '@material-ui/core/Drawer';
-import Grid from '@material-ui/core/Grid';
-import IconButton from '@material-ui/core/IconButton';
-import Typography from '@material-ui/core/Typography';
+import Button from '@mui/material/Button';
+import CloseIcon from '@mui/icons-material/Close';
+import InfoRoundedIcon from '@mui/icons-material/InfoRounded';
+import EqualizerIcon from '@mui/icons-material/Equalizer';
+import Drawer from '@mui/material/Drawer';
+import Grid from '@mui/material/Grid';
+import IconButton from '@mui/material/IconButton';
+import Typography from '@mui/material/Typography';
 
 import assignWith from 'lodash/assignWith';
 import difference from 'lodash/difference';

@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
 
-import ClickAwayListener from '@material-ui/core/ClickAwayListener';
-import HelpOutlineIcon from '@material-ui/icons/HelpOutline';
-import Tooltip from '@material-ui/core/Tooltip';
+import ClickAwayListener from '@mui/material/ClickAwayListener';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import Tooltip from '@mui/material/Tooltip';
 
-import { darken, makeStyles } from '@material-ui/core/styles';
+import { darken, makeStyles } from '@mui/material/styles';
 
 const useStyles = makeStyles(() => ({
   root: {

@@ -1,12 +1,12 @@
 import React from 'react';
-import { withStyles } from '@material-ui/core/styles';
+import { withStyles } from '@mui/material/styles';
 import { Field, useField } from 'formik';
 
 import { TextField } from 'material-ui-formik-components/TextField';
 
-import InputAdornment from '@material-ui/core/InputAdornment';
-import CheckCircleIcon from '@material-ui/icons/CheckCircleRounded';
-import ErrorCircleIcon from '@material-ui/icons/ErrorRounded';
+import InputAdornment from '@mui/material/InputAdornment';
+import CheckCircleIcon from '@mui/icons-material/CheckCircleRounded';
+import ErrorCircleIcon from '@mui/icons-material/ErrorRounded';
 import identity from 'lodash/identity';
 
 /**

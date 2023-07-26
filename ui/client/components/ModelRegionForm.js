@@ -1,10 +1,10 @@
 import React, { useEffect, useRef, useState } from 'react';
 
-import AddCircleOutlineIcon from '@material-ui/icons/AddCircleOutline';
-import Autocomplete from '@material-ui/lab/Autocomplete';
-import CloseIcon from '@material-ui/icons/Close';
-import RemoveCircleOutlineIcon from '@material-ui/icons/RemoveCircleOutline';
-import { makeStyles } from '@material-ui/core/styles';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import Autocomplete from '@mui/lab/Autocomplete';
+import CloseIcon from '@mui/icons-material/Close';
+import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
+import { makeStyles } from '@mui/material/styles';
 import {
   Box,
   Button,
@@ -14,7 +14,7 @@ import {
   Snackbar,
   TextField,
   Typography,
-} from '@material-ui/core';
+} from '@mui/material';
 
 import Fuse from 'fuse.js';
 

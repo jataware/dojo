@@ -2,12 +2,12 @@ import React from 'react';
 
 import isEmpty from 'lodash/isEmpty';
 import axios from 'axios';
-import Typography from '@material-ui/core/Typography';
+import Typography from '@mui/material/Typography';
 
 import * as yup from 'yup';
 import get from 'lodash/get';
 
-import { withStyles } from '@material-ui/core/styles';
+import { withStyles } from '@mui/material/styles';
 import { DomainsAutocomplete } from '../components/ModelDetailForm';
 
 import { FormAwareTextField, FormAwareSelect } from './FormFields';

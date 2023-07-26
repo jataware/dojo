@@ -7,15 +7,15 @@ import toLower from 'lodash/toLower';
 import get from 'lodash/get';
 import isEmpty from 'lodash/isEmpty';
 
-import Alert from '@material-ui/lab/Alert';
-import Button from '@material-ui/core/Button';
-import Container from '@material-ui/core/Container';
-import Grid from '@material-ui/core/Grid';
-import Hidden from '@material-ui/core/Hidden';
-import Typography from '@material-ui/core/Typography';
-import QueuedJobIcon from '@material-ui/icons/Schedule';
-import RunningJobIcon from '@material-ui/icons/PlayCircleFilledWhite';
-import { withStyles } from '@material-ui/core/styles';
+import Alert from '@mui/lab/Alert';
+import Button from '@mui/material/Button';
+import Container from '@mui/material/Container';
+import Grid from '@mui/material/Grid';
+import Hidden from '@mui/material/Hidden';
+import Typography from '@mui/material/Typography';
+import QueuedJobIcon from '@mui/icons-material/Schedule';
+import RunningJobIcon from '@mui/icons-material/PlayCircleFilledWhite';
+import { withStyles } from '@mui/material/styles';
 import { useRun } from './SWRHooks';
 
 import { ExternalLink, InternalTab } from './Links';

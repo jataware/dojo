@@ -1,8 +1,8 @@
 import React from 'react';
 import { GadmResolver } from '../client/datasets/DataTransformation/GadmResolver';
 
-import { ThemeProvider } from '@material-ui/core/styles';
-import CssBaseline from '@material-ui/core/CssBaseline';
+import { ThemeProvider } from '@mui/material/styles';
+import CssBaseline from '@mui/material/CssBaseline';
 
 import random from 'lodash/random';
 import times from 'lodash/times';

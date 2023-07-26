@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import TextField from '@material-ui/core/TextField';
+import TextField from '@mui/material/TextField';
 
 /**
  * Special-purpose TextField for document upload. It calls onChange on blurring fields,

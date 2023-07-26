@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 
-import { CircularProgress } from '@material-ui/core';
-import Chip from '@material-ui/core/Chip';
-import Container from '@material-ui/core/Container';
-import FailedIcon from '@material-ui/icons/Clear';
-import Typography from '@material-ui/core/Typography';
+import { CircularProgress } from '@mui/material';
+import Chip from '@mui/material/Chip';
+import Container from '@mui/material/Container';
+import FailedIcon from '@mui/icons-material/Clear';
+import Typography from '@mui/material/Typography';
 
-import { withStyles } from '@material-ui/core/styles';
+import { withStyles } from '@mui/material/styles';
 
 import axios from 'axios';
 import { Navigation } from '.';

@@ -1,6 +1,6 @@
 /* eslint-disable sort-imports */
 import React from 'react';
-import Link from '@material-ui/core/Link';
+import Link from '@mui/material/Link';
 import { Link as RouteLink } from 'react-router-dom';
 
 /**

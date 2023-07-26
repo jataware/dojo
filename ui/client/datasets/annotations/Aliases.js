@@ -3,14 +3,14 @@ import React from 'react';
 import { FieldArray } from 'formik';
 import isEmpty from 'lodash/isEmpty';
 
-import AddCircleIcon from '@material-ui/icons/AddCircle';
-import ArrowRightIcon from '@material-ui/icons/ArrowRight';
-import Button from '@material-ui/core/Button';
-import DeleteIcon from '@material-ui/icons/Delete';
-import IconButton from '@material-ui/core/IconButton';
-import Tooltip from '@material-ui/core/Tooltip';
+import AddCircleIcon from '@mui/icons-material/AddCircle';
+import ArrowRightIcon from '@mui/icons-material/ArrowRight';
+import Button from '@mui/material/Button';
+import DeleteIcon from '@mui/icons-material/Delete';
+import IconButton from '@mui/material/IconButton';
+import Tooltip from '@mui/material/Tooltip';
 
-import { withStyles } from '@material-ui/core/styles';
+import { withStyles } from '@mui/material/styles';
 
 import { FormAwareTextField } from '../FormFields';
 

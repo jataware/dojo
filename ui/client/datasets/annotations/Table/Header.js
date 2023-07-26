@@ -1,14 +1,14 @@
 import React from 'react';
 import clsx from 'clsx';
 
-import Button from '@material-ui/core/Button';
-import Divider from '@material-ui/core/Divider';
-import Typography from '@material-ui/core/Typography';
-import { makeStyles } from '@material-ui/core/styles';
+import Button from '@mui/material/Button';
+import Divider from '@mui/material/Divider';
+import Typography from '@mui/material/Typography';
+import { makeStyles } from '@mui/material/styles';
 
-import TimelineIcon from '@material-ui/icons/Timeline'; // feature
-import LanguageIcon from '@material-ui/icons/Language'; // geo
-import EventIcon from '@material-ui/icons/Event'; // date
+import TimelineIcon from '@mui/icons-material/Timeline'; // feature
+import LanguageIcon from '@mui/icons-material/Language'; // geo
+import EventIcon from '@mui/icons-material/Event'; // date
 
 // TODO use colors from theme
 const inferredColor = '#337288'; // inferred/hint/"action" blue-gray

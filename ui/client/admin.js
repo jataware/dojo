@@ -6,11 +6,11 @@ import axios from 'axios';
 
 import { Link } from 'react-router-dom';
 
-import Button from '@material-ui/core/Button';
-import Grid from '@material-ui/core/Grid';
-import Paper from '@material-ui/core/Paper';
+import Button from '@mui/material/Button';
+import Grid from '@mui/material/Grid';
+import Paper from '@mui/material/Paper';
 
-import { lighten, makeStyles, useTheme } from '@material-ui/core/styles';
+import { lighten, makeStyles, useTheme } from '@mui/material/styles';
 
 import BasicAlert from './components/BasicAlert';
 import LoadingOverlay from './components/LoadingOverlay';

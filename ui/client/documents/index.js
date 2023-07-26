@@ -6,20 +6,20 @@ import axios from 'axios';
 import debounce from 'lodash/debounce';
 import { format } from 'date-fns';
 
-import Button from '@material-ui/core/Button';
+import Button from '@mui/material/Button';
 import { GridOverlay, DataGrid } from '@material-ui/data-grid';
-import Typography from '@material-ui/core/Typography';
-import { withStyles } from '@material-ui/core/styles';
+import Typography from '@mui/material/Typography';
+import { withStyles } from '@mui/material/styles';
 
-import LinearProgress from '@material-ui/core/LinearProgress';
-import CancelIcon from '@material-ui/icons/Cancel';
-import IconButton from '@material-ui/core/IconButton';
-import InputAdornment from '@material-ui/core/InputAdornment';
-import TextField from '@material-ui/core/TextField';
+import LinearProgress from '@mui/material/LinearProgress';
+import CancelIcon from '@mui/icons-material/Cancel';
+import IconButton from '@mui/material/IconButton';
+import InputAdornment from '@mui/material/InputAdornment';
+import TextField from '@mui/material/TextField';
 import map from 'lodash/map';
 import get from 'lodash/get';
 
-import Container from '@material-ui/core/Container';
+import Container from '@mui/material/Container';
 
 import { Link as RouteLink } from 'react-router-dom';
 
