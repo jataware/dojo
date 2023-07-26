@@ -161,7 +161,7 @@ export default withStyles(({ spacing }) => ({
       .finally(() => { setSubmitLoading(false); });
   }
 
-  function next() {
+  async function next() {
     // TODO use errors || warnings as condition to open prompt instead of additional open state
     // clear last viewed warnings||errors in order to close
     const { errors: newErrors, warnings: newWarnings } = validateRequirements(internalAnnotations);
@@ -170,13 +170,21 @@ export default withStyles(({ spacing }) => ({
 
     if (!isEmpty(newErrors) || !isEmpty(newWarnings)) {
       setPreviewPromptOpen(true);
-    } else if (onSubmit) {
-      const formattedAnnotations = formatAnnotationsOUT(internalAnnotations);
-      onSubmit({
-        annotations, formattedAnnotations, setAnnotations, handleNext
-      });
     } else {
-      submitToBackend();
+      try {
+        await axios.post(`/api/dojo/job/clear/${datasetInfo.id}`);
+      } catch (error) {
+        console.info(error?.response?.data);
+      }
+
+      if (onSubmit) {
+        const formattedAnnotations = formatAnnotationsOUT(internalAnnotations);
+        onSubmit({
+          annotations, formattedAnnotations, setAnnotations, handleNext
+        });
+      } else {
+        submitToBackend();
+      }
     }
   }
 

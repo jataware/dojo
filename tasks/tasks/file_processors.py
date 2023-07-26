@@ -9,6 +9,8 @@ from elwood import file_processor
 from base_annotation import BaseProcessor
 from utils import DATASET_STORAGE_BASE_URL, get_rawfile, put_rawfile
 
+from settings import settings
+
 logging.basicConfig()
 logging.getLogger().setLevel(logging.DEBUG)
 
@@ -144,7 +146,7 @@ def model_output_preview(context, *args, **kwargs):
     filepath = context["annotations"]["metadata"]["filepath"]
     file_uuid = context["annotations"]["metadata"]["file_uuid"]
 
-    url = f"{os.environ['TERMINAL_ENDPOINT']}{fileurl}"
+    url = f"{settings.TERMINAL_ENDPOINT}{fileurl}"
 
     req = requests.get(url, stream=True)
     stream = req.raw

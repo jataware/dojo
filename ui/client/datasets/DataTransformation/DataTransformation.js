@@ -173,17 +173,42 @@ const DataTransformation = withStyles(() => ({
 
   const transformationsRef = useRef({});
 
+  // all for the useElwoodData failure dialog
   const [promptTitle, setPromptTitle] = useState('');
   const [promptMessage, setPromptMessage] = useState('');
+  // keep track of the failed jobs separately from the message so we can show them all
+  // We do actually use this, just never directly by name - see onBackendFailure
+  // eslint-disable-next-line no-unused-vars
+  const [failedJobs, setFailedJobs] = useState([]);
 
-  const onBackendFailure = (stack_message) => {
-    setPromptTitle('Something went wrong');
-    setPromptMessage(stack_message);
+  const onBackendFailure = (jobString) => {
+    setFailedJobs((prevJobs) => {
+      // all of the following needs to happen within setFailedJobs or it won't update in
+      // PromptDialog because of render cycle & closure btw useElwoodData/DataTransformation etc
+      const newFailedJobs = [...prevJobs, jobString];
+
+      setPromptTitle('Something went wrong');
+      setPromptMessage(
+        <div>
+          An unexpected system error occurred while running job(s):
+          <ul>
+            {newFailedJobs.map((job, index) => (
+              // eslint-disable-next-line react/no-array-index-key
+              <li key={index} style={{ color: '#99223398' }}>{job}</li>
+            ))}
+          </ul>
+          <br />Contact Jataware for assistance.
+        </div>
+      );
+
+      return newFailedJobs;
+    });
   };
 
   const closePrompt = () => {
     setPromptTitle('');
     setPromptMessage('');
+    setFailedJobs([]);
   };
 
   // until we get the list of timeresoptions from the backend:
@@ -731,6 +756,7 @@ export default withStyles(({ spacing }) => ({
     generateArgs: () => ({}),
     cleanupRef,
     onSuccess,
+    onBackendFailure: () => {},
   });
 
   useEffect(() => {

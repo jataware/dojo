@@ -140,9 +140,9 @@ def run_elwood(context, filename=None, on_success_endpoint=None):
     if not os.path.isdir(datapath):
         os.makedirs(datapath)
 
+    # TODO Could change elwood to accept file-like objects as well as filepaths.
     # Copy raw data file into rq-worker
-    # Could change elwood to accept file-like objects as well as filepaths.
-    # To save processing time, always re-use the converted CSV file
+    # Here we always use the converted CSV file to save time
     if filename is None:
         filename = "raw_data.csv"
         file_suffix = ""
@@ -191,7 +191,7 @@ def run_elwood(context, filename=None, on_success_endpoint=None):
             )
             with open(os.path.join(datapath, local_file), "rb") as fileobj:
                 put_rawfile(path=dest_file_path, fileobj=fileobj)
-            if dest_file_path.startswith("s3:") and not os.environ.get("STORAGE_HOST"):
+            if dest_file_path.startswith("s3:") and not settings.STORAGE_HOST:
                 # "https://jataware-world-modelers.s3.amazonaws.com/dev/indicators/6c9c996b-a175-4fa6-803c-e39b24e38b6e/6c9c996b-a175-4fa6-803c-e39b24e38b6e.parquet.gzip"
                 location_info = urlparse(dest_file_path)
                 data_files.append(
@@ -481,7 +481,7 @@ def scale_features(context, filename=None):
     data_paths_normalized_robust = context["dataset"].get(
         "data_paths_normalized_robust", []
     )
-    api_url = os.environ.get("DOJO_HOST")
+    api_url = settings.DOJO_URL
 
     if not data_paths_normalized:
         data_paths_normalized = []

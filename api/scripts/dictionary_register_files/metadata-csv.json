@@ -1,0 +1,14 @@
+{
+  "name": "Test Dataset Register Endpoint CSV",
+  "description": "Another manual test to register a dataset using API-only endpoint. CSV data file.",
+  "domains": ["Logic"],
+  "maintainer": {
+    "name": "Joel",
+    "email": "joel@jataware2.com",
+    "organization": "Jataware2",
+    "website": "jataware.com"
+  },
+  "file_metadata": {
+    "filetype": "csv"
+  }
+}
