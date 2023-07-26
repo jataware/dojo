@@ -48,7 +48,7 @@ services:
       - dmc-data-model_configs:/model_configs
   airflow-worker:
     environment:
-      AIRFLOW_CONN_AWS_DEFAULT: aws://${AWS_ACCESS_KEY_ID}:${AWS_SECRET_ACCESS_KEY_ENCODED}@
+      AIRFLOW_CONN_AWS_DEFAULT: aws://
       BUCKET: ${DMC_BUCKET}
       DOCKER_URL: "docker.dojo-stack:8375"
       DMC_LOCAL_DIR:
