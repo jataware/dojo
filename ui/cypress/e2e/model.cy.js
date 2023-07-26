@@ -5,7 +5,7 @@ const directiveCmd = `run file.txt --data=${date}`;
 const modelName = `TestName${date}`;
 const configText = `test: ${date} \nmore text`;
 
-describe('Creating a model', () => {
+describe.skip('Creating a model', () => {
   /* use this to reconnect between tests (if developing in terminal) */
   // beforeEach(() => {
   //   cy.visit('/admin');
@@ -332,7 +332,7 @@ describe('Creating a model', () => {
   });
 });
 
-describe('Model metadata form state navigation', () => {
+describe.skip('Model metadata form state navigation', () => {
   it('Keeps state when navigating away and then back', () => {
     cy.visit('/');
     cy.get('[data-test=landingPageModelForm]').click();

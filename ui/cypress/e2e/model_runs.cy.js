@@ -1,6 +1,6 @@
 describe('ModelRuns List', function () {
 
-  before(function () {
+  beforeEach(function () {
     cy.fixture('modelruns.json')
       .then((runs) => {
         cy.intercept('/api/dojo/runs*', { body: {results: runs} });
@@ -53,7 +53,7 @@ describe(`Summary Page for Model Runs`, function () {
 
     context(`Status: ${Cypress._.get(run, 'attributes.status', 'queued')}`, function () {
 
-      before(function () {
+      beforeEach(function () {
         cy.intercept({ method: 'GET', url: '/api/dojo/runs/*' }, run);
         cy.visit('/runs/fooStubbed');
       });
