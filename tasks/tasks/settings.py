@@ -12,8 +12,6 @@ class Settings(BaseSettings):
     TERMINAL_ENDPOINT: str
 
     STORAGE_HOST: str = None
-    AWS_ACCESS_KEY_ID: str = ""
-    AWS_SECRET_ACCESS_KEY: str = ""
 
     class Config:
         case_sensitive = True

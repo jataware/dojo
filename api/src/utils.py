@@ -22,9 +22,6 @@ es = Elasticsearch([settings.ELASTICSEARCH_URL], port=settings.ELASTICSEARCH_POR
 s3 = boto3.client(
     "s3",
     endpoint_url=os.getenv("STORAGE_HOST") or None,
-    aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
-    aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
-    aws_session_token=None,
     config=boto3.session.Config(signature_version="s3v4"),
     verify=False,
 )
@@ -208,9 +205,6 @@ def list_files(path):
 async def stream_csv_from_data_paths(data_paths, wide_format="false"):
 
     storage_options = {
-        "key": os.getenv("AWS_ACCESS_KEY_ID"),
-        "secret": os.getenv("AWS_SECRET_ACCESS_KEY"),
-        "token": None,
         "client_kwargs": {"endpoint_url": os.getenv("STORAGE_HOST") or None},
     }
 
@@ -265,16 +259,6 @@ async def compress_stream(content):
 
 
 def add_date_to_dataset(path):
-    # Read file in
-    storage_options = {
-        "key": os.getenv("AWS_ACCESS_KEY_ID"),
-        "secret": os.getenv("AWS_SECRET_ACCESS_KEY"),
-        "token": None,
-        "client_kwargs": {"endpoint_url": None},
-    }
-    # dataframe = pd.read_csv(
-    #     path, storage_options=None if path.startswith("http") else storage_options
-    # )
     file = get_rawfile(path)
     dataframe = pd.read_csv(file)
     time_format = "%Y-%m-%d"

@@ -73,7 +73,6 @@ terminal/.dockerenv:
 
 docker-compose.yaml:$(COMPOSE_FILES) docker-compose.build-override.yaml terminal/.dockerenv envfile
 	export $$(grep -v '^#' envfile | xargs); \
-	export AWS_SECRET_ACCESS_KEY_ENCODED=$$(echo -n $${AWS_SECRET_ACCESS_KEY} | \
 		curl -Gso /dev/null -w %{url_effective} --data-urlencode @- "" | cut -c 3-); \
 	if [[ -z "$${DOCKERHUB_AUTH}" ]]; then \
 		export DOCKERHUB_AUTH="$$(echo '{"username":"'$${DOCKERHUB_USER}'","password":"'$${DOCKERHUB_PWD}'","email":"'$${DOCKERHUB_EMAIL}'"}' | base64 | tr -d '\n')"; \
@@ -91,7 +90,7 @@ docker-compose.yaml:$(COMPOSE_FILES) docker-compose.build-override.yaml terminal
 ui/package-lock.json:ui/package.json
 	$(DOCKER_COMPOSE) run ui npm i -y --package-lock-only
 
-ui/node_modules:ui/package-lock.json | 
+ui/node_modules:ui/package-lock.json |
 	$(DOCKER_COMPOSE) run ui npm ci -y
 
 .PHONY:up
