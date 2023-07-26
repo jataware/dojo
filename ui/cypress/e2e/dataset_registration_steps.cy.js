@@ -21,52 +21,53 @@ function get_tranform_intercepts(jobName, result) {
 }
 
 const transformPairs = [
-    ['gadm_processors.resolution_alternatives', {
-      id: `${dataset_id}_gadm_processors.resolution_alternatives`,
-      result: {
-        field: 'mockCountry',
-        exact_match: [],
-        fuzzy_match: [],
-      }
-    }],
+  ['gadm_processors.resolution_alternatives', {
+    id: `${dataset_id}_gadm_processors.resolution_alternatives`,
+    result: {
+      field: 'mockCountry',
+      exact_match: [],
+      fuzzy_match: [],
+    }
+  }],
 
-    ['transformation_processors.restore_raw_file', {
-      "message": "File not found, nothing was changed",
-      "transformed":false
-    }],
-    ['resolution_processors.calculate_temporal_resolution', {
-      "message": "Resolution calculated successfully",
-      "resolution_result": {
-        uniformity: 'PERFECT',
-        "unit": "day",
-        "resolution": 1,
-        "error": 0
-      }
-    }],
-    ['transformation_processors.get_unique_dates', {
-      "message": "Unique dates list generated",
-      "unique_dates": [
-        2022
-      ]
-    }],
-    ['transformation_processors.get_boundary_box', {
-      "message": "Boundary box generated successfully",
-      "boundary_box": {
-        "xmin": -26.0423,
-        "xmax": 15.3333,
-        "ymin": 26.3539,
-        "ymax": 57.7956
-      }
-    }],
-    ['resolution_processors.calculate_geographical_resolution', {
-      "message": "Resolution calculated successfully",
-      "resolution_result": {
-        "uniformity": "uniform",
-        "unit": "country"
-      }
-    }],
-    ['gadm_processors.all_gadm_values', ['mocked_countries']],
-  ];
+  ['transformation_processors.restore_raw_file', {
+    "message": "File not found, nothing was changed",
+    "transformed":false
+  }],
+  ['resolution_processors.calculate_temporal_resolution', {
+    "message": "Resolution calculated successfully",
+    "resolution_result": {
+      uniformity: 'PERFECT',
+      "unit": "day",
+      "resolution": 1,
+      "error": 0
+    }
+  }],
+  ['transformation_processors.get_unique_dates', {
+    "message": "Unique dates list generated",
+    "unique_dates": [
+      2022
+    ]
+  }],
+  ['transformation_processors.get_boundary_box', {
+    "message": "Boundary box generated successfully",
+    "boundary_box": {
+      "xmin": -26.0423,
+      "xmax": 15.3333,
+      "ymin": 26.3539,
+      "ymax": 57.7956
+    }
+  }],
+  ['resolution_processors.calculate_geographical_resolution', {
+    "message": "Resolution calculated successfully",
+    "resolution_result": {
+      "uniformity": "uniform",
+      "unit": "country"
+    }
+  }],
+  ['gadm_processors.all_gadm_values', ['mocked_countries']],
+  ['transformation_processors.scale_time', {}]
+];
 
 /**
  *
@@ -79,6 +80,11 @@ function mockHttpRequests() {
     cy.intercept(fetch_job[0], fetch_job[1]).as(fetch_job[2]);
     cy.intercept(start_job[0], start_job[1]).as(start_job[2]);
   });
+
+  cy.intercept({
+    method: 'POST',
+    url: '/api/dojo/job/clear/mock-test-guid'
+  }, 'No job found for uuid = mock-test-guid');
 
   cy.intercept({
     method: 'GET',
@@ -230,6 +236,8 @@ describe('Dataset Register Flow', function () {
 
     cy.get('@DatasetName').type('Dataset Name X');
     cy.get('@DatasetDescription').type('A sample description for a glorious test');
+
+    cy.wait(200);
 
     cy.get('@DomainsSelector').type('Mathematics');
     cy.findByRole('listbox').click();
