@@ -12,7 +12,7 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import Autocomplete, { createFilterOptions } from '@mui/lab/Autocomplete';
 
-import { makeStyles } from '@mui/material/styles';
+import { makeStyles } from 'tss-react/mui';
 import { useHistory, useLocation, useParams } from 'react-router-dom';
 
 import { useModel } from './components/SWRHooks';
@@ -20,7 +20,7 @@ import { useModel } from './components/SWRHooks';
 import BasicAlert from './components/BasicAlert';
 import LoadingOverlay from './components/LoadingOverlay';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   formControl: {
     minWidth: 200,
   },
@@ -67,7 +67,7 @@ function useQuery() {
 }
 
 const Provision = () => {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const history = useHistory();
   const query = useQuery();
   const relaunch = query.has('relaunch');

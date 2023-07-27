@@ -3,9 +3,9 @@ import React from 'react';
 import CircularProgress from '@mui/material/CircularProgress';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
-import { makeStyles } from '@mui/material/styles';
+import { makeStyles } from 'tss-react/mui';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   loadingOverlay: {
     left: 0,
     height: '100%',
@@ -28,7 +28,7 @@ const useStyles = makeStyles((theme) => ({
 function LoadingOverlay({
   text, error, link
 }) {
-  const classes = useStyles();
+  const { classes } = useStyles();
 
   let errorTextHeader;
   let errorTextBody;

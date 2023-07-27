@@ -6,13 +6,15 @@ import IconButton from '@mui/material/IconButton';
 import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import Typography from '@mui/material/Typography';
 
-import { makeStyles, useTheme } from '@mui/material/styles';
+import { useTheme } from '@mui/material/styles';
+
+import { makeStyles } from 'tss-react/mui';
 
 import HelperTip from './HelperTip';
 
 import { useDirective } from './SWRHooks';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   card: {
     alignItems: 'flex-start',
     display: 'flex',
@@ -31,7 +33,7 @@ const useStyles = makeStyles((theme) => ({
 const DirectiveBox = ({
   disableClick, handleClick, modelId, summaryPage
 }) => {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const theme = useTheme();
 
   const { directive, directiveLoading } = useDirective(modelId);

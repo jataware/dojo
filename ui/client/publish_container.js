@@ -14,7 +14,7 @@ import Typography from '@mui/material/Typography';
 
 import { useHistory } from 'react-router-dom';
 
-import { makeStyles } from '@mui/material/styles';
+import { makeStyles } from 'tss-react/mui';
 
 import HelperTip from './components/HelperTip';
 
@@ -26,7 +26,7 @@ import {
 
 import { sleep } from './utils';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   root: {
     position: 'fixed',
     bottom: '0',
@@ -76,7 +76,7 @@ const imageTags = (modelId) => {
 
 const PublishContainer = ({ modelId, setUploading, mutateModel }) => {
   const { model } = useModel(modelId);
-  const classes = useStyles();
+  const { classes } = useStyles();
   const [enableFinished, setEnableFinished] = useState(false);
   const [minimized, setMinimized] = useState(false);
   const [uploadInProgress, setUploadInProgress] = useState(false);

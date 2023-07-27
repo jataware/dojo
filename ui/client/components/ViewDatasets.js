@@ -3,19 +3,22 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 
 import Button from '@mui/material/Button';
-import ToggleButton from '@mui/lab/ToggleButton';
-import ToggleButtonGroup from '@mui/lab/ToggleButtonGroup';
 import Container from '@mui/material/Container';
 import { DataGrid } from '@material-ui/data-grid';
 import Typography from '@mui/material/Typography';
-import { darken, makeStyles } from '@mui/material/styles';
+
+import ToggleButton from '@mui/lab/ToggleButton';
+import ToggleButtonGroup from '@mui/lab/ToggleButtonGroup';
+import { darken } from '@mui/material/styles';
+
+import { makeStyles } from 'tss-react/mui';
+
 import ExpandableDataGridCell from './ExpandableDataGridCell';
 import LoadingOverlay from './LoadingOverlay';
 import SearchDatasets from './SearchDatasets';
-
 import ViewFeatures from './ViewFeatures';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   root: {
     padding: [[theme.spacing(8), theme.spacing(2), theme.spacing(2)]],
   },
@@ -159,7 +162,7 @@ const getDatasets = (setDatasets, setDatasetsError, setDatasetsLoading) => {
  *
  */
 function ViewDatasets() {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const [datasets, setDatasets] = useState([]);
   const [datasetsError, setDatasetsError] = useState(false);
   const [datasetsLoading, setDatasetsLoading] = useState(false);

@@ -7,11 +7,13 @@ import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import Toolbar from '@mui/material/Toolbar';
 import Tooltip from '@mui/material/Tooltip';
-import { lighten, makeStyles } from '@mui/material/styles';
+import { lighten } from '@mui/material/styles';
+
+import { makeStyles } from 'tss-react/mui';
 
 import { ThemeContext } from './ThemeContextProvider';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()()((theme) => ({
   appBarRoot: {
     backgroundColor: lighten(theme.palette.primary.light, 0.6),
   },
@@ -30,7 +32,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const NavBar = () => {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const { showNavBar } = useContext(ThemeContext);
 
   if (!showNavBar) {

@@ -19,9 +19,11 @@ import Slide from '@mui/material/Slide';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 
-import { makeStyles, useTheme, withStyles } from '@mui/material/styles';
+import { useTheme, withStyles } from '@mui/material/styles';
 
-const useStyles = makeStyles((theme) => ({
+import { makeStyles } from 'tss-react/mui';
+
+const useStyles = makeStyles()((theme) => ({
   versionButtonWrapper: {
     marginTop: theme.spacing(2),
   },
@@ -76,7 +78,7 @@ const SummaryIntroDialog = ({
 
   const history = useHistory();
 
-  const classes = useStyles();
+  const { classes } = useStyles();
   const theme = useTheme();
 
   const handleClose = () => {

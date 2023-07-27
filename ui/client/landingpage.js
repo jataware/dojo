@@ -20,9 +20,9 @@ import MenuBookIcon from '@mui/icons-material/MenuBook';
 
 import useSWRImmutable from 'swr/immutable';
 
-import { makeStyles } from '@mui/material/styles';
+import { makeStyles } from 'tss-react/mui';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()()((theme) => ({
   topContentWrapper: {
     display: 'flex',
     justifyContent: 'center',
@@ -32,7 +32,7 @@ const useStyles = makeStyles((theme) => ({
     [theme.breakpoints.up('lg')]: {
       padding: theme.spacing(4),
     },
-    [theme.breakpoints.down('lg')]: {
+    [theme.breakpoints.down('xl')]: {
       padding: [[theme.spacing(3), theme.spacing(4), theme.spacing(1)]],
     },
   },
@@ -43,7 +43,7 @@ const useStyles = makeStyles((theme) => ({
     [theme.breakpoints.up('lg')]: {
       marginBottom: theme.spacing(6),
     },
-    [theme.breakpoints.down('lg')]: {
+    [theme.breakpoints.down('xl')]: {
       marginBottom: theme.spacing(3),
     },
   },
@@ -52,7 +52,7 @@ const useStyles = makeStyles((theme) => ({
     [theme.breakpoints.up('lg')]: {
       marginBottom: theme.spacing(6),
     },
-    [theme.breakpoints.down('lg')]: {
+    [theme.breakpoints.down('xl')]: {
       marginBottom: theme.spacing(3),
     },
   },
@@ -60,7 +60,7 @@ const useStyles = makeStyles((theme) => ({
     backgroundColor: theme.palette.grey[100],
     padding: theme.spacing(4),
     height: '100%',
-    [theme.breakpoints.down('lg')]: {
+    [theme.breakpoints.down('xl')]: {
       padding: [[theme.spacing(3), theme.spacing(4), theme.spacing(4)]],
     },
   },
@@ -139,7 +139,7 @@ const useRuns = () => {
 };
 
 const LandingPage = () => {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const [loggedIn] = useState(true);
 
   const { models, modelsLoading, modelsError } = useModels();

@@ -13,12 +13,12 @@ import {
 import { KeyboardDatePicker } from 'material-ui-formik-components/KeyboardDatePicker';
 import TextField from '@mui/material/TextField';
 import axios from 'axios';
-import { makeStyles } from '@mui/material/styles';
+import { makeStyles } from 'tss-react/mui';
 import { Field, FormikProvider, useFormik } from 'formik';
 
 import FormikTextField from './FormikTextField';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   desc: {
     marginTop: theme.spacing(2),
   },
@@ -110,7 +110,7 @@ export const DomainsAutocomplete = ({
 export const ModelDetailFields = ({
   formik
 }) => {
-  const classes = useStyles();
+  const { classes } = useStyles();
 
   return (
     <>
@@ -161,7 +161,7 @@ export const ModelDetailFields = ({
 export const ModelDetail = ({
   modelInfo, handleBack, handleNext
 }) => {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const formik = useFormik({
     initialValues: modelInfo,
     validationSchema: detailValidationSchema,

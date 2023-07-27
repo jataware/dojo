@@ -4,13 +4,13 @@ import CancelIcon from '@mui/icons-material/Cancel';
 import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
 import TextField from '@mui/material/TextField';
-import { makeStyles } from '@mui/material/styles';
+import { makeStyles } from 'tss-react/mui';
 
 import Fuse from 'fuse.js';
 
 import BasicAlert from './BasicAlert';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   searchWrapper: {
     marginBottom: theme.spacing(2),
     display: 'flex',
@@ -40,7 +40,7 @@ const SearchDatasets = ({ setSearchedDatasets, datasets }) => {
     message: ''
   });
 
-  const classes = useStyles();
+  const { classes } = useStyles();
 
   useEffect(() => {
     // define this inside the useEffect to ensure stability

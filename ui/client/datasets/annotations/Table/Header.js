@@ -4,7 +4,7 @@ import clsx from 'clsx';
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
 import Typography from '@mui/material/Typography';
-import { makeStyles } from '@mui/material/styles';
+import { makeStyles } from 'tss-react/mui';
 
 import TimelineIcon from '@mui/icons-material/Timeline'; // feature
 import LanguageIcon from '@mui/icons-material/Language'; // geo
@@ -27,7 +27,7 @@ const mapTypeIcon = {
   time: EventIcon // date
 };
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   multipartRoot: {
     position: 'absolute',
     left: 0,
@@ -100,7 +100,7 @@ const useStyles = makeStyles((theme) => ({
 const MultiPartHeader = ({
   status, colSpan, TypeIcon, qualifies, showMarkers, buttonClick, column
 }) => {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const shouldDisplayStatus = ((['inferred', 'primary'].includes(status) || qualifies));
 
   return (
@@ -147,7 +147,7 @@ const Header = ({
   buttonClick,
   drawerOpen = false,
 }) => {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const isAnnotated = ['annotated', 'primary'].includes(status);
   const isInferred = status === 'inferred' && !isMultiPartMember;
   // only display the status badge if it is inferred or primary OR it is a qualifier

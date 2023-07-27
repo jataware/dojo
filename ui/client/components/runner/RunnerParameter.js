@@ -7,7 +7,7 @@ import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
 import { Select, TextField } from 'material-ui-formik-components';
 
-import { makeStyles } from '@mui/material/styles';
+import { makeStyles } from 'tss-react/mui';
 
 import HelperTip from '../HelperTip';
 import { isNum, patchOptions } from './runnerTools';
@@ -17,7 +17,7 @@ const makeOptionConverter = (type, option) => ({
   value: isNum(type) ? Number(option) : option
 });
 
-const useStyles = makeStyles(() => ({
+const useStyles = makeStyles()(() => ({
   runField: {
     display: 'flex',
     flexDirection: 'column',
@@ -41,7 +41,7 @@ const RunnerParameter = ({
   min,
   max,
 }) => {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const minWarning = min ? `'${name}' ≥ ${min}.` : '';
   const maxWarning = max ? `'${name}' ≤ ${max}.` : '';
   const limitWarning = min + max ? `${minWarning} ${maxWarning}` : undefined;

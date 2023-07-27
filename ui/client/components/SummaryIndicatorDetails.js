@@ -4,13 +4,13 @@ import Button from '@mui/material/Button';
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
 
-import { makeStyles } from '@mui/material/styles';
+import { makeStyles } from 'tss-react/mui';
 
 import CollapseText from './CollapseText';
 import DatasetDownload from './DatasetDownload';
 import IndicatorCountryMap from './CountryMap';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   editButton: {
     float: 'right',
     border: '2px solid black',
@@ -46,7 +46,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 function SummaryIndicatorDetails({ indicator }) {
-  const classes = useStyles();
+  const { classes } = useStyles();
 
   // no need to spread the following out onto a million lines
   /* eslint-disable react/jsx-one-expression-per-line */

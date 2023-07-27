@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-import { makeStyles } from '@mui/material/styles';
+import { makeStyles } from 'tss-react/mui';
 
 import axios from 'axios';
 
@@ -14,7 +14,7 @@ import {
 
 import GeographyListModal from './GeographyListModal';
 
-const useStyles = makeStyles(() => ({
+const useStyles = makeStyles()(() => ({
   myLeaflet: {
     backgroundColor: '#a3ceff',
   },
@@ -43,7 +43,7 @@ function CountryMap({ dataset }) {
     axios.get('/assets/countries_borders.json')
       .then((countryBorderData) => { setCountries([...countryBorderData.data.features]); });
   }, []);
-  const classes = useStyles();
+  const { classes } = useStyles();
   return (
     <div>
       {countries.length < 1

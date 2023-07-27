@@ -11,11 +11,13 @@ import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
 import Typography from '@mui/material/Typography';
 
-import { makeStyles, useTheme } from '@mui/material/styles';
+import { useTheme } from '@mui/material/styles';
+
+import { makeStyles } from 'tss-react/mui';
 
 import BasicAlert from './BasicAlert';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   root: {
     height: '114px',
   },
@@ -35,7 +37,7 @@ function CSVDownload({ resource, index = 'indicators' }) {
   const name = `${resource.id}.csv`;
 
   const theme = useTheme();
-  const classes = useStyles();
+  const { classes } = useStyles();
 
   const handleChange = (event) => {
     setCsvChoice(event.target.value);

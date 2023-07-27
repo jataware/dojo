@@ -5,7 +5,7 @@ import axios from 'axios';
 import Fab from '@mui/material/Fab';
 import Grid from '@mui/material/Grid';
 
-import { makeStyles } from '@mui/material/styles';
+import { makeStyles } from 'tss-react/mui';
 
 import { useHistory, useParams } from 'react-router-dom';
 
@@ -31,7 +31,7 @@ import {
 } from './components/SWRHooks';
 import RegistrationStepper from './datasets/RegistrationStepper';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   pageRoot: {
     backgroundColor: '#272d33',
   },
@@ -66,7 +66,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const CenteredGrid = ({ model }) => {
-  const classes = useStyles();
+  const { classes } = useStyles();
 
   const { mutateOutputs } = useOutputFiles(model.id);
 

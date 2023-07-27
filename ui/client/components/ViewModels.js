@@ -13,7 +13,7 @@ import HelpIcon from '@mui/icons-material/Help';
 import Typography from '@mui/material/Typography';
 import useMediaQuery from '@mui/material/useMediaQuery';
 
-import { makeStyles } from '@mui/material/styles';
+import { makeStyles } from 'tss-react/mui';
 
 import { useHistory, Link } from 'react-router-dom';
 
@@ -21,7 +21,7 @@ import ExpandableDataGridCell from './ExpandableDataGridCell';
 import LoadingOverlay from './LoadingOverlay';
 import Search from './SearchItems';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   root: {
     padding: [[theme.spacing(10), theme.spacing(2), theme.spacing(2)]],
   },
@@ -153,7 +153,7 @@ const ViewModels = ({
   includeStatuses = true
 }) => {
   const history = useHistory();
-  const classes = useStyles();
+  const { classes } = useStyles();
   const [models, setModels] = useState([]);
   const [modelsError, setModelsError] = useState(false);
   const [modelsLoading, setModelsLoading] = useState(false);

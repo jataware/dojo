@@ -11,7 +11,7 @@ import { v4 as uuidv4 } from 'uuid';
 import cloneDeep from 'lodash/cloneDeep';
 import isEqual from 'lodash/isEqual';
 
-import { makeStyles } from '@mui/material/styles';
+import { makeStyles } from 'tss-react/mui';
 import { useHistory } from 'react-router-dom';
 
 import BasicAlert from './BasicAlert';
@@ -20,7 +20,7 @@ import { ModelDetail } from './ModelDetailForm';
 import { ModelOverview } from './ModelOverviewForm';
 import ModelRegionForm from './ModelRegionForm';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   root: {
     width: '100%',
     position: 'relative'
@@ -128,7 +128,7 @@ const createModel = async (model, history) => {
 
 export const HorizontalLinearStepper = ({ modelFamily }) => {
   const history = useHistory();
-  const classes = useStyles();
+  const { classes } = useStyles();
   const [lockFamilyName, setLockFamilyName] = useState(false);
   const [activeStep, setActiveStep] = React.useState(() => {
     // put us back to wherever we left off, if localstorage has a modelStep

@@ -13,11 +13,11 @@ import NavigateNextIcon from '@mui/icons-material/NavigateNext';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 
-import { makeStyles } from '@mui/material/styles';
+import { makeStyles } from 'tss-react/mui';
 
 import { useDirective, useModel } from './SWRHooks';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   root: {
     minHeight: '340px',
     minWidth: '500px',
@@ -46,7 +46,7 @@ const EndSessionDialog = ({
   const [commitMessage, setCommitMessage] = useState();
   const [published, setPublished] = useState(false);
 
-  const classes = useStyles();
+  const { classes } = useStyles();
   const { directive } = useDirective(model.id);
   const { mutateModel } = useModel(model.id);
 

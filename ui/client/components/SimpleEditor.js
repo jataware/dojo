@@ -5,14 +5,14 @@ import Divider from '@mui/material/Divider';
 import Paper from '@mui/material/Paper';
 import TextField from '@mui/material/TextField';
 
-import { makeStyles } from '@mui/material/styles';
+import { makeStyles } from 'tss-react/mui';
 
 // we need these to be consistent in multiple places
 // so the line numbers and text lines match up
 const LINE_HEIGHT = 21;
 const FONT_SIZE = '14px';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   root: {
     display: 'flex',
     fontFamily: 'monospace',
@@ -61,7 +61,7 @@ const displayLineNumbers = () => {
 };
 
 const SimpleEditor = ({ editorContents, setEditorContents }) => {
-  const classes = useStyles();
+  const { classes } = useStyles();
   // we need this ref to access the height of the textarea so we can display
   // the appropriate number of line numbers
   const textRef = useRef(null);

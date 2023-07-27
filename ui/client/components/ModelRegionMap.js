@@ -12,7 +12,7 @@ import * as yup from 'yup';
 
 import { FormikProvider, useFormik } from 'formik';
 
-import { makeStyles } from '@mui/material/styles';
+import { makeStyles } from 'tss-react/mui';
 import {
   Box,
   Button,
@@ -21,7 +21,7 @@ import {
 
 import FormikTextField from './FormikTextField';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   chip: {
     margin: theme.spacing(0.5),
   },
@@ -64,7 +64,7 @@ const validationSchema = yup.object({
 });
 
 function ModelRegionMap({ mapCoords, updateMapCoords, showMap }) {
-  const classes = useStyles();
+  const { classes } = useStyles();
   let handleAddRegion;
 
   const formik = useFormik({

@@ -10,11 +10,11 @@ import Slide from '@mui/material/Slide';
 import Toolbar from '@mui/material/Toolbar';
 import Typography from '@mui/material/Typography';
 
-import { makeStyles } from '@mui/material/styles';
+import { makeStyles } from 'tss-react/mui';
 
 import ConfirmDialog from './ConfirmDialog';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   title: {
     marginLeft: theme.spacing(2),
     flex: 1,
@@ -33,7 +33,7 @@ const FullScreenDialog = ({
 }) => {
   const saveVisible = showSave !== false;
   const [openConfirmCloseDialog, setOpenConfirmCloseDialog] = useState(false);
-  const classes = useStyles();
+  const { classes } = useStyles();
   const handleClose = () => {
     if (noConfirm) {
       setOpen(false);

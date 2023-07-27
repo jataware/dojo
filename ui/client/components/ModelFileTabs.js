@@ -5,7 +5,7 @@ import Tab from '@mui/material/Tab';
 import Tabs from '@mui/material/Tabs';
 import Typography from '@mui/material/Typography';
 
-import { makeStyles } from '@mui/material/styles';
+import { makeStyles } from 'tss-react/mui';
 
 import FileList from './FileList';
 import HelperTip from './HelperTip';
@@ -18,7 +18,7 @@ const a11yProps = (index) => ({
   'aria-controls': `file-tabpanel-${index}`,
 });
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   indicator: {
     margin: [[0, theme.spacing(1)]],
   },
@@ -32,7 +32,7 @@ function TabPanel(props) {
     children, value, index, ...other
   } = props;
 
-  const classes = useStyles();
+  const { classes } = useStyles();
 
   return (
     <div
@@ -63,7 +63,7 @@ const ModelFileTabs = ({
   const { outputs } = useOutputFiles(model.id);
   const { configs } = useConfigs(model.id);
 
-  const classes = useStyles();
+  const { classes } = useStyles();
 
   const handleTabClick = (event, newValue) => {
     setTabValue(newValue);

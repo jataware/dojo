@@ -1,11 +1,11 @@
 import React from 'react';
 
 import { TextField } from '@mui/material';
-import { makeStyles } from '@mui/material/styles';
+import { makeStyles } from 'tss-react/mui';
 
 import get from 'lodash/get';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   root: {
     margin: [[theme.spacing(1), 0]],
   },
@@ -13,7 +13,7 @@ const useStyles = makeStyles((theme) => ({
 function FormikTextField({
   name, label, formik, disabled, ...props
 }) {
-  const classes = useStyles();
+  const { classes } = useStyles();
   // apply our three default props to make the default formik textfield
   // and then any other MUI TextField props passed in are spread with ...props
   return (

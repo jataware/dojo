@@ -16,9 +16,9 @@ import Typography from '@mui/material/Typography';
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import UpdateIcon from '@mui/icons-material/Update';
 
-import { makeStyles } from '@mui/material/styles';
+import { makeStyles } from 'tss-react/mui';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   confirmContentText: {
     padding: [[0, theme.spacing(2)]],
   },
@@ -33,7 +33,7 @@ const DatasetEditDialog = ({
 }) => {
   const [dialogContent, setDialogContent] = useState('start');
   const dataUrl = 'https://data.wm.dojo-modeling.com/';
-  const classes = useStyles();
+  const { classes } = useStyles();
 
   const redirectToDatasetUrl = (action) => {
     window.location.href = `${dataUrl}?indicator=${dataset?.id}&action=${action}`;

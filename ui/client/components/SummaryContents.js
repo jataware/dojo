@@ -12,7 +12,9 @@ import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import useMediaQuery from '@mui/material/useMediaQuery';
 
-import { makeStyles, useTheme } from '@mui/material/styles';
+import { useTheme } from '@mui/material/styles';
+
+import { makeStyles } from 'tss-react/mui';
 
 import { Link, useHistory } from 'react-router-dom';
 
@@ -35,7 +37,7 @@ import ViewRuns from './ViewRuns';
 
 import { useDirective } from './SWRHooks';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   root: {
     padding: [[theme.spacing(10), theme.spacing(2), theme.spacing(2)]],
   },
@@ -147,7 +149,7 @@ const SummaryContents = ({
 
   const [endSessionDialog, setEndSessionDialog] = useState(false);
 
-  const classes = useStyles();
+  const { classes } = useStyles();
   const theme = useTheme();
   const mediumBreakpoint = useMediaQuery(theme.breakpoints.down('md'));
 

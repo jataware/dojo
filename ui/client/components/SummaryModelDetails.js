@@ -4,9 +4,9 @@ import Button from '@mui/material/Button';
 import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 
-import { makeStyles } from '@mui/material/styles';
+import { makeStyles } from 'tss-react/mui';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   subsection: {
     marginLeft: theme.spacing(1),
   },
@@ -16,7 +16,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 function SummaryModelDetails({ model }) {
-  const classes = useStyles();
+  const { classes } = useStyles();
 
   let parsedCoordinates = [];
 

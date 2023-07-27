@@ -11,13 +11,13 @@ import Link from '@mui/material/Link';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 
-import { makeStyles } from '@mui/material/styles';
+import { makeStyles } from 'tss-react/mui';
 import { useHistory, useParams } from 'react-router-dom';
 
 import LoadingOverlay from './components/LoadingOverlay';
 import { ThemeContext } from './components/ThemeContextProvider';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   backdrop: {
     zIndex: theme.zIndex.drawer + 1,
   },
@@ -98,7 +98,7 @@ const Provisioning = () => {
 
   const { modelId } = useParams();
   const history = useHistory();
-  const classes = useStyles();
+  const { classes } = useStyles();
 
   const [provisionState, setProvisionState] = useState('');
 

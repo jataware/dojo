@@ -4,7 +4,7 @@ import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 import Autocomplete from '@mui/lab/Autocomplete';
 import CloseIcon from '@mui/icons-material/Close';
 import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
-import { makeStyles } from '@mui/material/styles';
+import { makeStyles } from 'tss-react/mui';
 import {
   Box,
   Button,
@@ -22,7 +22,7 @@ import CountriesAndRegions from '../assets/nestedCountries.json';
 
 import ModelRegionMap from './ModelRegionMap';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   buttonContainer: {
     display: 'flex',
     justifyContent: 'space-between',
@@ -86,7 +86,7 @@ const parseRegions = (selectedRegions, mapCoords) => {
 function ModelRegionForm({
   handleBack, handleNext, storedRegions, storedCoords, autoSave
 }) {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [autocompleteValue, setAutocompleteValue] = useState('');

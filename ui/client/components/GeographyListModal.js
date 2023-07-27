@@ -4,11 +4,11 @@ import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import Typography from '@mui/material/Typography';
 
-import { makeStyles } from '@mui/material/styles';
+import { makeStyles } from 'tss-react/mui';
 
 import CollapseText from './CollapseText';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   buttons: {
     backgroundColor: 'transparent',
     border: '2px solid black',
@@ -33,7 +33,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 function GeographyListModal({ geography }) {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const [open, setOpen] = useState(false);
 
   const handleClose = () => {

@@ -4,7 +4,9 @@ import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 
-import { lighten, makeStyles } from '@mui/material/styles';
+import { lighten } from '@mui/material/styles';
+
+import { makeStyles } from 'tss-react/mui';
 
 import {
   selectionIsBackwards,
@@ -17,7 +19,7 @@ import {
 import BasicAlert from '../BasicAlert';
 import TemplaterDrawer from './TemplaterDrawer';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   mark: {
     backgroundColor: lighten(theme.palette.primary.light, 0.5),
     margin: '0 1px',
@@ -82,7 +84,7 @@ const Mark = ({
   savedHover,
   formOpen,
 }) => {
-  const classes = useStyles();
+  const { classes } = useStyles();
 
   const displayInnerContent = () => (
     <span

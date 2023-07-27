@@ -8,7 +8,9 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 
-import { makeStyles, withStyles } from '@mui/material/styles';
+import { withStyles } from '@mui/material/styles';
+
+import { makeStyles } from 'tss-react/mui';
 
 import AliasDialog from './AliasDialog';
 import CollapseText from './CollapseText';
@@ -46,7 +48,7 @@ const StyledTableRow = withStyles((theme) => ({
   },
 }))(TableRow);
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   indexRow: {
     maxWidth: '75px',
     backgroundColor: theme.palette.action.hover,
@@ -57,7 +59,7 @@ function DatasetSummaryOutputsTable({ dataset }) {
   const columns = [...dataset?.outputs, ...(dataset?.qualifier_outputs || [])
     .filter((qual) => !['admin1', 'admin2', 'admin3', 'country', 'lat', 'lng'].includes(qual.name))];
 
-  const classes = useStyles();
+  const { classes } = useStyles();
 
   return (
     <div>

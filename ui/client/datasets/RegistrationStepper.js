@@ -9,7 +9,7 @@ import Typography from '@mui/material/Typography';
 import cloneDeep from 'lodash/cloneDeep';
 import get from 'lodash/get';
 
-import { makeStyles } from '@mui/material/styles';
+import { makeStyles } from 'tss-react/mui';
 import { useHistory, useLocation } from 'react-router-dom';
 
 import axios from 'axios';
@@ -18,7 +18,7 @@ import { DefaultErrorFallback } from '../components/DefaultErrorFallback';
 import Prompt from './PromptDialog';
 import flows from './Flows';
 
-const useStyles = makeStyles(({ spacing, breakpoints }) => ({
+const useStyles = makeStyles()(({ spacing, breakpoints }) => ({
   root: {
     width: '100%',
     position: 'relative',
@@ -136,7 +136,7 @@ const InnerStepper = ({ match, updateLocation, ...props }) => {
   const shouldUpdateLocation = updateLocation === undefined ? true : Boolean(updateLocation);
 
   const history = useHistory();
-  const classes = useStyles();
+  const { classes } = useStyles();
   const location = useLocation();
   const flow = flows[flowslug];
 

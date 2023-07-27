@@ -10,13 +10,13 @@ import LinearProgress from '@mui/material/LinearProgress';
 import PublishIcon from '@mui/icons-material/Publish';
 import Typography from '@mui/material/Typography';
 
-import { makeStyles } from '@mui/material/styles';
+import { makeStyles } from 'tss-react/mui';
 
 import axios from 'axios';
 
 import { Input } from '@mui/material';
 
-const useStyles = makeStyles(() => ({
+const useStyles = makeStyles()(() => ({
   buttons: {
     backgroundColor: '#b5d3f0',
     border: '2px solid black',
@@ -41,7 +41,7 @@ const UploadFileDialog = ({
   const FILES_MAX_LENGTH = 5;
   const MAX_FILE_UPLOAD_SIZE = 25 * 1000 * 1000;
 
-  const classes = useStyles();
+  const { classes } = useStyles();
 
   const uploadFile = (file) => new Promise((resolve) => {
     try {

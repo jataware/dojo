@@ -10,7 +10,9 @@ import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
 import useMediaQuery from '@mui/material/useMediaQuery';
 
-import { makeStyles, useTheme } from '@mui/material/styles';
+import { useTheme } from '@mui/material/styles';
+
+import { makeStyles } from 'tss-react/mui';
 
 import { useLocation } from 'react-router-dom';
 
@@ -24,7 +26,7 @@ import {
   useDataset
 } from './components/SWRHooks';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   fabsWrapper: {
     bottom: 0,
     padding: theme.spacing(2),
@@ -91,7 +93,7 @@ const DatasetSummary = () => {
     dataset, datasetLoading, datasetError, mutateDataset
   } = useDataset(datasetId);
 
-  const classes = useStyles();
+  const { classes } = useStyles();
   const theme = useTheme();
   const mediumBreakpoint = useMediaQuery(theme.breakpoints.down('md'));
 

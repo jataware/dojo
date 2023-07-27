@@ -10,9 +10,9 @@ import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 
-import { makeStyles } from '@mui/material/styles';
+import { makeStyles } from 'tss-react/mui';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   card: {
     backgroundColor: theme.palette.grey[300],
     color: theme.palette.text.secondary,
@@ -52,7 +52,7 @@ const useStyles = makeStyles((theme) => ({
 
 // this is broken out into its own component so it can toggle its own open/closed state
 function FileParams({ params, name }) {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const [showParams, setShowParams] = useState(false);
 
   const displayParameter = (param, i) => {
@@ -97,7 +97,7 @@ export default function FileCardList({
   secondaryClickHandler, secondaryIcon, outputs, hideExpandHeader
 }) {
   const [expanded, setExpanded] = useState(false || hideExpandHeader);
-  const classes = useStyles();
+  const { classes } = useStyles();
 
   useEffect(() => {
     if (loading || error || !files.length) {

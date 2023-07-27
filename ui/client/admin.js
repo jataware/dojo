@@ -10,13 +10,15 @@ import Button from '@mui/material/Button';
 import Grid from '@mui/material/Grid';
 import Paper from '@mui/material/Paper';
 
-import { lighten, makeStyles, useTheme } from '@mui/material/styles';
+import { lighten, useTheme } from '@mui/material/styles';
+
+import { makeStyles } from 'tss-react/mui';
 
 import BasicAlert from './components/BasicAlert';
 import LoadingOverlay from './components/LoadingOverlay';
 import { useLocks, useNodes } from './components/SWRHooks';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   buttonLink: {
     margin: [[theme.spacing(1), 0]],
   },
@@ -35,7 +37,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const Admin = () => {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const theme = useTheme();
   const [nodeInfo, setNodeInfo] = useState([]);
   const [shutDownFailed, setShutDownFailed] = useState(false);

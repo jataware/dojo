@@ -16,13 +16,13 @@ import TableRow from '@mui/material/TableRow';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 
-import { makeStyles, } from '@mui/material/styles';
+import { makeStyles } from 'tss-react/mui';
 
 import HelperTip from './HelperTip';
 
 import { useDirective, useShellHistory } from './SWRHooks';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   root: {
     backgroundColor: 'inherit',
     margin: [[theme.spacing(2), 0]],
@@ -80,7 +80,7 @@ const ShellHistory = ({
   setTemplaterMode,
   setTemplaterContents,
 }) => {
-  const classes = useStyles();
+  const { classes } = useStyles();
 
   const tableRef = React.createRef(null);
   const [expanded, setExpanded] = useState(true);

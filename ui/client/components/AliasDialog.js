@@ -4,9 +4,9 @@ import Button from '@mui/material/Button';
 import Dialog from '@mui/material/Dialog';
 import Typography from '@mui/material/Typography';
 
-import { makeStyles } from '@mui/material/styles';
+import { makeStyles } from 'tss-react/mui';
 
-const useStyles = makeStyles(() => ({
+const useStyles = makeStyles()(() => ({
   buttons: {
     backgroundColor: '#C8C8C8',
   },
@@ -16,7 +16,7 @@ const useStyles = makeStyles(() => ({
 }));
 
 function AliasDialog({ column }) {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const [open, setOpen] = useState(false);
 
   const handleClose = () => {
