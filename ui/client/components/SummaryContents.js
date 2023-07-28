@@ -151,7 +151,7 @@ const SummaryContents = ({
 
   const { classes } = useStyles();
   const theme = useTheme();
-  const mediumBreakpoint = useMediaQuery(theme.breakpoints.down('md'));
+  const mediumBreakpoint = useMediaQuery(theme.breakpoints.down('lg'));
 
   const onUnload = (e) => {
     // preventDefault here triggers the confirm dialog

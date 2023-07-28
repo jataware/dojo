@@ -1,8 +1,8 @@
-import { createTheme } from '@mui/material/styles';
+import { createTheme, adaptV4Theme } from '@mui/material/styles';
 
-export default createTheme({
+export default createTheme(adaptV4Theme({
   palette: {
-    // type: 'dark',
+    // mode: 'dark',
     primary: {
       main: '#1976d2',
     },
@@ -30,4 +30,4 @@ export default createTheme({
       }
     }
   }
-});
+}));

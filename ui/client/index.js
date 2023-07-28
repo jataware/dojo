@@ -10,7 +10,7 @@ import {
   Switch,
 } from 'react-router-dom';
 
-import { ThemeProvider } from '@mui/material/styles';
+import { ThemeProvider, StyledEngineProvider } from '@mui/material/styles';
 
 import NavBar from './components/NavBar';
 import ThemeContextProvider from './components/ThemeContextProvider';
@@ -66,12 +66,14 @@ export default function Main() {
 }
 
 ReactDOM.render(
-  <ThemeProvider theme={theme}>
-    <CssBaseline />
-    <ThemeContextProvider>
-      <Main />
-    </ThemeContextProvider>
-  </ThemeProvider>,
+  <StyledEngineProvider injectFirst>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <ThemeContextProvider>
+        <Main />
+      </ThemeContextProvider>
+    </ThemeProvider>
+  </StyledEngineProvider>,
   document.getElementById('app')
 );
 

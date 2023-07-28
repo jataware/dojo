@@ -262,7 +262,7 @@ function ModelRegionForm({
               onInputChange={(e, newValue) => {
                 setInputValue(newValue);
               }}
-              getOptionSelected={(opt, input) => checkRegionEquality(opt, input)}
+              isOptionEqualToValue={(opt, input) => checkRegionEquality(opt, input)}
               getOptionLabel={(option) => formatRegionLabel(option)}
               renderInput={(params) => (
                 <TextField

@@ -114,7 +114,7 @@ const SearchDatasets = ({ setSearchedDatasets, datasets }) => {
         InputProps={{
           endAdornment: (
             <InputAdornment position="end">
-              <IconButton onClick={clearSearch}><CancelIcon /></IconButton>
+              <IconButton onClick={clearSearch} size="large"><CancelIcon /></IconButton>
             </InputAdornment>
           )
         }}

@@ -355,7 +355,7 @@ export default ({
           <div className={classes.editPanel}>
 
             <div className={classes.drawerControls}>
-              <IconButton onClick={onClose}>
+              <IconButton onClick={onClose} size="large">
                 <CloseIcon />
               </IconButton>
             </div>

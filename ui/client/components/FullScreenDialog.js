@@ -72,7 +72,7 @@ const FullScreenDialog = ({
               data-test="fullScreenDialogCloseBtn"
               edge="start"
               onClick={handleClose}
-            >
+              size="large">
               <CloseIcon />
             </IconButton>
             <Typography variant="h6" className={classes.title}>

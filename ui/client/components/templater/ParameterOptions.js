@@ -54,10 +54,7 @@ const ParameterOptions = ({ options }) => {
                   variant="outlined"
                   component={TextField}
                 />
-                <IconButton
-                  onClick={() => arrayHelpers.remove(index)}
-                  color="secondary"
-                >
+                <IconButton onClick={() => arrayHelpers.remove(index)} color="secondary" size="large">
                   <DeleteIcon />
                 </IconButton>
               </ListItem>

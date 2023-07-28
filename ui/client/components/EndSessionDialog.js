@@ -85,7 +85,7 @@ const EndSessionDialog = ({
         open={open}
         onClose={handleClose}
       >
-        <DialogTitle id="alert-dialog-title" align="center" disableTypography>
+        <DialogTitle id="alert-dialog-title" align="center">
           <Typography variant="h5">Your model was successfully published!</Typography>
         </DialogTitle>
         <DialogContent>
@@ -108,7 +108,7 @@ const EndSessionDialog = ({
       aria-describedby="alert-dialog-description"
       classes={{ paper: classes.root }}
     >
-      <DialogTitle id="alert-dialog-title" align="center" disableTypography>
+      <DialogTitle id="alert-dialog-title" align="center">
         <Typography variant="h5">Are you ready to publish the model?</Typography>
       </DialogTitle>
       <DialogContent>

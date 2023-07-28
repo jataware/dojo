@@ -37,7 +37,7 @@ const HintTooltip = () => {
       classes={{ tooltip: classes.tooltip }}
       title="This is a Preview of the normalized data. Review output and submit to Dojo."
     >
-      <IconButton>
+      <IconButton size="large">
         <InfoIcon />
       </IconButton>
     </Tooltip>

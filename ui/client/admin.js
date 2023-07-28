@@ -135,104 +135,102 @@ const Admin = () => {
     );
   }
 
-  return (
-    <>
-      <Grid container spacing={2}>
-        <Grid item xs={12}>
-          <Grid container spacing={1} justify="center">
-            {nodeInfo.map((node) => (
-              <Grid item key={node.info.ID} xs={3}>
-                <Paper
-                  elevation={0}
-                  className={classes.paper}
-                  style={{
-                    backgroundColor: (node.status === 'up')
-                      ? lighten(theme.palette.success.light, 0.4)
-                      : lighten(theme.palette.warning.light, 0.4)
-                  }}
-                >
-                  <div>
-                    <b>Worker - </b> {node.host}
-                  </div>
-                  <div>
-                    <b>Status:</b> {node.status}
-                  </div>
-                  <div>
-                    <b>Connections: </b>{node.clients}
-                  </div>
-                  <div>
-                    <b>Running Containers: </b> {node.info?.ContainersRunning}
-                  </div>
-                  <div>
-                    <b>In use by: </b>{node.lock?.name}
-                  </div>
-                  <div>
-                    <b>Model ID: </b>{node.lock?.modelId}
-                  </div>
-                  <div>
-                    <b> Provision State: </b> {node.lock?.status?.state}
-                  </div>
-                  <div>
-                    <Button
-                      component={Link}
-                      className={classes.buttonLink}
-                      variant="outlined"
-                      to={`/summary/${node.lock?.modelId}`}
-                      data-test="adminSummaryLink"
-                      disabled={!node.lock?.modelId}
-                      disableElevation
-                    >
-                      Link to Model Summary
-                    </Button>
-                  </div>
-                  <div>
-                    {node.lock?.status?.state === 'failed' ? (
-                      <details>
-                        <summary>reason</summary>
-                        <p>{node.lock?.status?.message}</p>
-                      </details>
-                    ) : ''}
-                  </div>
-                  <div className={classes.buttonWrapper}>
-                    <Button
-                      component={Link}
-                      variant="contained"
-                      color="primary"
-                      disabled={node.lock?.status?.state !== 'ready'}
-                      disableElevation
-                      fullWidth
-                      to={`/term/${node.lock?.modelId}`}
-                      data-test="adminReconnectLink"
-                    >
-                      Reconnect
-                    </Button>
-                  </div>
-                  <div className={classes.buttonWrapper}>
-                    <Button
-                      variant="contained"
-                      color="secondary"
-                      disabled={node.lock?.status?.state !== 'ready'}
-                      disableElevation
-                      fullWidth
-                      onClick={() => destroyLock(node.lock?.modelId)}
-                      data-test="adminShutDownBtn"
-                    >
-                      Shut Down
-                    </Button>
-                  </div>
-                </Paper>
-              </Grid>
-            ))}
-          </Grid>
+  return <>
+    <Grid container spacing={2}>
+      <Grid item xs={12}>
+        <Grid container spacing={1} justifyContent="center">
+          {nodeInfo.map((node) => (
+            <Grid item key={node.info.ID} xs={3}>
+              <Paper
+                elevation={0}
+                className={classes.paper}
+                style={{
+                  backgroundColor: (node.status === 'up')
+                    ? lighten(theme.palette.success.light, 0.4)
+                    : lighten(theme.palette.warning.light, 0.4)
+                }}
+              >
+                <div>
+                  <b>Worker - </b> {node.host}
+                </div>
+                <div>
+                  <b>Status:</b> {node.status}
+                </div>
+                <div>
+                  <b>Connections: </b>{node.clients}
+                </div>
+                <div>
+                  <b>Running Containers: </b> {node.info?.ContainersRunning}
+                </div>
+                <div>
+                  <b>In use by: </b>{node.lock?.name}
+                </div>
+                <div>
+                  <b>Model ID: </b>{node.lock?.modelId}
+                </div>
+                <div>
+                  <b> Provision State: </b> {node.lock?.status?.state}
+                </div>
+                <div>
+                  <Button
+                    component={Link}
+                    className={classes.buttonLink}
+                    variant="outlined"
+                    to={`/summary/${node.lock?.modelId}`}
+                    data-test="adminSummaryLink"
+                    disabled={!node.lock?.modelId}
+                    disableElevation
+                  >
+                    Link to Model Summary
+                  </Button>
+                </div>
+                <div>
+                  {node.lock?.status?.state === 'failed' ? (
+                    <details>
+                      <summary>reason</summary>
+                      <p>{node.lock?.status?.message}</p>
+                    </details>
+                  ) : ''}
+                </div>
+                <div className={classes.buttonWrapper}>
+                  <Button
+                    component={Link}
+                    variant="contained"
+                    color="primary"
+                    disabled={node.lock?.status?.state !== 'ready'}
+                    disableElevation
+                    fullWidth
+                    to={`/term/${node.lock?.modelId}`}
+                    data-test="adminReconnectLink"
+                  >
+                    Reconnect
+                  </Button>
+                </div>
+                <div className={classes.buttonWrapper}>
+                  <Button
+                    variant="contained"
+                    color="secondary"
+                    disabled={node.lock?.status?.state !== 'ready'}
+                    disableElevation
+                    fullWidth
+                    onClick={() => destroyLock(node.lock?.modelId)}
+                    data-test="adminShutDownBtn"
+                  >
+                    Shut Down
+                  </Button>
+                </div>
+              </Paper>
+            </Grid>
+          ))}
         </Grid>
       </Grid>
-      <BasicAlert
-        alert={{ message: alertMessage, severity: 'error' }}
-        visible={shutDownFailed}
-        setVisible={setShutDownFailed}
-      />
-    </>
-  );
+    </Grid>
+    <BasicAlert
+      alert={{ message: alertMessage, severity: 'error' }}
+      visible={shutDownFailed}
+      setVisible={setShutDownFailed}
+    />
+  </>;
 };
 
 export default Admin;

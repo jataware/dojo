@@ -102,7 +102,7 @@ export const Aliases = ({
                         color="secondary"
                         onClick={() => arrayHelpers.remove(idx)}
                         style={{ height: '48px' }}
-                      >
+                        size="large">
                         <DeleteIcon />
                       </IconButton>
                     </Tooltip>

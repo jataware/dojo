@@ -163,7 +163,7 @@ function loadConfig(labels, datasets) {
 
 const styles = (theme) => ({
   cardContent: {
-    [theme.breakpoints.down('sm')]: {
+    [theme.breakpoints.down('md')]: {
       padding: theme.spacing(0.5)
     }
   },
@@ -173,7 +173,7 @@ const styles = (theme) => ({
   },
   cardTextValue: {
     fontWeight: '100',
-    [theme.breakpoints.down('xs')]: {
+    [theme.breakpoints.down('sm')]: {
       fontSize: '0.7rem'
     }
   },

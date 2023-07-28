@@ -95,7 +95,7 @@ const DatasetSummary = () => {
 
   const { classes } = useStyles();
   const theme = useTheme();
-  const mediumBreakpoint = useMediaQuery(theme.breakpoints.down('md'));
+  const mediumBreakpoint = useMediaQuery(theme.breakpoints.down('lg'));
 
   useEffect(() => {
     document.title = 'Dataset Summary - Dojo';

@@ -155,7 +155,7 @@ export default function FileCardList({
                     component="span"
                     onClick={() => primaryClickHandler(file)}
                     disabled={disableClick}
-                  >
+                    size="large">
                     {primaryIcon}
                   </IconButton>
                   { secondaryIcon && (
@@ -163,7 +163,7 @@ export default function FileCardList({
                     component="span"
                     onClick={() => secondaryClickHandler(file)}
                     disabled={disableClick}
-                  >
+                    size="large">
                     {secondaryIcon}
                   </IconButton>
                   )}
@@ -183,26 +183,24 @@ export default function FileCardList({
     }
   };
 
-  return (
-    <>
-      <span className={classes.headerContainer}>
-        {!hideExpandHeader && (
-          <>
-            <Typography
-              align="center"
-              color="textSecondary"
-              variant="h6"
-              gutterBottom
-            >
-              {`${name} Files`}
-            </Typography>
-            <IconButton onClick={() => setExpanded((prevExpanded) => !prevExpanded)}>
-              { expanded ? <RemoveCircleOutlineIcon /> : <AddCircleOutlineIcon />}
-            </IconButton>
-          </>
-        )}
-      </span>
-      {displayCards()}
-    </>
-  );
+  return <>
+    <span className={classes.headerContainer}>
+      {!hideExpandHeader && (
+        <>
+          <Typography
+            align="center"
+            color="textSecondary"
+            variant="h6"
+            gutterBottom
+          >
+            {`${name} Files`}
+          </Typography>
+          <IconButton onClick={() => setExpanded((prevExpanded) => !prevExpanded)} size="large">
+            { expanded ? <RemoveCircleOutlineIcon /> : <AddCircleOutlineIcon />}
+          </IconButton>
+        </>
+      )}
+    </span>
+    {displayCards()}
+  </>;
 }

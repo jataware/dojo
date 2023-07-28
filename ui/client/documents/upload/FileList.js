@@ -86,7 +86,7 @@ export const FileTile = ({
       />
 
       <ListItemSecondaryAction>
-        <IconButton edge="end" aria-label="delete" onClick={handleDeleteClick}>
+        <IconButton edge="end" aria-label="delete" onClick={handleDeleteClick} size="large">
           <ClearIcon />
         </IconButton>
       </ListItemSecondaryAction>

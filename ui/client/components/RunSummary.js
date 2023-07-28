@@ -96,7 +96,7 @@ export const Status = ({
       style={refreshActionStyles}
       {...props}
     >
-      <Hidden smDown={responsive}>
+      <Hidden mdDown={responsive}>
         {capitalize(status)}
       </Hidden>
     </Alert>
