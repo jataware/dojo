@@ -8,13 +8,11 @@ import DialogContentText from '@mui/material/DialogContentText';
 import DialogTitle from '@mui/material/DialogTitle';
 import Typography from '@mui/material/Typography';
 import isEmpty from 'lodash/isEmpty';
-import { withStyles } from '@mui/material/styles';
 
 /**
  *
  * */
-export default withStyles(() => ({
-}))(({
+export default ({
   open, warnings = [], errors = [], onAccept, onDecline
 }) => (
   <Dialog
@@ -70,4 +68,4 @@ export default withStyles(() => ({
       )}
     </DialogActions>
   </Dialog>
-));
+);

@@ -9,7 +9,8 @@ import Container from '@mui/material/Container';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
-import { withStyles } from '@mui/material/styles';
+
+import { makeStyles } from 'tss-react/mui';
 
 import { Navigation } from '.';
 import {
@@ -20,15 +21,12 @@ import {
 
 const skipValidation = false;
 
-/**
- * Dataset Update Metadata file landing page (fileMetadata changes only).
- **/
-export default withStyles(({ spacing }) => ({
+const useStyles = makeStyles()((theme) => ({
   root: {
-    padding: [[spacing(4), spacing(4), spacing(2), spacing(4)]],
+    padding: [[theme.spacing(4), theme.spacing(4), theme.spacing(2), theme.spacing(4)]],
   },
   header: {
-    marginBottom: spacing(6),
+    marginBottom: theme.spacing(6),
   },
   accordion: {
     margin: '1.5rem 0 2rem 0'
@@ -36,11 +34,17 @@ export default withStyles(({ spacing }) => ({
   accordionContent: {
     flexGrow: 0
   }
-}))(({
-  classes, datasetInfo, error, stepTitle, setDatasetInfo,
+}));
+
+/**
+ * Dataset Update Metadata file landing page (fileMetadata changes only).
+ **/
+export default ({
+  datasetInfo, error, stepTitle, setDatasetInfo,
   handleNext, rawFileName, uploadedFilesData
 }) => {
   const fileMetadata = {};
+  const { classes } = useStyles();
 
   const updateDataset = async (validatedData, id) => {
     const payload = {
@@ -171,4 +175,4 @@ export default withStyles(({ spacing }) => ({
 
     </Container>
   );
-});
+};

@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Form, Formik } from 'formik';
 
-import { withStyles } from '@mui/material/styles';
+import { makeStyles } from 'tss-react/mui';
+
 import Accordion from '@mui/material/Accordion';
 import AccordionDetails from '@mui/material/AccordionDetails';
 import AccordionSummary from '@mui/material/AccordionSummary';
@@ -22,19 +23,12 @@ import {
 
 const skipValidation = false;
 
-/**
- * Dataset Registration landing page (fileMetadata, file upload).
- * */
-
-/**
- *
- * */
-export default withStyles(({ spacing }) => ({
+const useStyles = makeStyles()((theme) => ({
   root: {
-    padding: [[spacing(4), spacing(4), spacing(2), spacing(4)]],
+    padding: [[theme.spacing(4), theme.spacing(4), theme.spacing(2), theme.spacing(4)]],
   },
   header: {
-    marginBottom: spacing(6),
+    marginBottom: theme.spacing(6),
   },
   accordion: {
     margin: '1.5rem 0 2rem 0'
@@ -42,12 +36,23 @@ export default withStyles(({ spacing }) => ({
   accordionContent: {
     flexGrow: 0
   }
-}))(({
-  classes, datasetInfo, stepTitle, setDatasetInfo, setAnnotations,
+}));
+
+/**
+ * Dataset Registration landing page (fileMetadata, file upload).
+ * */
+
+/**
+ *
+ * */
+export default ({
+  datasetInfo, stepTitle, setDatasetInfo, setAnnotations,
   handleNext, rawFileName, uploadedFilesData
 }) => {
   // This is the file metadata as we fill in the form (not the one stored in services):
   const [fileMetadata, setFileMetadata] = useState({});
+
+  const { classes } = useStyles();
 
   const back = (/* event*/) => {}; // Do nothing
 
@@ -217,4 +222,4 @@ export default withStyles(({ spacing }) => ({
 
     </Container>
   );
-});
+};

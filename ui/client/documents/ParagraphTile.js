@@ -1,14 +1,14 @@
 import React from 'react';
 
 import Typography from '@mui/material/Typography';
-import { withStyles } from '@mui/material/styles';
+import { makeStyles, withStyles } from 'tss-react/mui';
 
 import Chip from '@mui/material/Chip';
 import LinearProgress from '@mui/material/LinearProgress';
 
 import { calculateHighlightTargets } from './utils';
 
-export const ConfidenceBar = withStyles(() => ({
+export const ConfidenceBar = withStyles(LinearProgress, () => ({
   root: {
     height: 15,
   },
@@ -20,9 +20,9 @@ export const ConfidenceBar = withStyles(() => ({
   bar: {
     backgroundColor: '#00cd00',
   },
-}))(LinearProgress);
+}));
 
-export const ParagraphTile = withStyles(() => ({
+const useStyles = makeStyles()(() => ({
   root: {
     padding: '0.5rem 1.5rem',
     margin: '0.75rem 0',
@@ -45,9 +45,12 @@ export const ParagraphTile = withStyles(() => ({
     display: 'flex',
     justifyContent: 'center'
   }
-}))(({
-  classes, paragraph, highlights = null, query, onClick
+}));
+
+export const ParagraphTile = ({
+  paragraph, highlights = null, query, onClick
 }) => {
+  const { classes } = useStyles();
   const handleClick = () => onClick(paragraph);
 
   return (
@@ -120,4 +123,4 @@ export const ParagraphTile = withStyles(() => ({
       <br />
     </div>
   );
-});
+};

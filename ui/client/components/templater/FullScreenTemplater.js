@@ -8,7 +8,7 @@ import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
 
-import { withStyles } from '@mui/material/styles';
+import { makeStyles } from 'tss-react/mui';
 
 import BasicAlert from '../BasicAlert';
 import FullScreenDialog from '../FullScreenDialog';
@@ -16,7 +16,7 @@ import SavedTemplates from './SavedTemplates';
 import TextAnnotater from './TextAnnotater';
 import { useConfigs, useDirective } from '../SWRHooks';
 
-const FullScreenTemplater = withStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   allContentWrapper: {
     margin: [[theme.spacing(2), 0]],
     // full screen height minus the dialog top bar and the card margin
@@ -67,8 +67,9 @@ const FullScreenTemplater = withStyles((theme) => ({
   allParamsButton: {
     minWidth: '200px',
   },
-}))(({
-  classes,
+}));
+
+const FullScreenTemplater = ({
   content,
   contentChanged,
   open,
@@ -76,6 +77,7 @@ const FullScreenTemplater = withStyles((theme) => ({
   modelId,
   setOpen
 }) => {
+  const { classes } = useStyles();
   const [highlights, setHighlights] = useState(
     // if the parameters are passed in as a prop, then we have preexisting highlights
     // so load those in as state so we can edit them in this chain of components
@@ -258,6 +260,6 @@ const FullScreenTemplater = withStyles((theme) => ({
       />
     </>
   );
-});
+};
 
 export default FullScreenTemplater;

@@ -1,6 +1,7 @@
 import React from 'react';
 
-import { withStyles } from '@mui/material/styles';
+import { withStyles } from 'tss-react/mui';
+
 import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
 import Card from '@mui/material/Card';
@@ -291,4 +292,4 @@ const Stats = ({
   );
 };
 
-export default withStyles(styles)(React.memo(Stats));
+export default withStyles(React.memo(Stats), styles);

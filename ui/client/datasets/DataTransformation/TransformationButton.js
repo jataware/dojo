@@ -8,9 +8,10 @@ import ListItem from '@mui/material/ListItem';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import Tooltip from '@mui/material/Tooltip';
-import { withStyles } from '@mui/material/styles';
 
-const TransformationButton = withStyles(({ palette }) => ({
+import { makeStyles } from 'tss-react/mui';
+
+const useStyles = makeStyles()(({ palette }) => ({
   complete: {
     color: palette.grey[500],
   },
@@ -30,8 +31,9 @@ const TransformationButton = withStyles(({ palette }) => ({
     display: 'flex',
     justifyContent: 'center',
   },
-}))(({
-  classes,
+}));
+
+const TransformationButton = ({
   isComplete,
   Icon,
   title,
@@ -39,6 +41,7 @@ const TransformationButton = withStyles(({ palette }) => ({
   loading,
   error,
 }) => {
+  const { classes } = useStyles();
   const displayIcon = () => {
     if (isComplete) {
       return <CheckIcon className={classes.check} fontSize="large" />;
@@ -87,6 +90,6 @@ const TransformationButton = withStyles(({ palette }) => ({
       </span>
     </Tooltip>
   );
-});
+};
 
 export default TransformationButton;

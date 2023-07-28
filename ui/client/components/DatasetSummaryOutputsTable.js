@@ -8,15 +8,12 @@ import TableContainer from '@mui/material/TableContainer';
 import TableHead from '@mui/material/TableHead';
 import TableRow from '@mui/material/TableRow';
 
-import { withStyles } from '@mui/material/styles';
-
-import { makeStyles } from 'tss-react/mui';
+import { makeStyles, withStyles } from 'tss-react/mui';
 
 import AliasDialog from './AliasDialog';
 import CollapseText from './CollapseText';
 
-const StyledTableCell = withStyles((theme) => ({
-
+const StyledTableCell = withStyles(TableCell, (theme) => ({
   root: {
     color: theme.palette.common.black,
     padding: [[theme.spacing(1), theme.spacing(2)]],
@@ -37,16 +34,16 @@ const StyledTableCell = withStyles((theme) => ({
   body: {
     fontSize: 14,
   },
-}))(TableCell);
+}));
 
-const StyledTableRow = withStyles((theme) => ({
+const StyledTableRow = withStyles(TableRow, (theme) => ({
   root: {
     '&:nth-of-type(odd)': {
       backgroundColor: theme.palette.action.hover,
       color: theme.palette.common.black,
     },
   },
-}))(TableRow);
+}));
 
 const useStyles = makeStyles()((theme) => ({
   indexRow: {

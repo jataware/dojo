@@ -19,9 +19,9 @@ import Slide from '@mui/material/Slide';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 
-import { useTheme, withStyles } from '@mui/material/styles';
+import { useTheme } from '@mui/material/styles';
 
-import { makeStyles } from 'tss-react/mui';
+import { makeStyles, withStyles } from 'tss-react/mui';
 
 const useStyles = makeStyles()((theme) => ({
   versionButtonWrapper: {
@@ -60,11 +60,11 @@ const useStyles = makeStyles()((theme) => ({
 }));
 
 // This prevents an ugly interior (second) scrollbar from appearing on smaller screens
-const DialogContentNoOverflow = withStyles({
+const DialogContentNoOverflow = withStyles(DialogContent, {
   root: {
     overflow: 'hidden',
   }
-})(DialogContent);
+});
 
 const SummaryIntroDialog = ({
   open, setOpen, model, summaryLoading, setSummaryLoading

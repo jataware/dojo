@@ -22,7 +22,7 @@ import useSWRImmutable from 'swr/immutable';
 
 import { makeStyles } from 'tss-react/mui';
 
-const useStyles = makeStyles()()((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   topContentWrapper: {
     display: 'flex',
     justifyContent: 'center',

@@ -8,13 +8,15 @@ import Button from '@mui/material/Button';
 import { GridOverlay, DataGrid } from '@material-ui/data-grid';
 // useGridSlotComponentProps
 import Typography from '@mui/material/Typography';
-import { withStyles } from '@mui/material/styles';
 import LinearProgress from '@mui/material/LinearProgress';
 import CancelIcon from '@mui/icons-material/Cancel';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
 import TextField from '@mui/material/TextField';
+
+import { makeStyles } from 'tss-react/mui';
+
 import ExpandableDataGridCell from './ExpandableDataGridCell';
 
 const expandableCell = ({ value, colDef }) => (
@@ -29,10 +31,7 @@ const MATCH_TYPE = {
   hybrid: 'hybrid'
 };
 
-/**
- * Used in Match % column when searching
- **/
-export const ConfidenceBar = withStyles(() => ({
+const useStyles = makeStyles()(() => ({
   root: {
     height: 15,
   },
@@ -49,8 +48,27 @@ export const ConfidenceBar = withStyles(() => ({
   },
   semanticBar: {
     backgroundColor: 'rgb(142,114,233)' // rgb(68,81,225)
+  },
+  viewFeaturesRoot: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column'
+  },
+  aboveTableWrapper: {
+    display: 'flex',
+    maxWidth: '100vw',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    flexWrap: 'wrap',
+    marginBottom: '1rem',
   }
-}))(({ matchType, classes, ...props }) => {
+}));
+
+/**
+ * Used in Match % column when searching
+ **/
+export const ConfidenceBar = ({ matchType, ...props }) => {
+  const { classes } = useStyles();
   let overrides = {};
 
   const { semanticBar, hybridBar, ...supportedClasses } = classes;
@@ -70,7 +88,7 @@ export const ConfidenceBar = withStyles(() => ({
       }}
     />
   );
-});
+};
 
 const semanticSearchFeatures = async (query) => {
   const url = `/api/dojo/features/search?query=${query}&size=50`;
@@ -168,21 +186,8 @@ const Legend = ({ color, label }) => (
 /**
  *
  */
-const ViewFeatures = withStyles(() => ({
-  root: {
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'column'
-  },
-  aboveTableWrapper: {
-    display: 'flex',
-    maxWidth: '100vw',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-    flexWrap: 'wrap',
-    marginBottom: '1rem',
-  }
-}))(({ classes }) => {
+const ViewFeatures = () => {
+  const { classes } = useStyles();
   const [searchTerm, setSearchTerm] = useState('');
   const [searchTermValue, setSearchTermValue] = useState('');
 
@@ -327,7 +332,7 @@ const ViewFeatures = withStyles(() => ({
       Error loading features.
     </Typography>
   ) : (
-    <div className={classes.root}>
+    <div className={classes.viewFeaturesRoot}>
       <div className={classes.aboveTableWrapper}>
         <div>
           <TextField
@@ -369,6 +374,6 @@ const ViewFeatures = withStyles(() => ({
       />
     </div>
   );
-});
+};
 
 export default ViewFeatures;

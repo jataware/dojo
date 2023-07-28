@@ -5,7 +5,8 @@ import get from 'lodash/get';
 import find from 'lodash/find';
 import isEmpty from 'lodash/isEmpty';
 
-import { withStyles } from '@mui/material/styles';
+import { makeStyles } from 'tss-react/mui';
+
 import { GridOverlay, DataGrid } from '@material-ui/data-grid';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
@@ -23,52 +24,21 @@ import AnnotationDialog from './UploadAnnotationFileDialog';
 
 const rowsPerPageOptions = [25, 50, 100];
 
-const Cell = withStyles(({ palette, spacing }) => ({
-  root: {
+const ROW_HEIGHT = 52;
+const HEADER_HEIGHT = 80;
+
+const useStyles = makeStyles()((theme) => ({
+  cellRoot: {
     marginLeft: -6,
     width: '115%',
     marginRight: -6,
     // NOTE How much to space cell content left. We can also use flex + center items
-    paddingLeft: spacing(2),
+    paddingLeft: theme.spacing(2),
     cursor: 'pointer',
   },
   hoveredCell: {
-    backgroundColor: palette.grey[100],
+    backgroundColor: theme.palette.grey[100],
   },
-}))(({
-  isHighlighted, classes, value
-}) => (
-  <span
-    className={clsx({
-      [classes.root]: true,
-      [classes.hoveredCell]: isHighlighted,
-    })}
-  >
-    {value}
-  </span>
-));
-
-const ROW_HEIGHT = 52;
-const HEADER_HEIGHT = 80;
-
-/**
- * Blue linear loading animation displayed when table loading/searching of
- * features is still in progress.
- */
-function CustomLoadingOverlay() {
-  return (
-    <GridOverlay>
-      <div style={{
-        position: 'absolute', top: 0, width: '100%', zIndex: 15
-      }}
-      >
-        <LinearProgress style={{ height: 3 }} />
-      </div>
-    </GridOverlay>
-  );
-}
-
-export default withStyles(({ palette }) => ({
   root: {
     display: 'flex',
     flexDirection: 'column',
@@ -79,7 +49,7 @@ export default withStyles(({ palette }) => ({
     maxHeight: `${(ROW_HEIGHT * 15) + HEADER_HEIGHT + 10}px`,
   },
   row: {
-    backgroundColor: `${palette.common.white} !important`
+    backgroundColor: `${theme.palette.common.white} !important`
   },
   disabledEvents: {
     pointerEvents: 'none'
@@ -122,13 +92,49 @@ export default withStyles(({ palette }) => ({
       visibility: 'hidden',
     },
   },
-}), { name: 'TableAnnotation' })(({
-  classes, annotateColumns, rows,
+}));
+
+const Cell = ({
+  isHighlighted, value
+}) => {
+  const { classes } = useStyles();
+  return (
+    <span
+      className={clsx({
+        [classes.cellRoot]: true,
+        [classes.hoveredCell]: isHighlighted,
+      })}
+    >
+      {value}
+    </span>
+  );
+};
+
+/**
+ * Blue linear loading animation displayed when table loading/searching of
+ * features is still in progress.
+ */
+function CustomLoadingOverlay() {
+  return (
+    <GridOverlay>
+      <div style={{
+        position: 'absolute', top: 0, width: '100%', zIndex: 15
+      }}
+      >
+        <LinearProgress style={{ height: 3 }} />
+      </div>
+    </GridOverlay>
+  );
+}
+
+export default ({
+  annotateColumns, rows,
   columns, annotations, inferredData,
   loading, multiPartData, setMultiPartData,
   validateDateFormat, columnStats,
   fieldsConfig, addingAnnotationsAllowed, onUploadAnnotations, datasetID
 }) => {
+  const { classes } = useStyles();
   const [pageSize, setPageSize] = useState(rowsPerPageOptions[0]);
   const [highlightedColumn, setHighlightedColumn] = useState(null);
   const [editingColumn, setEditingColumn] = useState(null);
@@ -415,4 +421,4 @@ export default withStyles(({ palette }) => ({
       />
     </div>
   );
-});
+};

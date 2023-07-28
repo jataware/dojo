@@ -1,20 +1,19 @@
 import React from 'react';
 import Button from '@mui/material/Button';
-import { withStyles } from '@mui/material/styles';
 
 /**
  *
  * */
-export const Navigation = withStyles(({ spacing }) => ({
-  buttonContainer: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    marginTop: spacing(2)
-  },
-}))(({
-  classes, handleNext, handleBack, label, disabled, disableNext, ...props
+export const Navigation = ({
+  handleNext, handleBack, label, disabled, disableNext, ...props
 }) => (
-  <div className={classes.buttonContainer}>
+  <div
+    style={{
+      display: 'flex',
+      justifyContent: 'space-between',
+      marginTop: '16px',
+    }}
+  >
     <Button
       onClick={handleBack}
       disabled={disabled}
@@ -33,4 +32,4 @@ export const Navigation = withStyles(({ spacing }) => ({
       </Button>
     )}
   </div>
-));
+);

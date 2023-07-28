@@ -14,13 +14,13 @@ import FormHelperText from '@mui/material/FormHelperText';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 
-import { withStyles } from '@mui/material/styles';
+import { makeStyles } from 'tss-react/mui';
 
 import ParameterOptions from './ParameterOptions';
 import { checkUniqueParameterName } from './templaterUtils';
 import { useConfigs, useDirective } from '../SWRHooks';
 
-const TemplaterForm = withStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   paramOptionsWrapper: {
     paddingLeft: theme.spacing(2),
   },
@@ -43,8 +43,9 @@ const TemplaterForm = withStyles((theme) => ({
   predefinedListItem: {
     flexDirection: 'column',
   },
-}))(({
-  classes,
+}));
+
+const TemplaterForm = ({
   initialValues,
   handleSubmit,
   setDisableConfirm,
@@ -58,6 +59,8 @@ const TemplaterForm = withStyles((theme) => ({
 }) => {
   const { configs } = useConfigs(modelId);
   const { directive } = useDirective(modelId);
+
+  const { classes } = useStyles();
 
   // This schema is defined inside the component so that we have access to all the arguments
   // for the checkUniqueParameterName function
@@ -281,6 +284,6 @@ const TemplaterForm = withStyles((theme) => ({
       </Form>
     </FormikProvider>
   );
-});
+};
 
 export default TemplaterForm;

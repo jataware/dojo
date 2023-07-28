@@ -8,7 +8,8 @@ import InputLabel from '@mui/material/InputLabel';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import Typography from '@mui/material/Typography';
-import { withStyles } from '@mui/material/styles';
+
+import { makeStyles } from 'tss-react/mui';
 
 import PreviewTransformation from './PreviewTransformation';
 import { generateProcessTempResArgs } from './dataTransformationHelpers';
@@ -27,7 +28,7 @@ const aggregationFunctions = [
   'last',
 ];
 
-export default withStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   selectWrapper: {
     width: '200px',
   },
@@ -57,8 +58,9 @@ export default withStyles((theme) => ({
     alignItems: 'center',
     justifyContent: 'center',
   },
-}))(({
-  classes,
+}));
+
+export default ({
   closeDrawer,
   oldResolution,
   resolutionOptions,
@@ -71,6 +73,7 @@ export default withStyles((theme) => ({
   annotations,
   cleanupRef,
 }) => {
+  const { classes } = useStyles();
   const [selectedResolution, setSelectedResolution] = useState(savedResolution || '');
   const [selectedAggregation, setSelectedAggregation] = useState(savedAggregation || '');
   const [saveAttempt, setSaveAttempt] = useState(false);
@@ -199,4 +202,4 @@ export default withStyles((theme) => ({
       />
     </div>
   );
-});
+};

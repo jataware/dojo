@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
-import { withStyles } from '@mui/material/styles';
-import IconButton from '@mui/material/IconButton';
 
+import { makeStyles } from 'tss-react/mui';
+
+import IconButton from '@mui/material/IconButton';
 import Grid from '@mui/material/Grid';
 
 import InfoIcon from '@mui/icons-material/Info';
@@ -12,7 +13,7 @@ import EventIcon from '@mui/icons-material/Event'; // date
 import Popover from '@mui/material/Popover';
 import Typography from '@mui/material/Typography';
 
-export default withStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   popoverContent: {
     padding: theme.spacing(2),
     background: theme.palette.common.white,
@@ -45,7 +46,10 @@ export default withStyles((theme) => ({
   icon: {
     color: '#23b26b',
   },
-}))(({ classes }) => {
+}));
+
+export default (() => {
+  const { classes } = useStyles();
   const [anchorEl, setAnchorEl] = useState(null);
 
   const handleClick = (event) => {

@@ -3,11 +3,12 @@ import React, { useCallback, useEffect, useState } from 'react';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import Typography from '@mui/material/Typography';
-import { withStyles } from '@mui/material/styles';
 import {
   MuiPickersUtilsProvider,
   KeyboardDatePicker,
 } from '@material-ui/pickers';
+
+import { makeStyles } from 'tss-react/mui';
 
 import parseISO from 'date-fns/parseISO';
 import format from 'date-fns/format';
@@ -107,7 +108,7 @@ const transformIntoDataset = (dates) => {
   return { datasets: [{ data }] };
 };
 
-export default withStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   loading: {
     display: 'flex',
     alignItems: 'center',
@@ -134,8 +135,9 @@ export default withStyles((theme) => ({
     justifyContent: 'flex-end',
     margin: [[theme.spacing(8), theme.spacing(4)]],
   },
-}))(({
-  classes,
+}));
+
+export default ({
   timeBounds,
   setSavedTimeBounds,
   savedTimeBounds,
@@ -145,6 +147,7 @@ export default withStyles((theme) => ({
   annotations,
   cleanupRef,
 }) => {
+  const { classes } = useStyles();
   const [startValue, setStartValue] = useState(() => {
     if (savedTimeBounds) return savedTimeBounds[0];
     return null;
@@ -360,4 +363,4 @@ export default withStyles((theme) => ({
       )}
     </div>
   );
-});
+};

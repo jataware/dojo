@@ -7,7 +7,6 @@ import Typography from '@mui/material/Typography';
 import * as yup from 'yup';
 import get from 'lodash/get';
 
-import { withStyles } from '@mui/material/styles';
 import { DomainsAutocomplete } from '../components/ModelDetailForm';
 
 import { FormAwareTextField, FormAwareSelect } from './FormFields';
@@ -109,11 +108,8 @@ export const updateMetadata = async (datasetId, fileMetadataData, storeAnnotatio
 /**
  *
  * */
-const Section = withStyles(() => ({
-  root: {
-  }
-}))(({ title, children, classes }) => (
-  <section className={classes.root}>
+const Section = ({ title, children }) => (
+  <section>
     <Typography
       variant="h6"
       color="textSecondary"
@@ -124,7 +120,7 @@ const Section = withStyles(() => ({
 
     {children}
   </section>
-));
+);
 
 /**
  *

@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { withStyles } from '@mui/material/styles';
+import { makeStyles } from 'tss-react/mui';
 
 import keyBy from 'lodash/keyBy';
 import reduce from 'lodash/reduce';
@@ -34,10 +34,7 @@ const gadmResolverColumns = [
   }
 ];
 
-/**
- *
- **/
-const GadmResolverTable = withStyles(() => ({
+const useStyles = makeStyles()(() => ({
   table: {
     maxHeight: '100%'
   },
@@ -62,70 +59,7 @@ const GadmResolverTable = withStyles(() => ({
   },
   innerInputOutlined: {
     padding: 10
-  }
-}))(({
-  classes, rows, gadmValues, onGadmChange, countries
-}) => (
-  <Table
-    className={classes.table}
-    aria-label="Gadm Resolver Table"
-    stickyHeader
-  >
-    <TableHead>
-      <TableRow className={classes.tableHeader}>
-        {gadmResolverColumns.map((column) => (
-          <TableCell
-            className={classes.tableHeaderCell}
-            key={column.id}
-            align={column.align}
-            style={{ minWidth: column.minWidth }}
-          >
-            <Typography
-              variant="h5"
-              style={{ fontSize: '1.1rem' }}
-            >
-              {column.label}
-            </Typography>
-          </TableCell>
-        ))}
-      </TableRow>
-    </TableHead>
-    <TableBody>
-      {rows.map((row) => (
-        <TableRow
-          className={classes.tableRow}
-          hover
-          role="checkbox"
-          tabIndex={-1}
-          key={row.raw_value}
-        >
-          <TableCell className={classes.tableCell}>
-            {row.raw_value}
-          </TableCell>
-
-          <TableCell className={classes.tableCell}>
-            <Autocomplete
-              multiple={false}
-              options={[
-                ...row.alternatives,
-                ...countries.filter((c) => !row.alternatives.includes(c))
-              ]}
-              values={
-                    gadmValues[row.raw_value].override || row.gadm_resolved
-                  }
-              setValues={(newValue) => onGadmChange(row.raw_value, newValue)}
-            />
-          </TableCell>
-        </TableRow>
-      ))}
-    </TableBody>
-  </Table>
-));
-
-/**
- *
- **/
-export const GadmResolver = withStyles(() => ({
+  },
   root: {
     maxWidth: '40rem',
     margin: 'auto',
@@ -162,9 +96,80 @@ export const GadmResolver = withStyles(() => ({
     backgroundColor: 'white',
     alignItems: 'center',
   }
-}))(({
-  classes, gadmRowData, onSave, onCancel, overrides, countries
+}));
+
+/**
+ *
+ **/
+const GadmResolverTable = ({
+  rows, gadmValues, onGadmChange, countries
 }) => {
+  const { classes } = useStyles();
+  return (
+    <Table
+      className={classes.table}
+      aria-label="Gadm Resolver Table"
+      stickyHeader
+    >
+      <TableHead>
+        <TableRow className={classes.tableHeader}>
+          {gadmResolverColumns.map((column) => (
+            <TableCell
+              className={classes.tableHeaderCell}
+              key={column.id}
+              align={column.align}
+              style={{ minWidth: column.minWidth }}
+            >
+              <Typography
+                variant="h5"
+                style={{ fontSize: '1.1rem' }}
+              >
+                {column.label}
+              </Typography>
+            </TableCell>
+          ))}
+        </TableRow>
+      </TableHead>
+      <TableBody>
+        {rows.map((row) => (
+          <TableRow
+            className={classes.tableRow}
+            hover
+            role="checkbox"
+            tabIndex={-1}
+            key={row.raw_value}
+          >
+            <TableCell className={classes.tableCell}>
+              {row.raw_value}
+            </TableCell>
+
+            <TableCell className={classes.tableCell}>
+              <Autocomplete
+                multiple={false}
+                options={[
+                  ...row.alternatives,
+                  ...countries.filter((c) => !row.alternatives.includes(c))
+                ]}
+                values={
+                      gadmValues[row.raw_value].override || row.gadm_resolved
+                    }
+                setValues={(newValue) => onGadmChange(row.raw_value, newValue)}
+              />
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  );
+};
+
+/**
+ *
+ **/
+export const GadmResolver = ({
+  gadmRowData, onSave, onCancel, overrides, countries
+}) => {
+  const { classes } = useStyles();
   const lowConfidenceRows = gadmRowData.fuzzy_match;
   const primaryField = gadmRowData.field;
 
@@ -269,4 +274,4 @@ export const GadmResolver = withStyles(() => ({
 
     </div>
   );
-});
+};

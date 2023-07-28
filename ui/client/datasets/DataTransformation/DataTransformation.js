@@ -17,7 +17,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Container from '@mui/material/Container';
 import List from '@mui/material/List';
 import Typography from '@mui/material/Typography';
-import { withStyles } from '@mui/material/styles';
+import { makeStyles } from 'tss-react/mui';
 
 import ClipMap from './ClipMap';
 import ClipTime from './ClipTime';
@@ -136,18 +136,35 @@ import PromptDialog from '../PromptDialog';
 //   });
 // }
 
-/**
- *
- **/
-const DataTransformation = withStyles(() => ({
+const useStyles = makeStyles()(({ spacing }) => ({
   transformationRoot: {
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'space-between',
     height: 'calc(100% - 128px)',
   },
-}))(({
-  classes,
+  root: {
+    padding: [[spacing(4), spacing(4), spacing(2), spacing(4)]],
+
+    height: '100%',
+
+  },
+  header: {
+    marginBottom: spacing(6),
+  },
+  restoreFileWrapper: {
+    margin: spacing(8),
+  },
+  restoreFileSpinner: {
+    margin: [[0, 'auto', spacing(3)]],
+    display: 'block',
+  },
+}));
+
+/**
+ *
+ **/
+const DataTransformation = ({
   datasetInfo,
   handleNext,
   handleBack,
@@ -155,6 +172,7 @@ const DataTransformation = withStyles(() => ({
   setAnnotations,
   cleanupRef,
 }) => {
+  const { classes } = useStyles();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerName, setDrawerName] = useState(null);
   const [disableDrawerClose, setDisableDrawerClose] = useState(false);
@@ -711,27 +729,9 @@ const DataTransformation = withStyles(() => ({
       />
     </div>
   );
-});
+};
 
-export default withStyles(({ spacing }) => ({
-  root: {
-    padding: [[spacing(4), spacing(4), spacing(2), spacing(4)]],
-
-    height: '100%',
-
-  },
-  header: {
-    marginBottom: spacing(6),
-  },
-  restoreFileWrapper: {
-    margin: spacing(8),
-  },
-  restoreFileSpinner: {
-    margin: [[0, 'auto', spacing(3)]],
-    display: 'block',
-  },
-}))(({
-  classes,
+export default ({
   datasetInfo,
   stepTitle,
   handleNext,
@@ -739,6 +739,7 @@ export default withStyles(({ spacing }) => ({
   setAnnotations,
   annotations,
 }) => {
+  const { classes } = useStyles();
   const cleanupRef = useRef(null);
   const [showSpinner, setShowSpinner] = useState(true);
 
@@ -809,4 +810,4 @@ export default withStyles(({ spacing }) => ({
       )}
     </Container>
   );
-});
+};

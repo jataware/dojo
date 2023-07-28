@@ -13,7 +13,7 @@ import { makeStyles } from 'tss-react/mui';
 
 import { ThemeContext } from './ThemeContextProvider';
 
-const useStyles = makeStyles()()((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   appBarRoot: {
     backgroundColor: lighten(theme.palette.primary.light, 0.6),
   },

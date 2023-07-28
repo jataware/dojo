@@ -4,7 +4,6 @@ import _values from 'lodash/values';
 
 import { RadioGroup } from 'material-ui-formik-components/RadioGroup';
 import { Switch } from 'material-ui-formik-components/Switch';
-import { withStyles } from '@mui/material/styles';
 import { Field } from 'formik';
 import Typography from '@mui/material/Typography';
 
@@ -287,14 +286,8 @@ const widgets = {
 /**
  *
  * */
-export const ColumnAnnotation = withStyles((theme) => ({
-  root: {
-  },
-  qualifies: {
-    padding: theme.spacing(1)
-  }
-}))(({
-  classes, editingColumnName, columns,
+export const ColumnAnnotation = ({
+  editingColumnName, columns,
   values, setFieldValue, validateDateFormat,
   annotatedColumns, fieldsConfig = () => ({}),
   focusRef
@@ -310,7 +303,7 @@ export const ColumnAnnotation = withStyles((theme) => ({
   const TypeWidget = widgets[values?.category];
 
   return (
-    <div className={classes.root}>
+    <div>
 
       <FormAwareTextField
         margin="dense"
@@ -363,7 +356,7 @@ export const ColumnAnnotation = withStyles((theme) => ({
       />
 
       {values?.isQualifies && (
-        <div className={classes.qualifies}>
+        <div style={{ padding: '8px' }}>
           <Autocomplete
             label="Columns to Qualify"
             options={removeSelf(annotatedColumns, editingColumnName)
@@ -392,5 +385,5 @@ export const ColumnAnnotation = withStyles((theme) => ({
 
     </div>
   );
-});
+};
 ColumnAnnotation.displayName = 'ColumnAnnotation';

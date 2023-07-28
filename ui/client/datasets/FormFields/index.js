@@ -8,11 +8,26 @@ import FormHelperText from '@mui/material/FormHelperText';
 
 import { Select } from 'material-ui-formik-components/Select';
 
-import { withStyles } from '@mui/material/styles';
 import { Field, getIn, useField } from 'formik';
 import isFunction from 'lodash/isFunction';
 import get from 'lodash/get';
 
+import { makeStyles } from 'tss-react/mui';
+
+const useStyles = makeStyles()((theme) => ({
+  root: {
+    margin: [[theme.spacing(1), 0]],
+
+    '& .MuiFormHelperText-root': {
+      marginLeft: 7,
+      marginRight: 5,
+    }
+  },
+  helperText: {
+    marginTop: -6,
+    color: `${theme.palette.grey[600]} !important`
+  }
+}));
 /**
  * All Form-Aware fields in this directory need to be nested within a Formik's
  * <Formik> <Form> anywhere in the parent react tree.
@@ -23,17 +38,7 @@ import get from 'lodash/get';
  * Needs to be nested within <Formik><Form> from a parent
  * within the React Tree context.
  * */
-export const FormAwareTextField = withStyles((theme) => ({
-  root: {
-    margin: [[theme.spacing(1), 0]],
-
-    '& .MuiFormHelperText-root': {
-      marginLeft: 7,
-      marginRight: 5,
-    }
-  },
-}))(({
-  classes,
+export const FormAwareTextField = ({
   name,
   label,
   requiredFn,
@@ -44,6 +49,7 @@ export const FormAwareTextField = withStyles((theme) => ({
   validate,
   ...props
 }) => {
+  const { classes } = useStyles();
   const [field, meta] = useField({ ...props, name, validate });
 
   return (
@@ -69,19 +75,12 @@ export const FormAwareTextField = withStyles((theme) => ({
       {...props}
     />
   );
-});
+};
 
 /**
  *
  * */
-const FormikCheckbox = withStyles((theme) => ({
-  root: {
-  },
-  helperText: {
-    marginTop: -6,
-    color: `${theme.palette.grey[600]} !important`
-  }
-}))((props) => {
+const FormikCheckbox = (props) => {
   const {
     label,
     field,
@@ -90,9 +89,9 @@ const FormikCheckbox = withStyles((theme) => ({
     fullWidth,
     margin,
     helperText,
-    classes,
     ...other
   } = props;
+  const { classes } = useStyles();
 
   const errorText = getIn(errors, field.name);
   const touchedVal = getIn(touched, field.name);
@@ -108,7 +107,6 @@ const FormikCheckbox = withStyles((theme) => ({
 
   return (
     <FormControl
-      className={classes.root}
       fullWidth={fullWidth}
       required={required}
       error={hasError}
@@ -123,7 +121,7 @@ const FormikCheckbox = withStyles((theme) => ({
       {hasError && <FormHelperText>{errorText}</FormHelperText>}
     </FormControl>
   );
-});
+};
 FormikCheckbox.defaultProps = {
   required: false,
   fullWidth: true,

@@ -10,7 +10,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 
-import { withStyles } from '@mui/material/styles';
+import { makeStyles } from 'tss-react/mui';
 
 import useElwoodData from './useElwoodData';
 import BasicAlert from '../../components/BasicAlert';
@@ -64,7 +64,7 @@ const Previewed = ({
   return null;
 };
 
-export default withStyles(() => ({
+const useStyles = makeStyles()(() => ({
   root: {
     width: '275px',
     margin: '0 auto',
@@ -90,8 +90,9 @@ export default withStyles(() => ({
   cardContent: {
     position: 'relative',
   },
-}))(({
-  classes,
+}));
+
+export default ({
   datasetId,
   jobString,
   createPreviewArgs,
@@ -99,6 +100,7 @@ export default withStyles(() => ({
   cleanupRef,
   disabled,
 }) => {
+  const { classes } = useStyles();
   const [showPreview, setShowPreview] = useState(false);
   const [loading, setLoading] = useState(false);
   const [after, setAfter] = useState('___');
@@ -191,4 +193,4 @@ export default withStyles(() => ({
       />
     </>
   );
-});
+};

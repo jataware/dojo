@@ -6,8 +6,9 @@ import axios from 'axios';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
-import { withStyles } from '@mui/material/styles';
 import { DataGrid } from '@material-ui/data-grid';
+
+import { withStyles } from 'tss-react/mui';
 
 import ExpandableDataGridCell from './ExpandableDataGridCell';
 import LoadingOverlay from './LoadingOverlay';
@@ -234,4 +235,4 @@ const ViewRuns = ({
   );
 };
 
-export default withStyles(styles)(ViewRuns);
+export default withStyles(ViewRuns, styles);

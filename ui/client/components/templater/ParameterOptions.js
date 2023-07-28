@@ -14,9 +14,9 @@ import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import Typography from '@mui/material/Typography';
 
-import { withStyles } from '@mui/material/styles';
+import { makeStyles } from 'tss-react/mui';
 
-const ParameterOptions = withStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   root: {
     width: '100%',
   },
@@ -32,50 +32,55 @@ const ParameterOptions = withStyles((theme) => ({
   subtext: {
     maxWidth: '300px',
   },
-}))(({ classes, options }) => (
-  <FieldArray
-    name="options"
-    render={(arrayHelpers) => (
-      <div className={classes.root}>
-        <List dense>
-          {options && !isEmpty(options) && options.map((option, index) => (
-            // using the index is what the formik docs use for this, even though one
-            // would expect it to cause issues with re-rendering when you remove items
-            // eslint-disable-next-line react/no-array-index-key
-            <ListItem key={index}>
-              <Field
-                name={`options.${index}`}
-                margin="dense"
-                label={`#${index + 1}`}
-                variant="outlined"
-                component={TextField}
-              />
-              <IconButton
-                onClick={() => arrayHelpers.remove(index)}
-                color="secondary"
-              >
-                <DeleteIcon />
-              </IconButton>
-            </ListItem>
-          ))}
-        </List>
-        <div className={classes.subtextWrapper}>
-          <Typography variant="caption" className={classes.subtext}>
-            Make sure that the choices you specify are valid values for this parameter
-          </Typography>
-          <Button
-            className={classes.addButton}
-            color="primary"
-            onClick={() => arrayHelpers.push('')}
-            size="small"
-            startIcon={<AddCircleIcon />}
-          >
-            Add Option
-          </Button>
+}));
+
+const ParameterOptions = ({ options }) => {
+  const { classes } = useStyles();
+  return (
+    <FieldArray
+      name="options"
+      render={(arrayHelpers) => (
+        <div className={classes.root}>
+          <List dense>
+            {options && !isEmpty(options) && options.map((option, index) => (
+              // using the index is what the formik docs use for this, even though one
+              // would expect it to cause issues with re-rendering when you remove items
+              // eslint-disable-next-line react/no-array-index-key
+              <ListItem key={index}>
+                <Field
+                  name={`options.${index}`}
+                  margin="dense"
+                  label={`#${index + 1}`}
+                  variant="outlined"
+                  component={TextField}
+                />
+                <IconButton
+                  onClick={() => arrayHelpers.remove(index)}
+                  color="secondary"
+                >
+                  <DeleteIcon />
+                </IconButton>
+              </ListItem>
+            ))}
+          </List>
+          <div className={classes.subtextWrapper}>
+            <Typography variant="caption" className={classes.subtext}>
+              Make sure that the choices you specify are valid values for this parameter
+            </Typography>
+            <Button
+              className={classes.addButton}
+              color="primary"
+              onClick={() => arrayHelpers.push('')}
+              size="small"
+              startIcon={<AddCircleIcon />}
+            >
+              Add Option
+            </Button>
+          </div>
         </div>
-      </div>
-    )}
-  />
-));
+      )}
+    />
+  );
+};
 
 export default ParameterOptions;

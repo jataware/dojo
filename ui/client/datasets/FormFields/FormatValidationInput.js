@@ -1,5 +1,4 @@
 import React from 'react';
-import { withStyles } from '@mui/material/styles';
 import { Field, useField } from 'formik';
 
 import { TextField } from 'material-ui-formik-components/TextField';
@@ -15,17 +14,8 @@ import identity from 'lodash/identity';
  * Encapsulates logic for displaying good/bad icons on custom validation.
  * As of June 2023, used exclusively for Date inputs with backend validation
  * */
-export default withStyles(() => ({
-  root: {
-  },
-  valid: {
-    color: 'green'
-  },
-  invalid: {
-    color: 'red'
-  }
-}))(({
-  classes, validateFormat = identity, parentName, InputProps, ...props
+export default ({
+  validateFormat = identity, parentName, InputProps, ...props
 }) => {
   const [field, meta, helpers] = useField(props.name);
   const valid = !meta?.error;
@@ -105,7 +95,6 @@ export default withStyles(() => ({
   return (
     <Field
       validate={validate}
-      className={classes.root}
       component={TextField}
       variant="outlined"
       fullWidth
@@ -115,9 +104,9 @@ export default withStyles(() => ({
         endAdornment: field.value && (
           <InputAdornment position="end">
             {valid ? (
-              <CheckCircleIcon className={classes.valid} />
+              <CheckCircleIcon sx={{ color: 'green' }} />
             ) : (
-              <ErrorCircleIcon className={classes.invalid} />
+              <ErrorCircleIcon sx={{ color: 'red' }} />
             )}
           </InputAdornment>
         ),
@@ -127,4 +116,4 @@ export default withStyles(() => ({
       {...props}
     />
   );
-});
+};

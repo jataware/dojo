@@ -6,15 +6,15 @@ import Container from '@mui/material/Container';
 import FailedIcon from '@mui/icons-material/Clear';
 import Typography from '@mui/material/Typography';
 
-import { withStyles } from '@mui/material/styles';
+import { makeStyles } from 'tss-react/mui';
 
 import axios from 'axios';
 import { Navigation } from '.';
 
-const RunJobs = withStyles(({ spacing }) => ({
+const useStyles = makeStyles()((theme) => ({
   root: {
     display: 'flex',
-    padding: [[0, spacing(4), spacing(2), spacing(4)]],
+    padding: [[0, theme.spacing(4), theme.spacing(2), theme.spacing(4)]],
     flexDirection: 'column',
     flex: 1,
     height: '100%'
@@ -46,10 +46,14 @@ const RunJobs = withStyles(({ spacing }) => ({
     overflow: 'auto',
     maxHeight: '30%'
   }
-}))(({
-  classes, datasetInfo, setDatasetInfo, stepTitle, annotations, setAnnotations,
+}));
+
+const RunJobs = ({
+  datasetInfo, setDatasetInfo, stepTitle, annotations, setAnnotations,
   handleNext, handleBack, jobs, rawFileName, ...props
 }) => {
+  const { classes } = useStyles();
+
   // Don't proceed if we don't have a job set.
   if (jobs === null) {
     return null;
@@ -180,6 +184,6 @@ const RunJobs = withStyles(({ spacing }) => ({
       />
     </Container>
   );
-});
+};
 RunJobs.SKIP = true; // TODO probably set within flow descriptor object in Flows.js
 export default RunJobs;

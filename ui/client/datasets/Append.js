@@ -8,7 +8,8 @@ import Container from '@mui/material/Container';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
-import { withStyles } from '@mui/material/styles';
+
+import { makeStyles } from 'tss-react/mui';
 
 import { Navigation } from '.';
 import {
@@ -20,19 +21,12 @@ import {
 
 const skipValidation = false;
 
-/**
- * Dataset Append file landing page (fileMetadata, file upload).
- **/
-
-/**
- *
- * */
-export default withStyles(({ spacing }) => ({
+const useStyles = makeStyles()((theme) => ({
   root: {
-    padding: [[spacing(4), spacing(4), spacing(2), spacing(4)]],
+    padding: [[theme.spacing(4), theme.spacing(4), theme.spacing(2), theme.spacing(4)]],
   },
   header: {
-    marginBottom: spacing(6),
+    marginBottom: theme.spacing(6),
   },
   accordion: {
     margin: '1.5rem 0 2rem 0'
@@ -40,11 +34,21 @@ export default withStyles(({ spacing }) => ({
   accordionContent: {
     flexGrow: 0
   }
-}))(({
-  classes, datasetInfo, error, stepTitle, setDatasetInfo,
+}));
+
+/**
+ * Dataset Append file landing page (fileMetadata, file upload).
+ **/
+
+/**
+ *
+ * */
+export default ({
+  datasetInfo, error, stepTitle, setDatasetInfo,
   setAnnotations, handleNext, rawFileName, uploadedFilesData,
 }) => {
   const [fileMetadata, setFileMetadata] = useState({});
+  const { classes } = useStyles();
 
   const formRef = React.useRef();
 
@@ -163,4 +167,4 @@ export default withStyles(({ spacing }) => ({
 
     </Container>
   );
-});
+};

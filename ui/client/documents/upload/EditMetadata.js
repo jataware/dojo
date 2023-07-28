@@ -1,10 +1,11 @@
 import React from 'react';
 
-import { withStyles } from '@mui/material/styles';
 import startCase from 'lodash/startCase';
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
 import DateFnsUtils from '@date-io/date-fns';
+
+import { makeStyles } from 'tss-react/mui';
 
 import {
   MuiPickersUtilsProvider,
@@ -13,6 +14,16 @@ import {
 import { KeyboardDatePicker } from 'material-ui-formik-components/KeyboardDatePicker';
 import { Formik, Field } from 'formik';
 import { ManagedTextField } from './FormFields';
+
+const useStyles = makeStyles()((theme) => ({
+  root: {
+    padding: '1rem',
+    paddingRight: 0
+  },
+  filename: {
+    color: theme.palette.primary.main
+  }
+}));
 
 /**
  * Simple helper
@@ -27,17 +38,11 @@ const arrayToDOMOptions = (optionsArray) => optionsArray
 /**
  *
  **/
-export default withStyles((theme) => ({
-  root: {
-    padding: '1rem',
-    paddingRight: 0
-  },
-  filename: {
-    color: theme.palette.primary.main
-  }
-}))(({
-  classes, metadata, filename, onSave
+export default ({
+  metadata, filename, onSave
 }) => {
+  const { classes } = useStyles();
+
   const sharedTextFieldProps = (fieldName) => ({
     name: fieldName,
     label: startCase(fieldName),
@@ -205,4 +210,4 @@ export default withStyles((theme) => ({
 
     </div>
   );
-});
+};

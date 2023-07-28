@@ -14,7 +14,8 @@ import Typography from '@mui/material/Typography';
 import * as yup from 'yup';
 import get from 'lodash/get';
 
-import { withStyles } from '@mui/material/styles';
+import { makeStyles } from 'tss-react/mui';
+
 import { DomainsAutocomplete } from '../components/ModelDetailForm';
 
 import { Navigation } from '.';
@@ -48,11 +49,8 @@ const checkRequired = (fieldName) => get(formSchema, `fields.${fieldName}.exclus
 /**
  *
  * */
-const Section = withStyles(() => ({
-  root: {
-  }
-}))(({ title, children, classes }) => (
-  <section className={classes.root}>
+const Section = ({ title, children }) => (
+  <section>
     <Typography
       variant="h6"
       color="textSecondary"
@@ -63,7 +61,7 @@ const Section = withStyles(() => ({
 
     {children}
   </section>
-));
+);
 
 /**
  *
@@ -111,10 +109,7 @@ const BaseData = ({
   </Section>
 );
 
-/**
- *
- * */
-export default withStyles(({ spacing }) => ({
+const useStyles = makeStyles()(({ spacing }) => ({
   root: {
     padding: [[spacing(4), spacing(4), spacing(2), spacing(4)]],
   },
@@ -127,14 +122,21 @@ export default withStyles(({ spacing }) => ({
   accordionContent: {
     flexGrow: 0
   }
-}))(({
-  classes, datasetInfo, setDatasetInfo, stepTitle, handleNext, handleBack, modelId,
+}));
+
+/**
+ *
+ * */
+export default ({
+  datasetInfo, setDatasetInfo, stepTitle, handleNext, handleBack, modelId,
   annotations, setAnnotations, ...props
 }) => {
   const [fileMetadata, setFileMetadata] = useState({
     filename: null,
   });
   const [loading, setLoading] = useState(false);
+
+  const { classes } = useStyles();
 
   const back = (/* event*/) => {}; // Do nothing
 
@@ -286,4 +288,4 @@ export default withStyles(({ spacing }) => ({
 
     </Container>
   );
-});
+};

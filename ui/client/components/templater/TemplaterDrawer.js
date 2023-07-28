@@ -2,20 +2,21 @@ import React, { useEffect, useState } from 'react';
 
 import Typography from '@mui/material/Typography';
 
-import { withStyles } from '@mui/material/styles';
+import { makeStyles } from 'tss-react/mui';
 
 import ConfirmDialog from '../ConfirmDialog';
 import Drawer from '../Drawer';
 import TemplaterForm from './TemplaterForm';
 
-const TemplaterDrawer = withStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   highlight: {
     backgroundColor: theme.palette.grey[200],
     borderRadius: theme.shape.borderRadius,
     margin: [[0, theme.spacing(2)]],
   },
-}))(({
-  classes,
+}));
+
+const TemplaterDrawer = ({
   formOpen,
   onClose,
   currentHighlight,
@@ -30,6 +31,8 @@ const TemplaterDrawer = withStyles((theme) => ({
 }) => {
   const [confirmDeleteDialogOpen, setConfirmDeleteDialogOpen] = useState(false);
   const [disableConfirm, setDisableConfirm] = useState(true);
+
+  const { classes } = useStyles();
 
   useEffect(() => {
     if (!formOpen) {
@@ -91,6 +94,6 @@ const TemplaterDrawer = withStyles((theme) => ({
       />
     </Drawer>
   );
-});
+};
 
 export default TemplaterDrawer;

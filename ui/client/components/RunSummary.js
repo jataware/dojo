@@ -15,7 +15,7 @@ import Hidden from '@mui/material/Hidden';
 import Typography from '@mui/material/Typography';
 import QueuedJobIcon from '@mui/icons-material/Schedule';
 import RunningJobIcon from '@mui/icons-material/PlayCircleFilledWhite';
-import { withStyles } from '@mui/material/styles';
+import { withStyles } from 'tss-react/mui';
 import { useRun } from './SWRHooks';
 
 import { ExternalLink, InternalTab } from './Links';
@@ -130,25 +130,23 @@ const Value = ({ href, title, ...props }) => {
   );
 };
 
-const SectionGridItem = withStyles({
-  detailsSection: {
-    padding: '1.5rem',
-    '& ul': {
-      listStyle: 'none',
-      marginBlockStart: '0.25em',
-      marginBlockEnd: 0,
-      paddingInlineStart: 0,
-      overflow: 'auto'
-    }
-  },
-})(({
+const SectionGridItem = ({
   title, classes, children, empty, ...props
 }) => (
   <Grid
     item
     xs={12}
     md={6}
-    className={classes.detailsSection}
+    sx={{
+      padding: '1.5rem',
+      '& ul': {
+        listStyle: 'none',
+        marginBlockStart: '0.25em',
+        marginBlockEnd: 0,
+        paddingInlineStart: 0,
+        overflow: 'auto'
+      }
+    }}
     role="region"
     aria-label={title}
     {...props}
@@ -165,7 +163,7 @@ const SectionGridItem = withStyles({
     {empty ? <Typography>No {title}</Typography> : children}
 
   </Grid>
-));
+);
 
 // -------------------------- Main Container ----------------------------------
 
@@ -372,4 +370,4 @@ const RunSummary = ({ classes }) => {
   );
 };
 
-export default withStyles(styles)(RunSummary);
+export default withStyles(RunSummary, styles);

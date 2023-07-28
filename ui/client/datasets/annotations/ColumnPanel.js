@@ -3,7 +3,7 @@ import clsx from 'clsx';
 import { Form, Formik } from 'formik';
 import * as yup from 'yup';
 
-import { withStyles } from '@mui/material/styles';
+import { makeStyles } from 'tss-react/mui';
 
 import Button from '@mui/material/Button';
 import CloseIcon from '@mui/icons-material/Close';
@@ -24,6 +24,72 @@ import { CATEGORIES, LATLON_MAPPINGS } from './constants';
 import { ColumnAnnotation } from './ColumnAnnotation';
 import { cleanUnusedFields, verifyConditionalRequiredFields, verifyQualifierPrimaryRules } from './annotationRules';
 import Stats from './Stats';
+
+const useStyles = makeStyles()(({ palette, spacing, breakpoints }) => ({
+  root: {
+    width: '40%',
+    minWidth: '25rem',
+    background: 'none',
+    borderLeft: 'none',
+  },
+  expanded: {
+    minWidth: '35rem',
+    width: '60%',
+
+    [breakpoints.down('sm')]: {
+      minWidth: 'unset',
+      width: '90vw',
+    },
+  },
+  drawerControls: {
+    display: 'flex',
+    justifyContent: 'flex-end'
+  },
+  highlightHeading: {
+    fontWeight: 'bold'
+  },
+  buttonContainer: {
+    marginTop: spacing(0.5),
+    display: 'flex',
+    '& > div': {
+      display: 'flex',
+      flex: 1,
+      justifyContent: 'flex-end'
+    }
+  },
+  editPanel: {
+    padding: '2rem',
+    paddingTop: '0.5rem',
+    background: palette.common.white,
+    flex: 1
+  },
+  tabsPanel: {
+    borderRight: '1px solid gray', // TODO tweak subtle border color
+
+    '& > div': {
+      marginTop: '5rem',
+      height: '10rem',
+      width: 0,
+      paddingRight: '3rem',
+      background: palette.common.white,
+      marginRight: -1, // Overlap and hide left border of panel itself
+      display: 'flex',
+      alignItems: 'center',
+      border: '1px solid gray', // TODO tweak color
+      borderRadius: '6px 0 0 6px',
+      borderRight: 'lightgray', // theme color
+    }
+  },
+  statisticsButton: {
+    transform: 'rotate(270deg)',
+    marginLeft: -6,
+
+    '&:hover': {
+      backgroundColor: 'transparent',
+      boxShadow: 'none',
+    }
+  }
+}));
 
 // TODO convert ColumnPanel to folder- have index, form, and stats/maps files within it
 
@@ -176,72 +242,8 @@ function generateMultiPartData(columnName, values) {
 /**
  *
  * */
-export default withStyles(({ palette, spacing, breakpoints }) => ({
-  root: {
-    width: '40%',
-    minWidth: '25rem',
-    background: 'none',
-    borderLeft: 'none',
-  },
-  expanded: {
-    minWidth: '35rem',
-    width: '60%',
-
-    [breakpoints.down('sm')]: {
-      minWidth: 'unset',
-      width: '90vw',
-    },
-  },
-  drawerControls: {
-    display: 'flex',
-    justifyContent: 'flex-end'
-  },
-  highlightHeading: {
-    fontWeight: 'bold'
-  },
-  buttonContainer: {
-    marginTop: spacing(0.5),
-    display: 'flex',
-    '& > div': {
-      display: 'flex',
-      flex: 1,
-      justifyContent: 'flex-end'
-    }
-  },
-  editPanel: {
-    padding: '2rem',
-    paddingTop: '0.5rem',
-    background: palette.common.white,
-    flex: 1
-  },
-  tabsPanel: {
-    borderRight: '1px solid gray', // TODO tweak subtle border color
-
-    '& > div': {
-      marginTop: '5rem',
-      height: '10rem',
-      width: 0,
-      paddingRight: '3rem',
-      background: palette.common.white,
-      marginRight: -1, // Overlap and hide left border of panel itself
-      display: 'flex',
-      alignItems: 'center',
-      border: '1px solid gray', // TODO tweak color
-      borderRadius: '6px 0 0 6px',
-      borderRight: 'lightgray', // theme color
-    }
-  },
-  statisticsButton: {
-    transform: 'rotate(270deg)',
-    marginLeft: -6,
-
-    '&:hover': {
-      backgroundColor: 'transparent',
-      boxShadow: 'none',
-    }
-  }
-}))(({
-  anchorPosition = 'right', classes,
+export default ({
+  anchorPosition = 'right',
   columnName, headerName, columns,
   annotations, annotateColumns, inferredData,
   multiPartData, setMultiPartData,
@@ -253,6 +255,8 @@ export default withStyles(({ palette, spacing, breakpoints }) => ({
   // focusRef is passed down to columnAnnotation to autofocus on the first input
   // which we have to do manually due to the potential focus on grid cells (MUI autofocus fails)
   const focusRef = useRef(null);
+
+  const { classes } = useStyles();
 
   useEffect(() => {
     if (focusRef.current) {
@@ -519,4 +523,4 @@ export default withStyles(({ palette, spacing, breakpoints }) => ({
       )}
     </Drawer>
   );
-});
+};
