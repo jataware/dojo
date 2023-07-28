@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 
 import * as yup from 'yup';
 
-import Autocomplete from '@mui/lab/Autocomplete';
+import Autocomplete from '@mui/material/Autocomplete';
 import Button from '@mui/material/Button';
 
 import DateFnsUtils from '@date-io/date-fns';

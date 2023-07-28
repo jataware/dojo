@@ -3,7 +3,7 @@ import { useField } from 'formik';
 import * as XLSX from 'xlsx/xlsx.mjs';
 import * as GeoTiff from 'geotiff';
 
-import Autocomplete from '@mui/lab/Autocomplete';
+import Autocomplete from '@mui/material/Autocomplete';
 import Button from '@mui/material/Button';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';

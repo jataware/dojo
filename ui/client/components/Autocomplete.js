@@ -1,6 +1,6 @@
 import React from 'react';
 
-import MuiAutocomplete from '@mui/lab/Autocomplete';
+import MuiAutocomplete from '@mui/material/Autocomplete';
 import TextField from '@mui/material/TextField';
 
 /**
