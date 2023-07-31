@@ -99,10 +99,10 @@ export default ({
             <FormControl variant="outlined" className={classes.selectWrapper}>
               <InputLabel>Resolution</InputLabel>
               <Select
+                variant="standard"
                 value={selectedResolution}
                 onChange={handleChangeResolution}
-                label="Resolution"
-              >
+                label="Resolution">
                 {resolutionOptions.map((option) => (
                   <MenuItem key={option} value={option}>{option.toFixed(2)} km</MenuItem>
                 ))}

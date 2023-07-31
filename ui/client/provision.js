@@ -311,7 +311,7 @@ const Provision = () => {
           </div>
 
           <Grid item xs={12} className={classes.gridItem}>
-            <FormControl className={classes.formControl} fullWidth>
+            <FormControl variant="standard" className={classes.formControl} fullWidth>
               {/* don't show the loading spinner if we have the relaunch param as in that case
                 we aren't fetching base images */}
               {baseImageList.length || relaunch ? (
@@ -328,12 +328,12 @@ const Provision = () => {
                   selectOnFocus
                   renderInput={(params) => (
                     <TextField
+                      variant="standard"
                       {...params}
                       label={
                         relaunch ? 'Your existing image has been preselected below'
                           : 'Select or search for a base image'
-                      }
-                    />
+                      } />
                   )}
                 />
               ) : (
@@ -351,7 +351,7 @@ const Provision = () => {
           </Grid>
 
           <Grid item xs={12} className={classes.gridItem}>
-            <FormControl className={classes.formControl}>
+            <FormControl variant="standard" className={classes.formControl}>
               <Button
                 color="primary"
                 data-test="modelContainerLaunchBtn"

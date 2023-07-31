@@ -44,7 +44,7 @@ const MultiColumnDateSelector = ({
   };
 
   return (
-    <FormControl>
+    <FormControl variant="standard">
       <FormGroup>
         <Typography variant="caption">
           <ExternalLink href="https://docs.python.org/3/library/datetime.html#strftime-and-strptime-format-codes">

@@ -18,6 +18,7 @@ function FormikTextField({
   // and then any other MUI TextField props passed in are spread with ...props
   return (
     <TextField
+      variant="standard"
       /* eslint-disable react/jsx-props-no-spreading */
       {...props}
       InputProps={{ autoComplete: 'off' }}
@@ -34,8 +35,7 @@ function FormikTextField({
       error={
         get(formik, `touched.${[name]}`, null) && Boolean(get(formik, `errors.${[name]}`, null))
       }
-      helperText={get(formik, `touched.${[name]}`, null) && get(formik, `errors.${[name]}`, null)}
-    />
+      helperText={get(formik, `touched.${[name]}`, null) && get(formik, `errors.${[name]}`, null)} />
   );
 }
 

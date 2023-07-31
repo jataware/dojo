@@ -103,6 +103,7 @@ const SimpleEditor = ({ editorContents, setEditorContents }) => {
         </div>
         <Divider orientation="vertical" flexItem className={classes.divider} />
         <TextField
+          variant="standard"
           id="textField"
           data-test="terminalEditorTextArea"
           multiline
@@ -121,8 +122,7 @@ const SimpleEditor = ({ editorContents, setEditorContents }) => {
               lineHeight: `${LINE_HEIGHT}px`,
               paddingTop: 0,
             },
-          }}
-        />
+          }} />
 
       </Paper>
     </Container>
