@@ -151,27 +151,25 @@ const Provisioning = () => {
 
   const displayBodyText = () => {
     if (provisionState === 'failed') {
-      return (
-        <>
-          <div className={classes.failText}>
-            <Typography variant="subtitle1" align="center" gutterBottom>
-              There was an issue launching your container.
-            </Typography>
-            <Typography variant="subtitle1" align="center" gutterBottom>
-              Please contact Jataware at&nbsp;
-              <Link href="mailto:dojo@jataware.com" color="inherit">dojo@jataware.com</Link> for assistance.
-            </Typography>
-          </div>
-          <div className={classes.failNavButtons}>
-            <Button onClick={() => history.goBack()} variant="contained" disableElevation>
-              Return to the Provision Page
-            </Button>
-            <Button href={`/summary/${modelId}`} variant="contained" disableElevation>
-              Go to the Model Summary Page
-            </Button>
-          </div>
-        </>
-      );
+      return <>
+        <div className={classes.failText}>
+          <Typography variant="subtitle1" align="center" gutterBottom>
+            There was an issue launching your container.
+          </Typography>
+          <Typography variant="subtitle1" align="center" gutterBottom>
+            Please contact Jataware at&nbsp;
+            <Link href="mailto:dojo@jataware.com" color="inherit" underline="hover">dojo@jataware.com</Link> for assistance.
+          </Typography>
+        </div>
+        <div className={classes.failNavButtons}>
+          <Button onClick={() => history.goBack()} variant="contained" disableElevation>
+            Return to the Provision Page
+          </Button>
+          <Button href={`/summary/${modelId}`} variant="contained" disableElevation>
+            Go to the Model Summary Page
+          </Button>
+        </div>
+      </>;
     }
     if (provisionState === 'processing') {
       return (

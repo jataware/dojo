@@ -68,7 +68,7 @@ function LoadingOverlay({
         </>
       )}
       {!error && <CircularProgress />}
-      {link && <Link variant="h6" href={link.href}>{link.text}</Link>}
+      {link && <Link variant="h6" href={link.href} underline="hover">{link.text}</Link>}
     </div>
   );
 }

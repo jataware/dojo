@@ -90,7 +90,7 @@ const EndSessionDialog = ({
         </DialogTitle>
         <DialogContent>
           <DialogContentText align="center">
-            View your model on <Link href={causemosUrl}>Causemos</Link>
+            View your model on <Link href={causemosUrl} underline="hover">Causemos</Link>
           </DialogContentText>
         </DialogContent>
         <DialogActions>
