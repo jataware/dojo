@@ -1,11 +1,11 @@
 import 'cypress-iframe';
+import { genBaseModel, generatedIDs } from '../seeds/model_api_data';
 
 const date = Date.now().toString();
 const directiveCmd = `run file.txt --data=${date}`;
-const modelName = `TestName${date}`;
-const configText = `test: ${date} \nmore text`;
+const modelName = `TestModel_created_at=${date}`;
 
-describe.skip('Creating a model', () => {
+describe('Creating a model up to terminal step', () => {
   /* use this to reconnect between tests (if developing in terminal) */
   // beforeEach(() => {
   //   cy.visit('/admin');
@@ -31,6 +31,14 @@ describe.skip('Creating a model', () => {
 
   /* shut before each tests, if we leave a model running */
   beforeEach(shutdownWorker);
+
+  after(() => {
+    console.log('Cleaning up seed test model:', modelName);
+    // TODO this cleans the model, but can leave a lock behind for a container
+    // which makes the /admin urls /locks endpoint break and breaks system.
+    // Debug later and clean up models here.
+    // cy.task('seed:clean', {type: 'model', name: modelName});
+  });
 
   it('Creates a model with all the metadata fields and just the basic terminal steps', () => {
     cy.visit('/');
@@ -99,6 +107,8 @@ describe.skip('Creating a model', () => {
     // and then wait until it is hit (give it an absurdly long time to timeout)
     cy.wait('@outputFiles', { timeout: 300000 });
 
+    cy.wait(1000);
+
     // make sure xterm has loaded
     cy.get('.xterm-helper-textarea').should('exist');
 
@@ -108,231 +118,59 @@ describe.skip('Creating a model', () => {
     // type in a directive
     cy.get('.xterm-helper-textarea').type(`${directiveCmd}{enter}`);
 
-    // and then force cypress to wait on the request we defined above
-    cy.wait('@shellHistory');
+    // Click on the directive
+    cy.get('[data-test=terminalMarkDirectiveBtn]').last().click();
 
-    return;
-
-    // TODO the following fails after our shorthand -> templater refactor. UPDATEME
-
-    // then click the directive button
-    cy.get('[data-test=terminalMarkDirectiveBtn]').last().click().then(() => {
-      // cy.frameLoaded comes from cypress-iframe - https://gitlab.com/kgroat/cypress-iframe
-      cy.frameLoaded({ url: '/api/shorthand' }, { timeout: 60000 }).then(() => {
-        // once our iframe has loaded, invoke a postMessage on window for our base React
-        // (ie not the shorthand angular iframe postmessage) to let it know the editor has loaded
-        // which will then trigger React to send the appropriate details to shorthand
-        cy.window().invoke('postMessage', JSON.stringify({ type: 'editor_loaded' }));
-
-        // wait for shorthand to populate
-        // eslint-disable-next-line cypress/no-unnecessary-waiting
-        cy.wait(500).iframe().find('.editor-line').first()
-          .setSelection(date)
-          .then(() => {
-            cy.iframe().find('#name').type('data');
-            cy.iframe().find('#description').type('data description');
-            cy.iframe().find('#data_type').select('freeform');
-            cy.iframe().find('input[type=submit]').click();
-          });
-
-        cy.get('[data-test=fullScreenDialogSaveBtn]').click().then(() => {
-          cy.window().then((win) => {
-            // send this message to trigger the fullscreendialog to close
-            win.postMessage(JSON.stringify({ type: 'params_saved' }));
-          });
-        });
-      });
-    });
-
-    // take us to the summary page
-    cy.get('[data-test=terminalSaveButton]').click();
-
-    // first make sure the upload dialog appears
-    cy.get('[data-test=summaryUploadDialog]').should('exist');
-
-    // then give it a very long timeout to disappear in case the upload takes a long time
-    cy.get('[data-test=summaryUploadDialog]', { timeout: 300000 }).should('not.exist');
-
-    // stub out the actual publish calls so we don't do the final publish to causemos step
-    cy.intercept('/api/dojo/models/*/publish', { statusCode: 200 });
-    cy.intercept('/api/dojo/models/register/*', { statusCode: 200 });
-    cy.get('[data-test=summaryPublishButton]').click();
-    cy.get('[data-test=terminalSubmitConfirmBtn]').click();
   });
 
-  it('Visits an existing model and does more things in the terminal', () => {
-    cy.visit('/');
-    cy.get('[data-test=landingPageViewModels]').click();
-    cy.get('[data-test=viewModelsSearchField]', { timeout: 20000 }).type(modelName);
-    // cy.wait(1000);
-    cy.get('.MuiDataGrid-row').should((row) => {
-      expect(row).to.contain(date);
-      expect(row).to.have.length(1);
-    }).then(() => {
-      cy.get('[data-test=modelSummaryLink]').click();
-    });
+  // TODO plan how to reuse a terminal session for the below?
 
+  xit('Can use Templater to annotate a config file');
 
-    return;
-    // TODO FIXME UPDATE these tests
+  xit('Can use Templater to annotate a directive parameter');
 
-    // summary page
-    cy.get('[data-test=introDialogFirstStepBtn]').click();
-    cy.get('[data-test=introDialogStartOverBtn]').click();
-    cy.window().then((win) => {
-      // if we're still on the summary page, then we need to do a couple more steps
-      if (win.location.pathname.includes('summary')) {
-        cy.get('[data-test=introDialogConfirmNameField]').type(modelName);
-        cy.get('[data-test=introDialogConfirmNameBtn]').click();
-      }
-    });
+  xit('Can annotate model output: metadata step 1');
 
-    // provision page
-    cy.intercept('GET', '/api/dojo/ui/base_images', { fixture: 'images.json' });
-    cy.get('[data-test=selectImage]').click();
-    cy.contains('Ubuntu').click();
-    cy.get('[data-test=modelContainerLaunchBtn]').click();
+  xit('Can annotate model output: annotate (step 2)');
 
-    // terminal page
-    cy.intercept('/api/dojo/dojo/outputfile/*').as('outputFiles');
-    cy.wait('@outputFiles', { timeout: 300000 });
-    cy.get('.xterm-helper-textarea').should('exist');
+});
 
-    // create a file and add some text to it
-    cy.get('.xterm-helper-textarea').type(`touch file${date}.txt {enter}`);
-    cy.get('.xterm-helper-textarea').type(`dojo edit file${date}.txt {enter}`).then(() => {
-      cy.get('[data-test=terminalEditorTextArea] textarea:first').type(configText);
-      cy.get('[data-test=fullScreenDialogSaveBtn]').click();
-    });
+describe('Model listings', () => {
 
-    // make the file into a config file
-    cy.get('.xterm-helper-textarea').type(`dojo config file${date}.txt {enter}`).then(() => {
-      cy.frameLoaded({ url: '/api/shorthand' }, { timeout: 60000 }).then(() => {
-        cy.window().invoke('postMessage', JSON.stringify({ type: 'editor_loaded' }));
+  const testModel = genBaseModel();
 
-        // wait for a half second to give the iframe time to load its contents
-        // eslint-disable-next-line cypress/no-unnecessary-waiting
-        cy.wait(500).iframe().find('.editor-line').first()
-          .setSelection(date);
+  before(() => {
+    cy.request('post', '/api/dojo/models', testModel)
+      .its('body').should('include', testModel.id);
 
-        cy.iframe().find('#name').type('test name');
-        cy.iframe().find('#description').type('test description');
-        cy.iframe().find('#data_type').select('freeform');
-        cy.iframe().find('input[type=submit]').click();
+    cy.wait(300);
+  });
 
-        cy.get('[data-test=fullScreenDialogSaveBtn]').click().then(() => {
-          cy.window().then((win) => {
-            // send this message to trigger the fullscreendialog to close
-            win.postMessage(JSON.stringify({ type: 'params_saved' }));
-          });
-        });
-      });
-    });
+  after(() => {
+    console.log('Cleaning up seed test model:', testModel.id);
+    console.debug('generatedIDs', generatedIDs);
+    cy.task('seed:clean', {type: 'model', id: testModel.id});
+  });
 
-    // create a simple CSV file for a model output/spacetag
-    cy.get('.xterm-helper-textarea').type(`touch data${date}.csv {enter}`);
-    cy.get('.xterm-helper-textarea').type(`dojo edit data${date}.csv {enter}`).then(() => {
-      cy.get('[data-test=terminalEditorTextArea] textarea:first')
-        .type('A,B\nC,D');
+  xit('Visits an existing model and does more things in the terminal');
 
-      cy.get('[data-test=fullScreenDialogSaveBtn]').click();
-    });
+  it('Existing model is found in Model List page', () => {
 
-    // enter the spacetag flow
-    cy.get('.xterm-helper-textarea').type(`dojo annotate data${date}.csv {enter}`).then(() => {
-      // wait until we've loaded the iframe before we start entering stuff
-      cy.frameLoaded({ url: '/api/spacetag/byom' }).then(() => {
-        cy.iframe().find('#dataset_Name').type('Test Dataset');
-        cy.iframe().find('#dataset_Description').type('Test Description');
-        cy.iframe().find('#resolution_spatial_x').type(1000);
-        cy.iframe().find('#resolution_spatial_y').type(1000);
-        cy.iframe().find('#submit').click();
-      });
-      // overview screen
-      cy.frameLoaded({ url: '/api/spacetag/overview' }).then(() => {
-        cy.iframe().contains('Annotate').first().click();
-      });
+    cy.visit('/models');
+    // cy.task('seed', 'models-registered');
 
-      // annotation screen
-      cy.frameLoaded({ url: '/annotate' }).then(() => {
-        // spy on our call to go back to /overview
-        cy.intercept('/api/spacetag/overview/*').as('overview');
+    cy.get('[data-test=viewModelsSearchField]', { timeout: 10000 }).type(testModel.name);
 
-        cy.iframe().find('#Description').type('description');
-        cy.iframe().find('#Units').type('test units');
-        cy.iframe().find('#Unit_Description').type('test unit description');
-        cy.iframe().find('#Submit_annotation').click();
+    cy.findAllByRole('row')
+      .eq(1)
+      .as('ResultDataRow');
 
-        // wait until the call to /overview responds
-        cy.wait('@overview');
-        // and then click submit on the next page
-        cy.iframe().contains('Submit').click();
-      });
-
-      // spy on our 'done' response
-      cy.intercept('/api/spacetag/overview/submit/send/*/done').as('spacetagDone');
-      // submit screen
-      cy.frameLoaded({ url: 'api/spacetag/overview/submit' }).then(() => {
-        cy.iframe().contains('Submit to dojo').click();
-      });
-
-      // pause until this request finishes
-      cy.wait('@spacetagDone', { timeout: 20000 });
-
-      // then try to find and click our button
-      cy.iframe().contains('Return to terminal').then((button) => {
-        button.click();
-      });
-    });
-
-    // create a fake image file
-    cy.get('.xterm-helper-textarea').type(`touch image${date}.jpg {enter}`);
-    // and tag it
-    cy.get('.xterm-helper-textarea')
-      .type(`dojo tag image${date}.jpg "this is an accessory file" {enter}`);
-    cy.contains('Your accessory was successfully added').should('exist');
-
-    // SWR mutate is not cooperating with the cypress iframe environment,
-    // so navigate to the summary page and back to ensure the new files have loaded
-    cy.get('[data-test=terminalSaveButton]').click();
-    cy.get('[data-test=backToTerminalBtn').click();
-
-    cy.get('[data-test=fileTabAccessories]').click().then(() => {
-      cy.get('[data-test=fileCard]').filter(`:contains("image${date}.jpg")`)
-        .should('have.length', 1);
-    });
-
-    cy.get('[data-test=fileTabConfigs]').click().then(() => {
-      cy.get('[data-test=fileCard]').filter(`:contains("file${date}.txt")`)
-        .should('have.length', 1);
-    });
-
-    cy.get('[data-test=fileTabOutputs]').click().then(() => {
-      cy.get('[data-test=fileCard]').filter(`:contains("data${date}.csv")`)
-        .should('have.length', 1);
-    });
-
-    cy.get('[data-test=terminalSaveButton]').click();
-
-    // Add a region in the summary metadata editor
-    cy.get('[data-test=summaryDetailsEditButton]').click().then(() => {
-      cy.get('[data-test=modelFormExpandRegionBtn]').click().then(() => {
-        cy.get('[data-test=modelFormRegionSearch]').type('New York').then(() => {
-          cy.get('[data-test=modelFormRegionSearchBtn]').click();
-          cy.contains('New York, admin1').click();
-          cy.get('[data-test=modelFormRegionSearchBtn]').click();
-        });
-      });
-
-      cy.get('[data-test=fullScreenDialogSaveBtn]').click();
-    });
-
-    // check that it got added
-    cy.contains('Admin 1: Texas, New York');
+    cy.get('@ResultDataRow')
+      .contains(testModel.name);
   });
 });
 
-describe.skip('Model metadata form state navigation', () => {
+describe('Model metadata form state navigation', () => {
   it('Keeps state when navigating away and then back', () => {
     cy.visit('/');
     cy.get('[data-test=landingPageModelForm]').click();
@@ -371,4 +209,12 @@ describe.skip('Model metadata form state navigation', () => {
     // and check that the first value is empty
     cy.get('[data-test=modelForm-name]').should('have.value', '');
   });
+});
+
+
+describe('Model Summary Page Actions', () => {
+
+  xit('All required Model properties are displayed on page');
+
+  xit('Can start edit/re-publish Model process');
 });

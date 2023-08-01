@@ -194,6 +194,10 @@ function mockHttpRequests() {
 
 }
 
+/**
+ * UI Integration tests for Happy Path on Dataset Registration
+ * Can be run on CI, but stubs all interactions with the backend.
+ **/
 describe('Dataset Register Flow', function () {
 
   beforeEach(() => {

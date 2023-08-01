@@ -12,6 +12,12 @@
 // This function is called when a project is opened or re-opened (e.g. due to
 // the project's config changing)
 
+const { genBaseModel } = require('../seeds/model_api_data');
+const axios = require('axios');
+
+const { Client } = require('@elastic/elasticsearch');
+const es = new Client({ node: 'http://localhost:9200' });
+
 /**
  * @type {Cypress.PluginConfig}
  */
@@ -26,6 +32,63 @@ module.exports = (on, config) => {
       startDevServer({ options, webpackConfig })
     );
   }
+
+  on('task', {
+
+    // TODO this is unused for now as we can use API
+    // for simple cases, but for complex scenarios it will be useful
+    'seed': ({type, id, name}) => {
+
+      console.log('Seed task running');
+
+      // create a model, return a promise for the caller to wait on
+      let promise;
+
+      switch (type) {
+        case 'model':
+          console.log('seeding registered model');
+        promise = axios.post('http://localhost:8000/dojo/models/', genBaseModel());
+          break;
+        default:
+          console.log('TODO Warning: Default clause on seed:api.');
+          // promise = axios.post('api/dojo/models/', genBaseModel());
+      }
+
+      return promise;
+    },
+
+    // TODO clean up (better switch/case); support datasets, etc
+    'seed:clean': ({type, id, name}) => {
+      console.log(`cleaning ${type} seeds, id: ${id}, name: ${name}`);
+
+      if (type == 'model' && id) {
+        const promise = es.delete({
+          index: "models",
+          // type: "products",
+          id: id
+        });
+        return promise;
+
+      } else if (type == 'model' && name) {
+        // Actually deletes app TestModel_created_at= models
+        const promise = es.deleteByQuery({
+          index: 'models',
+          body: {
+            query: {
+              match: { 'name.keyword': name }
+            }
+          }
+        });
+
+        return promise;
+
+      } else {
+        throw new Error('Invalid type and param combination');
+      }
+
+    }
+
+  });
 
   return config;
 };
