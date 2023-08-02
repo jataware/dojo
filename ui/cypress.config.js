@@ -4,7 +4,7 @@ module.exports = defineConfig({
   chromeWebSecurity: false,
   defaultCommandTimeout: 10000,
 
-  "experimentalStudio" : true,
+  experimentalStudio : true,
 
   e2e: {
     viewportHeight: 1000,
@@ -14,7 +14,7 @@ module.exports = defineConfig({
       return require("./cypress/plugins/index.js")(on, config);
     },
     baseUrl: "http://localhost:8080",
-    specPattern: 'cypress/e2e/**/*.cy.{js,jsx,ts,tsx}',
+    specPattern: 'cypress/e2e/**/*.cy.{js}',
     "experimentalRunAllSpecs": true,
     "experimentalMemoryManagement": true
   }
