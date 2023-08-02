@@ -12,11 +12,46 @@
 // This function is called when a project is opened or re-opened (e.g. due to
 // the project's config changing)
 
-const { genBaseModel } = require('../seeds/model_api_data');
 const axios = require('axios');
+const fs = require('fs');
+const path = require('path');
+var FormData = require('form-data');
 
 const { Client } = require('@elastic/elasticsearch');
 const es = new Client({ node: 'http://localhost:9200' });
+
+const { genBaseModel } = require('../seeds/model_api_data');
+
+
+async function sendFileToEndpoint(filename, endpointUrl, newFilename) {
+  // Read the file as a stream
+  const fileStream = fs.createReadStream(filename);
+
+  // Create a FormData object to send the file as multipart/form-data
+  const formData = new FormData();
+  formData.append('file', fileStream);
+
+  formData.append('file', fileStream);
+  if (newFilename) {
+    formData.append('filename', newFilename);
+  }
+
+  // Make a POST request using axios
+
+  console.log('endpointUrl', endpointUrl);
+  console.log('filename', filename);
+
+  const response = await axios.post(endpointUrl, formData, {
+    headers: {
+      ...formData.getHeaders(), // Set the appropriate headers for multipart/form-data
+    },
+  });
+
+  console.log('========== Response from server:', response.data);
+
+  return response;
+
+}
 
 /**
  * @type {Cypress.PluginConfig}
@@ -86,9 +121,46 @@ module.exports = (on, config) => {
         throw new Error('Invalid type and param combination');
       }
 
+    },
+
+    'upload': async ({type, id, variant}) => {
+      // assume type=dataset for now
+      // assume variant=acled for now
+
+      const url = `http://localhost:8080/api/dojo/indicators/${id}/upload`;
+      const mockFileLocation = path.join(__dirname, '..', 'files', 'ACLED_redacted.xlsx');
+
+      // returns promise. TODO check what failure conditions look like on cypress
+      await sendFileToEndpoint(mockFileLocation, url);
+
+      const mockCSVFileLocation = path.join(__dirname, '..', 'files', 'raw_data.csv');
+
+      // returns promise. TODO check what failure conditions look like on cypress
+      await sendFileToEndpoint(mockCSVFileLocation, url, 'raw_data.csv');
+
+      return true;
     }
+
 
   });
 
   return config;
 };
+
+// if (require.main === module) {
+
+//   console.log('called directly');
+
+//   const id = '2c5422eb-53a2-40b5-8c03-983f757d5efb';
+//   const url = `http://localhost:8080/api/dojo/indicators/${id}/upload`;
+//   const mockFileLocation = path.join(__dirname, '..', 'files', 'ACLED_redacted.xlsx');
+
+
+//   console.log('mockFileLocation', mockFileLocation);
+
+//   // returns promise. TODO check what failure conditions look like on cypress
+//   return sendFileToEndpoint(mockFileLocation+'', url);
+
+// } else {
+//   console.log('required as a module');
+// }
