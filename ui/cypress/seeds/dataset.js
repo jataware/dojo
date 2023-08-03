@@ -104,42 +104,6 @@ const dataset_acled_annotations = {
   "annotations" : {
     "geo" : [
       {
-        "geo_type" : "state/territory",
-        "resolve_to_gadm" : true,
-        "coord_format" : null,
-        "aliases" : { },
-        "qualifies" : [ ],
-        "name" : "admin1",
-        "description" : "all_gadm_levels",
-        "primary_geo" : true,
-        "display_name" : "",
-        "type" : "geo"
-      },
-      {
-        "geo_type" : "county/district",
-        "resolve_to_gadm" : true,
-        "coord_format" : null,
-        "aliases" : { },
-        "qualifies" : [ ],
-        "name" : "admin2",
-        "description" : "all_gadm_levels",
-        "primary_geo" : true,
-        "display_name" : "",
-        "type" : "geo"
-      },
-      {
-        "geo_type" : "municipality/town",
-        "resolve_to_gadm" : true,
-        "coord_format" : null,
-        "aliases" : { },
-        "qualifies" : [ ],
-        "name" : "admin3",
-        "description" : "all_gadm_levels",
-        "primary_geo" : true,
-        "display_name" : "",
-        "type" : "geo"
-      },
-      {
         "geo_type" : "country",
         "resolve_to_gadm" : true,
         "coord_format" : null,

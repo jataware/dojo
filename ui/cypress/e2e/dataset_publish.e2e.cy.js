@@ -25,6 +25,11 @@ function get_tranform_intercepts(dataset_id, jobName, result) {
 }
 
 
+function clean_dataset(id) {
+  console.log('TODO clean_dataset', id);
+  // TODO
+  // cy.request('DELETE', `/api/dojo/indicators/${id}`);
+}
 
 describe('Dataset Register: Publish E2E', () => {
   // this is a full Dataset after run_elwood, but before publish!
@@ -96,13 +101,12 @@ describe('Dataset Register: Publish E2E', () => {
       ['transformation_processors.scale_time', {}]
     ];
 
-    cy.request('POST', `/api/dojo/indicators/${dataset_id}/annotations`, dataset_acled_annotations)
+    cy.request('POST', `/api/dojo/indicators/${dataset_id}/annotations`, dataset_acled_annotations);
 
     // 2. Upload raw file through API
-    await cy.task('upload', {type: 'dataset', id: dataset_id, variant: 'acled'}) // or task...
-    // await cy.task('upload', {type: 'dataset', id: dataset_id, variant: 'acled'}) // or task...
+    await cy.task('upload', {type: 'dataset', id: dataset_id, variant: 'acled'});
 
-    cy.wait(1000); // TODO remove
+    cy.wait(500); // TODO remove
 
     // 3. stub/mock transform fetch jobs so that none are required
 
@@ -128,16 +132,48 @@ describe('Dataset Register: Publish E2E', () => {
       findByRole('button', {name: /Next/i})
       .click();
 
+    cy.wait(20000); // TODO remove
+
     // 5. wait for processing, up to preview step
     // 6. click submit/publish. wait for plugins/responses or cy.wait(time is)
     cy.
-      findAllByRole('button', {name: /Submit To Dojo/i, timeout: 22000})
+      // NOTE wait for any OS to finish processing.. takes time
+      findAllByRole('button', {name: /Submit To Dojo/i, timeout: 95000}) // TODO discuss
       .eq(1)
       .click();
 
+    cy.wait(10000); // Allow time for the sync plugins to run :-(   (woop woop)
+
     // ?
     // 7. Finally, fetch final dataset and assert the the expected properties are present in the dataset
-    // cy.request(`/api/dojo/indicators/${dataset_id}`).as('FInalDataset')
+    cy.request(`/api/dojo/indicators/${dataset_id}`).as('FinalDataset');
+
+    cy
+      .get('@FinalDataset')
+      .should((response) => {
+
+        console.log('status', response.status);
+
+        const { body } = response;
+
+        console.log('body', body);
+
+        expect(body.id).to.equal(dataset_id);
+
+        expect(body.published).to.equal(true);
+
+        expect(body.feature_names).to.have.length(2);
+
+        expect(body.qualifier_outputs).to.have.length.of.at.least(1);
+        expect(body.geography.country).to.have.length.of.at.least(1);
+
+        expect(body.period).to.have.property('gte');
+        expect(body.period).to.have.property('lte');
+
+        expect(body.outputs).to.have.length(1);
+
+        clean_dataset();
+    });
 
   });
 
