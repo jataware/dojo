@@ -33,7 +33,9 @@ describe('Creating a model up to terminal step', () => {
   beforeEach(shutdownWorker);
 
   after(() => {
-    console.log('Cleaning up seed test model:', modelName);
+    shutdownWorker();
+
+    console.log('TODO Cleaning up seed test model:', modelName);
     // TODO this cleans the model, but can leave a lock behind for a container
     // which makes the /admin urls /locks endpoint break and breaks system.
     // Debug later and clean up models here.
@@ -117,9 +119,6 @@ describe('Creating a model up to terminal step', () => {
 
     // type in a directive
     cy.get('.xterm-helper-textarea').type(`${directiveCmd}{enter}`);
-
-    // Click on the directive
-    cy.get('[data-test=terminalMarkDirectiveBtn]').last().click();
 
   });
 

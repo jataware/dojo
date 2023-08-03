@@ -58,23 +58,13 @@ const genTransformPairs = (dataset_id) => ([
 
 
 describe('Dataset Register: Publish E2E', () => {
-  // this is a full Dataset after run_elwood, but before publish!
-  // xit('From Preview to Publish modified the dataset correctly');
-
-  // TODO Move before/after seed/clean to beforeEach and afterEach hooks once we
-  //      have more than one test.
 
   // Stub transform fetch jobs for this one, as we only care about run_elwood results:
   it('From Annotate > skip transform > Process/publish modifies the dataset correctly', async () => {
-    // TODO auto-cleanups
-    // 0. Clean up any dataset/annotation/file through API as precondition
-
     // 1. Create dataset & annotations through API as precondition
     const dataset = genDataset('acled');
 
     const { body: createdDataset } = await cy.request('POST', '/api/dojo/indicators', dataset);
-
-    console.log('Created dataset', createdDataset);
 
     const dataset_id = createdDataset.id;
     const transformPairs = genTransformPairs(dataset_id);
@@ -96,7 +86,6 @@ describe('Dataset Register: Publish E2E', () => {
       url: '/api/dojo/job/clear/mock-test-guid'
     }, 'No job found for uuid = mock-test-guid');
 
-    //  Now we're ready. test:
     // 4. open transform step, click next to skip
     cy.visit(`/datasets/register/transform/${dataset_id}?filename=raw_data.xlsx`);
 
@@ -104,15 +93,15 @@ describe('Dataset Register: Publish E2E', () => {
       findByRole('button', {name: /Next/i})
       .click();
 
-    // 5. wait for processing, up to preview step
-    // 6. click submit/publish. wait for plugins/responses or cy.wait(time is)
+    // 5. wait for processing;
+    // 6. click submit/publish.
     cy.
-      // NOTE wait for any OS to finish processing.. takes time
-      findAllByRole('button', {name: /Submit To Dojo/i, timeout: 100000}) // TODO discuss
+      // 10 seconds for Ubuntu, up to 2 minutes for macos+docker
+      findAllByRole('button', {name: /Submit To Dojo/i, timeout: 130000})
       .eq(1)
       .click();
 
-    cy.wait(2000); // Allow time for the sync plugins to run :-(   (woop woop)
+    cy.wait(2000); // Allow time for the sync plugins to run...
 
     // 7. Finally, fetch final dataset and assert the the expected properties are present in the dataset
     cy.request(`/api/dojo/indicators/${dataset_id}`).as('FinalDataset');
@@ -147,8 +136,7 @@ describe('Dataset Register: Publish E2E', () => {
   });
 
 
-  // TODO use something more than ACLED, normal data, that supports the most transforms
-  // On transform page- apply transforms, (assert after processing jobs)
+  // Use a measurement dataset, not event (not like ACLED), which supports most transforms
   it('From Annotate > Transforms.. > Processing modifies the dataset correctly (by elwood/processing)');
 
 });
