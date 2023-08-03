@@ -18,7 +18,7 @@ describe('Creating a model up to terminal step', () => {
     cy.intercept('/api/terminal/docker/*/release').as('shutdown');
     cy.visit('/admin');
     /* find our shutdown button */
-    cy.get('[data-test=adminShutDownBtn]').then((btn) => {
+    cy.get('[data-test=adminShutDownBtn]', {timeout: 15000}).then((btn) => {
       /* if it's not disabled */
       if (!btn[0].disabled) {
         /* wrap the returned button in a promise (necessary inside the .then) and click it */

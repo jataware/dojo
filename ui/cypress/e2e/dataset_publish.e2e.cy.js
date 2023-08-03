@@ -2,12 +2,12 @@
 import {
   genDataset,
   dataset_acled_annotations,
-
 } from '../seeds/dataset';
 
-import { gen_tranform_intercepts } from './dataset_registration_steps.cy.js';
+import { gen_tranform_intercepts } from '../support/helpers';
 
-const genTransformPairs = (dataset_id) => ([
+const genTransformPairs = (dataset_id) => {
+  return [
       ['gadm_processors.resolution_alternatives', {
         id: `${dataset_id}_gadm_processors.resolution_alternatives`,
         result: {
@@ -54,47 +54,38 @@ const genTransformPairs = (dataset_id) => ([
       }],
       ['gadm_processors.all_gadm_values', ['mocked_countries']],
       ['transformation_processors.scale_time', {}]
-    ]);
+    ]
+};
 
 
 describe('Dataset Register: Publish E2E', () => {
 
   // Stub transform fetch jobs for this one, as we only care about run_elwood results:
   it('From Annotate > skip transform > Process/publish modifies the dataset correctly', async () => {
-    // 1. Create dataset & annotations through API as precondition
+
     const dataset = genDataset('acled');
-
     const { body: createdDataset } = await cy.request('POST', '/api/dojo/indicators', dataset);
-
     const dataset_id = createdDataset.id;
     const transformPairs = genTransformPairs(dataset_id);
 
     cy.request('POST', `/api/dojo/indicators/${dataset_id}/annotations`, dataset_acled_annotations);
 
-    // 2. Upload raw file through API
     await cy.task('upload', {type: 'dataset', id: dataset_id, variant: 'acled'});
 
-    // 3. stub/mock transform fetch jobs so that none are required
+    // stub/mock transform fetch jobs so that none are required
     transformPairs.forEach((testData) => {
       const [fetch_job, start_job] = gen_tranform_intercepts.apply(null, [dataset_id, ...testData]);
       cy.intercept(fetch_job[0], fetch_job[1]).as(fetch_job[2]);
       cy.intercept(start_job[0], start_job[1]).as(start_job[2]);
     });
 
-    cy.intercept({
-      method: 'POST',
-      url: '/api/dojo/job/clear/mock-test-guid'
-    }, 'No job found for uuid = mock-test-guid');
-
-    // 4. open transform step, click next to skip
     cy.visit(`/datasets/register/transform/${dataset_id}?filename=raw_data.xlsx`);
 
     cy.
       findByRole('button', {name: /Next/i})
       .click();
 
-    // 5. wait for processing;
-    // 6. click submit/publish.
+    // Wait; click submit/publish.
     cy.
       // 10 seconds for Ubuntu, up to 2 minutes for macos+docker
       findAllByRole('button', {name: /Submit To Dojo/i, timeout: 130000})
@@ -103,7 +94,7 @@ describe('Dataset Register: Publish E2E', () => {
 
     cy.wait(2000); // Allow time for the sync plugins to run...
 
-    // 7. Finally, fetch final dataset and assert the the expected properties are present in the dataset
+    // Finally, fetch final dataset and assert expected properties
     cy.request(`/api/dojo/indicators/${dataset_id}`).as('FinalDataset');
 
     cy
@@ -113,25 +104,22 @@ describe('Dataset Register: Publish E2E', () => {
         const { body } = response;
 
         expect(body.id).to.equal(dataset_id);
-
         expect(body.published).to.equal(true);
 
         expect(body.feature_names).to.have.length(2);
-
+        expect(body.outputs).to.have.length(1);
         expect(body.qualifier_outputs).to.have.length.of.at.least(1);
         expect(body.geography.country).to.have.length.of.at.least(1);
 
         expect(body.period).to.have.property('gte');
         expect(body.period).to.have.property('lte');
 
-        expect(body.outputs).to.have.length(1);
-
         console.log('Cleaning seeded artifacts.');
         cy.task('seed:clean', {type: 'dataset', id: dataset_id});
         cy.task('seed:clean', {type: 'annotation', id: dataset_id});
+
         // TODO call seed:clean-files for minio files. TBD
     });
-
 
   });
 
