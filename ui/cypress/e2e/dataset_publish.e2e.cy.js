@@ -1,58 +1,13 @@
 
 import {
-  // dataset_acled_before_normalized,
   genDataset,
-  dataset_acled_annotations
+  dataset_acled_annotations,
+
 } from '../seeds/dataset';
 
-function get_tranform_intercepts(dataset_id, jobName, result) {
-  const method = 'POST';
-  return [[
-    {
-      method: method,
-      url: `/api/dojo/job/fetch/*_${jobName}`
-    },
-    result,
-    `${method}_${jobName}_fetch`
-  ], [
-    {
-      method: method,
-      url: `/api/dojo/job/*/${jobName}`
-    },
-    {id: `${dataset_id}_${jobName}`, result},
-    `${method}_${jobName}_start`
-  ]];
-}
+import { gen_tranform_intercepts } from './dataset_registration_steps.cy.js';
 
-
-function clean_dataset(id) {
-  console.log('TODO clean_dataset', id);
-  // TODO
-  // cy.request('DELETE', `/api/dojo/indicators/${id}`);
-}
-
-describe('Dataset Register: Publish E2E', () => {
-  // this is a full Dataset after run_elwood, but before publish!
-  // xit('From Preview to Publish modified the dataset correctly');
-
-  // Stub transform fetch jobs for this one, as we only care about run_elwood results:
-  // TODO first:
-  // use ACLED
-  it('From Annotate > skip transform > Process/publish modifies the dataset correctly', async () => {
-    // TODO auto-cleanups
-    // 0. Clean up any dataset/annotation/file through API as precondition
-
-
-    // 1. Create dataset/annotation through API as precondition
-    const dataset = genDataset('acled');
-
-    const { body: createdDataset } = await cy.request('POST', '/api/dojo/indicators', dataset);
-
-    console.log('createdDataset', createdDataset);
-
-    const dataset_id = createdDataset.id;
-
-    const transformPairs = [
+const genTransformPairs = (dataset_id) => ([
       ['gadm_processors.resolution_alternatives', {
         id: `${dataset_id}_gadm_processors.resolution_alternatives`,
         result: {
@@ -99,20 +54,39 @@ describe('Dataset Register: Publish E2E', () => {
       }],
       ['gadm_processors.all_gadm_values', ['mocked_countries']],
       ['transformation_processors.scale_time', {}]
-    ];
+    ]);
+
+
+describe('Dataset Register: Publish E2E', () => {
+  // this is a full Dataset after run_elwood, but before publish!
+  // xit('From Preview to Publish modified the dataset correctly');
+
+  // TODO Move before/after seed/clean to beforeEach and afterEach hooks once we
+  //      have more than one test.
+
+  // Stub transform fetch jobs for this one, as we only care about run_elwood results:
+  it('From Annotate > skip transform > Process/publish modifies the dataset correctly', async () => {
+    // TODO auto-cleanups
+    // 0. Clean up any dataset/annotation/file through API as precondition
+
+    // 1. Create dataset & annotations through API as precondition
+    const dataset = genDataset('acled');
+
+    const { body: createdDataset } = await cy.request('POST', '/api/dojo/indicators', dataset);
+
+    console.log('Created dataset', createdDataset);
+
+    const dataset_id = createdDataset.id;
+    const transformPairs = genTransformPairs(dataset_id);
 
     cy.request('POST', `/api/dojo/indicators/${dataset_id}/annotations`, dataset_acled_annotations);
 
     // 2. Upload raw file through API
     await cy.task('upload', {type: 'dataset', id: dataset_id, variant: 'acled'});
 
-    cy.wait(500); // TODO remove
-
     // 3. stub/mock transform fetch jobs so that none are required
-
-    // Generate pair of jobs for transform jobname,result as defined above this fn
     transformPairs.forEach((testData) => {
-      const [fetch_job, start_job] = get_tranform_intercepts.apply(null, [dataset_id, ...testData]);
+      const [fetch_job, start_job] = gen_tranform_intercepts.apply(null, [dataset_id, ...testData]);
       cy.intercept(fetch_job[0], fetch_job[1]).as(fetch_job[2]);
       cy.intercept(start_job[0], start_job[1]).as(start_job[2]);
     });
@@ -126,37 +100,28 @@ describe('Dataset Register: Publish E2E', () => {
     // 4. open transform step, click next to skip
     cy.visit(`/datasets/register/transform/${dataset_id}?filename=raw_data.xlsx`);
 
-    cy.wait(1000); // TODO remove
-
     cy.
       findByRole('button', {name: /Next/i})
       .click();
-
-    cy.wait(20000); // TODO remove
 
     // 5. wait for processing, up to preview step
     // 6. click submit/publish. wait for plugins/responses or cy.wait(time is)
     cy.
       // NOTE wait for any OS to finish processing.. takes time
-      findAllByRole('button', {name: /Submit To Dojo/i, timeout: 95000}) // TODO discuss
+      findAllByRole('button', {name: /Submit To Dojo/i, timeout: 100000}) // TODO discuss
       .eq(1)
       .click();
 
-    cy.wait(10000); // Allow time for the sync plugins to run :-(   (woop woop)
+    cy.wait(2000); // Allow time for the sync plugins to run :-(   (woop woop)
 
-    // ?
     // 7. Finally, fetch final dataset and assert the the expected properties are present in the dataset
     cy.request(`/api/dojo/indicators/${dataset_id}`).as('FinalDataset');
 
     cy
       .get('@FinalDataset')
-      .should((response) => {
-
-        console.log('status', response.status);
+      .then((response) => {
 
         const { body } = response;
-
-        console.log('body', body);
 
         expect(body.id).to.equal(dataset_id);
 
@@ -172,10 +137,15 @@ describe('Dataset Register: Publish E2E', () => {
 
         expect(body.outputs).to.have.length(1);
 
-        clean_dataset();
+        console.log('Cleaning seeded artifacts.');
+        cy.task('seed:clean', {type: 'dataset', id: dataset_id});
+        cy.task('seed:clean', {type: 'annotation', id: dataset_id});
+        // TODO call seed:clean-files for minio files. TBD
     });
 
+
   });
+
 
   // TODO use something more than ACLED, normal data, that supports the most transforms
   // On transform page- apply transforms, (assert after processing jobs)

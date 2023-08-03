@@ -20,26 +20,38 @@ var FormData = require('form-data');
 const { Client } = require('@elastic/elasticsearch');
 const es = new Client({ node: 'http://localhost:9200' });
 
+
 const { genBaseModel } = require('../seeds/model_api_data');
 
 
-async function sendFileToEndpoint(filename, endpointUrl, newFilename) {
-  // Read the file as a stream
-  const fileStream = fs.createReadStream(filename);
+const chalk = require('chalk');
 
-  // Create a FormData object to send the file as multipart/form-data
+const warn = chalk.hex('#FFA500');
+const debugColor= chalk.bold.blue;
+
+const debug = (...args) => {
+  console.log(
+    warn(`***[DEBUG]***:`),
+    debugColor(...args)
+  );
+}
+
+/**
+ *
+ **/
+async function sendFileToEndpoint(filePath, endpointUrl, newFilename) {
+  const fileStream = fs.createReadStream(filePath);
+
   const formData = new FormData();
   formData.append('file', fileStream);
 
-  formData.append('file', fileStream);
   if (newFilename) {
     formData.append('filename', newFilename);
   }
 
   // Make a POST request using axios
-
-  console.log('endpointUrl', endpointUrl);
-  console.log('filename', filename);
+  debug('endpointUrl', endpointUrl);
+  debug('filename', filePath);
 
   const response = await axios.post(endpointUrl, formData, {
     headers: {
@@ -47,10 +59,49 @@ async function sendFileToEndpoint(filename, endpointUrl, newFilename) {
     },
   });
 
-  console.log('========== Response from server:', response.data);
+  debug(`Response: ${Object.keys(response)}`)
 
-  return response;
+  if (response) {
+    return response.data;
+  }
 
+  return null;
+}
+
+
+const esIndexMappings = {
+  dataset: 'indicators',
+  model: 'models',
+  annotation: 'annotations'
+};
+
+
+/**
+ *
+ **/
+function deleteById({type, id, name}) {
+  const index = esIndexMappings[type]
+
+  const promise = es.delete({
+    index,
+    id: id
+  });
+  return promise;
+}
+
+
+function deleteByName({type, name}) {
+
+  const index = esIndexMappings(type);
+
+  const promise = es.deleteByQuery({
+    index,
+    body: {
+      query: {
+        match: { 'name.keyword': name }
+      }
+    }
+  });
 }
 
 /**
@@ -73,72 +124,40 @@ module.exports = (on, config) => {
     // TODO this is unused for now as we can use API
     // for simple cases, but for complex scenarios it will be useful
     'seed': ({type, id, name}) => {
-
-      console.log('Seed task running');
-
-      // create a model, return a promise for the caller to wait on
-      let promise;
-
-      switch (type) {
-        case 'model':
-          console.log('seeding registered model');
-        promise = axios.post('http://localhost:8000/dojo/models/', genBaseModel());
-          break;
-        default:
-          console.log('TODO Warning: Default clause on seed:api.');
-          // promise = axios.post('api/dojo/models/', genBaseModel());
-      }
-
-      return promise;
+      // TODO
+      debug("Not implemented. Called cypress task seed. Nothing done on plugins nodejs side for now. Use cy.request with the Dojo API.");
+      return undefined;
     },
 
-    // TODO clean up (better switch/case); support datasets, etc
+
     'seed:clean': ({type, id, name}) => {
-      console.log(`cleaning ${type} seeds, id: ${id}, name: ${name}`);
 
-      if (type == 'model' && id) {
-        const promise = es.delete({
-          index: "models",
-          // type: "products",
-          id: id
-        });
-        return promise;
+      debug(`Cleaning ${type} seeds, id: ${id}, name: ${name}`);
 
-      } else if (type == 'model' && name) {
-        // Actually deletes app TestModel_created_at= models
-        const promise = es.deleteByQuery({
-          index: 'models',
-          body: {
-            query: {
-              match: { 'name.keyword': name }
-            }
-          }
-        });
+      if(!type) {
+        debug('Should have passed in a valid type. Throwing the towel.');
+        throw new Error(`No valid type passed in to seed:clean. Received: ${type}`);
+      }
 
-        return promise;
-
+      if (id) {
+        return deleteById({type,id});
+      } else if (name) {
+        return deleteByName({type,name});
       } else {
-        throw new Error('Invalid type and param combination');
+        throw new Error(`No valid id or name passed in to seed:clean. Received: type=${type}, id=${id}, name=${name}`);
       }
 
     },
 
-    'upload': async ({type, id, variant}) => {
-      // assume type=dataset for now
-      // assume variant=acled for now
+    'upload': ({type, id, variant='acled'}) => {
+      if (type === 'dataset') {
+        const url = `http://localhost:8080/api/dojo/indicators/${id}/upload`;
+        const mockCSVFileLocation = path.join(__dirname, '..', 'files', 'raw_data.csv');
+        return sendFileToEndpoint(mockCSVFileLocation, url, 'raw_data.csv');
+      }
 
-      const url = `http://localhost:8080/api/dojo/indicators/${id}/upload`;
-      const mockFileLocation = path.join(__dirname, '..', 'files', 'ACLED_redacted.xlsx');
+      return undefined; // Test will error if not for datasets for now
 
-      // returns promise. TODO check what failure conditions look like on cypress
-      await sendFileToEndpoint(mockFileLocation, url);
-
-      const mockCSVFileLocation = path.join(__dirname, '..', 'files', 'raw_data.csv');
-
-      // returns promise. TODO check what failure conditions look like on cypress
-      await sendFileToEndpoint(mockCSVFileLocation, url, 'raw_data.csv');
-
-      return true;
     }
 
 
@@ -147,20 +166,16 @@ module.exports = (on, config) => {
   return config;
 };
 
+
 // if (require.main === module) {
 
-//   console.log('called directly');
+//   console.log('called plugins/index file directly. Running for development as playground.');
 
 //   const id = '2c5422eb-53a2-40b5-8c03-983f757d5efb';
 //   const url = `http://localhost:8080/api/dojo/indicators/${id}/upload`;
 //   const mockFileLocation = path.join(__dirname, '..', 'files', 'ACLED_redacted.xlsx');
 
-
-//   console.log('mockFileLocation', mockFileLocation);
-
 //   // returns promise. TODO check what failure conditions look like on cypress
-//   return sendFileToEndpoint(mockFileLocation+'', url);
+//   return sendFileToEndpoint(mockFileLocation, url);
 
-// } else {
-//   console.log('required as a module');
 // }
