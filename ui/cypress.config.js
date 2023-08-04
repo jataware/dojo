@@ -1,4 +1,5 @@
 const { defineConfig } = require("cypress");
+const webpackConfig = require('./cypress/webpack.cypress.js');
 
 module.exports = defineConfig({
   chromeWebSecurity: false,
@@ -17,5 +18,17 @@ module.exports = defineConfig({
     specPattern: 'cypress/e2e/**/*.cy.js',
     "experimentalRunAllSpecs": true,
     "experimentalMemoryManagement": true
-  }
+  },
+
+  component: {
+
+    viewportHeight: 1000,
+    viewportWidth: 1200,
+
+    devServer: {
+      framework: 'react',
+      bundler: 'webpack',
+      webpackConfig,
+    },
+  },
 });

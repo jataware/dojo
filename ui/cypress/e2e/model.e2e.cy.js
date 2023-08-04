@@ -122,16 +122,20 @@ describe('Creating a model up to terminal step', () => {
 
   });
 
+});
+
+describe('Model templater annotations', () => {
   // TODO plan how to reuse a terminal session for the below?
 
   xit('Can use Templater to annotate a config file');
 
   xit('Can use Templater to annotate a directive parameter');
+});
 
+describe('Model output annotation', () => {
   xit('Can annotate model output: metadata step 1');
 
   xit('Can annotate model output: annotate (step 2)');
-
 });
 
 describe('Model listings', () => {
