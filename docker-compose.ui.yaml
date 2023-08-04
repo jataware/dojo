@@ -1,0 +1,15 @@
+
+services:
+
+  ui:
+    image: registry.gitlab.com/jataware/dojo/ui:${VERSION}
+    profiles:
+      - ui
+    hostname: ui.${INTERNAL_DOMAIN}
+    environment:
+      API_HOST: api.${INTERNAL_DOMAIN}
+      DOJO_HOST: api.${INTERNAL_DOMAIN}
+      TERMINAL_HOST: terminal.${INTERNAL_DOMAIN}
+      WEBSOCKET_HOST: terminal.${INTERNAL_DOMAIN}
+    networks:
+      - dojo

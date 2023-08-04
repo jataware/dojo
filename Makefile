@@ -1,3 +1,10 @@
+VERSION := 0.0.1
+
+# make helpers
+null  :=
+space := $(null) #
+comma := ,
+
 SHELL = /bin/bash
 LANG = en_US.utf-8
 PYTHON = $(shell which python3 || which python)
@@ -21,6 +28,13 @@ TEMP_COMPOSE_FILES := $(foreach file,$(subst /,_,$(COMPOSE_FILES)),temp_$(file))
 IMAGE_NAMES = api terminal ui tasks
 BUILD_FILES = $(wildcard */.build)
 BUILD_DIRS = $(dir $(BUILD_FILES))
+
+DETECTED_OS := $(shell uname)
+ifeq ($(DETECTED_OS),Darwin)
+	SED=gsed
+else
+	SED=sed
+endif
 
 .PHONY:update
 update:
@@ -113,6 +127,127 @@ restart:docker-compose.yaml
 	make down && make up
 
 
+
+.PHONY:
+ALL_DOCKER_COMPOSE_FILES:= $(wildcard docker-compose*.yaml)
+
+ifneq ($(wildcard .docker-compose.locals),)
+DOCKER_COMPOSE_LOCALS=$(shell cat .docker-compose.locals)
+else
+DOCKER_COMPOSE_LOCALS=
+endif
+
+
+DOCKER_COMPOSE_FILES:=docker-compose.network.yaml \
+	docker-compose.redis.yaml \
+	docker-compose.elastic.yaml \
+	docker-compose.kibana.yaml \
+	docker-compose.airflow.yaml \
+	docker-compose.api.yaml \
+	docker-compose.ui.yaml \
+	docker-compose.terminal.yaml \
+	docker-compose.minio.yaml \
+	docker-compose.testmos.yaml \
+	$(DOCKER_COMPOSE_LOCALS) \
+	docker-compose.dev.yaml
+
+ALL_PROFILES=default elastic redis dojoapi ui terminal docker airflow minio testmos
+
+define all_profiles
+$(subst $(space),$(comma),$(ALL_PROFILES))
+endef
+
+
+.PHONY: up.a
+up.a:
+	COMPOSE_PROFILES="$(all_profiles)" docker compose $(addprefix -f , $(DOCKER_COMPOSE_FILES)) up -d
+
+.PHONY: down.a
+down.a:
+	COMPOSE_PROFILES="*" docker compose $(addprefix -f , $(DOCKER_COMPOSE_FILES)) down
+
+
+.PHONY: down.v
+down.v:
+	COMPOSE_PROFILES="*" docker compose $(addprefix -f , $(DOCKER_COMPOSE_FILES)) down -v
+
 .PHONY:logs
 logs:
-	$(DOCKER_COMPOSE) logs -f --tail=30
+	COMPOSE_PROFILES="*" docker compose $(addprefix -f , $(DOCKER_COMPOSE_FILES)) logs
+
+
+.PHONY: docker_build-api
+docker_build-api:
+	(cd api && docker build -t dojo_api:dev .)
+
+.PHONY: docker_build-terminal
+docker_build-terminal:
+	(cd terminal && docker build -t dojo_terminal:dev .)
+
+.PHONY: docker_build-worker
+docker_build-worker:
+	(cd workers && docker build -t dojo_worker:dev .)
+
+.PHONY: docker_build-rqworker
+docker_build-rqworker:
+	(cd tasks && docker build -t dojo_rqworker:dev .)
+
+.PHONY: docker_build-ui
+docker_build-ui:
+	(cd ui && docker build -t dojo_ui:dev .)
+
+.PHONY: docker_build-router
+docker_build-router:
+	(cd router && docker build -t dojo_router:dev .)
+
+.PHONY: docker_build-dags
+docker_build-dags:
+	(cd dmc && docker build -t dojo_dags:dev .)
+
+.PHONY: docker_build-permfix
+docker_build-permfix:
+	(cd perm-fixer && docker build -t dojo_permfix:dev .)
+
+
+check-%:
+	@: $(if $(value $*),,$(error $* is undefined))
+
+
+.PHONY: print-version
+print-version:
+	@printf "${VERSION}"
+
+.PHONY: bump-version
+bump-version:
+	@echo "Current: ${VERSION}"
+	@echo ${VERSION} | awk -F. -v OFS=. '{$$NF+=1; print}' | xargs -I%x $(SED) -i "0,/${VERSION}/s//%x/" Makefile
+	@$(MAKE) -s print-version
+
+
+.PHONY: docker_tag
+docker_tag: check-VERSION
+	docker tag dojo_api:dev registry.gitlab.com/jataware/dojo/api:${VERSION}
+	docker tag dojo_ui:dev registry.gitlab.com/jataware/dojo/ui:${VERSION}
+	#docker tag dojo_router:dev registry.gitlab.com/jataware/dojo/router:${VERSION}
+	docker tag dojo_rqworker:dev registry.gitlab.com/jataware/dojo/rqworker:${VERSION}
+	docker tag dojo_terminal:dev registry.gitlab.com/jataware/dojo/terminal:${VERSION}
+	docker tag dojo_worker:dev registry.gitlab.com/jataware/dojo/worker:${VERSION}
+	docker tag dojo_dags:dev registry.gitlab.com/jataware/dojo/dags:${VERSION}
+	docker tag dojo_permfix:dev registry.gitlab.com/jataware/dojo/permfix:${VERSION}
+
+.PHONY: gitlab-docker-login
+gitlab-docker-login:| check-GITLAB_USER check-GITLAB_PASS
+	@printf "${GITLAB_PASS}\n" | docker login registry.gitlab.com/jataware -u "${GITLAB_USER}" --password-stdin
+
+
+.PHONY: docker_push
+docker_push:| gitlab-docker-login check-VERSION
+	@echo "push ${VERSION}"
+	docker push registry.gitlab.com/jataware/dojo/api:${VERSION}
+	docker push registry.gitlab.com/jataware/dojo/terminal:${VERSION}
+	docker push registry.gitlab.com/jataware/dojo/worker:${VERSION}
+	docker push registry.gitlab.com/jataware/dojo/rqworker:${VERSION}
+	#docker push registry.gitlab.com/jataware/dojo/router:${VERSION}
+	docker push registry.gitlab.com/jataware/dojo/ui:${VERSION}
+	docker push registry.gitlab.com/jataware/dojo/dags:${VERSION}
+	docker push registry.gitlab.com/jataware/dojo/permfix:${VERSION}

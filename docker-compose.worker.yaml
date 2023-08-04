@@ -1,0 +1,16 @@
+
+services:
+
+  docker_terminal:
+    image: registry.gitlab.com/jataware/dojo/worker:${VERSION}
+    profiles:
+      - terminal
+    hostname: worker1.${INTERNAL_DOMAIN}
+    privileged: true
+    volumes:
+      - docker:/var/lib/docker
+    networks:
+      - dojo
+
+volumes:
+  docker:

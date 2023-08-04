@@ -1,0 +1,77 @@
+
+
+services:
+
+  api:
+    image: dojo_api:dev
+    ports:
+      - 8000:8000
+    configs:
+      - source: aws_creds
+        target: /root/.aws/credentials
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  ui:
+    image: dojo_ui:dev
+    ports:
+      - 8080:80
+    depends_on:
+      redis:
+        condition: service_healthy
+      terminal:
+        condition: service_healthy
+
+  terminal:
+    image: dojo_terminal:dev
+    ports:
+      - 3000:3000
+    depends_on:
+      redis:
+        condition: service_healthy
+      docker:
+        condition: service_healthy
+
+  rqworker:
+    image: dojo_rqworker:dev
+    configs:
+      - source: aws_creds
+        target: /root/.aws/credentials
+    depends_on:
+      redis:
+        condition: service_healthy
+
+  elastic:
+    ports:
+      - 9200:9200
+
+  kibana:
+    ports:
+      - 5601:5601
+
+  redis:
+    ports:
+      - 6379:6379
+
+  dags-init:
+    image: dojo_dags:dev
+
+  perm-fixer:
+    image: dojo_permfix:dev
+
+  docker:
+    image: dojo_worker:dev
+
+  airflow-webserver:
+    ports:
+      - 8088:8080
+
+  airflow-worker:
+    configs:
+      - source: aws_creds
+        target: /home/airflow/.aws/credentials
+
+configs:
+  aws_creds:
+    file: ./aws/credentials

@@ -1,0 +1,231 @@
+
+x-airflow-common: &airflow-common
+  image: ${AIRFLOW_IMAGE_NAME:-apache/airflow:2.0.1}
+  profiles:
+    - airflow
+  environment: &airflow-common-env
+    AIRFLOW__CORE__EXECUTOR: CeleryExecutor
+    AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@postgres/airflow
+    AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow@postgres/airflow
+    AIRFLOW__CELERY__BROKER_URL: redis://:@redis:6379/0
+    AIRFLOW__CORE__FERNET_KEY: ''
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'false'
+    AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+    #AIRFLOW__API__ENABLE_EXPERIMENTAL_API: 'true'
+    AIRFLOW__API__AUTH_BACKEND: 'airflow.api.auth.backend.basic_auth'
+    DOCKER_URL: http://docker:8375
+    DMC_LOCAL_DIR: /data
+    BUCKET: ${BUCKET}
+    BUCKET_DIR: ${BUCKET_DIR}
+    DMC_DEBUG: 'true'
+    AIRFLOW_CONN_AWS_DEFAULT: aws://
+    ELWOOD_VERSION: stable
+    CAUSEMOS_BASE_URL: ${CAUSEMOS_BASE_URL}
+    CAUSEMOS_USER: ${CAUSEMOS_USER}
+    CAUSEMOS_PWD: ${CAUSEMOS_PWD}
+    DAG_MAX_ACTIVE_RUNS: 3
+    DAG_CONCURRENCY: 10
+
+  configs:
+    - source: airflow_docker_py
+      target: /home/airflow/.local/lib/python3.6/site-packages/airflow/providers/docker/operators/docker.py
+
+  user: "${AIRFLOW_UID:-50000}:${AIRFLOW_GID:-50000}"
+  depends_on:
+    dags-init:
+      condition: service_completed_successfully
+    redis:
+      condition: service_healthy
+    postgres:
+      condition: service_healthy
+
+services:
+
+  dags-init:
+    image: registry.gitlab.com/jataware/dojo/dags:${VERSION}
+    profiles:
+      - airflow
+    volumes:
+      - airflow_dags:/dags
+    networks:
+      - dojo
+
+  perm-fixer:
+    image: registry.gitlab.com/jataware/dojo/permfix:${VERSION}
+    profiles:
+      - airflow
+    volumes:
+      - dmc-data-results:/data/results
+      - dmc-data-mappers:/data/mappers
+      - dmc-data-model_configs:/data/model_configs
+    depends_on:
+      dags-init:
+        condition: service_completed_successfully
+
+  postgres:
+    image: postgres:13
+    profiles:
+      - airflow
+    environment:
+      POSTGRES_USER: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_DB: airflow
+    volumes:
+      - postgres-db-volume:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD", "pg_isready", "-U", "airflow"]
+      interval: 5s
+      retries: 5
+    restart: always
+    networks:
+      - dojo
+
+  redis:
+    profiles:
+      - airflow
+    image: redis:latest
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 30s
+      retries: 50
+    restart: always
+    networks:
+      - dojo
+
+  airflow-webserver:
+    <<: *airflow-common
+    hostname: airflow.${INTERNAL_DOMAIN}
+    command: webserver
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8080/health"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    restart: always
+    networks:
+      - dojo
+
+  airflow-scheduler:
+    <<: *airflow-common
+    command: scheduler
+    restart: always
+    networks:
+      - dojo
+    volumes:
+      - airflow_dags:/opt/airflow/dags
+      - airflow_logs:/opt/airflow/logs
+      - airflow_plugins:/opt/airflow/plugins
+      - airflow_results:/results
+      - aiflow_mappers:/mappers
+      - airflow_model_configs:/model_configs
+      - dmc-data-results:/results
+      - dmc-data-mappers:/mappers
+      - dmc-data-model_configs:/model_configs
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  airflow-worker:
+    <<: *airflow-common
+    command: celery worker
+    restart: always
+    networks:
+      - dojo
+    volumes:
+      - airflow_dags:/opt/airflow/dags
+      - airflow_logs:/opt/airflow/logs
+      - airflow_plugins:/opt/airflow/plugins
+      - airflow_results:/results
+      - aiflow_mappers:/mappers
+      - airflow_model_configs:/model_configs
+      - dmc-data-results:/results
+      - dmc-data-mappers:/mappers
+      - dmc-data-model_configs:/model_configs
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  airflow-init:
+    <<: *airflow-common
+    command: version
+    environment:
+      <<: *airflow-common-env
+      _AIRFLOW_DB_UPGRADE: 'true'
+      _AIRFLOW_WWW_USER_CREATE: 'true'
+      _AIRFLOW_WWW_USER_USERNAME: ${DMC_USER}
+      _AIRFLOW_WWW_USER_PASSWORD: ${DMC_PASSWORD}
+    volumes:
+      - airflow_dags:/opt/airflow/dags
+      - airflow_logs:/opt/airflow/logs
+      - airflow_plugins:/opt/airflow/plugins
+      - airflow_results:/results
+      - aiflow_mappers:/mappers
+      - airflow_model_configs:/model_configs
+      - dmc-data-results:/results
+      - dmc-data-mappers:/mappers
+      - dmc-data-model_configs:/model_configs
+      - /var/run/docker.sock:/var/run/docker.sock
+
+    networks:
+      - dojo
+
+  flower:
+    <<: *airflow-common
+    command: celery flower
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:5555/"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    restart: always
+    volumes:
+      - airflow_dags:/opt/airflow/dags
+      - airflow_logs:/opt/airflow/logs
+      - airflow_plugins:/opt/airflow/plugins
+      - airflow_results:/results
+      - aiflow_mappers:/mappers
+      - airflow_model_configs:/model_configs
+      - dmc-data-results:/results
+      - dmc-data-mappers:/mappers
+      - dmc-data-model_configs:/model_configs
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - dojo
+
+  # shared for terminal worker locally
+  docker:
+    image: registry.gitlab.com/jataware/dojo/worker:${VERSION}
+    privileged: true
+    hostname: docker.${INTERNAL_DOMAIN}
+    profiles:
+      - docker
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://0.0.0.0:8375/v1.43/info"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+    volumes:
+      - dmc-data-results:/data/results
+      - dmc-data-mappers:/data/mappers
+      - dmc-data-model_configs:/data/model_configs
+      - docker:/var/lib/docker
+    networks:
+      - dojo
+
+
+
+configs:
+  airflow_docker_py:
+    file: ./dmc/docker.py
+
+
+volumes:
+  postgres-db-volume:
+  airflow_results:
+  aiflow_mappers:
+  airflow_plugins:
+  airflow_dags:
+  airflow_logs:
+  airflow_model_configs:
+  dmc-data-results:
+  dmc-data-mappers:
+  dmc-data-model_configs:
+  docker:
+

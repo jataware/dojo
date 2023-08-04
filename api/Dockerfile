@@ -10,5 +10,4 @@ WORKDIR /api
 
 RUN python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-mpnet-base-v2')"
 
-EXPOSE 80
-CMD ["uvicorn", "server:api", "--host", "0.0.0.0", "--port", "80", "--log-config", "logging.yaml"]
+CMD ["uvicorn", "server:api", "--host", "0.0.0.0", "--port", "8000", "--log-config", "logging.yaml"]

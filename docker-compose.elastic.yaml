@@ -1,0 +1,26 @@
+
+
+services:
+
+  elastic:
+    profiles:
+      - elastic
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.11.2
+    hostname: elastic.${INTERNAL_DOMAIN}
+    environment:
+      - "discovery.type=single-node"
+      - bootstrap.memory_lock=true
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+      - dojo_esdata:/usr/share/elasticsearch/data
+    networks:
+      - dojo
+
+volumes:
+  dojo_esdata:
+    driver: local
+

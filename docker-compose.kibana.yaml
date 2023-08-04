@@ -1,0 +1,14 @@
+
+
+services:
+
+  kibana:
+    profiles:
+      - elastic
+    image: docker.elastic.co/kibana/kibana:7.11.2
+    hostname: kibana.${INTERNAL_DOMAIN}
+    environment:
+      ELASTICSEARCH_HOSTS: http://elasticsearch.${INTERNAL_DOMAIN}:9200
+    networks:
+      - dojo
+

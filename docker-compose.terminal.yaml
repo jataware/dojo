@@ -1,0 +1,33 @@
+
+services:
+
+  terminal:
+    image: registry.gitlab.com/jataware/dojo/terminal:${VERSION}
+    profiles:
+      - terminal
+    hostname: terminal.${INTERNAL_DOMAIN}
+    command: -debug -pull-images=false
+    configs:
+      - source: terminal_settings_yaml
+        target: /home/app/connector/settings.yaml
+        mode: 755
+    healthcheck:
+      test: timeout 10s bash -c ':> /dev/tcp/127.0.0.1/3000' || exit 1
+      interval: 15s
+      timeout: 10s
+      retries: 5
+    environment:
+      DOCKERHUB_AUTH: ${DOCKERHUB_AUTH}
+      HTTP_STATIC: /home/app/api/static
+      DOCKERHUB_ORG: jataware
+      REDIS_PORT: 6379
+      REDIS_HOST: redis.${INTERNAL_DOMAIN}
+      TERMINAL_WORKERS: ${TERMINAL_WORKERS}
+    networks:
+      - dojo
+
+
+configs:
+  terminal_settings_yaml:
+    file: ./terminal/api/server/settings.yaml
+

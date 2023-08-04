@@ -1,0 +1,19 @@
+
+services:
+  redis:
+    profiles:
+      - redis
+    image: redis:latest
+    hostname: redis.${INTERNAL_DOMAIN}
+    volumes:
+      - redis_data:/data
+    networks:
+      - dojo
+    logging:
+      driver: json-file
+      options:
+        max-size: 100m
+        max-file: "3"
+
+volumes:
+  redis_data:

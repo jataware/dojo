@@ -1,0 +1,6 @@
+
+
+networks:
+  dojo:
+    driver: bridge
+    name: do.jo

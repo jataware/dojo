@@ -1,0 +1,15 @@
+
+
+services:
+
+  testmos:
+    profiles:
+      - testmos
+    build:
+      context: ./testmos
+    image: testmos:dev
+    networks:
+      - dojo
+    ports:
+      - 8012:8012
+

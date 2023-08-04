@@ -1,0 +1,75 @@
+
+x-shared-env: &x-shared-environment
+  DOJO_URL: http://api.${INTERNAL_DOMAIN}:8000
+  CONFIG_STORAGE_BASE: s3://${BUCKET}/configs/
+  DATASET_STORAGE_BASE_URL: s3://${BUCKET}/datasets/
+  DOCUMENT_STORAGE_BASE_URL: s3://${BUCKET}/documents/
+  DMC_URL: airflow.${INTERNAL_DOMAIN}
+  DMC_USER: jataware
+  DMC_PASSWORD: jataware
+  DMC_LOCAL_DIR: /data
+  UAZ_URL: http://linking.cs.arizona.edu/v1
+  UAZ_THRESHOLD: 0.6
+  UAZ_HITS: 10
+  ELASTICSEARCH_URL: http://elastic.${INTERNAL_DOMAIN}:9200
+  REDIS_HOST: redis.${INTENAL_DOMAIN}
+
+
+x-app-env: &x-app-environment
+  DOCKERHUB_URL: https://hub.docker.com/v2
+  DOCKERHUB_USER: ${DOCKERHUB_USER}
+  DOCKERHUB_PWD: ${DOCKERHUB_PWD}
+
+x-rq-env: &x-rq-environment
+  TERMINAL_ENDPOINT: http://terminal.${INTERNAL_DOMAIN}:3000
+
+services:
+  api:
+    profiles:
+      - dojoapi
+    image: registry.gitlab.com/jataware/dojo/api:${VERSION}
+    hostname: api.${INTERNAL_DOMAIN}
+    env_file:
+      - .env
+    environment:
+      <<: [ *x-shared-environment, *x-app-environment ]
+    networks:
+      - dojo
+    volumes:
+      - dataset-storage:/datasets
+    healthcheck:
+      test: ["CMD", "curl", "--fail", "http://localhost:8000"]
+      interval: 20s
+      timeout: 10s
+      retries: 5
+    logging:
+      driver: json-file
+      options:
+        max-size: 100m
+        max-file: "10"
+
+
+  rqworker:
+    profiles:
+      - dojoapi
+    image: registry.gitlab.com/jataware/dojo/rqworker:${VERSION}
+    hostname: rqworker.${INTERNAL_DOMAIN}
+    env_file:
+      - .env
+    environment:
+      <<: [ *x-shared-environment, *x-rq-environment ]
+    networks:
+      - dojo
+    command:
+      - rq
+      - worker
+      - --url
+      - redis://redis.${INTERNAL_DOMAIN}:${REDIS_PORT}
+      - high
+      - default
+      - low
+    volumes:
+      - dataset-storage:/datasets
+
+volumes:
+  dataset-storage:
