@@ -1,0 +1,15 @@
+{
+  "name": "Test Dataset API Register - XLS",
+  "description": "XLS manual test to register a dataset using API-only endpoint.",
+  "domains": ["Logic"],
+  "maintainer": {
+    "name": "Joel",
+    "email": "joel@jataware.com",
+    "organization": "Jataware",
+    "website": "jataware.com"
+  },
+  "file_metadata": {
+    "filetype": "excel",
+    "excel_sheet": "2019-06-18-2022-06-21-Eastern_A"
+  }
+}

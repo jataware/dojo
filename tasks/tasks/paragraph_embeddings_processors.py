@@ -9,8 +9,9 @@ import numpy as np
 from utils import get_rawfile
 from embedder_engine import embedder
 
+from settings import settings
 
-es_url = os.environ.get("ELASTICSEARCH_URL", "http://localhost:9200")
+es_url = settings.ELASTICSEARCH_URL
 es = Elasticsearch(es_url)
 
 

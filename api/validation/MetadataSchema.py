@@ -154,25 +154,31 @@ class TimeRange(BaseModel):
 
 class RegridGeo(BaseModel):
     datetime_column: List[str]
-    geo_columns: List[str]
+    geo_columns: Dict[str, str]
     scale: Union[float, str]
     scale_multi: Union[float, str]
 
 class ScaleTime(BaseModel):
     datetime_bucket: str
     datetime_column: str
-    geo_columns: List[str]
+    geo_columns: Dict[str, str]
     aggregation_function_list: List[str]
 
 class ClipGeo(BaseModel):
-    geo_columns: List[str]
+    geo_columns: Dict[str, str]
     map_shapes: List[List[LatLong]]
 
 class ClipTime(BaseModel):
     time_ranges: List[TimeRange]
     datetime_column: str
 
-Transformation = Union[RegridGeo, ScaleTime, ClipGeo, ClipTime]
+
+class Overrides(BaseModel):
+    gadm: Optional[Dict[str, Dict]]
+
+
+Transformation = Union[RegridGeo, ScaleTime, ClipGeo, ClipTime, Overrides]
+
 
 class Metadata(BaseModel):
     class Config:

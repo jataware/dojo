@@ -18,13 +18,15 @@ export const getPrimaryLatLonColumns = (geoAnnotations) => {
 };
 
 export const generateProcessTempResArgs = (annotations, resolution, aggregation) => {
+  const geoColumns = getPrimaryLatLonColumns(annotations.annotations.geo);
   const args = {
     datetime_column: annotations.annotations.date[0].name,
     datetime_bucket: resolution.alias,
     aggregation_function_list: [aggregation],
-    geo_columns: [],
+    // TODO: the order of these shouldn't matter, as these are just columns that we skip
+    // for temporal resolution scaling?
+    geo_columns: geoColumns,
   };
-  annotations.annotations.geo.forEach((geo) => args.geo_columns.push(geo.name));
 
   return args;
 };
@@ -35,8 +37,7 @@ export const generateProcessGeoResArgs = (
   const geoColumns = getPrimaryLatLonColumns(annotations.annotations.geo);
   const args = {
     datetime_column: [annotations?.annotations.date[0].name],
-    // TODO: does this lat/lon order mess things up?
-    geo_columns: [geoColumns?.lat_column, geoColumns?.lon_column],
+    geo_columns: geoColumns,
     scale_multi: newMapResolution,
     aggregation_function_list: [aggregation],
     scale: oldMapResolution,
@@ -48,8 +49,7 @@ export const generateProcessGeoCovArgs = (annotations, drawings) => {
   const geoColumns = getPrimaryLatLonColumns(annotations.annotations.geo);
   const args = {
     map_shapes: drawings,
-    // TODO: does this lat/lon order mess things up?
-    geo_columns: [geoColumns?.lat_column, geoColumns?.lon_column],
+    geo_columns: geoColumns,
   };
   return args;
 };

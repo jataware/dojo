@@ -23,9 +23,9 @@ def clip_geo(context, filename=None, **kwargs):
 
     # Main Call
     shape_list = kwargs.get("map_shapes", [])
-    geo_columns = kwargs.get("geo_columns", [])
+    geo_columns = kwargs.get("geo_columns", {})
 
-    if shape_list and geo_columns:
+    if shape_list and geo_columns and 'lat_column' in geo_columns and 'lon_column' in geo_columns:
         clipped_df = elwood.clip_geo(
             dataframe=original_dataframe,
             geo_columns=geo_columns,
@@ -131,7 +131,7 @@ def clip_time(context, filename=None, **kwargs):
 
     response = {
         "message": "Time values not clipped, some information was not provided (time column or time range list).",
-        "dataframe": json.loads(json.dumps(original_dataframe)),
+        "dataframe": original_dataframe.to_json(),
     }
     return response
 
@@ -150,13 +150,20 @@ def scale_time(context, filename=None, **kwargs):
     geo_columns = kwargs.get("geo_columns", None)
 
     if time_column and time_bucket and aggregation_list:
-        clipped_df = elwood.rescale_dataframe_time(
-            dataframe=original_dataframe,
-            time_column=time_column,
-            time_bucket=time_bucket,
-            aggregation_functions=aggregation_list,
-            geo_columns=geo_columns,
-        )
+        try:
+            clipped_df = elwood.rescale_dataframe_time(
+                dataframe=original_dataframe,
+                time_column=time_column,
+                time_bucket=time_bucket,
+                aggregation_functions=aggregation_list,
+                geo_columns=geo_columns,
+            )
+        except ValueError as e:
+            response = {
+                "message": f"Time not rescaled due to error: {str(e)}",
+                "dataframe": original_dataframe.to_json(),
+            }
+            return response
 
         json_dataframe_preview = clipped_df.head(100).to_json(default_handler=str)
         rows_post_clip = len(clipped_df.index)
@@ -195,7 +202,7 @@ def scale_time(context, filename=None, **kwargs):
 
     response = {
         "message": "Time not rescaled, some information was not provided (time column, time bucket, or aggregation function list).",
-        "dataframe": json.loads(json.dumps(original_dataframe)),
+        "dataframe": original_dataframe.to_json(),
     }
     return response
 
@@ -258,7 +265,7 @@ def regrid_geo(context, filename=None, **kwargs):
 
     response = {
         "message": "Geography not rescaled, some information was not provided (geo_columns, scale_multiplier).",
-        "dataframe": json.loads(json.dumps(original_dataframe)),
+        "dataframe": original_dataframe.to_json(),
     }
     return response
 
@@ -269,9 +276,9 @@ def get_boundary_box(context, filename=None, **kwargs):
     original_dataframe = pd.read_csv(file, delimiter=",")
 
     # Main Call
-    geo_columns = kwargs.get("geo_columns", [])
+    geo_columns = kwargs.get("geo_columns", {})
 
-    if geo_columns:
+    if geo_columns and 'lat_column' in geo_columns and 'lon_column' in geo_columns:
         boundary_dict = elwood.get_boundary_box(
             dataframe=original_dataframe,
             geo_columns=geo_columns,
@@ -401,6 +408,6 @@ def post_transformation_message(context, message, prefix):
         "maintainer": context["dataset"]["maintainer"],
     }
 
-    api_url = os.environ.get("DOJO_HOST")
+    api_url = settings.DOJO_URL
     response = requests.patch(f"{api_url}/indicators?indicator_id={uuid}", json=payload)
     print(f"Description updated: {response.content}")

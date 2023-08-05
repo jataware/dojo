@@ -2,12 +2,13 @@ import logging
 from base_annotation import BaseProcessor
 from elasticsearch import Elasticsearch
 import os
+from settings import settings
 from embedder_engine import embedder
 
 logging.basicConfig()
 logging.getLogger().setLevel(logging.DEBUG)
 
-es_url = os.environ.get("ELASTICSEARCH_URL", "http://localhost:9200")
+es_url = settings.ELASTICSEARCH_URL
 es = Elasticsearch(es_url)
 
 

@@ -21,14 +21,14 @@ function mockHttpRequests() {
     method: 'POST',
     url: '/api/dojo/indicators/*/upload*'
   }, {
-    "id": "test-guid",
+    "id": "mock-test-guid",
     "filename": "raw_data_3.csv"
   }).as('DatasetFileUploadStub');
 
   cy.intercept({
     method: 'PATCH',
     url: '/api/dojo/indicators/*/annotations'
-  }, "Updated annotation with id = test-guid");
+  }, "Updated annotation with id = mock-test-guid");
 
   cy.intercept({
     method: 'POST',
@@ -64,9 +64,9 @@ function mockHttpRequests() {
 
   cy.intercept(
     'POST',
-    '/api/dojo/job/test-guid/elwood_processors.scale_features*',
+    '/api/dojo/job/mock-test-guid/elwood_processors.scale_features*',
     {
-      "id": "test-guid_elwood_processors.scale_features",
+      "id": "mock-test-guid_elwood_processors.scale_features",
       "created_at": "2022-08-17T15:18:27.474601",
       "enqueued_at": "2022-08-17T15:18:27.475190",
       "started_at": "2022-08-17T15:18:27.518462",
@@ -97,7 +97,7 @@ describe('Dataset Append Flow', function () {
     cy.wait(15);
 
     cy
-      .visit('/datasets/append/register/test-guid');
+      .visit('/datasets/append/register/mock-test-guid');
 
     cy
       .findAllByRole('button', {name: /Next/i})
@@ -140,7 +140,7 @@ it('Starts from Preview page from previously uplaoded file, navigates back, then
 
   cy.wait(15);
 
-  cy.visit('/datasets/append/preview/test-guid?filename=raw_data.csv');
+  cy.visit('/datasets/append/preview/mock-test-guid?filename=raw_data.csv');
 
   cy.findAllByText(/timestamp/i); // Wait for the table to load
 

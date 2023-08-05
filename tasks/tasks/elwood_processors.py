@@ -22,6 +22,8 @@ from resolution_processors import (
 from base_annotation import BaseProcessor
 from settings import settings
 
+logging.basicConfig()
+logging.getLogger().setLevel(logging.DEBUG)
 
 def build_elwood_meta_from_context(context, filename=None):
     metadata = context["annotations"]["metadata"]
@@ -62,6 +64,29 @@ def build_elwood_meta_from_context(context, filename=None):
     return elwood_meta
 
 
+def dict_get(nested, path, fallback=None):
+    """
+    Receives a nested dictionary and a string describing a dictionary path,
+    and returns the corresponding value.
+    [Optional]`fallback` if path doesn't exists, defaults to None.
+    `path`: str describing the nested dictionary deep path.
+            Each key in the path is separated by a dot ('.').
+            eg for {'a': {'b': {'c': 42}}}, `path` 'a.b.c' returns 42.
+    """
+
+    if not type(nested) == dict:
+        return fallback
+
+    keys = path.split('.')
+    value = nested
+    try:
+        for key in keys:
+            value = value[key]
+        return value
+    except (KeyError, TypeError):
+        return fallback
+
+
 class ElwoodProcessor(BaseProcessor):
     @staticmethod
     def run(context, datapath, filename) -> pd.DataFrame:
@@ -82,8 +107,15 @@ class ElwoodProcessor(BaseProcessor):
 
         # Elwood output path (it needs the filename attached to write parquets, and the file name is the uuid)
         mix_output_path = f"{output_path}/{uuid}"
+
         # Main elwood processing call
-        ret, rename = mix.process(raw_data_fp, mapper_fp, admin_level, mix_output_path)
+        ret, rename = mix.process(
+            raw_data_fp,
+            mapper_fp,
+            admin_level,
+            mix_output_path,
+            overrides=dict_get(context, "annotations.metadata.transformations.overrides", {})
+        )
 
         ret.to_csv(f"{output_path}/elwood_processed_df.csv", index=False)
 
@@ -108,9 +140,9 @@ def run_elwood(context, filename=None, on_success_endpoint=None):
     if not os.path.isdir(datapath):
         os.makedirs(datapath)
 
+    # TODO Could change elwood to accept file-like objects as well as filepaths.
     # Copy raw data file into rq-worker
-    # Could change elwood to accept file-like objects as well as filepaths.
-    # To save processing time, always re-use the converted CSV file
+    # Here we always use the converted CSV file to save time
     if filename is None:
         filename = "raw_data.csv"
         file_suffix = ""
@@ -159,7 +191,7 @@ def run_elwood(context, filename=None, on_success_endpoint=None):
             )
             with open(os.path.join(datapath, local_file), "rb") as fileobj:
                 put_rawfile(path=dest_file_path, fileobj=fileobj)
-            if dest_file_path.startswith("s3:") and not os.environ.get("STORAGE_HOST"):
+            if dest_file_path.startswith("s3:") and not settings.STORAGE_HOST:
                 # "https://jataware-world-modelers.s3.amazonaws.com/dev/indicators/6c9c996b-a175-4fa6-803c-e39b24e38b6e/6c9c996b-a175-4fa6-803c-e39b24e38b6e.parquet.gzip"
                 location_info = urlparse(dest_file_path)
                 data_files.append(
@@ -449,7 +481,7 @@ def scale_features(context, filename=None):
     data_paths_normalized_robust = context["dataset"].get(
         "data_paths_normalized_robust", []
     )
-    api_url = os.environ.get("DOJO_HOST")
+    api_url = settings.DOJO_URL
 
     if not data_paths_normalized:
         data_paths_normalized = []

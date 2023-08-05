@@ -53,6 +53,38 @@ def get_context(uuid):
 
 # RQ ENDPOINTS
 
+@router.post("/job/clear/{uuid}")
+async def clear_rq_job_cache(uuid: str):
+    """Clear the RQ job cache for a specific uuid.
+
+    Returns:
+        Response:
+            status_code: 200 if successful, 404 if no job found for uuid.
+            content: a success message or an error message.
+    """
+    # Construct the pattern to match job ids for this UUID
+    pattern = f'*{uuid}_*'
+    keys = redis.scan_iter(match=pattern)
+    # strip out rq:job: as scan_iter returns that with all keys
+    job_ids = [key.decode('utf-8').replace('rq:job:', '') for key in keys]
+
+    if job_ids:
+        try:
+            for job_id in job_ids:
+                job = Job.fetch(job_id, connection=redis)
+                job.cleanup(ttl=0)
+        except NoSuchJobError:
+            # Ignore jobs that no longer exist
+            pass
+
+        return {"message": f"Cleared {len(job_ids)} jobs for UUID: {uuid}"}
+    else:
+        return Response(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content=f"No job found for uuid = {uuid}",
+        )
+
+
 
 @router.post("/job/fetch/{job_id}")
 def get_rq_job_results(job_id: str):

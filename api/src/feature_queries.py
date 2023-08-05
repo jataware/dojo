@@ -1,5 +1,45 @@
 from src.embedder_engine import embedder
 
+def keyword_query_v3(phrase):
+    """
+    """
+    q = {
+        "query": {
+            "bool": {
+                "should": [
+                    {
+                        "match_phrase": {
+                            "name": {
+                                "query": phrase,
+                                "_name": "keyword_name"
+                            }
+                        }
+                    },
+                    {
+                        "match_phrase": {
+                            "display_name": {
+                                "query": phrase,
+                                "_name": "keyword_display_name"
+                            }
+                        }
+                    },
+                    {
+                        "match_phrase": {
+                            "description": {
+                                "query": phrase,
+                                "_name": "keyword_description"
+                            }
+                        }
+                    }
+                ]
+            }
+        },
+        "_source": {
+            "excludes": "embeddings"
+        }
+    }
+    return q
+
 
 def keyword_query_v2(term):
     q = {
@@ -79,6 +119,7 @@ def semantic_search_query(term):
         "query": {
             "script_score": {
                 "query": {"match_all": {}},
+                "_name": "semantic_search",
                 "script": {
                     "source": "Math.max(cosineSimilarity(params.query_vector, 'embeddings'), 0)",
                     "params": {
@@ -168,6 +209,31 @@ def hybrid_query_v0(query):
             "query": {"match_all": {}},
             "_name": "semantic_search",
             "boost": 1,
+            "script": {
+                "source": "Math.max(cosineSimilarity(params.query_vector, 'embeddings'), 0)",
+                "params": {
+                    "query_vector": embedding
+                }
+            }
+        }
+    })
+    return features_query
+
+
+def hybrid_query_v2(term):
+    """
+    Latest and greatest hybrid query, with less keyword-phrase-fuzzy-match
+    after hybrid search feedback from MITRE.
+    """
+
+    embedding = embedder.embed([term])[0]
+
+    features_query = keyword_query_v3(term)
+
+    features_query["query"]["bool"]["should"].append({
+        "script_score": {
+            "query": {"match_all": {}},
+            "_name": "semantic_search",
             "script": {
                 "source": "Math.max(cosineSimilarity(params.query_vector, 'embeddings'), 0)",
                 "params": {
