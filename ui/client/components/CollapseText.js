@@ -34,7 +34,7 @@ const CollapseText = ({ childrenText, collapsedSize = 60 }) => {
     <div ref={wrapper}>
       <div>
         <Collapse
-          innerRef={cellValue}
+          ref={cellValue}
           in={display}
           collapsedSize={collapsedSize}
         >
