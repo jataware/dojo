@@ -59,7 +59,7 @@ const genTransformPairs = (dataset_id) => {
 };
 
 
-describe.only('Dataset Register: Publish E2E', () => {
+describe('Dataset Register: Publish E2E', () => {
 
   // Stub transform fetch jobs for this one, as we only care about run_elwood results:
   it('From Annotate > skip transform > Process/publish modifies the dataset correctly', async () => {
@@ -126,7 +126,7 @@ describe.only('Dataset Register: Publish E2E', () => {
 
 
   // Use a measurement dataset, not event (not like ACLED), which supports most transforms
-  it.only('From Annotate > Transforms.. > Processing modifies the dataset correctly (by elwood/processing)', async () => {
+  it('From Annotate > Transforms.. > Processing modifies the dataset correctly (by elwood/processing)', async () => {
     const dataset = genDataset('uniform');
     const { body: createdDataset } = await cy.request('POST', '/api/dojo/indicators', dataset);
     const dataset_id = createdDataset.id;

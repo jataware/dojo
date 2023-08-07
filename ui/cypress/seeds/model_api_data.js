@@ -120,8 +120,8 @@ const genQualifierOutput = () => ({
 
 const generatedIDs = [];
 
-const genBaseModel = () => {
-  const uuid = faker.string.uuid();
+const genBaseModel = (id) => {
+  const uuid = id || faker.string.uuid();
 
   generatedIDs.push(uuid);
 

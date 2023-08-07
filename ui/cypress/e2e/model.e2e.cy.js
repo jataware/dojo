@@ -132,10 +132,80 @@ describe('Model templater annotations', () => {
   xit('Can use Templater to annotate a directive parameter');
 });
 
-describe('Model output annotation', () => {
-  xit('Can annotate model output: metadata step 1');
+describe.only('Model output annotation', () => {
 
-  xit('Can annotate model output: annotate (step 2)');
+  it('Can annotate model output', () => {
+
+    const testModel = genBaseModel('acb7c12a-4938-4c48-9e84-21cb7a8b6c6c'); // force this id for now
+
+    // TODO this is commented to reuse the same model while developing
+    // cy.request('post', '/api/dojo/models', testModel)
+    //   .its('body').should('include', testModel.id); // this waits for the model
+
+    // TODO this should only be created when not running already, which we wont do
+    // while developing tests
+    // cy.request('POST', `/api/terminal/docker/provision/${testModel.id}`, {
+    //   "name": testModel.id,
+    //   "image": "jataware/dojo-publish:Ubuntu-latest",
+    //   "listeners": []
+    // })
+    //   .its('body').should('include', `Processing ${testModel.id}`)
+
+    // http://localhost:8080/api/terminal/docker/provision/acb7c12a-4938-4c48-9e84-21cb7a8b6c6c
+
+    cy.visit(`/term/${testModel.id}`);
+
+    cy.wait(2000);
+
+    cy.findByRole('textbox', {name: /terminal input/i})
+      .type('mkdir testmodel{enter}')
+      .type('cd testmodel{enter}')
+      .type('touch output_data.csv{enter}')
+      .type('dojo edit output_data.csv{enter}');
+
+    cy.findByRole('button', {name: 'close'}); // data-test=fullScreenDialogCloseBtn
+
+    cy.findByRole('textbox').as('EditingText');
+
+    cy.get('@EditingText')
+      .type('latitude,longitude,date,value,color_hue{enter}');
+
+    cy.wait(10);
+
+    cy.get('@EditingText')
+      .type('60.4985255,-10.615118,1986-07-31,0.1237884593924997,#a04620{enter}')
+      .type('28.5827915,-103.818624,2019-09-25,0.8583255955703992,#c61352{enter}')
+      .type('-73.3958715,141.932549,1972-05-30,1.137030617734822,#f77bad{enter}')
+      .type('62.866798,-57.143830,1993-07-11,1.917793049098565,#ea6b81{enter}')
+      .type('-85.861143,-67.704187,2018-05-24,1.5932706382475221,#b2254d{enter}')
+      .type('-0.0828935,143.074336,2016-04-29,0.6276615872169006,#962d00{enter}')
+      .type('31.704198,65.765472,1979-01-10,0.03205149393145829,#fcc4d0{enter}')
+      .type('-23.5363155,66.668348,1979-09-06,1.8721222284406769,#ef260b{enter}')
+
+    cy.findByRole('button', {name: /save/i})
+
+  });
+
+  const shutdownWorker = () => {
+    /* give the shutdown endpoint an alias so we can know when it is complete */
+    cy.intercept('/api/terminal/docker/*/release').as('shutdown');
+    cy.visit('/admin');
+    /* find our shutdown button */
+    cy.get('[data-test=adminShutDownBtn]', {timeout: 15000}).then((btn) => {
+      /* if it's not disabled */
+      if (!btn[0].disabled) {
+        /* wrap the returned button in a promise (necessary inside the .then) and click it */
+        cy.wrap(btn).click();
+        /* and wait for the shutdown endpoint to return */
+        cy.wait('@shutdown', { timeout: 300000 });
+      }
+    });
+  };
+
+  // beforeEach(shutdownWorker);
+  // after(shutdownWorker);
+
+  // xit('Can annotate model output: annotate (step 2)');
 });
 
 describe('Model listings', () => {
@@ -146,7 +216,7 @@ describe('Model listings', () => {
     cy.request('post', '/api/dojo/models', testModel)
       .its('body').should('include', testModel.id);
 
-    cy.wait(300);
+    // cy.wait(300);
   });
 
   after(() => {
