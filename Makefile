@@ -212,6 +212,14 @@ docker_build-permfix:
 check-%:
 	@: $(if $(value $*),,$(error $* is undefined))
 
+.PHONY: docker_build-all
+docker_build-all: docker_build-api \
+	docker_build-dags \
+	docker_build-permfix \
+	docker_build-rqworker \
+	docker_build-terminal \
+	docker_build-worker \
+	docker_build-ui
 
 .PHONY: print-version
 print-version:
