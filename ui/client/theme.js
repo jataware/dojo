@@ -28,6 +28,12 @@ export default createTheme(adaptV4Theme({
       root: {
         padding: 0
       }
-    }
+    },
+    // match v4 body font size
+    body: {
+      fontSize: '0.875rem',
+      lineHeight: 1.43,
+      letterSpacing: '0.01071em',
+    },
   }
 }));

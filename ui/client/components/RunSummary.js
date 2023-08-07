@@ -11,7 +11,7 @@ import Alert from '@mui/lab/Alert';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
 import Grid from '@mui/material/Grid';
-import Hidden from '@mui/material/Hidden';
+import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 import QueuedJobIcon from '@mui/icons-material/Schedule';
 import RunningJobIcon from '@mui/icons-material/PlayCircleFilledWhite';
@@ -96,9 +96,9 @@ export const Status = ({
       style={refreshActionStyles}
       {...props}
     >
-      <Hidden mdDown={responsive}>
+      <Box sx={{ display: { xs: responsive ? 'none' : 'block', lg: 'block' } }}>
         {capitalize(status)}
-      </Hidden>
+      </Box>
     </Alert>
   );
 };
