@@ -326,7 +326,7 @@ const InnerStepper = ({ match, updateLocation, ...props }) => {
       <div className={classes.navigation}>
 
         <div className={classes.stepperWrapper}>
-          <Stepper activeStep={activeStep}>
+          <Stepper style={{ padding: 24 }} activeStep={activeStep}>
             {flow.steps.map((mappedStep, index) => (
               <Tooltip
                 classes={{

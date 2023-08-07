@@ -34,8 +34,8 @@ const useStyles = makeStyles()((theme) => ({
   resetButton: {
     position: 'absolute',
     // very specific positioning to line this up with the stepper
-    top: '31px',
-    left: '24px',
+    top: '52px',
+    left: '0',
     opacity: 0.6,
     '&:hover': {
       opacity: 1,
@@ -45,7 +45,7 @@ const useStyles = makeStyles()((theme) => ({
     height: '20px',
   },
   stepperWrapper: {
-    width: '85%',
+    width: '100%',
     margin: '0 auto',
   },
 }));
@@ -256,11 +256,11 @@ export const HorizontalLinearStepper = ({ modelFamily }) => {
         Reset
       </Button>
       <div className={classes.stepperWrapper}>
-        <Stepper activeStep={activeStep}>
+        <Stepper style={{ padding: '16px 24px 32px 24px' }} activeStep={activeStep}>
           {steps.map((label, index) => (
             <Step key={label} completed={completedSteps[index] || index < activeStep}>
               <StepLabel>
-                <Typography variant="h5">
+                <Typography variant="h5" sx={{ whiteSpace: 'nowrap' }}>
                   {label}
                 </Typography>
               </StepLabel>
