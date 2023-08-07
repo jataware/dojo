@@ -19,7 +19,13 @@ const BasicAlert = ({
 
   // autoHideDuration={null} passed as a prop will work to keep BasicAlert open forever
   return (
-    <Snackbar open={visible} autoHideDuration={6000} onClose={handleAlertClose} {...props}>
+    <Snackbar
+      open={visible}
+      autoHideDuration={6000}
+      onClose={handleAlertClose}
+      anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      {...props}
+    >
       <MuiAlert elevation={6} variant="filled" severity={severity} action={action}>
         {message}
       </MuiAlert>
