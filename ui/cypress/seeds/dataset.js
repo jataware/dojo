@@ -65,12 +65,16 @@ const genDataset = (variant) => {
     //      See https://github.com/jataware/dojo/issues/145
 
     "fileData" : {
-      "raw" : {
+      "raw" : variant === 'acled' ? {
         "uploaded" : true,
         "url" : "ACLED_redacted.xlsx",
         "rawFileName" : "raw_data.xlsx"
+      } : {
+        "uploaded" : true,
+        "url" : "gridded_uniform.csv",
+        "rawFileName" : "raw_data.csv"
       }
-    },
+    }
 
   };
 }
@@ -161,4 +165,81 @@ const dataset_acled_annotations = {
 };
 
 
-module.exports = {genDataset, dataset_acled_annotations};
+const dataset_uniform_annotations = {
+  "metadata" : {
+    "transformations" : null,
+    "files" : {
+      "raw_data.csv" : {
+        "filetype" : "csv",
+        "filename" : "gridded_uniform.csv",
+        "rawFileName" : "raw_data.csv",
+      }
+    },
+    "histograms" : {
+      // NOTE can ignore, won't use
+    },
+    "geotime_classify" : {
+      // NOTE can ignore, won't use
+    },
+    "column_statistics" : {
+      // NOTE can ignore, won't use
+    }
+  },
+  "annotations" : {
+    "geo" : [
+      {
+        "geo_type" : "latitude",
+        "resolve_to_gadm" : true,
+        "aliases" : {},
+        "qualifies" : [],
+        "name" : "latitude",
+        "description" : "lat lon coords",
+        "primary_geo" : true,
+        "display_name" : "",
+        "type" : "geo",
+        "is_geo_pair": "longitude",
+      },
+      {
+        "geo_type" : "longitude",
+        "resolve_to_gadm" : true,
+        "aliases" : {},
+        "qualifies" : [],
+        "name" : "longitude",
+        "description" : "lat lon coords",
+        "primary_geo" : true,
+        "display_name" : "",
+        "type" : "geo"
+      }
+    ],
+    "date" : [
+      {
+        "date_type" : "date",
+        "time_format" : "%m/%d/%Y",
+        "aliases" : { },
+        "primary_date" : true,
+        "qualifies" : [ ],
+        "name" : "date",
+        "description" : "date",
+        "display_name" : "",
+        "type" : "date"
+      }
+    ],
+    "feature" : [
+      {
+        "feature_type": "int",
+        "aliases": {},
+        "qualifies": [],
+        "units_description": "deaths",
+        "qualifierrole": null,
+        "name": "people",
+        "description" : "people value",
+        "units" : "population",
+        "display_name" : "",
+        "type" : "feature"
+      }
+    ]
+  }
+};
+
+module.exports = {genDataset, dataset_acled_annotations, dataset_uniform_annotations};
+

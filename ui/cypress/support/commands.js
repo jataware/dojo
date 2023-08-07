@@ -54,12 +54,15 @@ function getTextNode(el, match) {
       return node;
     }
   }
+  return null;
 }
 
 // https://github.com/netlify/netlify-cms/blob/a4b7481a99f58b9abe85ab5712d27593cde20096/cypress/support/commands.js#L180
 // allows us to highlight text when testing shorthand
 Cypress.Commands.add('setSelection', { prevSubject: true }, (subject, query, endQuery) => (
+
   cy.wrap(subject).selection(($el) => {
+
     if (typeof query === 'string') {
       const anchorNode = getTextNode($el[0], query);
       const focusNode = endQuery ? getTextNode($el[0], endQuery) : anchorNode;

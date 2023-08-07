@@ -2,6 +2,7 @@
 import {
   genDataset,
   dataset_acled_annotations,
+  dataset_uniform_annotations,
 } from '../seeds/dataset';
 
 import { gen_tranform_intercepts } from '../support/helpers';
@@ -54,11 +55,11 @@ const genTransformPairs = (dataset_id) => {
       }],
       ['gadm_processors.all_gadm_values', ['mocked_countries']],
       ['transformation_processors.scale_time', {}]
-    ]
+  ];
 };
 
 
-describe('Dataset Register: Publish E2E', () => {
+describe.only('Dataset Register: Publish E2E', () => {
 
   // Stub transform fetch jobs for this one, as we only care about run_elwood results:
   it('From Annotate > skip transform > Process/publish modifies the dataset correctly', async () => {
@@ -125,6 +126,19 @@ describe('Dataset Register: Publish E2E', () => {
 
 
   // Use a measurement dataset, not event (not like ACLED), which supports most transforms
-  it('From Annotate > Transforms.. > Processing modifies the dataset correctly (by elwood/processing)');
+  it.only('From Annotate > Transforms.. > Processing modifies the dataset correctly (by elwood/processing)', async () => {
+    const dataset = genDataset('uniform');
+    const { body: createdDataset } = await cy.request('POST', '/api/dojo/indicators', dataset);
+    const dataset_id = createdDataset.id;
+
+    cy.request('POST', `/api/dojo/indicators/${dataset_id}/annotations`, dataset_uniform_annotations);
+
+    await cy.task('upload', {type: 'dataset', id: dataset_id, variant: 'uniform'});
+
+    cy.visit(`/datasets/register/transform/${dataset_id}?filename=raw_data.xlsx`);
+
+    cy.wait(30000); // Await transform-fetch jobs
+
+  });
 
 });

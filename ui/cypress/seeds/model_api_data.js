@@ -178,5 +178,69 @@ const genBaseModel = () => {
   };
  };
 
-module.exports = { genBaseModel, generatedIDs };
+/**
+ *
+ **/
+const genConfig = (modelId) => {
+  return [{
+    "model_config": {
+      "model_id": modelId,
+      "path":"/home/clouseau/test-model/configFiles/parameters.json",
+      "parameters":[
+        {"start":13,"end":16,"text":"0.9","annotation": {
+          "name": "rainfall",
+          "description": "eldnef",
+          "type": "int",
+          "default_value": "0.9",
+          "unit": "",
+          "unit_description": "",
+          "data_type": "numerical",
+          "predefined": false,
+          "options":[],
+          "min":"",
+          "max":""
+        }}
+      ],
+      "md5_hash":"c982ef4fdc0ebb2fb43a9b86d23d0b7d",
+      "id":"17ebc618-9087-4e29-b6a7-5c6d36e8c6f2"
+    },
+    file_content: '{"rain": "1.4"}'
+  }];
+};
+
+/**
+ *
+ **/
+const genDirective = (modelId) => {
+
+  return {
+    "model_id": modelId,
+    "command":"python3 main.py --temp 1.3",
+    "cwd":"/home/terminal/test-model",
+    "parameters":[
+      {"start":0,
+       "end":0,
+       "text":"string",
+       "annotation": {
+         "name":"string",
+         "description": "string",
+         "type": "int",
+         "default_value": "string",
+         "unit": "string",
+         "unit_description": "string",
+         "data_type": "nominal",
+         "predefined": false,
+         "options": ["string"],
+         "min": "string",
+         "max": "string"
+       }}
+    ],
+    "id":"61036b02-04c0-4ab5-a550-26abecb23617"
+  };
+
+};
+
+
+module.exports = { genBaseModel, generatedIDs, genConfig, genDirective };
+
 // export genBaseModel;

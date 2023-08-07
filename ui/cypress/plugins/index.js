@@ -59,7 +59,7 @@ async function sendFileToEndpoint(filePath, endpointUrl, newFilename) {
     },
   });
 
-  debug(`Response: ${Object.keys(response)}`)
+  debug(`Response: ${Object.keys(response)}`);
 
   if (response) {
     return response.data;
@@ -80,7 +80,7 @@ const esIndexMappings = {
  *
  **/
 function deleteById({type, id, name}) {
-  const index = esIndexMappings[type]
+  const index = esIndexMappings[type];
 
   const promise = es.delete({
     index,
@@ -150,9 +150,14 @@ module.exports = (on, config) => {
     },
 
     'upload': ({type, id, variant='acled'}) => {
-      if (type === 'dataset') {
+      if (type === 'dataset' && variant === 'acled') {
         const url = `http://localhost:8080/api/dojo/indicators/${id}/upload`;
         const mockCSVFileLocation = path.join(__dirname, '..', 'files', 'raw_data.csv');
+        return sendFileToEndpoint(mockCSVFileLocation, url, 'raw_data.csv');
+      } else if (type === 'dataset' && variant === 'uniform') {
+
+        const url = `http://localhost:8080/api/dojo/indicators/${id}/upload`;
+        const mockCSVFileLocation = path.join(__dirname, '..', 'files', 'gridded_uniform_raw_data.csv');
         return sendFileToEndpoint(mockCSVFileLocation, url, 'raw_data.csv');
       }
 
