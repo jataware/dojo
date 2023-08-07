@@ -2,7 +2,8 @@ import identity from 'lodash/identity';
 import FullScreenTemplater from '../../client/components/templater/FullScreenTemplater';
 
 import {
-  genBaseModel, genConfig, genDirective, generatedIDs
+  genBaseModel, // genConfig,
+  genDirective, generatedIDs
 } from '../seeds/model_api_data';
 
 
@@ -53,11 +54,7 @@ const mockData = {
   "md5_hash": "61da491d3e89d79c5f3fe0e438ecd4b9"
 };
 
-const modelId = "66414944-9aef-4735-9d62-2f5e157e2fe6";
 
-// http://localhost:8080/api/dojo/dojo/config/66414944-9aef-4735-9d62-2f5e157e2fe6
-
-// http://localhost:8080/api/dojo/dojo/directive/66414944-9aef-4735-9d62-2f5e157e2fe6
 
 describe('FullScreenTemplater', () => {
 
@@ -71,13 +68,10 @@ describe('FullScreenTemplater', () => {
       .its('body').should('include', testModel.id);
 
     // const config = genConfig(testModel.id);
-
-
     // cy.request('post', '/api/dojo/dojo/config', config)
     //   .its('body').should('include', testModel.id);
 
     // The following config/directive endpoints have /dojo in their paths
-
     const directive = genDirective(testModel.id);
 
     cy.request('post', '/api/dojo/dojo/directive', directive)
@@ -141,7 +135,7 @@ describe('FullScreenTemplater', () => {
     cy.findByRole('button', {name: /save/i})
       .click();
 
-    // TODO wait on the save intercepted instead
+    // TODO wait on the config-POST-save intercepted instead
     cy.wait(2000);
 
     cy.request(`/api/dojo/dojo/config/${testModel.id}`)
