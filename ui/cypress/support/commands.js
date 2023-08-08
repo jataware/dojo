@@ -83,3 +83,35 @@ Cypress.Commands.add('setSelection', { prevSubject: true }, (subject, query, end
     }
   })
 ));
+
+
+let sharedStatus = 0;
+
+Cypress.Commands.add('spyPoll', {}, (method, url, property, expectedVal, nth=0) => {
+
+  if (sharedStatus === 1) {
+    console.log('done by sharedStatus!', 'sharedStatus:', sharedStatus);
+    return true;
+  }
+
+  let tryNum = nth + 1;
+  console.log('invoked spyPoll with args', expectedVal, 'tryNum:', tryNum);
+
+  const interceptName =`JobCheck`;
+  cy.intercept(method, url).as(interceptName);
+
+  return cy.wait(`@${interceptName}`)
+    .then((inter) => {
+      console.log('status:', inter.response.body[property]);
+
+      if (![expectedVal, 'errored'].includes(inter.response.body[property]) || sharedStatus !== 1) {
+        console.log('retrying...');
+        cy.wait(8000);
+        return cy.spyPoll(method, url, property, expectedVal, tryNum);
+      } else {
+        sharedStatus = 1;
+        console.log('done by expected state!', 'sharedStatus:', sharedStatus);
+        return true;
+      }
+    });
+ });

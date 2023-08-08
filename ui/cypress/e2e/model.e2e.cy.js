@@ -134,55 +134,58 @@ describe('Model templater annotations', () => {
 
 describe.only('Model output annotation', () => {
 
-  it('Can annotate model output', () => {
+  it('Creates a file and edits with dojo edit', () => {
 
-    const testModel = genBaseModel('acb7c12a-4938-4c48-9e84-21cb7a8b6c6c'); // force this id for now
+    let modelId = undefined;
+    const testModel = genBaseModel(modelId);
 
-    // TODO this is commented to reuse the same model while developing
-    // cy.request('post', '/api/dojo/models', testModel)
-    //   .its('body').should('include', testModel.id); // this waits for the model
+    modelId = testModel.id;
 
-    // TODO this should only be created when not running already, which we wont do
-    // while developing tests
-    // cy.request('POST', `/api/terminal/docker/provision/${testModel.id}`, {
-    //   "name": testModel.id,
-    //   "image": "jataware/dojo-publish:Ubuntu-latest",
-    //   "listeners": []
-    // })
-    //   .its('body').should('include', `Processing ${testModel.id}`)
+    cy.request('post', '/api/dojo/models', testModel)
+      .its('body').should('include', testModel.id);
 
-    // http://localhost:8080/api/terminal/docker/provision/acb7c12a-4938-4c48-9e84-21cb7a8b6c6c
+    cy.request('POST', `/api/terminal/docker/provision/${testModel.id}`, {
+      "name": testModel.id,
+      "image": "jataware/dojo-publish:Ubuntu-latest",
+      "listeners": []
+    })
+      .its('body').should('include', `Processing ${testModel.id}`);
+
+    cy.wait(10000);
 
     cy.visit(`/term/${testModel.id}`);
 
-    cy.wait(2000);
+    const fileName = 'output_data.csv';
+    const folderName = 'testmodel';
 
     cy.findByRole('textbox', {name: /terminal input/i})
-      .type('mkdir testmodel{enter}')
-      .type('cd testmodel{enter}')
-      .type('touch output_data.csv{enter}')
-      .type('dojo edit output_data.csv{enter}');
+      .type(`mkdir ${folderName}{enter}`)
+      .type(`cd ${folderName}{enter}`)
+      .type(`touch ${fileName}{enter}`)
+      .type(`dojo edit ${fileName}{enter}`);
 
-    cy.findByRole('button', {name: 'close'}); // data-test=fullScreenDialogCloseBtn
+    cy.findByRole('button', {name: 'close'});
 
     cy.findByRole('textbox').as('EditingText');
 
     cy.get('@EditingText')
       .type('latitude,longitude,date,value,color_hue{enter}');
 
-    cy.wait(10);
-
     cy.get('@EditingText')
-      .type('60.4985255,-10.615118,1986-07-31,0.1237884593924997,#a04620{enter}')
-      .type('28.5827915,-103.818624,2019-09-25,0.8583255955703992,#c61352{enter}')
-      .type('-73.3958715,141.932549,1972-05-30,1.137030617734822,#f77bad{enter}')
-      .type('62.866798,-57.143830,1993-07-11,1.917793049098565,#ea6b81{enter}')
-      .type('-85.861143,-67.704187,2018-05-24,1.5932706382475221,#b2254d{enter}')
-      .type('-0.0828935,143.074336,2016-04-29,0.6276615872169006,#962d00{enter}')
-      .type('31.704198,65.765472,1979-01-10,0.03205149393145829,#fcc4d0{enter}')
-      .type('-23.5363155,66.668348,1979-09-06,1.8721222284406769,#ef260b{enter}')
+      .type('60.4985255,-10.615118,1986-07-31,0.1237884593924997,#a04620{enter}28.5827915,-103.818624,2019-09-25,0.8583255955703992,#c61352{enter}28.5827915,-103.818624,2019-09-25,0.8583255955703992,#c61352{enter}-73.3958715,141.932549,1972-05-30,1.137030617734822,#f77bad{enter}62.866798,-57.143830,1993-07-11,1.917793049098565,#ea6b81{enter}', {force: true} );
+
+    const saveUrl = `/api/terminal/container/${modelId}/ops/save?path=/home/clouseau/${folderName}/${fileName}`;
+
+    cy.intercept('POST', saveUrl).as('SavingNewFile');
 
     cy.findByRole('button', {name: /save/i})
+      .click();
+
+    cy.get('@SavingNewFile').then(({request, response}) => {
+      expect(request.query.path).to.contain(fileName);
+      expect(request.body).to.contain('latitude');
+      expect(response.body).to.equal('ok');
+    });
 
   });
 
@@ -203,9 +206,152 @@ describe.only('Model output annotation', () => {
   };
 
   // beforeEach(shutdownWorker);
-  // after(shutdownWorker);
+  // afterEach(() => {
+  //   cy.wait(3000);
+  //   shutdownWorker();
+  // });
 
-  // xit('Can annotate model output: annotate (step 2)');
+  it.only('Can annotate model output: annotate', () => {
+
+    // TODO reuse logic
+    let modelId = '57361222-0099-41a1-9f21-66767af50a2f'; // undefined;
+    const testModel = genBaseModel(modelId);
+
+    modelId = testModel.id;
+
+    // cy.request('post', '/api/dojo/models', testModel)
+    //   .its('body').should('include', testModel.id);
+
+    // cy.request('POST', `/api/terminal/docker/provision/${testModel.id}`, {
+    //   "name": testModel.id,
+    //   "image": "jataware/dojo-publish:Ubuntu-latest",
+    //   "listeners": []
+    // })
+    //   .its('body').should('include', `Processing ${testModel.id}`);
+
+    // cy.wait(5000); // figure out how to make this stable.. wait for term to show up on cy.request?
+
+    const fileName = 'output_data.csv';
+    const folderName = 'testmodel';
+
+    const saveUrl = `/api/terminal/container/${testModel.id}/ops/save?path=/home/clouseau/${folderName}/${fileName}`;
+
+    cy.visit(`/term/${testModel.id}`);
+
+    cy.findByRole('textbox', {name: /terminal input/i})
+      .type(`mkdir ${folderName}{enter}`)
+      .type(`cd ${folderName}{enter}`)
+      .type(`touch ${fileName}{enter}`)
+      .type('cd ..{enter}');
+
+
+    cy.readFile('cypress/files/sample_output.csv').then((contents) => {
+      cy
+        .intercept('POST', `/api/dojo/job/${modelId}/tasks.model_output_analysis`)
+        .as('FilePreAnalysis');
+
+      return cy.request('POST', saveUrl, contents);
+    }).then(() => {
+
+      cy.findByRole('textbox', {name: /terminal input/i})
+        .type(`cd ${folderName}{enter}dojo annotate ${fileName}{enter}`);
+
+      cy.findByRole('button', {name: /close/i});
+
+      cy.findByRole('textbox', {name: /Name/i}).type('named!');
+
+      cy.findByRole('textbox', {name: /Description/i}).type('desc');
+
+      cy.findByRole('textbox', {name: /Domains/i}).type('Logic');
+
+      // NOTE Protects against current bug / race-condition (can click next until processed ugh)
+      cy.wait('@FilePreAnalysis');
+
+      cy.findAllByRole('button', {name: /Next/i}).click();
+
+      cy.findAllByRole('button', {name: /Annotate/i, timeout: 45000})
+        .eq(0)
+        .click();
+
+      cy.findByRole('textbox', {name: /Description/i})
+        .type('hello lat lon');
+
+      cy.findByRole('checkbox', {name: /This is my primary geo field/i})
+        .click();
+
+      cy.findByRole('checkbox', {name: /This is part of a coordinate pair/i})
+        .click();
+
+      cy.findByRole('button', {name: /geocoding level/i})
+        .click();
+
+      cy.findByRole('listbox').contains('Country')
+        .click();
+
+      cy.findByRole('button', {name: /save/i})
+        .click();
+
+      cy.findAllByRole('button', {name: /Annotate/i})
+        .eq(0)
+        .click();
+
+      cy.findByRole('textbox', {name: /Description/i})
+        .type('hello date');
+
+      cy.findByRole('checkbox', {name: /This is my primary date field/i})
+        .click();
+
+      cy.findByRole('button', {name: /save/i})
+        .click();
+
+      cy.findAllByRole('button', {name: /Annotate/i})
+        .eq(0)
+        .click();
+
+      cy.findByRole('textbox', {name: /units/i})
+        .type('vals');
+
+      cy.findAllByRole('textbox', {name: /Description/i})
+        .eq(0)
+        .type('hello feature');
+
+      cy.findByRole('button', {name: /save/i})
+        .click();
+
+      cy.get('body').click();
+
+      cy.wait(100);
+
+      // cy.intercept();
+      // 'POST'
+      // http://localhost:8080/api/dojo/job/57361222-0099-41a1-9f21-66767af50a2f/elwood_processors.run_model_elwood
+      // status='queued'
+      // not 'failed'
+
+      // http://localhost:8080/api/dojo/job/57361222-0099-41a1-9f21-66767af50a2f/elwood_processors.run_model_elwood
+      // status='finished'
+
+      cy.findAllByRole('button', {name: /next/i})
+        .eq(1)
+        .click();
+
+      cy.spyPoll('POST', `/api/dojo/job/${modelId}/elwood_processors.run_model_elwood`, 'status', 'finished');
+
+      // cy.intercept(`/api/dojo/indicators/${modelId}/preview/processed?filepath=model-output-samples/*.csv`, {timeout: 10000})
+      //   .as('ProcessingPreviewPage');
+
+      // cy.wait('@ProcessingPreviewPage');
+
+      // cy.intercept('POST', ) // intercept annotation to expect against
+
+      cy.findByRole('button', {name: /submit to dojo/i, timeout: 20000})
+        .click();
+
+
+    });
+
+
+  });
 });
 
 describe('Model listings', () => {
