@@ -344,7 +344,7 @@ describe('Model output annotation', () => {
   });
 });
 
-describe('Annotate directive', () => {
+describe('Model Annotate directive', () => {
 
   const shutdownWorker = () => {
     /* give the shutdown endpoint an alias so we can know when it is complete */
@@ -418,8 +418,6 @@ describe('Annotate directive', () => {
     });
   });
 })
-
-
 
 describe('Model listings', () => {
 
@@ -497,10 +495,35 @@ describe('Model metadata form state navigation', () => {
   });
 });
 
+describe.skip('Model Summary Page Actions', () => {
 
-describe('Model Summary Page Actions', () => {
+  it('All required Model properties are displayed on page', () => {
 
-  xit('All required Model properties are displayed on page');
+
+    // let modelId = '57361222-0099-41a1-9f21-66767af50a2f'; // undefined;
+    // const testModel = genBaseModel(modelId);
+
+    // modelId = testModel.id;
+
+    // cy.request('post', '/api/dojo/models', testModel)
+    //   .its('body').should('include', testModel.id);
+
+    // cy.request('POST', `/api/terminal/docker/provision/${testModel.id}`, {
+    //   "name": testModel.id,
+    //   "image": "jataware/dojo-publish:Ubuntu-latest",
+    //   "listeners": []
+    // })
+    //   .its('body').should('include', `Processing ${testModel.id}`);
+
+    // cy.wait(5000); // figure out how to make this stable.. wait for term to show up on cy.request?
+
+    // const fileName = 'output_data.csv';
+    // const folderName = 'testmodel';
+
+    // const saveUrl = `/api/terminal/container/${testModel.id}/ops/save?path=/home/clouseau/${folderName}/${fileName}`;
+
+
+  });
 
   xit('Can start edit/re-publish Model process');
 });

@@ -56,11 +56,9 @@ const mockData = {
 
 
 
-describe('FullScreenTemplater', () => {
+describe('FullScreenTemplater: config', () => {
 
   const testModel = genBaseModel();
-
-  console.log('testmodel id:', testModel.id);
 
   beforeEach(() => {
 
@@ -77,7 +75,6 @@ describe('FullScreenTemplater', () => {
     cy.request('post', '/api/dojo/dojo/directive', directive)
       .its('body').should('include', testModel.id);
 
-    cy.intercept('POST', `/api/dojo/dojo/config/`).as('CreatingConfig');
   });
 
   it('With templater open, annotating a config stores to system correctly', () => {
@@ -135,8 +132,9 @@ describe('FullScreenTemplater', () => {
     cy.findByRole('button', {name: /save/i})
       .click();
 
-    // TODO wait on the config-POST-save intercepted instead
-    cy.wait(2000);
+    cy.intercept('POST', `/api/dojo/dojo/config/`).as('CreatingConfig');
+    // cy.wait('@CreatingConfig');
+    cy.wait(1000);
 
     cy.request(`/api/dojo/dojo/config/${testModel.id}`)
       .its('body').should((response) => {
