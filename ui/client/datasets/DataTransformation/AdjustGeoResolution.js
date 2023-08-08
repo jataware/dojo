@@ -22,15 +22,17 @@ import { areLatLngAnnotated, generateProcessGeoResArgs } from './dataTransformat
 import { ExternalLink } from '../../components/Links';
 
 const aggregationFunctions = [
-  'CONSERVATIVE',
-  'SUM',
-  'MINIMUM',
-  'MAXIMUM',
-  'MEDIAN',
-  'AVERAGE',
-  'BILINEAR',
-  'BICUBIC',
-  'NEAREST_NEIGHBOR',
+  'count',
+  'size',
+  'sum',
+  'mean',
+  'std',
+  'var',
+  'sem',
+  'min',
+  'max',
+  'first',
+  'last',
 ];
 
 export default withStyles((theme) => ({

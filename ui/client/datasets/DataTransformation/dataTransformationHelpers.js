@@ -38,7 +38,7 @@ export const generateProcessGeoResArgs = (
   const args = {
     datetime_column: [annotations?.annotations.date[0].name],
     geo_columns: geoColumns,
-    scale_multi: newMapResolution,
+    scale_multi: newMapResolution / oldMapResolution,
     aggregation_function_list: [aggregation],
     scale: oldMapResolution,
   };

@@ -218,6 +218,7 @@ def regrid_geo(context, filename=None, **kwargs):
     time_column = kwargs.get("datetime_column")
     scale_multiplier = kwargs.get("scale_multi")
     scale = kwargs.get("scale", None)
+    aggregation_functions = kwargs.get("aggregation_function_list")
 
     if geo_column and time_column and scale_multiplier:
         regridded_df = elwood.regrid_dataframe_geo(
@@ -226,6 +227,7 @@ def regrid_geo(context, filename=None, **kwargs):
             time_column=time_column,
             scale_multi=scale_multiplier,
             scale=scale,
+            aggregation_functions=aggregation_functions,
         )
 
         json_dataframe_preview = regridded_df.head(100).to_json(default_handler=str)
