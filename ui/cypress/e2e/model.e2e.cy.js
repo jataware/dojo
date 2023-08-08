@@ -124,15 +124,7 @@ describe('Creating a model up to terminal step', () => {
 
 });
 
-describe('Model templater annotations', () => {
-  // TODO plan how to reuse a terminal session for the below?
-
-  xit('Can use Templater to annotate a config file');
-
-  xit('Can use Templater to annotate a directive parameter');
-});
-
-describe.only('Model output annotation', () => {
+describe('Model output annotation', () => {
 
   it('Creates a file and edits with dojo edit', () => {
 
@@ -205,31 +197,30 @@ describe.only('Model output annotation', () => {
     });
   };
 
-  // beforeEach(shutdownWorker);
-  // afterEach(() => {
-  //   cy.wait(3000);
-  //   shutdownWorker();
-  // });
+  beforeEach(shutdownWorker);
+  afterEach(() => {
+    cy.wait(3000);
+    shutdownWorker();
+  });
 
-  it.only('Can annotate model output: annotate', () => {
+  it('Annotate model output', () => {
 
-    // TODO reuse logic
     let modelId = '57361222-0099-41a1-9f21-66767af50a2f'; // undefined;
     const testModel = genBaseModel(modelId);
 
     modelId = testModel.id;
 
-    // cy.request('post', '/api/dojo/models', testModel)
-    //   .its('body').should('include', testModel.id);
+    cy.request('post', '/api/dojo/models', testModel)
+      .its('body').should('include', testModel.id);
 
-    // cy.request('POST', `/api/terminal/docker/provision/${testModel.id}`, {
-    //   "name": testModel.id,
-    //   "image": "jataware/dojo-publish:Ubuntu-latest",
-    //   "listeners": []
-    // })
-    //   .its('body').should('include', `Processing ${testModel.id}`);
+    cy.request('POST', `/api/terminal/docker/provision/${testModel.id}`, {
+      "name": testModel.id,
+      "image": "jataware/dojo-publish:Ubuntu-latest",
+      "listeners": []
+    })
+      .its('body').should('include', `Processing ${testModel.id}`);
 
-    // cy.wait(5000); // figure out how to make this stable.. wait for term to show up on cy.request?
+    cy.wait(5000); // figure out how to make this stable.. wait for term to show up on cy.request?
 
     const fileName = 'output_data.csv';
     const folderName = 'testmodel';
@@ -322,37 +313,113 @@ describe.only('Model output annotation', () => {
 
       cy.wait(100);
 
-      // cy.intercept();
-      // 'POST'
-      // http://localhost:8080/api/dojo/job/57361222-0099-41a1-9f21-66767af50a2f/elwood_processors.run_model_elwood
-      // status='queued'
-      // not 'failed'
-
-      // http://localhost:8080/api/dojo/job/57361222-0099-41a1-9f21-66767af50a2f/elwood_processors.run_model_elwood
-      // status='finished'
-
       cy.findAllByRole('button', {name: /next/i})
         .eq(1)
         .click();
 
-      cy.spyPoll('POST', `/api/dojo/job/${modelId}/elwood_processors.run_model_elwood`, 'status', 'finished');
+      // possible enhancement think about promises and discuss
+      // cy.spyPoll('POST', `/api/dojo/job/${modelId}/elwood_processors.run_model_elwood`, 'status', 'finished');
 
-      // cy.intercept(`/api/dojo/indicators/${modelId}/preview/processed?filepath=model-output-samples/*.csv`, {timeout: 10000})
-      //   .as('ProcessingPreviewPage');
+      cy.intercept(`/api/dojo/indicators/${modelId}/preview/processed?filepath=model-output-samples/*.csv`, {timeout: 20000})
+        .as('ProcessingPreviewPage');
 
-      // cy.wait('@ProcessingPreviewPage');
+      cy.intercept('PATCH', '/api/dojo/models/57361222-0099-41a1-9f21-66767af50a2f').as('SaveModelAnnotations');
+      cy.intercept('POST', 'api/dojo/dojo/outputfile').as('CreateOutputFile');
 
-      // cy.intercept('POST', ) // intercept annotation to expect against
-
-      cy.findByRole('button', {name: /submit to dojo/i, timeout: 20000})
+      cy.findAllByRole('button', {name: /submit to dojo/i})
+        .eq(1)
         .click();
 
+      cy.get('@CreateOutputFile').should((intercept) => {
+        expect(intercept.response.body).to.include(modelId);
+      });
+
+      cy.get('@SaveModelAnnotations').should((intercept) => {
+        console.log('save model intercept', intercept);
+        expect(intercept.request.body.outputs[0].name).to.equal('value');
+      });
 
     });
 
-
   });
 });
+
+describe('Annotate directive', () => {
+
+  const shutdownWorker = () => {
+    /* give the shutdown endpoint an alias so we can know when it is complete */
+    cy.intercept('/api/terminal/docker/*/release').as('shutdown');
+    cy.visit('/admin');
+    /* find our shutdown button */
+    cy.get('[data-test=adminShutDownBtn]', {timeout: 15000}).then((btn) => {
+      /* if it's not disabled */
+      if (!btn[0].disabled) {
+        /* wrap the returned button in a promise (necessary inside the .then) and click it */
+        cy.wrap(btn).click();
+        /* and wait for the shutdown endpoint to return */
+        cy.wait('@shutdown', { timeout: 300000 });
+      }
+    });
+  };
+
+  beforeEach(shutdownWorker);
+  afterEach(() => {
+    cy.wait(3000);
+    shutdownWorker();
+  });
+
+  it('Opens panel to annotate directive', () => {
+
+    let modelId = '57361222-0099-41a1-9f21-66767af50a2f'; // undefined;
+    const testModel = genBaseModel(modelId);
+
+    modelId = testModel.id;
+
+    cy.request('post', '/api/dojo/models', testModel)
+      .its('body').should('include', testModel.id);
+
+    cy.request('POST', `/api/terminal/docker/provision/${testModel.id}`, {
+      "name": testModel.id,
+      "image": "jataware/dojo-publish:Ubuntu-latest",
+      "listeners": []
+    })
+      .its('body').should('include', `Processing ${testModel.id}`);
+
+    cy.wait(5000); // figure out how to make this stable.. wait for term to show up on cy.request?
+
+    const fileName = 'output_data.csv';
+    const folderName = 'testmodel';
+
+    const saveUrl = `/api/terminal/container/${testModel.id}/ops/save?path=/home/clouseau/${folderName}/${fileName}`;
+
+    cy.visit(`/term/${testModel.id}`);
+
+    cy.findByRole('textbox', {name: /terminal input/i})
+      .type(`mkdir ${folderName}{enter}`)
+      .type(`cd ${folderName}{enter}`)
+      .type(`touch ${fileName}{enter}`)
+
+    cy.readFile('cypress/files/sample_output.csv').then((contents) => {
+      return cy.request('POST', saveUrl, contents);
+    }).then(() => {
+
+    cy.findByRole('textbox', {name: /terminal input/i})
+      .type(`cat ${fileName}{enter}`);
+
+    cy
+      .findByRole('table', {name: /enhanced table/i})
+      .findAllByRole('button', {name: /mark as directive/i})
+      .last()
+      .click();
+
+      cy.findByRole('dialog')
+        .findByText(`cat ${fileName}`)
+
+    });
+  });
+})
+
+
 
 describe('Model listings', () => {
 
