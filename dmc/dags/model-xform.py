@@ -2,6 +2,8 @@ from datetime import timedelta, datetime
 import requests
 import json
 import os
+import boto3
+
 from airflow import DAG
 # from airflow.providers.docker.operators.docker import DockerOperator
 from operators.dojo_operators import DojoDockerOperator
@@ -25,6 +27,9 @@ causemos_pwd = os.getenv('CAUSEMOS_PWD')
 causemos_base_url = os.getenv('CAUSEMOS_BASE_URL')
 active_runs = int(os.getenv('DAG_MAX_ACTIVE_RUNS'))
 concurrency = int(os.getenv('DAG_CONCURRENCY'))
+
+STORAGE_HOST = os.getenv('STORAGE_HOST')
+
 
 ############################
 ####### Generate DAG #######
@@ -97,6 +102,14 @@ def accessoryNodeTask(**kwargs):
         If anything is in /results/{run.id}/accessories, push it to S3.
     """
     s3 = S3Hook(aws_conn_id="aws_default")
+    s3.conn = boto3.client(
+        "s3",
+        endpoint_url=STORAGE_HOST,
+        config=boto3.session.Config(signature_version="s3v4"),
+        verify=False,
+    )
+
+
     accessories_path = f"/results/{kwargs['dag_run'].conf.get('run_id')}/accessories"
     logger.info(f'accessories_path: {accessories_path}')
 
@@ -147,6 +160,13 @@ def accessoryNodeTask(**kwargs):
 
 def s3copy(**kwargs):
     s3 = S3Hook(aws_conn_id="aws_default")
+    s3.conn = boto3.client(
+        "s3",
+        endpoint_url=STORAGE_HOST,
+        config=boto3.session.Config(signature_version="s3v4"),
+        verify=False,
+    )
+
     results_path = f"/results/{kwargs['dag_run'].conf.get('run_id')}"
 
     for fpath in glob.glob(f'{results_path}/*.parquet.gzip'):
@@ -213,11 +233,11 @@ def RunExit(**kwargs):
     caption_lookup = {}
     for accessory in accessories:
         caption_lookup[accessory['id']] = accessory.get('caption','')
-    
+
     print(f"Accessories: {accessories}")
     print(f"Caption Lookup: {caption_lookup}")
     accessories_paths = set([i.get('path').split('/')[-1] for i in accessories])
-        
+
     # Get any accessories and append their S3 URLS to run['pre_gen_output_paths']
     accessories_array = []
     for fpath in glob.glob(f'/results/{run_id}/accessories/*'):
@@ -243,7 +263,7 @@ def RunExit(**kwargs):
 
     # Update attributes.executed_at.
     run['attributes']['executed_at'] = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-    
+
     # Create the response, which is the response from the dojo api/runs PUT.
     response = requests.put(f"{dojo_url}/runs", json=run)
     print(response.text)
@@ -255,12 +275,12 @@ def RunExit(**kwargs):
     else:
         print(f'Notifying Uncharted at {causemos_base_url}/{run_id}/post-process')
         response = requests.post(f'{causemos_base_url}/{run_id}/post-process',
-                                headers={'Content-Type': 'application/json'}, 
-                                json=run, 
+                                headers={'Content-Type': 'application/json'},
+                                json=run,
                                 auth=(causemos_user, causemos_pwd))
         print(f"Response from Uncharted: {response.text}")
         return
-    
+
 
 def post_failed_to_dojo(**kwargs):
 
@@ -309,7 +329,7 @@ acccessory_node = PythonOperator(task_id='accessory-task',
                              trigger_rule='all_success',
                              python_callable=accessoryNodeTask,
                              provide_context=True,
-                             dag=dag)                             
+                             dag=dag)
 
 s3_node = PythonOperator(task_id='s3push-task',
                              trigger_rule='all_success',

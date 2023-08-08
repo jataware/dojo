@@ -38,6 +38,7 @@ services:
     configs:
       - source: aws_creds
         target: /root/.aws/credentials
+
     depends_on:
       redis:
         condition: service_healthy
