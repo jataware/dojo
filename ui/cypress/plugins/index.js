@@ -80,6 +80,9 @@ const esIndexMappings = {
 };
 
 
+/**
+ * Deletes related entities to model in order to clean up seeds after real tests.
+ **/
 function deleteByModelQuery(modelId, type) {
 
   if (!modelId) {
