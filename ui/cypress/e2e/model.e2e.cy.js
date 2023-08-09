@@ -206,7 +206,11 @@ describe('Model output annotation', () => {
 
       const saveUrl = `/api/terminal/container/${testModel.id}/ops/save?path=/home/clouseau/${folderName}/${fileName}`;
 
+      cy.wait(3000);
+
       cy.visit(`/term/${testModel.id}`);
+
+      cy.reload();
 
       cy.findByRole('textbox', {name: /terminal input/i})
         .type(`mkdir ${folderName}{enter}`)
