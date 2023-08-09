@@ -72,9 +72,37 @@ async function sendFileToEndpoint(filePath, endpointUrl, newFilename) {
 const esIndexMappings = {
   dataset: 'indicators',
   model: 'models',
-  annotation: 'annotations'
+  annotation: 'annotations',
+  directive: 'directives',
+  outputfile: 'outputfiles',
+  accessory: 'accessories',
+  config: 'configs'
 };
 
+
+function deleteByModelQuery(modelId, type) {
+
+  if (!modelId) {
+    throw new Error('Can\'t call plugins/index:deleteByModelQuery() without a modelId');
+  }
+
+  const index = esIndexMappings[type];
+
+  debug(`Called deleteByModelQuery with modelid=${modelId} and type=${type}`);
+
+  const promise = es.deleteByQuery({
+    index,
+    max_docs: 4,
+    body: {
+      "query": {
+        "term": {
+          "model_id": modelId
+        }
+      }
+    }
+  });
+  return promise;
+}
 
 /**
  *
@@ -129,7 +157,6 @@ module.exports = (on, config) => {
       return undefined;
     },
 
-
     'seed:clean': ({type, id, name}) => {
 
       debug(`Cleaning ${type} seeds, id: ${id}, name: ${name}`);
@@ -137,6 +164,15 @@ module.exports = (on, config) => {
       if(!type) {
         debug('Should have passed in a valid type. Throwing the towel.');
         throw new Error(`No valid type passed in to seed:clean. Received: ${type}`);
+      }
+
+      if (type === 'model') {
+        // Need to delete multiple items before cleaning
+        debug('Clearing related model seeds.');
+        deleteByModelQuery(id, 'accessory');
+        deleteByModelQuery(id, 'directive');
+        deleteByModelQuery(id, 'outputfile');
+        deleteByModelQuery(id, 'config');
       }
 
       if (id) {
