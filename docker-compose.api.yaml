@@ -13,7 +13,8 @@ x-shared-env: &x-shared-environment
   UAZ_HITS: 10
   ELASTICSEARCH_URL: http://elastic.${INTERNAL_DOMAIN}:9200
   REDIS_HOST: redis.${INTERNAL_DOMAIN}
-
+  PLUGINS: '{"causemos":"src.plugins.causemos.CausemosPlugin","logger":"src.plugins.logging.LoggingPlugin","sync":"src.plugins.sync.SyncPlugin"}'
+  CAUSEMOS_IND_URL: ${CAUSEMOS_IND_URL}
 
 x-app-env: &x-app-environment
   DOCKERHUB_URL: https://hub.docker.com/v2

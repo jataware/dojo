@@ -2,6 +2,9 @@ FROM node:18-buster as build
 USER node
 COPY --chown=node . /ui/
 
+
+ENV CAUSEMOS_UI_URL=https://causemos.uncharted.software
+
 WORKDIR /ui
 RUN npm install
 RUN npm run build

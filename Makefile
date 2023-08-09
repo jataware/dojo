@@ -158,8 +158,19 @@ $(subst $(space),$(comma),$(ALL_PROFILES))
 endef
 
 
+.PHONY: docker-hub-env
+docker-hub-env: check-DOCKERHUB_USER check-DOCKERHUB_USER
+	@echo "Regenrating .env file"; \
+	$(file >.env,$(file <env.template)) \
+	$(file >>.env,$(newline)) \
+	$(file >>.env,DOCKERHUB_AUTH=$(shell echo '{"username":"'$${DOCKERHUB_USER}'","password":"'$${DOCKERHUB_PWD}'","email":"'$${DOCKERHUB_EMAIL}'"}' | base64 | tr -d '\n')) \
+	$(file >>.env,DOCKERHUB_USER=$(shell echo $${DOCKERHUB_USER})) \
+	$(file >>.env,DOCKERHUB_PWD=$(shell echo $${DOCKERHUB_PWD}))
+
+.env: docker-hub-env
+
 .PHONY: up.a
-up.a:
+up.a:| .env
 	COMPOSE_PROFILES="$(all_profiles)" docker compose $(addprefix -f , $(DOCKER_COMPOSE_FILES)) up -d
 
 .PHONY: down.a

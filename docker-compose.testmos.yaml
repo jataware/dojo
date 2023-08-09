@@ -7,6 +7,7 @@ services:
       - testmos
     build:
       context: ./testmos
+    hostname: testmos.do.jo
     image: testmos:dev
     networks:
       - dojo
