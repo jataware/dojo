@@ -25,7 +25,12 @@ def clip_geo(context, filename=None, **kwargs):
     shape_list = kwargs.get("map_shapes", [])
     geo_columns = kwargs.get("geo_columns", {})
 
-    if shape_list and geo_columns and 'lat_column' in geo_columns and 'lon_column' in geo_columns:
+    if (
+        shape_list
+        and geo_columns
+        and "lat_column" in geo_columns
+        and "lon_column" in geo_columns
+    ):
         clipped_df = elwood.clip_geo(
             dataframe=original_dataframe,
             geo_columns=geo_columns,
@@ -211,11 +216,13 @@ def regrid_geo(context, filename=None, **kwargs):
     # Setup
     file, filename, rawfile_path = job_setup(context=context, filename=filename)
     original_dataframe = pd.read_csv(file, delimiter=",")
+    print(f"starting frame: {original_dataframe}")
+    sys.stdout.flush()
     rows_pre_clip = len(original_dataframe.index)
 
     # Main Call
     geo_column = kwargs.get("geo_columns")
-    time_column = kwargs.get("datetime_column")
+    time_column = kwargs.get("datetime_column")[0]
     scale_multiplier = kwargs.get("scale_multi")
     scale = kwargs.get("scale", None)
     aggregation_functions = kwargs.get("aggregation_function_list")
@@ -280,7 +287,7 @@ def get_boundary_box(context, filename=None, **kwargs):
     # Main Call
     geo_columns = kwargs.get("geo_columns", {})
 
-    if geo_columns and 'lat_column' in geo_columns and 'lon_column' in geo_columns:
+    if geo_columns and "lat_column" in geo_columns and "lon_column" in geo_columns:
         boundary_dict = elwood.get_boundary_box(
             dataframe=original_dataframe,
             geo_columns=geo_columns,

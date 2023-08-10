@@ -40,7 +40,7 @@ export const generateProcessGeoResArgs = (
     geo_columns: geoColumns,
     scale_multi: newMapResolution / oldMapResolution,
     aggregation_function_list: [aggregation],
-    scale: oldMapResolution,
+    scale: null,
   };
   return args;
 };
