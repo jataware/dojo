@@ -53,3 +53,17 @@ When `make up` command is run, the Ubuntu image is pulled and loaded in to the i
 If you need a different base image loaded, you can load it with this command: `docker-compose exec docker docker pull jataware/dojo-publish:{base_image_tag_name}`
 
 Since the Docker service has a persistent volume, you should not need to rerun the command unless changes have been made to the image.
+
+
+
+#### Quick Start
+
+Run `make docker_build-all` to build all the `dev` tagged images locally.
+
+Make sure `DOCKERHUB_USER` and `DOCKERHUB_PWD` are defined in your local environment. If you do not have an account you can either create one or just use a dummy variable like `dev` but pushing images to dockerhub will fail.
+
+Run `$ make up.a` to build and bring online all services
+
+Run `$ make down.a` to stop all services or `$ make down.v` to stop and remove all volumes
+
+
