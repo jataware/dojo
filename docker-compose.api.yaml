@@ -5,8 +5,8 @@ x-shared-env: &x-shared-environment
   DATASET_STORAGE_BASE_URL: s3://${BUCKET}/datasets/
   DOCUMENT_STORAGE_BASE_URL: s3://${BUCKET}/documents/
   DMC_URL: airflow.${INTERNAL_DOMAIN}
-  DMC_USER: jataware
-  DMC_PASSWORD: jataware
+  DMC_USER: ${DMC_USER}
+  DMC_PASSWORD: ${DMC_PASSWORD}
   DMC_LOCAL_DIR: /data
   UAZ_URL: http://linking.cs.arizona.edu/v1
   UAZ_THRESHOLD: 0.6
@@ -15,6 +15,9 @@ x-shared-env: &x-shared-environment
   REDIS_HOST: redis.${INTERNAL_DOMAIN}
   PLUGINS: '{"causemos":"src.plugins.causemos.CausemosPlugin","logger":"src.plugins.logging.LoggingPlugin","sync":"src.plugins.sync.SyncPlugin"}'
   CAUSEMOS_IND_URL: ${CAUSEMOS_IND_URL}
+  CAUSEMOS_USER: ${CAUSEMOS_USER}
+  CAUSEMOS_PWD:  ${CAUSEMOS_PWD}
+
 
 x-app-env: &x-app-environment
   DOCKERHUB_URL: https://hub.docker.com/v2
