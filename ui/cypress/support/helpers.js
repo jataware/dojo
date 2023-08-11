@@ -71,16 +71,27 @@ export const shutdownWorker = () => {
 
 
 // NOTE use cy.wrap on tests
-export async function waitUrlToProcess(url, property, expectedValue) {
+export async function waitUrlToProcess(url, property, method='GET') {
 
-  let response = await p(cy.request('POST', url));
+  let response = await p(cy.request({
+    method,
+    url,
+    failOnStatusCode: false
+  }));
+
   let tries = 0;
 
-  while (get(response, property) !== expectedValue && tries < 5) {
-    console.log('url', url, property, 'did not yield', expectedValue)
-    cy.wait(1000);
+  while (!get(response, property) && tries < 5) {
     tries++;
-    response = await p(cy.request('POST', url));
+    console.log('url', url, property, 'did not finish', 'tries:', tries, '. Retrying.');
+    cy.wait(1000);
+
+    let response = await p(cy.request({
+      method,
+      url,
+      failOnStatusCode: false
+    }));
+
   }
 
   return response;

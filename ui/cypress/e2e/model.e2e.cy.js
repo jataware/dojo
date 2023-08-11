@@ -10,7 +10,7 @@ import get from 'lodash/get';
 import last from 'lodash/last';
 
 import { createModel, provisionModelTerminal, shutdownWorker,
-         provisionAndWaitReady, getModelRegisterUrls } from '../support/helpers';
+         provisionAndWaitReady, getModelRegisterUrls, waitUrlToProcess } from '../support/helpers';
 
 import p from 'cypress-promise'; // p == promisify
 
@@ -462,7 +462,7 @@ async function waitForAllUrlsToFinish(urls) {
 }
 
 
-describe.only('Model Summary Page', () => {
+describe('Model Summary Page', () => {
 
   let modelId = undefined;
 
@@ -510,39 +510,17 @@ describe.only('Model Summary Page', () => {
         cy.wrap(waitForAllUrlsToFinish(urls))
           .then(() => {
 
-            cy.request({
-              method: 'GET',
-              url: `/api/dojo/dojo/config/${modelId}`,
-              failOnStatusCode: false
-            }).then((response) => {
+            cy.wrap(waitUrlToProcess(`/api/dojo/dojo/config/${modelId}`, '[0]'))
+              .then(() => {
 
-              cy.findByRole('button', {name: /save and continue/i})
-                .click();
+                cy.findByRole('button', {name: /save and continue/i})
+                  .click();
 
-              cy.request({
-                method: 'GET',
-                url: `/api/dojo/dojo/outputfile/${modelId}`,
-                failOnStatusCode: false
-              }).then((res) => {
-                cy.reload();
-              }).then(() => {
                 cy.findByText(/Uploading Model to Docker.+/i);
-
-                cy.wait(5000);
-
-                cy.reload();
-
                 cy.findByRole('heading', {name: /parameters\.json/i})
-
                 cy.findAllByRole('heading', {name: /accessory\.png/i});
-
-                cy.wait(5000);
-
-                cy.reload();
-
                 cy.findAllByRole('heading', {name: /Test-Output-Name/i});
               });
-            });
 
           });
       });

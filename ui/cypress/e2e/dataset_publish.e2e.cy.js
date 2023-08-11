@@ -1,4 +1,6 @@
 
+import p from 'cypress-promise'; // p == promisify
+
 import {
   genDataset,
   dataset_acled_annotations,
@@ -59,9 +61,39 @@ const genTransformPairs = (dataset_id) => {
 };
 
 
+
+export async function waitForElwood(taskName, datasetId) {
+
+  const params = {filename: "raw_data.xlsx"};
+
+  let elwoodStatus = await p(cy.request('POST', `/api/dojo/job/${datasetId}/elwood_processors.${taskName}`, params));
+
+  console.log('elwoodStatus', elwoodStatus);
+
+  while (!['finished', 'failed'].includes(elwoodStatus.body.status)) {
+    console.log('retrying..');
+
+    cy.wait(3000);
+
+    elwoodStatus = await p(cy.request('POST', `/api/dojo/job/${datasetId}/elwood_processors.${taskName}`, params));
+  }
+
+  return elwoodStatus;
+}
+
+
 describe('Dataset Register: Publish E2E', () => {
 
-  // Stub transform fetch jobs for this one, as we only care about run_elwood results:
+  let dataset_id;
+
+  afterEach(() => {
+    console.log('Cleaning seeded artifacts.');
+    cy.task('seed:clean', {type: 'dataset', id: dataset_id});
+    cy.task('seed:clean', {type: 'annotation', id: dataset_id});
+
+    // Call seed:clean-files for minio files? TBD.
+  });
+
   it('From Annotate > skip transform > Process/publish modifies the dataset correctly', () => {
 
     const dataset = genDataset('acled');
@@ -70,14 +102,13 @@ describe('Dataset Register: Publish E2E', () => {
       .then(({body}) => {
 
         const createdDataset = body
-        const dataset_id = createdDataset.id;
+        dataset_id = createdDataset.id;
         const transformPairs = genTransformPairs(dataset_id);
 
         cy.request('POST', `/api/dojo/indicators/${dataset_id}/annotations`, dataset_acled_annotations);
-
         cy.task('upload', {type: 'dataset', id: dataset_id, variant: 'acled'});
 
-        // stub/mock transform fetch jobs so that none are required
+        // Stub transform fetch jobs for this one, as we only care about run_elwood results
         transformPairs.forEach((testData) => {
           const [fetch_job, start_job] = gen_tranform_intercepts.apply(null, [dataset_id, ...testData]);
           cy.intercept(fetch_job[0], fetch_job[1]).as(fetch_job[2]);
@@ -90,41 +121,54 @@ describe('Dataset Register: Publish E2E', () => {
           findByRole('button', {name: /Next/i})
           .click();
 
-        // Wait, then click submit/publish.
-        // 10 seconds for Ubuntu, up to 2 minutes for macos+docker
-        cy.
-        findAllByRole('button', {name: /Submit To Dojo/i, timeout: 130000})
-          .eq(1)
-          .click();
+        cy.wait(3000);
 
-        cy.wait(2000); // Allow time for the sync plugins to run.
+        cy.wrap(waitForElwood('run_elwood', dataset_id))
+          .then((elwoodResult) => {
 
-        // Finally, fetch final dataset and assert expected properties
-        cy.request(`/api/dojo/indicators/${dataset_id}`).as('FinalDataset');
+            console.log('run_elwood res:', elwoodResult);
 
-        cy
-          .get('@FinalDataset')
-          .then((response) => {
+            cy.wait(3000);
 
-            const { body } = response;
+            cy.wrap(waitForElwood('scale_features', dataset_id))
+              .then((scaleResult) => {
 
-            expect(body.id).to.equal(dataset_id);
-            expect(body.published).to.equal(true);
+                console.log('Scale res:', scaleResult);
 
-            expect(body.feature_names).to.have.length(2);
-            expect(body.outputs).to.have.length(1);
-            expect(body.qualifier_outputs).to.have.length.of.at.least(1);
-            expect(body.geography.country).to.have.length.of.at.least(1);
+                // Wait, then click submit/publish.
+                // 10 seconds for Ubuntu, up to 2 minutes for macos+docker
+                cy.
+                  findAllByRole('button', {name: /Submit To Dojo/i, timeout: 10000})
+                  .eq(1)
+                  .click();
 
-            expect(body.period).to.have.property('gte');
-            expect(body.period).to.have.property('lte');
+                cy.wait(2000); // Allow time for the sync plugins to run.
 
-            console.log('Cleaning seeded artifacts.');
-            cy.task('seed:clean', {type: 'dataset', id: dataset_id});
-            cy.task('seed:clean', {type: 'annotation', id: dataset_id});
+                // Finally, fetch final dataset and assert expected properties
+                cy.request(`/api/dojo/indicators/${dataset_id}`).as('FinalDataset');
 
-            // Call seed:clean-files for minio files? TBD.
+                cy
+                  .get('@FinalDataset')
+                  .then((response) => {
+
+                    const { body } = response;
+
+                    expect(body.id).to.equal(dataset_id);
+                    expect(body.published).to.equal(true);
+
+                    expect(body.feature_names).to.have.length(2);
+                    expect(body.outputs).to.have.length(1);
+                    expect(body.qualifier_outputs).to.have.length.of.at.least(1);
+                    expect(body.geography.country).to.have.length.of.at.least(1);
+
+                    expect(body.period).to.have.property('gte');
+                    expect(body.period).to.have.property('lte');
+                  });
+
+              });
+
           });
+
       });
 
   });
