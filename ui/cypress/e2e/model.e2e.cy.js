@@ -297,7 +297,7 @@ describe('Model output annotation', () => {
           .eq(1)
           .click();
 
-        cy.intercept(`/api/dojo/indicators/${modelId}/preview/processed?filepath=model-output-samples/*.csv`, {timeout: 55000})
+        cy.intercept(`/api/dojo/indicators/${modelId}/preview/processed?filepath=model-output-samples/*.csv`, {timeout: 120000})
           .as('ProcessingPreviewPage');
 
         cy.intercept('PATCH', `/api/dojo/models/${modelId}`).as('SaveModelAnnotations');
@@ -364,8 +364,10 @@ describe('Model Annotate directive', () => {
           .last()
           .click();
 
+        cy.wait(1000);
+
         cy.findByRole('dialog')
-          .findByText(`cat ${fileName}`)
+          .findByText(`cat ${fileName}`);
 
       });
 

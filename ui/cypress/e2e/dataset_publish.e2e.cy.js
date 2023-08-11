@@ -61,7 +61,6 @@ const genTransformPairs = (dataset_id) => {
 };
 
 
-
 export async function waitForElwood(taskName, datasetId) {
 
   const params = {filename: "raw_data.xlsx"};
@@ -71,7 +70,7 @@ export async function waitForElwood(taskName, datasetId) {
   console.log('elwoodStatus', elwoodStatus);
 
   while (!['finished', 'failed'].includes(elwoodStatus.body.status)) {
-    console.log('retrying..');
+    console.log('retrying..', taskName, elwoodStatus.body.status);
 
     cy.wait(3000);
 
@@ -101,7 +100,7 @@ describe('Dataset Register: Publish E2E', () => {
     cy.request('POST', '/api/dojo/indicators', dataset)
       .then(({body}) => {
 
-        const createdDataset = body
+        const createdDataset = body;
         dataset_id = createdDataset.id;
         const transformPairs = genTransformPairs(dataset_id);
 
