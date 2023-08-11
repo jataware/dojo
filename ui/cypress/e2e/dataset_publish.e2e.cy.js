@@ -80,7 +80,7 @@ describe('Dataset Register: Publish E2E', () => {
     cy.request('POST', '/api/dojo/indicators', dataset)
       .then(({body}) => {
 
-        const createdDataset = body
+        const createdDataset = body;
         dataset_id = createdDataset.id;
         const transformPairs = genTransformPairs(dataset_id);
 
