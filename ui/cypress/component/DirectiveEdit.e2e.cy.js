@@ -33,7 +33,7 @@ const mockData = {
   // "md5_hash": "61da491d3e89d79c5f3fe0e438ecd4b9"
 };
 
-describe.only('FullScreenTemplater: directive', () => {
+describe('FullScreenTemplater: directive', () => {
 
   const testModel = genBaseModel();
 

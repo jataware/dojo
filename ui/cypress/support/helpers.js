@@ -65,12 +65,32 @@ export const shutdownWorker = () => {
         const modelId = lockResponse.body.locks[0].modelId;
         return cy.request('DELETE', `/api/terminal/docker/${modelId}/release`);
       }
-      return Promise.resolve(true);
+      return Cypress.Promise.resolve(true);
     });
 };
 
+
+// NOTE use cy.wrap on tests
+export async function waitUrlToProcess(url, property, expectedValue) {
+
+  let response = await p(cy.request('POST', url));
+  let tries = 0;
+
+  while (get(response, property) !== expectedValue && tries < 5) {
+    console.log('url', url, property, 'did not yield', expectedValue)
+    cy.wait(1000);
+    tries++;
+    response = await p(cy.request('POST', url));
+  }
+
+  return response;
+}
+
+
+
 /**
- *
+ * NOTE Returns a regular promise, not a "cypress one".
+        Use cy.wrap(this_result) to convert to cypress promise on test.
  **/
 export async function provisionAndWaitReady(existingModelId) {
   console.log('provisionAndWaitReady existingModelId', existingModelId);
@@ -105,6 +125,24 @@ export async function provisionAndWaitReady(existingModelId) {
   return provisionState;
 }
 
+
+
+/**
+ *
+ **/
+export async function waitForElwood(taskName, datasetId) {
+
+  const params = {filename: "raw_data.xlsx"};
+
+  let elwoodStatus;
+
+  for (let i = 0; i < 3; i++) {
+    elwoodStatus = await p(cy.request('POST', `/api/dojo/job/${datasetId}/elwood_processors.${taskName}`, params));
+    console.log('elwoodStatus', elwoodStatus);
+  }
+
+  return elwoodStatus;
+}
 
 /**
  *

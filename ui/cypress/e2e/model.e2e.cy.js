@@ -9,43 +9,34 @@ import isEmpty from 'lodash/isEmpty';
 import get from 'lodash/get';
 import last from 'lodash/last';
 
-import { createModel, provisionModelTerminal } from '../support/helpers';
+import { createModel, provisionModelTerminal, shutdownWorker,
+         provisionAndWaitReady, getModelRegisterUrls } from '../support/helpers';
 
+import p from 'cypress-promise'; // p == promisify
 
-const shutdownWorker = () => {
-  return cy.request('GET', '/api/terminal/docker/locks')
-    .then((lockResponse) => {
+/**
+ *
+ **/
+function cleanModel(modelId) {
 
-      console.log('shutdownWorker lock response', lockResponse);
+  cy.visit('/admin');
 
-      if (get(lockResponse, 'body.locks[0].modelId')) {
-
-        const modelId = lockResponse.body.locks[0].modelId;
-
-        console.log('locks present, clearing...', modelId);
-
-        return cy.request('DELETE', `/api/terminal/docker/${modelId}/release`);
-      }
-    });
-};
+  return shutdownWorker().then(() => {
+    console.log('Done clearing worker, clearing seeds.');
+    cy.task('seed:clean', {type: 'model', id: modelId});
+  });
+}
 
 
 describe('Model Metadata: Creating a Model up to terminal step', () => {
 
-  beforeEach(() => {
-    shutdownWorker();
-  });
+  beforeEach(shutdownWorker);
 
   afterEach(() => {
     cy.location()
       .then((loc) => {
         const modelId = last(loc.pathname.split('/'));
-
-        shutdownWorker().then(() => {
-          console.log('Shut down. cleaning seeds for model:', modelId);
-          cy.task('seed:clean', {type: 'model', id: modelId});
-        });
-
+        cleanModel(modelId);
       });
   });
 
@@ -136,9 +127,18 @@ describe('Model output annotation', () => {
 
   let modelId;
 
-  it('Creates a file and edits with dojo edit', () => {
+  afterEach(() => {
 
-    shutdownWorker();
+    // Move out of terminal since it'll shut down.
+    cy.visit('/admin');
+
+    shutdownWorker().then(() => {
+      console.log('Done clearing worker');
+      cy.task('seed:clean', {type: 'model', id: modelId});
+    });
+  });
+
+  it('Creates a file and edits with dojo edit', () => {
 
     modelId = undefined;
 
@@ -146,8 +146,7 @@ describe('Model output annotation', () => {
 
     modelId = testModel.id;
 
-    provisionModelTerminal(modelId).then(() => {
-      cy.wait(5000);
+    cy.wrap(provisionAndWaitReady(modelId)).then(() => {
 
       cy.visit(`/term/${testModel.id}`);
 
@@ -170,7 +169,7 @@ describe('Model output annotation', () => {
         .type('latitude,longitude,date,value,color_hue{enter}');
 
       cy.get('@EditingText')
-        .type('60.4985255,-10.615118,1986-07-31,0.1237884593924997,#a04620{enter}28.5827915,-103.818624,2019-09-25,0.8583255955703992,#c61352{enter}28.5827915,-103.818624,2019-09-25,0.8583255955703992,#c61352{enter}-73.3958715,141.932549,1972-05-30,1.137030617734822,#f77bad{enter}62.866798,-57.143830,1993-07-11,1.917793049098565,#ea6b81{enter}', {force: true} );
+        .type('60.4985255,-10.615118,1986-07-31,0.1237884593924997,#a04620{enter}28.5827915,-103.818624,2019-09-25,0.8583255955703992,#c61352{enter}', {force: true} );
 
       const saveUrl = `/api/terminal/container/${modelId}/ops/save?path=/home/clouseau/${folderName}/${fileName}`;
 
@@ -179,7 +178,7 @@ describe('Model output annotation', () => {
       cy.findByRole('button', {name: /save/i})
         .click();
 
-      return cy.get('@SavingNewFile')
+      cy.get('@SavingNewFile')
         .then(({request, response}) => {
           expect(request.query.path).to.contain(fileName);
           expect(request.body).to.contain('latitude');
@@ -191,22 +190,20 @@ describe('Model output annotation', () => {
 
   it('Annotate model output', () => {
 
-    shutdownWorker();
-
     modelId = undefined;
 
     const testModel = createModel(modelId);
 
     modelId = testModel.id;
 
-    provisionModelTerminal(modelId).then(() => {
+    cy.wrap(provisionAndWaitReady(modelId)).then(() => {
 
       const fileName = 'output_data.csv';
       const folderName = 'testmodel';
 
       const saveUrl = `/api/terminal/container/${testModel.id}/ops/save?path=/home/clouseau/${folderName}/${fileName}`;
 
-      cy.wait(3000);
+      cy.wait(2000);
 
       cy.visit(`/term/${testModel.id}`);
 
@@ -218,8 +215,8 @@ describe('Model output annotation', () => {
         .type(`touch ${fileName}{enter}`)
         .type('cd ..{enter}');
 
-
       cy.readFile('cypress/files/sample_output.csv').then((contents) => {
+
         cy
           .intercept('POST', `/api/dojo/job/${modelId}/tasks.model_output_analysis`)
           .as('FilePreAnalysis');
@@ -238,7 +235,7 @@ describe('Model output annotation', () => {
 
         cy.findByRole('textbox', {name: /Domains/i}).type('Logic');
 
-        // NOTE Protects against current bug / race-condition (can click next until processed...)
+        // NOTE Protects against current Dojo App bug / race-condition (can click next until processed...)
         cy.wait('@FilePreAnalysis');
 
         cy.findAllByRole('button', {name: /Next/i}).click();
@@ -300,9 +297,6 @@ describe('Model output annotation', () => {
           .eq(1)
           .click();
 
-        // possible enhancement think about promises and discuss
-        // cy.spyPoll('POST', `/api/dojo/job/${modelId}/elwood_processors.run_model_elwood`, 'status', 'finished');
-
         cy.intercept(`/api/dojo/indicators/${modelId}/preview/processed?filepath=model-output-samples/*.csv`, {timeout: 55000})
           .as('ProcessingPreviewPage');
 
@@ -327,17 +321,6 @@ describe('Model output annotation', () => {
 
   });
 
-  afterEach(() => {
-
-    // Move out of terminal since it'll shut down.
-    cy.visit('/admin');
-
-    shutdownWorker().then(() => {
-      console.log('Done clearing worker');
-      cy.task('seed:clean', {type: 'model', id: modelId});
-    });
-  });
-
 });
 
 
@@ -346,10 +329,7 @@ describe('Model Annotate directive', () => {
   let modelId;
 
   afterEach(() => {
-    shutdownWorker().then(() => {
-      console.log('Shut down. cleaning seeds');
-      cy.task('seed:clean', {type: 'model', id: modelId});
-    })
+    cleanModel(modelId);
   });
 
   it('Opens panel to annotate directive', () => {
@@ -358,19 +338,7 @@ describe('Model Annotate directive', () => {
 
     modelId = testModel.id;
 
-    cy.request('GET', '/api/terminal/docker/locks').then((response) => {
-      let promise;
-      if (get(response, 'body.locks[0].modelId')) {
-        if (get(response, 'body.locks[0].modelId') !== modelId) {
-          promise = shutdownWorker().then(() => {
-            return provisionModelTerminal(modelId);
-          });
-        }
-      } else {
-        promise = provisionModelTerminal(modelId);
-      }
-      return promise;
-    }).then(() => {
+    cy.wrap(provisionAndWaitReady(modelId)).then(() => {
 
       const fileName = 'output_data.csv';
       const folderName = 'testmodel';
@@ -405,6 +373,7 @@ describe('Model Annotate directive', () => {
 
   });
 });
+
 
 describe('Model listings', () => {
 
@@ -478,9 +447,28 @@ describe('Model metadata form state navigation', () => {
   });
 });
 
-describe('Model Summary Page', () => {
+
+async function waitForAllUrlsToFinish(urls) {
+  const METHOD = 0, URL = 1, BODY = 2;
+
+  const finishedRequests = urls.map(async (item) => {
+    const res = await p(cy.request(item[METHOD], item[URL], item[BODY]));
+    return res;
+  });
+
+  console.log('finishedRequests', finishedRequests);
+
+  return finishedRequests;
+}
+
+
+describe.only('Model Summary Page', () => {
 
   let modelId = undefined;
+
+  afterEach(() => {
+    cleanModel(modelId);
+  });
 
   it('All required Model properties are displayed on page', () => {
 
@@ -491,23 +479,7 @@ describe('Model Summary Page', () => {
 
     modelId = testModel.id;
 
-    cy
-      .request('GET', '/api/terminal/docker/locks')
-      .then((response) => {
-
-        let promise;
-        if (get(response, 'body.locks[0].modelId')) {
-          if (get(response, 'body.locks[0].modelId') !== modelId) {
-            promise = shutdownWorker().then(() => {
-              return provisionModelTerminal(modelId);
-            });
-          }
-        } else {
-          promise = provisionModelTerminal(modelId);
-        }
-
-        return promise;
-      })
+    cy.wrap(provisionAndWaitReady(modelId))
       .then(() => {
         const fileName = 'output_data.csv';
         const folderName = 'testmodel';
@@ -517,8 +489,6 @@ describe('Model Summary Page', () => {
         const saveUrl = `/api/terminal/container/${testModel.id}/ops/save?path=/home/clouseau/${folderName}/${fileName}`;
 
         cy.visit(`/term/${testModel.id}`);
-
-        cy.wait(10000); // TODO
 
         cy.reload();
 
@@ -535,427 +505,48 @@ describe('Model Summary Page', () => {
           return cy.request('POST', saveUrl, contents);
         });
 
-        const urls = [
+        const urls = getModelRegisterUrls(modelId, {homeDir, user, fileName, folderName, saveUrl})
 
-          ['POST',
-           '/api/dojo/terminal/file',
-           {
-             "model_id": modelId,
-             "file_path": `${homeDir}/${folderName}/${fileName}`,
-             "request_path": `/container/${modelId}/ops/cat?path=%2Fhome%2Fclouseau%2F${folderName}%2F${fileName}`
-           }],
-
-          ['POST',
-           `/api/dojo/job/${modelId}/tasks.model_output_analysis`,
-           {
-             "model_id": modelId,
-             "fileurl": `/container/${modelId}/ops/cat?path=%2Fhome%2Fclouseau%2F${folderName}%2F${fileName}`,
-             "filepath": `/home/clouseau/${folderName}/${fileName}`,
-             "synchronous": true,
-             "context": {}
-           }],
-          ['POST',
-           `/api/dojo/job/${modelId}/file_processors.model_output_preview`,
-           {
-             "context": {
-               "uuid": modelId,
-               "dataset": {
-                 "id": modelId,
-                 "name": "TestSeedModel",
-                 "family_name": null,
-                 "description": "fefe",
-                 "deprecated": false,
-                 "published": false,
-                 "domains": [
-                   "Physics"
-                 ],
-                 "maintainer": {
-                   "email": "",
-                   "name": "",
-                   "website": "",
-                   "organization": ""
-                 },
-                 "data_sensitivity": null,
-                 "data_quality": null,
-                 "data_paths": [],
-                 "outputs": [],
-                 "qualifier_outputs": [],
-                 "tags": [],
-                 "fileData": {
-                   "raw": {
-                     "uploaded": false,
-                     "url": null
-                   }
-                 },
-                 "temporal_resolution": "annual",
-                 "filepath": `/home/clouseau/${folderName}/${fileName}`,
-                 "x-resolution": "",
-                 "y-resolution": ""
-               },
-               "annotations": {
-                 "annotations": {},
-                 "metadata": {
-                   "filename": `/home/clouseau/${folderName}/${fileName}`,
-                   "file_uuid": "f6d85da0-f768-4c4b-823b-cca6b0680df2",
-                   "fileurl": `/container/${modelId}/ops/cat?path=%2Fhome%2Fclouseau%2F${folderName}%2F${fileName}`,
-                   "filepath": `/home/clouseau/${folderName}/${fileName}`
-                 }
-               }
-             },
-             "filename": null,
-             "force_restart": true
-           }],
-
-          ['POST',
-           `/api/dojo/job/${modelId}/elwood_processors.run_model_elwood`,
-           {
-             "context": {
-               "uuid": modelId,
-               "dataset": {
-                 "id": modelId,
-                 "name": "Test-Output-Name",
-                 "family_name": null,
-                 "description": "fefe",
-                 "deprecated": false,
-                 "published": false,
-                 "domains": [
-                   "Physics"
-                 ],
-                 "maintainer": {
-                   "email": "",
-                   "name": "",
-                   "website": "",
-                   "organization": ""
-                 },
-                 "data_sensitivity": null,
-                 "data_quality": null,
-                 "data_paths": [],
-                 "outputs": [],
-                 "qualifier_outputs": [],
-                 "tags": [],
-                 "fileData": {
-                   "raw": {
-                     "uploaded": false,
-                     "url": null
-                   }
-                 },
-                 "temporal_resolution": "annual",
-                 "filepath": `/home/clouseau/${folderName}/${fileName}`,
-                 "x-resolution": "",
-                 "y-resolution": ""
-               },
-               "annotations": {
-                 "annotations": {
-                   "feature": [
-                     {
-                       "aliases": {},
-                       "type": "feature",
-                       "description": "val-desc",
-                       "display_name": "value",
-                       "qualifies": [],
-                       "qualifierrole": "breakdown",
-                       "feature_type": "float",
-                       "units_description": "",
-                       "units": "val",
-                       "name": "value"
-                     }
-                   ],
-                   "geo": [
-                     {
-                       "aliases": {},
-                       "type": "geo",
-                       "description": "desc-latlon",
-                       "display_name": "latitude",
-                       "qualifies": [],
-                       "qualifierrole": "breakdown",
-                       "geo_type": "longitude",
-                       "resolve_to_gadm": false,
-                       "coord_format": "lonlat",
-                       "name": "longitude",
-                       "primary_geo": true,
-                       "gadm_level": "country"
-                     },
-                     {
-                       "aliases": {},
-                       "type": "geo",
-                       "description": "desc-latlon",
-                       "display_name": "latitude",
-                       "qualifies": [],
-                       "qualifierrole": "breakdown",
-                       "geo_type": "latitude",
-                       "resolve_to_gadm": false,
-                       "coord_format": "lonlat",
-                       "name": "latitude",
-                       "primary_geo": true,
-                       "gadm_level": "country",
-                       "is_geo_pair": "longitude"
-                     }
-                   ],
-                   "date": [
-                     {
-                       "aliases": {},
-                       "type": "date",
-                       "description": "date-desc",
-                       "display_name": "date",
-                       "qualifies": [],
-                       "qualifierrole": "breakdown",
-                       "date_type": "date",
-                       "time_format": "%Y-%m-%d",
-                       "name": "date",
-                       "primary_date": true
-                     }
-                   ]
-                 },
-                 "metadata": {
-                   "filename": `/home/clouseau/${folderName}/${fileName}`,
-                   "file_uuid": "f6d85da0-f768-4c4b-823b-cca6b0680df2",
-                   "fileurl": `/container/${modelId}/ops/cat?path=%2Fhome%2F${user}%2F${folderName}%2F${fileName}`,
-                   "filepath": `${homeDir}/${folderName}/${fileName}`,
-                   "geotime_classify": {
-                     "date": {
-                       "category": "time",
-                       "subcategory": "date",
-                       "format": "%Y-%m-%d"
-                     },
-                     "latitude": {
-                       "category": "geo",
-                       "subcategory": "latitude",
-                       "format": null
-                     },
-                     "longitude": {
-                       "category": "geo",
-                       "subcategory": "longitude",
-                       "format": null
-                     }
-                   }
-                 }
-               }
-             },
-             "filename": `model-output-samples/${modelId}/f6d85da0-f768-4c4b-823b-cca6b0680df2.csv`,
-             "force_restart": true
-           }],
-
-          ['POST',
-           '/api/dojo/dojo/outputfile',
-           [
-             {
-               "id": "f6d85da0-f768-4c4b-823b-cca6b0680df2",
-               "model_id": modelId,
-               "name": "Test-Output-Name",
-               "output_directory": `${homeDir}/${folderName}`,
-               "path": fileName,
-               "file_type": "csv",
-               "transform": {
-                 "feature": [
-                   {
-                     "aliases": {},
-                     "type": "feature",
-                     "description": "val-desc",
-                     "display_name": "value",
-                     "qualifies": [],
-                     "qualifierrole": "breakdown",
-                     "feature_type": "float",
-                     "units_description": "",
-                     "units": "val",
-                     "name": "value"
-                   }
-                 ],
-                 "geo": [
-                   {
-                     "aliases": {},
-                     "type": "geo",
-                     "description": "desc-latlon",
-                     "display_name": "latitude",
-                     "qualifies": [],
-                     "qualifierrole": "breakdown",
-                     "geo_type": "longitude",
-                     "resolve_to_gadm": false,
-                     "coord_format": "lonlat",
-                     "name": "longitude",
-                     "primary_geo": true,
-                     "gadm_level": "country"
-                   },
-                   {
-                     "aliases": {},
-                     "type": "geo",
-                     "description": "desc-latlon",
-                     "display_name": "latitude",
-                     "qualifies": [],
-                     "qualifierrole": "breakdown",
-                     "geo_type": "latitude",
-                     "resolve_to_gadm": false,
-                     "coord_format": "lonlat",
-                     "name": "latitude",
-                     "primary_geo": true,
-                     "gadm_level": "country",
-                     "is_geo_pair": "longitude"
-                   }
-                 ],
-                 "date": [
-                   {
-                     "aliases": {},
-                     "type": "date",
-                     "description": "date-desc",
-                     "display_name": "date",
-                     "qualifies": [],
-                     "qualifierrole": "breakdown",
-                     "date_type": "date",
-                     "time_format": "%Y-%m-%d",
-                     "name": "date",
-                     "primary_date": true
-                   }
-                 ],
-                 "meta": {
-                   "ftype": "csv"
-                 }
-               },
-               "prev_id": null
-             }
-           ]],
-
-          ['POST',
-           '/api/dojo/dojo/config',
-           [
-             {
-               "model_config": {
-                 "model_id": modelId,
-                 "parameters": [
-                   {
-                     "start": 11,
-                     "end": 14,
-                     "text": "2.3",
-                     "annotation": {
-                       "name": "rain",
-                       "description": "rainf",
-                       "type": "float",
-                       "default_value": "2.3",
-                       "unit": "",
-                       "unit_description": "",
-                       "data_type": "numerical",
-                       "predefined": false,
-                       "options": [],
-                       "min": "",
-                       "max": ""
-                     }
-                   }
-                 ],
-                 "path": `${homeDir}/${folderName}/parameters.json`,
-                 "md5_hash": "958d3f92c05b1489d368d7ee74fe8bdd"
-               },
-               "file_content": "{rainfall: 2.3}"
-             }
-           ]],
-
-          ['POST',
-           "/api/dojo/dojo/accessories",
-           {
-             "model_id": modelId,
-             "path": `${homeDir}/${folderName}/accessory.png`,
-             "caption": "tag"
-           }],
-
-          ['POST',
-           '/api/dojo/dojo/directive',
-           {
-             "model_id": modelId,
-             "parameters": [
-               {
-                 "start": 14,
-                 "end": 25,
-                 "text": "output_data",
-                 "annotation": {
-                   "name": "const val",
-                   "description": "leave default val",
-                   "type": "str",
-                   "default_value": "output_data",
-                   "unit": "",
-                   "unit_description": "",
-                   "data_type": "nominal",
-                   "predefined": false,
-                   "options": [],
-                   "min": "",
-                   "max": ""
-                 }
-               }
-             ],
-             "command": `cat ${folderName}/${fileName}`,
-             "cwd": homeDir
-           }]
-
-        ];
-
-        const doneMocking = new Promise((resolve, reject) => {
-          const METHOD = 0, URL = 1, BODY = 2;
-          let succeeded = 0;
-          urls.forEach((item, index) => {
-            const name = `${item[URL]}-${index}`;
-            console.log('url seed name', name);
-
-            cy.request(item[METHOD], item[URL], item[BODY]).as(name);
-
-            cy.get(`@${name}`).then((response) => {
-              expect(response.status).to.match(/^2[0-1]+/);
-              succeeded++;
-
-              console.log('name', name, 'succeeded', succeeded);
-
-              if (succeeded === urls.length) {
-                resolve(true);
-              } else if (index === urls.length - 1) {
-                reject(false);
-              }
-            });
-          });
-        });
-
-        doneMocking.then(() => {
-
-          cy.request({
-            method: 'GET',
-            url: `/api/dojo/dojo/config/${modelId}`,
-            failOnStatusCode: false
-          }).then((response) => {
-
-            cy.findByRole('button', {name: /save and continue/i})
-              .click();
+        cy.wrap(waitForAllUrlsToFinish(urls))
+          .then(() => {
 
             cy.request({
               method: 'GET',
-              url: `/api/dojo/dojo/outputfile/${modelId}`,
+              url: `/api/dojo/dojo/config/${modelId}`,
               failOnStatusCode: false
-            }).then((res) => {
-              console.log('res for outputfile', res);
-              cy.reload();
-            }).then(() => {
-              cy.findByText(/Uploading Model to Docker.+/i);
+            }).then((response) => {
 
-              cy.wait(5000);
+              cy.findByRole('button', {name: /save and continue/i})
+                .click();
 
-              cy.reload();
+              cy.request({
+                method: 'GET',
+                url: `/api/dojo/dojo/outputfile/${modelId}`,
+                failOnStatusCode: false
+              }).then((res) => {
+                cy.reload();
+              }).then(() => {
+                cy.findByText(/Uploading Model to Docker.+/i);
 
-              cy.findByRole('heading', {name: /parameters\.json/i})
+                cy.wait(5000);
 
-              cy.findAllByRole('heading', {name: /accessory\.png/i});
+                cy.reload();
 
-              cy.wait(5000);
+                cy.findByRole('heading', {name: /parameters\.json/i})
 
-              cy.reload();
+                cy.findAllByRole('heading', {name: /accessory\.png/i});
 
-              cy.findAllByRole('heading', {name: /Test-Output-Name/i});
+                cy.wait(5000);
+
+                cy.reload();
+
+                cy.findAllByRole('heading', {name: /Test-Output-Name/i});
+              });
             });
-          });
 
-        });
+          });
       });
 
   });
 
-  afterEach(() => {
-    shutdownWorker().then(() => {
-      console.log('Shut down. cleaning seeds');
-      cy.task('seed:clean', {type: 'model', id: modelId});
-    });
-  });
-
- xit('Can start edit Model process');
 });
