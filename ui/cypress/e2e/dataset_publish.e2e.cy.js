@@ -62,84 +62,70 @@ const genTransformPairs = (dataset_id) => {
 describe('Dataset Register: Publish E2E', () => {
 
   // Stub transform fetch jobs for this one, as we only care about run_elwood results:
-  it('From Annotate > skip transform > Process/publish modifies the dataset correctly', async () => {
+  it('From Annotate > skip transform > Process/publish modifies the dataset correctly', () => {
 
     const dataset = genDataset('acled');
-    const { body: createdDataset } = await cy.request('POST', '/api/dojo/indicators', dataset);
-    const dataset_id = createdDataset.id;
-    const transformPairs = genTransformPairs(dataset_id);
 
-    cy.request('POST', `/api/dojo/indicators/${dataset_id}/annotations`, dataset_acled_annotations);
+    cy.request('POST', '/api/dojo/indicators', dataset)
+      .then(({body}) => {
 
-    await cy.task('upload', {type: 'dataset', id: dataset_id, variant: 'acled'});
+        const createdDataset = body
+        const dataset_id = createdDataset.id;
+        const transformPairs = genTransformPairs(dataset_id);
 
-    // stub/mock transform fetch jobs so that none are required
-    transformPairs.forEach((testData) => {
-      const [fetch_job, start_job] = gen_tranform_intercepts.apply(null, [dataset_id, ...testData]);
-      cy.intercept(fetch_job[0], fetch_job[1]).as(fetch_job[2]);
-      cy.intercept(start_job[0], start_job[1]).as(start_job[2]);
-    });
+        cy.request('POST', `/api/dojo/indicators/${dataset_id}/annotations`, dataset_acled_annotations);
 
-    cy.visit(`/datasets/register/transform/${dataset_id}?filename=raw_data.xlsx`);
+        cy.task('upload', {type: 'dataset', id: dataset_id, variant: 'acled'});
 
-    cy.
-      findByRole('button', {name: /Next/i})
-      .click();
+        // stub/mock transform fetch jobs so that none are required
+        transformPairs.forEach((testData) => {
+          const [fetch_job, start_job] = gen_tranform_intercepts.apply(null, [dataset_id, ...testData]);
+          cy.intercept(fetch_job[0], fetch_job[1]).as(fetch_job[2]);
+          cy.intercept(start_job[0], start_job[1]).as(start_job[2]);
+        });
 
-    // Wait; click submit/publish.
-    cy.
-      // 10 seconds for Ubuntu, up to 2 minutes for macos+docker
-      findAllByRole('button', {name: /Submit To Dojo/i, timeout: 130000})
-      .eq(1)
-      .click();
+        cy.visit(`/datasets/register/transform/${dataset_id}?filename=raw_data.xlsx`);
 
-    cy.wait(2000); // Allow time for the sync plugins to run...
+        cy.
+          findByRole('button', {name: /Next/i})
+          .click();
 
-    // Finally, fetch final dataset and assert expected properties
-    cy.request(`/api/dojo/indicators/${dataset_id}`).as('FinalDataset');
+        // Wait, then click submit/publish.
+        // 10 seconds for Ubuntu, up to 2 minutes for macos+docker
+        cy.
+        findAllByRole('button', {name: /Submit To Dojo/i, timeout: 130000})
+          .eq(1)
+          .click();
 
-    cy
-      .get('@FinalDataset')
-      .then((response) => {
+        cy.wait(2000); // Allow time for the sync plugins to run.
 
-        const { body } = response;
+        // Finally, fetch final dataset and assert expected properties
+        cy.request(`/api/dojo/indicators/${dataset_id}`).as('FinalDataset');
 
-        expect(body.id).to.equal(dataset_id);
-        expect(body.published).to.equal(true);
+        cy
+          .get('@FinalDataset')
+          .then((response) => {
 
-        expect(body.feature_names).to.have.length(2);
-        expect(body.outputs).to.have.length(1);
-        expect(body.qualifier_outputs).to.have.length.of.at.least(1);
-        expect(body.geography.country).to.have.length.of.at.least(1);
+            const { body } = response;
 
-        expect(body.period).to.have.property('gte');
-        expect(body.period).to.have.property('lte');
+            expect(body.id).to.equal(dataset_id);
+            expect(body.published).to.equal(true);
 
-        console.log('Cleaning seeded artifacts.');
-        cy.task('seed:clean', {type: 'dataset', id: dataset_id});
-        cy.task('seed:clean', {type: 'annotation', id: dataset_id});
+            expect(body.feature_names).to.have.length(2);
+            expect(body.outputs).to.have.length(1);
+            expect(body.qualifier_outputs).to.have.length.of.at.least(1);
+            expect(body.geography.country).to.have.length.of.at.least(1);
 
-        // TODO call seed:clean-files for minio files. TBD
-    });
+            expect(body.period).to.have.property('gte');
+            expect(body.period).to.have.property('lte');
 
-  });
+            console.log('Cleaning seeded artifacts.');
+            cy.task('seed:clean', {type: 'dataset', id: dataset_id});
+            cy.task('seed:clean', {type: 'annotation', id: dataset_id});
 
-
-  // Use a measurement dataset, not event (not like ACLED), which supports most transforms
-  it.skip('From Annotate > Transforms.. > Processing modifies the dataset correctly (by elwood/processing)', async () => {
-    const dataset = genDataset('uniform');
-    const { body: createdDataset } = await cy.request('POST', '/api/dojo/indicators', dataset);
-    const dataset_id = createdDataset.id;
-
-    cy.request('POST', `/api/dojo/indicators/${dataset_id}/annotations`, dataset_uniform_annotations);
-
-    await cy.task('upload', {type: 'dataset', id: dataset_id, variant: 'uniform'});
-
-    cy.visit(`/datasets/register/transform/${dataset_id}?filename=raw_data.xlsx`);
-
-    // cy.wait(30000); // Await transform-fetch jobs
-
-    // Transform jobs take too long
+            // Call seed:clean-files for minio files? TBD.
+          });
+      });
 
   });
 
