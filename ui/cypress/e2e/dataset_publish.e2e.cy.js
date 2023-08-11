@@ -65,17 +65,18 @@ const genTransformPairs = (dataset_id) => {
 export async function waitForElwood(taskName, datasetId) {
 
   const params = {filename: "raw_data.xlsx"};
+  const formattedUrl = `/api/dojo/job/${datasetId}/elwood_processors.${taskName}`;
 
-  let elwoodStatus = await p(cy.request('POST', `/api/dojo/job/${datasetId}/elwood_processors.${taskName}`, params));
+  let elwoodStatus = await p(cy.request('POST', formattedUrl, params));
 
-  console.log('elwoodStatus', elwoodStatus);
+  console.log(taskName, 'elwoodStatus:', elwoodStatus);
 
-  while (!['finished', 'failed'].includes(elwoodStatus.body.status)) {
+  while (!elwoodStatus.body) {
     console.log('retrying..');
 
-    cy.wait(3000);
+    cy.wait(4000);
 
-    elwoodStatus = await p(cy.request('POST', `/api/dojo/job/${datasetId}/elwood_processors.${taskName}`, params));
+    elwoodStatus = await p(cy.request('POST', formattedUrl, params));
   }
 
   return elwoodStatus;
