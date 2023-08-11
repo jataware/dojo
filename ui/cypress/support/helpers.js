@@ -137,24 +137,6 @@ export async function provisionAndWaitReady(existingModelId) {
 }
 
 
-
-/**
- *
- **/
-export async function waitForElwood(taskName, datasetId) {
-
-  const params = {filename: "raw_data.xlsx"};
-
-  let elwoodStatus;
-
-  for (let i = 0; i < 3; i++) {
-    elwoodStatus = await p(cy.request('POST', `/api/dojo/job/${datasetId}/elwood_processors.${taskName}`, params));
-    console.log('elwoodStatus', elwoodStatus);
-  }
-
-  return elwoodStatus;
-}
-
 /**
  *
  **/
@@ -505,3 +487,24 @@ export const getModelRegisterUrls = (modelId, {homeDir, user, fileName, folderNa
          "cwd": homeDir
        }]
 ]);
+
+export async function waitForElwood(taskName, datasetId) {
+
+  const params = {filename: "raw_data.xlsx"};
+  const formattedUrl = `/api/dojo/job/${datasetId}/elwood_processors.${taskName}`;
+
+  let elwoodStatus = await p(cy.request('POST', formattedUrl, params));
+
+  console.log(taskName, 'elwoodStatus:', elwoodStatus);
+
+  while (!elwoodStatus.body) {
+    console.log('retrying..');
+
+    cy.wait(4000);
+
+    elwoodStatus = await p(cy.request('POST', formattedUrl, params));
+  }
+
+  return elwoodStatus;
+}
+

@@ -1,6 +1,4 @@
 
-import p from 'cypress-promise'; // p == promisify
-
 import {
   genDataset,
   dataset_acled_annotations,
@@ -60,27 +58,7 @@ const genTransformPairs = (dataset_id) => {
   ];
 };
 
-
-
-export async function waitForElwood(taskName, datasetId) {
-
-  const params = {filename: "raw_data.xlsx"};
-  const formattedUrl = `/api/dojo/job/${datasetId}/elwood_processors.${taskName}`;
-
-  let elwoodStatus = await p(cy.request('POST', formattedUrl, params));
-
-  console.log(taskName, 'elwoodStatus:', elwoodStatus);
-
-  while (!elwoodStatus.body) {
-    console.log('retrying..');
-
-    cy.wait(4000);
-
-    elwoodStatus = await p(cy.request('POST', formattedUrl, params));
-  }
-
-  return elwoodStatus;
-}
+import { waitForElwood } from '../support/helpers';
 
 
 describe('Dataset Register: Publish E2E', () => {
