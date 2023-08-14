@@ -196,7 +196,8 @@ const ShellHistory = ({
                 aria-label="delete"
                 className={classes.iconButton}
                 onClick={() => removeItem(item)}
-                size="large">
+                size="large"
+              >
                 <DeleteIcon fontSize="small" />
               </IconButton>
             </Tooltip>

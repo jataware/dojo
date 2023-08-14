@@ -55,7 +55,8 @@ function SummaryModelDetails({ model }) {
           href={model.maintainer?.website}
           target="_blank"
           rel="noopener"
-          underline="hover">
+          underline="hover"
+        >
           {model.maintainer?.website}
         </Link>
       </Typography>

@@ -87,7 +87,8 @@ const DirectiveBox = ({
           component="span"
           onClick={() => handleClick(directive)}
           disabled={disableClick}
-          size="large">
+          size="large"
+        >
           {/* inherit pencil color on the summary page to toggle between enabled/disabled */}
           <EditIcon style={{ color: summaryPage ? 'inherit' : '#fff' }} />
         </IconButton>

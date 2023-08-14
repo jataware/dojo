@@ -111,7 +111,8 @@ const FormikCheckbox = (props) => {
       fullWidth={fullWidth}
       required={required}
       error={hasError}
-      {...other}>
+      {...other}
+    >
       <FormControlLabel
         margin={margin}
         control={<Checkbox aria-label={label} {...controlProps} />}

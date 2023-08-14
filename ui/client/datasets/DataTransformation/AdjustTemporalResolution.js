@@ -146,7 +146,8 @@ export default ({
             onChange={handleChangeAggregation}
             label="Aggregation Function"
             data-testid="transform-select-temporal-resolution-aggregation-function"
-            error={saveAttempt && !selectedAggregation}>
+            error={saveAttempt && !selectedAggregation}
+          >
             {aggregationFunctions.map((funct) => (
               <MenuItem key={funct} value={funct}>{funct}</MenuItem>
             ))}
@@ -167,7 +168,8 @@ export default ({
             value={selectedResolution}
             onChange={handleChangeResolution}
             label="Resolution"
-            error={saveAttempt && !selectedResolution}>
+            error={saveAttempt && !selectedResolution}
+          >
             {resolutionOptions.slice(firstOption).map((option) => (
               <MenuItem key={option.description} value={option}>
                 {option.description}

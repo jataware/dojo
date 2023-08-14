@@ -62,112 +62,114 @@ export default (() => {
 
   const open = Boolean(anchorEl);
 
-  return <>
-    <IconButton onClick={handleClick} size="large">
-      <InfoIcon />
-    </IconButton>
-    <Popover
-      open={open}
-      anchorEl={anchorEl}
-      onClose={handleClose}
-      anchorOrigin={{
-        vertical: 'bottom',
-        horizontal: 'center',
-      }}
-      transformOrigin={{
-        vertical: 'top',
-        horizontal: 'center',
-      }}
-    >
-      <div className={classes.popoverContent}>
+  return (
+    <>
+      <IconButton onClick={handleClick} size="large">
+        <InfoIcon />
+      </IconButton>
+      <Popover
+        open={open}
+        anchorEl={anchorEl}
+        onClose={handleClose}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'center',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'center',
+        }}
+      >
+        <div className={classes.popoverContent}>
 
-        <Typography variant="h5">
-          Guide
-        </Typography>
-
-        <Typography
-          variant="body1"
-          component="div"
-        >
-          <p>
-            Annotate Features, Geo, and Date columns before proceeding.
-            Click on a column to start.
-          </p>
-          <p>
-            Only annotate columns of interest. Typically includes at least one date column,
-            one geo column, and one or more feature columns.
-          </p>
-          <p>
-            During our analysis process, we attempted to automatically infer feature
-            types, detect geographic information, and identify temporal information.
-          </p>
-          <p>
-            Upload a data-dictionary annotations file
-            and continue updating annotations on this page.
-          </p>
-
-          <Typography variant="h6">
-            Legend
+          <Typography variant="h5">
+            Guide
           </Typography>
 
-          <ul className={classes.legendList}>
-            {/* TODO import these styled/colored icons from common file */}
-            <Grid container>
-              <Grid item xs={12} md={6}>
-                <li>
-                  <LanguageIcon className={classes.icon} />
+          <Typography
+            variant="body1"
+            component="div"
+          >
+            <p>
+              Annotate Features, Geo, and Date columns before proceeding.
+              Click on a column to start.
+            </p>
+            <p>
+              Only annotate columns of interest. Typically includes at least one date column,
+              one geo column, and one or more feature columns.
+            </p>
+            <p>
+              During our analysis process, we attempted to automatically infer feature
+              types, detect geographic information, and identify temporal information.
+            </p>
+            <p>
+              Upload a data-dictionary annotations file
+              and continue updating annotations on this page.
+            </p>
+
+            <Typography variant="h6">
+              Legend
+            </Typography>
+
+            <ul className={classes.legendList}>
+              {/* TODO import these styled/colored icons from common file */}
+              <Grid container>
+                <Grid item xs={12} md={6}>
+                  <li>
+                    <LanguageIcon className={classes.icon} />
                   &nbsp; Annotated Geo field
-                </li>
-                <li>
-                  <EventIcon className={classes.icon} />
+                  </li>
+                  <li>
+                    <EventIcon className={classes.icon} />
                   &nbsp; Annotated Date field
-                </li>
-                <li>
-                  <TimelineIcon className={classes.icon} />
+                  </li>
+                  <li>
+                    <TimelineIcon className={classes.icon} />
                   &nbsp; Annotated Feature field
-                </li>
+                  </li>
 
-              </Grid>
-              <Grid item xs={12} md={6}>
-                <li className={classes.statusBadgeItem}>
-                  <Typography
-                    component="span"
-                    variant="caption"
-                    className={classes.statusBadge}
-                    align="center"
-                  >
-                    inferred
-                  </Typography>
-                  <span>Column with inferred type data</span>
-                </li>
-                <li className={classes.statusBadgeItem}>
-                  <Typography
-                    component="span"
-                    variant="caption"
-                    className={classes.statusBadge}
-                    align="center"
-                  >
-                    primary
-                  </Typography>
-                  <span>Primary Date or Geo field</span>
-                </li>
-                <li className={classes.statusBadgeItem}>
-                  <Typography
-                    component="span"
-                    variant="caption"
-                    className={classes.statusBadge}
-                    align="center"
-                  >
-                    qualifier
-                  </Typography>
-                  <span>Qualifies another annotated column</span>
-                </li>
+                </Grid>
+                <Grid item xs={12} md={6}>
+                  <li className={classes.statusBadgeItem}>
+                    <Typography
+                      component="span"
+                      variant="caption"
+                      className={classes.statusBadge}
+                      align="center"
+                    >
+                      inferred
+                    </Typography>
+                    <span>Column with inferred type data</span>
+                  </li>
+                  <li className={classes.statusBadgeItem}>
+                    <Typography
+                      component="span"
+                      variant="caption"
+                      className={classes.statusBadge}
+                      align="center"
+                    >
+                      primary
+                    </Typography>
+                    <span>Primary Date or Geo field</span>
+                  </li>
+                  <li className={classes.statusBadgeItem}>
+                    <Typography
+                      component="span"
+                      variant="caption"
+                      className={classes.statusBadge}
+                      align="center"
+                    >
+                      qualifier
+                    </Typography>
+                    <span>Qualifies another annotated column</span>
+                  </li>
 
+                </Grid>
               </Grid>
-            </Grid>
-          </ul>
-        </Typography>
-      </div>
-    </Popover>
-  </>;
+            </ul>
+          </Typography>
+        </div>
+      </Popover>
+    </>
+  );
 });

@@ -283,7 +283,8 @@ const Provision = () => {
                     href="https://www.dojo-modeling.com/cheatsheet.html#dojo-terminal-commands"
                     target="_blank"
                     rel="noopener"
-                    underline="hover">
+                    underline="hover"
+                  >
                     Built-in &quot;dojo&quot; command
                   </Link>
                   &nbsp;to set your model parameters and annotate your model outputs.
@@ -302,7 +303,8 @@ const Provision = () => {
                   href="https://www.dojo-modeling.com/docker.html"
                   target="_blank"
                   rel="noopener"
-                  underline="hover">
+                  underline="hover"
+                >
                   Dojo’s docs
                 </Link>
                 &nbsp;for more information on using prebuilt containers.
@@ -333,7 +335,8 @@ const Provision = () => {
                       label={
                         relaunch ? 'Your existing image has been preselected below'
                           : 'Select or search for a base image'
-                      } />
+                      }
+                    />
                   )}
                 />
               ) : (

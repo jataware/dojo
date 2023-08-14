@@ -35,7 +35,8 @@ function FormikTextField({
       error={
         get(formik, `touched.${[name]}`, null) && Boolean(get(formik, `errors.${[name]}`, null))
       }
-      helperText={get(formik, `touched.${[name]}`, null) && get(formik, `errors.${[name]}`, null)} />
+      helperText={get(formik, `touched.${[name]}`, null) && get(formik, `errors.${[name]}`, null)}
+    />
   );
 }
 

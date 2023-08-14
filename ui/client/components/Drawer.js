@@ -62,29 +62,30 @@ export default ({
     onClose(true);
   };
 
-  return <>
-    <Drawer
-      variant={variant}
-      classes={{ paper: wide ? classes.wideRoot : classes.root }}
-      anchor={anchorPosition}
-      open={open}
-      onClose={handleClose}
-      style={{ width: wide ? '40%' : '30%' }}
-      {...props}
-    >
-      <>
-        <div className={classes.drawerControls}>
-          <IconButton onClick={handleClose} size="large">
-            <CloseIcon />
-          </IconButton>
-        </div>
-        {children}
-      </>
-    </Drawer>
+  return (
+    <>
+      <Drawer
+        variant={variant}
+        classes={{ paper: wide ? classes.wideRoot : classes.root }}
+        anchor={anchorPosition}
+        open={open}
+        onClose={handleClose}
+        style={{ width: wide ? '40%' : '30%' }}
+        {...props}
+      >
+        <>
+          <div className={classes.drawerControls}>
+            <IconButton onClick={handleClose} size="large">
+              <CloseIcon />
+            </IconButton>
+          </div>
+          {children}
+        </>
+      </Drawer>
 
-    {/* unmount the dialog so we reset its state entirely
+      {/* unmount the dialog so we reset its state entirely
       otherwise it can get into a closing state if opened again */}
-    {confirmClose && (
+      {confirmClose && (
       <ConfirmDialog
         accept={handleConfirmedClose}
         body={confirmBody}
@@ -92,6 +93,7 @@ export default ({
         reject={() => setConfirmClose(false)}
         title={confirmTitle}
       />
-    )}
-  </>;
+      )}
+    </>
+  );
 };
