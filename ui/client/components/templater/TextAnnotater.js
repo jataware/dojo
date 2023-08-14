@@ -133,7 +133,6 @@ const Mark = ({
         arrow
         placement="top"
         leaveDelay={200}
-        interactive
       >
         {displayInnerContent()}
       </Tooltip>

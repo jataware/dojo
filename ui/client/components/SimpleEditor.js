@@ -122,7 +122,8 @@ const SimpleEditor = ({ editorContents, setEditorContents }) => {
               lineHeight: `${LINE_HEIGHT}px`,
               paddingTop: 0,
             },
-          }} />
+          }}
+        />
 
       </Paper>
     </Container>

@@ -76,7 +76,6 @@ const ModelFileTabs = ({
         onChange={handleTabClick}
         variant="fullWidth"
         style={{ color: 'white' }}
-        indicatorColor="primary"
         classes={{ indicator: classes.indicator }}
       >
         <Tab
@@ -86,7 +85,7 @@ const ModelFileTabs = ({
                 to expose to end users. You can add a configuration file by entering
                 'dojo config <filename>' into the terminal"
             >
-              {`Configs  (${configs?.length || 0})`}
+              {`Configs  (${configs?.length || 0})`}&nbsp;
             </HelperTip>
           )}
           {...a11yProps(0)}
@@ -98,7 +97,7 @@ const ModelFileTabs = ({
               title="The annotated output files. You can add an output file by entering
                 'dojo annotate <filename>' into the terminal"
             >
-              {`Outputs  (${outputs?.length || 0})`}
+              {`Outputs  (${outputs?.length || 0})`}&nbsp;
             </HelperTip>
            )}
           {...a11yProps(1)}
@@ -110,14 +109,14 @@ const ModelFileTabs = ({
               title="Tagged output accessory files, such as images or videos. You can add
                 an accessory file by entering 'dojo tag <filename>' into the terminal"
             >
-              {`Accessories  (${accessories?.length || 0})`}
+              {`Accessories  (${accessories?.length || 0})`}&nbsp;
             </HelperTip>
           )}
           {...a11yProps(2)}
           data-test="fileTabAccessories"
         />
       </Tabs>
-      <div style={{ overflowY: 'scroll' }}>
+      <div style={{ overflowY: 'auto' }}>
         <TabPanel value={tabValue} index={0}>
           <FileList
             fileType="config"
