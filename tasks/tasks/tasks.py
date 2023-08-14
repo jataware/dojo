@@ -15,6 +15,8 @@ import pandas as pd
 import rasterio
 import requests
 
+from settings import settings
+
 logging.basicConfig()
 logging.getLogger().setLevel(logging.INFO)
 
@@ -251,7 +253,7 @@ def model_output_analysis(context, model_id, fileurl, filepath):
 
     file_key = f"{model_id}:{filepath}"
     file_uuid = str(uuid.UUID(bytes=hashlib.md5(file_key.encode()).digest(), version=4))
-    url = f"{os.environ['TERMINAL_ENDPOINT']}{fileurl}"
+    url = f"{settings.TERMINAL_ENDPOINT}{fileurl}"
     req = requests.get(url, stream=True)
     stream = req.raw
     if filepath.endswith('.xlsx') or filepath.endswith('.xls'):

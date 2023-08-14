@@ -10,18 +10,20 @@ import boto3
 
 import logging
 
+from settings import settings
+
 # S3 OBJECT
 
 s3 = boto3.client(
     "s3",
-    endpoint_url=os.getenv("STORAGE_HOST") or None,
-    aws_access_key_id=os.getenv("AWS_ACCESS_KEY_ID"),
-    aws_secret_access_key=os.getenv("AWS_SECRET_ACCESS_KEY"),
+    endpoint_url=settings.STORAGE_HOST,
+    aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
+    aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
     aws_session_token=None,
     config=boto3.session.Config(signature_version="s3v4"),
     verify=False,
 )
-DATASET_STORAGE_BASE_URL = os.environ.get("DATASET_STORAGE_BASE_URL")
+DATASET_STORAGE_BASE_URL = settings.DATASET_STORAGE_BASE_URL
 
 
 # FILE I/O UTILS

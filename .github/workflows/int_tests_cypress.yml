@@ -33,10 +33,10 @@ jobs:
         run: npm install
 
       - name: Cypress run
-        uses: cypress-io/github-action@v4
+        uses: cypress-io/github-action@v5
         with:
           working-directory: ./ui
-          config: video=false,videoUploadOnPasses=false,keystrokeDelay=1,retries=2,ignoreTestFiles=model_spec.js
+          config: video=false,videoUploadOnPasses=false,keystrokeDelay=1,retries=2
           start: npm run dev
           wait-on: 'http://127.0.0.1:8080'
           wait-on-timeout: 160
