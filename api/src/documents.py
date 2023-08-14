@@ -383,6 +383,77 @@ def list_documents(
 
 
 @router.get(
+    "/documents/search", response_model=DocumentSchema.DocumentListResponse
+)
+def search_documents(
+        query: str,
+        scroll_id: Optional[str]=None,
+        sort_by: Optional[str] = Query("creation_date", description="Field to sort by"),
+        order: Optional[str] = Query("desc", description="Order to sort by"),
+        size: int = 10,
+):
+
+    if scroll_id:
+        documents = es.scroll(scroll_id=scroll_id, scroll="2m")
+    else:
+
+        if order not in ["asc", "desc"]:
+            raise HTTPException(status_code=400, detail="Invalid sort order. Must be either 'asc' or 'desc'")
+
+        # Apply .keyword to the fields with keyword mappings
+        if sort_by in ["type", "description", "original_language", "classification", "title", "producer", "stated_genre", "publisher"]:
+            sort_by += ".keyword"
+
+        q = {
+            "query": {
+                "bool": {
+                    "should": [
+                        {
+                            "match_phrase": {
+                                "title": {
+                                    "query": query,
+                                    "_name": "title"
+                                }
+                            }
+                        },
+                        {
+                            "match_phrase": {
+                                "description": {
+                                    "query": query,
+                                    "_name": "keyword_display_name"
+                                }
+                            }
+                        },
+                    ]
+                }
+            },
+            "sort": [
+                {
+                    sort_by: {
+                        "order": order
+                    }
+                }
+            ]
+        }
+
+        documents = es.search(index="documents", body=q, size=size, scroll="2m")
+
+    totalDocsInPage = len(documents["hits"]["hits"])
+
+    if totalDocsInPage < size:
+        scroll_id = None
+    else:
+        scroll_id = documents.get("_scroll_id", None)
+
+    return {
+        "hits": documents["hits"]["total"]["value"],
+        "items_in_page": totalDocsInPage,
+        "scroll_id": scroll_id,
+        "results": [{**i["_source"], "id": i["_id"]} for i in documents["hits"]["hits"]]
+    }
+
+
+@router.get(
     "/documents/{document_id}/paragraphs", response_model=DocumentSchema.DocumentTextResponse
 )
 def get_document_text(document_id: str,
