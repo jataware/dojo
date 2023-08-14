@@ -342,8 +342,11 @@ def list_documents(
         raise HTTPException(status_code=400, detail="Invalid sort order. Must be either 'asc' or 'desc'")
 
     # Apply .keyword to the fields with keyword mappings
-    if sort_by in ["type", "description", "original_language", "classification", "title", "producer", "stated_genre", "publisher"]:
+    if sort_by in ["type", "description", "original_language", "classification", "producer", "stated_genre"]:
         sort_by += ".keyword"
+
+    if sort_by in ["title", "publisher"]:
+        sort_by += ".lowersortable"
 
     q = {
         "query": {
@@ -400,9 +403,11 @@ def search_documents(
         if order not in ["asc", "desc"]:
             raise HTTPException(status_code=400, detail="Invalid sort order. Must be either 'asc' or 'desc'")
 
-        # Apply .keyword to the fields with keyword mappings
-        if sort_by in ["type", "description", "original_language", "classification", "title", "producer", "stated_genre", "publisher"]:
+        if sort_by in ["type", "description", "original_language", "classification", "producer", "stated_genre"]:
             sort_by += ".keyword"
+
+        if sort_by in ["title", "publisher"]:
+            sort_by += ".lowersortable"
 
         q = {
             "query": {
