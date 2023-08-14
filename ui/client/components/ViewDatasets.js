@@ -4,7 +4,7 @@ import axios from 'axios';
 
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
-import { DataGrid } from '@material-ui/data-grid';
+import { DataGrid } from '@mui/x-data-grid';
 import Typography from '@mui/material/Typography';
 
 import ToggleButton from '@mui/material/ToggleButton';

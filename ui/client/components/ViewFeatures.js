@@ -5,8 +5,7 @@ import debounce from 'lodash/debounce';
 import identity from 'lodash/identity';
 
 import Button from '@mui/material/Button';
-import { GridOverlay, DataGrid } from '@material-ui/data-grid';
-// useGridSlotComponentProps
+import { GridOverlay, DataGrid } from '@mui/x-data-grid';
 import Typography from '@mui/material/Typography';
 import LinearProgress from '@mui/material/LinearProgress';
 import CancelIcon from '@mui/icons-material/Cancel';
@@ -127,33 +126,6 @@ const fetchFeatures = async (
       setFeaturesLoading(false);
     });
 };
-
-/**
- * Uses internal DataGrid API to:
- * a) Decide if we should display "Many" for features count
- * b) Wire and display the rest of the labels that are usually
- *    set for us when we don't need custom behavior.
- */
-// Reverted Many count per implementation changes.
-// Leaving CustomTablePagination in to assess action after feedback.
-// const CustomTablePagination = (props) => {
-//   const { state, apiRef } = useGridSlotComponentProps();
-
-//   return (
-//     <TablePagination
-//       labelDisplayedRows={({ from, to, count }) => {
-//         // const displayCount = count > 500 ? 'Many' : count;
-//         const displayCount = count;
-//         return `${from}-${to} of ${displayCount}`;
-//       }}
-//       {...props}
-//       page={state.pagination.page}
-//       onPageChange={(event, value) => apiRef.current.setPage(value)}
-//       rowsPerPage={100}
-//       count={state.pagination.rowCount}
-//     />
-//   );
-// };
 
 /**
  * Blue linear loading animation displayed when table loading/searching of

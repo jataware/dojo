@@ -7,7 +7,7 @@ import Button from '@mui/material/Button';
 import CheckOutlinedIcon from '@mui/icons-material/CheckOutlined';
 import CloudDoneOutlinedIcon from '@mui/icons-material/CloudDoneOutlined';
 import Container from '@mui/material/Container';
-import { DataGrid } from '@material-ui/data-grid';
+import { DataGrid } from '@mui/x-data-grid';
 import ErrorOutlineOutlinedIcon from '@mui/icons-material/ErrorOutlineOutlined';
 import HelpIcon from '@mui/icons-material/Help';
 import Typography from '@mui/material/Typography';

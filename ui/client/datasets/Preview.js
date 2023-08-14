@@ -3,7 +3,7 @@ import axios from 'axios';
 
 import { makeStyles } from 'tss-react/mui';
 
-import { DataGrid } from '@material-ui/data-grid';
+import { DataGrid } from '@mui/x-data-grid';
 import Container from '@mui/material/Container';
 import IconButton from '@mui/material/IconButton';
 import InfoIcon from '@mui/icons-material/Info';

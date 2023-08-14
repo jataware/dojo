@@ -10,7 +10,7 @@ import get from 'lodash/get';
 import { format } from 'date-fns';
 
 import Button from '@mui/material/Button';
-import { GridOverlay, DataGrid } from '@material-ui/data-grid';
+import { GridOverlay, DataGrid } from '@mui/x-data-grid';
 import Typography from '@mui/material/Typography';
 import LinearProgress from '@mui/material/LinearProgress';
 import CancelIcon from '@mui/icons-material/Cancel';

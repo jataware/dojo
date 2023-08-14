@@ -6,7 +6,7 @@ import axios from 'axios';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
-import { DataGrid } from '@material-ui/data-grid';
+import { DataGrid } from '@mui/x-data-grid';
 
 import { withStyles } from 'tss-react/mui';
 

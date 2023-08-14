@@ -7,7 +7,7 @@ import isEmpty from 'lodash/isEmpty';
 
 import { makeStyles } from 'tss-react/mui';
 
-import { GridOverlay, DataGrid } from '@material-ui/data-grid';
+import { GridOverlay, DataGrid } from '@mui/x-data-grid';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
 import Button from '@mui/material/Button';
