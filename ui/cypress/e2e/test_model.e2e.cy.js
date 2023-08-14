@@ -1,5 +1,6 @@
 import 'cypress-iframe';
 import { genBaseModel, generatedIDs } from '../seeds/model_api_data';
+const { faker } = require('@faker-js/faker');
 
 const date = Date.now().toString();
 const directiveCmd = `run file.txt --data=${date}`;
@@ -9,14 +10,11 @@ import isEmpty from 'lodash/isEmpty';
 import get from 'lodash/get';
 import last from 'lodash/last';
 
-import { createModel, provisionModelTerminal, shutdownWorker,
+import { createModel, shutdownWorker,
          provisionAndWaitReady,
          waitForAllUrlsToFinish,
-         // getModelRegisterUrls,
-         // getTestModelRegisterUrls,
+         getTestModelRegisterUrls,
          waitUrlToProcess } from '../support/helpers';
-
-import p from 'cypress-promise'; // p == promisify
 
 /**
  *
@@ -36,18 +34,18 @@ function cleanModel(modelId) {
 // NOTE slowest test of them all since it registers jataware/test-model
 // and cannot determine how much to wait for the HTML canvas terminal ssh session
 // commands.
-describe.only('Register/Publish Test Model', () => {
+describe('Register/Publish Test Model', () => {
 
   let modelId = undefined;
 
-  // TODO enable
-  // afterEach(() => {
-  //   cleanModel(modelId);
-  // });
+  afterEach(() => {
+    cleanModel(modelId);
+  });
 
-  it('E2E Test Model Register/publish completed.', () => {
+  it('E2E jataware/test-model Register/Publish completed.', () => {
 
-    // modelId = 'acab2a55-8356-4029-99c2-734b4939293e'; // in case we want to reuse/override
+    // in case we want to reuse/override a test with forced ID:
+    // modelId = 'acab2a55-8356-4029-99c2-734b4939293e';
 
     const modelOverrides = {
       is_published: false,
@@ -68,9 +66,8 @@ describe.only('Register/Publish Test Model', () => {
     cy.wrap(provisionAndWaitReady(modelId))
       .then(() => {
 
-        cy.wait(500);
-
-        const fileName = 'output_0.9_4.8.csv';
+        const directiveParamValue = 4.8;
+        const fileName = `output_0.9_${directiveParamValue}.csv`;
         const folderName = 'test-model';
         const user = 'clouseau';
         const homeDir = `/home/${user}`;
@@ -83,480 +80,164 @@ describe.only('Register/Publish Test Model', () => {
 
         cy.findByRole('textbox', {name: /terminal input/i}).as('TerminalInput');
 
-        cy.get('@TerminalInput')
-          .type(`sudo apt update && sudo apt install -y python3-pip && git clone https://github.com/jataware/test-model.git && cd test-model{enter}`);
-
-        cy.wait(30000); // 60000
-
-        // cy.findByText(/Resolving deltas: 100%/i, {timeout: 85000});
+        cy.wait(500);
 
         cy.get('@TerminalInput')
-          .type(`git checkout 041cdfa10a995a2d55baeb3ebe35320f22bc996a && pip3 install -r requirements.txt{enter}`);
+          .type(`sudo apt update && sudo apt install -y python3-pip && git clone https://github.com/jataware/test-model.git && cd test-model{enter}`, {force: true});
 
-        cy.wait(12000); // 20000
+        cy.wait(25000); // 60000 for slower computers
 
-        // cy.findByText(/Successfully installed/i);
+        // cy.get('@TerminalInput')
+        //   .type('echo finished setup{enter}', {force: true});
+        // cy.findByText(/finished setup/i, {timeout: 20000});
 
         cy.get('@TerminalInput')
-          .type('python3 main.py --temp=4.8{enter}');
+          .type(`git checkout 041cdfa10a995a2d55baeb3ebe35320f22bc996a && pip3 install -r requirements.txt{enter}`, {force: true});
 
-        cy.wait(2000);
+        cy.wait(6000); // 20000+ for slower computers
+
+        cy.get('@TerminalInput')
+          .type('echo finished install{enter}', {force: true});
+
+        cy.findByText(/finished install/i, {timeout: 20000});
+
+        cy.get('@TerminalInput')
+          .type(`python3 main.py --temp=${directiveParamValue}{enter}`);
+
+        cy.get('@TerminalInput')
+          .type('echo finished run{enter}', {force: true});
+
+        cy.findByText(/finished run/i);
 
         cy.get('@TerminalInput')
           .type('dojo tag media/1WWMDwIQ_400x400.jpg "1"{enter}');
 
-        cy.wait(1000);
+        cy.get('@TerminalInput')
+          .type('echo finished tag{enter}', {force: true});
 
-        cy.request('POST', '/api/dojo/dojo/directive', {
-          "model_id": modelId,
-          "parameters": [
-            {
-              "start": 23,
-              "end": 26,
-              "text": "4.8",
-              "annotation": {
-                "name": "temp",
-                "description": "temp",
-                "type": "float",
-                "default_value": "4.8",
-                "unit": "temp",
-                "unit_description": "temp",
-                "data_type": "numerical",
-                "predefined": false,
-                "options": [],
-                "min": "",
-                "max": ""
-              }
-            }
-          ],
-          "command": "python3 main.py --temp=4.8",
-          "cwd": "/home/clouseau/test-model"
-        })
-          .then(() => {
+        cy.findByText(/finished tag/i);
 
-            cy.request('POST', '/api/dojo/dojo/config', [
+        const urls = getTestModelRegisterUrls(modelId, {homeDir, user, fileName, folderName, saveUrl, directiveParamValue});
+
+        cy.wrap(waitForAllUrlsToFinish(urls)).then(() => {
+
+          cy.request('PATCH', `/api/dojo/models/${modelId}`, {
+            "outputs": [
               {
-                "model_config": {
-                  "model_id": modelId,
-                  "parameters": [
-                    {
-                      "start": 13,
-                      "end": 16,
-                      "text": "0.9",
-                      "annotation": {
-                        "name": "rain",
-                        "description": "rain",
-                        "type": "float",
-                        "default_value": "0.9",
-                        "unit": "rain",
-                        "unit_description": "rain",
-                        "data_type": "numerical",
-                        "predefined": false,
-                        "options": [],
-                        "min": "",
-                        "max": ""
-                      }
-                    }
-                  ],
-                  "path": "/home/clouseau/test-model/configFiles/parameters.json",
-                  "md5_hash": "c982ef4fdc0ebb2fb43a9b86d23d0b7d"
+                "uuid": "bbae0b07-33d1-4e2b-82ea-ef72026cdfc7",
+                "name": "value",
+                "display_name": "value",
+                "description": "featval",
+                "type": "float",
+                "unit": "fv",
+                "unit_description": "",
+                "is_primary": false,
+                "data_resolution": {
+                  "temporal_resolution": "annual"
                 },
-                "file_content": "{\"rainfall\": 0.9}\n"
+                "alias": {},
+                "choices": null,
+                "min": null,
+                "max": null,
+                "ontologies": null
               }
-            ]).then(() => {
+            ],
+            "qualifier_outputs": [
+              {
+                "uuid": "bbae0b07-33d1-4e2b-82ea-ef72026cdfc7",
+                "name": "date",
+                "display_name": "date",
+                "description": "date",
+                "type": "datetime",
+                "unit": null,
+                "unit_description": null,
+                "related_features": [],
+                "qualifier_role": "breakdown",
+                "alias": {}
+              },
+              {
+                "uuid": "bbae0b07-33d1-4e2b-82ea-ef72026cdfc7",
+                "name": "longitude",
+                "display_name": "latitude",
+                "description": "latlon",
+                "type": "lng",
+                "unit": null,
+                "unit_description": null,
+                "related_features": [],
+                "qualifier_role": "breakdown",
+                "alias": {}
+              },
+              {
+                "uuid": "bbae0b07-33d1-4e2b-82ea-ef72026cdfc7",
+                "name": "latitude",
+                "display_name": "latitude",
+                "description": "latlon",
+                "type": "lat",
+                "unit": null,
+                "unit_description": null,
+                "related_features": [],
+                "qualifier_role": "breakdown",
+                "alias": {}
+              }
+            ]
+          }).then(() => {
 
-              cy.wait(500);
+            cy.wrap(waitUrlToProcess(`/api/dojo/dojo/config/${modelId}`, '[0]'))
+              .then(() => {
 
-              const urls = [['POST',  `/api/dojo/job/${modelId}/file_processors.model_output_preview`, {
-                "context": {
-                  "uuid": modelId,
-                  "dataset": {
-                    "id": modelId,
-                    "name": "TempRainTest",
-                    "family_name": null,
-                    "description": "test model rainf",
-                    "deprecated": false,
-                    "published": false,
-                    "domains": [
-                      "Mathematics"
-                    ],
-                    "maintainer": {
-                      "email": "",
-                      "name": "",
-                      "website": "",
-                      "organization": ""
-                    },
-                    "data_sensitivity": null,
-                    "data_quality": null,
-                    "data_paths": [],
-                    "outputs": [],
-                    "qualifier_outputs": [],
-                    "tags": [],
-                    "fileData": {
-                      "raw": {
-                        "uploaded": false,
-                        "url": null
-                      }
-                    },
-                    "temporal_resolution": "annual",
-                    "filepath": "/home/clouseau/test-model/output/output_*.csv",
-                    "x-resolution": "",
-                    "y-resolution": ""
-                  },
-                  "annotations": {
-                    "annotations": {},
-                    "metadata": {
-                      "filename": "/home/clouseau/test-model/output/output_*.csv",
-                      "file_uuid": "bbae0b07-33d1-4e2b-82ea-ef72026cdfc7",
-                      "fileurl": `/container/${modelId}/ops/cat?path=%2Fhome%2Fclouseau%2Ftest-model%2Foutput%2Foutput_0.9_4.8.csv`,
-                      "filepath": "/home/clouseau/test-model/output/output_0.9_4.8.csv"
-                    }
-                  }
-                },
-                "filename": null,
-                "force_restart": true
-              }]];
+                cy.intercept('POST', `/api/terminal/docker/${modelId}/commit`).as('ModelTerminalCommit');
 
+                cy.findByRole('button', {name: /save and continue/i})
+                  .click();
 
-              cy.wrap(waitForAllUrlsToFinish(urls)).then(() => {
+                cy.findByText(/Uploading Model to Docker.+/i);
 
-                cy.wait(500);
+                cy.wait(10000);
 
-                cy.request('POST', `/api/dojo/job/${modelId}/elwood_processors.run_model_elwood`, {
-                  "context": {
-                    "uuid": modelId,
-                    "dataset": {
-                      "id": modelId,
-                      "name": "TempRainTest",
-                      "family_name": null,
-                      "description": "test model rainf",
-                      "deprecated": false,
-                      "published": false,
-                      "domains": [
-                        "Mathematics"
-                      ],
-                      "maintainer": {
-                        "email": "",
-                        "name": "",
-                        "website": "",
-                        "organization": ""
-                      },
-                      "data_sensitivity": null,
-                      "data_quality": null,
-                      "data_paths": [],
-                      "outputs": [],
-                      "qualifier_outputs": [],
-                      "tags": [],
-                      "fileData": {
-                        "raw": {
-                          "uploaded": false,
-                          "url": null
-                        }
-                      },
-                      "temporal_resolution": "annual",
-                      "filepath": "/home/clouseau/test-model/output/output_*.csv",
-                      "x-resolution": "",
-                      "y-resolution": ""
-                    },
-                    "annotations": {
-                      "annotations": {
-                        "feature": [
-                          {
-                            "aliases": {},
-                            "type": "feature",
-                            "description": "featval",
-                            "display_name": "value",
-                            "qualifies": [],
-                            "qualifierrole": "breakdown",
-                            "feature_type": "float",
-                            "units_description": "",
-                            "units": "fv",
-                            "name": "value"
-                          }
-                        ],
-                        "geo": [
-                          {
-                            "aliases": {},
-                            "type": "geo",
-                            "description": "latlon",
-                            "display_name": "latitude",
-                            "qualifies": [],
-                            "qualifierrole": "breakdown",
-                            "geo_type": "longitude",
-                            "resolve_to_gadm": false,
-                            "coord_format": "lonlat",
-                            "name": "longitude",
-                            "primary_geo": true,
-                            "gadm_level": "country"
-                          },
-                          {
-                            "aliases": {},
-                            "type": "geo",
-                            "description": "latlon",
-                            "display_name": "latitude",
-                            "qualifies": [],
-                            "qualifierrole": "breakdown",
-                            "geo_type": "latitude",
-                            "resolve_to_gadm": false,
-                            "coord_format": "lonlat",
-                            "name": "latitude",
-                            "primary_geo": true,
-                            "gadm_level": "country",
-                            "is_geo_pair": "longitude"
-                          }
-                        ],
-                        "date": [
-                          {
-                            "aliases": {},
-                            "type": "date",
-                            "description": "date",
-                            "display_name": "date",
-                            "qualifies": [],
-                            "qualifierrole": "breakdown",
-                            "date_type": "date",
-                            "time_format": "%Y-%m-%d",
-                            "name": "date",
-                            "primary_date": true
-                          }
-                        ]
-                      },
-                      "metadata": {
-                        "filename": "/home/clouseau/test-model/output/output_*.csv",
-                        "file_uuid": "bbae0b07-33d1-4e2b-82ea-ef72026cdfc7",
-                        "fileurl": `/container/${modelId}/ops/cat?path=%2Fhome%2Fclouseau%2Ftest-model%2Foutput%2Foutput_0.9_4.8.csv`,
-                        "filepath": "/home/clouseau/test-model/output/output_0.9_4.8.csv",
-                        "geotime_classify": {
-                          "date": {
-                            "category": "time",
-                            "subcategory": "date",
-                            "format": "%Y-%m-%d"
-                          },
-                          "latitude": {
-                            "category": "geo",
-                            "subcategory": "latitude",
-                            "format": null
-                          },
-                          "longitude": {
-                            "category": "geo",
-                            "subcategory": "longitude",
-                            "format": null
-                          }
-                        }
-                      }
-                    }
-                  },
-                  "filename": `model-output-samples/${modelId}/bbae0b07-33d1-4e2b-82ea-ef72026cdfc7.csv`,
-                  "force_restart": true
-                }).then(() => {
+                cy.findByText(/Upload Complete.+/i, {timeout: 25000});
 
-                  cy.wait(500);
+                cy.intercept('POST', `/api/dojo/models/register/${modelId}`).as('RegisterModelComplete');
 
-                  cy.request('POST', '/api/dojo/dojo/outputfile', [
-                    {
-                      "id": "bbae0b07-33d1-4e2b-82ea-ef72026cdfc7",
-                      "model_id": modelId,
-                      "name": "TempRainTest",
-                      "output_directory": "/home/clouseau/test-model/output",
-                      "path": "output_*.csv",
-                      "file_type": "csv",
-                      "transform": {
-                        "feature": [
-                          {
-                            "aliases": {},
-                            "type": "feature",
-                            "description": "featval",
-                            "display_name": "value",
-                            "qualifies": [],
-                            "qualifierrole": "breakdown",
-                            "feature_type": "float",
-                            "units_description": "",
-                            "units": "fv",
-                            "name": "value"
-                          }
-                        ],
-                        "geo": [
-                          {
-                            "aliases": {},
-                            "type": "geo",
-                            "description": "latlon",
-                            "display_name": "latitude",
-                            "qualifies": [],
-                            "qualifierrole": "breakdown",
-                            "geo_type": "longitude",
-                            "resolve_to_gadm": false,
-                            "coord_format": "lonlat",
-                            "name": "longitude",
-                            "primary_geo": true,
-                            "gadm_level": "country"
-                          },
-                          {
-                            "aliases": {},
-                            "type": "geo",
-                            "description": "latlon",
-                            "display_name": "latitude",
-                            "qualifies": [],
-                            "qualifierrole": "breakdown",
-                            "geo_type": "latitude",
-                            "resolve_to_gadm": false,
-                            "coord_format": "lonlat",
-                            "name": "latitude",
-                            "primary_geo": true,
-                            "gadm_level": "country",
-                            "is_geo_pair": "longitude"
-                          }
-                        ],
-                        "date": [
-                          {
-                            "aliases": {},
-                            "type": "date",
-                            "description": "date",
-                            "display_name": "date",
-                            "qualifies": [],
-                            "qualifierrole": "breakdown",
-                            "date_type": "date",
-                            "time_format": "%Y-%m-%d",
-                            "name": "date",
-                            "primary_date": true
-                          }
-                        ],
-                        "meta": {
-                          "ftype": "csv"
-                        }
-                      },
-                      "prev_id": null
-                    }
-                  ]).then(() => {
-
-                    cy.wait(500);
-
-                    cy.request('PATCH', `/api/dojo/models/${modelId}`, {
-                      "outputs": [
-                        {
-                          "uuid": "bbae0b07-33d1-4e2b-82ea-ef72026cdfc7",
-                          "name": "value",
-                          "display_name": "value",
-                          "description": "featval",
-                          "type": "float",
-                          "unit": "fv",
-                          "unit_description": "",
-                          "is_primary": false,
-                          "data_resolution": {
-                            "temporal_resolution": "annual"
-                          },
-                          "alias": {},
-                          "choices": null,
-                          "min": null,
-                          "max": null,
-                          "ontologies": null
-                        }
-                      ],
-                      "qualifier_outputs": [
-                        {
-                          "uuid": "bbae0b07-33d1-4e2b-82ea-ef72026cdfc7",
-                          "name": "date",
-                          "display_name": "date",
-                          "description": "date",
-                          "type": "datetime",
-                          "unit": null,
-                          "unit_description": null,
-                          "related_features": [],
-                          "qualifier_role": "breakdown",
-                          "alias": {}
-                        },
-                        {
-                          "uuid": "bbae0b07-33d1-4e2b-82ea-ef72026cdfc7",
-                          "name": "longitude",
-                          "display_name": "latitude",
-                          "description": "latlon",
-                          "type": "lng",
-                          "unit": null,
-                          "unit_description": null,
-                          "related_features": [],
-                          "qualifier_role": "breakdown",
-                          "alias": {}
-                        },
-                        {
-                          "uuid": "bbae0b07-33d1-4e2b-82ea-ef72026cdfc7",
-                          "name": "latitude",
-                          "display_name": "latitude",
-                          "description": "latlon",
-                          "type": "lat",
-                          "unit": null,
-                          "unit_description": null,
-                          "related_features": [],
-                          "qualifier_role": "breakdown",
-                          "alias": {}
-                        }
-                      ]
-                    }).then(() => {
-
-                      cy.wait(500);
-
-                      cy.wrap(waitUrlToProcess(`/api/dojo/dojo/config/${modelId}`, '[0]'))
-                        .then(() => {
-
-                          cy.wait(500);
-
-                          cy.intercept('POST', `/api/terminal/docker/${modelId}/commit`).as('ModelTerminalCommit');
-
-                          cy.findByRole('button', {name: /save and continue/i})
-                            .click();
-
-                          cy.findByText(/Uploading Model to Docker.+/i);
-
-                          cy.wait(10000);
-
-                          cy.findByText(/Upload Complete.+/i, {timeout: 25000});
-
-                          cy.intercept('POST', `/api/dojo/models/register/${modelId}`).as('RegisterModelComplete');
-
-                          cy.get('@ModelTerminalCommit').should((inter) => {
-                            expect(inter.request.body.tags[0]).to.contain(modelId);
-                            expect(inter.response.body).to.contain('Processing');
-                          });
-
-                          cy.findByRole('button', {name: /Publish/i})
-                            .click();
-
-                          cy.findByRole('dialog', {name: /Are you ready to publish the model?/i})
-                            .as('PublishDialog');
-
-                          const commitMessage = 'My test commit message';
-
-                          cy.get('@PublishDialog')
-                            .findByRole('textbox')
-                            .type('My test commit message');
-
-                          cy.get('@PublishDialog')
-                            .findByRole('button', {name: /Yes/i})
-                            .click();
-
-                          cy.findByText(/Your model was successfully published/i);
-
-                          cy.get('@RegisterModelComplete')
-                            .should((inter) => {
-                              expect(inter.response.body).to.contain('Registered model to');
-                            })
-                            .then(() => {
-                              cy.request('GET', `/api/dojo/models/${modelId}`)
-                                .should((response) => {
-
-                                  expect(response.status).to.equal(200);
-                                  expect(response.body.is_published).to.equal(true);
-                                  expect(response.body.commit_message).to.equal(commitMessage);
-
-                                  expect(response.body.outputs).to.not.be.empty;
-                                  expect(response.body.qualifier_outputs).to.not.be.empty;
-                                });
-                            });
-                        });
-                    });
-                  });
+                cy.get('@ModelTerminalCommit').should((inter) => {
+                  expect(inter.request.body.tags[0]).to.contain(modelId);
+                  expect(inter.response.body).to.contain('Processing');
                 });
+
+                cy.findByRole('button', {name: /Publish/i})
+                  .click();
+
+                cy.findByRole('dialog', {name: /Are you ready to publish the model?/i})
+                  .as('PublishDialog');
+
+                const commitMessage = faker.commerce.productDescription();
+
+                cy.get('@PublishDialog')
+                  .findByRole('textbox')
+                  .type(commitMessage);
+
+                cy.get('@PublishDialog')
+                  .findByRole('button', {name: /Yes/i})
+                  .click();
+
+                cy.findByText(/Your model was successfully published/i);
+
+                cy.get('@RegisterModelComplete')
+                  .should((inter) => {
+                    expect(inter.response.body).to.contain('Registered model to');
+                  })
+                  .then(() => {
+                    cy.request('GET', `/api/dojo/models/${modelId}`)
+                      .should((response) => {
+                        expect(response.status).to.equal(200);
+                        expect(response.body.is_published).to.equal(true);
+                        expect(response.body.commit_message).to.equal(commitMessage);
+                        expect(response.body.outputs).to.not.be.empty;
+                        expect(response.body.qualifier_outputs).to.not.be.empty;
+                      });
+                  });
               });
-            });
           });
+        });
       });
   });
-
 });
