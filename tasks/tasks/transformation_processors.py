@@ -52,7 +52,7 @@ def clip_geo(context, filename=None, **kwargs):
             # Put the new clipped file to overwrite the old one.
             file_buffer = io.BytesIO()
 
-            clipped_df.to_csv(file_buffer)
+            clipped_df.to_csv(file_buffer, index=False)
             file_buffer.seek(0)
 
             put_rawfile(path=rawfile_path, fileobj=file_buffer)
@@ -112,7 +112,7 @@ def clip_time(context, filename=None, **kwargs):
             # Put the new clipped file to overwrite the old one.
             file_buffer = io.BytesIO()
 
-            clipped_df.to_csv(file_buffer)
+            clipped_df.to_csv(file_buffer, index=False)
             file_buffer.seek(0)
 
             put_rawfile(path=rawfile_path, fileobj=file_buffer)
@@ -183,7 +183,7 @@ def scale_time(context, filename=None, **kwargs):
             # Put the new clipped file to overwrite the old one.
             file_buffer = io.BytesIO()
 
-            clipped_df.to_csv(file_buffer)
+            clipped_df.to_csv(file_buffer, index=False)
             file_buffer.seek(0)
 
             put_rawfile(path=rawfile_path, fileobj=file_buffer)
@@ -220,6 +220,10 @@ def regrid_geo(context, filename=None, **kwargs):
     sys.stdout.flush()
     rows_pre_clip = len(original_dataframe.index)
 
+    time_format = (
+        context.get("annotations").get("annotations").get("date")[0].get("time_format")
+    )
+
     # Main Call
     geo_column = kwargs.get("geo_columns")
     time_column = kwargs.get("datetime_column")[0]
@@ -237,6 +241,15 @@ def regrid_geo(context, filename=None, **kwargs):
             aggregation_functions=aggregation_functions,
         )
 
+        print(f"REGRIDDED DF: {regridded_df}")
+
+        regridded_df[time_column] = pd.to_datetime(regridded_df[time_column])
+        regridded_df[time_column] = regridded_df[time_column].apply(
+            lambda x: x.strftime(time_format)
+        )
+
+        print(f"REGRIDDED DF fromatted: {regridded_df}")
+
         json_dataframe_preview = regridded_df.head(100).to_json(default_handler=str)
         rows_post_clip = len(regridded_df.index)
 
@@ -250,7 +263,7 @@ def regrid_geo(context, filename=None, **kwargs):
             # Put the new clipped file to overwrite the old one.
             file_buffer = io.BytesIO()
 
-            regridded_df.to_csv(file_buffer)
+            regridded_df.to_csv(file_buffer, index=False)
             file_buffer.seek(0)
 
             put_rawfile(path=rawfile_path, fileobj=file_buffer)
