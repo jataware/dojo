@@ -11,6 +11,7 @@ import last from 'lodash/last';
 
 import { createModel, provisionModelTerminal, shutdownWorker,
          provisionAndWaitReady,
+         waitForAllUrlsToFinish,
          // getModelRegisterUrls,
          // getTestModelRegisterUrls,
          waitUrlToProcess } from '../support/helpers';
@@ -30,19 +31,11 @@ function cleanModel(modelId) {
   });
 }
 
-async function waitForAllUrlsToFinish(urls) {
-  const METHOD = 0, URL = 1, BODY = 2;
 
-  const finishedRequests = urls.map(async (item) => {
-    const res = await p(cy.request(item[METHOD], item[URL], item[BODY]));
-    return res;
-  });
 
-  console.log('finishedRequests', finishedRequests);
-
-  return finishedRequests;
-}
-
+// NOTE slowest test of them all since it registers jataware/test-model
+// and cannot determine how much to wait for the HTML canvas terminal ssh session
+// commands.
 describe.only('Register/Publish Test Model', () => {
 
   let modelId = undefined;
@@ -54,13 +47,21 @@ describe.only('Register/Publish Test Model', () => {
 
   it('E2E Test Model Register/publish completed.', () => {
 
-    // http://localhost:8080/api/terminal/docker/locks
-    // modelId = 'acab2a55-8356-4029-99c2-734b4939293e';
+    // modelId = 'acab2a55-8356-4029-99c2-734b4939293e'; // in case we want to reuse/override
 
-    const testModel = createModel(modelId);
+    const modelOverrides = {
+      is_published: false,
+      commit_message: '',
+      period: null,
+      outputs: [],
+      image: '',
+      qualifier_outputs: [],
+      geography: null
+    };
+
+    const testModel = createModel(modelId, modelOverrides);
 
     modelId = testModel.id;
-
 
     console.log('Test Model ID:', modelId);
 
@@ -85,26 +86,26 @@ describe.only('Register/Publish Test Model', () => {
         cy.get('@TerminalInput')
           .type(`sudo apt update && sudo apt install -y python3-pip && git clone https://github.com/jataware/test-model.git && cd test-model{enter}`);
 
-        cy.wait(50000);
+        cy.wait(30000); // 60000
 
         // cy.findByText(/Resolving deltas: 100%/i, {timeout: 85000});
 
         cy.get('@TerminalInput')
           .type(`git checkout 041cdfa10a995a2d55baeb3ebe35320f22bc996a && pip3 install -r requirements.txt{enter}`);
 
-        cy.wait(30000);
+        cy.wait(12000); // 20000
 
         // cy.findByText(/Successfully installed/i);
 
         cy.get('@TerminalInput')
           .type('python3 main.py --temp=4.8{enter}');
 
-        cy.wait(4000);
+        cy.wait(2000);
 
         cy.get('@TerminalInput')
           .type('dojo tag media/1WWMDwIQ_400x400.jpg "1"{enter}');
 
-        cy.wait(3000);
+        cy.wait(1000);
 
         cy.request('POST', '/api/dojo/dojo/directive', {
           "model_id": modelId,
@@ -496,50 +497,66 @@ describe.only('Register/Publish Test Model', () => {
 
                           cy.wait(500);
 
+                          cy.intercept('POST', `/api/terminal/docker/${modelId}/commit`).as('ModelTerminalCommit');
+
                           cy.findByRole('button', {name: /save and continue/i})
                             .click();
 
                           cy.findByText(/Uploading Model to Docker.+/i);
 
-                          // cy.reload();
                           cy.wait(10000);
 
-                          cy.findByText(/Upload Complete.+/i, {timeout: 20000});
+                          cy.findByText(/Upload Complete.+/i, {timeout: 25000});
 
-                          // TODO button doesn't show up: Help.
-                          // cy.findByRole('button', {name: /Publish/i})
-                          //   .click();
+                          cy.intercept('POST', `/api/dojo/models/register/${modelId}`).as('RegisterModelComplete');
 
-                          // cy.wait(500);
+                          cy.get('@ModelTerminalCommit').should((inter) => {
+                            expect(inter.request.body.tags[0]).to.contain(modelId);
+                            expect(inter.response.body).to.contain('Processing');
+                          });
 
-                          // // TODO intercept
-                          // cy.intercept('POST', `/api/dojo/models/register/${modelId}`).as('RegisterModelComplete');
+                          cy.findByRole('button', {name: /Publish/i})
+                            .click();
 
-                          // cy.findByRole('button', {name: /Yes/i})
-                          //   .click();
+                          cy.findByRole('dialog', {name: /Are you ready to publish the model?/i})
+                            .as('PublishDialog');
 
-                          // cy.wait('RegisterModelComplete');
+                          const commitMessage = 'My test commit message';
 
+                          cy.get('@PublishDialog')
+                            .findByRole('textbox')
+                            .type('My test commit message');
 
-                          // cy.findByText(/Uploaded to Causemos/i);
+                          cy.get('@PublishDialog')
+                            .findByRole('button', {name: /Yes/i})
+                            .click();
 
-                          // TODO check final model with register property, etc
-                          // cy.request('')
+                          cy.findByText(/Your model was successfully published/i);
+
+                          cy.get('@RegisterModelComplete')
+                            .should((inter) => {
+                              expect(inter.response.body).to.contain('Registered model to');
+                            })
+                            .then(() => {
+                              cy.request('GET', `/api/dojo/models/${modelId}`)
+                                .should((response) => {
+
+                                  expect(response.status).to.equal(200);
+                                  expect(response.body.is_published).to.equal(true);
+                                  expect(response.body.commit_message).to.equal(commitMessage);
+
+                                  expect(response.body.outputs).to.not.be.empty;
+                                  expect(response.body.qualifier_outputs).to.not.be.empty;
+                                });
+                            });
                         });
-
                     });
                   });
-
                 });
-
               });
-
             });
-
           });
-
       });
-
   });
 
 });

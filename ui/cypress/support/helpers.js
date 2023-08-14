@@ -35,11 +35,11 @@ export function gen_tranform_intercepts(dataset_id, jobName, result) {
 
 // ================== End-to-End Helpers =======================================
 
-export function createModel(modelId) {
+export function createModel(modelId, overrides={}) {
 
   console.log('Creating Seed Model', modelId);
 
-  const testModel = genBaseModel(modelId);
+  const testModel = genBaseModel(modelId, overrides);
 
   modelId = testModel.id;
 
@@ -78,6 +78,17 @@ export const shutdownWorker = () => {
     });
 };
 
+
+export async function waitForAllUrlsToFinish(urls) {
+  const METHOD = 0, URL = 1, BODY = 2;
+
+  const finishedRequests = urls.map(async (item) => {
+    const res = await p(cy.request(item[METHOD], item[URL], item[BODY]));
+    return res;
+  });
+
+  return finishedRequests;
+}
 
 // NOTE use cy.wrap on tests
 export async function waitUrlToProcess(url, property, method='GET') {

@@ -120,7 +120,7 @@ const genQualifierOutput = () => ({
 
 const generatedIDs = [];
 
-const genBaseModel = (id) => {
+const genBaseModel = (id, overrides={}) => {
   const uuid = id || faker.string.uuid();
 
   generatedIDs.push(uuid);
@@ -174,7 +174,11 @@ const genBaseModel = (id) => {
     // "next_version": "string", // would mean the current version is deprecated in favor of next version
     // "prev_version": "string",
     "is_published": true,
-    "commit_message": faker.company.catchPhrase()
+    "commit_message": faker.company.catchPhrase(),
+
+    // In order to create variations of this (not published, processed, etc).
+    ...overrides
+
   };
  };
 
