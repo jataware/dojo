@@ -37,6 +37,10 @@ const useStyles = makeStyles()((theme) => ({
     cursor: 'pointer',
   },
   hoveredCell: {
+    width: '115%',
+    height: '100%',
+    display: 'flex',
+    alignItems: 'center',
     backgroundColor: theme.palette.grey[100],
   },
   root: {
@@ -56,6 +60,12 @@ const useStyles = makeStyles()((theme) => ({
   },
   columnHeaderTitle: {
     padding: '0 4px !important',
+  },
+  displayUnderline: {
+    borderBottom: '2px solid #66BB6A',
+  },
+  noUnderline: {
+    borderBottom: `2px solid ${theme.palette.common.white}`,
   },
   hideHeaderBorder: {
     // hide the blue outline on the datagrid header when focused
@@ -226,39 +236,47 @@ export default ({
   const sortedColumns = groupColumns(columns, multiPartData, annotations);
 
   const formattedColumns = sortedColumns
-    .map((column) => ({
-      ...column,
+    .map((column) => {
+      const columnAttributes = calcColumnAttrs(column.field);
+      const isAnnotated = ['annotated', 'primary'].includes(columnAttributes.status);
+      return {
+        ...column,
 
-      flex: 1,
-      minWidth: 200,
-      sortable: false,
-      disableReorder: true,
-      // add this class to hide the vertical separators between the headers
-      // we'll add it manually in the Header itself so that we can handle multiparts
-      headerClassName: classes.hideRightSeparator,
+        flex: 1,
+        minWidth: 200,
+        sortable: false,
+        disableReorder: true,
+        // add this class to hide the vertical separators between the headers
+        // we'll add it manually in the Header itself so that we can handle multiparts
+        headerClassName: clsx(
+          classes.hideRightSeparator,
+          { [classes.displayUnderline]: isAnnotated, [classes.noUnderline]: !isAnnotated }
+        ),
 
-      headerName: column.field,
+        headerName: column.field,
+        headerAlign: 'center',
 
-      renderHeader: ({ colDef }) => (
-        <Header
-          addingAnnotationsAllowed={addingAnnotationsAllowed}
-          showMarkers={isShowMarkers}
-          {...calcColumnAttrs(colDef.field)}
-          heading={colDef.headerName}
-          column={column}
-          buttonClick={openAnnotationPanel}
-          isHighlighted={(colDef.field === highlightedColumn)}
-          drawerOpen={Boolean(editingColumn)}
-        />
-      ),
+        renderHeader: ({ colDef }) => (
+          <Header
+            addingAnnotationsAllowed={addingAnnotationsAllowed}
+            showMarkers={isShowMarkers}
+            {...columnAttributes}
+            heading={colDef.headerName}
+            column={column}
+            buttonClick={openAnnotationPanel}
+            isHighlighted={(colDef.field === highlightedColumn)}
+            drawerOpen={Boolean(editingColumn)}
+          />
+        ),
 
-      renderCell: ({ colDef, value }) => (
-        <Cell
-          {...calcColumnAttrs(colDef.field)}
-          value={value}
-        />
-      )
-    }));
+        renderCell: ({ value }) => (
+          <Cell
+            {...columnAttributes}
+            value={value}
+          />
+        )
+      };
+    });
 
   const gridRef = useRef(null);
 
@@ -269,20 +287,21 @@ export default ({
     });
   }
 
-  const highlightColumn = (cell, event) => {
-    // Get the next column to highlight from relatedTarget - this works for arrow key navigation
-    const clicked = event.relatedTarget;
-    if (clicked?.getAttribute('role') !== 'cell') {
-      // only continue if the user has clicked on a 'cell'
-      return;
-    }
+  // TODO: this isn't working with datagrid V5+ because onCellBlur was deprecated
+  // we need a new way to hook it into the DG flow, or more likely come up with a less brittle solution
+  // const highlightColumn = (cell, event) => {
+  //   // Get the next column to highlight from relatedTarget - this works for arrow key navigation
+  //   const clicked = event.target.nextSibling;
+  //   if (clicked?.getAttribute('role') !== 'cell') {
+  //     // only continue if the user has clicked on a 'cell'
+  //     return;
+  //   }
+  //   // Fetch the column name out of the element's data-field attribute
+  //   const nextHighlight = clicked.getAttribute('data-field');
 
-    // Fetch the column name out of the element's data-field attribute
-    const nextHighlight = clicked.getAttribute('data-field');
-
-    // and set our state to the column name, if it existed
-    if (nextHighlight) setHighlightedColumn(nextHighlight);
-  };
+  //   // and set our state to the column name, if it existed
+  //   if (nextHighlight) setHighlightedColumn(nextHighlight);
+  // };
 
   const handleCellKeyDown = (cell, event) => {
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
@@ -379,7 +398,7 @@ export default ({
         onColumnHeaderDoubleClick={openAnnotationPanel}
         GridSortModel={null}
         onCellKeyDown={handleCellKeyDown}
-        onCellBlur={highlightColumn}
+        // onCellBlur={highlightColumn}
         onCellClick={(cell) => setHighlightedColumn(cell.field)}
       />
 

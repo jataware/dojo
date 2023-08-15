@@ -31,7 +31,7 @@ const useStyles = makeStyles()((theme) => ({
   multipartRoot: {
     position: 'absolute',
     left: 0,
-    top: 0,
+    top: '8px',
     display: 'flex',
     justifyContent: 'center',
   },
@@ -66,14 +66,6 @@ const useStyles = makeStyles()((theme) => ({
   },
   headerWrapper: {
     width: '100%',
-  },
-  headerText: {
-    // magic number that pushes us down to put the border-bottom exactly on top of the columns
-    lineHeight: '32px',
-    width: '100%',
-  },
-  bottomBorder: {
-    borderBottom: `2px solid ${annotatedColor}`,
   },
   // very specific styling in this divider to replicate the Datagrid column header separator
   divider: {
@@ -163,11 +155,7 @@ const Header = ({
 
     <div
       style={{ color: !isInferredButDisabled && mapStatusColor[status] }}
-      className={
-        clsx({
-          [classes.headerWrapper]: true,
-        })
-      }
+      className={classes.headerWrapper}
     >
 
       {isMultiPartBase && (
@@ -221,11 +209,7 @@ const Header = ({
       )}
 
       <Typography
-        className={clsx({
-          [classes.headerText]: true,
-          [classes.selectedHeader]: isHighlighted,
-          [classes.bottomBorder]: isAnnotated,
-        })}
+        className={clsx({ [classes.selectedHeader]: isHighlighted })}
         variant="subtitle1"
         align="center"
       >
