@@ -23,12 +23,16 @@ function cleanModel(modelId) {
 
   return shutdownWorker().then(() => {
     console.log('Done clearing worker, clearing seeds.');
-    cy.task('seed:clean', {type: 'model', id: modelId});
+    // cy.task('seed:clean', {type: 'model', id: modelId});
   });
 }
 
 
 describe('Model Metadata: Creating a Model up to terminal step', () => {
+
+  before(() => {
+    cy.login();
+  });
 
   beforeEach(shutdownWorker);
 
@@ -125,6 +129,10 @@ describe('Model Metadata: Creating a Model up to terminal step', () => {
 
 describe('Model output annotation', () => {
 
+  before(() => {
+    cy.login();
+  });
+
   let modelId;
 
   afterEach(() => {
@@ -134,7 +142,7 @@ describe('Model output annotation', () => {
 
     shutdownWorker().then(() => {
       console.log('Done clearing worker');
-      cy.task('seed:clean', {type: 'model', id: modelId});
+      // cy.task('seed:clean', {type: 'model', id: modelId});
     });
   });
 
@@ -326,6 +334,10 @@ describe('Model output annotation', () => {
 
 describe('Model Annotate directive', () => {
 
+  before(() => {
+    cy.login();
+  });
+
   let modelId;
 
   afterEach(() => {
@@ -379,6 +391,10 @@ describe('Model Annotate directive', () => {
 
 describe('Model listings', () => {
 
+  before(() => {
+    cy.login();
+  });
+
   let modelId;
   let testModel;
 
@@ -389,7 +405,7 @@ describe('Model listings', () => {
 
   after(() => {
     console.log('Cleaning up seed test model:', modelId);
-    cy.task('seed:clean', {type: 'model', id: modelId});
+    // cy.task('seed:clean', {type: 'model', id: modelId});
   });
 
   it('Existing model is found in Model List page', () => {
@@ -409,6 +425,11 @@ describe('Model listings', () => {
 
 
 describe('Model metadata form state navigation', () => {
+
+  before(() => {
+    cy.login();
+  });
+
   it('Keeps state when navigating away and then back', () => {
     cy.visit('/');
     cy.get('[data-test=landingPageModelForm]').click();
@@ -465,6 +486,10 @@ async function waitForAllUrlsToFinish(urls) {
 
 
 describe('Model Summary Page', () => {
+
+  before(() => {
+    cy.login();
+  });
 
   let modelId = undefined;
 

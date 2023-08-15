@@ -79,11 +79,18 @@ export const shutdownWorker = () => {
 };
 
 
+const username = Cypress.env('dojo_demo_user');
+const password = Cypress.env('dojo_demo_pass');
+const auth = {
+  username,
+  password
+};
+
 export async function waitForAllUrlsToFinish(urls) {
   const METHOD = 0, URL = 1, BODY = 2;
 
   const finishedRequests = urls.map(async (item) => {
-    const res = await p(cy.request(item[METHOD], item[URL], item[BODY]));
+    const res = await p(cy.request(item[METHOD], item[URL], item[BODY], { auth }));
     return res;
   });
 
@@ -517,11 +524,11 @@ export async function waitForElwood(taskName, datasetId) {
     failOnStatusCode: false
   }
 
-  let elwoodStatus = await p(cy.request(reqArgs));
+  let elwoodStatus = await p(cy.request(reqArgs, { auth }));
 
   while (elwoodStatus.status === 200) {
     cy.wait(3000);
-    elwoodStatus = await p(cy.request(reqArgs));
+    elwoodStatus = await p(cy.request(reqArgs, { auth }));
   }
 
   return elwoodStatus;

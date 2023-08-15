@@ -115,3 +115,39 @@ Cypress.Commands.add('setSelection', { prevSubject: true }, (subject, query, end
 //       }
 //     });
 //  });
+
+/**
+ *
+ * Set the following OS env vars for cypress to use below.
+ * Cypress auto camelCases and remoced the leading cypress_:
+ * `cypress_dojo_demo_user`
+ * `cypress_dojo_demo_pass`
+ **/
+Cypress.Commands.add('login', () => {
+  // (you can use the authentification via API request)
+
+  console.log('cy env w/ regular:', Cypress.env('dojo_demo_user'));
+
+  const user = Cypress.env('dojo_demo_user');
+  const pass = Cypress.env('dojo_demo_pass');
+
+  console.log('demo env?:', user, pass);
+
+  const hasAuth = Boolean(user) && Boolean(pass);
+
+  console.log('has auth?', hasAuth);
+
+  console.log('process.env', process.env);
+
+  if(!hasAuth) {
+    return Cypress.Promise.resolve(false);
+  }
+
+  cy.visit('/', {
+    auth: {
+      username: user,
+      password: pass,
+    },
+  });
+
+})

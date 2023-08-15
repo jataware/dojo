@@ -5,6 +5,7 @@ import {
   dataset_uniform_annotations,
 } from '../seeds/dataset';
 
+import axios from 'axios';
 import { gen_tranform_intercepts } from '../support/helpers';
 
 const genTransformPairs = (dataset_id) => {
@@ -60,15 +61,47 @@ const genTransformPairs = (dataset_id) => {
 
 import { waitForElwood } from '../support/helpers';
 
+const username = Cypress.env('dojo_demo_user');
+const password = Cypress.env('dojo_demo_pass');
+const auth = {
+  username,
+  password
+};
+
+
+function createDataset(data) {
+
+  console.log('host on create dataset', Cypress.env('HOST'), Cypress.env('CYPRESS_HOST'), Cypress.env('cypressHost'), Cypress.env('host'), Cypress.env('baseUrl'));
+
+  return axios.post('https://dojo.jata.lol/api/dojo/indicators', data, {
+    auth
+  });
+}
+
+function createAnnotation(dataset_id, data) {
+  return axios.post('/api/dojo/indicators/${dataset_id}/annotations', data, {
+    auth
+  });
+}
+
+
 
 describe('Dataset Register: Publish E2E', () => {
+
+  before(() => {
+    cy.login();
+  });
 
   let dataset_id;
 
   afterEach(() => {
-    console.log('Cleaning seeded artifacts.');
-    cy.task('seed:clean', {type: 'dataset', id: dataset_id});
-    cy.task('seed:clean', {type: 'annotation', id: dataset_id});
+    const isAuthEnabledProd = Boolean(Cypress.env('dojo_demo_user'));
+
+    if (!isAuthEnabledProd) {
+      console.log('Cleaning seeded artifacts.');
+      cy.task('seed:clean', {type: 'dataset', id: dataset_id});
+      cy.task('seed:clean', {type: 'annotation', id: dataset_id});
+    }
 
     // Call seed:clean-files for minio files? TBD.
   });
@@ -77,79 +110,90 @@ describe('Dataset Register: Publish E2E', () => {
 
     const dataset = genDataset('acled');
 
-    cy.request('POST', '/api/dojo/indicators', dataset)
-      .then(({body}) => {
+    cy.wrap(createDataset(dataset))
+      .then(({data: body }) => {
 
         const createdDataset = body;
         dataset_id = createdDataset.id;
         const transformPairs = genTransformPairs(dataset_id);
 
-        cy.request('POST', `/api/dojo/indicators/${dataset_id}/annotations`, dataset_acled_annotations);
-        cy.task('upload', {type: 'dataset', id: dataset_id, variant: 'acled'});
+        cy.wrap(createAnnotation(dataset_id, dataset_acled_annotations))
+          .then(({data: savedAnnotations}) => {
 
-        // Stub transform fetch jobs for this one, as we only care about run_elwood results
-        transformPairs.forEach((testData) => {
-          const [fetch_job, start_job] = gen_tranform_intercepts.apply(null, [dataset_id, ...testData]);
-          cy.intercept(fetch_job[0], fetch_job[1]).as(fetch_job[2]);
-          cy.intercept(start_job[0], start_job[1]).as(start_job[2]);
-        });
+            cy.task('upload', {type: 'dataset', id: dataset_id, variant: 'acled'})
+              .then(() => {
 
-        cy.visit(`/datasets/register/transform/${dataset_id}?filename=raw_data.xlsx`);
 
-        cy.
-          findByRole('button', {name: /Next/i})
-          .click();
+                // Stub transform fetch jobs for this one, as we only care about run_elwood results
+                // transformPairs.forEach((testData) => {
+                //   const [fetch_job, start_job] = gen_tranform_intercepts.apply(null, [dataset_id, ...testData]);
+                //   cy.intercept(fetch_job[0], fetch_job[1]).as(fetch_job[2]);
+                //   cy.intercept(start_job[0], start_job[1]).as(start_job[2]);
 
-        cy.wait(3000);
+                //   cy.get(`@${fetch_job[2]}`).should((response) => {
+                //     expect(response.status).to.be(true);
+                //   });
 
-        cy.wrap(waitForElwood('run_elwood', dataset_id))
-          .then((elwoodResult) => {
+                //   // cy.get(`@${start_job[2]}`)
+                // });
 
-            console.log('run_elwood res:', elwoodResult);
+                cy.visit(`/datasets/register/transform/${dataset_id}?filename=raw_data.xlsx`, { auth });
 
-            cy.wait(3000);
+                cy.wait(30000); // wait since we dont have the intercepts above
 
-            cy.wrap(waitForElwood('scale_features', dataset_id))
-              .then((scaleResult) => {
-
-                console.log('Scale res:', scaleResult);
-
-                // Wait, then click submit/publish.
-                // 10 seconds for Ubuntu, up to 2 minutes for macos+docker
                 cy.
-                  findAllByRole('button', {name: /Submit To Dojo/i, timeout: 10000})
-                  .eq(1)
+                  findByRole('button', {name: /Next/i})
                   .click();
 
-                cy.wait(2000); // Allow time for the sync plugins to run.
+                cy.wait(3000);
 
-                // Finally, fetch final dataset and assert expected properties
-                cy.request(`/api/dojo/indicators/${dataset_id}`).as('FinalDataset');
+                cy.wrap(waitForElwood('run_elwood', dataset_id))
+                  .then((elwoodResult) => {
 
-                cy
-                  .get('@FinalDataset')
-                  .then((response) => {
+                    console.log('run_elwood res:', elwoodResult);
 
-                    const { body } = response;
+                    cy.wait(3000);
 
-                    expect(body.id).to.equal(dataset_id);
-                    expect(body.published).to.equal(true);
+                    cy.wrap(waitForElwood('scale_features', dataset_id))
+                      .then((scaleResult) => {
 
-                    expect(body.feature_names).to.have.length(2);
-                    expect(body.outputs).to.have.length(1);
-                    expect(body.qualifier_outputs).to.have.length.of.at.least(1);
-                    expect(body.geography.country).to.have.length.of.at.least(1);
+                        console.log('Scale res:', scaleResult);
 
-                    expect(body.period).to.have.property('gte');
-                    expect(body.period).to.have.property('lte');
+                        // Wait, then click submit/publish.
+                        // 10 seconds for Ubuntu, up to 2 minutes for macos+docker
+                        cy.
+                          findAllByRole('button', {name: /Submit To Dojo/i, timeout: 10000})
+                          .eq(1)
+                          .click();
+
+                        cy.wait(2000); // Allow time for the sync plugins to run.
+
+                        // Finally, fetch final dataset and assert expected properties
+                        cy.request(`/api/dojo/indicators/${dataset_id}`, { auth }).as('FinalDataset');
+
+                        cy
+                          .get('@FinalDataset')
+                          .then((response) => {
+
+                            const { body } = response;
+
+                            expect(body.id).to.equal(dataset_id);
+                            expect(body.published).to.equal(true);
+
+                            expect(body.feature_names).to.have.length(2);
+                            expect(body.outputs).to.have.length(1);
+                            expect(body.qualifier_outputs).to.have.length.of.at.least(1);
+                            expect(body.geography.country).to.have.length.of.at.least(1);
+
+                            expect(body.period).to.have.property('gte');
+                            expect(body.period).to.have.property('lte');
+                          });
+
+                      });
+
                   });
-
               });
-
           });
-
       });
-
   });
-
 });

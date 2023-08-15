@@ -1,6 +1,11 @@
 const { defineConfig } = require("cypress");
 const webpackConfig = require('./cypress/webpack.cypress.js');
 
+const user = process.env['cypress_dojo_demo_user']
+const pass = process.env['cypress_dojo_demo_pass'];
+
+// console.log(user);
+
 module.exports = defineConfig({
   chromeWebSecurity: false,
   defaultCommandTimeout: 10000,
@@ -14,7 +19,8 @@ module.exports = defineConfig({
     setupNodeEvents(on, config) {
       return require("./cypress/plugins/index.js")(on, config);
     },
-    baseUrl: "http://localhost:8080",
+    // baseUrl: `https://${user}:${pass}@dojo.jata.lol`,
+    baseUrl: 'https://dojo.jata.lol',
     specPattern: 'cypress/e2e/**/*.cy.js',
     "experimentalRunAllSpecs": true,
     "experimentalMemoryManagement": true
