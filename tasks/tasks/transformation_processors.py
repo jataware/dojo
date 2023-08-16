@@ -9,7 +9,13 @@ import sys
 import pandas as pd
 import numpy as np
 
-from utils import job_setup, put_rawfile, persist_untransformed_file, rewrite_file
+from utils import (
+    job_setup,
+    put_rawfile,
+    persist_untransformed_file,
+    rewrite_file,
+    get_primary_time_format,
+)
 from elwood import elwood
 from settings import settings
 
@@ -148,6 +154,8 @@ def scale_time(context, filename=None, **kwargs):
     original_dataframe = pd.read_csv(file, delimiter=",")
     rows_pre_clip = len(original_dataframe.index)
 
+    time_format = get_primary_time_format(context)
+
     # Main call
     time_column = kwargs.get("datetime_column", "")
     time_bucket = kwargs.get("datetime_bucket", "")
@@ -156,7 +164,7 @@ def scale_time(context, filename=None, **kwargs):
 
     if time_column and time_bucket and aggregation_list:
         try:
-            clipped_df = elwood.rescale_dataframe_time(
+            scaled_df = elwood.rescale_dataframe_time(
                 dataframe=original_dataframe,
                 time_column=time_column,
                 time_bucket=time_bucket,
@@ -170,8 +178,17 @@ def scale_time(context, filename=None, **kwargs):
             }
             return response
 
-        json_dataframe_preview = clipped_df.head(100).to_json(default_handler=str)
-        rows_post_clip = len(clipped_df.index)
+        print(f"SCALED DF: {scaled_df}")
+
+        scaled_df[time_column] = pd.to_datetime(scaled_df[time_column])
+        scaled_df[time_column] = scaled_df[time_column].apply(
+            lambda x: x.strftime(time_format)
+        )
+
+        print(f"SCALED DF formatted: {scaled_df}")
+
+        json_dataframe_preview = scaled_df.head(100).to_json(default_handler=str)
+        rows_post_clip = len(scaled_df.index)
 
         preview = kwargs.get("preview_run", False)
 
@@ -183,7 +200,7 @@ def scale_time(context, filename=None, **kwargs):
             # Put the new clipped file to overwrite the old one.
             file_buffer = io.BytesIO()
 
-            clipped_df.to_csv(file_buffer, index=False)
+            scaled_df.to_csv(file_buffer, index=False)
             file_buffer.seek(0)
 
             put_rawfile(path=rawfile_path, fileobj=file_buffer)
@@ -220,9 +237,7 @@ def regrid_geo(context, filename=None, **kwargs):
     sys.stdout.flush()
     rows_pre_clip = len(original_dataframe.index)
 
-    time_format = (
-        context.get("annotations").get("annotations").get("date")[0].get("time_format")
-    )
+    time_format = get_primary_time_format(context)
 
     # Main Call
     geo_column = kwargs.get("geo_columns")
@@ -248,7 +263,7 @@ def regrid_geo(context, filename=None, **kwargs):
             lambda x: x.strftime(time_format)
         )
 
-        print(f"REGRIDDED DF fromatted: {regridded_df}")
+        print(f"REGRIDDED DF formatted: {regridded_df}")
 
         json_dataframe_preview = regridded_df.head(100).to_json(default_handler=str)
         rows_post_clip = len(regridded_df.index)
