@@ -7,7 +7,7 @@ from elasticsearch import Elasticsearch
 import time
 import re
 
-from .dart_papers import DartPapers
+from dart_papers import DartPapers
 
 parser = argparse.ArgumentParser("Parse indicators and upload features to elasticsearch.")
 parser.add_argument("--es-host",
@@ -49,7 +49,8 @@ DEFAULT_DOC = {
     "producer": "",
     "stated_genre": "",
     "uploaded_at": None,
-    "processed_at": None
+    "processed_at": None,
+    "author": "DART"
 }
 
 def index_all_documents():

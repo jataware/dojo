@@ -7,13 +7,10 @@ as a one-off script, or derive a tool in case indicators and features ever get
 out of sync.
 """
 
-import sys
 from pathlib import Path
 import argparse
 
-sys.path.append(str(Path(__file__).resolve().parent.parent))
-
-from src.embedder_engine import embedder
+from embedder_engine import get_embedder
 from elasticsearch import Elasticsearch
 
 parser = argparse.ArgumentParser("Parse indicators and upload features to elasticsearch.")
@@ -45,6 +42,7 @@ def calcOutputEmbeddings(output):
 
     # Accepts a list for flexibility, and returns corresponsing embeddings list
     # We only pass one input, so we retrieve the first and only output
+    embedder = get_embedder()
     return embedder.embed([description])[0]
 
 

@@ -2,7 +2,7 @@
 name = "missing-datasets"
 version = "0.1.0"
 description = ""
-authors = ["Mr. Joel"]
+authors = ["Joel Q <joel@jataware.com>"]
 readme = "README.md"
 packages = [{include = "missing_datasets"}]
 

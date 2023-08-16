@@ -212,8 +212,25 @@ def setup_elasticsearch_indexes():
                         "type": "dense_vector",
                         "dims": 768
                     },
+                    "document_id": {
+                        "type": "keyword",
+                        "index": True,
+                        "doc_values": True,
+                        "norms": False,
+                        "fields": {
+                            "partial": {
+                                "type": "search_as_you_type"
+                            }
+                        }
+                    },
                     "length": {
                         "type": "short"
+                    },
+                    "index": {
+                        "type": "long"
+                    },
+                    "page_no": {
+                        "type": "long"
                     }
                 }
             }
