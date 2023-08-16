@@ -9,6 +9,7 @@ import { makeStyles } from 'tss-react/mui';
 import TimelineIcon from '@mui/icons-material/Timeline'; // feature
 import LanguageIcon from '@mui/icons-material/Language'; // geo
 import EventIcon from '@mui/icons-material/Event'; // date
+// import { keyframes } from '@emotion/react';
 
 // TODO use colors from theme
 const inferredColor = '#337288'; // inferred/hint/"action" blue-gray
@@ -26,6 +27,16 @@ const mapTypeIcon = {
   geo: LanguageIcon,
   time: EventIcon // date
 };
+
+// MUI-TODO: animation is not displaying properly in v5, sort this out later
+// const buttonPulse = keyframes`
+//   from {
+//     outline 2px solid #86b5e3;
+//   }
+//   to {
+//     outline: 2px solid white;
+//   }
+// `;
 
 const useStyles = makeStyles()((theme) => ({
   multipartRoot: {
@@ -77,16 +88,7 @@ const useStyles = makeStyles()((theme) => ({
   },
   highlightedButton: {
     backgroundColor: theme.palette.grey[100],
-    animation: '$pulse 1.5s infinite alternate',
   },
-  '@keyframes pulse': {
-    from: {
-      outline: `1px solid ${theme.palette.primary.light}`,
-    },
-    to: {
-      outline: '1px solid white',
-    }
-  }
 }));
 
 const MultiPartHeader = ({
@@ -179,6 +181,10 @@ const Header = ({
           <Button
             variant="outlined"
             disabled={isMultiPartMember}
+            // MUI-TODO
+            // sx={{
+            //   animation: isHighlighted && !isAnnotated ? `${buttonPulse} 1.5s infinite alternate` : '',
+            // }}
             style={{ visibility: isMultiPartMember ? 'hidden' : 'visible' }}
             size="small"
             onClick={() => buttonClick(column)}
