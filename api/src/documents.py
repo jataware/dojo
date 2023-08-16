@@ -474,6 +474,13 @@ def get_document_text(document_id: str,
                 "query": {
                     "match": {"document_id": document_id}
                 },
+                "sort": [
+                    {
+                        "index": {
+                            "order": "asc"
+                        }
+                    }
+                ],
                 "_source": {"excludes": ["embeddings"]}
             }
             # Get all the paragraphs for the document, ordered by indexed order
