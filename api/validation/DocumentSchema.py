@@ -29,7 +29,7 @@ class Model(CreateModel):
 
 
 class DocumentListResponse(BaseModel):
-    hits: str
+    hits: int
     items_in_page: int
     results: List[Model]
     scroll_id: Optional[str]

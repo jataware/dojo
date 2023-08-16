@@ -175,6 +175,24 @@ def setup_elasticsearch_indexes():
             },
             "mappings": {
                 "properties": {
+                    "title": {
+                        "type": "text",
+                        "fields": {
+                            "lowersortable": {
+                                "type": "keyword",
+                                "normalizer": "lowercase"
+                            }
+                        }
+                    },
+                    "publisher": {
+                        "type": "text",
+                        "fields": {
+                            "lowersortable": {
+                                "type": "keyword",
+                                "normalizer": "lowercase"
+                            }
+                        }
+                    },
                     "creation_date": {
                         "type": "date"
                     },
