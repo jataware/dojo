@@ -1,76 +1,122 @@
 from elasticsearch import Elasticsearch
 
 
-def create_and_reindex_index(es, index_name, version, new_mappings):
+def create_and_reindex_index(es, index_name, version, new_index_config):
     """
     """
-    # Create a new index with the given mappings
     new_index_name = f"{index_name}_v{version + 1}"
-    es.indices.create(index=new_index_name, body={"mappings": new_mappings})
 
-    # Reindex data from the old index to the new index
+    print(f"Creating new index: {new_index_name}.")
+
+    es.indices.create(index=new_index_name, body=new_index_config)
+
+    print(f"Indexing data from {index_name} to: {new_index_name}.")
+
     reindex_body = {
         "source": {"index": index_name},
         "dest": {"index": new_index_name}
     }
     es.reindex(body=reindex_body, wait_for_completion=True)
 
-    # Delete the old index
+    print(f"Now delete old '{index_name}'.")
+
     es.indices.delete(index=index_name)
 
-    # Create an alias using the index_name for the new index
+    print(f"Finally, create alias to use {index_name} for {new_index_name}.")
+
     es.indices.put_alias(index=new_index_name, name=index_name)
 
 
 if __name__ == "__main__":
-    index_name = input("Enter the index name: ")
-    version = int(input("Enter the current version: "))
+    index_name = "document_paragraphs" # Set your index here
+    current_version = 1                        # Set current version here
 
     # !WARNING! PLEASE READ
     # NOTE Set your new index settings/mappings here!
     # These are just a sample/from previous use.
-    new_mappings = {
-        "settings": {
-            "index": {
-                "sort.field": "uploaded_at",
-                "sort.order": "desc"
-            }
-        },
-        "mappings": {
-            "properties": {
-                "title": {
-                    "type": "text",
-                    "fields": {
-                        "lowersortable": {
-                            "type": "keyword",
-                            "normalizer": "lowercase"
-                        }
-                    }
-                },
-                "publisher": {
-                    "type": "text",
-                    "fields": {
-                        "lowersortable": {
-                            "type": "keyword",
-                            "normalizer": "lowercase"
-                        }
-                    }
-                },
-                "creation_date": {
-                    "type": "date"
-                },
-                "uploaded_at": {
-                    "type": "date"
-                },
-                "processed_at": {
-                    "type": "date"
-                }
-            }
-        }
-    }
 
-    es = Elasticsearch([{'host': 'localhost', 'port': 9200}])  # Update with your Elasticsearch connection details
+    # Sample up upgrade documents index to v2
+    # new_index_config = {
+    #     "settings": {
+    #         "index": {
+    #             "sort.field": "uploaded_at",
+    #             "sort.order": "desc"
+    #         }
+    #     },
+    #     "mappings": {
+    #         "properties": {
+    #             "title": {
+    #                 "type": "text",
+    #                 "fields": {
+    #                     "lowersortable": {
+    #                         "type": "keyword",
+    #                         "normalizer": "lowercase"
+    #                     }
+    #                 }
+    #             },
+    #             "publisher": {
+    #                 "type": "text",
+    #                 "fields": {
+    #                     "lowersortable": {
+    #                         "type": "keyword",
+    #                         "normalizer": "lowercase"
+    #                     }
+    #                 }
+    #             },
+    #             "creation_date": {
+    #                 "type": "date"
+    #             },
+    #             "uploaded_at": {
+    #                 "type": "date"
+    #             },
+    #             "processed_at": {
+    #                 "type": "date"
+    #             }
+    #         }
+    #     }
+    # }
 
-    create_and_reindex_index(es, index_name, version, new_mappings)
+    # TODO put in your es index config here
+    # See examples around this line.
+    new_index_config = {}
+
+    # For document_paragraphs_v2:
+    # new_index_config = {
+    #     "mappings": {
+    #         "properties": {
+    #             "embeddings": {
+    #                 "type": "dense_vector",
+    #                 "dims": 768
+    #             },
+    #             "document_id": {
+    #                 "type": "keyword",
+    #                 "index": True,
+    #                 "doc_values": True,
+    #                 "norms": False,
+    #                 "fields": {
+    #                     "partial": {
+    #                         "type": "search_as_you_type"
+    #                     }
+    #                 }
+    #             },
+    #             "length": {
+    #                 "type": "short"
+    #             },
+    #             "index": {
+    #                 "type": "long"
+    #             },
+    #             "page_no": {
+    #                 "type": "long"
+    #             }
+    #         }
+    #     }
+    # }
+
+    es = Elasticsearch([{'host': 'localhost', 'port': 9200}],
+                       timeout=30,         # Adjust this as needed
+                       max_retries=3       # Adjust this as needed
+                       )  # Update with your Elasticsearch connection details
+
+    create_and_reindex_index(es, index_name, current_version, new_index_config)
 
     print("Index creation, reindexing, and aliasing complete.")
