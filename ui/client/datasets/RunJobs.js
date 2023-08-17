@@ -135,6 +135,20 @@ const RunJobs = withStyles(({ spacing }) => ({
   }, [jobData, datasetInfo.id]);
   /* eslint-enable */
 
+  // clear rqworker jobs and go back to previous step
+  // currently only applies to the 'BasicRegistrationFlow' but shouldn't harm others
+  const clearBack = async () => {
+    try {
+      // clear the rqworker jobs for this dataset id
+      // so that the transformations page will not use cached results for stale data
+      await axios.post(`/api/dojo/job/clear/${datasetInfo.id}`);
+    } catch (error) {
+      console.info(error?.response?.data);
+    }
+
+    handleBack();
+  };
+
   return (
     <Container
       className={classes.root}
@@ -176,7 +190,7 @@ const RunJobs = withStyles(({ spacing }) => ({
       {/* TODO NOTE Temporary for navigation testing. Should auto-go to next when complete. */}
       <Navigation
         handleNext={null}
-        handleBack={handleBack}
+        handleBack={clearBack}
       />
     </Container>
   );
