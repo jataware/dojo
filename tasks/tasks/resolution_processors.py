@@ -59,7 +59,12 @@ def calculate_geographical_resolution(context, filename=None, **kwargs):
 
     resolution_res = detect_latlon_resolution(lat, lon)
 
-    if resolution_res is None or resolution_res.square is None:
+    if (
+        resolution_res is None
+        or isinstance(resolution_res, dict)
+        or resolution_res.square is None
+    ):
+        print(f"RESOLUTION RESULT: {resolution_res}")
         response = {
             "message": "Resolution not detectable",
             "resolution_result": "None",
@@ -67,7 +72,6 @@ def calculate_geographical_resolution(context, filename=None, **kwargs):
         return response
 
     try:
-
         scale_km = degrees_to_km(
             resolution_res.square.unit.name, resolution_res.square.resolution
         )
@@ -98,7 +102,6 @@ def calculate_geographical_resolution(context, filename=None, **kwargs):
 
 
 def degrees_to_km(degree_unit, value):
-
     value = float(value)
 
     if degree_unit == "degrees":
