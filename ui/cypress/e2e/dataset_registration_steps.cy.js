@@ -1,26 +1,7 @@
 
-const dataset_id = 'mock-test-guid';
+import { gen_tranform_intercepts } from '../support/helpers';
 
-function get_tranform_intercepts(jobName, result) {
-  const method = 'POST';
-  return [[
-    {
-      method: method,
-      url: `/api/dojo/job/fetch/*_${jobName}`
-    },
-    result,
-    `${method}_${jobName}_fetch`
-  ], [
-    {
-      method: method,
-      url: `/api/dojo/job/*/${jobName}`
-    },
-    {id: `${dataset_id}_${jobName}`, result},
-    `${method}_${jobName}_start`
-  ]];
-}
-
-const transformPairs = [
+const genTransformPairs = (dataset_id) => ([
   ['gadm_processors.resolution_alternatives', {
     id: `${dataset_id}_gadm_processors.resolution_alternatives`,
     result: {
@@ -67,16 +48,18 @@ const transformPairs = [
   }],
   ['gadm_processors.all_gadm_values', ['mocked_countries']],
   ['transformation_processors.scale_time', {}]
-];
+]);
 
 /**
  *
  **/
 function mockHttpRequests() {
 
+  const dataset_id = 'mock-test-guid';
+
   // Generate pair of jobs for transform jobname,result as defined above this fn
-  transformPairs.forEach((testData, index) => {
-    const [fetch_job, start_job] = get_tranform_intercepts.apply(null, testData);
+  genTransformPairs(dataset_id).forEach((testData, index) => {
+    const [fetch_job, start_job] = gen_tranform_intercepts.apply(null, [dataset_id, ...testData]);
     cy.intercept(fetch_job[0], fetch_job[1]).as(fetch_job[2]);
     cy.intercept(start_job[0], start_job[1]).as(start_job[2]);
   });
@@ -194,6 +177,10 @@ function mockHttpRequests() {
 
 }
 
+/**
+ * UI Integration tests for Happy Path on Dataset Registration
+ * Can be run on CI, but stubs all interactions with the backend.
+ **/
 describe('Dataset Register Flow', function () {
 
   beforeEach(() => {

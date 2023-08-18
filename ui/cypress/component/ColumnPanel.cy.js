@@ -1,5 +1,3 @@
-import React from 'react';
-import { mount } from '@cypress/react';
 import identity from 'lodash/identity';
 import ColumnPanel from '../../client/datasets/annotations/ColumnPanel';
 
@@ -7,7 +5,7 @@ describe('ColumnPanel', () => {
 
   it('Displays validation error when submitting form with both primary field + qualifies another.', () => {
 
-    mount(
+    cy.mount(
       <ColumnPanel
         columnName="ravioli"
         headerName="That Value"

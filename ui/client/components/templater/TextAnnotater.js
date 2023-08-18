@@ -87,6 +87,7 @@ const Mark = ({
   const displayInnerContent = () => (
     <span
       className={savedHover ? classes.darkerMark : classes.mark}
+      data-testid="annotation-inner-contents"
       data-start={start}
       data-end={end}
     >
@@ -98,6 +99,7 @@ const Mark = ({
   return (
     formOpen ? displayInnerContent() : (
       <Tooltip
+        data-testid="tooltip"
         classes={{ tooltip: classes.tooltip, tooltipArrow: classes.tooltipArrow }}
         title={(
           <>
@@ -121,6 +123,7 @@ const Mark = ({
                   color="inherit"
                   size="small"
                   variant="outlined"
+                  data-testid="annotate-tooltip-edit"
                 >
                   Edit
                 </Button>
