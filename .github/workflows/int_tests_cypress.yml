@@ -36,7 +36,7 @@ jobs:
         uses: cypress-io/github-action@v5
         with:
           working-directory: ./ui
-          config: video=false,videoUploadOnPasses=false,keystrokeDelay=1,retries=2,excludeSpecPattern=[*.hot-update.js, *.e2e.*]
+          config: '{"e2e": { "excludeSpecPattern": ["*.hot-update.js", "**/*.e2e.cy.js"] }, "video": false, "keystrokeDelay": 1, "retries": 2,  "component": {"excludeSpecPattern": ["*.hot-update.js", "**/*.e2e.cy.js"]}}'
           start: npm run dev
           wait-on: 'http://127.0.0.1:8080'
           wait-on-timeout: 160

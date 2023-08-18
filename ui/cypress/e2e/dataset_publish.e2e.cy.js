@@ -61,7 +61,7 @@ const genTransformPairs = (dataset_id) => {
 import { waitForElwood } from '../support/helpers';
 
 
-describe('Dataset Register: Publish E2E', () => {
+describe('Dataset Register: Publish E2E', { browser: ['chrome', 'chromium', 'firefox'] }, () => {
 
   let dataset_id;
 

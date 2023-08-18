@@ -56,7 +56,7 @@ const mockData = {
 
 
 
-describe('FullScreenTemplater: config', () => {
+describe('FullScreenTemplater: config', { browser: ['chrome', 'chromium', 'firefox'] }, () => {
 
   const testModel = genBaseModel();
 

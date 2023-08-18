@@ -34,7 +34,7 @@ function cleanModel(modelId) {
 // NOTE slowest test of them all since it registers jataware/test-model
 // and cannot determine how much to wait for the HTML canvas terminal ssh session
 // commands.
-describe('Register/Publish Test Model', () => {
+describe('Register/Publish Test Model', { browser: ['chrome', 'chromium', 'firefox'] }, () => {
 
   let modelId = undefined;
 

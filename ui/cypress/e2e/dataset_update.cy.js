@@ -4,6 +4,8 @@
  **/
 function mockHttpRequests() {
 
+  Cypress.log({message: 'Mocking HTTP Requests'});
+
   cy.intercept({
     method: 'GET',
     url: '/api/dojo/*/domains*'
@@ -94,6 +96,15 @@ describe('Dataset Update Metadata Flow', function () {
   it('Happy path: Goes through from Update Metadata flow until success page with mocked requests', function () {
 
     mockHttpRequests();
+
+    console.log('Cypress config:', Cypress.config());
+
+    const baseUrl = Cypress.config('baseUrl');
+    const browser = Cypress.config('browser');
+
+    console.log('Cypress baseUrl:', baseUrl);
+    console.log('Cypress browser:', browser);
+
 
     cy.visit('/datasets/update/register/test-guid');
 

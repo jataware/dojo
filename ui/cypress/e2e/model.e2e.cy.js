@@ -28,7 +28,7 @@ function cleanModel(modelId) {
 }
 
 
-describe('Model Metadata: Creating a Model up to terminal step', () => {
+describe('Model Metadata: Creating a Model up to terminal step', { browser: ['chrome', 'chromium', 'firefox'] }, () => {
 
   beforeEach(shutdownWorker);
 
@@ -123,7 +123,7 @@ describe('Model Metadata: Creating a Model up to terminal step', () => {
 });
 
 
-describe('Model output annotation', () => {
+describe('Model output annotation', { browser: ['chrome', 'chromium', 'firefox'] }, () => {
 
   let modelId;
 
@@ -324,7 +324,7 @@ describe('Model output annotation', () => {
 });
 
 
-describe('Model Annotate directive', () => {
+describe('Model Annotate directive', { browser: ['chrome', 'chromium', 'firefox'] }, () => {
 
   let modelId;
 
@@ -377,7 +377,7 @@ describe('Model Annotate directive', () => {
 });
 
 
-describe('Model listings', () => {
+describe('Model listings', { browser: ['chrome', 'chromium', 'firefox'] }, () => {
 
   let modelId;
   let testModel;
@@ -408,7 +408,7 @@ describe('Model listings', () => {
 });
 
 
-describe('Model metadata form state navigation', () => {
+describe('Model metadata form state navigation', { browser: ['chrome', 'chromium', 'firefox'] }, () => {
   it('Keeps state when navigating away and then back', () => {
     cy.visit('/');
     cy.get('[data-test=landingPageModelForm]').click();
@@ -464,7 +464,7 @@ async function waitForAllUrlsToFinish(urls) {
 }
 
 
-describe('Model Summary Page', () => {
+describe('Model Summary Page', { browser: ['chrome', 'chromium', 'firefox'] }, () => {
 
   let modelId = undefined;
 
