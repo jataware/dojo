@@ -16,6 +16,15 @@ const useElwoodData = ({
   const [dataLoading, setDataLoading] = useState(false);
   const [dataError, setDataError] = useState(false);
 
+  // This is necessary for useOrderedElwoodJobs to run multiple jobs in sequence
+  // with the same hook but changing jobString
+  useEffect(() => {
+    // Reset the state when jobString changes
+    setData(null);
+    setDataError(false);
+    setDataLoading(false);
+  }, [jobString]);
+
   useEffect(() => {
     const handleFailure = () => {
       setDataError('An unexpected error occurred while starting the job.');

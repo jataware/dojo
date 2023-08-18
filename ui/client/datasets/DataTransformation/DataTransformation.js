@@ -505,8 +505,9 @@ const DataTransformation = withStyles(() => ({
   // }, []);
 
   const processAdjustGeo = () => {
+    let args;
     if (savedMapResolution) {
-      const args = generateProcessGeoResArgs({
+      args = generateProcessGeoResArgs({
         annotations,
         newMapResolution: savedMapResolution,
         oldMapResolution: mapResolution,
@@ -519,31 +520,24 @@ const DataTransformation = withStyles(() => ({
       if (savedMapResolution === 'Non-uniform/event data') return;
 
       // return startElwoodJob(datasetInfo.id, args, 'transformation_processors.regrid_geo');
-
-
-      // const { data: adjustedGeo, error: adjustedGeoError } = useElwoodData({
-      //   datasetId: datasetInfo.id,
-      //   annotations,
-      //   jobString: 'transformation_processors.regrid_geo',
-      //   generateArgs: args,
-      //   cleanupRef,
-      //   onSuccess: onTransformationSuccess,
-      //   onBackendFailure
-      // });
     }
+    return args;
   };
 
   const processMapClippings = () => {
+    let args;
     if (savedDrawings.length > 0) {
-      const args = generateProcessGeoCovArgs(annotations, savedDrawings);
+      args = generateProcessGeoCovArgs(annotations, savedDrawings);
       transformationsRef.current.clip_geo = args;
       // return startElwoodJob(datasetInfo.id, args, 'transformation_processors.clip_geo');
     }
+    return args;
   };
 
   const processClipTime = () => {
+    let args;
     if (savedTimeBounds) {
-      const args = generateProcessTempCovArgs({
+      args = generateProcessTempCovArgs({
         annotations,
         start: savedTimeBounds[0],
         end: savedTimeBounds[savedTimeBounds.length - 1],
@@ -551,11 +545,13 @@ const DataTransformation = withStyles(() => ({
       transformationsRef.current.clip_time = args;
       // return startElwoodJob(datasetInfo.id, args, 'transformation_processors.clip_time');
     }
+    return args;
   };
 
   const processAdjustTime = () => {
+    let args;
     if (savedTimeResolution) {
-      const args = generateProcessTempResArgs(
+      args = generateProcessTempResArgs(
         annotations,
         savedTimeResolution,
         savedTimeAggregation
@@ -563,6 +559,7 @@ const DataTransformation = withStyles(() => ({
       transformationsRef.current.scale_time = args;
       // return startElwoodJob(datasetInfo.id, args, 'transformation_processors.scale_time');
     }
+    return args;
   };
 
   const processGadmOverrides = () => {
@@ -570,22 +567,25 @@ const DataTransformation = withStyles(() => ({
   };
 
   const handleNextStep = () => {
+    // the order we want TODO: remove this
     // time clipping
     // geo clipping
     // adjust time
     // adjust geo
-    const adjustGeo = processAdjustGeo();
-    const clipMap = processMapClippings();
-    const adjustTime = processAdjustTime();
-    const clipTime = processClipTime();
+    // const adjustGeo = processAdjustGeo();
+    // const clipMap = processMapClippings();
+    // const adjustTime = processAdjustTime();
+    // const clipTime = processClipTime();
 
     processGadmOverrides();
+  // TODO:Handle skipping jobs if there aren't transformations done - perhaps only push into
+  // the array if there are transformations done?
     setJobsConfig([
       {
         datasetId: datasetInfo.id,
         annotations,
         onSuccess: (data) => console.log('First job data - clip geo:', data),
-        generateArgs: () => generateProcessGeoCovArgs(annotations, savedDrawings),
+        generateArgs: () => processMapClippings(),
         jobString: 'transformation_processors.clip_geo',
         cleanupRef,
         onBackendFailure,
@@ -594,11 +594,7 @@ const DataTransformation = withStyles(() => ({
         datasetId: datasetInfo.id,
         annotations,
         onSuccess: (data) => console.log('Second job data - clip time:', data),
-        generateArgs: () => generateProcessTempCovArgs({
-          annotations,
-          start: savedTimeBounds[0],
-          end: savedTimeBounds[savedTimeBounds.length - 1],
-        }),
+        generateArgs: () => processClipTime(),
         jobString: 'transformation_processors.clip_time',
         cleanupRef,
         onBackendFailure,
@@ -607,11 +603,7 @@ const DataTransformation = withStyles(() => ({
         datasetId: datasetInfo.id,
         annotations,
         onSuccess: (data) => console.log('Third job data - scale time:', data),
-        generateArgs: () => generateProcessTempResArgs(
-          annotations,
-          savedTimeResolution,
-          savedTimeAggregation
-        ),
+        generateArgs: () => processAdjustTime(),
         jobString: 'transformation_processors.scale_time',
         cleanupRef,
         onBackendFailure,
@@ -620,20 +612,16 @@ const DataTransformation = withStyles(() => ({
         datasetId: datasetInfo.id,
         annotations,
         onSuccess: (data) => console.log('Fourth job data - regrid geo:', data),
-        generateArgs: () => generateProcessGeoResArgs({
-          annotations,
-          newMapResolution: savedMapResolution,
-          oldMapResolution: mapResolution,
-          aggregation: savedMapAggregation
-        }),
+        generateArgs: () => processAdjustGeo(),
         jobString: 'transformation_processors.regrid_geo',
         cleanupRef,
         onBackendFailure,
       },
     ]);
 
-
-
+// TODO: set this up to happen when the jobs wrap up
+  // either in RunTransformations, or triggered via a useEffect when the results come back
+  // from RunTransformations
     // Only do all of the below when we've done all of the selected transformations
     // any untouched transformations won't return a promise and thus won't delay this
     // Promise.all([adjustGeo, clipMap, adjustTime, clipTime]).then((responses) => {
