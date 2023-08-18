@@ -152,6 +152,8 @@ module.exports = (on, config) => {
 
   on('task', {
 
+    'debug': (...args) => {debug(...args); return true;},
+
     // TODO this is unused for now as we can use API
     // for simple cases, but for complex scenarios it will be useful
     'seed': ({type, id, name}) => {

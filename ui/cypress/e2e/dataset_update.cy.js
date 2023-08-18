@@ -7,6 +7,11 @@ function mockHttpRequests() {
   Cypress.log({message: 'Mocking HTTP Requests'});
 
   cy.intercept({
+    method: 'POST',
+    url: '/api/dojo/job/clear/*'
+  }, 'No job found for uuid = test-guid');
+
+  cy.intercept({
     method: 'GET',
     url: '/api/dojo/*/domains*'
   }, {
@@ -97,14 +102,7 @@ describe('Dataset Update Metadata Flow', function () {
 
     mockHttpRequests();
 
-    console.log('Cypress config:', Cypress.config());
-
-    const baseUrl = Cypress.config('baseUrl');
-    const browser = Cypress.config('browser');
-
-    console.log('Cypress baseUrl:', baseUrl);
-    console.log('Cypress browser:', browser);
-
+    cy.task('debug', JSON.stringify(Cypress.config(), null, 2));
 
     cy.visit('/datasets/update/register/test-guid');
 

@@ -503,11 +503,15 @@ describe('Model Summary Page', { browser: ['chrome', 'chromium', 'firefox'] }, (
           .type('cd ..{enter}')
           .type(`cat ${folderName}/${fileName}{enter}`);
 
+        Cypress.log({message: `Uploading output file seed.`});
+
         cy.readFile('cypress/files/sample_output.csv').then((contents) => {
           return cy.request('POST', saveUrl, contents);
         });
 
         const urls = getModelRegisterUrls(modelId, {homeDir, user, fileName, folderName, saveUrl})
+
+        Cypress.log({message: 'Wait for all seed URLs to finish'});
 
         cy.wrap(waitForAllUrlsToFinish(urls))
           .then(() => {
@@ -519,6 +523,9 @@ describe('Model Summary Page', { browser: ['chrome', 'chromium', 'firefox'] }, (
                   .click();
 
                 cy.findByText(/Uploading Model to Docker.+/i);
+
+                Cypress.log({message: 'Verify all regions are populated on summary.'});
+
                 cy.findByRole('heading', {name: /parameters\.json/i})
                 cy.findAllByRole('heading', {name: /accessory\.png/i});
                 cy.findAllByRole('heading', {name: /Test-Output-Name/i});

@@ -128,6 +128,8 @@ export async function provisionAndWaitReady(existingModelId) {
 
   const modelId = existingModelId;
 
+  Cypress.log({message: `Provisioning Terminal for model ${modelId}.`});
+
   const response = await p(cy.request('GET', '/api/terminal/docker/locks'));
 
   let cy_promise;
