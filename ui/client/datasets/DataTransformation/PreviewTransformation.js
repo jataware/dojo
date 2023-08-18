@@ -35,12 +35,11 @@ const Previewed = ({
     }
     setDataLoading(false);
   }, []);
-
   const { data: preview, error: previewError } = useElwoodData({
     datasetId,
     annotations,
     jobString,
-    generateArgs: createPreviewArgs,
+    generateArgs: () => createPreviewArgs(annotations),
     cleanupRef,
     onSuccess,
   });

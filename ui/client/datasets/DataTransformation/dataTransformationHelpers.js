@@ -31,9 +31,9 @@ export const generateProcessTempResArgs = (annotations, resolution, aggregation)
   return args;
 };
 
-export const generateProcessGeoResArgs = (
+export const generateProcessGeoResArgs = ({
   annotations, newMapResolution, oldMapResolution, aggregation
-) => {
+}) => {
   const geoColumns = getPrimaryLatLonColumns(annotations.annotations.geo);
   const args = {
     datetime_column: [annotations?.annotations.date[0].name],

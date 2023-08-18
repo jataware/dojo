@@ -161,13 +161,16 @@ export default withStyles((theme) => ({
   };
 
   // Generate the arguments to pass into the preview component that runs the useElwoodData hook
-  const createPreviewArgs = useCallback((argsAnnotations) => {
-    const args = generateProcessGeoResArgs(
-      argsAnnotations, selectedResolution, oldResolution, selectedAggregation
-    );
+  const createPreviewArgs = useCallback(() => {
+    const args = generateProcessGeoResArgs({
+      annotations,
+      newMapResolution: selectedResolution,
+      oldMapResolution: oldResolution,
+      aggregation: selectedAggregation
+    });
     args.preview_run = true;
     return args;
-  }, [selectedResolution, oldResolution, selectedAggregation]);
+  }, [annotations, selectedResolution, oldResolution, selectedAggregation]);
 
   const formatNewResolution = () => {
     if (!selectedResolution || selectedResolution === '') return '';

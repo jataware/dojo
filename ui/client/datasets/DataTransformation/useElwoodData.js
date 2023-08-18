@@ -9,7 +9,7 @@ const useElwoodData = ({
   generateArgs,
   jobString,
   cleanupRef,
-  onBackendFailure
+  onBackendFailure,
 }) => {
   const [data, setData] = useState(null);
   const [options, setOptions] = useState(null);
