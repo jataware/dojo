@@ -189,6 +189,56 @@ const DataTransformation = withStyles(() => ({
   // eslint-disable-next-line no-unused-vars
   const [failedJobs, setFailedJobs] = useState([]);
 
+  const [allTransformationsComplete, setAllTransformationsComplete] = useState(false);
+
+  // Handles the next step process after the transformations are complete in <RunTransformation>
+  useEffect(() => {
+    // TODO: What if there are no transformations?
+    if (allTransformationsComplete) {
+      if (jobsConfig.length) {
+        // This lets us know that we need to show the spinner when the restore_raw_file job
+        // is running when revisiting this page in the registration flow
+        localStorage.setItem(`dataTransformation-${datasetInfo.id}`, true);
+      }
+
+      // If there are no transformations, skip updating the annotations object
+      if (isEmpty(transformationsRef.current)) {
+        handleNext();
+        return;
+      }
+
+      // If there are transformations, we want to store the data transformation decisions
+      const clonedMetadata = cloneDeep(annotations.metadata);
+      // add all the args that we sent to the elwood jobs and stored in our ref
+      // to our cloned metadata object
+      clonedMetadata.transformations = transformationsRef.current;
+      // and PATCH that to the dataset's annotations
+      // along with the existing annotations so it doesn't overwrite anything
+      axios.patch(
+        `/api/dojo/indicators/${datasetInfo.id}/annotations`, {
+          annotations: annotations.annotations,
+          metadata: clonedMetadata
+        }
+      ).then(() => {
+        // Ensure annotations with potential gadm resolver updates are stored
+        // To pass in to next step / jobs:
+        setAnnotations({
+          annotations: annotations.annotations,
+          metadata: clonedMetadata
+        });
+
+        handleNext();
+      });
+    }
+  }, [
+    allTransformationsComplete,
+    jobsConfig,
+    annotations,
+    datasetInfo.id,
+    handleNext,
+    setAnnotations
+  ]);
+
   const onBackendFailure = (jobString) => {
     setFailedJobs((prevJobs) => {
       // all of the following needs to happen within setFailedJobs or it won't update in
@@ -229,16 +279,6 @@ const DataTransformation = withStyles(() => ({
       { alias: 'Y', description: 'year end' },
     ]);
   }
-
-  const startElwoodJob = async (datasetId, requestArgs, jobString) => {
-    const jobQueueResp = await axios.post(
-      `/api/dojo/job/${datasetId}/${jobString}`, requestArgs
-    );
-
-    if (jobQueueResp.status === 200) {
-      return jobQueueResp.data?.id;
-    }
-  };
 
   const generateFetchGeoResArgs = useCallback((argsAnnotations) => {
     const geoColumns = getPrimaryLatLonColumns(argsAnnotations.annotations.geo);
@@ -503,63 +543,102 @@ const DataTransformation = withStyles(() => ({
   //   // }
   //   // setDataLoading(false);
   // }, []);
+  const processClipTime = () => {
+    let config;
+    if (savedTimeBounds) {
+      const args = generateProcessTempCovArgs({
+        annotations,
+        start: savedTimeBounds[0],
+        end: savedTimeBounds[savedTimeBounds.length - 1],
+      });
 
-  const processAdjustGeo = () => {
-    let args;
+      transformationsRef.current.clip_time = args;
+
+      config = {
+        datasetId: datasetInfo.id,
+        annotations,
+        onSuccess: (data) => console.log('First job data - clip time:', data),
+        generateArgs: () => args,
+        jobString: 'transformation_processors.clip_time',
+        cleanupRef,
+        onBackendFailure,
+      };
+    }
+    return config;
+  };
+
+  const processClipGeo = () => {
+    let config;
+    if (savedDrawings.length > 0) {
+      const args = generateProcessGeoCovArgs(annotations, savedDrawings);
+
+      transformationsRef.current.clip_geo = args;
+
+      config = {
+        datasetId: datasetInfo.id,
+        annotations,
+        onSuccess: (data) => console.log('Second job data - clip geo:', data),
+        generateArgs: () => args,
+        jobString: 'transformation_processors.clip_geo',
+        cleanupRef,
+        onBackendFailure,
+      };
+    }
+    return config;
+  };
+
+  const processScaleTime = () => {
+    let config;
+    if (savedTimeResolution) {
+      const args = generateProcessTempResArgs(
+        annotations,
+        savedTimeResolution,
+        savedTimeAggregation
+      );
+
+      transformationsRef.current.scale_time = args;
+
+      config = {
+        datasetId: datasetInfo.id,
+        annotations,
+        onSuccess: (data) => console.log('Third job data - scale time:', data),
+        generateArgs: () => args,
+        jobString: 'transformation_processors.scale_time',
+        cleanupRef,
+        onBackendFailure,
+      };
+    }
+    return config;
+  };
+
+  const processRegridGeo = () => {
+    let config;
     if (savedMapResolution) {
-      args = generateProcessGeoResArgs({
+      const args = generateProcessGeoResArgs({
         annotations,
         newMapResolution: savedMapResolution,
         oldMapResolution: mapResolution,
         aggregation: savedMapAggregation
       });
+
       // save the args to a ref so we can store them on the annotations object
       transformationsRef.current.regrid_geo = args;
 
       // If non-uniform is selected, don't run the transformation
-      if (savedMapResolution === 'Non-uniform/event data') return;
-
-      // return startElwoodJob(datasetInfo.id, args, 'transformation_processors.regrid_geo');
+      if (savedMapResolution !== 'Non-uniform/event data') {
+        config = {
+          datasetId: datasetInfo.id,
+          annotations,
+          onSuccess: (data) => console.log('Fourth job data - regrid geo:', data),
+          generateArgs: () => args,
+          jobString: 'transformation_processors.regrid_geo',
+          cleanupRef,
+          onBackendFailure,
+        };
+      }
     }
-    return args;
-  };
 
-  const processMapClippings = () => {
-    let args;
-    if (savedDrawings.length > 0) {
-      args = generateProcessGeoCovArgs(annotations, savedDrawings);
-      transformationsRef.current.clip_geo = args;
-      // return startElwoodJob(datasetInfo.id, args, 'transformation_processors.clip_geo');
-    }
-    return args;
-  };
-
-  const processClipTime = () => {
-    let args;
-    if (savedTimeBounds) {
-      args = generateProcessTempCovArgs({
-        annotations,
-        start: savedTimeBounds[0],
-        end: savedTimeBounds[savedTimeBounds.length - 1],
-      });
-      transformationsRef.current.clip_time = args;
-      // return startElwoodJob(datasetInfo.id, args, 'transformation_processors.clip_time');
-    }
-    return args;
-  };
-
-  const processAdjustTime = () => {
-    let args;
-    if (savedTimeResolution) {
-      args = generateProcessTempResArgs(
-        annotations,
-        savedTimeResolution,
-        savedTimeAggregation
-      );
-      transformationsRef.current.scale_time = args;
-      // return startElwoodJob(datasetInfo.id, args, 'transformation_processors.scale_time');
-    }
-    return args;
+    return config;
   };
 
   const processGadmOverrides = () => {
@@ -567,105 +646,22 @@ const DataTransformation = withStyles(() => ({
   };
 
   const handleNextStep = () => {
-    // the order we want TODO: remove this
-    // time clipping
-    // geo clipping
-    // adjust time
-    // adjust geo
-    // const adjustGeo = processAdjustGeo();
-    // const clipMap = processMapClippings();
-    // const adjustTime = processAdjustTime();
-    // const clipTime = processClipTime();
+    const clipTime = processClipTime();
+    const clipMap = processClipGeo();
+    const scaleTime = processScaleTime();
+    const regridGeo = processRegridGeo();
+
+    // The jobs always happen in this specific order
+    const transformations = [clipTime, clipMap, scaleTime, regridGeo]
+      .filter((job) => job !== undefined);
 
     processGadmOverrides();
-  // TODO:Handle skipping jobs if there aren't transformations done - perhaps only push into
-  // the array if there are transformations done?
-    setJobsConfig([
-      {
-        datasetId: datasetInfo.id,
-        annotations,
-        onSuccess: (data) => console.log('First job data - clip geo:', data),
-        generateArgs: () => processMapClippings(),
-        jobString: 'transformation_processors.clip_geo',
-        cleanupRef,
-        onBackendFailure,
-      },
-      {
-        datasetId: datasetInfo.id,
-        annotations,
-        onSuccess: (data) => console.log('Second job data - clip time:', data),
-        generateArgs: () => processClipTime(),
-        jobString: 'transformation_processors.clip_time',
-        cleanupRef,
-        onBackendFailure,
-      },
-      {
-        datasetId: datasetInfo.id,
-        annotations,
-        onSuccess: (data) => console.log('Third job data - scale time:', data),
-        generateArgs: () => processAdjustTime(),
-        jobString: 'transformation_processors.scale_time',
-        cleanupRef,
-        onBackendFailure,
-      },
-      {
-        datasetId: datasetInfo.id,
-        annotations,
-        onSuccess: (data) => console.log('Fourth job data - regrid geo:', data),
-        generateArgs: () => processAdjustGeo(),
-        jobString: 'transformation_processors.regrid_geo',
-        cleanupRef,
-        onBackendFailure,
-      },
-    ]);
 
-// TODO: set this up to happen when the jobs wrap up
-  // either in RunTransformations, or triggered via a useEffect when the results come back
-  // from RunTransformations
-    // Only do all of the below when we've done all of the selected transformations
-    // any untouched transformations won't return a promise and thus won't delay this
-    // Promise.all([adjustGeo, clipMap, adjustTime, clipTime]).then((responses) => {
-    //   let modified;
-    //   responses.forEach((resp) => {
-    //     // if any are truthy (an untouched transformation will be undefined)
-    //     if (resp) modified = true;
-    //   });
-
-    //   if (modified) {
-    //     // This lets us know that we need to show the spinner when the restore_raw_file job
-    //     // is running when revisiting this page in the registration flow
-    //     localStorage.setItem(`dataTransformation-${datasetInfo.id}`, true);
-    //   }
-
-    //   // If there are no transformations, skip updating the annotations object
-    //   if (isEmpty(transformationsRef.current)) {
-    //     handleNext();
-    //     return;
-    //   }
-
-    //   // If there are transformations, we want to store the data transformation decisions
-    //   const clonedMetadata = cloneDeep(annotations.metadata);
-    //   // add all the args that we sent to the elwood jobs and stored in our ref
-    //   // to our cloned metadata object
-    //   clonedMetadata.transformations = transformationsRef.current;
-    //   // and PATCH that to the dataset's annotations
-    //   // along with the existing annotations so it doesn't overwrite anything
-    //   axios.patch(
-    //     `/api/dojo/indicators/${datasetInfo.id}/annotations`, {
-    //       annotations: annotations.annotations,
-    //       metadata: clonedMetadata
-    //     }
-    //   ).then(() => {
-    //     // Ensure annotations with potential gadm resolver updates are stored
-    //     // To pass in to next step / jobs:
-    //     setAnnotations({
-    //       annotations: annotations.annotations,
-    //       metadata: clonedMetadata
-    //     });
-
-    //     handleNext();
-    //   });
-    // });
+    // jobsConfig triggers the useOrderedElwoodJobs hook to fire from the RunTransformation
+    // child component
+    setJobsConfig(transformations);
+    // The actual jump to next step happens in the useEffect at the top of this function
+    // after the jobs have completed in RunTransformation
   };
 
   const drawerInner = () => {
@@ -821,7 +817,12 @@ const DataTransformation = withStyles(() => ({
         handleClose={closePrompt}
       />
 
-      {jobsConfig && (<RunTransformations jobsConfig={jobsConfig} />)}
+      {jobsConfig && (
+        <RunTransformations
+          jobsConfig={jobsConfig}
+          setAllTransformationsComplete={setAllTransformationsComplete}
+        />
+      )}
     </div>
   );
 });

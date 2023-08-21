@@ -6,7 +6,7 @@ import useElwoodData from './useElwoodData';
 const useElwoodJob = (jobsConfig) => {
   const [currentJobIndex, setCurrentJobIndex] = useState(0);
   const [allJobsCompleted, setAllJobsCompleted] = useState(false);
-console.log('THIS IS THE CURRENT JOB INDEX', currentJobIndex)
+
   // Callback to run when a job completes
   const onSuccessWrapper = (data, setData, setDataError, setDataLoading, setOptions) => {
     jobsConfig[currentJobIndex].onSuccess(data, setData, setDataError, setDataLoading, setOptions);
