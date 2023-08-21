@@ -102,6 +102,8 @@ describe('Dataset Update Metadata Flow', function () {
 
     mockHttpRequests();
 
+    // TODO Decide where to move this outside a test so this is printed before any
+    // tests are run on CI once.
     cy.task('debug', JSON.stringify(Cypress.config(), null, 2));
 
     cy.visit('/datasets/update/register/test-guid');

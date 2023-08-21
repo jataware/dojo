@@ -35,6 +35,15 @@ export function gen_tranform_intercepts(dataset_id, jobName, result) {
 
 // ================== End-to-End Helpers =======================================
 
+
+const username = Cypress.env('DOJO_DEMO_USER');
+const password = Cypress.env('DOJO_DEMO_PASS');
+const auth = {
+  username,
+  password
+};
+
+
 export function createModel(modelId, overrides={}) {
 
   console.log('Creating Seed Model', modelId);
@@ -43,7 +52,7 @@ export function createModel(modelId, overrides={}) {
 
   modelId = testModel.id;
 
-  // The next two requests make the tests slower when iterating/developing tests:
+  // TODO check with remote (auth)
   cy.request('post', '/api/dojo/models', testModel)
     .its('body').should('include', testModel.id);
 
@@ -52,6 +61,7 @@ export function createModel(modelId, overrides={}) {
 
 
 export function provisionModelTerminal(modelId) {
+  // TODO check with remote (auth)
   return cy.request({
     method: 'POST',
     failOnStatusCode: false,
@@ -68,22 +78,25 @@ export function provisionModelTerminal(modelId) {
  *
  **/
 export const shutdownWorker = () => {
+  // TODO check with remote:
   return cy.request('GET', '/api/terminal/docker/locks')
     .then((lockResponse) => {
       if (get(lockResponse, 'body.locks[0].modelId')) {
         const modelId = lockResponse.body.locks[0].modelId;
+        // TODO check with remote:
         return cy.request('DELETE', `/api/terminal/docker/${modelId}/release`);
       }
       return Cypress.Promise.resolve(true);
     });
 };
 
-
 export async function waitForAllUrlsToFinish(urls) {
   const METHOD = 0, URL = 1, BODY = 2;
 
   const finishedRequests = urls.map(async (item) => {
-    const res = await p(cy.request(item[METHOD], item[URL], item[BODY]));
+    // TODO check with remote (auth)
+    const res = await p(cy.request(item[METHOD], item[URL], item[BODY]// , { auth }
+                                  ));
     return res;
   });
 
@@ -93,6 +106,7 @@ export async function waitForAllUrlsToFinish(urls) {
 // NOTE use cy.wrap on tests
 export async function waitUrlToProcess(url, property, maxTries = 6, method='GET') {
 
+  // TODO check with remote (auth)
   let response = await p(cy.request({
     method,
     url,
@@ -106,6 +120,7 @@ export async function waitUrlToProcess(url, property, maxTries = 6, method='GET'
     console.log('url', url, property, 'did not finish', 'tries:', tries, '. Retrying.');
     cy.wait(1000);
 
+    // TODO check with remote (auth)
     let response = await p(cy.request({
       method,
       url,
@@ -130,6 +145,7 @@ export async function provisionAndWaitReady(existingModelId) {
 
   Cypress.log({message: `Provisioning Terminal for model ${modelId}.`});
 
+  // TODO check with remote (auth)
   const response = await p(cy.request('GET', '/api/terminal/docker/locks'));
 
   let cy_promise;
@@ -147,11 +163,13 @@ export async function provisionAndWaitReady(existingModelId) {
 
   const provisioned = await p(cy_promise);
 
+  // TODO check with remote (auth):
   let provisionState = await p(cy.request(`/api/terminal/provision/state/${modelId}`));
 
   while (provisionState.body.state === 'processing') {
     console.log('Waiting before retrying');
     cy.wait(1000);
+    // TODO check with remote (auth):
     provisionState = await p(cy.request(`/api/terminal/provision/state/${modelId}`));
   }
 
@@ -519,11 +537,15 @@ export async function waitForElwood(taskName, datasetId) {
     failOnStatusCode: false
   }
 
-  let elwoodStatus = await p(cy.request(reqArgs));
+  // TODO check with remote (auth):
+  let elwoodStatus = await p(cy.request(reqArgs// , { auth }
+                                       ));
 
   while (elwoodStatus.status === 200) {
     cy.wait(3000);
-    elwoodStatus = await p(cy.request(reqArgs));
+    // TODO check with remote (auth):
+    elwoodStatus = await p(cy.request(reqArgs// , { auth }
+                                     ));
   }
 
   return elwoodStatus;
@@ -866,5 +888,3 @@ export const getTestModelRegisterUrls = (modelId, {homeDir, user, fileName, fold
    }
   ]
 ]);
-
-

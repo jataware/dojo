@@ -18,8 +18,14 @@ const path = require('path');
 var FormData = require('form-data');
 
 const { Client } = require('@elastic/elasticsearch');
-const es = new Client({ node: 'http://localhost:9200' });
 
+
+const esHost = process.env.CYPRESS_ES_HOST;
+
+// TODO decide what to do for staging/remote:
+const es = new Client({ node: esHost || 'http://localhost:9200' });
+
+const baseUrl = process.env.CYPRESS_BASE_URL;
 
 const { genBaseModel } = require('../seeds/model_api_data');
 
@@ -36,10 +42,22 @@ const debug = (...args) => {
   );
 }
 
+const username = process.env['DOJO_DEMO_USER'];
+const password = process.env['DOJO_DEMO_PASS'];
+
+const cy_env = JSON.stringify(process.env, null, 2)
+      .split('\n')
+      .filter(i => i.includes('CYPRESS'))
+      .join('\n');
+
+debug('env', '\n', cy_env);
+
 /**
  *
  **/
 async function sendFileToEndpoint(filePath, endpointUrl, newFilename) {
+  const auth = username ? {auth: username, password} : null;
+
   const fileStream = fs.createReadStream(filePath);
 
   const formData = new FormData();
@@ -49,20 +67,37 @@ async function sendFileToEndpoint(filePath, endpointUrl, newFilename) {
     formData.append('filename', newFilename);
   }
 
+  debug('~ username:', username);
+
+  const authHeader = 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64');
+
+  const config = {
+    method: 'POST',
+    url: endpointUrl,
+    data: formData,
+    headers: {
+      ...formData.getHeaders(), // Set the appropriate headers for multipart/form-data
+      Authorization: authHeader,
+    },
+  };
+
   // Make a POST request using axios
   debug('endpointUrl', endpointUrl);
   debug('filename', filePath);
+  debug('axios config');
+  debug(JSON.stringify(config));
 
-  const response = await axios.post(endpointUrl, formData, {
-    headers: {
-      ...formData.getHeaders(), // Set the appropriate headers for multipart/form-data
-    },
-  });
+  try {
+    const response = await axios(config);
 
-  debug(`Response: ${Object.keys(response)}`);
+    debug(`Response: ${Object.keys(response)}`);
 
-  if (response) {
-    return response.data;
+    if (response) {
+      return response.data;
+    }
+  } catch(e) {
+    debug('Error while uploading file:\n');
+    debug(e);
   }
 
   return null;
@@ -119,6 +154,10 @@ function deleteById({type, id, name}) {
   });
   return promise;
 }
+
+// Cypress is not defined, won't work:
+// console.log('Cypress', Cypress);
+// debug('Cypress', Cypress);
 
 
 function deleteByName({type, name}) {
@@ -191,21 +230,21 @@ module.exports = (on, config) => {
     },
 
     'upload': ({type, id, variant='acled'}) => {
-      if (type === 'dataset' && variant === 'acled') {
-        const url = `http://localhost:8080/api/dojo/indicators/${id}/upload`;
-        const mockCSVFileLocation = path.join(__dirname, '..', 'files', 'raw_data.csv');
-        return sendFileToEndpoint(mockCSVFileLocation, url, 'raw_data.csv');
-      } else if (type === 'dataset' && variant === 'uniform') {
 
-        const url = `http://localhost:8080/api/dojo/indicators/${id}/upload`;
-        const mockCSVFileLocation = path.join(__dirname, '..', 'files', 'gridded_uniform_raw_data.csv');
-        return sendFileToEndpoint(mockCSVFileLocation, url, 'raw_data.csv');
+      if (type === 'dataset') {
+        const url = `${baseUrl}/api/dojo/indicators/${id}/upload`;
+
+        if (variant === 'acled') {
+          const mockCSVFileLocation = path.join(__dirname, '..', 'files', 'raw_data.csv');
+          return sendFileToEndpoint(mockCSVFileLocation, url, 'raw_data.csv');
+        } else if (variant === 'uniform') {
+          const mockCSVFileLocation = path.join(__dirname, '..', 'files', 'gridded_uniform_raw_data.csv');
+          return sendFileToEndpoint(mockCSVFileLocation, url, 'raw_data.csv');
+        }
       }
 
       return undefined; // Test will error if not for datasets for now
-
     }
-
 
   });
 
@@ -214,14 +253,5 @@ module.exports = (on, config) => {
 
 
 // if (require.main === module) {
-
-//   console.log('called plugins/index file directly. Running for development as playground.');
-
-//   const id = '2c5422eb-53a2-40b5-8c03-983f757d5efb';
-//   const url = `http://localhost:8080/api/dojo/indicators/${id}/upload`;
-//   const mockFileLocation = path.join(__dirname, '..', 'files', 'ACLED_redacted.xlsx');
-
-//   // returns promise. TODO check what failure conditions look like on cypress
-//   return sendFileToEndpoint(mockFileLocation, url);
-
+// NOTE uncomment and run this clause as node script to develop/debug.
 // }

@@ -84,34 +84,35 @@ Cypress.Commands.add('setSelection', { prevSubject: true }, (subject, query, end
   })
 ));
 
+/**
+ *
+ * Set the following OS env vars for cypress to use below:
+ * `CYPRESS_DOJO_DEMO_USER`
+ * `CYPRESS_DOJO_DEMO_PASS`
+ * Cypress removes the leading CYPRESS_ when we retrieve in code:
+ **/
+Cypress.Commands.add('login', () => {
 
-// let sharedStatus = 0;
+  const user = Cypress.env('DOJO_DEMO_USER');
+  const pass = Cypress.env('DOJO_DEMO_PASS');
 
-// Cypress.Commands.add('spyPoll', {}, (method, url, property, expectedVal, nth=0) => {
+  console.log('cy user env w/ regular:', user);
+  // console.log('cy.login: baseUrl config::', Cypress.config('baseUrl')); // defined +1
 
-//   if (sharedStatus === 1) {
-//     console.log('done by sharedStatus!', 'sharedStatus:', sharedStatus);
-//     return true;
-//   }
+  const hasAuth = Boolean(user) && Boolean(pass);
 
-//   let tryNum = nth + 1;
-//   console.log('invoked spyPoll with args', expectedVal, 'tryNum:', tryNum);
+  console.log('has auth?', hasAuth);
+  console.log('process.env', process.env);
 
-//   const interceptName =`JobCheck`;
-//   cy.intercept(method, url).as(interceptName);
+  if(!hasAuth) {
+    return Cypress.Promise.resolve(false);
+  }
 
-//   return cy.wait(`@${interceptName}`)
-//     .then((inter) => {
-//       console.log('status:', inter.response.body[property]);
+  cy.visit('/', {
+    auth: {
+      username: user,
+      password: pass,
+    },
+  });
 
-//       if (![expectedVal, 'errored'].includes(inter.response.body[property]) || sharedStatus !== 1) {
-//         console.log('retrying...');
-//         cy.wait(8000);
-//         return cy.spyPoll(method, url, property, expectedVal, tryNum);
-//       } else {
-//         sharedStatus = 1;
-//         console.log('done by expected state!', 'sharedStatus:', sharedStatus);
-//         return true;
-//       }
-//     });
-//  });
+});

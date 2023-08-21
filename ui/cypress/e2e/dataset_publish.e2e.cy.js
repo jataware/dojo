@@ -5,6 +5,8 @@ import {
   dataset_uniform_annotations,
 } from '../seeds/dataset';
 
+import axios from 'axios';
+
 import { gen_tranform_intercepts } from '../support/helpers';
 
 const genTransformPairs = (dataset_id) => {
@@ -60,16 +62,63 @@ const genTransformPairs = (dataset_id) => {
 
 import { waitForElwood } from '../support/helpers';
 
+const username = Cypress.env('DOJO_DEMO_USER');
+const password = Cypress.env('DOJO_DEMO_PASS');
+const auth = {
+  username,
+  password
+};
+
+console.log('~ auth', auth);
+
+const baseUrl = Cypress.config('baseUrl');
+
+function createDataset(data) {
+  console.log(
+    'host on create dataset', Cypress.env('HOST'),
+    Cypress.env('CYPRESS_HOST'), Cypress.env('cypressHost'),
+    Cypress.env('host'), Cypress.env('baseUrl')
+  );
+
+  const additionalArgs = auth.username ? {auth} : null;
+  return axios.post(
+    `${baseUrl}/api/dojo/indicators`,
+    data,
+    additionalArgs
+  );
+}
+
+function createAnnotation(dataset_id, data) {
+  const additionalArgs = auth.username ? {auth} : null;
+  return axios.post(
+    `${baseUrl}/api/dojo/indicators/${dataset_id}/annotations`,
+    data,
+    additionalArgs
+  );
+}
+
+
+const isAuthEnabledRemote = Boolean(Cypress.env('DOJO_DEMO_USER'));
+
+console.log('isAuthEnabledRemote', isAuthEnabledRemote);
 
 describe('Dataset Register: Publish E2E', { browser: ['chrome', 'chromium', 'firefox'] }, () => {
+
+  before(() => {
+    cy.login();
+  });
 
   let dataset_id;
 
   afterEach(() => {
-    console.log('Cleaning seeded artifacts.');
-    cy.task('seed:clean', {type: 'dataset', id: dataset_id});
-    cy.task('seed:clean', {type: 'annotation', id: dataset_id});
-
+    if (!isAuthEnabledRemote) {
+      console.log('Cleaning seeded artifacts.');
+      cy.task('seed:clean', {type: 'dataset', id: dataset_id});
+      cy.task('seed:clean', {type: 'annotation', id: dataset_id});
+    } else {
+      cy.task('debug', 'auth enabled, skip seed cleaning');
+      console.log('auth enabled, skip seed cleaning');
+    }
     // Call seed:clean-files for minio files? TBD.
   });
 
@@ -77,79 +126,94 @@ describe('Dataset Register: Publish E2E', { browser: ['chrome', 'chromium', 'fir
 
     const dataset = genDataset('acled');
 
-    cy.request('POST', '/api/dojo/indicators', dataset)
-      .then(({body}) => {
+    // cy.request('POST', '/api/dojo/indicators', dataset)
+    //   .then(({body}) => {
+
+    cy.wrap(createDataset(dataset))
+      .then(({data: body }) => {
+
+        console.log('create dataset response body', body);
 
         const createdDataset = body;
         dataset_id = createdDataset.id;
         const transformPairs = genTransformPairs(dataset_id);
 
-        cy.request('POST', `/api/dojo/indicators/${dataset_id}/annotations`, dataset_acled_annotations);
-        cy.task('upload', {type: 'dataset', id: dataset_id, variant: 'acled'});
+        // cy.request('POST', `/api/dojo/indicators/${dataset_id}/annotations`, dataset_acled_annotations);
+        // cy.task('upload', {type: 'dataset', id: dataset_id, variant: 'acled'});
 
-        // Stub transform fetch jobs for this one, as we only care about run_elwood results
-        transformPairs.forEach((testData) => {
-          const [fetch_job, start_job] = gen_tranform_intercepts.apply(null, [dataset_id, ...testData]);
-          cy.intercept(fetch_job[0], fetch_job[1]).as(fetch_job[2]);
-          cy.intercept(start_job[0], start_job[1]).as(start_job[2]);
-        });
+        cy.wrap(createAnnotation(dataset_id, dataset_acled_annotations))
+          .then(({data: savedAnnotations}) => {
 
-        cy.visit(`/datasets/register/transform/${dataset_id}?filename=raw_data.xlsx`);
+            cy.task('upload', {type: 'dataset', id: dataset_id, variant: 'acled'})
+              .then(() => {
 
-        cy.
-          findByRole('button', {name: /Next/i})
-          .click();
+                // Stub transform fetch jobs for this one, as we only care about run_elwood results
+                transformPairs.forEach((testData) => {
+                  // TODO Make this work against staging/remote
+                  const [fetch_job, start_job] = gen_tranform_intercepts.apply(null, [dataset_id, ...testData]);
+                  cy.intercept(fetch_job[0], fetch_job[1]).as(fetch_job[2]);
+                  cy.intercept(start_job[0], start_job[1]).as(start_job[2]);
+                });
 
-        cy.wait(3000);
+                cy.visit(`/datasets/register/transform/${dataset_id}?filename=raw_data.xlsx`,
+                         auth.username ? { auth } : undefined);
 
-        cy.wrap(waitForElwood('run_elwood', dataset_id))
-          .then((elwoodResult) => {
+               // cy.wait(30000); // TODO wait since we dont have the intercepts above
 
-            console.log('run_elwood res:', elwoodResult);
-
-            cy.wait(3000);
-
-            cy.wrap(waitForElwood('scale_features', dataset_id))
-              .then((scaleResult) => {
-
-                console.log('Scale res:', scaleResult);
-
-                // Wait, then click submit/publish.
-                // 10 seconds for Ubuntu, up to 2 minutes for macos+docker
                 cy.
-                  findAllByRole('button', {name: /Submit To Dojo/i, timeout: 10000})
-                  .eq(1)
+                  findByRole('button', {name: /Next/i})
                   .click();
 
-                cy.wait(2000); // Allow time for the sync plugins to run.
+                cy.wait(3000);
 
-                // Finally, fetch final dataset and assert expected properties
-                cy.request(`/api/dojo/indicators/${dataset_id}`).as('FinalDataset');
+                cy.wrap(waitForElwood('run_elwood', dataset_id))
+                  .then((elwoodResult) => {
 
-                cy
-                  .get('@FinalDataset')
-                  .then((response) => {
+                    console.log('run_elwood res:', elwoodResult);
 
-                    const { body } = response;
+                    cy.wait(3000);
 
-                    expect(body.id).to.equal(dataset_id);
-                    expect(body.published).to.equal(true);
+                    cy.wrap(waitForElwood('scale_features', dataset_id))
+                      .then((scaleResult) => {
 
-                    expect(body.feature_names).to.have.length(2);
-                    expect(body.outputs).to.have.length(1);
-                    expect(body.qualifier_outputs).to.have.length.of.at.least(1);
-                    expect(body.geography.country).to.have.length.of.at.least(1);
+                        console.log('Scale res:', scaleResult);
 
-                    expect(body.period).to.have.property('gte');
-                    expect(body.period).to.have.property('lte');
+                        // Wait, then click submit/publish.
+                        // 10 seconds for Ubuntu, up to 2 minutes for macos+docker
+                        cy.
+                          findAllByRole('button', {name: /Submit To Dojo/i, timeout: 10000})
+                          .eq(1)
+                          .click();
+
+                        cy.wait(2000); // Allow time for the sync plugins to run.
+
+                        // TODO check with remote/auth:
+                        // Finally, fetch final dataset and assert expected properties
+                        cy.request(`/api/dojo/indicators/${dataset_id}`, { auth }).as('FinalDataset');
+
+                        cy
+                          .get('@FinalDataset')
+                          .then((response) => {
+
+                            const { body } = response;
+
+                            expect(body.id).to.equal(dataset_id);
+                            expect(body.published).to.equal(true);
+
+                            expect(body.feature_names).to.have.length(2);
+                            expect(body.outputs).to.have.length(1);
+                            expect(body.qualifier_outputs).to.have.length.of.at.least(1);
+                            expect(body.geography.country).to.have.length.of.at.least(1);
+
+                            expect(body.period).to.have.property('gte');
+                            expect(body.period).to.have.property('lte');
+                          });
+
+                      });
+
                   });
-
               });
-
           });
-
       });
-
   });
-
 });

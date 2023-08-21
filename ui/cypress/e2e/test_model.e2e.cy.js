@@ -121,6 +121,7 @@ describe('Register/Publish Test Model', { browser: ['chrome', 'chromium', 'firef
 
         cy.wrap(waitForAllUrlsToFinish(urls)).then(() => {
 
+          // TODO check with remote/auth:
           cy.request('PATCH', `/api/dojo/models/${modelId}`, {
             "outputs": [
               {
@@ -226,6 +227,7 @@ describe('Register/Publish Test Model', { browser: ['chrome', 'chromium', 'firef
                     expect(inter.response.body).to.contain('Registered model to');
                   })
                   .then(() => {
+                    // TODO check with remote/auth:
                     cy.request('GET', `/api/dojo/models/${modelId}`)
                       .should((response) => {
                         expect(response.status).to.equal(200);

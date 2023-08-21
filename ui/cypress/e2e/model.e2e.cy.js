@@ -28,102 +28,116 @@ function cleanModel(modelId) {
 }
 
 
-describe('Model Metadata: Creating a Model up to terminal step', { browser: ['chrome', 'chromium', 'firefox'] }, () => {
+const isAuthEnabledRemote = Boolean(Cypress.env('DOJO_DEMO_USER'));
 
-  beforeEach(shutdownWorker);
 
-  afterEach(() => {
-    cy.location()
-      .then((loc) => {
-        const modelId = last(loc.pathname.split('/'));
-        cleanModel(modelId);
+describe(
+  'Model Metadata: Creating a Model up to terminal step',
+  { browser: ['chrome', 'chromium', 'firefox'] },
+  () => {
+
+    before(() => {
+      cy.login();
+    });
+
+    beforeEach(shutdownWorker);
+
+    afterEach(() => {
+      cy.location()
+        .then((loc) => {
+          const modelId = last(loc.pathname.split('/'));
+          cleanModel(modelId);
+        });
+    });
+
+    it('Creates a model with all the metadata fields and just the basic terminal steps', () => {
+      cy.visit('/');
+      cy.get('[data-test=landingPageModelForm]').click();
+      // overview form
+      cy.get('[data-test=modelForm-name]').type(modelName);
+      cy.get('[data-test="modelForm-maintainer.website"]').clear().type('http://jataware.com');
+      cy.get('[data-test=modelForm-family_name]').type('Test Family Name');
+      cy.get('[data-test=modelForm-description]')
+        .type('This is a test description. It is long enough.');
+      cy.get('[data-test=modelFormOverviewNextBtn]').click();
+
+      // detail form
+      cy.get('[data-test="modelForm-maintainer.name"]').type('Maintainer Test Name');
+      cy.get('[data-test="modelForm-maintainer.email"]').type('test@example.com');
+      cy.get('[data-test="modelForm-maintainer.organization"]')
+        .type('Maintainer Test Organization');
+      cy.get('[data-test=modelFormStartDate]').type('01/01/2030');
+      cy.get('[data-test=modelFormEndDate]').type('01/01/2040');
+
+      // add domains
+      cy.get('[data-test=modelFormDomain]').type('politi').then(() => {
+        cy.contains('Political Science').click();
       });
-  });
+      cy.get('[data-test=modelFormDomain]').type('medica').then(() => {
+        cy.contains('Medical Science').click();
+      });
+      cy.get('[data-test=modelFormDetailNextBtn]').click();
 
-  it('Creates a model with all the metadata fields and just the basic terminal steps', () => {
-    cy.visit('/');
-    cy.get('[data-test=landingPageModelForm]').click();
-    // overview form
-    cy.get('[data-test=modelForm-name]').type(modelName);
-    cy.get('[data-test="modelForm-maintainer.website"]').clear().type('http://jataware.com');
-    cy.get('[data-test=modelForm-family_name]').type('Test Family Name');
-    cy.get('[data-test=modelForm-description]')
-      .type('This is a test description. It is long enough.');
-    cy.get('[data-test=modelFormOverviewNextBtn]').click();
+      // region form
+      cy.get('[data-test=modelFormExpandRegionBtn]').click();
 
-    // detail form
-    cy.get('[data-test="modelForm-maintainer.name"]').type('Maintainer Test Name');
-    cy.get('[data-test="modelForm-maintainer.email"]').type('test@example.com');
-    cy.get('[data-test="modelForm-maintainer.organization"]')
-      .type('Maintainer Test Organization');
-    cy.get('[data-test=modelFormStartDate]').type('01/01/2030');
-    cy.get('[data-test=modelFormEndDate]').type('01/01/2040');
+      // add texas
+      cy.get('[data-test=modelFormRegionSearch]').type('Texas').then(() => {
+        cy.get('[data-test=modelFormRegionSearchBtn]').click();
+        cy.contains('Texas, admin1').click();
+        cy.get('[data-test=modelFormRegionSearchBtn]').click();
+      });
 
-    // add domains
-    cy.get('[data-test=modelFormDomain]').type('politi').then(() => {
-      cy.contains('Political Science').click();
+      // check we have the correct region and nothing else
+      cy.contains('Texas, admin1').should('exist');
+      cy.contains('Los Angeles, admin2').should('not.exist');
+
+      // add a region by coordinates
+      cy.get('[data-test=modelFormExpandCoordsBtn]').click();
+      cy.get('[data-test=modelForm-Lat1]').type('12');
+      cy.get('[data-test=modelForm-Lng1]').type('21');
+      cy.get('[data-test=modelForm-Lat2]').type('-12');
+      cy.get('[data-test=modelForm-Lng2]').type('-21').then(() => {
+        cy.get('[data-test=modelFormCoordsBtn]').click();
+        // check that it showed up
+        cy.contains('12 21, -12 -21').should('exist');
+      });
+
+      cy.get('[data-test=modelFormSubmitBtn]').click();
+      // intercept our request to fetch the base images, so we aren't relying on dockerhub
+      // and respond with the mock set of images in ../fixtures/images.json
+      cy.intercept('GET', '/api/dojo/ui/base_images', { fixture: 'images.json' });
+      cy.get('[data-test=selectImage]').click();
+      cy.contains('Ubuntu').click();
+
+      cy.get('[data-test=modelContainerLaunchBtn]').click();
+
+      // create an alias for one of the endpoints that the terminal will hit when it loads
+      cy.intercept('/api/dojo/dojo/outputfile/*').as('outputFiles');
+      // and then wait until it is hit (give it an absurdly long time to timeout)
+      cy.wait('@outputFiles', { timeout: 300000 });
+
+      cy.wait(1000);
+
+      // make sure xterm has loaded
+      cy.get('.xterm-helper-textarea').should('exist');
+
+      // watch for our requests for the shell history, so we know when we get the new directive
+      cy.intercept('/api/dojo/terminal/container/history/*').as('shellHistory');
+
+      // type in a directive
+      cy.get('.xterm-helper-textarea').type(`${directiveCmd}{enter}`);
+
     });
-    cy.get('[data-test=modelFormDomain]').type('medica').then(() => {
-      cy.contains('Medical Science').click();
-    });
-    cy.get('[data-test=modelFormDetailNextBtn]').click();
-
-    // region form
-    cy.get('[data-test=modelFormExpandRegionBtn]').click();
-
-    // add texas
-    cy.get('[data-test=modelFormRegionSearch]').type('Texas').then(() => {
-      cy.get('[data-test=modelFormRegionSearchBtn]').click();
-      cy.contains('Texas, admin1').click();
-      cy.get('[data-test=modelFormRegionSearchBtn]').click();
-    });
-
-    // check we have the correct region and nothing else
-    cy.contains('Texas, admin1').should('exist');
-    cy.contains('Los Angeles, admin2').should('not.exist');
-
-    // add a region by coordinates
-    cy.get('[data-test=modelFormExpandCoordsBtn]').click();
-    cy.get('[data-test=modelForm-Lat1]').type('12');
-    cy.get('[data-test=modelForm-Lng1]').type('21');
-    cy.get('[data-test=modelForm-Lat2]').type('-12');
-    cy.get('[data-test=modelForm-Lng2]').type('-21').then(() => {
-      cy.get('[data-test=modelFormCoordsBtn]').click();
-      // check that it showed up
-      cy.contains('12 21, -12 -21').should('exist');
-    });
-
-    cy.get('[data-test=modelFormSubmitBtn]').click();
-    // intercept our request to fetch the base images, so we aren't relying on dockerhub
-    // and respond with the mock set of images in ../fixtures/images.json
-    cy.intercept('GET', '/api/dojo/ui/base_images', { fixture: 'images.json' });
-    cy.get('[data-test=selectImage]').click();
-    cy.contains('Ubuntu').click();
-
-    cy.get('[data-test=modelContainerLaunchBtn]').click();
-
-    // create an alias for one of the endpoints that the terminal will hit when it loads
-    cy.intercept('/api/dojo/dojo/outputfile/*').as('outputFiles');
-    // and then wait until it is hit (give it an absurdly long time to timeout)
-    cy.wait('@outputFiles', { timeout: 300000 });
-
-    cy.wait(1000);
-
-    // make sure xterm has loaded
-    cy.get('.xterm-helper-textarea').should('exist');
-
-    // watch for our requests for the shell history, so we know when we get the new directive
-    cy.intercept('/api/dojo/terminal/container/history/*').as('shellHistory');
-
-    // type in a directive
-    cy.get('.xterm-helper-textarea').type(`${directiveCmd}{enter}`);
 
   });
-
-});
 
 
 describe('Model output annotation', { browser: ['chrome', 'chromium', 'firefox'] }, () => {
+
+  before(() => {
+    cy.login();
+  });
 
   let modelId;
 
@@ -221,6 +235,7 @@ describe('Model output annotation', { browser: ['chrome', 'chromium', 'firefox']
           .intercept('POST', `/api/dojo/job/${modelId}/tasks.model_output_analysis`)
           .as('FilePreAnalysis');
 
+        // TODO check with remote/auth:
         return cy.request('POST', saveUrl, contents);
       }).then(() => {
 
@@ -326,6 +341,10 @@ describe('Model output annotation', { browser: ['chrome', 'chromium', 'firefox']
 
 describe('Model Annotate directive', { browser: ['chrome', 'chromium', 'firefox'] }, () => {
 
+  before(() => {
+    cy.login();
+  });
+
   let modelId;
 
   afterEach(() => {
@@ -355,6 +374,7 @@ describe('Model Annotate directive', { browser: ['chrome', 'chromium', 'firefox'
         .type(`cat ${fileName}{enter}`);
 
       cy.readFile('cypress/files/sample_output.csv').then((contents) => {
+        // TODO check with remote/auth:
         return cy.request('POST', saveUrl, contents);
       }).then(() => {
 
@@ -379,17 +399,28 @@ describe('Model Annotate directive', { browser: ['chrome', 'chromium', 'firefox'
 
 describe('Model listings', { browser: ['chrome', 'chromium', 'firefox'] }, () => {
 
-  let modelId;
   let testModel;
+  let modelId;
 
   before(() => {
+    cy.login();
     testModel = createModel(modelId);
     modelId = testModel.id;
   });
 
   after(() => {
-    console.log('Cleaning up seed test model:', modelId);
-    cy.task('seed:clean', {type: 'model', id: modelId});
+    if (!isAuthEnabledRemote) {
+      const message = 'Cleaning up seed test model:';
+
+      console.log(message, modelId);
+      Cypress.log({message});
+
+      cy.task('seed:clean', {type: 'model', id: modelId});
+    } else {
+      const message = 'Auth enabled, skip cleaning.'
+      Cypress.log({message})
+      console.log(message);
+    }
   });
 
   it('Existing model is found in Model List page', () => {
@@ -409,6 +440,11 @@ describe('Model listings', { browser: ['chrome', 'chromium', 'firefox'] }, () =>
 
 
 describe('Model metadata form state navigation', { browser: ['chrome', 'chromium', 'firefox'] }, () => {
+
+  before(() => {
+    cy.login();
+  });
+
   it('Keeps state when navigating away and then back', () => {
     cy.visit('/');
     cy.get('[data-test=landingPageModelForm]').click();
@@ -454,6 +490,7 @@ async function waitForAllUrlsToFinish(urls) {
   const METHOD = 0, URL = 1, BODY = 2;
 
   const finishedRequests = urls.map(async (item) => {
+    // TODO check with remote/auth:
     const res = await p(cy.request(item[METHOD], item[URL], item[BODY]));
     return res;
   });
@@ -465,6 +502,10 @@ async function waitForAllUrlsToFinish(urls) {
 
 
 describe('Model Summary Page', { browser: ['chrome', 'chromium', 'firefox'] }, () => {
+
+  before(() => {
+    cy.login();
+  });
 
   let modelId = undefined;
 
@@ -506,6 +547,7 @@ describe('Model Summary Page', { browser: ['chrome', 'chromium', 'firefox'] }, (
         Cypress.log({message: `Uploading output file seed.`});
 
         cy.readFile('cypress/files/sample_output.csv').then((contents) => {
+          // TODO check with remote/auth:
           return cy.request('POST', saveUrl, contents);
         });
 

@@ -41,10 +41,12 @@ describe('FullScreenTemplater: directive', { browser: ['chrome', 'chromium', 'fi
 
   beforeEach(() => {
 
+    // TODO check with remote/auth:
     cy.request('post', '/api/dojo/models', testModel)
       .its('body').should('include', testModel.id);
 
     const config = genConfig(testModel.id);
+    // TODO check with remote/auth:
     cy.request('post', '/api/dojo/dojo/config', config)
       .its('body').should('include', testModel.id);
   });
@@ -91,11 +93,10 @@ describe('FullScreenTemplater: directive', { browser: ['chrome', 'chromium', 'fi
     cy.wait(1000);
     // cy.wait('@CreatingDirective');
 
+    // TODO check with remote/auth:
     cy.request(`/api/dojo/dojo/directive/${testModel.id}`)
       .its('body').should((response) => {
-
-        console.log('response', response);
-
+        // console.log('response', response);
         expect(response.parameters[0].text).to.equal('10.4');
         expect(response.parameters[0].annotation.description).to.equal('temp-description');
       });

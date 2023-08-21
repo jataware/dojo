@@ -62,6 +62,8 @@ describe('FullScreenTemplater: config', { browser: ['chrome', 'chromium', 'firef
 
   beforeEach(() => {
 
+
+    // TODO check with remote/auth:
     cy.request('post', '/api/dojo/models', testModel)
       .its('body').should('include', testModel.id);
 
@@ -72,6 +74,7 @@ describe('FullScreenTemplater: config', { browser: ['chrome', 'chromium', 'firef
     // The following config/directive endpoints have /dojo in their paths
     const directive = genDirective(testModel.id);
 
+    // TODO check with remote/auth:
     cy.request('post', '/api/dojo/dojo/directive', directive)
       .its('body').should('include', testModel.id);
 
