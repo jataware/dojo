@@ -1,4 +1,3 @@
-import 'cypress-iframe';
 import { genBaseModel, generatedIDs } from '../seeds/model_api_data';
 const { faker } = require('@faker-js/faker');
 
@@ -16,6 +15,13 @@ import { createModel, shutdownWorker,
          getTestModelRegisterUrls,
          waitUrlToProcess } from '../support/helpers';
 
+const username = Cypress.env('DOJO_DEMO_USER');
+const password = Cypress.env('DOJO_DEMO_PASS');
+const hasAuth = Boolean(username) && Boolean(password);
+const auth = hasAuth ? {username, password} : undefined;
+const isAuthEnabledRemote = hasAuth;
+
+
 /**
  *
  **/
@@ -24,8 +30,14 @@ function cleanModel(modelId) {
   cy.visit('/admin');
 
   return shutdownWorker().then(() => {
-    console.log('Done clearing worker, clearing seeds.');
-    cy.task('seed:clean', {type: 'model', id: modelId});
+
+    if (!isAuthEnabledRemote) {
+      cy.log('Done clearing worker, clearing seeds.');
+      cy.task('seed:clean', {type: 'model', id: modelId});
+    } else {
+      const message = 'Auth enabled; skip seed cleaning.';
+      cy.log(message);
+    }
   });
 }
 
@@ -45,7 +57,7 @@ describe('Register/Publish Test Model', { browser: ['chrome', 'chromium', 'firef
   it('E2E jataware/test-model Register/Publish completed.', () => {
 
     // in case we want to reuse/override a test with forced ID:
-    // modelId = 'acab2a55-8356-4029-99c2-734b4939293e';
+    // modelId = '8c9bd402-4fbd-4722-b738-dd9f885402bc';
 
     const modelOverrides = {
       is_published: false,
@@ -57,7 +69,7 @@ describe('Register/Publish Test Model', { browser: ['chrome', 'chromium', 'firef
       geography: null
     };
 
-    const testModel = createModel(modelId, modelOverrides);
+    const testModel = createModel(modelId, 'test-model', modelOverrides);
 
     modelId = testModel.id;
 
@@ -85,7 +97,7 @@ describe('Register/Publish Test Model', { browser: ['chrome', 'chromium', 'firef
         cy.get('@TerminalInput')
           .type(`sudo apt update && sudo apt install -y python3-pip && git clone https://github.com/jataware/test-model.git && cd test-model{enter}`, {force: true});
 
-        cy.wait(25000); // 60000 for slower computers
+        cy.wait(35000); // 60000 for slower computers
 
         // cy.get('@TerminalInput')
         //   .type('echo finished setup{enter}', {force: true});
@@ -121,8 +133,10 @@ describe('Register/Publish Test Model', { browser: ['chrome', 'chromium', 'firef
 
         cy.wrap(waitForAllUrlsToFinish(urls)).then(() => {
 
-          // TODO check with remote/auth:
-          cy.request('PATCH', `/api/dojo/models/${modelId}`, {
+          cy.seed({
+            method: 'PATCH',
+            type: 'model',
+            data: {
             "outputs": [
               {
                 "uuid": "bbae0b07-33d1-4e2b-82ea-ef72026cdfc7",
@@ -181,12 +195,17 @@ describe('Register/Publish Test Model', { browser: ['chrome', 'chromium', 'firef
                 "alias": {}
               }
             ]
+            }
           }).then(() => {
 
             cy.wrap(waitUrlToProcess(`/api/dojo/dojo/config/${modelId}`, '[0]'))
               .then(() => {
 
-                cy.intercept('POST', `/api/terminal/docker/${modelId}/commit`).as('ModelTerminalCommit');
+                cy.intercept({
+                  method: 'POST',
+                  url: `/api/terminal/docker/${modelId}/commit`,
+                  auth
+                }).as('ModelTerminalCommit');
 
                 cy.findByRole('button', {name: /save and continue/i})
                   .click();
@@ -197,7 +216,12 @@ describe('Register/Publish Test Model', { browser: ['chrome', 'chromium', 'firef
 
                 cy.findByText(/Upload Complete.+/i, {timeout: 25000});
 
-                cy.intercept('POST', `/api/dojo/models/register/${modelId}`).as('RegisterModelComplete');
+                cy.intercept({
+                  method: 'POST',
+                  url: `/api/dojo/models/register/${modelId}`,
+                  auth
+                })
+                  .as('RegisterModelComplete');
 
                 cy.get('@ModelTerminalCommit').should((inter) => {
                   expect(inter.request.body.tags[0]).to.contain(modelId);
@@ -227,8 +251,11 @@ describe('Register/Publish Test Model', { browser: ['chrome', 'chromium', 'firef
                     expect(inter.response.body).to.contain('Registered model to');
                   })
                   .then(() => {
-                    // TODO check with remote/auth:
-                    cy.request('GET', `/api/dojo/models/${modelId}`)
+                    cy.request({
+                      method: 'GET',
+                      url: `/api/dojo/models/${modelId}`,
+                      auth
+                    })
                       .should((response) => {
                         expect(response.status).to.equal(200);
                         expect(response.body.is_published).to.equal(true);

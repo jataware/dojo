@@ -120,16 +120,14 @@ const genQualifierOutput = () => ({
 
 const generatedIDs = [];
 
-const genBaseModel = (id, overrides={}) => {
+const genBaseModel = (id, variant='base', overrides={}) => {
   const uuid = id || faker.string.uuid();
 
   generatedIDs.push(uuid);
 
-  // console.log('faker', faker);
-
   return {
     id: uuid,
-    name: `Seed-${faker.person.firstName()}`,
+    name: `Seed-${variant}-${faker.person.firstName()}`,
     family_name: faker.music.genre(),
 
     description: faker.commerce.productDescription(),
@@ -173,7 +171,7 @@ const genBaseModel = (id, overrides={}) => {
     },
     // "next_version": "string", // would mean the current version is deprecated in favor of next version
     // "prev_version": "string",
-    "is_published": true,
+    "is_published": false,
     "commit_message": faker.company.catchPhrase(),
 
     // In order to create variations of this (not published, processed, etc).

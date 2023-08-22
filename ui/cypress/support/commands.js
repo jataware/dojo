@@ -84,6 +84,13 @@ Cypress.Commands.add('setSelection', { prevSubject: true }, (subject, query, end
   })
 ));
 
+
+const username = Cypress.env('DOJO_DEMO_USER');
+const password = Cypress.env('DOJO_DEMO_PASS');
+const hasAuth = Boolean(username) && Boolean(password);
+const auth = hasAuth ? {username, password} : undefined;
+
+
 /**
  *
  * Set the following OS env vars for cypress to use below:
@@ -93,26 +100,81 @@ Cypress.Commands.add('setSelection', { prevSubject: true }, (subject, query, end
  **/
 Cypress.Commands.add('login', () => {
 
-  const user = Cypress.env('DOJO_DEMO_USER');
-  const pass = Cypress.env('DOJO_DEMO_PASS');
-
-  console.log('cy user env w/ regular:', user);
-  // console.log('cy.login: baseUrl config::', Cypress.config('baseUrl')); // defined +1
-
-  const hasAuth = Boolean(user) && Boolean(pass);
-
-  console.log('has auth?', hasAuth);
-  console.log('process.env', process.env);
-
-  if(!hasAuth) {
+  if (!hasAuth) {
     return Cypress.Promise.resolve(false);
   }
 
-  cy.visit('/', {
-    auth: {
-      username: user,
-      password: pass,
-    },
-  });
+  cy.visit('/', {auth});
+
+});
+
+
+
+
+Cypress.Commands.add('seed', ({type, data, id, method='POST'}) => {
+
+  const hasAuth = Boolean(username) && Boolean(password);
+
+  let uri = ''; // Replace with your API base URL
+
+  if (type === 'dataset') {
+    uri = 'indicators';
+  }
+  else if (type === 'model') {
+    if (method === 'PATCH') {
+      uri = `models/${id}`;
+    } else {
+      uri = 'models';
+    }
+  } else if (type === 'annotation') {
+    uri = `indicators/${id}/annotations`;
+  }
+
+  // NOTE cy.request here makes sense (from feedback).
+  // Seed the database using cy.request
+    const cy_promise = cy.request({
+      method,
+      url: `/api/dojo/${uri}`,
+      auth,
+      body: data
+    });
+
+  return cy_promise;
+});
+
+
+Cypress.Commands.add("uploadFile", ({type, id, variant}) => {
+
+  const hasAuth = Boolean(username) && Boolean(password);
+
+  if (type === 'dataset') {
+
+    cy.log('Uploading dataset seed-file.')
+
+    // NOTE For now ignore variant since this is used once.
+
+    const fileName = 'raw_data.csv';
+    const url = `/api/dojo/indicators/${id}/upload`;
+
+    return cy.readFile(`cypress/files/${fileName}`)
+      .then(Cypress.Blob.binaryStringToBlob)
+      .then((blob) => {
+
+        const formData = new FormData();
+        const file = new File([blob], fileName);
+        formData.append('file', file);
+        formData.append('filename', fileName);
+
+        return cy.request({
+          method: 'POST',
+          url: url,
+          body: formData,
+          auth
+        })
+      });
+
+  }
+
+  return undefined; // Test will error if not for datasets for now
 
 });

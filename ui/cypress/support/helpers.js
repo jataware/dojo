@@ -1,7 +1,7 @@
 import get from 'lodash/get';
 import p from 'cypress-promise'; // p == promisify
 import { genBaseModel } from '../seeds/model_api_data';
-
+// import axios from 'axios';
 
 /**
  *
@@ -38,22 +38,26 @@ export function gen_tranform_intercepts(dataset_id, jobName, result) {
 
 const username = Cypress.env('DOJO_DEMO_USER');
 const password = Cypress.env('DOJO_DEMO_PASS');
-const auth = {
-  username,
-  password
-};
+const hasAuth = Boolean(username) && Boolean(password);
+const auth = hasAuth ? {username, password} : undefined;
 
 
-export function createModel(modelId, overrides={}) {
+
+// TODO move/use seed fn
+export function createModel(modelId, variant='base', overrides={}) {
 
   console.log('Creating Seed Model', modelId);
 
-  const testModel = genBaseModel(modelId, overrides);
+  const testModel = genBaseModel(modelId, variant, overrides);
 
   modelId = testModel.id;
 
-  // TODO check with remote (auth)
-  cy.request('post', '/api/dojo/models', testModel)
+  cy.request({
+    method: 'post',
+    url: '/api/dojo/models',
+    body: testModel,
+    auth
+  })
     .its('body').should('include', testModel.id);
 
   return testModel;
@@ -61,7 +65,6 @@ export function createModel(modelId, overrides={}) {
 
 
 export function provisionModelTerminal(modelId) {
-  // TODO check with remote (auth)
   return cy.request({
     method: 'POST',
     failOnStatusCode: false,
@@ -70,7 +73,8 @@ export function provisionModelTerminal(modelId) {
       "name": modelId,
       "image": "jataware/dojo-publish:Ubuntu-latest",
       "listeners": []
-    }
+    },
+    auth
   });
 }
 
@@ -78,13 +82,18 @@ export function provisionModelTerminal(modelId) {
  *
  **/
 export const shutdownWorker = () => {
-  // TODO check with remote:
-  return cy.request('GET', '/api/terminal/docker/locks')
+  return cy.request({
+    url: '/api/terminal/docker/locks',
+    auth
+  })
     .then((lockResponse) => {
       if (get(lockResponse, 'body.locks[0].modelId')) {
         const modelId = lockResponse.body.locks[0].modelId;
-        // TODO check with remote:
-        return cy.request('DELETE', `/api/terminal/docker/${modelId}/release`);
+        return cy.request({
+          method: 'DELETE',
+          url: `/api/terminal/docker/${modelId}/release`,
+          auth
+        });
       }
       return Cypress.Promise.resolve(true);
     });
@@ -94,9 +103,12 @@ export async function waitForAllUrlsToFinish(urls) {
   const METHOD = 0, URL = 1, BODY = 2;
 
   const finishedRequests = urls.map(async (item) => {
-    // TODO check with remote (auth)
-    const res = await p(cy.request(item[METHOD], item[URL], item[BODY]// , { auth }
-                                  ));
+    const res = await p(cy.request({
+      method: item[METHOD],
+      url: item[URL],
+      body: item[BODY],
+      auth
+    }));
     return res;
   });
 
@@ -104,13 +116,14 @@ export async function waitForAllUrlsToFinish(urls) {
 }
 
 // NOTE use cy.wrap on tests
+// TODO try axios
 export async function waitUrlToProcess(url, property, maxTries = 6, method='GET') {
 
-  // TODO check with remote (auth)
   let response = await p(cy.request({
     method,
     url,
-    failOnStatusCode: false
+    failOnStatusCode: false,
+    auth
   }));
 
   let tries = 0;
@@ -120,11 +133,11 @@ export async function waitUrlToProcess(url, property, maxTries = 6, method='GET'
     console.log('url', url, property, 'did not finish', 'tries:', tries, '. Retrying.');
     cy.wait(1000);
 
-    // TODO check with remote (auth)
     let response = await p(cy.request({
       method,
       url,
-      failOnStatusCode: false
+      failOnStatusCode: false,
+      auth
     }));
 
   }
@@ -137,16 +150,18 @@ export async function waitUrlToProcess(url, property, maxTries = 6, method='GET'
 /**
  * NOTE Returns a regular promise, not a "cypress one".
         Use cy.wrap(this_result) to convert to cypress promise on test.
+ * TODO rename provisionAndWaitReady => provisionTerminalWaitReady or so
  **/
 export async function provisionAndWaitReady(existingModelId) {
-  console.log('provisionAndWaitReady existingModelId', existingModelId);
-
   const modelId = existingModelId;
 
-  Cypress.log({message: `Provisioning Terminal for model ${modelId}.`});
+  cy.log(`Provisioning Terminal for model ${modelId}.`);
 
-  // TODO check with remote (auth)
-  const response = await p(cy.request('GET', '/api/terminal/docker/locks'));
+  // TODO try axios
+  const response = await p(cy.request({
+    url: '/api/terminal/docker/locks',
+    auth
+ }));
 
   let cy_promise;
   if (get(response, 'body.locks[0].modelId')) {
@@ -163,14 +178,18 @@ export async function provisionAndWaitReady(existingModelId) {
 
   const provisioned = await p(cy_promise);
 
-  // TODO check with remote (auth):
-  let provisionState = await p(cy.request(`/api/terminal/provision/state/${modelId}`));
+  let provisionState = await p(cy.request({
+    url: `/api/terminal/provision/state/${modelId}`,
+    auth
+  }));
 
   while (provisionState.body.state === 'processing') {
     console.log('Waiting before retrying');
     cy.wait(1000);
-    // TODO check with remote (auth):
-    provisionState = await p(cy.request(`/api/terminal/provision/state/${modelId}`));
+    provisionState = await p(cy.request({
+      url: `/api/terminal/provision/state/${modelId}`,
+      auth
+    }));
   }
 
   return provisionState;
@@ -181,6 +200,7 @@ export async function provisionAndWaitReady(existingModelId) {
  *
  **/
 export const getModelRegisterUrls = (modelId, {homeDir, user, fileName, folderName, saveUrl}) => ([
+
       ['POST',
        '/api/dojo/terminal/file',
        {
@@ -534,25 +554,21 @@ export async function waitForElwood(taskName, datasetId) {
   const reqArgs = {
     method: 'POST',
     url: formattedUrl,
-    failOnStatusCode: false
+    failOnStatusCode: false,
+    auth
   }
 
-  // TODO check with remote (auth):
-  let elwoodStatus = await p(cy.request(reqArgs// , { auth }
-                                       ));
+  let elwoodStatus = await p(cy.request(reqArgs));
 
   while (elwoodStatus.status === 200) {
     cy.wait(3000);
-    // TODO check with remote (auth):
-    elwoodStatus = await p(cy.request(reqArgs// , { auth }
-                                     ));
+    elwoodStatus = await p(cy.request(reqArgs));
   }
 
   return elwoodStatus;
 }
 
 
-// TODO unused, urls hardcoded on test_model.* file and diff urls/paths used.
 // Use this exported object once cleaned up?
 export const getTestModelRegisterUrls = (modelId, {homeDir, user, fileName, folderName, saveUrl, directiveParamValue}) => ([
 

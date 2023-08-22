@@ -1,14 +1,8 @@
 /// <reference types="cypress" />
 // ***********************************************************
-// This example plugins/index.js can be used to load plugins
-//
-// You can change the location of this file or turn off loading
-// the plugins file with the 'pluginsFile' configuration option.
-//
 // You can read more here:
 // https://on.cypress.io/plugins-guide
 // ***********************************************************
-
 // This function is called when a project is opened or re-opened (e.g. due to
 // the project's config changing)
 
@@ -20,15 +14,10 @@ var FormData = require('form-data');
 const { Client } = require('@elastic/elasticsearch');
 
 
-const esHost = process.env.CYPRESS_ES_HOST;
+const esHost = process.env.CYPRESS_ES_HOST || 'http://localhost:9200';
 
 // TODO decide what to do for staging/remote:
-const es = new Client({ node: esHost || 'http://localhost:9200' });
-
-const baseUrl = process.env.CYPRESS_BASE_URL;
-
-const { genBaseModel } = require('../seeds/model_api_data');
-
+const es = new Client({ node: esHost });
 
 const chalk = require('chalk');
 
@@ -42,66 +31,13 @@ const debug = (...args) => {
   );
 }
 
-const username = process.env['DOJO_DEMO_USER'];
-const password = process.env['DOJO_DEMO_PASS'];
-
 const cy_env = JSON.stringify(process.env, null, 2)
       .split('\n')
       .filter(i => i.includes('CYPRESS'))
       .join('\n');
 
+// TODO remove when testing on github actions on stage instance
 debug('env', '\n', cy_env);
-
-/**
- *
- **/
-async function sendFileToEndpoint(filePath, endpointUrl, newFilename) {
-  const auth = username ? {auth: username, password} : null;
-
-  const fileStream = fs.createReadStream(filePath);
-
-  const formData = new FormData();
-  formData.append('file', fileStream);
-
-  if (newFilename) {
-    formData.append('filename', newFilename);
-  }
-
-  debug('~ username:', username);
-
-  const authHeader = 'Basic ' + Buffer.from(`${username}:${password}`).toString('base64');
-
-  const config = {
-    method: 'POST',
-    url: endpointUrl,
-    data: formData,
-    headers: {
-      ...formData.getHeaders(), // Set the appropriate headers for multipart/form-data
-      Authorization: authHeader,
-    },
-  };
-
-  // Make a POST request using axios
-  debug('endpointUrl', endpointUrl);
-  debug('filename', filePath);
-  debug('axios config');
-  debug(JSON.stringify(config));
-
-  try {
-    const response = await axios(config);
-
-    debug(`Response: ${Object.keys(response)}`);
-
-    if (response) {
-      return response.data;
-    }
-  } catch(e) {
-    debug('Error while uploading file:\n');
-    debug(e);
-  }
-
-  return null;
-}
 
 
 const esIndexMappings = {
@@ -155,10 +91,6 @@ function deleteById({type, id, name}) {
   return promise;
 }
 
-// Cypress is not defined, won't work:
-// console.log('Cypress', Cypress);
-// debug('Cypress', Cypress);
-
 
 function deleteByName({type, name}) {
 
@@ -193,19 +125,15 @@ module.exports = (on, config) => {
 
     'debug': (...args) => {debug(...args); return true;},
 
-    // TODO this is unused for now as we can use API
-    // for simple cases, but for complex scenarios it will be useful
-    'seed': ({type, id, name}) => {
-      // TODO
-      debug("Not implemented. Called cypress task seed. Nothing done on plugins nodejs side for now. Use cy.request with the Dojo API.");
-      return undefined;
-    },
-
+    // NOTE This runs on Cypress nodejs backend. Alternatively, we can create
+    // DELETE DOJO API endpoints for these entities.
+    // Defined as cy.task since we don't have access to DB/elasticsearch
+    // from the browser.
     'seed:clean': ({type, id, name}) => {
 
       debug(`Cleaning ${type} seeds, id: ${id}, name: ${name}`);
 
-      if(!type) {
+      if (!type) {
         debug('Should have passed in a valid type. Throwing the towel.');
         throw new Error(`No valid type passed in to seed:clean. Received: ${type}`);
       }
@@ -227,23 +155,6 @@ module.exports = (on, config) => {
         throw new Error(`No valid id or name passed in to seed:clean. Received: type=${type}, id=${id}, name=${name}`);
       }
 
-    },
-
-    'upload': ({type, id, variant='acled'}) => {
-
-      if (type === 'dataset') {
-        const url = `${baseUrl}/api/dojo/indicators/${id}/upload`;
-
-        if (variant === 'acled') {
-          const mockCSVFileLocation = path.join(__dirname, '..', 'files', 'raw_data.csv');
-          return sendFileToEndpoint(mockCSVFileLocation, url, 'raw_data.csv');
-        } else if (variant === 'uniform') {
-          const mockCSVFileLocation = path.join(__dirname, '..', 'files', 'gridded_uniform_raw_data.csv');
-          return sendFileToEndpoint(mockCSVFileLocation, url, 'raw_data.csv');
-        }
-      }
-
-      return undefined; // Test will error if not for datasets for now
     }
 
   });
