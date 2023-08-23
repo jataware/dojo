@@ -189,7 +189,10 @@ const DataTransformation = withStyles(() => ({
   // eslint-disable-next-line no-unused-vars
   const [failedJobs, setFailedJobs] = useState([]);
 
+  // toggles when the RunTransformations overlay closes
   const [allTransformationsComplete, setAllTransformationsComplete] = useState(false);
+  // toggles when the RunTransformation component unmounts due to errors
+  const [transformationProcessingError, setTransformationProcessingError] = useState(false);
 
   // Handles the next step process after the transformations are complete in <RunTransformation>
   useEffect(() => {
@@ -533,16 +536,6 @@ const DataTransformation = withStyles(() => ({
     return false;
   };
 
-  // const onTransformationSuccess = useCallback((resp, setData, setDataError, setDataLoading) => {
-  //   console.log('THIS IS THE RESPONSE FROM onTransformation SUCCESS', resp)
-  //   // if (resp.unique_dates.length) {
-  //   //   setData(resp.unique_dates);
-  //   // } else {
-  //   // // TODO: also handle single length arrays as an error/un-transformable?
-  //   //   setDataError(resp.message ? resp.message : true);
-  //   // }
-  //   // setDataLoading(false);
-  // }, []);
   const processClipTime = () => {
     let config;
     if (savedTimeBounds) {
@@ -646,16 +639,24 @@ const DataTransformation = withStyles(() => ({
   };
 
   const handleNextStep = () => {
+    // clear this before running each time, in case we're re-running after errors
+    setJobsConfig(null);
+
     const clipTime = processClipTime();
     const clipMap = processClipGeo();
     const scaleTime = processScaleTime();
     const regridGeo = processRegridGeo();
 
     // The jobs always happen in this specific order
+    // only do the jobs that are defined
     const transformations = [clipTime, clipMap, scaleTime, regridGeo]
       .filter((job) => job !== undefined);
 
     processGadmOverrides();
+
+    // in case there were errors, we want to re-mount the component and try again when
+    // NEXT is clicked again
+    setTransformationProcessingError(false);
 
     // jobsConfig triggers the useOrderedElwoodJobs hook to fire from the RunTransformation
     // child component
@@ -817,10 +818,11 @@ const DataTransformation = withStyles(() => ({
         handleClose={closePrompt}
       />
 
-      {jobsConfig && (
+      {jobsConfig && !transformationProcessingError && (
         <RunTransformations
           jobsConfig={jobsConfig}
           setAllTransformationsComplete={setAllTransformationsComplete}
+          setTransformationProcessingError={setTransformationProcessingError}
         />
       )}
     </div>

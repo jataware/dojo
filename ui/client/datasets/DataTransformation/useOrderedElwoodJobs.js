@@ -3,7 +3,7 @@ import { useState } from 'react';
 import useElwoodData from './useElwoodData';
 
 // Higher Order Hook to manage sequential jobs
-const useElwoodJob = (jobsConfig) => {
+const useOrderedElwoodJob = (jobsConfig) => {
   const [currentJobIndex, setCurrentJobIndex] = useState(0);
   const [allJobsCompleted, setAllJobsCompleted] = useState(false);
 
@@ -21,12 +21,12 @@ const useElwoodJob = (jobsConfig) => {
 
   const job = jobsConfig[currentJobIndex];
 
-  const jobData = useElwoodData({
+  const { error, ...restOfJobData } = useElwoodData({
     ...job,
     onSuccess: onSuccessWrapper
   });
 
-  return { ...jobData, allJobsCompleted };
+  return { ...restOfJobData, allJobsCompleted, error };
 };
 
-export default useElwoodJob;
+export default useOrderedElwoodJob;

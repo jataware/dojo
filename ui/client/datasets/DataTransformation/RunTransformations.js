@@ -37,10 +37,20 @@ const useStyles = makeStyles((theme) => ({
  **/
 const RunTransformations = ({
   jobsConfig,
-  setAllTransformationsComplete
+  setAllTransformationsComplete,
+  setTransformationProcessingError,
 }) => {
   const classes = useStyles();
-  const { allJobsCompleted } = useOrderedElwoodJobs(jobsConfig);
+  const { error, allJobsCompleted } = useOrderedElwoodJobs(jobsConfig);
+
+  useEffect(() => {
+    if (error) {
+      // set this on DataTransformation to trigger it to unmount this component
+      // so that we stop processing the transformations and are put back on the main screen
+      // and can run the transformations again after re-mount if adjustments are made
+      setTransformationProcessingError(true);
+    }
+  }, [error, setTransformationProcessingError]);
 
   // This triggers the DataTransformation useEffect to finish wrapping up the nextStep process
   useEffect(() => {
@@ -50,7 +60,7 @@ const RunTransformations = ({
   }, [allJobsCompleted, setAllTransformationsComplete]);
 
   return (
-    <Backdrop open={!allJobsCompleted} className={classes.backdrop}>
+    <Backdrop open={!allJobsCompleted && !error} className={classes.backdrop}>
       <div className={classes.innerWrapper}>
         <CircularProgress size={38} className={classes.progress} />
         <Typography variant="h4" className={classes.text}>
