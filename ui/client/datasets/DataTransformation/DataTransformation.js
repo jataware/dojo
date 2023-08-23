@@ -196,7 +196,8 @@ const DataTransformation = withStyles(() => ({
 
   // Handles the next step process after the transformations are complete in <RunTransformation>
   useEffect(() => {
-    // TODO: What if there are no transformations?
+    // There is always at least one required transformation
+    // time scaling happens even if the user hasn't annotated a date column
     if (allTransformationsComplete) {
       if (jobsConfig.length) {
         // This lets us know that we need to show the spinner when the restore_raw_file job
