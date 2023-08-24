@@ -1,6 +1,6 @@
 import json
 from typing import List, Tuple
-from .corpora import Corpus, CorpusLoader
+from corpora import Corpus, CorpusLoader
 
 
 class DartPapers(CorpusLoader):

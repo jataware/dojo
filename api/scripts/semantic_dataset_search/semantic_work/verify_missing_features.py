@@ -9,9 +9,8 @@ import sys
 from pathlib import Path
 import argparse
 
-sys.path.append(str(Path(__file__).resolve().parent.parent))
+# sys.path.append(str(Path(__file__).resolve().parent.parent))
 
-from src.embedder_engine import embedder
 from elasticsearch import Elasticsearch
 
 parser = argparse.ArgumentParser("Parse indicators and upload features to elasticsearch.")

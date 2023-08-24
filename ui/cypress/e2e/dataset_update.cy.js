@@ -4,6 +4,13 @@
  **/
 function mockHttpRequests() {
 
+  Cypress.log({message: 'Mocking HTTP Requests'});
+
+  cy.intercept({
+    method: 'POST',
+    url: '/api/dojo/job/clear/*'
+  }, 'No job found for uuid = test-guid');
+
   cy.intercept({
     method: 'GET',
     url: '/api/dojo/*/domains*'
@@ -94,6 +101,8 @@ describe('Dataset Update Metadata Flow', function () {
   it('Happy path: Goes through from Update Metadata flow until success page with mocked requests', function () {
 
     mockHttpRequests();
+
+    cy.task('debug', JSON.stringify(Cypress.config(), null, 2));
 
     cy.visit('/datasets/update/register/test-guid');
 

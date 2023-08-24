@@ -21,14 +21,14 @@ def extract_text(path: str) -> List[Tuple[str, int]]:
     reader = PdfReader(work_path)
     pages = [page.extract_text() for page in reader.pages]
 
-    #create a map from the line number to the page number
+    # create a map from the line number to the page number
     num_lines = np.array([len(page.splitlines()) for page in pages] + [float(9999999)]) # lines on each page
     cumulative_line_counts = np.cumsum(num_lines) # line number to page number
     line_to_page = lambda line_num: np.argmax(cumulative_line_counts >= line_num)
 
     text = '\n'.join(pages)
 
-    #combine any adjacent lines with more than 5 words (hacky way to combine paragraphs)
+    # Combine any adjacent lines with more than 5 words (hacky way to combine paragraphs)
     lines = text.splitlines()
     paragraphs = []
     paragraph = []
@@ -54,7 +54,7 @@ def extract_text(path: str) -> List[Tuple[str, int]]:
             paragraphs.append((paragraph_txt, paragraph_pages))
 
 
-    #take the smallest page number from the pages that the paragraph is on
+    # Take the smallest page number from the pages that the paragraph is on
     paragraphs = [(paragraph, min(pages)) for paragraph, pages in paragraphs]
 
     return paragraphs
@@ -94,6 +94,7 @@ class ParagraphProcessor(BaseProcessor):
                 "embeddings": embedder.embed([text])[0],
                 "document_id": document_id,
                 "length": len(text),
+                "index": i,
                 "page_no": p_no + 1 # indexes at 0, pdf pages make more sense starting from 1
             }
 

@@ -126,7 +126,7 @@ const RunJobs = ({
       console.log('failed');
     } else {
       // No result, wait for an update
-      timeoutHandle = setTimeout(updateJobData, 500);
+      timeoutHandle = setTimeout(updateJobData, 1500);
     }
 
     // Clean up timeout each time we're done

@@ -1,6 +1,7 @@
 module.exports = {
   "parser": "@babel/eslint-parser",
-  "extends": ["airbnb", "plugin:react-hooks/recommended", "plugin:storybook/recommended"],
+  "extends": ["airbnb", "plugin:react-hooks/recommended",
+              "plugin:storybook/recommended", "plugin:cypress/recommended"],
   "env": {
     "browser": true,
     "node": true,
