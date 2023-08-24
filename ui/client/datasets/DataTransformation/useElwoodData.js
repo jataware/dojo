@@ -9,12 +9,21 @@ const useElwoodData = ({
   generateArgs,
   jobString,
   cleanupRef,
-  onBackendFailure
+  onBackendFailure,
 }) => {
   const [data, setData] = useState(null);
   const [options, setOptions] = useState(null);
   const [dataLoading, setDataLoading] = useState(false);
   const [dataError, setDataError] = useState(false);
+
+  // This is necessary for useOrderedElwoodJobs to run multiple jobs in sequence
+  // with the same hook but changing jobString
+  useEffect(() => {
+    // Reset the state when jobString changes
+    setData(null);
+    setDataError(false);
+    setDataLoading(false);
+  }, [jobString]);
 
   useEffect(() => {
     const handleFailure = () => {

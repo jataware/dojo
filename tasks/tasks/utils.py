@@ -184,3 +184,19 @@ def job_setup(context, filename):
     file = get_rawfile(rawfile_path)
 
     return file, filename, rawfile_path
+
+
+def get_primary_time_format(context):
+    annotations = context.get("annotations").get("annotations")
+
+    date_annotations = annotations.get("date")
+
+    for date_obj in date_annotations:
+        if date_obj.get("primary_date", False):
+            time_format = date_obj.get("time_format")
+            return time_format
+
+    # Default to first date object time format.
+    return (
+        context.get("annotations").get("annotations").get("date")[0].get("time_format")
+    )

@@ -27,8 +27,10 @@ import AdjustTemporalResolution from './AdjustTemporalResolution';
 import AdjustGeoResolution from './AdjustGeoResolution';
 import TransformationButton from './TransformationButton';
 import useElwoodData from './useElwoodData';
+import RunTransformations from './RunTransformations';
 import {
   getPrimaryLatLonColumns,
+  areLatLngAnnotated,
   generateProcessGeoResArgs,
   generateProcessTempResArgs,
   generateProcessGeoCovArgs,
@@ -43,32 +45,36 @@ import PromptDialog from '../PromptDialog';
 // import times from 'lodash/times';
 
 // for development purposes
-// const mapResolution = 111.00000000000014;
-// const mapResolutionOptions = [
-//   222.00000000000028,
-//   333.00000000000045,
-//   444.00000000000057,
-//   555.0000000000007,
-//   666.0000000000009,
-//   777.000000000001,
-//   888.0000000000011,
-//   999.0000000000013,
-//   1110.0000000000014,
-//   1221.0000000000016,
-//   1332.0000000000018,
-//   1443.0000000000018,
-//   1554.000000000002,
-//   1665.000000000002,
-//   1776.0000000000023,
-//   1887.0000000000025,
-//   1998.0000000000025,
-//   2109.0000000000027,
-//   2220.0000000000027
-// ];
+// const mapResolution = 1.0000000000000013;//'Non-uniform/event data';
+// const mapResolutionOptions //= null;
+// = {
+//  deg: [
+//     1.0000000000000013,
+//     2.0000000000000027,
+//     3.000000000000004,
+//     4.000000000000005,
+//     5.000000000000007,
+//     6.000000000000008,
+//     7.000000000000009,
+//     8.00000000000001,
+//     9.000000000000012,
+//  ],
+//  km: [
+//       111.00000000000014,
+//       222.00000000000028,
+//       333.00000000000045,
+//       444.00000000000057,
+//       555.0000000000007,
+//       666.0000000000009,
+//       777.000000000001,
+//       888.0000000000011,
+//       999.0000000000013,
+// ]};
 // const mapBounds = [[10.5619, 42.0864], [12.595, 43.2906]];
-// const timeResolution = {
+// const timeResolution =//  null;
+// {
 //   uniformity: 'PERFECT',
-//   unit: 'day',
+//   unit: 'month',
 //   resolution: 1,
 //   error: 0
 // };
@@ -145,9 +151,7 @@ const useStyles = makeStyles()(({ spacing }) => ({
   },
   root: {
     padding: [[spacing(4), spacing(4), spacing(2), spacing(4)]],
-
     height: '100%',
-
   },
   header: {
     marginBottom: spacing(6),
@@ -180,14 +184,16 @@ const DataTransformation = ({
   const [savedDrawings, setSavedDrawings] = useState([]);
 
   const [savedMapResolution, setSavedMapResolution] = useState(null);
+  const [savedMapAggregation, setSavedMapAggregation] = useState(null);
 
   const [savedGADMOverrides, setSavedGADMOverrides] = useState(null);
 
   const [timeResolutionOptions, setTimeResolutionOptions] = useState([]);
   const [savedTimeResolution, setSavedTimeResolution] = useState(null);
-  const [savedAggregation, setSavedAggregation] = useState(null);
+  const [savedTimeAggregation, setSavedTimeAggregation] = useState(null);
 
   const [savedTimeBounds, setSavedTimeBounds] = useState(null);
+  const [jobsConfig, setJobsConfig] = useState();
 
   const transformationsRef = useRef({});
 
@@ -198,6 +204,60 @@ const DataTransformation = ({
   // We do actually use this, just never directly by name - see onBackendFailure
   // eslint-disable-next-line no-unused-vars
   const [failedJobs, setFailedJobs] = useState([]);
+
+  // toggles when the RunTransformations overlay closes
+  const [allTransformationsComplete, setAllTransformationsComplete] = useState(false);
+  // toggles when the RunTransformation component unmounts due to errors
+  const [transformationProcessingError, setTransformationProcessingError] = useState(false);
+
+  // Handles the next step process after the transformations are complete in <RunTransformation>
+  useEffect(() => {
+    // There is always at least one required transformation
+    // time scaling happens even if the user hasn't annotated a date column
+    if (allTransformationsComplete) {
+      if (jobsConfig.length) {
+        // This lets us know that we need to show the spinner when the restore_raw_file job
+        // is running when revisiting this page in the registration flow
+        localStorage.setItem(`dataTransformation-${datasetInfo.id}`, true);
+      }
+
+      // If there are no transformations, skip updating the annotations object
+      if (isEmpty(transformationsRef.current)) {
+        handleNext();
+        return;
+      }
+
+      // If there are transformations, we want to store the data transformation decisions
+      const clonedMetadata = cloneDeep(annotations.metadata);
+      // add all the args that we sent to the elwood jobs and stored in our ref
+      // to our cloned metadata object
+      clonedMetadata.transformations = transformationsRef.current;
+      // and PATCH that to the dataset's annotations
+      // along with the existing annotations so it doesn't overwrite anything
+      axios.patch(
+        `/api/dojo/indicators/${datasetInfo.id}/annotations`, {
+          annotations: annotations.annotations,
+          metadata: clonedMetadata
+        }
+      ).then(() => {
+        // Ensure annotations with potential gadm resolver updates are stored
+        // To pass in to next step / jobs:
+        setAnnotations({
+          annotations: annotations.annotations,
+          metadata: clonedMetadata
+        });
+
+        handleNext();
+      });
+    }
+  }, [
+    allTransformationsComplete,
+    jobsConfig,
+    annotations,
+    datasetInfo.id,
+    handleNext,
+    setAnnotations
+  ]);
 
   const onBackendFailure = (jobString) => {
     setFailedJobs((prevJobs) => {
@@ -232,10 +292,6 @@ const DataTransformation = ({
   // until we get the list of timeresoptions from the backend:
   if (!timeResolutionOptions.length) {
     setTimeResolutionOptions([
-      { alias: 'L', description: 'milliseconds' },
-      { alias: 'S', description: 'secondly' },
-      { alias: 'T', description: 'minutely' },
-      { alias: 'H', description: 'hourly' },
       { alias: 'D', description: 'day' },
       { alias: 'W', description: 'weekly' },
       { alias: 'M', description: 'month end' },
@@ -243,16 +299,6 @@ const DataTransformation = ({
       { alias: 'Y', description: 'year end' },
     ]);
   }
-
-  const startElwoodJob = async (datasetId, requestArgs, jobString) => {
-    const jobQueueResp = await axios.post(
-      `/api/dojo/job/${datasetId}/${jobString}`, requestArgs
-    );
-
-    if (jobQueueResp.status === 200) {
-      return jobQueueResp.data?.id;
-    }
-  };
 
   const generateFetchGeoResArgs = useCallback((argsAnnotations) => {
     const geoColumns = getPrimaryLatLonColumns(argsAnnotations.annotations.geo);
@@ -268,6 +314,7 @@ const DataTransformation = ({
     if (geoColumns) {
       return { geo_columns: geoColumns };
     }
+
     return 'Geospatial coverage cannot be transformed without annotated lat/lng columns marked as primary geo';
   }, []);
 
@@ -286,8 +333,20 @@ const DataTransformation = ({
   ) => {
     if (resp.resolution_result?.uniformity === 'PERFECT'
       || resp.resolution_result?.uniformity === 'UNIFORM') {
-      setData(resp.scale_km);
+      setData(resp.scale_deg);
+
+      if (resp.multiplier_samples_deg) {
+        setOptions({
+          deg: resp.multiplier_samples_deg,
+          km: resp.multiplier_samples_km,
+        });
+      }
     } else {
+      if (areLatLngAnnotated(annotations)) {
+        // as long as we have lat/lng annotated, set this string as our default geo resolution
+        setData('Non-uniform/event data');
+        return;
+      }
       // TODO: handle error case in geo res component & data transformation
       let message = 'Resolution not detectable';
       // if we have a uniformity that is not handled above, change the message to:
@@ -295,11 +354,8 @@ const DataTransformation = ({
       setDataError(message);
     }
 
-    if (resp.multiplier_samples) {
-      setOptions(resp.multiplier_samples);
-    }
     setDataLoading(false);
-  }, []);
+  }, [annotations]);
 
   const onGeoBoundarySuccess = useCallback((resp, setData, setDataError, setDataLoading) => {
     if (resp?.boundary_box) {
@@ -318,9 +374,23 @@ const DataTransformation = ({
 
   const onTemporalResSuccess = useCallback((resp, setData, setDataError, setDataLoading) => {
     if (resp.resolution_result?.unit) {
-      setData(resp.resolution_result);
+      if (
+        resp.uniformity === 'PERFECT'
+        || resp.resolution_result.uniformity === 'UNIFORM'
+        || resp.resolution_result.uniformity === 'PERFECTLY_UNIFORM'
+      ) {
+        setData(resp.resolution_result);
+      } else {
+        // If it isn't one of the three uniform types above, default to 'day'
+        // because we don't actually know the temporal resolution no matter what we get back
+        setData('day');
+      }
     } else {
-      setDataError(resp.message ? resp.message : true);
+      // display this string as the starting point for non-uniform data
+      // this only happens for datasets without an annotated date column
+      setData('Non-uniform/event data');
+      // we may want to handle errors if there is no annotated date, tbd
+      // setDataError(resp.message ? resp.message : true);
     }
     setDataLoading(false);
   }, []);
@@ -366,7 +436,7 @@ const DataTransformation = ({
     datasetId: datasetInfo.id,
     annotations,
     jobString: 'resolution_processors.calculate_geographical_resolution',
-    generateArgs: generateFetchGeoResArgs,
+    generateArgs: () => generateFetchGeoResArgs(annotations),
     cleanupRef,
     onSuccess: onGeoResSuccess,
     onBackendFailure
@@ -403,7 +473,7 @@ const DataTransformation = ({
     datasetId: datasetInfo.id,
     annotations,
     jobString: 'transformation_processors.get_boundary_box',
-    generateArgs: generateFetchGeoBoundaryArgs,
+    generateArgs: () => generateFetchGeoBoundaryArgs(annotations),
     cleanupRef,
     onSuccess: onGeoBoundarySuccess,
     onBackendFailure
@@ -414,7 +484,7 @@ const DataTransformation = ({
     datasetId: datasetInfo.id,
     annotations,
     jobString: 'resolution_processors.calculate_temporal_resolution',
-    generateArgs: generateFetchTemporalArgs,
+    generateArgs: () => generateFetchTemporalArgs(annotations),
     cleanupRef,
     onSuccess: onTemporalResSuccess,
     onBackendFailure
@@ -425,16 +495,16 @@ const DataTransformation = ({
     datasetId: datasetInfo.id,
     annotations,
     jobString: 'transformation_processors.get_unique_dates',
-    generateArgs: generateFetchTemporalArgs,
+    generateArgs: () => generateFetchTemporalArgs(annotations),
     cleanupRef,
     onSuccess: onGetDatesSuccess,
     onBackendFailure
   });
 
-  // const mapResolutionLoading = !mapResolution && !mapResolutionError;
-  // const mapBoundsLoading = !mapBounds && !mapBoundsError;
-  // const timeResolutionLoading = !timeResolution && !timeResolutionError;
-  // const timeBoundsLoading = !timeBounds && !timeBoundsError;
+  const mapResolutionLoading = !mapResolution && !mapResolutionError;
+  const mapBoundsLoading = !mapBounds && !mapBoundsError;
+  const timeResolutionLoading = !timeResolution && !timeResolutionError;
+  const timeBoundsLoading = !timeBounds && !timeBoundsError;
   const gadmResolutionLoading = !gadmResolution && !gadmResolutionError;
   const gadmCountriesLoading = !gadmCountries && !gadmCountriesError;
 
@@ -456,26 +526,25 @@ const DataTransformation = ({
 
   const disableNext = () => {
     if (
-      // mapResolutionLoading
-      // || mapBoundsLoading
-      // || timeResolutionLoading
-      // || timeBoundsLoading
-      // ||
-      gadmResolutionLoading
+      mapResolutionLoading
+      || mapBoundsLoading
+      || timeResolutionLoading
+      || timeBoundsLoading
+      || gadmResolutionLoading
     ) {
       // disable if any of the transformations are loading
       return true;
     }
 
-    // if (!mapResolutionError && !savedMapResolution) {
-    //   // disable if we are requiring a map resolution to be chosen and it hasn't been
-    //   return true;
-    // }
+    if (!mapResolutionError && !savedMapResolution) {
+      // disable if we are requiring a map resolution to be chosen and it hasn't been
+      return true;
+    }
 
-    // if (!timeResolutionError && !savedTimeResolution) {
-    //   // disable if we are requiring a time resolution to be set and it hasn't been
-    //   return true;
-    // }
+    if (!timeResolutionError && !savedTimeResolution) {
+      // disable if we are requiring a time resolution to be set and it hasn't been
+      return true;
+    }
 
     if (!gadmResolutionError && !savedGADMOverrides) {
       return true;
@@ -484,41 +553,102 @@ const DataTransformation = ({
     return false;
   };
 
-  const processAdjustGeo = () => {
-    if (savedMapResolution) {
-      const args = generateProcessGeoResArgs(annotations, savedMapResolution, mapResolution);
-      // save the args to a ref so we can store them on the annotations object
-      transformationsRef.current.regrid_geo = args;
-      return startElwoodJob(datasetInfo.id, args, 'transformation_processors.regrid_geo');
-    }
-  };
-
-  const processMapClippings = () => {
-    if (savedDrawings.length > 0) {
-      const args = generateProcessGeoCovArgs(annotations, savedDrawings);
-      transformationsRef.current.clip_geo = args;
-      return startElwoodJob(datasetInfo.id, args, 'transformation_processors.clip_geo');
-    }
-  };
-
   const processClipTime = () => {
+    let config;
     if (savedTimeBounds) {
       const args = generateProcessTempCovArgs({
         annotations,
         start: savedTimeBounds[0],
         end: savedTimeBounds[savedTimeBounds.length - 1],
       });
+
       transformationsRef.current.clip_time = args;
-      return startElwoodJob(datasetInfo.id, args, 'transformation_processors.clip_time');
+
+      config = {
+        datasetId: datasetInfo.id,
+        annotations,
+        onSuccess: (data) => console.log('First job data - clip time:', data),
+        generateArgs: () => args,
+        jobString: 'transformation_processors.clip_time',
+        cleanupRef,
+        onBackendFailure,
+      };
     }
+    return config;
   };
 
-  const processAdjustTime = () => {
-    if (savedTimeResolution) {
-      const args = generateProcessTempResArgs(annotations, savedTimeResolution, savedAggregation);
-      transformationsRef.current.scale_time = args;
-      return startElwoodJob(datasetInfo.id, args, 'transformation_processors.scale_time');
+  const processClipGeo = () => {
+    let config;
+    if (savedDrawings.length > 0) {
+      const args = generateProcessGeoCovArgs(annotations, savedDrawings);
+
+      transformationsRef.current.clip_geo = args;
+
+      config = {
+        datasetId: datasetInfo.id,
+        annotations,
+        onSuccess: (data) => console.log('Second job data - clip geo:', data),
+        generateArgs: () => args,
+        jobString: 'transformation_processors.clip_geo',
+        cleanupRef,
+        onBackendFailure,
+      };
     }
+    return config;
+  };
+
+  const processScaleTime = () => {
+    let config;
+    if (savedTimeResolution) {
+      const args = generateProcessTempResArgs(
+        annotations,
+        savedTimeResolution,
+        savedTimeAggregation
+      );
+
+      transformationsRef.current.scale_time = args;
+
+      config = {
+        datasetId: datasetInfo.id,
+        annotations,
+        onSuccess: (data) => console.log('Third job data - scale time:', data),
+        generateArgs: () => args,
+        jobString: 'transformation_processors.scale_time',
+        cleanupRef,
+        onBackendFailure,
+      };
+    }
+    return config;
+  };
+
+  const processRegridGeo = () => {
+    let config;
+    if (savedMapResolution) {
+      const args = generateProcessGeoResArgs({
+        annotations,
+        newMapResolution: savedMapResolution,
+        oldMapResolution: mapResolution,
+        aggregation: savedMapAggregation
+      });
+
+      // save the args to a ref so we can store them on the annotations object
+      transformationsRef.current.regrid_geo = args;
+
+      // If non-uniform is selected, don't run the transformation
+      if (savedMapResolution !== 'Non-uniform/event data') {
+        config = {
+          datasetId: datasetInfo.id,
+          annotations,
+          onSuccess: (data) => console.log('Fourth job data - regrid geo:', data),
+          generateArgs: () => args,
+          jobString: 'transformation_processors.regrid_geo',
+          cleanupRef,
+          onBackendFailure,
+        };
+      }
+    }
+
+    return config;
   };
 
   const processGadmOverrides = () => {
@@ -526,57 +656,30 @@ const DataTransformation = ({
   };
 
   const handleNextStep = () => {
-    const adjustGeo = processAdjustGeo();
-    const clipMap = processMapClippings();
-    const adjustTime = processAdjustTime();
+    // clear this before running each time, in case we're re-running after errors
+    setJobsConfig(null);
+
     const clipTime = processClipTime();
+    const clipMap = processClipGeo();
+    const scaleTime = processScaleTime();
+    const regridGeo = processRegridGeo();
+
+    // The jobs always happen in this specific order
+    // only do the jobs that are defined
+    const transformations = [clipTime, clipMap, scaleTime, regridGeo]
+      .filter((job) => job !== undefined);
 
     processGadmOverrides();
 
-    // Only do all of the below when we've done all of the selected transformations
-    // any untouched transformations won't return a promise and thus won't delay this
-    Promise.all([adjustGeo, clipMap, adjustTime, clipTime]).then((responses) => {
-      let modified;
-      responses.forEach((resp) => {
-        // if any are truthy (an untouched transformation will be undefined)
-        if (resp) modified = true;
-      });
+    // in case there were errors, we want to re-mount the component and try again when
+    // NEXT is clicked again
+    setTransformationProcessingError(false);
 
-      if (modified) {
-        // This lets us know that we need to show the spinner when the restore_raw_file job
-        // is running when revisiting this page in the registration flow
-        localStorage.setItem(`dataTransformation-${datasetInfo.id}`, true);
-      }
-
-      // If there are no transformations, skip updating the annotations object
-      if (isEmpty(transformationsRef.current)) {
-        handleNext();
-        return;
-      }
-
-      // If there are transformations, we want to store the data transformation decisions
-      const clonedMetadata = cloneDeep(annotations.metadata);
-      // add all the args that we sent to the elwood jobs and stored in our ref
-      // to our cloned metadata object
-      clonedMetadata.transformations = transformationsRef.current;
-      // and PATCH that to the dataset's annotations
-      // along with the existing annotations so it doesn't overwrite anything
-      axios.patch(
-        `/api/dojo/indicators/${datasetInfo.id}/annotations`, {
-          annotations: annotations.annotations,
-          metadata: clonedMetadata
-        }
-      ).then(() => {
-        // Ensure annotations with potential gadm resolver updates are stored
-        // To pass in to next step / jobs:
-        setAnnotations({
-          annotations: annotations.annotations,
-          metadata: clonedMetadata
-        });
-
-        handleNext();
-      });
-    });
+    // jobsConfig triggers the useOrderedElwoodJobs hook to fire from the RunTransformation
+    // child component
+    setJobsConfig(transformations);
+    // The actual jump to next step happens in the useEffect at the top of this function
+    // after the jobs have completed in RunTransformation
   };
 
   const drawerInner = () => {
@@ -589,6 +692,8 @@ const DataTransformation = ({
             resolutionOptions={mapResolutionOptions}
             setSavedResolution={setSavedMapResolution}
             savedResolution={savedMapResolution}
+            savedAggregation={savedMapAggregation}
+            setSavedAggregation={setSavedMapAggregation}
             jobString="transformation_processors.regrid_geo"
             datasetId={datasetInfo.id}
             annotations={annotations}
@@ -618,8 +723,8 @@ const DataTransformation = ({
             resolutionOptions={timeResolutionOptions}
             setSavedResolution={setSavedTimeResolution}
             savedResolution={savedTimeResolution}
-            savedAggregation={savedAggregation}
-            setSavedAggregation={setSavedAggregation}
+            savedAggregation={savedTimeAggregation}
+            setSavedAggregation={setSavedTimeAggregation}
             jobString="transformation_processors.scale_time"
             datasetId={datasetInfo.id}
             annotations={annotations}
@@ -675,15 +780,16 @@ const DataTransformation = ({
           Icon={GridOnIcon}
           title="Adjust Geospatial Resolution"
           onClick={() => handleDrawerOpen('regridMap')}
-          loading={!mapResolution && !mapResolutionError}
+          loading={mapResolutionLoading}
           error={mapResolutionError}
+          required={!mapResolutionError}
         />
         <TransformationButton
           isComplete={!!savedDrawings.length}
           Icon={MapIcon}
           title="Select Geospatial Coverage"
           onClick={() => handleDrawerOpen('clipMap')}
-          loading={!mapBounds && !mapBoundsError}
+          loading={mapBoundsLoading}
           error={mapBoundsError}
         />
         <TransformationButton
@@ -691,15 +797,16 @@ const DataTransformation = ({
           Icon={AspectRatioIcon}
           title="Adjust Temporal Resolution"
           onClick={() => handleDrawerOpen('scaleTime')}
-          loading={!timeResolution && !timeResolutionError}
+          loading={timeResolutionLoading}
           error={timeResolutionError}
+          required={!timeResolutionError}
         />
         <TransformationButton
           isComplete={!!savedTimeBounds}
           Icon={TodayIcon}
           title="Select Temporal Coverage"
           onClick={() => handleDrawerOpen('clipTime')}
-          loading={!timeBounds && !timeBoundsError}
+          loading={timeBoundsLoading}
           error={timeBoundsError}
         />
       </List>
@@ -727,10 +834,25 @@ const DataTransformation = ({
         open={Boolean(promptMessage)}
         handleClose={closePrompt}
       />
+
+      {jobsConfig && !transformationProcessingError && (
+        <RunTransformations
+          jobsConfig={jobsConfig}
+          setAllTransformationsComplete={setAllTransformationsComplete}
+          setTransformationProcessingError={setTransformationProcessingError}
+        />
+      )}
     </div>
   );
 };
 
+/**
+ * This component mounts specifically to run the restore_raw_file data transformation before any
+ * of the other useElwoodData jobs run, as we need to confirm that the file is in its original
+ * state before the other ones can run.
+ * It also holds onto the cleanupRef that will prevent the various useElwoodData calls from
+ * repeating forever if we navigate away
+ **/
 export default ({
   datasetInfo,
   stepTitle,
@@ -740,6 +862,9 @@ export default ({
   annotations,
 }) => {
   const { classes } = useStyles();
+  // this ref keeps track of when the page is mounted so that we can avoid useElwoodData running
+  // endlessly if we navigate away while it's still going
+  // it should be passed into every use of useElwoodData
   const cleanupRef = useRef(null);
   const [showSpinner, setShowSpinner] = useState(true);
 

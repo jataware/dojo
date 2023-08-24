@@ -18,7 +18,7 @@ import {
   uploadFile, genRegisterDefaultValues,
   formSchema, updateMetadata,
   BaseData, ContactInformation,
-  Resolution, DataQualitySensitivity
+  DataQualitySensitivity
 } from './metadataComponents';
 
 const skipValidation = false;
@@ -191,7 +191,7 @@ export default ({
                 classes={{ content: classes.accordionContent }}
               >
                 <Typography variant="body2">
-                  Resolution, Quality, Sensitivity
+                  Quality, Sensitivity
                 </Typography>
               </AccordionSummary>
 
@@ -200,9 +200,6 @@ export default ({
                   container
                   spacing={4}
                 >
-                  <Grid item xs={12}>
-                    <Resolution />
-                  </Grid>
                   <Grid item xs={12}>
                     <DataQualitySensitivity />
                   </Grid>

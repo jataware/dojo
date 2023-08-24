@@ -155,8 +155,8 @@ class TimeRange(BaseModel):
 class RegridGeo(BaseModel):
     datetime_column: List[str]
     geo_columns: Dict[str, str]
-    scale: float
-    scale_multi: float
+    scale: Union[float, str]
+    scale_multi: Union[float, str]
 
 class ScaleTime(BaseModel):
     datetime_bucket: str

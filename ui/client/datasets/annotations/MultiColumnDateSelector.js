@@ -48,7 +48,7 @@ const MultiColumnDateSelector = ({
       <FormGroup>
         <Typography variant="caption">
           <ExternalLink href="https://docs.python.org/3/library/datetime.html#strftime-and-strptime-format-codes">
-            Date Formatting Referece
+            Date Formatting Reference
           </ExternalLink>
         </Typography>
 
