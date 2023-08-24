@@ -144,6 +144,7 @@ const UploadFileDialog = ({
                           target="_blank"
                           rel="noopener"
                           className={classes.buttons}
+                          color="grey"
                         >
                           Documentation - Uploading Large Files
                         </Button>

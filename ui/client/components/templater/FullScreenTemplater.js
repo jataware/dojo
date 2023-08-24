@@ -207,6 +207,7 @@ const FullScreenTemplater = ({
                 variant="outlined"
                 disabled={!highlights.length}
                 className={classes.allParamsButton}
+                color="grey"
               >
                 {`${templatesDrawerOpen ? 'Hide' : 'View'} All Parameters`}
               </Button>

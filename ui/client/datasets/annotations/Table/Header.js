@@ -115,6 +115,7 @@ const MultiPartHeader = ({
           variant="outlined"
           size="small"
           onClick={() => buttonClick(column)}
+          color="grey"
         >
           Edit
         </Button>
@@ -187,6 +188,7 @@ const Header = ({
             // }}
             style={{ visibility: isMultiPartMember ? 'hidden' : 'visible' }}
             size="small"
+            color="grey"
             onClick={() => buttonClick(column)}
             /* Disable the pulse animation when the drawer is open or once it's annotated */
             className={

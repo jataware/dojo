@@ -312,6 +312,7 @@ function ModelRegionForm({
               onClick={() => clearAutocomplete()}
               size="large"
               variant="outlined"
+              color="grey"
             >
               Clear Results
             </Button>
@@ -360,6 +361,7 @@ function ModelRegionForm({
           startIcon={
             showSearch ? <RemoveCircleOutlineIcon /> : <AddCircleOutlineIcon />
           }
+          color="grey"
         >
           Add Regions By Name
         </Button>
@@ -380,6 +382,7 @@ function ModelRegionForm({
           startIcon={
             showMap ? <RemoveCircleOutlineIcon /> : <AddCircleOutlineIcon />
           }
+          color="grey"
         >
           Add Regions By Coordinates
         </Button>
@@ -391,6 +394,7 @@ function ModelRegionForm({
         <div className={classes.buttonContainer}>
           <Button
             onClick={() => onBack()}
+            color="grey"
           >
             Back
           </Button>

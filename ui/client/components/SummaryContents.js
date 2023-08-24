@@ -240,6 +240,7 @@ const SummaryContents = ({
               size="small"
               startIcon={<ArrowBackIcon />}
               data-test="backToTerminalBtn"
+              color="grey"
             >
               Back to Terminal
             </Button>
@@ -326,6 +327,7 @@ const SummaryContents = ({
                 onClick={() => setOpenModelEdit(true)}
                 className={classes.modelEditButton}
                 disabled={disabledMode}
+                color="grey"
               >
                 Edit
               </Button>

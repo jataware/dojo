@@ -57,6 +57,7 @@ function GeographyListModal({ geography }) {
           className={classes.buttons}
           onClick={() => setOpen(true)}
           align="right"
+          color="grey"
         >
           Detailed Admin Levels:
         </Button>

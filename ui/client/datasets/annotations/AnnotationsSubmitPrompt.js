@@ -55,6 +55,7 @@ export default ({
     <DialogActions>
       <Button
         onClick={onDecline}
+        color="grey"
       >
         Make Changes
       </Button>

@@ -289,6 +289,7 @@ const ViewModels = ({
           onClick={() => viewModelClick(params.row.id)}
           variant="outlined"
           data-test="modelSummaryLink"
+          color="grey"
         >
           View Model
         </Button>

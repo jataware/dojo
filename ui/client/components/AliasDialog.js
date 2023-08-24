@@ -29,6 +29,7 @@ function AliasDialog({ column }) {
       <Button
         className={classes.buttons}
         onClick={() => setOpen(true)}
+        color="grey"
       >
         Aliases:
 

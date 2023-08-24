@@ -254,7 +254,7 @@ export const GadmResolver = ({
             justifyContent: 'space-between'
           }}
         >
-          <Button variant="outlined" onClick={onCancel}>
+          <Button variant="outlined" onClick={onCancel} color="grey">
             Cancel
           </Button>
           <Button

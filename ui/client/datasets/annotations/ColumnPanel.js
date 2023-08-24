@@ -497,7 +497,7 @@ export default ({
                         </Button>
 
                         <div>
-                          <Button onClick={onClose}>
+                          <Button onClick={onClose} color="grey">
                             Cancel
                           </Button>
 

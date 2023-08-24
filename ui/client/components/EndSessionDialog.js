@@ -94,7 +94,7 @@ const EndSessionDialog = ({
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleClose}>Close</Button>
+          <Button onClick={handleClose} color="grey">Close</Button>
         </DialogActions>
       </Dialog>
     );

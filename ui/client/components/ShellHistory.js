@@ -172,7 +172,7 @@ const ShellHistory = ({
           </TableCell>
           <TableCell align="right">
             <Button
-              color={directiveItem ? 'primary' : 'default'}
+              color={directiveItem ? 'primary' : 'grey'}
               data-test="terminalMarkDirectiveBtn"
               disabled={directiveDuplicate}
               disableElevation

@@ -17,6 +17,7 @@ export const Navigation = ({
     <Button
       onClick={handleBack}
       disabled={disabled}
+      color="grey"
     >
       Back
     </Button>

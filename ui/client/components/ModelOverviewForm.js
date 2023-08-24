@@ -110,7 +110,7 @@ export const ModelOverview = ({
       <form onSubmit={formik.handleSubmit}>
         <ModelOverviewFields formik={formik} lockFamilyName={lockFamilyName} />
         <div className={classes.buttonContainer}>
-          <Button disabled>
+          <Button disabled color="grey">
             Back
           </Button>
           <Button

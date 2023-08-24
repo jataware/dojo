@@ -163,10 +163,20 @@ const Provisioning = () => {
             </Typography>
           </div>
           <div className={classes.failNavButtons}>
-            <Button onClick={() => history.goBack()} variant="contained" disableElevation>
+            <Button
+              onClick={() => history.goBack()}
+              variant="contained"
+              disableElevation
+              color="grey"
+            >
               Return to the Provision Page
             </Button>
-            <Button href={`/summary/${modelId}`} variant="contained" disableElevation>
+            <Button
+              href={`/summary/${modelId}`}
+              variant="contained"
+              disableElevation
+              color="grey"
+            >
               Go to the Model Summary Page
             </Button>
           </div>

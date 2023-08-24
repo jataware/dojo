@@ -253,6 +253,7 @@ const ViewFeatures = () => {
           href={`/dataset_summary?dataset=${row.owner_dataset.id}`}
           target="_blank"
           variant="outlined"
+          color="grey"
         >
           Parent Dataset
           <OpenInNewIcon />

@@ -187,6 +187,7 @@ export const ModelDetail = ({
             <Button
               data-test="modelFormDetailBackBtn"
               onClick={() => handleBack(formik.values)}
+              color="grey"
             >
               Back
             </Button>

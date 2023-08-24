@@ -90,6 +90,7 @@ function SummaryIndicatorDetails({ indicator }) {
               href={`${process.env.CAUSEMOS_UI_URL}/#/dataset/${indicator.id}/datasetOverview`}
               target="_blank"
               rel="noopener"
+              color="grey"
             > View In Causemos
             </Button>
           </Typography>

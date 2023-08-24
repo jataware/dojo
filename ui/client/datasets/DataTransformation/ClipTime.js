@@ -328,6 +328,7 @@ export default ({
               <Button
                 variant="outlined"
                 onClick={handleReset}
+                color="grey"
                 style={{ marginRight: '16px' }}
               >
                 Reset

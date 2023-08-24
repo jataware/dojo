@@ -21,8 +21,11 @@ export default function DeletionDialog({
         </DialogContentText>
       </DialogContent>
       <DialogActions>
-        <Button onClick={handleDialogClose}>No</Button>
-        <Button onClick={(event) => { deletionHandler(event); handleDialogClose(event); }}>
+        <Button onClick={handleDialogClose} color="grey">No</Button>
+        <Button
+          onClick={(event) => { deletionHandler(event); handleDialogClose(event); }}
+          color="grey"
+        >
           Yes
         </Button>
       </DialogActions>

@@ -58,30 +58,46 @@ const NavBar = () => {
         <Button
           component={Link}
           to="/models"
+          color="grey"
         >
           Models
         </Button>
         <Button
           component={Link}
           to="/datasets"
+          color="grey"
         >
           Datasets
         </Button>
         <Button
           component={Link}
           to="/runs"
+          color="grey"
         >
           Model Runs
         </Button>
         <Button
           component={Link}
           to="/documents"
+          color="grey"
         >
           Documents
         </Button>
         <span className={classes.spacer} />
-        <Button href="https://www.dojo-modeling.com" target="_blank">Documentation</Button>
-        <Button href="https://github.com/dojo-modeling/dojo" target="_blank">GitHub</Button>
+        <Button
+          href="https://www.dojo-modeling.com"
+          target="_blank"
+          color="grey"
+        >
+          Documentation
+        </Button>
+        <Button
+          href="https://github.com/dojo-modeling/dojo"
+          target="_blank"
+          color="grey"
+        >
+          GitHub
+        </Button>
       </Toolbar>
     </AppBar>
   );

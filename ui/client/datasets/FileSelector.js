@@ -480,6 +480,7 @@ export const FileSelector = ((allProps) => {
             <Button
               variant="outlined"
               size="small"
+              color="grey"
               onClick={() => setUpdatingUploadedFile(true)}
             >
               Replace File
@@ -499,6 +500,7 @@ export const FileSelector = ((allProps) => {
               <Button
                 variant="outlined"
                 size="small"
+                color="grey"
                 onClick={() => setUpdatingUploadedFile(false)}
               >
                 Cancel and use original

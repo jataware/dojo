@@ -175,7 +175,11 @@ export default ({
             arrow
           >
             <span>
-              <Button onClick={startPreview} disabled={loading || disabled}>
+              <Button
+                onClick={startPreview}
+                disabled={loading || disabled}
+                color="grey"
+              >
                 Preview
               </Button>
             </span>

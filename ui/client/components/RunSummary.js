@@ -283,6 +283,7 @@ const RunSummary = ({ classes }) => {
                 variant="outlined"
                 style={{ marginTop: '0.5rem' }}
                 to={`/runlogs/${run.id}`}
+                color="grey"
               >
                 View Logs
               </Button>

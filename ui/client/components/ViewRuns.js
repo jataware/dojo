@@ -111,6 +111,7 @@ const columns = [
         component={Link}
         to={`/runs/${row.id}`}
         variant="outlined"
+        color="grey"
       >
         Summary
       </Button>

@@ -129,6 +129,7 @@ const columns = [
       <Button
         href={`/dataset_summary?dataset=${row.id}`}
         variant="outlined"
+        color="grey"
       >
         View Dataset
       </Button>

@@ -88,6 +88,7 @@ function SummaryModelDetails({ model }) {
           variant="contained"
           href={causemosUrl}
           disableElevation
+          color="grey"
         >
           View Model on Causemos
         </Button>

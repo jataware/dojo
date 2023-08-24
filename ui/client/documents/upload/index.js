@@ -354,6 +354,7 @@ const UploadDocumentForm = () => {
                 variant="contained"
                 size="large"
                 disabled={uploading}
+                color="grey"
               >
                 Cancel
               </Button>
