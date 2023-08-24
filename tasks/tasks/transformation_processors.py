@@ -9,7 +9,13 @@ import sys
 import pandas as pd
 import numpy as np
 
-from utils import job_setup, put_rawfile, persist_untransformed_file, rewrite_file
+from utils import (
+    job_setup,
+    put_rawfile,
+    persist_untransformed_file,
+    rewrite_file,
+    get_primary_time_format,
+)
 from elwood import elwood
 from settings import settings
 
@@ -25,7 +31,12 @@ def clip_geo(context, filename=None, **kwargs):
     shape_list = kwargs.get("map_shapes", [])
     geo_columns = kwargs.get("geo_columns", {})
 
-    if shape_list and geo_columns and 'lat_column' in geo_columns and 'lon_column' in geo_columns:
+    if (
+        shape_list
+        and geo_columns
+        and "lat_column" in geo_columns
+        and "lon_column" in geo_columns
+    ):
         clipped_df = elwood.clip_geo(
             dataframe=original_dataframe,
             geo_columns=geo_columns,
@@ -47,7 +58,7 @@ def clip_geo(context, filename=None, **kwargs):
             # Put the new clipped file to overwrite the old one.
             file_buffer = io.BytesIO()
 
-            clipped_df.to_csv(file_buffer)
+            clipped_df.to_csv(file_buffer, index=False)
             file_buffer.seek(0)
 
             put_rawfile(path=rawfile_path, fileobj=file_buffer)
@@ -107,7 +118,7 @@ def clip_time(context, filename=None, **kwargs):
             # Put the new clipped file to overwrite the old one.
             file_buffer = io.BytesIO()
 
-            clipped_df.to_csv(file_buffer)
+            clipped_df.to_csv(file_buffer, index=False)
             file_buffer.seek(0)
 
             put_rawfile(path=rawfile_path, fileobj=file_buffer)
@@ -143,6 +154,8 @@ def scale_time(context, filename=None, **kwargs):
     original_dataframe = pd.read_csv(file, delimiter=",")
     rows_pre_clip = len(original_dataframe.index)
 
+    time_format = get_primary_time_format(context)
+
     # Main call
     time_column = kwargs.get("datetime_column", "")
     time_bucket = kwargs.get("datetime_bucket", "")
@@ -151,7 +164,7 @@ def scale_time(context, filename=None, **kwargs):
 
     if time_column and time_bucket and aggregation_list:
         try:
-            clipped_df = elwood.rescale_dataframe_time(
+            scaled_df = elwood.rescale_dataframe_time(
                 dataframe=original_dataframe,
                 time_column=time_column,
                 time_bucket=time_bucket,
@@ -165,8 +178,17 @@ def scale_time(context, filename=None, **kwargs):
             }
             return response
 
-        json_dataframe_preview = clipped_df.head(100).to_json(default_handler=str)
-        rows_post_clip = len(clipped_df.index)
+        print(f"SCALED DF: {scaled_df}")
+
+        scaled_df[time_column] = pd.to_datetime(scaled_df[time_column])
+        scaled_df[time_column] = scaled_df[time_column].apply(
+            lambda x: x.strftime(time_format)
+        )
+
+        print(f"SCALED DF formatted: {scaled_df}")
+
+        json_dataframe_preview = scaled_df.head(100).to_json(default_handler=str)
+        rows_post_clip = len(scaled_df.index)
 
         preview = kwargs.get("preview_run", False)
 
@@ -178,7 +200,7 @@ def scale_time(context, filename=None, **kwargs):
             # Put the new clipped file to overwrite the old one.
             file_buffer = io.BytesIO()
 
-            clipped_df.to_csv(file_buffer)
+            scaled_df.to_csv(file_buffer, index=False)
             file_buffer.seek(0)
 
             put_rawfile(path=rawfile_path, fileobj=file_buffer)
@@ -211,13 +233,18 @@ def regrid_geo(context, filename=None, **kwargs):
     # Setup
     file, filename, rawfile_path = job_setup(context=context, filename=filename)
     original_dataframe = pd.read_csv(file, delimiter=",")
+    print(f"starting frame: {original_dataframe}")
+    sys.stdout.flush()
     rows_pre_clip = len(original_dataframe.index)
+
+    time_format = get_primary_time_format(context)
 
     # Main Call
     geo_column = kwargs.get("geo_columns")
-    time_column = kwargs.get("datetime_column")
+    time_column = kwargs.get("datetime_column")[0]
     scale_multiplier = kwargs.get("scale_multi")
     scale = kwargs.get("scale", None)
+    aggregation_functions = kwargs.get("aggregation_function_list")
 
     if geo_column and time_column and scale_multiplier:
         regridded_df = elwood.regrid_dataframe_geo(
@@ -226,7 +253,17 @@ def regrid_geo(context, filename=None, **kwargs):
             time_column=time_column,
             scale_multi=scale_multiplier,
             scale=scale,
+            aggregation_functions=aggregation_functions,
         )
+
+        print(f"REGRIDDED DF: {regridded_df}")
+
+        regridded_df[time_column] = pd.to_datetime(regridded_df[time_column])
+        regridded_df[time_column] = regridded_df[time_column].apply(
+            lambda x: x.strftime(time_format)
+        )
+
+        print(f"REGRIDDED DF formatted: {regridded_df}")
 
         json_dataframe_preview = regridded_df.head(100).to_json(default_handler=str)
         rows_post_clip = len(regridded_df.index)
@@ -241,7 +278,7 @@ def regrid_geo(context, filename=None, **kwargs):
             # Put the new clipped file to overwrite the old one.
             file_buffer = io.BytesIO()
 
-            regridded_df.to_csv(file_buffer)
+            regridded_df.to_csv(file_buffer, index=False)
             file_buffer.seek(0)
 
             put_rawfile(path=rawfile_path, fileobj=file_buffer)
@@ -278,7 +315,7 @@ def get_boundary_box(context, filename=None, **kwargs):
     # Main Call
     geo_columns = kwargs.get("geo_columns", {})
 
-    if geo_columns and 'lat_column' in geo_columns and 'lon_column' in geo_columns:
+    if geo_columns and "lat_column" in geo_columns and "lon_column" in geo_columns:
         boundary_dict = elwood.get_boundary_box(
             dataframe=original_dataframe,
             geo_columns=geo_columns,
