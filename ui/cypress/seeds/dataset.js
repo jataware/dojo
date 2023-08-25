@@ -1,4 +1,4 @@
-// const { faker } = require('@faker-js/faker'); // if needed
+const { faker } = require('@faker-js/faker');
 
 /**
  * Plan/state needed for these tests:
@@ -34,7 +34,7 @@
 
 const genDataset = (variant) => {
   return {
-    "name": `Seed: ${variant} Dataset`,
+    "name": `Seed-${variant}-${faker.person.firstName()}`,
     "family_name": null,
     "description": "hello",
     // "created_at": 1690989601903, // NOTE ignore
@@ -242,4 +242,3 @@ const dataset_uniform_annotations = {
 };
 
 module.exports = {genDataset, dataset_acled_annotations, dataset_uniform_annotations};
-

@@ -102,8 +102,6 @@ describe('Dataset Update Metadata Flow', function () {
 
     mockHttpRequests();
 
-    cy.task('debug', JSON.stringify(Cypress.config(), null, 2));
-
     cy.visit('/datasets/update/register/test-guid');
 
     cy

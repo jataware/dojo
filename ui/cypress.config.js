@@ -1,6 +1,8 @@
 const { defineConfig } = require("cypress");
 const webpackConfig = require('./cypress/webpack.cypress.js');
 
+const BASE_URL = process.env.CYPRESS_BASE_URL || "http://localhost:8080";
+
 module.exports = defineConfig({
   chromeWebSecurity: false,
   defaultCommandTimeout: 10000,
@@ -14,7 +16,8 @@ module.exports = defineConfig({
     setupNodeEvents(on, config) {
       return require("./cypress/plugins/index.js")(on, config);
     },
-    baseUrl: "http://localhost:8080",
+    baseUrl: BASE_URL,
+
     specPattern: 'cypress/e2e/**/*.cy.js',
     "experimentalRunAllSpecs": true,
     "experimentalMemoryManagement": true
