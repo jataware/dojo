@@ -11,6 +11,8 @@ import {
 } from 'react-router-dom';
 
 import { ThemeProvider, StyledEngineProvider } from '@mui/material/styles';
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns'
 
 import NavBar from './components/NavBar';
 import ThemeContextProvider from './components/ThemeContextProvider';
@@ -70,7 +72,9 @@ ReactDOM.render(
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <ThemeContextProvider>
-        <Main />
+        <LocalizationProvider dateAdapter={AdapterDateFns}>
+          <Main />
+        </LocalizationProvider>
       </ThemeContextProvider>
     </ThemeProvider>
   </StyledEngineProvider>,

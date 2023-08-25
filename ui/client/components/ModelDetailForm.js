@@ -5,18 +5,17 @@ import * as yup from 'yup';
 import Autocomplete from '@mui/material/Autocomplete';
 import Button from '@mui/material/Button';
 
-import DateFnsUtils from '@date-io/date-fns';
-import {
-  MuiPickersUtilsProvider,
-} from '@material-ui/pickers';
+// import DateFnsUtils from '@date-io/date-fns';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 
-import { KeyboardDatePicker } from 'material-ui-formik-components/KeyboardDatePicker';
+// import { KeyboardDatePicker } from 'material-ui-formik-components/KeyboardDatePicker';
 import TextField from '@mui/material/TextField';
 import axios from 'axios';
 import { makeStyles } from 'tss-react/mui';
 import { Field, FormikProvider, useFormik } from 'formik';
 
 import FormikTextField from './FormikTextField';
+import FormikDatePicker from './formikComponents/FormikDatePicker';
 
 const useStyles = makeStyles()((theme) => ({
   desc: {
@@ -130,28 +129,20 @@ export const ModelDetailFields = ({
         label="Maintainer Organization"
         formik={formik}
       />
-      <MuiPickersUtilsProvider utils={DateFnsUtils}>
-        <div className={classes.datePickerContainer}>
-          <Field
-            component={KeyboardDatePicker}
-            data-test="modelFormStartDate"
-            format="MM/dd/yyyy"
-            label="Model Start Date"
-            name="period.gte"
-            placeholder="mm/dd/yyyy"
-            variant="inline"
-          />
-          <Field
-            format="MM/dd/yyyy"
-            component={KeyboardDatePicker}
-            data-test="modelFormEndDate"
-            label="Model End Date"
-            name="period.lte"
-            placeholder="mm/dd/yyyy"
-            variant="inline"
-          />
-        </div>
-      </MuiPickersUtilsProvider>
+      <div className={classes.datePickerContainer}>
+        <FormikDatePicker
+          data-test="modelFormStartDate"
+          format="MM/dd/yyyy"
+          label="Model Start Date"
+          name="period.gte"
+        />
+        <FormikDatePicker
+          format="MM/dd/yyyy"
+          data-test="modelFormEndDate"
+          label="Model End Date"
+          name="period.lte"
+        />
+      </div>
 
       <DomainsAutocomplete formik={formik} />
     </>
