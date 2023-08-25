@@ -27,6 +27,7 @@ class FileLoadProcessor(BaseProcessor):
             "tiff": GeotiffLoadProcessor,
             "csv": CsvLoadProcessor,
             "nc": NetcdfLoadProcessor,
+            "nc4": NetcdfLoadProcessor,
         }
 
         if isinstance(fp, str):

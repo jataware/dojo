@@ -172,6 +172,8 @@ export default withStyles(({ spacing }) => ({
       setPreviewPromptOpen(true);
     } else {
       try {
+        // clear the rqworker jobs for this dataset id
+        // so that the transformations page will not use cached results for stale data
         await axios.post(`/api/dojo/job/clear/${datasetInfo.id}`);
       } catch (error) {
         console.info(error?.response?.data);
