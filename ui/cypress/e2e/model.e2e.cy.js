@@ -8,8 +8,8 @@ import isEmpty from 'lodash/isEmpty';
 import get from 'lodash/get';
 import last from 'lodash/last';
 
-import { createModel, provisionModelTerminal, shutdownWorker,
-         provisionAndWaitReady, getModelRegisterUrls, waitUrlToProcess,
+import { provisionModelTerminal, shutdownWorker,
+         provisionTerminalWaitReady, getModelRegisterUrls, waitUrlToProcess,
          waitForAllUrlsToFinish
        } from '../support/helpers';
 
@@ -27,8 +27,7 @@ const isAuthEnabledRemote = hasAuth;
 function cleanModel(modelId) {
   cy.visit('/admin', {auth});
 
-  return shutdownWorker().then(() => {
-
+  return cy.wrap(shutdownWorker()).then(() => {
     if (!isAuthEnabledRemote) {
       cy.log('Done clearing worker, clearing seeds.');
       cy.task('seed:clean', {type: 'model', id: modelId});
@@ -46,7 +45,9 @@ describe(
   { browser: ['chrome', 'chromium', 'firefox'] },
   () => {
 
-    beforeEach(shutdownWorker);
+    beforeEach(() => {
+      cy.wrap(shutdownWorker());
+    });
 
     afterEach(() => {
       cy.location()
@@ -150,53 +151,57 @@ describe('Model output annotation', { browser: ['chrome', 'chromium', 'firefox']
 
     modelId = undefined;
 
-    const testModel = createModel(modelId);
+    const testModel = genBaseModel(modelId);
 
     modelId = testModel.id;
 
-    cy.wrap(provisionAndWaitReady(modelId)).then(() => {
+    cy.seed({type: 'model', data: testModel})
+      .then(() => {
 
-      cy.visit(`/term/${testModel.id}`, {auth}); // Can't visit WS term on HTTPS upgrade Cypress
+      cy.wrap(provisionTerminalWaitReady(modelId)).then(() => {
 
-      cy.reload();
+        cy.visit(`/term/${testModel.id}`, {auth}); // Can't visit WS term on HTTPS upgrade Cypress
 
-      const fileName = 'output_data.csv';
-      const folderName = 'testmodel';
+        cy.reload();
 
-      cy.findByRole('textbox', {name: /terminal input/i})
-        .type(`mkdir ${folderName}{enter}`)
-        .type(`cd ${folderName}{enter}`)
-        .type(`touch ${fileName}{enter}`)
-        .type(`dojo edit ${fileName}{enter}`);
+        const fileName = 'output_data.csv';
+        const folderName = 'testmodel';
 
-      cy.findByRole('button', {name: /^close/i});
+        cy.findByRole('textbox', {name: /terminal input/i})
+          .type(`mkdir ${folderName}{enter}`)
+          .type(`cd ${folderName}{enter}`)
+          .type(`touch ${fileName}{enter}`)
+          .type(`dojo edit ${fileName}{enter}`);
 
-      cy.findByRole('textbox').as('EditingText');
+        cy.findByRole('button', {name: /^close/i});
 
-      cy.get('@EditingText')
-        .type('latitude,longitude,date,value,color_hue{enter}');
+        cy.findByRole('textbox').as('EditingText');
 
-      cy.get('@EditingText')
-        .type('60.4985255,-10.615118,1986-07-31,0.1237884593924997,#a04620{enter}28.5827915,-103.818624,2019-09-25,0.8583255955703992,#c61352{enter}', {force: true} );
+        cy.get('@EditingText')
+          .type('latitude,longitude,date,value,color_hue{enter}');
 
-      const saveUrl = `/api/terminal/container/${modelId}/ops/save?path=/home/clouseau/${folderName}/${fileName}`;
+        cy.get('@EditingText')
+          .type('60.4985255,-10.615118,1986-07-31,0.1237884593924997,#a04620{enter}28.5827915,-103.818624,2019-09-25,0.8583255955703992,#c61352{enter}', {force: true} );
 
-      cy.intercept({
-        method: 'POST',
-        url: saveUrl,
-        // auth // TODO breaks in local. Conditionally add auth object on intercept?
-      }).as('SavingNewFile');
+        const saveUrl = `/api/terminal/container/${modelId}/ops/save?path=/home/clouseau/${folderName}/${fileName}`;
 
-      cy.findByRole('button', {name: /save/i})
-        .click();
+        cy.intercept({
+          method: 'POST',
+          url: saveUrl,
+          auth // TODO breaks in local. Conditionally add auth object on intercept?
+        }).as('SavingNewFile');
 
-      cy.get('@SavingNewFile')
-        .then(({request, response}) => {
-          expect(request.query.path).to.contain(fileName);
-          expect(request.body).to.contain('latitude');
-          expect(response.body).to.equal('ok');
+        cy.findByRole('button', {name: /save/i})
+          .click();
+
+        cy.get('@SavingNewFile')
+          .then(({request, response}) => {
+            expect(request.query.path).to.contain(fileName);
+            expect(request.body).to.contain('latitude');
+            expect(response.body).to.equal('ok');
+          });
+
       });
-
     });
   });
 
@@ -216,7 +221,7 @@ describe('Model output annotation', { browser: ['chrome', 'chromium', 'firefox']
 
     cy.seed({type: 'model', data: testModel})
       .then(() => {
-        cy.wrap(provisionAndWaitReady(modelId)).then(() => {
+        cy.wrap(provisionTerminalWaitReady(modelId)).then(() => {
 
           const fileName = 'output_data.csv';
           const folderName = 'testmodel';
@@ -228,7 +233,7 @@ describe('Model output annotation', { browser: ['chrome', 'chromium', 'firefox']
           const baseUrl = Cypress.config('baseUrl');
           cy.visit(`/term/${testModel.id}`, {auth});
 
-          // cy.reload();
+          cy.reload();
 
           cy.findByRole('textbox', {name: /terminal input/i})
             .type(`mkdir ${folderName}{enter}`)
@@ -242,7 +247,7 @@ describe('Model output annotation', { browser: ['chrome', 'chromium', 'firefox']
               .intercept({
                 method:'POST',
                 url: `/api/dojo/job/${modelId}/tasks.model_output_analysis`,
-                // auth // TODO breaks in local if backend doesnt have basic auth enabled. Verified and confirmed.
+                auth
               })
               .as('FilePreAnalysis');
 
@@ -329,20 +334,20 @@ describe('Model output annotation', { browser: ['chrome', 'chromium', 'firefox']
 
             cy.intercept({
               url: `/api/dojo/indicators/${modelId}/preview/processed?filepath=model-output-samples/*.csv`,
-              // auth, // TODO examine this in local
+              auth
             }, {timeout: 120000})
               .as('ProcessingPreviewPage');
 
             cy.intercept({
               method: 'PATCH',
               url: `/api/dojo/models/${modelId}`,
-              // auth
+              auth
             }).as('SaveModelAnnotations');
 
             cy.intercept({
               method: 'POST',
               url: 'api/dojo/dojo/outputfile',
-              // auth
+              auth
             }).as('CreateOutputFile');
 
             cy.findAllByRole('button', {name: /submit to dojo/i})
@@ -354,7 +359,6 @@ describe('Model output annotation', { browser: ['chrome', 'chromium', 'firefox']
             });
 
             cy.get('@SaveModelAnnotations').should((intercept) => {
-              console.log('save model intercept', intercept);
               expect(intercept.request.body.outputs[0].name).to.equal('value');
             });
 
@@ -375,50 +379,51 @@ describe('Model Annotate directive', { browser: ['chrome', 'chromium', 'firefox'
 
   it('Opens panel to annotate directive', () => {
 
-    const testModel = createModel(modelId);
-
+    const testModel = genBaseModel(modelId);
     modelId = testModel.id;
 
-    cy.wrap(provisionAndWaitReady(modelId)).then(() => {
+    cy.seed({type: 'model', data: testModel})
+      .then(() => {
+        cy.wrap(provisionTerminalWaitReady(modelId)).then(() => {
 
-      const fileName = 'output_data.csv';
-      const folderName = 'testmodel';
-      const saveUrl = `/api/terminal/container/${testModel.id}/ops/save?path=/home/clouseau/${folderName}/${fileName}`;
+          const fileName = 'output_data.csv';
+          const folderName = 'testmodel';
+          const saveUrl = `/api/terminal/container/${testModel.id}/ops/save?path=/home/clouseau/${folderName}/${fileName}`;
 
-      cy.visit(`/term/${testModel.id}`, {auth});
+          cy.visit(`/term/${testModel.id}`, {auth});
 
-      cy.reload();
+          cy.reload();
 
-      cy.findByRole('textbox', {name: /terminal input/i})
-        .type(`mkdir ${folderName}{enter}`)
-        .type(`cd ${folderName}{enter}`)
-        .type(`touch ${fileName}{enter}`)
-        .type(`cat ${fileName}{enter}`);
+          cy.findByRole('textbox', {name: /terminal input/i})
+            .type(`mkdir ${folderName}{enter}`)
+            .type(`cd ${folderName}{enter}`)
+            .type(`touch ${fileName}{enter}`)
+            .type(`cat ${fileName}{enter}`);
 
-      cy.readFile('cypress/files/sample_output.csv').then((contents) => {
-        return cy.request({
-          method: 'POST',
-          url: saveUrl,
-          body: contents,
-          auth
+          cy.readFile('cypress/files/sample_output.csv').then((contents) => {
+            return cy.request({
+              method: 'POST',
+              url: saveUrl,
+              body: contents,
+              auth
+            });
+          }).then(() => {
+
+            cy
+              .findByRole('table', {name: /enhanced table/i})
+              .findAllByRole('button', {name: /mark as directive/i})
+              .last()
+              .click();
+
+            cy.wait(1000);
+
+            cy.findByRole('dialog')
+              .findByText(`cat ${fileName}`);
+
+          });
+
         });
-      }).then(() => {
-
-        cy
-          .findByRole('table', {name: /enhanced table/i})
-          .findAllByRole('button', {name: /mark as directive/i})
-          .last()
-          .click();
-
-        cy.wait(1000);
-
-        cy.findByRole('dialog')
-          .findByText(`cat ${fileName}`);
-
       });
-
-    });
-
   });
 });
 
@@ -429,8 +434,9 @@ describe('Model listings', { browser: ['chrome', 'chromium', 'firefox'] }, () =>
   let modelId;
 
   before(() => {
-    testModel = createModel(modelId);
+    testModel = genBaseModel(modelId);
     modelId = testModel.id;
+    cy.seed({type: 'model', data: testModel});
   });
 
   after(() => {
@@ -496,7 +502,6 @@ describe('Model metadata form state navigation', { browser: ['chrome', 'chromium
 });
 
 
-
 describe('Model Summary Page', { browser: ['chrome', 'chromium', 'firefox'] }, () => {
 
   let modelId = undefined;
@@ -506,13 +511,17 @@ describe('Model Summary Page', { browser: ['chrome', 'chromium', 'firefox'] }, (
   });
 
   it('All required Model properties are displayed on page', () => {
-    const testModel = genBaseModel(modelId);
+
     // modelId = 'acab2a55-8356-4029-99c2-734b4939293e';
+
+    const testModel = genBaseModel(modelId, 'base', {});
+
     modelId = testModel.id;
 
     cy.seed({type: 'model', data: testModel})
       .then(() => {
-        cy.wrap(provisionAndWaitReady(modelId))
+
+        cy.wrap(provisionTerminalWaitReady(modelId))
           .then(() => {
             const fileName = 'output_data.csv';
             const folderName = 'testmodel';
@@ -523,6 +532,8 @@ describe('Model Summary Page', { browser: ['chrome', 'chromium', 'firefox'] }, (
             cy.visit(`/term/${testModel.id}`, {auth});
 
             cy.reload();
+
+            cy.wait(2000);
 
             cy.findByRole('textbox', {name: /terminal input/i})
               .type(`mkdir ${folderName}{enter}`)
@@ -558,6 +569,8 @@ describe('Model Summary Page', { browser: ['chrome', 'chromium', 'firefox'] }, (
                       .click();
 
                     cy.findByText(/Uploading Model to Docker.+/i);
+
+                    cy.reload();
 
                     cy.log('Verify all regions are populated on summary.');
 
