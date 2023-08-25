@@ -822,7 +822,7 @@ const DataTransformation = ({
         onClose={handleDrawerClose}
         anchorPosition="right"
         noConfirm
-        PaperProps={{ variant: 'outlined' }}
+        PaperProps={{ elevation: 0 }}
         wide
         variant="temporary"
       >

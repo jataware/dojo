@@ -3,17 +3,13 @@ import React, { useCallback, useEffect, useState } from 'react';
 import Button from '@mui/material/Button';
 import CircularProgress from '@mui/material/CircularProgress';
 import Typography from '@mui/material/Typography';
-import {
-  MuiPickersUtilsProvider,
-  KeyboardDatePicker,
-} from '@material-ui/pickers';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 
 import { makeStyles } from 'tss-react/mui';
 
 import parseISO from 'date-fns/parseISO';
 import format from 'date-fns/format';
 import isValid from 'date-fns/isValid';
-import DateFnsUtils from '@date-io/date-fns';
 import { enUS } from 'date-fns/locale';
 
 import 'chartjs-adapter-date-fns';
@@ -281,37 +277,23 @@ export default ({
             <Chart type="line" data={displayData} options={options} />
           </div>
           <div className={classes.datepickers}>
-            <MuiPickersUtilsProvider utils={DateFnsUtils}>
-              <KeyboardDatePicker
-                disableToolbar
-                variant="inline"
-                format="MM/dd/yyyy"
-                margin="normal"
-                label="Select a start date"
-                /* We need to parse the value to keep it from jumping back one day */
-                value={parseISO(startValue)}
-                onChange={handleChangeStart}
-                KeyboardButtonProps={{
-                  'aria-label': 'change date',
-                }}
-                minDate={minDate}
-                maxDate={maxDate}
-              />
-              <KeyboardDatePicker
-                disableToolbar
-                variant="inline"
-                format="MM/dd/yyyy"
-                margin="normal"
-                label="Select an end date"
-                value={parseISO(endValue)}
-                onChange={handleChangeEnd}
-                KeyboardButtonProps={{
-                  'aria-label': 'change date',
-                }}
-                minDate={minDate}
-                maxDate={maxDate}
-              />
-            </MuiPickersUtilsProvider>
+            <DatePicker
+              format="MM/dd/yyyy"
+              label="Select a start date"
+              /* We need to parse the value to keep it from jumping back one day */
+              value={parseISO(startValue)}
+              onChange={handleChangeStart}
+              minDate={minDate}
+              maxDate={maxDate}
+            />
+            <DatePicker
+              format="MM/dd/yyyy"
+              label="Select an end date"
+              value={parseISO(endValue)}
+              onChange={handleChangeEnd}
+              minDate={minDate}
+              maxDate={maxDate}
+            />
           </div>
 
           <div className={classes.timelineButtonsWrapper}>
@@ -336,7 +318,6 @@ export default ({
               <Button
                 variant="outlined"
                 color="primary"
-                disableElevation
                 onClick={handleSelectDates}
                 // only allow these to be set once before resetting
                 disabled={!displayData || invalidDates}

@@ -1,18 +1,13 @@
 import React from 'react';
 
 import startCase from 'lodash/startCase';
+
 import Grid from '@mui/material/Grid';
 import Typography from '@mui/material/Typography';
-import DateFnsUtils from '@date-io/date-fns';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 
 import { makeStyles } from 'tss-react/mui';
 
-import {
-  MuiPickersUtilsProvider,
-} from '@material-ui/pickers';
-
-import { KeyboardDatePicker } from 'material-ui-formik-components/KeyboardDatePicker';
-import { Formik, Field } from 'formik';
 import { ManagedTextField } from './FormFields';
 
 const useStyles = makeStyles()((theme) => ({
@@ -120,26 +115,9 @@ export default ({
         <Grid
           {...gridItemProps}
         >
-          <Formik>
-            <MuiPickersUtilsProvider
-              utils={DateFnsUtils}
-            >
-              <Field
-                style={{
-                  marginTop: 0
-                }}
-                InputLabelProps={{ shrink: true }}
-                InputProps={{
-                  style: { borderRadius: 0 },
-                }}
-                format="MM/dd/yyyy"
-                component={KeyboardDatePicker}
-                inputVariant="outlined"
-                placeholder="mm/dd/yyyy"
-                {...sharedTextFieldProps('creation_date')}
-              />
-            </MuiPickersUtilsProvider>
-          </Formik>
+          <DatePicker
+            {...sharedTextFieldProps('creation_date')}
+          />
         </Grid>
 
         <Grid
