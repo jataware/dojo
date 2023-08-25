@@ -5,8 +5,6 @@ import {
   dataset_uniform_annotations,
 } from '../seeds/dataset';
 
-import axios from 'axios';
-
 import { gen_tranform_intercepts } from '../support/helpers';
 
 const genTransformPairs = (dataset_id) => {
@@ -69,7 +67,7 @@ const auth = hasAuth ? {username, password} : undefined;
 
 const isAuthEnabledRemote = hasAuth;
 
-// NOTE works both on deployment and local
+
 describe('Dataset Register: Publish E2E', { browser: ['chrome', 'chromium', 'firefox'] }, () => {
 
   let dataset_id;
@@ -77,7 +75,6 @@ describe('Dataset Register: Publish E2E', { browser: ['chrome', 'chromium', 'fir
   afterEach(() => {
     if (!isAuthEnabledRemote) {
       cy.log('Cleaning seeded artifacts.');
-      // TODO grab the dataset id from url?
       cy.task('seed:clean', {type: 'dataset', id: dataset_id});
       cy.task('seed:clean', {type: 'annotation', id: dataset_id});
     } else {
