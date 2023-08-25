@@ -116,6 +116,8 @@ export default ({
           {...gridItemProps}
         >
           <DatePicker
+            sx={{ width: '100%' }}
+            slotProps={{ textField: { InputProps: { style: { borderRadius: 0 } } } }}
             {...sharedTextFieldProps('creation_date')}
           />
         </Grid>
