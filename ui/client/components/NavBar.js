@@ -79,7 +79,7 @@ const NavBar = () => {
         </Button>
         <span className={classes.spacer} />
         <Button href="https://www.dojo-modeling.com" target="_blank">Documentation</Button>
-        <Button href="https://github.com/dojo-modeling/dojo" target="_blank">GitHub</Button>
+        <Button href="https://github.com/jataware/dojo" target="_blank">GitHub</Button>
       </Toolbar>
     </AppBar>
   );
