@@ -333,7 +333,7 @@ const LandingPage = () => {
                 <GitHubIcon fontSize="large" />
                 <Typography
                   component={Link}
-                  href="https://github.com/dojo-modeling"
+                  href="https://github.com/jataware/dojo"
                   target="_blank"
                   variant="h6"
                   className={classes.link}
