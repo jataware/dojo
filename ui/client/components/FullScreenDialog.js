@@ -62,6 +62,8 @@ const FullScreenDialog = ({
         open={open}
         onClose={handleClose}
         TransitionComponent={Transition}
+        // lower this so the dialog doesn't conflict with drawers etc
+        sx={{ zIndex: '99' }}
         {...props}
       >
         <AppBar position="sticky">
