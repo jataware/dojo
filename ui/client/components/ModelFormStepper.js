@@ -94,8 +94,8 @@ const createModel = async (model, history) => {
   } = model;
   // instead we want the epoch value for the start and end dates
   parsedModelInfo.period = {
-    gte: model.period.gte?.valueOf(),
-    lte: model.period.lte?.valueOf(),
+    gte: model.period.gte && Date.parse(model.period.gte),
+    lte: model.period.lte && Date.parse(model.period.lte),
   };
   // then add in an ID
   parsedModelInfo.id = uuidv4();
