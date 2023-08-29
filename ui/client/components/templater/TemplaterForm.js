@@ -5,8 +5,6 @@ import {
   Field, Form, FormikProvider, useFormik
 } from 'formik';
 
-import { Select } from 'material-ui-formik-components';
-
 import Button from '@mui/material/Button';
 import Checkbox from '@mui/material/Checkbox';
 import FormControlLabel from '@mui/material/FormControlLabel';
@@ -20,6 +18,7 @@ import ParameterOptions from './ParameterOptions';
 import { checkUniqueParameterName } from './templaterUtils';
 import { useConfigs, useDirective } from '../SWRHooks';
 import FormikTextField from '../formikComponents/FormikTextField';
+import FormikSelect from '../formikComponents/FormikSelect';
 
 const useStyles = makeStyles()((theme) => ({
   paramOptionsWrapper: {
@@ -150,12 +149,12 @@ const TemplaterForm = ({
             />
           </ListItem>
           <ListItem>
-            <Field
+            <FormikSelect
               name="type"
               margin="dense"
               label="Type"
               variant="outlined"
-              component={Select}
+              fullWidth
               options={[
                 { value: 'str', label: 'String / Text' },
                 { value: 'int', label: 'Integer / Whole Number' },
@@ -244,12 +243,12 @@ const TemplaterForm = ({
             />
           </ListItem>
           <ListItem>
-            <Field
+            <FormikSelect
               name="data_type"
               margin="dense"
               label="Data Type"
               variant="outlined"
-              component={Select}
+              fullWidth
               options={[
                 { value: 'nominal', label: 'nominal' },
                 { value: 'ordinal', label: 'ordinal' },

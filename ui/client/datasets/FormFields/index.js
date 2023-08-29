@@ -6,13 +6,13 @@ import FormControl from '@mui/material/FormControl';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import FormHelperText from '@mui/material/FormHelperText';
 
-import { Select } from 'material-ui-formik-components/Select';
-
 import { Field, getIn, useField } from 'formik';
 import isFunction from 'lodash/isFunction';
 import get from 'lodash/get';
 
 import { makeStyles } from 'tss-react/mui';
+
+import FormikSelect from '../../components/formikComponents/FormikSelect';
 
 const useStyles = makeStyles()((theme) => ({
   root: {
@@ -140,28 +140,17 @@ export const FormAwareCheckBox = (props) => (
 );
 
 /**
- *
+ * Wraps the custom FormikSelect so that we can maintain the same Dataset styling throughout
  * */
 export const FormAwareSelect = ({
-  InputProps = {}, InputLabelProps = {}, inputProps = {}, ...props
+  options, ...props
 }) => (
-  <Field
+  <FormikSelect
     {...props}
     margin="dense"
     variant="outlined"
     fullWidth
-    InputProps={{
-      ...InputProps,
-      style: { borderRadius: 0 }
-    }}
-    inputProps={{
-      'aria-label': props.label,
-      ...inputProps
-    }}
-    InputLabelProps={{
-      shrink: true,
-      ...InputLabelProps,
-    }}
-    component={Select}
+    options={options}
+    squareCorners
   />
 );

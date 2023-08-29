@@ -317,9 +317,6 @@ export const ColumnAnnotation = ({
       <FormAwareSelect
         name="category"
         label="Type"
-        inputProps={{
-          'aria-label': 'type'
-        }}
         options={[
           { value: 'feature', label: 'Feature' },
           { value: 'geo', label: 'Geo' },

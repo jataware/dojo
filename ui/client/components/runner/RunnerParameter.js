@@ -2,15 +2,14 @@
 
 import React from 'react';
 
-import { Field } from 'formik';
 import ListItem from '@mui/material/ListItem';
 import ListItemText from '@mui/material/ListItemText';
-import { Select } from 'material-ui-formik-components';
 
 import { makeStyles } from 'tss-react/mui';
 
 import HelperTip from '../HelperTip';
 import FormikTextField from '../formikComponents/FormikTextField';
+import FormikSelect from '../formikComponents/FormikSelect';
 import { isNum, patchOptions } from './runnerTools';
 
 const makeOptionConverter = (type, option) => ({
@@ -46,6 +45,11 @@ const RunnerParameter = ({
   const minWarning = min ? `'${name}' ≥ ${min}.` : '';
   const maxWarning = max ? `'${name}' ≤ ${max}.` : '';
   const limitWarning = min + max ? `${minWarning} ${maxWarning}` : undefined;
+
+  const parsedOptions = patchOptions(options, default_value).map(
+    (option) => makeOptionConverter(type, option)
+  );
+
   return (
     <ListItem
       key={name}
@@ -63,15 +67,12 @@ const RunnerParameter = ({
         />
       </div>
       {predefined ? (
-        <Field
+        <FormikSelect
           name={name}
           margin="dense"
           label={`${name} (${unit})`}
           variant="outlined"
-          component={Select}
-          options={patchOptions(options, default_value).map(
-            (option) => makeOptionConverter(type, option)
-          )}
+          options={parsedOptions}
         />
       ) : (
         <FormikTextField
