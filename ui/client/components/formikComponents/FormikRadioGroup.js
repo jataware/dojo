@@ -31,9 +31,7 @@ const FormikSelect = ({
       <FormLabel>{props.label}</FormLabel>
       <RadioGroup
         {...configRadio}
-        inputProps={{
-          'aria-labelledby': props.label,
-        }}
+        aria-labelledby={props.label}
       >
         {options?.map((option, index) => (
           <FormControlLabel

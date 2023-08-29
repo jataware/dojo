@@ -13,19 +13,13 @@ import Typography from '@mui/material/Typography';
 
 import { makeStyles } from 'tss-react/mui';
 
+import Checkbox from '@mui/material/Checkbox';
 
+import FormControlLabel from '@mui/material/FormControlLabel';
+import FormHelperText from '@mui/material/FormHelperText';
 
-import Checkbox from '@material-ui/core/Checkbox';
-
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import FormHelperText from '@material-ui/core/FormHelperText';
-
-
-
-import TextField from '@material-ui/core/TextField';
-import Tooltip from '@material-ui/core/Tooltip';
-
-
+import TextField from '@mui/material/TextField';
+import Tooltip from '@mui/material/Tooltip';
 
 import PreviewTransformation from './PreviewTransformation';
 import { areLatLngAnnotated, generateProcessGeoResArgs } from './dataTransformationHelpers';
