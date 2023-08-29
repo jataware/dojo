@@ -18,7 +18,7 @@ const useStyles = makeStyles()((theme) => ({
     color: theme.palette.text.secondary,
     marginBottom: theme.spacing(1),
     whiteSpace: 'nowrap',
-    padding: [[theme.spacing(1), theme.spacing(2), theme.spacing(1)]],
+    padding: `${theme.spacing(1)} ${theme.spacing(2)} ${theme.spacing(1)}`,
   },
   mainWrapper: {
     display: 'flex',

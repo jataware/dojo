@@ -20,7 +20,7 @@ import ViewFeatures from './ViewFeatures';
 
 const useStyles = makeStyles()((theme) => ({
   root: {
-    padding: [[theme.spacing(8), theme.spacing(2), theme.spacing(2)]],
+    padding: `${theme.spacing(8)} ${theme.spacing(2)} ${theme.spacing(2)}`,
   },
   gridContainer: {
     display: 'flex',

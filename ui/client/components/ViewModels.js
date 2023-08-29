@@ -23,7 +23,7 @@ import Search from './SearchItems';
 
 const useStyles = makeStyles()((theme) => ({
   root: {
-    padding: [[theme.spacing(10), theme.spacing(2), theme.spacing(2)]],
+    padding: `${theme.spacing(10)} ${theme.spacing(2)} ${theme.spacing(2)}`,
   },
   gridContainer: {
     height: '400px',

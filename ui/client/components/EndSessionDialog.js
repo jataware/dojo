@@ -24,7 +24,7 @@ const useStyles = makeStyles()((theme) => ({
   },
   textArea: {
     width: '100%',
-    margin: [[theme.spacing(1), 0]],
+    margin: `${theme.spacing(1)} 0`,
   },
   directiveText: {
     backgroundColor: '#445d6e',

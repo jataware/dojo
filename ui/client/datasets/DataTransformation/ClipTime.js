@@ -129,7 +129,7 @@ const useStyles = makeStyles()((theme) => ({
   saveButtonWrapper: {
     display: 'flex',
     justifyContent: 'flex-end',
-    margin: [[theme.spacing(8), theme.spacing(4)]],
+    margin: `${theme.spacing(8)} ${theme.spacing(4)}`,
   },
 }));
 

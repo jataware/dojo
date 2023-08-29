@@ -26,7 +26,7 @@ import { parseDatetimeString, formatDatetime } from '../utils';
 
 const styles = (theme) => ({
   root: {
-    padding: [[theme.spacing(10), theme.spacing(2), theme.spacing(2)]],
+    padding: `${theme.spacing(10)} ${theme.spacing(2)} ${theme.spacing(2)}`,
   },
   header: {
     marginBottom: theme.spacing(3),

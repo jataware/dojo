@@ -26,10 +26,10 @@ const useStyles = makeStyles()((theme) => ({
     position: 'relative'
   },
   instructions: {
-    margin: [[theme.spacing(1), 0]],
+    margin: `${theme.spacing(1)} 0`,
   },
   form: {
-    margin: [[theme.spacing(3), 0]],
+    margin: `${theme.spacing(3)} 0`,
   },
   resetButton: {
     position: 'absolute',

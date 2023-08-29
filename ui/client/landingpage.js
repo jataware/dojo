@@ -33,7 +33,7 @@ const useStyles = makeStyles()((theme) => ({
       padding: theme.spacing(4),
     },
     [theme.breakpoints.down('xl')]: {
-      padding: [[theme.spacing(3), theme.spacing(4), theme.spacing(1)]],
+      padding: `${theme.spacing(3)} ${theme.spacing(4)} ${theme.spacing(1)}`,
     },
   },
   topHeaderTitle: {
@@ -61,7 +61,7 @@ const useStyles = makeStyles()((theme) => ({
     padding: theme.spacing(4),
     height: '100%',
     [theme.breakpoints.down('xl')]: {
-      padding: [[theme.spacing(3), theme.spacing(4), theme.spacing(4)]],
+      padding: `${theme.spacing(3)} ${theme.spacing(4)} ${theme.spacing(4)}`,
     },
   },
   bottomContentContainer: {

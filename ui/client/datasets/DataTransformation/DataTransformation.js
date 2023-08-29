@@ -150,7 +150,7 @@ const useStyles = makeStyles()(({ spacing }) => ({
     height: 'calc(100% - 128px)',
   },
   root: {
-    padding: [[spacing(4), spacing(4), spacing(2), spacing(4)]],
+    padding: `${spacing(4)} ${spacing(4)} ${spacing(2)} ${spacing(4)}`,
     height: '100%',
   },
   header: {
@@ -160,7 +160,7 @@ const useStyles = makeStyles()(({ spacing }) => ({
     margin: spacing(8),
   },
   restoreFileSpinner: {
-    margin: [[0, 'auto', spacing(3)]],
+    margin: `0 auto ${spacing(3)}`,
     display: 'block',
   },
 }));

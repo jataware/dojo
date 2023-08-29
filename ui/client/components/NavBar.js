@@ -18,7 +18,7 @@ const useStyles = makeStyles()((theme) => ({
     backgroundColor: lighten(theme.palette.primary.light, 0.6),
   },
   toolbar: {
-    padding: [[0, theme.spacing(5)]],
+    padding: `0 ${theme.spacing(5)}`,
     gap: theme.spacing(3),
   },
   dojoIcon: {

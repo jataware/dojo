@@ -21,7 +21,7 @@ const useStyles = makeStyles()((theme) => ({
     fontSize: '1rem'
   },
   root: {
-    padding: [[theme.spacing(6), theme.spacing(4), theme.spacing(2), theme.spacing(4)]],
+    padding: `${theme.spacing(6)} ${theme.spacing(4)} ${theme.spacing(2)} ${theme.spacing(4)}`,
     display: 'flex',
     flexDirection: 'column',
   },

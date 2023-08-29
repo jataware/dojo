@@ -20,7 +20,7 @@ import { makeStyles } from 'tss-react/mui';
 
 const useStyles = makeStyles()((theme) => ({
   confirmContentText: {
-    padding: [[0, theme.spacing(2)]],
+    padding: `0 ${theme.spacing(2)}`,
   },
   actionButton: {
     minWidth: '110px',

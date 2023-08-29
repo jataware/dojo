@@ -20,7 +20,7 @@ const a11yProps = (index) => ({
 
 const useStyles = makeStyles()((theme) => ({
   indicator: {
-    margin: [[0, theme.spacing(1)]],
+    margin: `0 ${theme.spacing(1)}`,
   },
   textWrapper: {
     color: theme.palette.common.white,

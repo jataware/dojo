@@ -25,7 +25,7 @@ import { useDirective, useShellHistory } from './SWRHooks';
 const useStyles = makeStyles()((theme) => ({
   root: {
     backgroundColor: 'inherit',
-    margin: [[theme.spacing(2), 0]],
+    margin: `${theme.spacing(2)} 0`,
   },
   table: {
     borderCollapse: 'separate',
@@ -52,7 +52,7 @@ const useStyles = makeStyles()((theme) => ({
   },
   tableContainer: {
     overflow: 'auto',
-    padding: [[0, theme.spacing(1), theme.spacing(1)]],
+    padding: `0 ${theme.spacing(1)} ${theme.spacing(1)}`,
     [theme.breakpoints.down('xl')]: {
       height: '260px',
     },

@@ -47,7 +47,7 @@ const useStyles = makeStyles()((theme) => ({
     listStyle: 'none',
   },
   explainer: {
-    margin: [[theme.spacing(1), 0]]
+    margin: `${theme.spacing(1)} 0`
   },
   input: {
     width: theme.spacing(38),
@@ -56,7 +56,7 @@ const useStyles = makeStyles()((theme) => ({
     height: '1px',
     backgroundColor: theme.palette.grey[500],
     flex: '1',
-    margin: [[0, theme.spacing(1)]],
+    margin: `0 ${theme.spacing(1)}`,
   },
   regionButton: {
     width: theme.spacing(19),

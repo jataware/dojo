@@ -36,13 +36,13 @@ const useStyles = makeStyles()((theme) => ({
     display: 'flex',
     justifyContent: 'center',
     gap: theme.spacing(6),
-    margin: [[theme.spacing(6), 0, theme.spacing(10)]],
+    margin: `${theme.spacing(6)} 0 ${theme.spacing(10)}`,
     flexWrap: 'wrap',
   },
   textWrapper: {
     backgroundColor: theme.palette.grey[200],
     borderRadius: theme.shape.borderRadius,
-    padding: [[theme.spacing(4), 0]]
+    padding: `${theme.spacing(4)} 0`
   },
   oldToNew: {
     marginTop: theme.spacing(10),

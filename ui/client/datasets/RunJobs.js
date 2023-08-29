@@ -14,7 +14,7 @@ import { Navigation } from '.';
 const useStyles = makeStyles()((theme) => ({
   root: {
     display: 'flex',
-    padding: [[0, theme.spacing(4), theme.spacing(2), theme.spacing(4)]],
+    padding: `0 ${theme.spacing(4)} ${theme.spacing(2)} ${theme.spacing(4)}`,
     flexDirection: 'column',
     flex: 1,
     height: '100%'

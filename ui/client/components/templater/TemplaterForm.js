@@ -31,7 +31,7 @@ const useStyles = makeStyles()((theme) => ({
     display: 'flex',
     alignItems: 'flex-start',
     justifyContent: 'space-around',
-    padding: [['4px', theme.spacing(2)]],
+    padding: `4px ${theme.spacing(2)}`,
     width: '100%',
     '& > :first-child': {
       marginRight: theme.spacing(2),

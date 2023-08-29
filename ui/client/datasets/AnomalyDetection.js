@@ -15,7 +15,7 @@ const useStyles = makeStyles()((theme) => ({
     flexDirection: 'column',
     flex: 1,
     height: '100%',
-    padding: [[0, theme.spacing(4), theme.spacing(2), theme.spacing(4)]],
+    padding: `0 ${theme.spacing(4)} ${theme.spacing(2)} ${theme.spacing(4)}`,
   },
   header: {
   },

@@ -7,7 +7,7 @@ import get from 'lodash/get';
 
 const useStyles = makeStyles()((theme) => ({
   root: {
-    margin: [[theme.spacing(1), 0]],
+    margin: `${theme.spacing(1)} 0`,
   },
 }));
 function FormikTextField({

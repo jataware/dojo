@@ -18,7 +18,7 @@ import { useConfigs, useDirective } from '../SWRHooks';
 
 const useStyles = makeStyles()((theme) => ({
   allContentWrapper: {
-    margin: [[theme.spacing(2), 0]],
+    margin: `${theme.spacing(2)} 0`,
     // full screen height minus the dialog top bar and the card margin
     height: 'calc(100vh - 80px)',
     display: 'flex',
@@ -31,7 +31,7 @@ const useStyles = makeStyles()((theme) => ({
     backgroundColor: theme.palette.grey[200],
     border: '1px solid black',
     borderRadius: theme.shape.borderRadius,
-    padding: [[theme.spacing(3), theme.spacing(2)]],
+    padding: `${theme.spacing(3)} ${theme.spacing(2)}`,
     overflow: 'auto',
     flexShrink: '2',
   },

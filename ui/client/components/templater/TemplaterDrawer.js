@@ -12,7 +12,7 @@ const useStyles = makeStyles()((theme) => ({
   highlight: {
     backgroundColor: theme.palette.grey[200],
     borderRadius: theme.shape.borderRadius,
-    margin: [[0, theme.spacing(2)]],
+    margin: `0 ${theme.spacing(2)}`,
   },
 }));
 

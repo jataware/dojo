@@ -19,7 +19,7 @@ const useStyles = makeStyles()((theme) => ({
     alignItems: 'flex-start',
     display: 'flex',
     justifyContent: 'space-between',
-    padding: [[theme.spacing(1), theme.spacing(2), '10px']],
+    padding: `${theme.spacing(1)} ${theme.spacing(2)} 10px`,
     maxHeight: '104px',
     overflowY: 'auto',
   },

@@ -11,7 +11,7 @@ import CloudDoneIcon from '@mui/icons-material/CloudDone';
 
 const useStyles = makeStyles()((theme) => ({
   root: {
-    padding: [[theme.spacing(6), theme.spacing(4), theme.spacing(2), theme.spacing(4)]],
+    padding: `${theme.spacing(6)} ${theme.spacing(4)} ${theme.spacing(2)} ${theme.spacing(4)}`,
     height: '100%',
     display: 'flex',
     flexDirection: 'column'

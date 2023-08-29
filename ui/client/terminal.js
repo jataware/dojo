@@ -50,8 +50,8 @@ const useStyles = makeStyles()((theme) => ({
     right: 0,
     bottom: 0,
     zIndex: 10,
-    '& > *': {
-      margin: [[0, theme.spacing(2), theme.spacing(2), 0]],
+    '&& > *': {
+      margin: `0 ${theme.spacing(2)} ${theme.spacing(2)} 0`,
     },
   },
   rightColumnWrapper: {
@@ -61,7 +61,7 @@ const useStyles = makeStyles()((theme) => ({
     paddingBottom: theme.spacing(3),
   },
   directiveContainer: {
-    margin: [[0, 0, theme.spacing(1), theme.spacing(1)]],
+    margin: `0 0 ${theme.spacing(1)} ${theme.spacing(1)}`,
   },
 }));
 

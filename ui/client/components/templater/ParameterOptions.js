@@ -1,6 +1,6 @@
 import React from 'react';
 
-import { Field, FieldArray } from 'formik';
+import { FieldArray } from 'formik';
 
 import isEmpty from 'lodash/isEmpty';
 
@@ -24,7 +24,7 @@ const useStyles = makeStyles()((theme) => ({
   subtextWrapper: {
     display: 'flex',
     justifyContent: 'space-between',
-    padding: [[0, theme.spacing(2), theme.spacing(1)]],
+   padding: `0 ${theme.spacing(2)} ${theme.spacing(1)}`,
   },
   addButton: {
     minWidth: '120px',

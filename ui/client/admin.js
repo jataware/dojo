@@ -20,7 +20,7 @@ import { useLocks, useNodes } from './components/SWRHooks';
 
 const useStyles = makeStyles()((theme) => ({
   buttonLink: {
-    margin: [[theme.spacing(1), 0]],
+    margin: `${theme.spacing(1)} 0`,
   },
   buttonWrapper: {
     paddingTop: theme.spacing(1),

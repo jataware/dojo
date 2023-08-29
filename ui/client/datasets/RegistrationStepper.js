@@ -25,7 +25,7 @@ const useStyles = makeStyles()(({ spacing, breakpoints }) => ({
     display: 'flex',
     flex: 1,
     flexDirection: 'column',
-    padding: [[spacing(0.5), spacing(2), spacing(2), spacing(2)]],
+    padding: `${spacing(0.5)} ${spacing(2)} ${spacing(2)} ${spacing(2)}`,
   },
   navigation: {
     display: 'flex',

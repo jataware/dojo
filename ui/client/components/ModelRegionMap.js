@@ -38,7 +38,7 @@ const useStyles = makeStyles()((theme) => ({
   coordsInputs: {
     display: 'flex',
     justifyContent: 'space-between',
-    margin: [[0, theme.spacing(1)]],
+    margin: `0 ${theme.spacing(1)}`,
     '& :first-child': {
       marginRight: theme.spacing(1),
     },
@@ -47,12 +47,12 @@ const useStyles = makeStyles()((theme) => ({
     width: '100%',
   },
   explainer: {
-    margin: [[theme.spacing(2), 0]]
+    margin: `${theme.spacing(2)} 0`
   },
   regionButton: {
     height: theme.spacing(5),
     minWidth: theme.spacing(24),
-    margin: [[theme.spacing(5), theme.spacing(1), theme.spacing(1)]],
+    margin: `${theme.spacing(5)} ${theme.spacing(1)} ${theme.spacing(1)}`,
   },
 }));
 

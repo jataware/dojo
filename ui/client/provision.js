@@ -26,7 +26,7 @@ const useStyles = makeStyles()((theme) => ({
   },
   root: {
     flexGrow: 1,
-    padding: [[theme.spacing(10), theme.spacing(2), theme.spacing(20)]],
+    padding: `${theme.spacing(10)} ${theme.spacing(2)} ${theme.spacing(20)}`,
   },
   gridContainer: {
     minHeight: '100vh',
@@ -54,7 +54,7 @@ const useStyles = makeStyles()((theme) => ({
     height: '43px',
   },
   explainerText: {
-    margin: [[0, theme.spacing(1), theme.spacing(2)]]
+    margin: `0 ${theme.spacing(1)} ${theme.spacing(2)}`
   }
 }));
 

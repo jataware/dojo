@@ -16,7 +16,7 @@ import CollapseText from './CollapseText';
 const StyledTableCell = withStyles(TableCell, (theme) => ({
   root: {
     color: theme.palette.common.black,
-    padding: [[theme.spacing(1), theme.spacing(2)]],
+    padding: `${theme.spacing(1)} ${theme.spacing(2)}`,
     minWidth: '190px',
     maxWidth: '350px',
     maxHeight: '100px',
@@ -26,7 +26,7 @@ const StyledTableCell = withStyles(TableCell, (theme) => ({
   head: {
     backgroundColor: theme.palette.common.white,
     color: theme.palette.common.black,
-    padding: [[theme.spacing(1), theme.spacing(2)]],
+    padding: `${theme.spacing(1)} ${theme.spacing(2)}`,
     minWidth: '100px',
     fontWeight: 'bold',
     fontSize: '17px',

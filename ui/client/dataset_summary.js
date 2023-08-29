@@ -38,10 +38,10 @@ const useStyles = makeStyles()((theme) => ({
     },
   },
   containers: {
-    padding: [[theme.spacing(1), theme.spacing(8), theme.spacing(1)]],
+    padding: `${theme.spacing(1)} ${theme.spacing(8)} ${theme.spacing(1)}`,
   },
   root: {
-    padding: [[theme.spacing(10), theme.spacing(2), theme.spacing(2)]],
+    padding: `${theme.spacing(10)} ${theme.spacing(2)} ${theme.spacing(2)}`,
   },
   header: {
     marginBottom: theme.spacing(3),
@@ -64,7 +64,7 @@ const useStyles = makeStyles()((theme) => ({
     backgroundColor: theme.palette.warning.main,
     borderRadius: theme.shape.borderRadius,
     color: theme.palette.getContrastText(theme.palette.warning.main),
-    padding: [[0, theme.spacing(1)]],
+    padding: `0 ${theme.spacing(1)}`,
     position: 'absolute',
     right: 0,
     top: 12,

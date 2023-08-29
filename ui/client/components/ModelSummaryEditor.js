@@ -13,7 +13,7 @@ import { ModelOverviewFields, overviewValidationSchema } from './ModelOverviewFo
 
 const useStyles = makeStyles()((theme) => ({
   root: {
-    margin: [[theme.spacing(1), 'auto', theme.spacing(4)]],
+    margin: `${theme.spacing(1)} auto ${theme.spacing(4)}`,
   },
 }));
 

@@ -18,7 +18,7 @@ import { matchFileNameExtension } from '../utils';
 
 const useStyles = makeStyles()((theme) => ({
   root: {
-    margin: [[theme.spacing(1), 0]],
+    margin: `${theme.spacing(1)} 0`,
     '& .MuiFormHelperText-root': {
       marginLeft: 7,
       marginRight: 5,
@@ -28,7 +28,7 @@ const useStyles = makeStyles()((theme) => ({
     backgroundColor: 'pink'
   },
   uploadedFileData: {
-    padding: [[theme.spacing(1), theme.spacing(0)]],
+    padding: `${theme.spacing(1)} ${theme.spacing(0)}`,
     '& .filename': {
       fontWeight: 'bold'
     },

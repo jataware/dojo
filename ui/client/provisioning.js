@@ -23,7 +23,7 @@ const useStyles = makeStyles()((theme) => ({
   },
   progressWrapper: {
     height: theme.spacing(3),
-    margin: [[theme.spacing(3), 0, theme.spacing(4)]],
+    margin: `${theme.spacing(3)} 0 ${theme.spacing(4)}`,
   },
   paper: {
     minHeight: '315px',

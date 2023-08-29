@@ -18,10 +18,10 @@ const useStyles = makeStyles()((theme) => ({
     fontFamily: 'monospace',
     margin: theme.spacing(4),
     backgroundColor: theme.palette.grey[100],
-    padding: [[theme.spacing(3), 0]],
+    padding: `${theme.spacing(3)} 0`,
   },
   divider: {
-    margin: [[0, '14px']],
+    margin: '0 14px',
   },
   textareaAutosize: {
     overflow: 'auto',

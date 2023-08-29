@@ -53,7 +53,7 @@ const useStyles = makeStyles()((theme) => ({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    margin: [[theme.spacing(1), 0]],
+    margin: `${theme.spacing(1)} 0`,
   },
   upperWrapperMulti: {
     // left margin to keep the button centered between the columns (accounting for the icon)
@@ -70,7 +70,7 @@ const useStyles = makeStyles()((theme) => ({
     color: theme.palette.primary.contrastText,
     borderRadius: theme.shape.borderRadius,
     fontSize: '0.6rem',
-    padding: [[0, theme.spacing(0.5)]],
+    padding: `0 ${theme.spacing(0.5)}`,
   },
   selectedHeader: {
     fontWeight: 'bold'

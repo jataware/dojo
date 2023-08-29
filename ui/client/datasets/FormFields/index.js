@@ -16,7 +16,7 @@ import FormikSelect from '../../components/formikComponents/FormikSelect';
 
 const useStyles = makeStyles()((theme) => ({
   root: {
-    margin: [[theme.spacing(1), 0]],
+    margin: `${theme.spacing(1)} 0`,
 
     '& .MuiFormHelperText-root': {
       marginLeft: 7,

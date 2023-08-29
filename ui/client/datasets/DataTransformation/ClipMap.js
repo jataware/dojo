@@ -149,7 +149,7 @@ const useStyles = makeStyles()((theme) => ({
   underMapContent: {
     display: 'flex',
     justifyContent: 'space-between',
-    margin: [[theme.spacing(2), theme.spacing(1)]],
+    margin: `${theme.spacing(2)} ${theme.spacing(1)}`,
     gap: theme.spacing(2),
   },
 }));

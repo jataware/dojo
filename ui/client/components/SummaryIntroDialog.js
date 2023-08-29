@@ -31,8 +31,8 @@ const useStyles = makeStyles()((theme) => ({
     backgroundColor: theme.palette.grey[300],
     borderRadius: '4px',
     color: theme.palette.grey[900],
-    padding: [[theme.spacing(1), theme.spacing(2)]],
-    margin: [[theme.spacing(2), 0]],
+    padding: `${theme.spacing(1)} ${theme.spacing(2)}`,
+    margin: `${theme.spacing(2)} 0`,
   },
   containerSelectionDialog: {
     display: 'flex',

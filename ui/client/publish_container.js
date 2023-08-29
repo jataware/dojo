@@ -33,7 +33,7 @@ const useStyles = makeStyles()((theme) => ({
     zIndex: '99',
     left: '0',
     right: '0',
-    margin: [[theme.spacing(12), 'auto']],
+    margin: `${theme.spacing(12)} auto`,
     width: '680px',
   },
   backdrop: {

@@ -111,7 +111,7 @@ const BaseData = ({
 
 const useStyles = makeStyles()(({ spacing }) => ({
   root: {
-    padding: [[spacing(4), spacing(4), spacing(2), spacing(4)]],
+    padding: `${spacing(4)} ${spacing(4)} ${spacing(2)} ${spacing(4)}`,
   },
   header: {
     marginBottom: spacing(6),
