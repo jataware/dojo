@@ -1,12 +1,13 @@
 import React from 'react';
-import { Field, useField } from 'formik';
+import { useField } from 'formik';
 
-import { TextField } from 'material-ui-formik-components/TextField';
+import identity from 'lodash/identity';
 
 import InputAdornment from '@mui/material/InputAdornment';
 import CheckCircleIcon from '@mui/icons-material/CheckCircleRounded';
 import ErrorCircleIcon from '@mui/icons-material/ErrorRounded';
-import identity from 'lodash/identity';
+
+import FormikTextField from '../../components/formikComponents/FormikTextField';
 
 /**
  * Accepts a validate function and memoizes the validation logic,
@@ -93,9 +94,8 @@ export default ({
   }, [helpers, meta, field.value, parentName, validateFormat, prevError]);
 
   return (
-    <Field
+    <FormikTextField
       validate={validate}
-      component={TextField}
       variant="outlined"
       fullWidth
       margin="dense"
