@@ -1,12 +1,11 @@
 import get from 'lodash/get';
-import p from 'cypress-promise'; // p == promisify
 import { genBaseModel } from '../seeds/model_api_data';
-
+import axios from 'axios';
 
 /**
  *
  **/
-function sleep(ms = 0) {
+export function sleep(ms = 0) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
@@ -35,55 +34,84 @@ export function gen_tranform_intercepts(dataset_id, jobName, result) {
 
 // ================== End-to-End Helpers =======================================
 
-export function createModel(modelId, overrides={}) {
 
-  console.log('Creating Seed Model', modelId);
+const username = Cypress.env('DOJO_DEMO_USER');
+const password = Cypress.env('DOJO_DEMO_PASS');
+const hasAuth = Boolean(username) && Boolean(password);
+const auth = hasAuth ? {username, password} : undefined;
 
-  const testModel = genBaseModel(modelId, overrides);
+const axiosClient = axios.create({
+  baseURL: Cypress.config('baseUrl'),
+  // timeout: 1000,
+  headers: {'Content-Type': 'application/json'}
+});
+
+
+// TODO move/use seed fn
+export function createModel(modelId, variant='base', overrides={}) {
+
+  const testModel = genBaseModel(modelId, variant, overrides);
 
   modelId = testModel.id;
 
-  // The next two requests make the tests slower when iterating/developing tests:
-  cy.request('post', '/api/dojo/models', testModel)
-    .its('body').should('include', testModel.id);
-
-  return testModel;
+  return axiosClient({
+    method: 'post',
+    url: '/api/dojo/models',
+    data: testModel,
+    auth
+  });
 }
 
 
 export function provisionModelTerminal(modelId) {
-  return cy.request({
+  return axiosClient({
     method: 'POST',
-    failOnStatusCode: false,
+    // failOnStatusCode: false,
     url: `/api/terminal/docker/provision/${modelId}`,
-    body: {
+    data: {
       "name": modelId,
       "image": "jataware/dojo-publish:Ubuntu-latest",
       "listeners": []
-    }
+    },
+    auth
   });
 }
 
 /**
- *
+ * Note use cy.wrap() when calling this async fn on tests
  **/
-export const shutdownWorker = () => {
-  return cy.request('GET', '/api/terminal/docker/locks')
-    .then((lockResponse) => {
-      if (get(lockResponse, 'body.locks[0].modelId')) {
-        const modelId = lockResponse.body.locks[0].modelId;
-        return cy.request('DELETE', `/api/terminal/docker/${modelId}/release`);
-      }
-      return Cypress.Promise.resolve(true);
+export const shutdownWorker = async () => {
+
+  const lockResponse = await axiosClient({
+    url: '/api/terminal/docker/locks',
+    auth
+  });
+
+  if (get(lockResponse, 'data.locks[0].modelId')) {
+
+    const modelId = lockResponse.data.locks[0].modelId;
+
+    return axiosClient({
+      method: 'DELETE',
+      url: `/api/terminal/docker/${modelId}/release`,
+      auth
     });
+  }
+
+  return Promise.resolve(true);
 };
 
-
+// NOTE wrap this fn call with cy.wrap() when calling async fns from tests
 export async function waitForAllUrlsToFinish(urls) {
   const METHOD = 0, URL = 1, BODY = 2;
 
   const finishedRequests = urls.map(async (item) => {
-    const res = await p(cy.request(item[METHOD], item[URL], item[BODY]));
+    const res = await axiosClient({
+      method: item[METHOD],
+      url: item[URL],
+      data: item[BODY],
+      auth
+    });
     return res;
   });
 
@@ -93,24 +121,25 @@ export async function waitForAllUrlsToFinish(urls) {
 // NOTE use cy.wrap on tests
 export async function waitUrlToProcess(url, property, maxTries = 6, method='GET') {
 
-  let response = await p(cy.request({
+  let response = await axiosClient({
     method,
     url,
-    failOnStatusCode: false
-  }));
+    failOnStatusCode: false,
+    auth
+  });
 
   let tries = 0;
 
   while (!get(response, property) && tries < 5) {
     tries++;
-    console.log('url', url, property, 'did not finish', 'tries:', tries, '. Retrying.');
-    cy.wait(1000);
+    await sleep(1000);
 
-    let response = await p(cy.request({
+    let response = await axiosClient({
       method,
       url,
-      failOnStatusCode: false
-    }));
+      failOnStatusCode: false,
+      auth
+    });
 
   }
 
@@ -121,38 +150,43 @@ export async function waitUrlToProcess(url, property, maxTries = 6, method='GET'
 
 /**
  * NOTE Returns a regular promise, not a "cypress one".
-        Use cy.wrap(this_result) to convert to cypress promise on test.
+ *      Use cy.wrap(this_result) to convert to cypress promise on test.
  **/
-export async function provisionAndWaitReady(existingModelId) {
-  console.log('provisionAndWaitReady existingModelId', existingModelId);
-
+export async function provisionTerminalWaitReady(existingModelId) {
   const modelId = existingModelId;
 
-  Cypress.log({message: `Provisioning Terminal for model ${modelId}.`});
+  cy.log(`Provisioning Terminal for model ${modelId}.`);
 
-  const response = await p(cy.request('GET', '/api/terminal/docker/locks'));
+  const response = await axiosClient({
+    url: '/api/terminal/docker/locks',
+    auth
+ });
 
-  let cy_promise;
-  if (get(response, 'body.locks[0].modelId')) {
-    if (get(response, 'body.locks[0].modelId') !== modelId) {
-      cy_promise = shutdownWorker()
-        .then(() => {
-          return provisionModelTerminal(modelId);
-        });
+  let promise;
+  if (get(response, 'data.locks[0].modelId')) {
+    if (get(response, 'data.locks[0].modelId') !== modelId) {
+      await shutdownWorker();
+      promise = provisionModelTerminal(modelId);
+    } else {
+      promise = Promise.resolve(true);
     }
-    cy_promise = Promise.resolve(true);
   } else {
-    cy_promise = provisionModelTerminal(modelId);
+    promise = provisionModelTerminal(modelId);
   }
 
-  const provisioned = await p(cy_promise);
+  const provisioned = await promise;
 
-  let provisionState = await p(cy.request(`/api/terminal/provision/state/${modelId}`));
+  let provisionState = await axiosClient({
+    url: `/api/terminal/provision/state/${modelId}`,
+    auth
+  });
 
-  while (provisionState.body.state === 'processing') {
-    console.log('Waiting before retrying');
-    cy.wait(1000);
-    provisionState = await p(cy.request(`/api/terminal/provision/state/${modelId}`));
+  while (provisionState.data.state === 'processing') {
+    await sleep(1000);
+    provisionState = await axiosClient({
+      url: `/api/terminal/provision/state/${modelId}`,
+      auth
+    });
   }
 
   return provisionState;
@@ -163,6 +197,7 @@ export async function provisionAndWaitReady(existingModelId) {
  *
  **/
 export const getModelRegisterUrls = (modelId, {homeDir, user, fileName, folderName, saveUrl}) => ([
+
       ['POST',
        '/api/dojo/terminal/file',
        {
@@ -510,27 +545,28 @@ export const getModelRegisterUrls = (modelId, {homeDir, user, fileName, folderNa
        }]
 ]);
 
+// NOTE wrap call for async fns with cy.wrap when calling from tests
 export async function waitForElwood(taskName, datasetId) {
   const formattedUrl = `/api/dojo/job/fetch/${datasetId}_elwood_processors.${taskName}`;
 
   const reqArgs = {
     method: 'POST',
     url: formattedUrl,
-    failOnStatusCode: false
+    failOnStatusCode: false,
+    auth
   }
 
-  let elwoodStatus = await p(cy.request(reqArgs));
+  let elwoodStatus = await axiosClient(reqArgs);
 
   while (elwoodStatus.status === 200) {
-    cy.wait(3000);
-    elwoodStatus = await p(cy.request(reqArgs));
+    await sleep(3000);
+    elwoodStatus = await axiosClient(reqArgs);
   }
 
   return elwoodStatus;
 }
 
 
-// TODO unused, urls hardcoded on test_model.* file and diff urls/paths used.
 // Use this exported object once cleaned up?
 export const getTestModelRegisterUrls = (modelId, {homeDir, user, fileName, folderName, saveUrl, directiveParamValue}) => ([
 
@@ -866,5 +902,3 @@ export const getTestModelRegisterUrls = (modelId, {homeDir, user, fileName, fold
    }
   ]
 ]);
-
-

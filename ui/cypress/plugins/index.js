@@ -1,14 +1,8 @@
 /// <reference types="cypress" />
 // ***********************************************************
-// This example plugins/index.js can be used to load plugins
-//
-// You can change the location of this file or turn off loading
-// the plugins file with the 'pluginsFile' configuration option.
-//
 // You can read more here:
 // https://on.cypress.io/plugins-guide
 // ***********************************************************
-
 // This function is called when a project is opened or re-opened (e.g. due to
 // the project's config changing)
 
@@ -18,11 +12,12 @@ const path = require('path');
 var FormData = require('form-data');
 
 const { Client } = require('@elastic/elasticsearch');
-const es = new Client({ node: 'http://localhost:9200' });
 
 
-const { genBaseModel } = require('../seeds/model_api_data');
+const esHost = process.env.CYPRESS_ES_HOST || 'http://localhost:9200';
 
+// TODO decide what to do for staging/remote:
+const es = new Client({ node: esHost });
 
 const chalk = require('chalk');
 
@@ -36,37 +31,13 @@ const debug = (...args) => {
   );
 }
 
-/**
- *
- **/
-async function sendFileToEndpoint(filePath, endpointUrl, newFilename) {
-  const fileStream = fs.createReadStream(filePath);
+const cy_env = JSON.stringify(process.env, null, 2)
+      .split('\n')
+      .filter(i => i.includes('CYPRESS'))
+      .join('\n');
 
-  const formData = new FormData();
-  formData.append('file', fileStream);
-
-  if (newFilename) {
-    formData.append('filename', newFilename);
-  }
-
-  // Make a POST request using axios
-  debug('endpointUrl', endpointUrl);
-  debug('filename', filePath);
-
-  const response = await axios.post(endpointUrl, formData, {
-    headers: {
-      ...formData.getHeaders(), // Set the appropriate headers for multipart/form-data
-    },
-  });
-
-  debug(`Response: ${Object.keys(response)}`);
-
-  if (response) {
-    return response.data;
-  }
-
-  return null;
-}
+// TODO remove when testing on github actions on stage instance
+debug('env', '\n', cy_env);
 
 
 const esIndexMappings = {
@@ -154,19 +125,15 @@ module.exports = (on, config) => {
 
     'debug': (...args) => {debug(...args); return true;},
 
-    // TODO this is unused for now as we can use API
-    // for simple cases, but for complex scenarios it will be useful
-    'seed': ({type, id, name}) => {
-      // TODO
-      debug("Not implemented. Called cypress task seed. Nothing done on plugins nodejs side for now. Use cy.request with the Dojo API.");
-      return undefined;
-    },
-
+    // NOTE This runs on Cypress nodejs backend. Alternatively, we can create
+    // DELETE DOJO API endpoints for these entities.
+    // Defined as cy.task since we don't have access to DB/elasticsearch
+    // from the browser.
     'seed:clean': ({type, id, name}) => {
 
       debug(`Cleaning ${type} seeds, id: ${id}, name: ${name}`);
 
-      if(!type) {
+      if (!type) {
         debug('Should have passed in a valid type. Throwing the towel.');
         throw new Error(`No valid type passed in to seed:clean. Received: ${type}`);
       }
@@ -188,24 +155,7 @@ module.exports = (on, config) => {
         throw new Error(`No valid id or name passed in to seed:clean. Received: type=${type}, id=${id}, name=${name}`);
       }
 
-    },
-
-    'upload': ({type, id, variant='acled'}) => {
-      if (type === 'dataset' && variant === 'acled') {
-        const url = `http://localhost:8080/api/dojo/indicators/${id}/upload`;
-        const mockCSVFileLocation = path.join(__dirname, '..', 'files', 'raw_data.csv');
-        return sendFileToEndpoint(mockCSVFileLocation, url, 'raw_data.csv');
-      } else if (type === 'dataset' && variant === 'uniform') {
-
-        const url = `http://localhost:8080/api/dojo/indicators/${id}/upload`;
-        const mockCSVFileLocation = path.join(__dirname, '..', 'files', 'gridded_uniform_raw_data.csv');
-        return sendFileToEndpoint(mockCSVFileLocation, url, 'raw_data.csv');
-      }
-
-      return undefined; // Test will error if not for datasets for now
-
     }
-
 
   });
 
@@ -214,14 +164,5 @@ module.exports = (on, config) => {
 
 
 // if (require.main === module) {
-
-//   console.log('called plugins/index file directly. Running for development as playground.');
-
-//   const id = '2c5422eb-53a2-40b5-8c03-983f757d5efb';
-//   const url = `http://localhost:8080/api/dojo/indicators/${id}/upload`;
-//   const mockFileLocation = path.join(__dirname, '..', 'files', 'ACLED_redacted.xlsx');
-
-//   // returns promise. TODO check what failure conditions look like on cypress
-//   return sendFileToEndpoint(mockFileLocation, url);
-
+// NOTE uncomment and run this clause as node script to develop/debug.
 // }

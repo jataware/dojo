@@ -85,33 +85,96 @@ Cypress.Commands.add('setSelection', { prevSubject: true }, (subject, query, end
 ));
 
 
-// let sharedStatus = 0;
+const username = Cypress.env('DOJO_DEMO_USER');
+const password = Cypress.env('DOJO_DEMO_PASS');
+const hasAuth = Boolean(username) && Boolean(password);
+const auth = hasAuth ? {username, password} : undefined;
 
-// Cypress.Commands.add('spyPoll', {}, (method, url, property, expectedVal, nth=0) => {
 
-//   if (sharedStatus === 1) {
-//     console.log('done by sharedStatus!', 'sharedStatus:', sharedStatus);
-//     return true;
-//   }
+/**
+ *
+ * Set the following OS env vars for cypress to use below:
+ * `CYPRESS_DOJO_DEMO_USER`
+ * `CYPRESS_DOJO_DEMO_PASS`
+ * Cypress removes the leading CYPRESS_ when we retrieve in code:
+ **/
+Cypress.Commands.add('login', () => {
 
-//   let tryNum = nth + 1;
-//   console.log('invoked spyPoll with args', expectedVal, 'tryNum:', tryNum);
+  if (!hasAuth) {
+    return Cypress.Promise.resolve(false);
+  }
 
-//   const interceptName =`JobCheck`;
-//   cy.intercept(method, url).as(interceptName);
+  cy.visit('/', {auth});
 
-//   return cy.wait(`@${interceptName}`)
-//     .then((inter) => {
-//       console.log('status:', inter.response.body[property]);
+});
 
-//       if (![expectedVal, 'errored'].includes(inter.response.body[property]) || sharedStatus !== 1) {
-//         console.log('retrying...');
-//         cy.wait(8000);
-//         return cy.spyPoll(method, url, property, expectedVal, tryNum);
-//       } else {
-//         sharedStatus = 1;
-//         console.log('done by expected state!', 'sharedStatus:', sharedStatus);
-//         return true;
-//       }
-//     });
-//  });
+
+
+
+Cypress.Commands.add('seed', ({type, data, id, method='POST'}) => {
+
+  const hasAuth = Boolean(username) && Boolean(password);
+
+  let uri = ''; // Replace with your API base URL
+
+  if (type === 'dataset') {
+    uri = 'indicators';
+  }
+  else if (type === 'model') {
+    if (method === 'PATCH') {
+      uri = `models/${id}`;
+    } else {
+      uri = 'models';
+    }
+  } else if (type === 'annotation') {
+    uri = `indicators/${id}/annotations`;
+  }
+
+  // NOTE cy.request here makes sense (from feedback).
+  // Seed the database using cy.request
+    const cy_promise = cy.request({
+      method,
+      url: `/api/dojo/${uri}`,
+      auth,
+      body: data
+    });
+
+  return cy_promise;
+});
+
+
+Cypress.Commands.add("uploadFile", ({type, id, variant}) => {
+
+  const hasAuth = Boolean(username) && Boolean(password);
+
+  if (type === 'dataset') {
+
+    cy.log('Uploading dataset seed-file.')
+
+    // NOTE For now ignore variant since this is used once.
+
+    const fileName = 'raw_data.csv';
+    const url = `/api/dojo/indicators/${id}/upload`;
+
+    return cy.readFile(`cypress/files/${fileName}`)
+      .then(Cypress.Blob.binaryStringToBlob)
+      .then((blob) => {
+
+        const formData = new FormData();
+        const file = new File([blob], fileName);
+        formData.append('file', file);
+        formData.append('filename', fileName);
+
+        return cy.request({
+          method: 'POST',
+          url: url,
+          body: formData,
+          auth
+        })
+      });
+
+  }
+
+  return undefined; // Test will error if not for datasets for now
+
+});

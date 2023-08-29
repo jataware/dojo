@@ -15,9 +15,14 @@
 
 import './commands';
 
+before(() => {
+  cy.log('Visit / with auth to log in.');
+  cy.login();
+});
 
 Cypress.on('uncaught:exception', (err, runnable) => {
   // If an inconsequential http request is done and not mocked
   // ignore and continue test without failing
   return false;
 });
+

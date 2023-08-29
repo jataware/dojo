@@ -92,7 +92,7 @@ const NavBar = () => {
           Documentation
         </Button>
         <Button
-          href="https://github.com/dojo-modeling/dojo"
+          href="https://github.com/jataware/dojo"
           target="_blank"
           color="grey"
         >
