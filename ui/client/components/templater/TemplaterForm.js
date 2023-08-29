@@ -5,7 +5,7 @@ import {
   Field, Form, FormikProvider, useFormik
 } from 'formik';
 
-import { Select, TextField } from 'material-ui-formik-components';
+import { Select } from 'material-ui-formik-components';
 
 import Button from '@mui/material/Button';
 import Checkbox from '@mui/material/Checkbox';
@@ -19,6 +19,7 @@ import { makeStyles } from 'tss-react/mui';
 import ParameterOptions from './ParameterOptions';
 import { checkUniqueParameterName } from './templaterUtils';
 import { useConfigs, useDirective } from '../SWRHooks';
+import FormikTextField from '../formikComponents/FormikTextField';
 
 const useStyles = makeStyles()((theme) => ({
   paramOptionsWrapper: {
@@ -30,7 +31,7 @@ const useStyles = makeStyles()((theme) => ({
   numberFieldsWrapper: {
     display: 'flex',
     alignItems: 'flex-start',
-    justifyContent: 'space-between',
+    justifyContent: 'space-around',
     padding: [['4px', theme.spacing(2)]],
     width: '100%',
     '& > :first-child': {
@@ -127,25 +128,25 @@ const TemplaterForm = ({
       <Form noValidate onSubmit={formik.handleSubmit}>
         <List dense>
           <ListItem>
-            <Field
+            <FormikTextField
               name="name"
               margin="dense"
               label="Name"
               variant="outlined"
-              component={TextField}
               required
+              fullWidth
             />
           </ListItem>
           <ListItem>
-            <Field
+            <FormikTextField
               name="description"
               margin="dense"
               label="Description"
               variant="outlined"
-              component={TextField}
               required
               multiline
               minRows={2}
+              fullWidth
             />
           </ListItem>
           <ListItem>
@@ -169,25 +170,23 @@ const TemplaterForm = ({
           {(formik.values.type === 'float' || formik.values.type === 'int') && (
             <ListItem>
               <div className={classes.numberFieldsWrapper}>
-                <Field
+                <FormikTextField
                   className={classes.numberField}
                   name="min"
                   label="min"
                   type="tel"
                   variant="outlined"
                   margin="dense"
-                  component={TextField}
-                  fullWidth={false}
+
                 />
-                <Field
+                <FormikTextField
                   className={classes.numberField}
                   name="max"
                   label="max"
                   type="tel"
                   variant="outlined"
                   margin="dense"
-                  component={TextField}
-                  fullWidth={false}
+
                 />
               </div>
             </ListItem>
@@ -218,30 +217,30 @@ const TemplaterForm = ({
           )}
 
           <ListItem>
-            <Field
+            <FormikTextField
               name="default_value"
               margin="dense"
               label="Default Value"
               variant="outlined"
-              component={TextField}
+              fullWidth
             />
           </ListItem>
           <ListItem>
-            <Field
+            <FormikTextField
               name="unit"
               margin="dense"
               label="Unit"
               variant="outlined"
-              component={TextField}
+              fullWidth
             />
           </ListItem>
           <ListItem>
-            <Field
+            <FormikTextField
               name="unit_description"
               margin="dense"
               label="Unit Description"
               variant="outlined"
-              component={TextField}
+              fullWidth
             />
           </ListItem>
           <ListItem>

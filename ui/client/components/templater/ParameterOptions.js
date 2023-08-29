@@ -4,17 +4,18 @@ import { Field, FieldArray } from 'formik';
 
 import isEmpty from 'lodash/isEmpty';
 
-import { TextField } from 'material-ui-formik-components';
-
 import AddCircleIcon from '@mui/icons-material/AddCircle';
 import Button from '@mui/material/Button';
 import DeleteIcon from '@mui/icons-material/Delete';
 import IconButton from '@mui/material/IconButton';
+import InputAdornment from '@mui/material/InputAdornment';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import Typography from '@mui/material/Typography';
 
 import { makeStyles } from 'tss-react/mui';
+
+import FormikTextField from '../formikComponents/FormikTextField';
 
 const useStyles = makeStyles()((theme) => ({
   root: {
@@ -47,16 +48,22 @@ const ParameterOptions = ({ options }) => {
               // would expect it to cause issues with re-rendering when you remove items
               // eslint-disable-next-line react/no-array-index-key
               <ListItem key={index}>
-                <Field
+                <FormikTextField
                   name={`options.${index}`}
                   margin="dense"
                   label={`#${index + 1}`}
                   variant="outlined"
-                  component={TextField}
+                  fullWidth
+                  InputProps={{
+                    endAdornment: (
+                      <InputAdornment position="end">
+                        <IconButton onClick={() => arrayHelpers.remove(index)} color="secondary" size="large">
+                          <DeleteIcon />
+                        </IconButton>
+                      </InputAdornment>
+                    )
+                  }}
                 />
-                <IconButton onClick={() => arrayHelpers.remove(index)} color="secondary" size="large">
-                  <DeleteIcon />
-                </IconButton>
               </ListItem>
             ))}
           </List>
