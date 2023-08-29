@@ -2,14 +2,13 @@ import React, { useCallback } from 'react';
 
 import _values from 'lodash/values';
 
-import { RadioGroup } from 'material-ui-formik-components/RadioGroup';
-import { Switch } from 'material-ui-formik-components/Switch';
-import { Field } from 'formik';
 import Typography from '@mui/material/Typography';
 
 import { Aliases } from './Aliases';
 import Autocomplete from '../../components/Autocomplete';
 import { FormAwareCheckBox, FormAwareSelect, FormAwareTextField } from '../FormFields';
+import FormikSwitch from '../../components/formikComponents/FormikSwitch';
+import FormikRadioGroup from '../../components/formikComponents/FormikRadioGroup';
 
 import FormatValidationInput from '../FormFields/FormatValidationInput';
 import MultiColumnDateSelector from './MultiColumnDateSelector';
@@ -107,10 +106,9 @@ export const GeoControls = ({
       />
 
       {values.geo_type === 'coordinates' && (
-        <Field
+        <FormikRadioGroup
           name="coord_format"
           label="Coordinate Format"
-          component={RadioGroup}
           options={[
             { value: 'lonlat', label: 'Longitude,Latitude' },
             { value: 'latlon', label: 'Latitude,Longitude' },
@@ -345,10 +343,9 @@ export const ColumnAnnotation = ({
         fieldsConfig={fieldsConfig}
       />
 
-      <Field
+      <FormikSwitch
         name="isQualifies"
         label="Field Qualifies Another"
-        component={Switch}
         {...fieldsConfig('isQualifies')}
       />
 
