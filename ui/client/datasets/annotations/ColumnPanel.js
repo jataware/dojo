@@ -1,5 +1,4 @@
 import React, { useEffect, useRef } from 'react';
-import clsx from 'clsx';
 import { Form, Formik } from 'formik';
 import * as yup from 'yup';
 
@@ -256,7 +255,7 @@ export default ({
   // which we have to do manually due to the potential focus on grid cells (MUI autofocus fails)
   const focusRef = useRef(null);
 
-  const { classes } = useStyles();
+  const { classes, cx } = useStyles();
 
   useEffect(() => {
     if (focusRef.current) {
@@ -328,7 +327,7 @@ export default ({
   return (
     <Drawer
       variant="persistent"
-      classes={{ paper: clsx({ [classes.root]: true, [classes.expanded]: displayStatistics }) }}
+      classes={{ paper: cx({ [classes.root]: true, [classes.expanded]: displayStatistics }) }}
       anchor={anchorPosition}
       open={Boolean(columnName)}
       onClose={onClose}

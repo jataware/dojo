@@ -1,6 +1,5 @@
 import React, { useRef, useState } from 'react';
 
-import clsx from 'clsx';
 import get from 'lodash/get';
 import find from 'lodash/find';
 import isEmpty from 'lodash/isEmpty';
@@ -107,10 +106,10 @@ const useStyles = makeStyles()((theme) => ({
 const Cell = ({
   isHighlighted, value
 }) => {
-  const { classes } = useStyles();
+  const { classes, cx } = useStyles();
   return (
     <span
-      className={clsx({
+      className={cx({
         [classes.cellRoot]: true,
         [classes.hoveredCell]: isHighlighted,
       })}
@@ -144,7 +143,7 @@ export default ({
   validateDateFormat, columnStats,
   fieldsConfig, addingAnnotationsAllowed, onUploadAnnotations, datasetID
 }) => {
-  const { classes } = useStyles();
+  const { classes, cx } = useStyles();
   const [pageSize, setPageSize] = useState(rowsPerPageOptions[0]);
   const [highlightedColumn, setHighlightedColumn] = useState(null);
   const [editingColumn, setEditingColumn] = useState(null);
@@ -248,7 +247,7 @@ export default ({
         disableReorder: true,
         // add this class to hide the vertical separators between the headers
         // we'll add it manually in the Header itself so that we can handle multiparts
-        headerClassName: clsx(
+        headerClassName: cx(
           classes.hideRightSeparator,
           { [classes.displayUnderline]: isAnnotated, [classes.noUnderline]: !isAnnotated }
         ),
@@ -380,10 +379,10 @@ export default ({
           LoadingOverlay: CustomLoadingOverlay
         }}
         classes={{
-          root: clsx([classes.grid, classes.gridScroll, classes.hideHeaderBorder]),
+          root: cx([classes.grid, classes.gridScroll, classes.hideHeaderBorder]),
           row: classes.row,
-          cell: clsx({ [classes.disabledEvents]: isEditing }),
-          columnHeader: clsx({
+          cell: cx({ [classes.disabledEvents]: isEditing }),
+          columnHeader: cx({
             [classes.disabledEvents]: isEditing,
             [classes.columnHeaderTitle]: true,
           }),

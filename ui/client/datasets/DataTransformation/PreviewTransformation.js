@@ -1,7 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
 
-import clsx from 'clsx';
-
 import Button from '@mui/material/Button';
 import Card from '@mui/material/Card';
 import CardActions from '@mui/material/CardActions';
@@ -99,7 +97,7 @@ export default ({
   cleanupRef,
   disabled,
 }) => {
-  const { classes } = useStyles();
+  const { classes, cx } = useStyles();
   const [showPreview, setShowPreview] = useState(false);
   const [loading, setLoading] = useState(false);
   const [after, setAfter] = useState('___');
@@ -151,7 +149,7 @@ export default ({
           </Typography>
           <Typography
             variant="subtitle1"
-            className={clsx(classes.extraGutter, classes.titleWeight)}
+            className={cx(classes.extraGutter, classes.titleWeight)}
             color="textSecondary"
           >
             after transformation:

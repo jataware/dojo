@@ -1,5 +1,4 @@
 import React, { useEffect, useState } from 'react';
-import clsx from 'clsx';
 import axios from 'axios';
 
 import Container from '@mui/material/Container';
@@ -66,7 +65,7 @@ const RunJob = ({
   datasetInfo, setDatasetInfo, stepTitle, handleNext, handleBack, job_id, ...props
 }) => {
   const [jobData, setJobData] = useState(null);
-  const { classes } = useStyles();
+  const { classes, cx } = useStyles();
 
   useEffect(() => {
     const updateJobData = () => {
@@ -114,7 +113,7 @@ const RunJob = ({
           &nbsp;
         {
             jobData?.result ? (
-              <div className={clsx([
+              <div className={cx([
                 classes.riskResult,
                 classes[`risk${jobData?.result?.anomalyConfidence}`]
               ])}

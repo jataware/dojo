@@ -1,5 +1,4 @@
 import React from 'react';
-import clsx from 'clsx';
 
 import Button from '@mui/material/Button';
 import Divider from '@mui/material/Divider';
@@ -94,7 +93,7 @@ const useStyles = makeStyles()((theme) => ({
 const MultiPartHeader = ({
   status, colSpan, TypeIcon, qualifies, showMarkers, buttonClick, column
 }) => {
-  const { classes } = useStyles();
+  const { classes, cx } = useStyles();
   const shouldDisplayStatus = ((['inferred', 'primary'].includes(status) || qualifies));
 
   return (
@@ -105,12 +104,12 @@ const MultiPartHeader = ({
       {showMarkers && shouldDisplayStatus && (
         <Typography
           variant="caption"
-          className={clsx([classes.statusBadge])}
+          className={classes.statusBadge}
         >
           {qualifies ? 'qualifier' : status}
         </Typography>
       )}
-      <div className={clsx([classes.upperWrapper, classes.upperWrapperMulti])}>
+      <div className={cx([classes.upperWrapper, classes.upperWrapperMulti])}>
         <Button
           variant="outlined"
           size="small"
@@ -142,7 +141,7 @@ const Header = ({
   buttonClick,
   drawerOpen = false,
 }) => {
-  const { classes } = useStyles();
+  const { classes, cx } = useStyles();
   const isAnnotated = ['annotated', 'primary'].includes(status);
   const isInferred = status === 'inferred' && !isMultiPartMember;
   // only display the status badge if it is inferred or primary OR it is a qualifier
@@ -217,7 +216,7 @@ const Header = ({
       )}
 
       <Typography
-        className={clsx({ [classes.selectedHeader]: isHighlighted })}
+        className={cx({ [classes.selectedHeader]: isHighlighted })}
         variant="subtitle1"
         align="center"
       >

@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import clsx from 'clsx';
 import { makeStyles } from 'tss-react/mui';
 
 import IconButton from '@mui/material/IconButton';
@@ -71,7 +70,7 @@ export const FileDropSelector = ({
   multiple = true,
   disableSelector,
 }) => {
-  const { classes } = useStyles();
+  const { classes, cx } = useStyles();
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
 
@@ -142,7 +141,7 @@ export const FileDropSelector = ({
 
   return (
     <div
-      className={clsx({
+      className={cx({
         [classes.root]: true,
         [classes.dropActive]: isDragActive,
         [classes.mini]: mini
