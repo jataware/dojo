@@ -245,7 +245,7 @@ export const HorizontalLinearStepper = ({ modelFamily }) => {
     <div className={classes.root}>
       <Button
         variant="outlined"
-        color="secondary"
+        color="error"
         disableElevation
         onClick={handleResetClick}
         className={classes.resetButton}

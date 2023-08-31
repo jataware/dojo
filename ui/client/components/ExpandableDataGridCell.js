@@ -1,41 +1,25 @@
-import React, { useRef, useState } from 'react';
+import React from 'react';
 
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
 import Paper from '@mui/material/Paper';
 import Popper from '@mui/material/Popper';
-import Typography from '@mui/material/Typography';
-import { makeStyles } from 'tss-react/mui';
 
-const useStyles = makeStyles()(() => ({
-  root: {
-    alignItems: 'center',
-    lineHeight: '24px',
-    width: '100%',
-    height: '100%',
-    position: 'relative',
-    display: 'flex',
-    '& .cellValue': {
-      whiteSpace: 'nowrap',
-      overflow: 'hidden',
-      textOverflow: 'ellipsis',
-    },
-  },
-}));
+function isOverflown(element) {
+  return (
+    element.scrollHeight > element.clientHeight
+    || element.scrollWidth > element.clientWidth
+  );
+}
 
-const isOverflown = (el) => (
-  el.scrollHeight > el.clientHeight || el.scrollWidth > el.clientWidth
-);
-
-const ExpandableDataGridCell = ({
-  width, value, whiteSpace = 'normal'
-}) => {
-  const cellValue = useRef(null);
-  const cellDiv = useRef(null);
-  const wrapper = useRef(null);
-  const [showPopper, setShowPopper] = useState(false);
-  const [anchorEl, setAnchorEl] = useState(null);
-  const [showFullCell, setShowFullCell] = useState(false);
-
-  const classes = useStyles({ whiteSpace });
+const ExpandableDataGridCell = React.memo((props) => {
+  const { width, value } = props;
+  const wrapper = React.useRef(null);
+  const cellDiv = React.useRef(null);
+  const cellValue = React.useRef(null);
+  const [anchorEl, setAnchorEl] = React.useState(null);
+  const [showFullCell, setShowFullCell] = React.useState(false);
+  const [showPopper, setShowPopper] = React.useState(false);
 
   const handleMouseEnter = () => {
     const isCurrentlyOverflown = isOverflown(cellValue.current);
@@ -48,26 +32,55 @@ const ExpandableDataGridCell = ({
     setShowFullCell(false);
   };
 
+  React.useEffect(() => {
+    if (!showFullCell) {
+      return undefined;
+    }
+
+    function handleKeyDown(nativeEvent) {
+      // IE11, Edge (prior to using Bink?) use 'Esc'
+      if (nativeEvent.key === 'Escape' || nativeEvent.key === 'Esc') {
+        setShowFullCell(false);
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [setShowFullCell, showFullCell]);
+
   return (
-    <div
-      className={classes.root}
+    <Box
+      ref={wrapper}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      ref={wrapper}
+      sx={{
+        alignItems: 'center',
+        lineHeight: '24px',
+        width: '100%',
+        height: '100%',
+        position: 'relative',
+        display: 'flex',
+      }}
     >
-      <div
+      <Box
         ref={cellDiv}
-        style={{
-          height: 1,
+        sx={{
+          height: '100%',
           width,
           display: 'block',
           position: 'absolute',
           top: 0,
         }}
       />
-      <div ref={cellValue} className="cellValue">
+      <Box
+        ref={cellValue}
+        sx={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}
+      >
         {value}
-      </div>
+      </Box>
       {showPopper && (
         <Popper
           open={showFullCell && anchorEl !== null}
@@ -78,14 +91,14 @@ const ExpandableDataGridCell = ({
             elevation={1}
             style={{ minHeight: wrapper.current.offsetHeight - 3 }}
           >
-            <Typography variant="body2" style={{ padding: 8, whiteSpace }}>
+            <Typography variant="body2" style={{ padding: 8 }}>
               {value}
             </Typography>
           </Paper>
         </Popper>
       )}
-    </div>
+    </Box>
   );
-};
+});
 
 export default ExpandableDataGridCell;
