@@ -71,6 +71,10 @@ const useStyles = makeStyles()((theme) => ({
     fontSize: '0.6rem',
     padding: `0 ${theme.spacing(0.5)}`,
   },
+  // specific spacing for the multipart header badge to match that of the single header badge
+  statusBadgeMulti: {
+    top: -5,
+  },
   selectedHeader: {
     fontWeight: 'bold'
   },
@@ -104,7 +108,7 @@ const MultiPartHeader = ({
       {showMarkers && shouldDisplayStatus && (
         <Typography
           variant="caption"
-          className={classes.statusBadge}
+          className={cx(classes.statusBadge, classes.statusBadgeMulti)}
         >
           {qualifies ? 'qualifier' : status}
         </Typography>

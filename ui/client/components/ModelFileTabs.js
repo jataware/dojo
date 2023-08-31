@@ -77,6 +77,7 @@ const ModelFileTabs = ({
         variant="fullWidth"
         style={{ color: 'white' }}
         classes={{ indicator: classes.indicator }}
+        textColor="inherit"
       >
         <Tab
           label={(

@@ -188,7 +188,7 @@ const CenteredGrid = ({ model }) => {
       <div className={classes.fabWrapper}>
         <Fab
           variant="extended"
-          color="secondary"
+          color="error"
           onClick={(e) => { e.preventDefault(); setAbandonSessionDialogOpen(true); }}
         >
           <HelperTip
