@@ -7,7 +7,7 @@ import toLower from 'lodash/toLower';
 import get from 'lodash/get';
 import isEmpty from 'lodash/isEmpty';
 
-import Alert from '@mui/lab/Alert';
+import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
 import Grid from '@mui/material/Grid';

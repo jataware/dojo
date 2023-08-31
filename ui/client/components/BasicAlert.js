@@ -1,6 +1,6 @@
 import React from 'react';
 
-import MuiAlert from '@mui/lab/Alert';
+import Alert from '@mui/material/Alert';
 import Snackbar from '@mui/material/Snackbar';
 
 const BasicAlert = ({
@@ -26,9 +26,9 @@ const BasicAlert = ({
       anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       {...props}
     >
-      <MuiAlert elevation={6} variant="filled" severity={severity} action={action}>
+      <Alert elevation={6} variant="filled" severity={severity} action={action}>
         {message}
-      </MuiAlert>
+      </Alert>
     </Snackbar>
   );
 };

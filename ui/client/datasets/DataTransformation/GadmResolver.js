@@ -17,7 +17,7 @@ import TableRow from '@mui/material/TableRow';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
 
-import MuiAlert from '@mui/lab/Alert';
+import Alert from '@mui/material/Alert';
 
 import Autocomplete from '../../components/Autocomplete';
 
@@ -220,12 +220,12 @@ export const GadmResolver = ({
           Review Administrative Area Detection
         </Typography>
 
-        <MuiAlert
+        <Alert
           classes={{ standardInfo: classes.alert }}
           severity="info"
         >
           The following GADM mappings for primary country <span style={{ color: '#2488ff', backgroundColor: '#f1f1f1', padding: 2 }}>{primaryField}</span> have been identified with lower confidence. Adjust as needed.
-        </MuiAlert>
+        </Alert>
       </div>
 
       <div className={classes.tableFlexer}>

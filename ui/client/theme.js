@@ -13,6 +13,11 @@ const theme = createTheme({
 });
 
 export default createTheme(theme, {
+  breakpoints: {
+    values: {
+      xl: 1920,
+    },
+  },
   palette: {
     // mode: 'dark',
     primary: {

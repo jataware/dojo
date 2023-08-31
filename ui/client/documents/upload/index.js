@@ -6,7 +6,7 @@ import snakeCase from 'lodash/snakeCase';
 
 import { PDFDocument } from 'pdf-lib';
 
-import Alert from '@mui/lab/Alert';
+import Alert from '@mui/material/Alert';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
 import CircularProgress from '@mui/material/CircularProgress';
