@@ -187,6 +187,7 @@ const Header = ({
             disabled={isMultiPartMember}
             // MUI-TODO
             // sx={{
+            // eslint-disable-next-line max-len
             //   animation: isHighlighted && !isAnnotated ? `${buttonPulse} 1.5s infinite alternate` : '',
             // }}
             style={{ visibility: isMultiPartMember ? 'hidden' : 'visible' }}

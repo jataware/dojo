@@ -59,10 +59,12 @@ const RunJobs = ({
     return null;
   }
 
+  // TODO: This file needs refactoring so that we aren't conditionally running these hooks
+  // and running the useEffect without all of its deps
+  /* eslint-disable */
   const [jobData, setJobData] = useState(null);
   const [jobIndex, setJobIndex] = useState(0);
 
-  /* eslint-disable */
 
   const updateJobData = ({ firstRun } = {}) => {
     const job = jobs[jobIndex];

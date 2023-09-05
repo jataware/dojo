@@ -287,7 +287,8 @@ export default ({
   }
 
   // TODO: this isn't working with datagrid V5+ because onCellBlur was deprecated
-  // we need a new way to hook it into the DG flow, or more likely come up with a less brittle solution
+  // we need a new way to hook it into the DG flow
+  // or more likely come up with a less brittle solution
   // const highlightColumn = (cell, event) => {
   //   // Get the next column to highlight from relatedTarget - this works for arrow key navigation
   //   const clicked = event.target.nextSibling;
