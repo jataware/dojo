@@ -383,8 +383,8 @@ describe('Dataset Register Flow', function () {
     cy.findByRole('textbox', {name: /Description/i})
       .should('have.value', 'A description, yo!');
 
-    cy.findByRole('combobox')
-      .findByText(/Earth and Space Sciences/i);
+    cy.get('[role="button"]')
+      .find('.MuiChip-label').should('have.text', 'Earth and Space Sciences');
 
     cy.findAllByRole('textbox', {name: /Registerer Name \(Organization\)/i})
       .should('have.value', 'Joel');
