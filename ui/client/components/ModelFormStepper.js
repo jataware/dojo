@@ -1,17 +1,17 @@
 import React, { useCallback, useEffect, useState } from 'react';
 
-import Button from '@material-ui/core/Button';
-import Step from '@material-ui/core/Step';
-import StepLabel from '@material-ui/core/StepLabel';
-import Stepper from '@material-ui/core/Stepper';
-import Typography from '@material-ui/core/Typography';
+import Button from '@mui/material/Button';
+import Step from '@mui/material/Step';
+import StepLabel from '@mui/material/StepLabel';
+import Stepper from '@mui/material/Stepper';
+import Typography from '@mui/material/Typography';
 
 import { v4 as uuidv4 } from 'uuid';
 
 import cloneDeep from 'lodash/cloneDeep';
 import isEqual from 'lodash/isEqual';
 
-import { makeStyles } from '@material-ui/core/styles';
+import { makeStyles } from 'tss-react/mui';
 import { useHistory } from 'react-router-dom';
 
 import BasicAlert from './BasicAlert';
@@ -20,22 +20,22 @@ import { ModelDetail } from './ModelDetailForm';
 import { ModelOverview } from './ModelOverviewForm';
 import ModelRegionForm from './ModelRegionForm';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   root: {
     width: '100%',
     position: 'relative'
   },
   instructions: {
-    margin: [[theme.spacing(1), 0]],
+    margin: `${theme.spacing(1)} 0`,
   },
   form: {
-    margin: [[theme.spacing(3), 0]],
+    margin: `${theme.spacing(3)} 0`,
   },
   resetButton: {
     position: 'absolute',
     // very specific positioning to line this up with the stepper
-    top: '31px',
-    left: '24px',
+    top: '52px',
+    left: '0',
     opacity: 0.6,
     '&:hover': {
       opacity: 1,
@@ -45,7 +45,7 @@ const useStyles = makeStyles((theme) => ({
     height: '20px',
   },
   stepperWrapper: {
-    width: '85%',
+    width: '100%',
     margin: '0 auto',
   },
 }));
@@ -94,8 +94,8 @@ const createModel = async (model, history) => {
   } = model;
   // instead we want the epoch value for the start and end dates
   parsedModelInfo.period = {
-    gte: model.period.gte?.valueOf(),
-    lte: model.period.lte?.valueOf(),
+    gte: model.period.gte && Date.parse(model.period.gte),
+    lte: model.period.lte && Date.parse(model.period.lte),
   };
   // then add in an ID
   parsedModelInfo.id = uuidv4();
@@ -128,7 +128,7 @@ const createModel = async (model, history) => {
 
 export const HorizontalLinearStepper = ({ modelFamily }) => {
   const history = useHistory();
-  const classes = useStyles();
+  const { classes } = useStyles();
   const [lockFamilyName, setLockFamilyName] = useState(false);
   const [activeStep, setActiveStep] = React.useState(() => {
     // put us back to wherever we left off, if localstorage has a modelStep
@@ -245,7 +245,7 @@ export const HorizontalLinearStepper = ({ modelFamily }) => {
     <div className={classes.root}>
       <Button
         variant="outlined"
-        color="secondary"
+        color="error"
         disableElevation
         onClick={handleResetClick}
         className={classes.resetButton}
@@ -256,11 +256,11 @@ export const HorizontalLinearStepper = ({ modelFamily }) => {
         Reset
       </Button>
       <div className={classes.stepperWrapper}>
-        <Stepper activeStep={activeStep}>
+        <Stepper style={{ padding: '16px 24px 32px 24px' }} activeStep={activeStep}>
           {steps.map((label, index) => (
             <Step key={label} completed={completedSteps[index] || index < activeStep}>
               <StepLabel>
-                <Typography variant="h5">
+                <Typography variant="h5" sx={{ whiteSpace: 'nowrap' }}>
                   {label}
                 </Typography>
               </StepLabel>

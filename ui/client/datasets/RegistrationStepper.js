@@ -1,15 +1,15 @@
 import React, { useEffect, useState } from 'react';
 
-import Step from '@material-ui/core/Step';
-import StepLabel from '@material-ui/core/StepLabel';
-import Stepper from '@material-ui/core/Stepper';
-import Tooltip from '@material-ui/core/Tooltip';
-import Typography from '@material-ui/core/Typography';
+import Step from '@mui/material/Step';
+import StepLabel from '@mui/material/StepLabel';
+import Stepper from '@mui/material/Stepper';
+import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
 
 import cloneDeep from 'lodash/cloneDeep';
 import get from 'lodash/get';
 
-import { makeStyles } from '@material-ui/core/styles';
+import { makeStyles } from 'tss-react/mui';
 import { useHistory, useLocation } from 'react-router-dom';
 
 import axios from 'axios';
@@ -18,14 +18,14 @@ import { DefaultErrorFallback } from '../components/DefaultErrorFallback';
 import Prompt from './PromptDialog';
 import flows from './Flows';
 
-const useStyles = makeStyles(({ spacing, breakpoints }) => ({
+const useStyles = makeStyles()(({ spacing, breakpoints }) => ({
   root: {
     width: '100%',
     position: 'relative',
     display: 'flex',
     flex: 1,
     flexDirection: 'column',
-    padding: [[spacing(0.5), spacing(2), spacing(2), spacing(2)]],
+    padding: `${spacing(0.5)} ${spacing(2)} ${spacing(2)} ${spacing(2)}`,
   },
   navigation: {
     display: 'flex',
@@ -136,7 +136,7 @@ const InnerStepper = ({ match, updateLocation, ...props }) => {
   const shouldUpdateLocation = updateLocation === undefined ? true : Boolean(updateLocation);
 
   const history = useHistory();
-  const classes = useStyles();
+  const { classes } = useStyles();
   const location = useLocation();
   const flow = flows[flowslug];
 
@@ -326,7 +326,7 @@ const InnerStepper = ({ match, updateLocation, ...props }) => {
       <div className={classes.navigation}>
 
         <div className={classes.stepperWrapper}>
-          <Stepper activeStep={activeStep}>
+          <Stepper style={{ padding: 24 }} activeStep={activeStep}>
             {flow.steps.map((mappedStep, index) => (
               <Tooltip
                 classes={{

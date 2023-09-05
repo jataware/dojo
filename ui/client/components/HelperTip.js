@@ -1,12 +1,14 @@
 import React, { useState } from 'react';
 
-import ClickAwayListener from '@material-ui/core/ClickAwayListener';
-import HelpOutlineIcon from '@material-ui/icons/HelpOutline';
-import Tooltip from '@material-ui/core/Tooltip';
+import ClickAwayListener from '@mui/material/ClickAwayListener';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
+import Tooltip from '@mui/material/Tooltip';
 
-import { darken, makeStyles } from '@material-ui/core/styles';
+import { darken } from '@mui/material/styles';
 
-const useStyles = makeStyles(() => ({
+import { makeStyles } from 'tss-react/mui';
+
+const useStyles = makeStyles()(() => ({
   root: {
     position: 'relative',
     // contain the width to the size of the content it is wrapping
@@ -32,7 +34,7 @@ const HelperTip = ({
   title, children, position = 'after', dark
 }) => {
   const [open, setOpen] = useState(false);
-  const classes = useStyles();
+  const { classes } = useStyles();
 
   const handleTooltipClose = () => {
     setOpen(false);

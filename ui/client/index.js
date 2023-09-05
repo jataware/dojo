@@ -2,7 +2,7 @@ import React from 'react';
 
 import './style.css';
 
-import CssBaseline from '@material-ui/core/CssBaseline';
+import CssBaseline from '@mui/material/CssBaseline';
 import ReactDOM from 'react-dom';
 import {
   Route,
@@ -10,7 +10,9 @@ import {
   Switch,
 } from 'react-router-dom';
 
-import { ThemeProvider } from '@material-ui/core/styles';
+import { ThemeProvider, StyledEngineProvider } from '@mui/material/styles';
+import { LocalizationProvider } from '@mui/x-date-pickers';
+import { AdapterDateFns } from '@mui/x-date-pickers/AdapterDateFns';
 
 import NavBar from './components/NavBar';
 import ThemeContextProvider from './components/ThemeContextProvider';
@@ -66,12 +68,16 @@ export default function Main() {
 }
 
 ReactDOM.render(
-  <ThemeProvider theme={theme}>
-    <CssBaseline />
-    <ThemeContextProvider>
-      <Main />
-    </ThemeContextProvider>
-  </ThemeProvider>,
+  <StyledEngineProvider injectFirst>
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <ThemeContextProvider>
+        <LocalizationProvider dateAdapter={AdapterDateFns}>
+          <Main />
+        </LocalizationProvider>
+      </ThemeContextProvider>
+    </ThemeProvider>
+  </StyledEngineProvider>,
   document.getElementById('app')
 );
 

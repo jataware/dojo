@@ -1,14 +1,14 @@
 import React, { useEffect } from 'react';
 
-import Backdrop from '@material-ui/core/Backdrop';
-import CircularProgress from '@material-ui/core/CircularProgress';
-import Typography from '@material-ui/core/Typography';
+import Backdrop from '@mui/material/Backdrop';
+import CircularProgress from '@mui/material/CircularProgress';
+import Typography from '@mui/material/Typography';
 
-import { makeStyles } from '@material-ui/core/styles';
+import { makeStyles } from 'tss-react/mui';
 
 import useOrderedElwoodJobs from './useOrderedElwoodJobs';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   backdrop: {
     zIndex: theme.zIndex.drawer + 1000,
     color: theme.palette.grey[700],

@@ -5,22 +5,22 @@ import {
   Field, Form, FormikProvider, useFormik
 } from 'formik';
 
-import { Select, TextField } from 'material-ui-formik-components';
+import Button from '@mui/material/Button';
+import Checkbox from '@mui/material/Checkbox';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import FormHelperText from '@mui/material/FormHelperText';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
 
-import Button from '@material-ui/core/Button';
-import Checkbox from '@material-ui/core/Checkbox';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import FormHelperText from '@material-ui/core/FormHelperText';
-import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-
-import { withStyles } from '@material-ui/core/styles';
+import { makeStyles } from 'tss-react/mui';
 
 import ParameterOptions from './ParameterOptions';
 import { checkUniqueParameterName } from './templaterUtils';
 import { useConfigs, useDirective } from '../SWRHooks';
+import FormikTextField from '../formikComponents/FormikTextField';
+import FormikSelect from '../formikComponents/FormikSelect';
 
-const TemplaterForm = withStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   paramOptionsWrapper: {
     paddingLeft: theme.spacing(2),
   },
@@ -30,8 +30,8 @@ const TemplaterForm = withStyles((theme) => ({
   numberFieldsWrapper: {
     display: 'flex',
     alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    padding: [['4px', theme.spacing(2)]],
+    justifyContent: 'space-around',
+    padding: `4px ${theme.spacing(2)}`,
     width: '100%',
     '& > :first-child': {
       marginRight: theme.spacing(2),
@@ -43,8 +43,9 @@ const TemplaterForm = withStyles((theme) => ({
   predefinedListItem: {
     flexDirection: 'column',
   },
-}))(({
-  classes,
+}));
+
+const TemplaterForm = ({
   initialValues,
   handleSubmit,
   setDisableConfirm,
@@ -58,6 +59,8 @@ const TemplaterForm = withStyles((theme) => ({
 }) => {
   const { configs } = useConfigs(modelId);
   const { directive } = useDirective(modelId);
+
+  const { classes } = useStyles();
 
   // This schema is defined inside the component so that we have access to all the arguments
   // for the checkUniqueParameterName function
@@ -124,34 +127,34 @@ const TemplaterForm = withStyles((theme) => ({
       <Form noValidate onSubmit={formik.handleSubmit}>
         <List dense>
           <ListItem>
-            <Field
+            <FormikTextField
               name="name"
               margin="dense"
               label="Name"
               variant="outlined"
-              component={TextField}
               required
+              fullWidth
             />
           </ListItem>
           <ListItem>
-            <Field
+            <FormikTextField
               name="description"
               margin="dense"
               label="Description"
               variant="outlined"
-              component={TextField}
               required
               multiline
               minRows={2}
+              fullWidth
             />
           </ListItem>
           <ListItem>
-            <Field
+            <FormikSelect
               name="type"
               margin="dense"
               label="Type"
               variant="outlined"
-              component={Select}
+              fullWidth
               options={[
                 { value: 'str', label: 'String / Text' },
                 { value: 'int', label: 'Integer / Whole Number' },
@@ -166,25 +169,23 @@ const TemplaterForm = withStyles((theme) => ({
           {(formik.values.type === 'float' || formik.values.type === 'int') && (
             <ListItem>
               <div className={classes.numberFieldsWrapper}>
-                <Field
+                <FormikTextField
                   className={classes.numberField}
                   name="min"
                   label="min"
                   type="tel"
                   variant="outlined"
                   margin="dense"
-                  component={TextField}
-                  fullWidth={false}
+
                 />
-                <Field
+                <FormikTextField
                   className={classes.numberField}
                   name="max"
                   label="max"
                   type="tel"
                   variant="outlined"
                   margin="dense"
-                  component={TextField}
-                  fullWidth={false}
+
                 />
               </div>
             </ListItem>
@@ -215,39 +216,39 @@ const TemplaterForm = withStyles((theme) => ({
           )}
 
           <ListItem>
-            <Field
+            <FormikTextField
               name="default_value"
               margin="dense"
               label="Default Value"
               variant="outlined"
-              component={TextField}
+              fullWidth
             />
           </ListItem>
           <ListItem>
-            <Field
+            <FormikTextField
               name="unit"
               margin="dense"
               label="Unit"
               variant="outlined"
-              component={TextField}
+              fullWidth
             />
           </ListItem>
           <ListItem>
-            <Field
+            <FormikTextField
               name="unit_description"
               margin="dense"
               label="Unit Description"
               variant="outlined"
-              component={TextField}
+              fullWidth
             />
           </ListItem>
           <ListItem>
-            <Field
+            <FormikSelect
               name="data_type"
               margin="dense"
               label="Data Type"
               variant="outlined"
-              component={Select}
+              fullWidth
               options={[
                 { value: 'nominal', label: 'nominal' },
                 { value: 'ordinal', label: 'ordinal' },
@@ -281,6 +282,6 @@ const TemplaterForm = withStyles((theme) => ({
       </Form>
     </FormikProvider>
   );
-});
+};
 
 export default TemplaterForm;

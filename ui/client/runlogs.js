@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
 
-import Button from '@material-ui/core/Button';
-import Container from '@material-ui/core/Container';
-import ExpandLessIcon from '@material-ui/icons/ExpandLess';
-import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
-import Typography from '@material-ui/core/Typography';
+import Button from '@mui/material/Button';
+import Container from '@mui/material/Container';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import Typography from '@mui/material/Typography';
 
-import { makeStyles } from '@material-ui/core/styles';
+import { makeStyles } from 'tss-react/mui';
 
 import { useParams } from 'react-router-dom';
 
@@ -14,7 +14,7 @@ import {
   useRunLogs
 } from './components/SWRHooks';
 
-const useStyles = makeStyles(() => ({
+const useStyles = makeStyles()(() => ({
   title: {
     marginTop: '1em',
   },
@@ -59,7 +59,7 @@ const useStyles = makeStyles(() => ({
 
 const LogStep = ({ taskName, content, state }) => {
   const [expanded, setExpanded] = useState(state !== 'success');
-  const classes = useStyles();
+  const { classes } = useStyles();
 
   return (
     <div className={classes.task}>
@@ -86,7 +86,7 @@ const RunLogs = () => {
   const {
     runLogs, runLogsLoading, runLogsError
   } = useRunLogs(runid);
-  const classes = useStyles();
+  const { classes } = useStyles();
 
   useEffect(() => {
     document.title = 'Run Logs - Dojo';

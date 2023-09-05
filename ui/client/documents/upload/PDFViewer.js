@@ -1,25 +1,14 @@
 import React from 'react';
-import clsx from 'clsx';
-import { withStyles } from '@material-ui/core/styles';
-import Paper from '@material-ui/core/Paper';
-import Typography from '@material-ui/core/Typography';
+import Paper from '@mui/material/Paper';
+import Typography from '@mui/material/Typography';
 
 /**
  *
  **/
-export default withStyles(() => ({
-  root: {
-    padding: '1rem',
-    height: '100%'
-  }
-}))(({ classes, file }) => (
+export default ({ file }) => (
   <Paper
     elevation={0}
-    className={
-        clsx({
-          [classes.root]: true
-        })
-      }
+    sx={{ padding: '1rem', height: '100%' }}
   >
     <Typography
       variant="h6"
@@ -36,4 +25,4 @@ export default withStyles(() => ({
     />
 
   </Paper>
-));
+);

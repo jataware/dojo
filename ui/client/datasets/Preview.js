@@ -1,14 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
 
-import { DataGrid } from '@material-ui/data-grid';
-import { withStyles } from '@material-ui/core/styles';
+import { makeStyles } from 'tss-react/mui';
 
-import Container from '@material-ui/core/Container';
-import IconButton from '@material-ui/core/IconButton';
-import InfoIcon from '@material-ui/icons/Info';
-import Tooltip from '@material-ui/core/Tooltip';
-import Typography from '@material-ui/core/Typography';
+import { DataGrid } from '@mui/x-data-grid';
+import Container from '@mui/material/Container';
+import IconButton from '@mui/material/IconButton';
+import InfoIcon from '@mui/icons-material/Info';
+import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
 
 import Prompt from './PromptDialog';
 import { Navigation } from '.';
@@ -16,22 +16,33 @@ import { formatDateOnly, splitOnWildCard } from '../utils';
 
 const rowsPerPageOptions = [25, 50, 100];
 
-const HintTooltip = withStyles(() => ({
-  root: {
-  },
+const useStyles = makeStyles()((theme) => ({
   tooltip: {
     fontSize: '1rem'
+  },
+  root: {
+    padding: `${theme.spacing(6)} ${theme.spacing(4)} ${theme.spacing(2)} ${theme.spacing(4)}`,
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  header: {
+    marginBottom: theme.spacing(5),
   }
-}))(({ classes }) => (
-  <Tooltip
-    classes={{ tooltip: classes.tooltip }}
-    title="This is a Preview of the normalized data. Review output and submit to Dojo."
-  >
-    <IconButton>
-      <InfoIcon />
-    </IconButton>
-  </Tooltip>
-));
+}));
+
+const HintTooltip = () => {
+  const { classes } = useStyles();
+  return (
+    <Tooltip
+      classes={{ tooltip: classes.tooltip }}
+      title="This is a Preview of the normalized data. Review output and submit to Dojo."
+    >
+      <IconButton size="large">
+        <InfoIcon />
+      </IconButton>
+    </Tooltip>
+  );
+};
 
 function PublishDataset({ datasetInfo, handleError, handleNext }) {
   axios.put(`/api/dojo/indicators/${datasetInfo.id}/publish`)
@@ -172,17 +183,8 @@ function PublishModelOutput({
 /**
  *
  * */
-export default withStyles(({ spacing }) => ({
-  root: {
-    padding: [[spacing(6), spacing(4), spacing(2), spacing(4)]],
-    display: 'flex',
-    flexDirection: 'column',
-  },
-  header: {
-    marginBottom: spacing(5),
-  }
-}))(({
-  classes, handleNext, datasetInfo, handleBack, stepTitle, rawFileName, useFilepath = false,
+export default ({
+  handleNext, datasetInfo, handleBack, stepTitle, rawFileName, useFilepath = false,
   handleNextFunc, ...props
 }) => {
   const [pageSize, setPageSize] = useState(rowsPerPageOptions[0]);
@@ -191,6 +193,8 @@ export default withStyles(({ spacing }) => ({
 
   const [columns, setColumns] = useState([]);
   const [previewData, setPreviewData] = useState([]);
+
+  const { classes } = useStyles();
 
   const nextHandlers = {
     PublishDataset,
@@ -280,4 +284,4 @@ export default withStyles(({ spacing }) => ({
 
     </Container>
   );
-});
+};

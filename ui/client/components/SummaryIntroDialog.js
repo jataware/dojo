@@ -4,24 +4,26 @@ import axios from 'axios';
 
 import { useHistory } from 'react-router-dom';
 
-import ArrowForwardIcon from '@material-ui/icons/ArrowForward';
-import Box from '@material-ui/core/Box';
-import Button from '@material-ui/core/Button';
-import Dialog from '@material-ui/core/Dialog';
-import DialogActions from '@material-ui/core/DialogActions';
-import DialogContent from '@material-ui/core/DialogContent';
-import DialogContentText from '@material-ui/core/DialogContentText';
-import DialogTitle from '@material-ui/core/DialogTitle';
-import Grid from '@material-ui/core/Grid';
-import PlayArrowIcon from '@material-ui/icons/PlayArrow';
-import SettingsBackupRestoreIcon from '@material-ui/icons/SettingsBackupRestore';
-import Slide from '@material-ui/core/Slide';
-import TextField from '@material-ui/core/TextField';
-import Typography from '@material-ui/core/Typography';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
+import Grid from '@mui/material/Grid';
+import PlayArrowIcon from '@mui/icons-material/PlayArrow';
+import SettingsBackupRestoreIcon from '@mui/icons-material/SettingsBackupRestore';
+import Slide from '@mui/material/Slide';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
 
-import { makeStyles, useTheme, withStyles } from '@material-ui/core/styles';
+import { useTheme } from '@mui/material/styles';
 
-const useStyles = makeStyles((theme) => ({
+import { makeStyles, withStyles } from 'tss-react/mui';
+
+const useStyles = makeStyles()((theme) => ({
   versionButtonWrapper: {
     marginTop: theme.spacing(2),
   },
@@ -29,8 +31,8 @@ const useStyles = makeStyles((theme) => ({
     backgroundColor: theme.palette.grey[300],
     borderRadius: '4px',
     color: theme.palette.grey[900],
-    padding: [[theme.spacing(1), theme.spacing(2)]],
-    margin: [[theme.spacing(2), 0]],
+    padding: `${theme.spacing(1)} ${theme.spacing(2)}`,
+    margin: `${theme.spacing(2)} 0`,
   },
   containerSelectionDialog: {
     display: 'flex',
@@ -58,11 +60,11 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 // This prevents an ugly interior (second) scrollbar from appearing on smaller screens
-const DialogContentNoOverflow = withStyles({
+const DialogContentNoOverflow = withStyles(DialogContent, {
   root: {
     overflow: 'hidden',
   }
-})(DialogContent);
+});
 
 const SummaryIntroDialog = ({
   open, setOpen, model, summaryLoading, setSummaryLoading
@@ -76,7 +78,7 @@ const SummaryIntroDialog = ({
 
   const history = useHistory();
 
-  const classes = useStyles();
+  const { classes } = useStyles();
   const theme = useTheme();
 
   const handleClose = () => {

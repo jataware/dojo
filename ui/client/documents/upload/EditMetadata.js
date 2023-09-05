@@ -1,18 +1,24 @@
 import React from 'react';
 
-import { withStyles } from '@material-ui/core/styles';
 import startCase from 'lodash/startCase';
-import Grid from '@material-ui/core/Grid';
-import Typography from '@material-ui/core/Typography';
-import DateFnsUtils from '@date-io/date-fns';
 
-import {
-  MuiPickersUtilsProvider,
-} from '@material-ui/pickers';
+import Grid from '@mui/material/Grid';
+import Typography from '@mui/material/Typography';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 
-import { KeyboardDatePicker } from 'material-ui-formik-components/KeyboardDatePicker';
-import { Formik, Field } from 'formik';
+import { makeStyles } from 'tss-react/mui';
+
 import { ManagedTextField } from './FormFields';
+
+const useStyles = makeStyles()((theme) => ({
+  root: {
+    padding: '1rem',
+    paddingRight: 0
+  },
+  filename: {
+    color: theme.palette.primary.main
+  }
+}));
 
 /**
  * Simple helper
@@ -27,17 +33,11 @@ const arrayToDOMOptions = (optionsArray) => optionsArray
 /**
  *
  **/
-export default withStyles((theme) => ({
-  root: {
-    padding: '1rem',
-    paddingRight: 0
-  },
-  filename: {
-    color: theme.palette.primary.main
-  }
-}))(({
-  classes, metadata, filename, onSave
+export default ({
+  metadata, filename, onSave
 }) => {
+  const { classes } = useStyles();
+
   const sharedTextFieldProps = (fieldName) => ({
     name: fieldName,
     label: startCase(fieldName),
@@ -115,26 +115,11 @@ export default withStyles((theme) => ({
         <Grid
           {...gridItemProps}
         >
-          <Formik>
-            <MuiPickersUtilsProvider
-              utils={DateFnsUtils}
-            >
-              <Field
-                style={{
-                  marginTop: 0
-                }}
-                InputLabelProps={{ shrink: true }}
-                InputProps={{
-                  style: { borderRadius: 0 },
-                }}
-                format="MM/dd/yyyy"
-                component={KeyboardDatePicker}
-                inputVariant="outlined"
-                placeholder="mm/dd/yyyy"
-                {...sharedTextFieldProps('creation_date')}
-              />
-            </MuiPickersUtilsProvider>
-          </Formik>
+          <DatePicker
+            sx={{ width: '100%' }}
+            slotProps={{ textField: { InputProps: { style: { borderRadius: 0 } } } }}
+            {...sharedTextFieldProps('creation_date')}
+          />
         </Grid>
 
         <Grid
@@ -205,4 +190,4 @@ export default withStyles((theme) => ({
 
     </div>
   );
-});
+};

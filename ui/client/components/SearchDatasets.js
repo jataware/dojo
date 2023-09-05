@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from 'react';
 
-import CancelIcon from '@material-ui/icons/Cancel';
-import IconButton from '@material-ui/core/IconButton';
-import InputAdornment from '@material-ui/core/InputAdornment';
-import TextField from '@material-ui/core/TextField';
-import { makeStyles } from '@material-ui/core/styles';
+import CancelIcon from '@mui/icons-material/Cancel';
+import IconButton from '@mui/material/IconButton';
+import InputAdornment from '@mui/material/InputAdornment';
+import TextField from '@mui/material/TextField';
+import { makeStyles } from 'tss-react/mui';
 
 import Fuse from 'fuse.js';
 
 import BasicAlert from './BasicAlert';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   searchWrapper: {
     marginBottom: theme.spacing(2),
     display: 'flex',
@@ -40,7 +40,7 @@ const SearchDatasets = ({ setSearchedDatasets, datasets }) => {
     message: ''
   });
 
-  const classes = useStyles();
+  const { classes } = useStyles();
 
   useEffect(() => {
     // define this inside the useEffect to ensure stability
@@ -114,7 +114,7 @@ const SearchDatasets = ({ setSearchedDatasets, datasets }) => {
         InputProps={{
           endAdornment: (
             <InputAdornment position="end">
-              <IconButton onClick={clearSearch}><CancelIcon /></IconButton>
+              <IconButton onClick={clearSearch} size="large"><CancelIcon /></IconButton>
             </InputAdornment>
           )
         }}

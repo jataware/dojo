@@ -4,9 +4,10 @@ import axios from 'axios';
 import isEmpty from 'lodash/isEmpty';
 import map from 'lodash/map';
 
-import Container from '@material-ui/core/Container';
-import Typography from '@material-ui/core/Typography';
-import { withStyles } from '@material-ui/core/styles';
+import Container from '@mui/material/Container';
+import Typography from '@mui/material/Typography';
+
+import { makeStyles } from 'tss-react/mui';
 
 import AnnotationsSubmitPrompt from './annotations/AnnotationsSubmitPrompt';
 import Instructions from './Instructions';
@@ -17,6 +18,18 @@ import { formatAnnotationsOUT } from './annotations/dataOUT';
 import { validateRequirements, knownFieldAnnotations } from './annotations/annotationRules';
 import Prompt from './PromptDialog';
 import { uploadFile } from '../utils';
+
+const useStyles = makeStyles()((theme) => ({
+  root: {
+    padding: `${theme.spacing(6)} ${theme.spacing(4)} ${theme.spacing(2)} ${theme.spacing(4)}`,
+    height: '99%',
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  header: {
+    marginBottom: theme.spacing(3),
+  },
+}));
 
 export function formatFileUploadValidationError(json) {
   try {
@@ -43,18 +56,8 @@ function prepareColumns(objData) {
 /**
  * Container component that will sync tabular row + annotation data with storage/backend.
  * */
-export default withStyles(({ spacing }) => ({
-  root: {
-    padding: [[spacing(6), spacing(4), spacing(2), spacing(4)]],
-    height: '100%',
-    display: 'flex',
-    flexDirection: 'column',
-  },
-  header: {
-    marginBottom: spacing(3),
-  },
-}))(({
-  classes, handleNext, handleBack,
+export default ({
+  handleNext, handleBack,
   datasetInfo, stepTitle, rawFileName,
   annotations, setAnnotations, onSubmit,
   addingAnnotationsAllowed = true, useFilepath = false,
@@ -76,6 +79,8 @@ export default withStyles(({ spacing }) => ({
   const [submitLoading, setSubmitLoading] = useState(false);
 
   const [promptMessage, setPromptMessage] = useState('');
+
+  const { classes } = useStyles();
 
   function formatAndSetAnnotations(serverAnnotations, knownColumns) {
     if (serverAnnotations) {
@@ -285,4 +290,4 @@ export default withStyles(({ spacing }) => ({
 
     </Container>
   );
-});
+};

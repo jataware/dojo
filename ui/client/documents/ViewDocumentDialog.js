@@ -2,15 +2,15 @@ import React, { useEffect, useState } from 'react';
 
 import axios from 'axios';
 
-import CircularProgress from '@material-ui/core/CircularProgress';
+import CircularProgress from '@mui/material/CircularProgress';
 import isEmpty from 'lodash/isEmpty';
 import startCase from 'lodash/startCase';
 
-import Dialog from '@material-ui/core/Dialog';
-import DialogContent from '@material-ui/core/DialogContent';
-import DialogContentText from '@material-ui/core/DialogContentText';
-import DialogTitle from '@material-ui/core/DialogTitle';
-import Divider from '@material-ui/core/Divider';
+import Dialog from '@mui/material/Dialog';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
+import Divider from '@mui/material/Divider';
 
 const fetchDocumentFullText = async (documentId) => {
   // paragraph id format: documentId-<paragraphIndex>

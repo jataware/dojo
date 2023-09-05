@@ -1,23 +1,25 @@
 import React from 'react';
 
-import Card from '@material-ui/core/Card';
-import EditIcon from '@material-ui/icons/Edit';
-import IconButton from '@material-ui/core/IconButton';
-import NavigateNextIcon from '@material-ui/icons/NavigateNext';
-import Typography from '@material-ui/core/Typography';
+import Card from '@mui/material/Card';
+import EditIcon from '@mui/icons-material/Edit';
+import IconButton from '@mui/material/IconButton';
+import NavigateNextIcon from '@mui/icons-material/NavigateNext';
+import Typography from '@mui/material/Typography';
 
-import { makeStyles, useTheme } from '@material-ui/core/styles';
+import { useTheme } from '@mui/material/styles';
+
+import { makeStyles } from 'tss-react/mui';
 
 import HelperTip from './HelperTip';
 
 import { useDirective } from './SWRHooks';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   card: {
     alignItems: 'flex-start',
     display: 'flex',
     justifyContent: 'space-between',
-    padding: [[theme.spacing(1), theme.spacing(2), '10px']],
+    padding: `${theme.spacing(1)} ${theme.spacing(2)} 10px`,
     maxHeight: '104px',
     overflowY: 'auto',
   },
@@ -31,7 +33,7 @@ const useStyles = makeStyles((theme) => ({
 const DirectiveBox = ({
   disableClick, handleClick, modelId, summaryPage
 }) => {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const theme = useTheme();
 
   const { directive, directiveLoading } = useDirective(modelId);
@@ -85,6 +87,7 @@ const DirectiveBox = ({
           component="span"
           onClick={() => handleClick(directive)}
           disabled={disableClick}
+          size="large"
         >
           {/* inherit pencil color on the summary page to toggle between enabled/disabled */}
           <EditIcon style={{ color: summaryPage ? 'inherit' : '#fff' }} />

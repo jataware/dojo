@@ -1,18 +1,19 @@
 import React, { useState } from 'react';
-import { withStyles } from '@material-ui/core/styles';
-import IconButton from '@material-ui/core/IconButton';
 
-import Grid from '@material-ui/core/Grid';
+import { makeStyles } from 'tss-react/mui';
 
-import InfoIcon from '@material-ui/icons/Info';
-import TimelineIcon from '@material-ui/icons/Timeline'; // feature
-import LanguageIcon from '@material-ui/icons/Language'; // geo
-import EventIcon from '@material-ui/icons/Event'; // date
+import IconButton from '@mui/material/IconButton';
+import Grid from '@mui/material/Grid';
 
-import Popover from '@material-ui/core/Popover';
-import Typography from '@material-ui/core/Typography';
+import InfoIcon from '@mui/icons-material/Info';
+import TimelineIcon from '@mui/icons-material/Timeline'; // feature
+import LanguageIcon from '@mui/icons-material/Language'; // geo
+import EventIcon from '@mui/icons-material/Event'; // date
 
-export default withStyles((theme) => ({
+import Popover from '@mui/material/Popover';
+import Typography from '@mui/material/Typography';
+
+const useStyles = makeStyles()((theme) => ({
   popoverContent: {
     padding: theme.spacing(2),
     background: theme.palette.common.white,
@@ -45,7 +46,10 @@ export default withStyles((theme) => ({
   icon: {
     color: '#23b26b',
   },
-}))(({ classes }) => {
+}));
+
+export default (() => {
+  const { classes } = useStyles();
   const [anchorEl, setAnchorEl] = useState(null);
 
   const handleClick = (event) => {
@@ -60,7 +64,7 @@ export default withStyles((theme) => ({
 
   return (
     <>
-      <IconButton onClick={handleClick}>
+      <IconButton onClick={handleClick} size="large">
         <InfoIcon />
       </IconButton>
       <Popover
@@ -113,15 +117,15 @@ export default withStyles((theme) => ({
                 <Grid item xs={12} md={6}>
                   <li>
                     <LanguageIcon className={classes.icon} />
-                    &nbsp; Annotated Geo field
+                  &nbsp; Annotated Geo field
                   </li>
                   <li>
                     <EventIcon className={classes.icon} />
-                    &nbsp; Annotated Date field
+                  &nbsp; Annotated Date field
                   </li>
                   <li>
                     <TimelineIcon className={classes.icon} />
-                    &nbsp; Annotated Feature field
+                  &nbsp; Annotated Feature field
                   </li>
 
                 </Grid>

@@ -7,17 +7,17 @@ import axios from 'axios';
 import cloneDeep from 'lodash/cloneDeep';
 import isEmpty from 'lodash/isEmpty';
 
-import AspectRatioIcon from '@material-ui/icons/AspectRatio';
-import TodayIcon from '@material-ui/icons/Today';
-import GridOnIcon from '@material-ui/icons/GridOn';
-import MapIcon from '@material-ui/icons/Map';
-import GlobeIcon from '@material-ui/icons/Public';
+import AspectRatioIcon from '@mui/icons-material/AspectRatio';
+import TodayIcon from '@mui/icons-material/Today';
+import GridOnIcon from '@mui/icons-material/GridOn';
+import MapIcon from '@mui/icons-material/Map';
+import GlobeIcon from '@mui/icons-material/Public';
 
-import CircularProgress from '@material-ui/core/CircularProgress';
-import Container from '@material-ui/core/Container';
-import List from '@material-ui/core/List';
-import Typography from '@material-ui/core/Typography';
-import { withStyles } from '@material-ui/core/styles';
+import CircularProgress from '@mui/material/CircularProgress';
+import Container from '@mui/material/Container';
+import List from '@mui/material/List';
+import Typography from '@mui/material/Typography';
+import { makeStyles } from 'tss-react/mui';
 
 import ClipMap from './ClipMap';
 import ClipTime from './ClipTime';
@@ -142,18 +142,33 @@ import PromptDialog from '../PromptDialog';
 //   });
 // }
 
-/**
- *
- **/
-const DataTransformation = withStyles(() => ({
+const useStyles = makeStyles()(({ spacing }) => ({
   transformationRoot: {
     display: 'flex',
     flexDirection: 'column',
     justifyContent: 'space-between',
     height: 'calc(100% - 128px)',
   },
-}))(({
-  classes,
+  root: {
+    padding: `${spacing(4)} ${spacing(4)} ${spacing(2)} ${spacing(4)}`,
+    height: '100%',
+  },
+  header: {
+    marginBottom: spacing(6),
+  },
+  restoreFileWrapper: {
+    margin: spacing(8),
+  },
+  restoreFileSpinner: {
+    margin: `0 auto ${spacing(3)}`,
+    display: 'block',
+  },
+}));
+
+/**
+ *
+ **/
+const DataTransformation = ({
   datasetInfo,
   handleNext,
   handleBack,
@@ -161,6 +176,7 @@ const DataTransformation = withStyles(() => ({
   setAnnotations,
   cleanupRef,
 }) => {
+  const { classes } = useStyles();
   const [drawerOpen, setDrawerOpen] = useState(false);
   const [drawerName, setDrawerName] = useState(null);
   const [disableDrawerClose, setDisableDrawerClose] = useState(false);
@@ -806,7 +822,7 @@ const DataTransformation = withStyles(() => ({
         onClose={handleDrawerClose}
         anchorPosition="right"
         noConfirm
-        PaperProps={{ variant: 'outlined' }}
+        PaperProps={{ elevation: 0 }}
         wide
         variant="temporary"
       >
@@ -828,7 +844,7 @@ const DataTransformation = withStyles(() => ({
       )}
     </div>
   );
-});
+};
 
 /**
  * This component mounts specifically to run the restore_raw_file data transformation before any
@@ -837,25 +853,7 @@ const DataTransformation = withStyles(() => ({
  * It also holds onto the cleanupRef that will prevent the various useElwoodData calls from
  * repeating forever if we navigate away
  **/
-export default withStyles(({ spacing }) => ({
-  root: {
-    padding: [[spacing(4), spacing(4), spacing(2), spacing(4)]],
-
-    height: '100%',
-
-  },
-  header: {
-    marginBottom: spacing(6),
-  },
-  restoreFileWrapper: {
-    margin: spacing(8),
-  },
-  restoreFileSpinner: {
-    margin: [[0, 'auto', spacing(3)]],
-    display: 'block',
-  },
-}))(({
-  classes,
+export default ({
   datasetInfo,
   stepTitle,
   handleNext,
@@ -863,6 +861,7 @@ export default withStyles(({ spacing }) => ({
   setAnnotations,
   annotations,
 }) => {
+  const { classes } = useStyles();
   // this ref keeps track of when the page is mounted so that we can avoid useElwoodData running
   // endlessly if we navigate away while it's still going
   // it should be passed into every use of useElwoodData
@@ -936,4 +935,4 @@ export default withStyles(({ spacing }) => ({
       )}
     </Container>
   );
-});
+};

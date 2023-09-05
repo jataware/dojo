@@ -2,10 +2,10 @@ import React, { useContext, useEffect, useState } from 'react';
 
 import axios from 'axios';
 
-import Fab from '@material-ui/core/Fab';
-import Grid from '@material-ui/core/Grid';
+import Fab from '@mui/material/Fab';
+import Grid from '@mui/material/Grid';
 
-import { makeStyles } from '@material-ui/core/styles';
+import { makeStyles } from 'tss-react/mui';
 
 import { useHistory, useParams } from 'react-router-dom';
 
@@ -31,7 +31,7 @@ import {
 } from './components/SWRHooks';
 import RegistrationStepper from './datasets/RegistrationStepper';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   pageRoot: {
     backgroundColor: '#272d33',
   },
@@ -50,8 +50,8 @@ const useStyles = makeStyles((theme) => ({
     right: 0,
     bottom: 0,
     zIndex: 10,
-    '& > *': {
-      margin: [[0, theme.spacing(2), theme.spacing(2), 0]],
+    '&& > *': {
+      margin: `0 ${theme.spacing(2)} ${theme.spacing(2)} 0`,
     },
   },
   rightColumnWrapper: {
@@ -61,12 +61,12 @@ const useStyles = makeStyles((theme) => ({
     paddingBottom: theme.spacing(3),
   },
   directiveContainer: {
-    margin: [[0, 0, theme.spacing(1), theme.spacing(1)]],
+    margin: `0 0 ${theme.spacing(1)} ${theme.spacing(1)}`,
   },
 }));
 
 const CenteredGrid = ({ model }) => {
-  const classes = useStyles();
+  const { classes } = useStyles();
 
   const { mutateOutputs } = useOutputFiles(model.id);
 
@@ -188,7 +188,7 @@ const CenteredGrid = ({ model }) => {
       <div className={classes.fabWrapper}>
         <Fab
           variant="extended"
-          color="secondary"
+          color="error"
           onClick={(e) => { e.preventDefault(); setAbandonSessionDialogOpen(true); }}
         >
           <HelperTip

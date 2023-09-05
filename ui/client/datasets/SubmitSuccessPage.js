@@ -1,24 +1,23 @@
 import React from 'react';
-import { withStyles } from '@material-ui/core/styles';
-import { Link } from 'react-router-dom';
-import Button from '@material-ui/core/Button';
-import Container from '@material-ui/core/Container';
-import Paper from '@material-ui/core/Paper';
-import Typography from '@material-ui/core/Typography';
-import CloudDoneIcon from '@material-ui/icons/CloudDone';
 
-/**
- *
- * */
-export default withStyles(({ spacing }) => ({
+import { makeStyles } from 'tss-react/mui';
+
+import { Link } from 'react-router-dom';
+import Button from '@mui/material/Button';
+import Container from '@mui/material/Container';
+import Paper from '@mui/material/Paper';
+import Typography from '@mui/material/Typography';
+import CloudDoneIcon from '@mui/icons-material/CloudDone';
+
+const useStyles = makeStyles()((theme) => ({
   root: {
-    padding: [[spacing(6), spacing(4), spacing(2), spacing(4)]],
+    padding: `${theme.spacing(6)} ${theme.spacing(4)} ${theme.spacing(2)} ${theme.spacing(4)}`,
     height: '100%',
     display: 'flex',
     flexDirection: 'column'
   },
   header: {
-    marginBottom: spacing(3),
+    marginBottom: theme.spacing(3),
   },
   wrapper: {
     flex: 1,
@@ -33,7 +32,7 @@ export default withStyles(({ spacing }) => ({
     flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
-    padding: spacing(3),
+    padding: theme.spacing(3),
 
     gridColumn: '2 / 6',
     gridRow: '2 / 5',
@@ -41,52 +40,60 @@ export default withStyles(({ spacing }) => ({
   icon: {
     fontSize: '8rem', color: '#8cd9a1'
   }
-}), { name: 'SubmitSuccess' })(({ classes, datasetInfo }) => (
-  <Container
-    className={classes.root}
-    component="main"
-    maxWidth="xl"
-  >
+}));
 
-    <div className={classes.wrapper}>
-      <Paper
-        elevation={3}
-        className={classes.contents}
-      >
+/**
+ *
+ * */
+export default ({ datasetInfo }) => {
+  const { classes } = useStyles();
+  return (
+    <Container
+      className={classes.root}
+      component="main"
+      maxWidth="xl"
+    >
 
-        <CloudDoneIcon className={classes.icon} />
-
-        <br />
-
-        <Typography
-          variant="h5"
-          paragraph
+      <div className={classes.wrapper}>
+        <Paper
+          elevation={3}
+          className={classes.contents}
         >
-          Your dataset has been successfully registered
-        </Typography>
 
-        <div>
-          <Button
-            color="primary"
-            component="a"
-            href="/datasets/register"
-            size="large"
+          <CloudDoneIcon className={classes.icon} />
+
+          <br />
+
+          <Typography
+            variant="h5"
+            paragraph
           >
-            Register Another Dataset
-          </Button>
-            &nbsp;
-          <Button
-            size="large"
-            to={`/dataset_summary?dataset=${datasetInfo?.id}`}
-            component={Link}
-          >
+            Your dataset has been successfully registered
+          </Typography>
 
-            View in Dojo
-          </Button>
-        </div>
+          <div>
+            <Button
+              color="primary"
+              component="a"
+              href="/datasets/register"
+              size="large"
+            >
+              Register Another Dataset
+            </Button>
+              &nbsp;
+            <Button
+              size="large"
+              to={`/dataset_summary?dataset=${datasetInfo?.id}`}
+              component={Link}
+            >
 
-      </Paper>
-    </div>
+              View in Dojo
+            </Button>
+          </div>
 
-  </Container>
-));
+        </Paper>
+      </div>
+
+    </Container>
+  );
+};

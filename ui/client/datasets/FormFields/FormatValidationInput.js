@@ -1,13 +1,13 @@
 import React from 'react';
-import { withStyles } from '@material-ui/core/styles';
-import { Field, useField } from 'formik';
+import { useField } from 'formik';
 
-import { TextField } from 'material-ui-formik-components/TextField';
-
-import InputAdornment from '@material-ui/core/InputAdornment';
-import CheckCircleIcon from '@material-ui/icons/CheckCircleRounded';
-import ErrorCircleIcon from '@material-ui/icons/ErrorRounded';
 import identity from 'lodash/identity';
+
+import InputAdornment from '@mui/material/InputAdornment';
+import CheckCircleIcon from '@mui/icons-material/CheckCircleRounded';
+import ErrorCircleIcon from '@mui/icons-material/ErrorRounded';
+
+import FormikTextField from '../../components/formikComponents/FormikTextField';
 
 /**
  * Accepts a validate function and memoizes the validation logic,
@@ -15,17 +15,8 @@ import identity from 'lodash/identity';
  * Encapsulates logic for displaying good/bad icons on custom validation.
  * As of June 2023, used exclusively for Date inputs with backend validation
  * */
-export default withStyles(() => ({
-  root: {
-  },
-  valid: {
-    color: 'green'
-  },
-  invalid: {
-    color: 'red'
-  }
-}))(({
-  classes, validateFormat = identity, parentName, InputProps, ...props
+export default ({
+  validateFormat = identity, parentName, InputProps, ...props
 }) => {
   const [field, meta, helpers] = useField(props.name);
   const valid = !meta?.error;
@@ -103,10 +94,8 @@ export default withStyles(() => ({
   }, [helpers, meta, field.value, parentName, validateFormat, prevError]);
 
   return (
-    <Field
+    <FormikTextField
       validate={validate}
-      className={classes.root}
-      component={TextField}
       variant="outlined"
       fullWidth
       margin="dense"
@@ -115,9 +104,9 @@ export default withStyles(() => ({
         endAdornment: field.value && (
           <InputAdornment position="end">
             {valid ? (
-              <CheckCircleIcon className={classes.valid} />
+              <CheckCircleIcon sx={{ color: 'green' }} />
             ) : (
-              <ErrorCircleIcon className={classes.invalid} />
+              <ErrorCircleIcon sx={{ color: 'red' }} />
             )}
           </InputAdornment>
         ),
@@ -127,4 +116,4 @@ export default withStyles(() => ({
       {...props}
     />
   );
-});
+};

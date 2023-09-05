@@ -1,6 +1,6 @@
 /* eslint-disable sort-imports */
 import React from 'react';
-import Link from '@material-ui/core/Link';
+import Link from '@mui/material/Link';
 import { Link as RouteLink } from 'react-router-dom';
 
 /**
@@ -18,29 +18,19 @@ import { Link as RouteLink } from 'react-router-dom';
   https://developer.mozilla.org/en-US/docs/Web/HTML/Link_types/noreferrer
   */
 export const ExternalLink = ({ children, ...props }) => (
-  <Link
-    target="_blank"
-    rel="noopener noreferrer"
-    {...props}
-  >
+  <Link target="_blank" rel="noopener noreferrer" {...props} underline="hover">
     {children}
   </Link>
 );
 
 export const InternalLink = ({ children, ...props }) => (
-  <Link
-    component={RouteLink}
-    {...props}
-  >
+  <Link component={RouteLink} {...props} underline="hover">
     {children}
   </Link>
 );
 
 export const InternalTab = ({ children, ...props }) => (
-  <Link
-    target="_blank"
-    {...props}
-  >
+  <Link target="_blank" {...props} underline="hover">
     {children}
   </Link>
 );

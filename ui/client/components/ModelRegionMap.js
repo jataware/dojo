@@ -12,16 +12,16 @@ import * as yup from 'yup';
 
 import { FormikProvider, useFormik } from 'formik';
 
-import { makeStyles } from '@material-ui/core/styles';
+import { makeStyles } from 'tss-react/mui';
 import {
   Box,
   Button,
   Typography,
-} from '@material-ui/core';
+} from '@mui/material';
 
 import FormikTextField from './FormikTextField';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   chip: {
     margin: theme.spacing(0.5),
   },
@@ -38,7 +38,7 @@ const useStyles = makeStyles((theme) => ({
   coordsInputs: {
     display: 'flex',
     justifyContent: 'space-between',
-    margin: [[0, theme.spacing(1)]],
+    margin: `0 ${theme.spacing(1)}`,
     '& :first-child': {
       marginRight: theme.spacing(1),
     },
@@ -47,12 +47,12 @@ const useStyles = makeStyles((theme) => ({
     width: '100%',
   },
   explainer: {
-    margin: [[theme.spacing(2), 0]]
+    margin: `${theme.spacing(2)} 0`
   },
   regionButton: {
     height: theme.spacing(5),
     minWidth: theme.spacing(24),
-    margin: [[theme.spacing(5), theme.spacing(1), theme.spacing(1)]],
+    margin: `${theme.spacing(5)} ${theme.spacing(1)} ${theme.spacing(1)}`,
   },
 }));
 
@@ -64,7 +64,7 @@ const validationSchema = yup.object({
 });
 
 function ModelRegionMap({ mapCoords, updateMapCoords, showMap }) {
-  const classes = useStyles();
+  const { classes } = useStyles();
   let handleAddRegion;
 
   const formik = useFormik({

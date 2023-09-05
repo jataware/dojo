@@ -4,17 +4,18 @@ import axios from 'axios';
 import debounce from 'lodash/debounce';
 import identity from 'lodash/identity';
 
-import Button from '@material-ui/core/Button';
-import { GridOverlay, DataGrid } from '@material-ui/data-grid';
-// useGridSlotComponentProps
-import Typography from '@material-ui/core/Typography';
-import { withStyles } from '@material-ui/core/styles';
-import LinearProgress from '@material-ui/core/LinearProgress';
-import CancelIcon from '@material-ui/icons/Cancel';
-import OpenInNewIcon from '@material-ui/icons/OpenInNew';
-import IconButton from '@material-ui/core/IconButton';
-import InputAdornment from '@material-ui/core/InputAdornment';
-import TextField from '@material-ui/core/TextField';
+import Button from '@mui/material/Button';
+import { GridOverlay, DataGrid } from '@mui/x-data-grid';
+import Typography from '@mui/material/Typography';
+import LinearProgress from '@mui/material/LinearProgress';
+import CancelIcon from '@mui/icons-material/Cancel';
+import OpenInNewIcon from '@mui/icons-material/OpenInNew';
+import IconButton from '@mui/material/IconButton';
+import InputAdornment from '@mui/material/InputAdornment';
+import TextField from '@mui/material/TextField';
+
+import { makeStyles } from 'tss-react/mui';
+
 import ExpandableDataGridCell from './ExpandableDataGridCell';
 
 const expandableCell = ({ value, colDef }) => (
@@ -29,10 +30,7 @@ const MATCH_TYPE = {
   hybrid: 'hybrid'
 };
 
-/**
- * Used in Match % column when searching
- **/
-export const ConfidenceBar = withStyles(() => ({
+const useStyles = makeStyles()(() => ({
   root: {
     height: 15,
   },
@@ -49,8 +47,27 @@ export const ConfidenceBar = withStyles(() => ({
   },
   semanticBar: {
     backgroundColor: 'rgb(142,114,233)' // rgb(68,81,225)
+  },
+  viewFeaturesRoot: {
+    flex: 1,
+    display: 'flex',
+    flexDirection: 'column'
+  },
+  aboveTableWrapper: {
+    display: 'flex',
+    maxWidth: '100vw',
+    justifyContent: 'space-between',
+    alignItems: 'flex-end',
+    flexWrap: 'wrap',
+    marginBottom: '1rem',
   }
-}))(({ matchType, classes, ...props }) => {
+}));
+
+/**
+ * Used in Match % column when searching
+ **/
+export const ConfidenceBar = ({ matchType, ...props }) => {
+  const { classes } = useStyles();
   let overrides = {};
 
   const { semanticBar, hybridBar, ...supportedClasses } = classes;
@@ -70,7 +87,7 @@ export const ConfidenceBar = withStyles(() => ({
       }}
     />
   );
-});
+};
 
 const semanticSearchFeatures = async (query) => {
   const url = `/api/dojo/features/search?query=${query}&size=50`;
@@ -111,33 +128,6 @@ const fetchFeatures = async (
 };
 
 /**
- * Uses internal DataGrid API to:
- * a) Decide if we should display "Many" for features count
- * b) Wire and display the rest of the labels that are usually
- *    set for us when we don't need custom behavior.
- */
-// Reverted Many count per implementation changes.
-// Leaving CustomTablePagination in to assess action after feedback.
-// const CustomTablePagination = (props) => {
-//   const { state, apiRef } = useGridSlotComponentProps();
-
-//   return (
-//     <TablePagination
-//       labelDisplayedRows={({ from, to, count }) => {
-//         // const displayCount = count > 500 ? 'Many' : count;
-//         const displayCount = count;
-//         return `${from}-${to} of ${displayCount}`;
-//       }}
-//       {...props}
-//       page={state.pagination.page}
-//       onPageChange={(event, value) => apiRef.current.setPage(value)}
-//       rowsPerPage={100}
-//       count={state.pagination.rowCount}
-//     />
-//   );
-// };
-
-/**
  * Blue linear loading animation displayed when table loading/searching of
  * features is still in progress.
  */
@@ -168,21 +158,8 @@ const Legend = ({ color, label }) => (
 /**
  *
  */
-const ViewFeatures = withStyles(() => ({
-  root: {
-    flex: 1,
-    display: 'flex',
-    flexDirection: 'column'
-  },
-  aboveTableWrapper: {
-    display: 'flex',
-    maxWidth: '100vw',
-    justifyContent: 'space-between',
-    alignItems: 'flex-end',
-    flexWrap: 'wrap',
-    marginBottom: '1rem',
-  }
-}))(({ classes }) => {
+const ViewFeatures = () => {
+  const { classes } = useStyles();
   const [searchTerm, setSearchTerm] = useState('');
   const [searchTermValue, setSearchTermValue] = useState('');
 
@@ -276,6 +253,7 @@ const ViewFeatures = withStyles(() => ({
           href={`/dataset_summary?dataset=${row.owner_dataset.id}`}
           target="_blank"
           variant="outlined"
+          color="grey"
         >
           Parent Dataset
           <OpenInNewIcon />
@@ -327,7 +305,7 @@ const ViewFeatures = withStyles(() => ({
       Error loading features.
     </Typography>
   ) : (
-    <div className={classes.root}>
+    <div className={classes.viewFeaturesRoot}>
       <div className={classes.aboveTableWrapper}>
         <div>
           <TextField
@@ -339,7 +317,7 @@ const ViewFeatures = withStyles(() => ({
             InputProps={{
               endAdornment: (
                 <InputAdornment position="end">
-                  <IconButton onClick={clearSearch}><CancelIcon /></IconButton>
+                  <IconButton onClick={clearSearch} size="large"><CancelIcon /></IconButton>
                 </InputAdornment>
               )
             }}
@@ -369,6 +347,6 @@ const ViewFeatures = withStyles(() => ({
       />
     </div>
   );
-});
+};
 
 export default ViewFeatures;

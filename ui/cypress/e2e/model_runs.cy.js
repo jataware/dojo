@@ -80,7 +80,7 @@ describe(`Summary Page for Model Runs`, function () {
           cy.findAllByRole('button')
             .contains('REFRESH');
         } else {
-          cy.findAllByRole('button') // Find the one button
+          cy.findAllByRole('link') // Find the one button
             .contains('View Logs');
         }
       });

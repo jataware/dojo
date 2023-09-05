@@ -2,22 +2,25 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 
-import Button from '@material-ui/core/Button';
-import ToggleButton from '@material-ui/lab/ToggleButton';
-import ToggleButtonGroup from '@material-ui/lab/ToggleButtonGroup';
-import Container from '@material-ui/core/Container';
-import { DataGrid } from '@material-ui/data-grid';
-import Typography from '@material-ui/core/Typography';
-import { darken, makeStyles } from '@material-ui/core/styles';
+import Button from '@mui/material/Button';
+import Container from '@mui/material/Container';
+import { DataGrid } from '@mui/x-data-grid';
+import Typography from '@mui/material/Typography';
+
+import ToggleButton from '@mui/material/ToggleButton';
+import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
+import { darken } from '@mui/material/styles';
+
+import { makeStyles } from 'tss-react/mui';
+
 import ExpandableDataGridCell from './ExpandableDataGridCell';
 import LoadingOverlay from './LoadingOverlay';
 import SearchDatasets from './SearchDatasets';
-
 import ViewFeatures from './ViewFeatures';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   root: {
-    padding: [[theme.spacing(8), theme.spacing(2), theme.spacing(2)]],
+    padding: `${theme.spacing(8)} ${theme.spacing(2)} ${theme.spacing(2)}`,
   },
   gridContainer: {
     display: 'flex',
@@ -126,6 +129,7 @@ const columns = [
       <Button
         href={`/dataset_summary?dataset=${row.id}`}
         variant="outlined"
+        color="grey"
       >
         View Dataset
       </Button>
@@ -159,7 +163,7 @@ const getDatasets = (setDatasets, setDatasetsError, setDatasetsLoading) => {
  *
  */
 function ViewDatasets() {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const [datasets, setDatasets] = useState([]);
   const [datasetsError, setDatasetsError] = useState(false);
   const [datasetsLoading, setDatasetsLoading] = useState(false);

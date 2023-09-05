@@ -1,26 +1,26 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
 
-import Button from '@material-ui/core/Button';
-import Dialog from '@material-ui/core/Dialog';
-import DialogActions from '@material-ui/core/DialogActions';
-import DialogContent from '@material-ui/core/DialogContent';
-import DialogContentText from '@material-ui/core/DialogContentText';
-import DialogTitle from '@material-ui/core/DialogTitle';
-import Divider from '@material-ui/core/Divider';
-import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemText from '@material-ui/core/ListItemText';
-import Typography from '@material-ui/core/Typography';
+import Button from '@mui/material/Button';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
+import Divider from '@mui/material/Divider';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemText from '@mui/material/ListItemText';
+import Typography from '@mui/material/Typography';
 
-import AddCircleIcon from '@material-ui/icons/AddCircle';
-import UpdateIcon from '@material-ui/icons/Update';
+import AddCircleIcon from '@mui/icons-material/AddCircle';
+import UpdateIcon from '@mui/icons-material/Update';
 
-import { makeStyles } from '@material-ui/core/styles';
+import { makeStyles } from 'tss-react/mui';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   confirmContentText: {
-    padding: [[0, theme.spacing(2)]],
+    padding: `0 ${theme.spacing(2)}`,
   },
   actionButton: {
     minWidth: '110px',
@@ -33,7 +33,7 @@ const DatasetEditDialog = ({
 }) => {
   const [dialogContent, setDialogContent] = useState('start');
   const dataUrl = 'https://data.wm.dojo-modeling.com/';
-  const classes = useStyles();
+  const { classes } = useStyles();
 
   const redirectToDatasetUrl = (action) => {
     window.location.href = `${dataUrl}?indicator=${dataset?.id}&action=${action}`;

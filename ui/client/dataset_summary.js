@@ -2,15 +2,17 @@ import React, { useEffect, useState } from 'react';
 
 import axios from 'axios';
 
-import CloseIcon from '@material-ui/icons/Close';
-import Container from '@material-ui/core/Container';
-import Fab from '@material-ui/core/Fab';
-import Grid from '@material-ui/core/Grid';
-import IconButton from '@material-ui/core/IconButton';
-import Typography from '@material-ui/core/Typography';
-import useMediaQuery from '@material-ui/core/useMediaQuery';
+import CloseIcon from '@mui/icons-material/Close';
+import Container from '@mui/material/Container';
+import Fab from '@mui/material/Fab';
+import Grid from '@mui/material/Grid';
+import IconButton from '@mui/material/IconButton';
+import Typography from '@mui/material/Typography';
+import useMediaQuery from '@mui/material/useMediaQuery';
 
-import { makeStyles, useTheme } from '@material-ui/core/styles';
+import { useTheme } from '@mui/material/styles';
+
+import { makeStyles } from 'tss-react/mui';
 
 import { useLocation } from 'react-router-dom';
 
@@ -24,7 +26,7 @@ import {
   useDataset
 } from './components/SWRHooks';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   fabsWrapper: {
     bottom: 0,
     padding: theme.spacing(2),
@@ -36,10 +38,10 @@ const useStyles = makeStyles((theme) => ({
     },
   },
   containers: {
-    padding: [[theme.spacing(1), theme.spacing(8), theme.spacing(1)]],
+    padding: `${theme.spacing(1)} ${theme.spacing(8)} ${theme.spacing(1)}`,
   },
   root: {
-    padding: [[theme.spacing(10), theme.spacing(2), theme.spacing(2)]],
+    padding: `${theme.spacing(10)} ${theme.spacing(2)} ${theme.spacing(2)}`,
   },
   header: {
     marginBottom: theme.spacing(3),
@@ -62,7 +64,7 @@ const useStyles = makeStyles((theme) => ({
     backgroundColor: theme.palette.warning.main,
     borderRadius: theme.shape.borderRadius,
     color: theme.palette.getContrastText(theme.palette.warning.main),
-    padding: [[0, theme.spacing(1)]],
+    padding: `0 ${theme.spacing(1)}`,
     position: 'absolute',
     right: 0,
     top: 12,
@@ -91,9 +93,9 @@ const DatasetSummary = () => {
     dataset, datasetLoading, datasetError, mutateDataset
   } = useDataset(datasetId);
 
-  const classes = useStyles();
+  const { classes } = useStyles();
   const theme = useTheme();
-  const mediumBreakpoint = useMediaQuery(theme.breakpoints.down('md'));
+  const mediumBreakpoint = useMediaQuery(theme.breakpoints.down('lg'));
 
   useEffect(() => {
     document.title = 'Dataset Summary - Dojo';

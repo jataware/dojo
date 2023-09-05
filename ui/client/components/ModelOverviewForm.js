@@ -1,14 +1,14 @@
 import React, { useEffect } from 'react';
 
 import * as yup from 'yup';
-import Button from '@material-ui/core/Button';
-import { makeStyles } from '@material-ui/core/styles';
+import Button from '@mui/material/Button';
+import { makeStyles } from 'tss-react/mui';
 
 import { FormikProvider, useFormik } from 'formik';
 
 import FormikTextField from './FormikTextField';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   buttonContainer: {
     display: 'flex',
     justifyContent: 'space-between',
@@ -74,7 +74,7 @@ export const ModelOverviewFields = ({
 export const ModelOverview = ({
   modelInfo, handleNext, lockFamilyName, resetFirstForm, setResetFirstForm
 }) => {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const formik = useFormik({
     initialValues: modelInfo,
     validationSchema: overviewValidationSchema,
@@ -110,7 +110,7 @@ export const ModelOverview = ({
       <form onSubmit={formik.handleSubmit}>
         <ModelOverviewFields formik={formik} lockFamilyName={lockFamilyName} />
         <div className={classes.buttonContainer}>
-          <Button disabled>
+          <Button disabled color="grey">
             Back
           </Button>
           <Button

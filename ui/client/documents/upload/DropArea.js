@@ -1,39 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { useDropzone } from 'react-dropzone';
-import clsx from 'clsx';
-import { withStyles } from '@material-ui/core/styles';
+import { makeStyles } from 'tss-react/mui';
 
-import IconButton from '@material-ui/core/IconButton';
-import InboxIcon from '@material-ui/icons/MoveToInbox';
-import Typography from '@material-ui/core/Typography';
+import IconButton from '@mui/material/IconButton';
+import InboxIcon from '@mui/icons-material/MoveToInbox';
+import Typography from '@mui/material/Typography';
 
 import BasicAlert from '../../components/BasicAlert';
 
-const extensionMap = {
-  pdf: {
-    'application/pdf': ['.pdf'],
-  },
-  csv: {
-    'text/csv': ['.csv'],
-  },
-  xls: {
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xls']
-  },
-  xlsx: {
-    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx']
-  }
-};
-
-export function formatExtensionForDropZone(extensionsArray) {
-  return extensionsArray.reduce((acc, extension) => {
-    // Optional preceding dot . for extension removed
-    const buff = extension.replace(/^\./g, '');
-
-    return { ...acc, ...extensionMap[buff] };
-  }, {});
-}
-
-export const FileDropSelector = withStyles(((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   root: {
     margin: '1rem 0 1rem 0',
     padding: '2rem',
@@ -61,8 +36,33 @@ export const FileDropSelector = withStyles(((theme) => ({
     margin: 1,
     flexDirection: 'row'
   }
-})))(({
-  classes,
+}));
+
+const extensionMap = {
+  pdf: {
+    'application/pdf': ['.pdf'],
+  },
+  csv: {
+    'text/csv': ['.csv'],
+  },
+  xls: {
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xls']
+  },
+  xlsx: {
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx']
+  }
+};
+
+export function formatExtensionForDropZone(extensionsArray) {
+  return extensionsArray.reduce((acc, extension) => {
+    // Optional preceding dot . for extension removed
+    const buff = extension.replace(/^\./g, '');
+
+    return { ...acc, ...extensionMap[buff] };
+  }, {});
+}
+
+export const FileDropSelector = ({
   onFileSelect,
   acceptExtensions,
   mini,
@@ -70,6 +70,7 @@ export const FileDropSelector = withStyles(((theme) => ({
   multiple = true,
   disableSelector,
 }) => {
+  const { classes, cx } = useStyles();
   const [alertVisible, setAlertVisible] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
 
@@ -140,7 +141,7 @@ export const FileDropSelector = withStyles(((theme) => ({
 
   return (
     <div
-      className={clsx({
+      className={cx({
         [classes.root]: true,
         [classes.dropActive]: isDragActive,
         [classes.mini]: mini
@@ -173,7 +174,7 @@ export const FileDropSelector = withStyles(((theme) => ({
       />
     </div>
   );
-});
+};
 FileDropSelector.defaultProps = {
   acceptExtensions: ['pdf']
 };

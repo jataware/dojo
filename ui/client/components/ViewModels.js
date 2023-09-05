@@ -2,18 +2,18 @@ import React, { useEffect, useState } from 'react';
 
 import axios from 'axios';
 
-import AutorenewIcon from '@material-ui/icons/Autorenew';
-import Button from '@material-ui/core/Button';
-import CheckOutlinedIcon from '@material-ui/icons/CheckOutlined';
-import CloudDoneOutlinedIcon from '@material-ui/icons/CloudDoneOutlined';
-import Container from '@material-ui/core/Container';
-import { DataGrid } from '@material-ui/data-grid';
-import ErrorOutlineOutlinedIcon from '@material-ui/icons/ErrorOutlineOutlined';
-import HelpIcon from '@material-ui/icons/Help';
-import Typography from '@material-ui/core/Typography';
-import useMediaQuery from '@material-ui/core/useMediaQuery';
+import AutorenewIcon from '@mui/icons-material/Autorenew';
+import Button from '@mui/material/Button';
+import CheckOutlinedIcon from '@mui/icons-material/CheckOutlined';
+import CloudDoneOutlinedIcon from '@mui/icons-material/CloudDoneOutlined';
+import Container from '@mui/material/Container';
+import { DataGrid } from '@mui/x-data-grid';
+import ErrorOutlineOutlinedIcon from '@mui/icons-material/ErrorOutlineOutlined';
+import HelpIcon from '@mui/icons-material/Help';
+import Typography from '@mui/material/Typography';
+import useMediaQuery from '@mui/material/useMediaQuery';
 
-import { makeStyles } from '@material-ui/core/styles';
+import { makeStyles } from 'tss-react/mui';
 
 import { useHistory, Link } from 'react-router-dom';
 
@@ -21,9 +21,9 @@ import ExpandableDataGridCell from './ExpandableDataGridCell';
 import LoadingOverlay from './LoadingOverlay';
 import Search from './SearchItems';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   root: {
-    padding: [[theme.spacing(10), theme.spacing(2), theme.spacing(2)]],
+    padding: `${theme.spacing(10)} ${theme.spacing(2)} ${theme.spacing(2)}`,
   },
   gridContainer: {
     height: '400px',
@@ -153,7 +153,7 @@ const ViewModels = ({
   includeStatuses = true
 }) => {
   const history = useHistory();
-  const classes = useStyles();
+  const { classes } = useStyles();
   const [models, setModels] = useState([]);
   const [modelsError, setModelsError] = useState(false);
   const [modelsLoading, setModelsLoading] = useState(false);
@@ -289,6 +289,7 @@ const ViewModels = ({
           onClick={() => viewModelClick(params.row.id)}
           variant="outlined"
           data-test="modelSummaryLink"
+          color="grey"
         >
           View Model
         </Button>

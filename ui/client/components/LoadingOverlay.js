@@ -1,11 +1,11 @@
 import React from 'react';
 
-import CircularProgress from '@material-ui/core/CircularProgress';
-import Link from '@material-ui/core/Link';
-import Typography from '@material-ui/core/Typography';
-import { makeStyles } from '@material-ui/core/styles';
+import CircularProgress from '@mui/material/CircularProgress';
+import Link from '@mui/material/Link';
+import Typography from '@mui/material/Typography';
+import { makeStyles } from 'tss-react/mui';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   loadingOverlay: {
     left: 0,
     height: '100%',
@@ -28,7 +28,7 @@ const useStyles = makeStyles((theme) => ({
 function LoadingOverlay({
   text, error, link
 }) {
-  const classes = useStyles();
+  const { classes } = useStyles();
 
   let errorTextHeader;
   let errorTextBody;
@@ -68,7 +68,7 @@ function LoadingOverlay({
         </>
       )}
       {!error && <CircularProgress />}
-      {link && <Link variant="h6" href={link.href}>{link.text}</Link>}
+      {link && <Link variant="h6" href={link.href} underline="hover">{link.text}</Link>}
     </div>
   );
 }

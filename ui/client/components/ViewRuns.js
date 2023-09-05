@@ -3,11 +3,12 @@ import React, { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 
-import Button from '@material-ui/core/Button';
-import Container from '@material-ui/core/Container';
-import Typography from '@material-ui/core/Typography';
-import { withStyles } from '@material-ui/core/styles';
-import { DataGrid } from '@material-ui/data-grid';
+import Button from '@mui/material/Button';
+import Container from '@mui/material/Container';
+import Typography from '@mui/material/Typography';
+import { DataGrid } from '@mui/x-data-grid';
+
+import { withStyles } from 'tss-react/mui';
 
 import ExpandableDataGridCell from './ExpandableDataGridCell';
 import LoadingOverlay from './LoadingOverlay';
@@ -17,7 +18,7 @@ import { Status } from './RunSummary';
 
 const styles = (theme) => ({
   root: {
-    padding: [[theme.spacing(10), theme.spacing(2), theme.spacing(2)]],
+    padding: `${theme.spacing(10)} ${theme.spacing(2)} ${theme.spacing(2)}`,
   },
   gridContainer: {
     height: '400px',
@@ -110,6 +111,7 @@ const columns = [
         component={Link}
         to={`/runs/${row.id}`}
         variant="outlined"
+        color="grey"
       >
         Summary
       </Button>
@@ -234,4 +236,4 @@ const ViewRuns = ({
   );
 };
 
-export default withStyles(styles)(ViewRuns);
+export default withStyles(ViewRuns, styles);

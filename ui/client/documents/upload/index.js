@@ -6,13 +6,13 @@ import snakeCase from 'lodash/snakeCase';
 
 import { PDFDocument } from 'pdf-lib';
 
-import Alert from '@material-ui/lab/Alert';
-import Button from '@material-ui/core/Button';
-import Container from '@material-ui/core/Container';
-import CircularProgress from '@material-ui/core/CircularProgress';
-import Typography from '@material-ui/core/Typography';
+import Alert from '@mui/material/Alert';
+import Button from '@mui/material/Button';
+import Container from '@mui/material/Container';
+import CircularProgress from '@mui/material/CircularProgress';
+import Typography from '@mui/material/Typography';
 
-import { withStyles } from '@material-ui/core/styles';
+import { makeStyles } from 'tss-react/mui';
 
 import { readFile } from '../utils';
 
@@ -72,13 +72,13 @@ function getFormattedPDFMetadata(pdfDoc) {
   );
 }
 
-const CustomLoading = withStyles((theme) => ({
-  root: {
+const useStyles = makeStyles()((theme) => ({
+  customLoadingRoot: {
     position: 'relative',
     display: 'inline'
   },
   bottom: {
-    color: theme.palette.grey[theme.palette.type === 'light' ? 200 : 700],
+    color: theme.palette.grey[theme.palette.mode === 'light' ? 200 : 700],
   },
   top: {
     color: '#1a90ff',
@@ -88,35 +88,7 @@ const CustomLoading = withStyles((theme) => ({
   },
   circle: {
     strokeLinecap: 'round',
-  }
-}))(({ classes, ...props }) => (
-  <div className={classes.root}>
-    <CircularProgress
-      variant="determinate"
-      className={classes.bottom}
-      size={30}
-      thickness={4}
-      {...props}
-      value={100}
-    />
-    <CircularProgress
-      variant="indeterminate"
-      className={classes.top}
-      classes={{
-        circle: classes.circle,
-      }}
-      size={30}
-      thickness={4}
-      {...props}
-    />
-  </div>
-));
-
-/**
- * Submit button is not type=submit for now, since pressing enter
- * causes issues on inconvenient input boxes.
- **/
-const UploadDocumentForm = withStyles(() => ({
+  },
   root: {
     padding: '3rem',
     height: '100%',
@@ -139,7 +111,40 @@ const UploadDocumentForm = withStyles(() => ({
     justifyContent: 'space-between',
     padding: '1rem'
   }
-}))(({ classes }) => {
+}));
+
+const CustomLoading = ({ ...props }) => {
+  const { classes } = useStyles();
+  return (
+    <div className={classes.customLoadingRoot}>
+      <CircularProgress
+        variant="determinate"
+        className={classes.bottom}
+        size={30}
+        thickness={4}
+        {...props}
+        value={100}
+      />
+      <CircularProgress
+        variant="indeterminate"
+        className={classes.top}
+        classes={{
+          circle: classes.circle,
+        }}
+        size={30}
+        thickness={4}
+        {...props}
+      />
+    </div>
+  );
+};
+
+/**
+ * Submit button is not type=submit for now, since pressing enter
+ * causes issues on inconvenient input boxes.
+ **/
+const UploadDocumentForm = () => {
+  const { classes } = useStyles();
   const [files, setFiles] = useState([]);
   const [allPDFMetadata, setAllPDFMetadata] = useState([]);
   const [selectedFileIndex, setSelectedFileIndex] = useState(0);
@@ -349,6 +354,7 @@ const UploadDocumentForm = withStyles(() => ({
                 variant="contained"
                 size="large"
                 disabled={uploading}
+                color="grey"
               >
                 Cancel
               </Button>
@@ -385,6 +391,6 @@ const UploadDocumentForm = withStyles(() => ({
       </div>
     </Container>
   );
-});
+};
 
 export default UploadDocumentForm;

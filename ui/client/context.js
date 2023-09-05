@@ -71,7 +71,7 @@ export const WebSocketContextProvider = ({ url, children }) => {
     // call unregister in case we previously had this channel/handler combo registered
     unregister(channel, handler);
     // set up our listeners ref at this channel to be connected to our handler
-    listeners.current[channel] = [...listeners.current[channel] ?? [], handler];
+    listeners.current[channel] = [...(listeners.current[channel] ?? []), handler];
     // return unregister - I'm not sure this is being used anywhere - AG
     return () => unregister(channel, handler);
   }, [unregister]);

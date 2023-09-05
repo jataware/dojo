@@ -1,31 +1,31 @@
 import React, { useEffect, useState } from 'react';
 
-import DeleteIcon from '@material-ui/icons/Delete';
-import ExpandLessIcon from '@material-ui/icons/ExpandLess';
-import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
+import DeleteIcon from '@mui/icons-material/Delete';
+import ExpandLessIcon from '@mui/icons-material/ExpandLess';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 
-import Button from '@material-ui/core/Button';
-import ButtonBase from '@material-ui/core/ButtonBase';
-import Collapse from '@material-ui/core/Collapse';
-import IconButton from '@material-ui/core/IconButton';
-import Table from '@material-ui/core/Table';
-import TableBody from '@material-ui/core/TableBody';
-import TableCell from '@material-ui/core/TableCell';
-import TableContainer from '@material-ui/core/TableContainer';
-import TableRow from '@material-ui/core/TableRow';
-import Tooltip from '@material-ui/core/Tooltip';
-import Typography from '@material-ui/core/Typography';
+import Button from '@mui/material/Button';
+import ButtonBase from '@mui/material/ButtonBase';
+import Collapse from '@mui/material/Collapse';
+import IconButton from '@mui/material/IconButton';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableRow from '@mui/material/TableRow';
+import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
 
-import { makeStyles, } from '@material-ui/core/styles';
+import { makeStyles } from 'tss-react/mui';
 
 import HelperTip from './HelperTip';
 
 import { useDirective, useShellHistory } from './SWRHooks';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   root: {
     backgroundColor: 'inherit',
-    margin: [[theme.spacing(2), 0]],
+    margin: `${theme.spacing(2)} 0`,
   },
   table: {
     borderCollapse: 'separate',
@@ -52,7 +52,7 @@ const useStyles = makeStyles((theme) => ({
   },
   tableContainer: {
     overflow: 'auto',
-    padding: [[0, theme.spacing(1), theme.spacing(1)]],
+    padding: `0 ${theme.spacing(1)} ${theme.spacing(1)}`,
     [theme.breakpoints.down('xl')]: {
       height: '260px',
     },
@@ -80,7 +80,7 @@ const ShellHistory = ({
   setTemplaterMode,
   setTemplaterContents,
 }) => {
-  const classes = useStyles();
+  const { classes } = useStyles();
 
   const tableRef = React.createRef(null);
   const [expanded, setExpanded] = useState(true);
@@ -172,7 +172,7 @@ const ShellHistory = ({
           </TableCell>
           <TableCell align="right">
             <Button
-              color={directiveItem ? 'primary' : 'default'}
+              color={directiveItem ? 'primary' : 'grey'}
               data-test="terminalMarkDirectiveBtn"
               disabled={directiveDuplicate}
               disableElevation
@@ -196,6 +196,7 @@ const ShellHistory = ({
                 aria-label="delete"
                 className={classes.iconButton}
                 onClick={() => removeItem(item)}
+                size="large"
               >
                 <DeleteIcon fontSize="small" />
               </IconButton>

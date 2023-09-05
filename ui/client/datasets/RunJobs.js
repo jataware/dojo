@@ -1,20 +1,20 @@
 import React, { useEffect, useState } from 'react';
 
-import { CircularProgress } from '@material-ui/core';
-import Chip from '@material-ui/core/Chip';
-import Container from '@material-ui/core/Container';
-import FailedIcon from '@material-ui/icons/Clear';
-import Typography from '@material-ui/core/Typography';
+import { CircularProgress } from '@mui/material';
+import Chip from '@mui/material/Chip';
+import Container from '@mui/material/Container';
+import FailedIcon from '@mui/icons-material/Clear';
+import Typography from '@mui/material/Typography';
 
-import { withStyles } from '@material-ui/core/styles';
+import { makeStyles } from 'tss-react/mui';
 
 import axios from 'axios';
 import { Navigation } from '.';
 
-const RunJobs = withStyles(({ spacing }) => ({
+const useStyles = makeStyles()((theme) => ({
   root: {
     display: 'flex',
-    padding: [[0, spacing(4), spacing(2), spacing(4)]],
+    padding: `0 ${theme.spacing(4)} ${theme.spacing(2)} ${theme.spacing(4)}`,
     flexDirection: 'column',
     flex: 1,
     height: '100%'
@@ -46,19 +46,25 @@ const RunJobs = withStyles(({ spacing }) => ({
     overflow: 'auto',
     maxHeight: '30%'
   }
-}))(({
-  classes, datasetInfo, setDatasetInfo, stepTitle, annotations, setAnnotations,
+}));
+
+const RunJobs = ({
+  datasetInfo, setDatasetInfo, stepTitle, annotations, setAnnotations,
   handleNext, handleBack, jobs, rawFileName, ...props
 }) => {
+  const { classes } = useStyles();
+
   // Don't proceed if we don't have a job set.
   if (jobs === null) {
     return null;
   }
 
+  // TODO: This file needs refactoring so that we aren't conditionally running these hooks
+  // and running the useEffect without all of its deps
+  /* eslint-disable */
   const [jobData, setJobData] = useState(null);
   const [jobIndex, setJobIndex] = useState(0);
 
-  /* eslint-disable */
 
   const updateJobData = ({ firstRun } = {}) => {
     const job = jobs[jobIndex];
@@ -194,6 +200,6 @@ const RunJobs = withStyles(({ spacing }) => ({
       />
     </Container>
   );
-});
+};
 RunJobs.SKIP = true; // TODO probably set within flow descriptor object in Flows.js
 export default RunJobs;

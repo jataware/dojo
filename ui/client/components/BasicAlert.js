@@ -1,7 +1,7 @@
 import React from 'react';
 
-import MuiAlert from '@material-ui/lab/Alert';
-import Snackbar from '@material-ui/core/Snackbar';
+import Alert from '@mui/material/Alert';
+import Snackbar from '@mui/material/Snackbar';
 
 const BasicAlert = ({
   alert, visible, setVisible, action, disableClickaway, ...props
@@ -19,10 +19,16 @@ const BasicAlert = ({
 
   // autoHideDuration={null} passed as a prop will work to keep BasicAlert open forever
   return (
-    <Snackbar open={visible} autoHideDuration={6000} onClose={handleAlertClose} {...props}>
-      <MuiAlert elevation={6} variant="filled" severity={severity} action={action}>
+    <Snackbar
+      open={visible}
+      autoHideDuration={6000}
+      onClose={handleAlertClose}
+      anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      {...props}
+    >
+      <Alert elevation={6} variant="filled" severity={severity} action={action}>
         {message}
-      </MuiAlert>
+      </Alert>
     </Snackbar>
   );
 };

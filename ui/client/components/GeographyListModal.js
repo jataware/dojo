@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 
-import Button from '@material-ui/core/Button';
-import Dialog from '@material-ui/core/Dialog';
-import Typography from '@material-ui/core/Typography';
+import Button from '@mui/material/Button';
+import Dialog from '@mui/material/Dialog';
+import Typography from '@mui/material/Typography';
 
-import { makeStyles } from '@material-ui/core/styles';
+import { makeStyles } from 'tss-react/mui';
 
 import CollapseText from './CollapseText';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   buttons: {
     backgroundColor: 'transparent',
     border: '2px solid black',
@@ -33,7 +33,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 function GeographyListModal({ geography }) {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const [open, setOpen] = useState(false);
 
   const handleClose = () => {
@@ -57,6 +57,7 @@ function GeographyListModal({ geography }) {
           className={classes.buttons}
           onClick={() => setOpen(true)}
           align="right"
+          color="grey"
         >
           Detailed Admin Levels:
         </Button>

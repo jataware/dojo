@@ -1,18 +1,15 @@
 import React, { useCallback, useEffect, useState } from 'react';
 
-import Button from '@material-ui/core/Button';
-import CircularProgress from '@material-ui/core/CircularProgress';
-import Typography from '@material-ui/core/Typography';
-import { withStyles } from '@material-ui/core/styles';
-import {
-  MuiPickersUtilsProvider,
-  KeyboardDatePicker,
-} from '@material-ui/pickers';
+import Button from '@mui/material/Button';
+import CircularProgress from '@mui/material/CircularProgress';
+import Typography from '@mui/material/Typography';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+
+import { makeStyles } from 'tss-react/mui';
 
 import parseISO from 'date-fns/parseISO';
 import format from 'date-fns/format';
 import isValid from 'date-fns/isValid';
-import DateFnsUtils from '@date-io/date-fns';
 import { enUS } from 'date-fns/locale';
 
 import 'chartjs-adapter-date-fns';
@@ -107,7 +104,7 @@ const transformIntoDataset = (dates) => {
   return { datasets: [{ data }] };
 };
 
-export default withStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   loading: {
     display: 'flex',
     alignItems: 'center',
@@ -132,10 +129,11 @@ export default withStyles((theme) => ({
   saveButtonWrapper: {
     display: 'flex',
     justifyContent: 'flex-end',
-    margin: [[theme.spacing(8), theme.spacing(4)]],
+    margin: `${theme.spacing(8)} ${theme.spacing(4)}`,
   },
-}))(({
-  classes,
+}));
+
+export default ({
   timeBounds,
   setSavedTimeBounds,
   savedTimeBounds,
@@ -145,6 +143,7 @@ export default withStyles((theme) => ({
   annotations,
   cleanupRef,
 }) => {
+  const { classes } = useStyles();
   const [startValue, setStartValue] = useState(() => {
     if (savedTimeBounds) return savedTimeBounds[0];
     return null;
@@ -278,37 +277,23 @@ export default withStyles((theme) => ({
             <Chart type="line" data={displayData} options={options} />
           </div>
           <div className={classes.datepickers}>
-            <MuiPickersUtilsProvider utils={DateFnsUtils}>
-              <KeyboardDatePicker
-                disableToolbar
-                variant="inline"
-                format="MM/dd/yyyy"
-                margin="normal"
-                label="Select a start date"
-                /* We need to parse the value to keep it from jumping back one day */
-                value={parseISO(startValue)}
-                onChange={handleChangeStart}
-                KeyboardButtonProps={{
-                  'aria-label': 'change date',
-                }}
-                minDate={minDate}
-                maxDate={maxDate}
-              />
-              <KeyboardDatePicker
-                disableToolbar
-                variant="inline"
-                format="MM/dd/yyyy"
-                margin="normal"
-                label="Select an end date"
-                value={parseISO(endValue)}
-                onChange={handleChangeEnd}
-                KeyboardButtonProps={{
-                  'aria-label': 'change date',
-                }}
-                minDate={minDate}
-                maxDate={maxDate}
-              />
-            </MuiPickersUtilsProvider>
+            <DatePicker
+              format="MM/dd/yyyy"
+              label="Select a start date"
+              /* We need to parse the value to keep it from jumping back one day */
+              value={parseISO(startValue)}
+              onChange={handleChangeStart}
+              minDate={minDate}
+              maxDate={maxDate}
+            />
+            <DatePicker
+              format="MM/dd/yyyy"
+              label="Select an end date"
+              value={parseISO(endValue)}
+              onChange={handleChangeEnd}
+              minDate={minDate}
+              maxDate={maxDate}
+            />
           </div>
 
           <div className={classes.timelineButtonsWrapper}>
@@ -325,6 +310,7 @@ export default withStyles((theme) => ({
               <Button
                 variant="outlined"
                 onClick={handleReset}
+                color="grey"
                 style={{ marginRight: '16px' }}
               >
                 Reset
@@ -332,7 +318,6 @@ export default withStyles((theme) => ({
               <Button
                 variant="outlined"
                 color="primary"
-                disableElevation
                 onClick={handleSelectDates}
                 // only allow these to be set once before resetting
                 disabled={!displayData || invalidDates}
@@ -360,4 +345,4 @@ export default withStyles((theme) => ({
       )}
     </div>
   );
-});
+};

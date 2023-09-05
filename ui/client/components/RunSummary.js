@@ -7,15 +7,15 @@ import toLower from 'lodash/toLower';
 import get from 'lodash/get';
 import isEmpty from 'lodash/isEmpty';
 
-import Alert from '@material-ui/lab/Alert';
-import Button from '@material-ui/core/Button';
-import Container from '@material-ui/core/Container';
-import Grid from '@material-ui/core/Grid';
-import Hidden from '@material-ui/core/Hidden';
-import Typography from '@material-ui/core/Typography';
-import QueuedJobIcon from '@material-ui/icons/Schedule';
-import RunningJobIcon from '@material-ui/icons/PlayCircleFilledWhite';
-import { withStyles } from '@material-ui/core/styles';
+import Alert from '@mui/material/Alert';
+import Button from '@mui/material/Button';
+import Container from '@mui/material/Container';
+import Grid from '@mui/material/Grid';
+import Box from '@mui/material/Box';
+import Typography from '@mui/material/Typography';
+import QueuedJobIcon from '@mui/icons-material/Schedule';
+import RunningJobIcon from '@mui/icons-material/PlayCircleFilledWhite';
+import { withStyles } from 'tss-react/mui';
 import { useRun } from './SWRHooks';
 
 import { ExternalLink, InternalTab } from './Links';
@@ -26,7 +26,7 @@ import { parseDatetimeString, formatDatetime } from '../utils';
 
 const styles = (theme) => ({
   root: {
-    padding: [[theme.spacing(10), theme.spacing(2), theme.spacing(2)]],
+    padding: `${theme.spacing(10)} ${theme.spacing(2)} ${theme.spacing(2)}`,
   },
   header: {
     marginBottom: theme.spacing(3),
@@ -96,9 +96,9 @@ export const Status = ({
       style={refreshActionStyles}
       {...props}
     >
-      <Hidden smDown={responsive}>
+      <Box sx={{ display: { xs: responsive ? 'none' : 'block', lg: 'block' } }}>
         {capitalize(status)}
-      </Hidden>
+      </Box>
     </Alert>
   );
 };
@@ -130,25 +130,23 @@ const Value = ({ href, title, ...props }) => {
   );
 };
 
-const SectionGridItem = withStyles({
-  detailsSection: {
-    padding: '1.5rem',
-    '& ul': {
-      listStyle: 'none',
-      marginBlockStart: '0.25em',
-      marginBlockEnd: 0,
-      paddingInlineStart: 0,
-      overflow: 'auto'
-    }
-  },
-})(({
+const SectionGridItem = ({
   title, classes, children, empty, ...props
 }) => (
   <Grid
     item
     xs={12}
     md={6}
-    className={classes.detailsSection}
+    sx={{
+      padding: '1.5rem',
+      '& ul': {
+        listStyle: 'none',
+        marginBlockStart: '0.25em',
+        marginBlockEnd: 0,
+        paddingInlineStart: 0,
+        overflow: 'auto'
+      }
+    }}
     role="region"
     aria-label={title}
     {...props}
@@ -165,7 +163,7 @@ const SectionGridItem = withStyles({
     {empty ? <Typography>No {title}</Typography> : children}
 
   </Grid>
-));
+);
 
 // -------------------------- Main Container ----------------------------------
 
@@ -285,6 +283,7 @@ const RunSummary = ({ classes }) => {
                 variant="outlined"
                 style={{ marginTop: '0.5rem' }}
                 to={`/runlogs/${run.id}`}
+                color="grey"
               >
                 View Logs
               </Button>
@@ -372,4 +371,4 @@ const RunSummary = ({ classes }) => {
   );
 };
 
-export default withStyles(styles)(RunSummary);
+export default withStyles(RunSummary, styles);

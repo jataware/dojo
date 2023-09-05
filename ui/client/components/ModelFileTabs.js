@@ -1,11 +1,11 @@
 import React, { useState } from 'react';
 
-import Box from '@material-ui/core/Box';
-import Tab from '@material-ui/core/Tab';
-import Tabs from '@material-ui/core/Tabs';
-import Typography from '@material-ui/core/Typography';
+import Box from '@mui/material/Box';
+import Tab from '@mui/material/Tab';
+import Tabs from '@mui/material/Tabs';
+import Typography from '@mui/material/Typography';
 
-import { makeStyles } from '@material-ui/core/styles';
+import { makeStyles } from 'tss-react/mui';
 
 import FileList from './FileList';
 import HelperTip from './HelperTip';
@@ -18,9 +18,9 @@ const a11yProps = (index) => ({
   'aria-controls': `file-tabpanel-${index}`,
 });
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   indicator: {
-    margin: [[0, theme.spacing(1)]],
+    margin: `0 ${theme.spacing(1)}`,
   },
   textWrapper: {
     color: theme.palette.common.white,
@@ -32,7 +32,7 @@ function TabPanel(props) {
     children, value, index, ...other
   } = props;
 
-  const classes = useStyles();
+  const { classes } = useStyles();
 
   return (
     <div
@@ -63,7 +63,7 @@ const ModelFileTabs = ({
   const { outputs } = useOutputFiles(model.id);
   const { configs } = useConfigs(model.id);
 
-  const classes = useStyles();
+  const { classes } = useStyles();
 
   const handleTabClick = (event, newValue) => {
     setTabValue(newValue);
@@ -76,8 +76,8 @@ const ModelFileTabs = ({
         onChange={handleTabClick}
         variant="fullWidth"
         style={{ color: 'white' }}
-        indicatorColor="primary"
         classes={{ indicator: classes.indicator }}
+        textColor="inherit"
       >
         <Tab
           label={(
@@ -86,7 +86,7 @@ const ModelFileTabs = ({
                 to expose to end users. You can add a configuration file by entering
                 'dojo config <filename>' into the terminal"
             >
-              {`Configs  (${configs?.length || 0})`}
+              {`Configs  (${configs?.length || 0})`}&nbsp;
             </HelperTip>
           )}
           {...a11yProps(0)}
@@ -98,7 +98,7 @@ const ModelFileTabs = ({
               title="The annotated output files. You can add an output file by entering
                 'dojo annotate <filename>' into the terminal"
             >
-              {`Outputs  (${outputs?.length || 0})`}
+              {`Outputs  (${outputs?.length || 0})`}&nbsp;
             </HelperTip>
            )}
           {...a11yProps(1)}
@@ -110,14 +110,14 @@ const ModelFileTabs = ({
               title="Tagged output accessory files, such as images or videos. You can add
                 an accessory file by entering 'dojo tag <filename>' into the terminal"
             >
-              {`Accessories  (${accessories?.length || 0})`}
+              {`Accessories  (${accessories?.length || 0})`}&nbsp;
             </HelperTip>
           )}
           {...a11yProps(2)}
           data-test="fileTabAccessories"
         />
       </Tabs>
-      <div style={{ overflowY: 'scroll' }}>
+      <div style={{ overflowY: 'auto' }}>
         <TabPanel value={tabValue} index={0}>
           <FileList
             fileType="config"

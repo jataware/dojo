@@ -4,11 +4,11 @@ import axios from 'axios';
 
 import isEqual from 'lodash/isEqual';
 
-import Button from '@material-ui/core/Button';
-import Container from '@material-ui/core/Container';
-import Typography from '@material-ui/core/Typography';
+import Button from '@mui/material/Button';
+import Container from '@mui/material/Container';
+import Typography from '@mui/material/Typography';
 
-import { withStyles } from '@material-ui/core/styles';
+import { makeStyles } from 'tss-react/mui';
 
 import BasicAlert from '../BasicAlert';
 import FullScreenDialog from '../FullScreenDialog';
@@ -16,9 +16,9 @@ import SavedTemplates from './SavedTemplates';
 import TextAnnotater from './TextAnnotater';
 import { useConfigs, useDirective } from '../SWRHooks';
 
-const FullScreenTemplater = withStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   allContentWrapper: {
-    margin: [[theme.spacing(2), 0]],
+    margin: `${theme.spacing(2)} 0`,
     // full screen height minus the dialog top bar and the card margin
     height: 'calc(100vh - 80px)',
     display: 'flex',
@@ -31,7 +31,7 @@ const FullScreenTemplater = withStyles((theme) => ({
     backgroundColor: theme.palette.grey[200],
     border: '1px solid black',
     borderRadius: theme.shape.borderRadius,
-    padding: [[theme.spacing(3), theme.spacing(2)]],
+    padding: `${theme.spacing(3)} ${theme.spacing(2)}`,
     overflow: 'auto',
     flexShrink: '2',
   },
@@ -67,8 +67,9 @@ const FullScreenTemplater = withStyles((theme) => ({
   allParamsButton: {
     minWidth: '200px',
   },
-}))(({
-  classes,
+}));
+
+const FullScreenTemplater = ({
   content,
   contentChanged,
   open,
@@ -76,6 +77,7 @@ const FullScreenTemplater = withStyles((theme) => ({
   modelId,
   setOpen
 }) => {
+  const { classes } = useStyles();
   const [highlights, setHighlights] = useState(
     // if the parameters are passed in as a prop, then we have preexisting highlights
     // so load those in as state so we can edit them in this chain of components
@@ -205,6 +207,7 @@ const FullScreenTemplater = withStyles((theme) => ({
                 variant="outlined"
                 disabled={!highlights.length}
                 className={classes.allParamsButton}
+                color="grey"
               >
                 {`${templatesDrawerOpen ? 'Hide' : 'View'} All Parameters`}
               </Button>
@@ -258,6 +261,6 @@ const FullScreenTemplater = withStyles((theme) => ({
       />
     </>
   );
-});
+};
 
 export default FullScreenTemplater;

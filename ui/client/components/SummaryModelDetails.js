@@ -1,12 +1,12 @@
 import React from 'react';
 
-import Button from '@material-ui/core/Button';
-import Link from '@material-ui/core/Link';
-import Typography from '@material-ui/core/Typography';
+import Button from '@mui/material/Button';
+import Link from '@mui/material/Link';
+import Typography from '@mui/material/Typography';
 
-import { makeStyles } from '@material-ui/core/styles';
+import { makeStyles } from 'tss-react/mui';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   subsection: {
     marginLeft: theme.spacing(1),
   },
@@ -16,7 +16,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 function SummaryModelDetails({ model }) {
-  const classes = useStyles();
+  const { classes } = useStyles();
 
   let parsedCoordinates = [];
 
@@ -55,6 +55,7 @@ function SummaryModelDetails({ model }) {
           href={model.maintainer?.website}
           target="_blank"
           rel="noopener"
+          underline="hover"
         >
           {model.maintainer?.website}
         </Link>
@@ -87,6 +88,7 @@ function SummaryModelDetails({ model }) {
           variant="contained"
           href={causemosUrl}
           disableElevation
+          color="grey"
         >
           View Model on Causemos
         </Button>

@@ -1,18 +1,33 @@
 import React from 'react';
 
-import TextField from '@material-ui/core/TextField';
-import Checkbox from '@material-ui/core/Checkbox';
-import FormControl from '@material-ui/core/FormControl';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import FormHelperText from '@material-ui/core/FormHelperText';
+import TextField from '@mui/material/TextField';
+import Checkbox from '@mui/material/Checkbox';
+import FormControl from '@mui/material/FormControl';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import FormHelperText from '@mui/material/FormHelperText';
 
-import { Select } from 'material-ui-formik-components/Select';
-
-import { withStyles } from '@material-ui/core/styles';
 import { Field, getIn, useField } from 'formik';
 import isFunction from 'lodash/isFunction';
 import get from 'lodash/get';
 
+import { makeStyles } from 'tss-react/mui';
+
+import FormikSelect from '../../components/formikComponents/FormikSelect';
+
+const useStyles = makeStyles()((theme) => ({
+  root: {
+    margin: `${theme.spacing(1)} 0`,
+
+    '& .MuiFormHelperText-root': {
+      marginLeft: 7,
+      marginRight: 5,
+    }
+  },
+  helperText: {
+    marginTop: -6,
+    color: `${theme.palette.grey[600]} !important`
+  }
+}));
 /**
  * All Form-Aware fields in this directory need to be nested within a Formik's
  * <Formik> <Form> anywhere in the parent react tree.
@@ -23,17 +38,7 @@ import get from 'lodash/get';
  * Needs to be nested within <Formik><Form> from a parent
  * within the React Tree context.
  * */
-export const FormAwareTextField = withStyles((theme) => ({
-  root: {
-    margin: [[theme.spacing(1), 0]],
-
-    '& .MuiFormHelperText-root': {
-      marginLeft: 7,
-      marginRight: 5,
-    }
-  },
-}))(({
-  classes,
+export const FormAwareTextField = ({
   name,
   label,
   requiredFn,
@@ -44,6 +49,7 @@ export const FormAwareTextField = withStyles((theme) => ({
   validate,
   ...props
 }) => {
+  const { classes } = useStyles();
   const [field, meta] = useField({ ...props, name, validate });
 
   return (
@@ -69,19 +75,12 @@ export const FormAwareTextField = withStyles((theme) => ({
       {...props}
     />
   );
-});
+};
 
 /**
  *
  * */
-const FormikCheckbox = withStyles((theme) => ({
-  root: {
-  },
-  helperText: {
-    marginTop: -6,
-    color: `${theme.palette.grey[600]} !important`
-  }
-}))((props) => {
+const FormikCheckbox = (props) => {
   const {
     label,
     field,
@@ -90,9 +89,9 @@ const FormikCheckbox = withStyles((theme) => ({
     fullWidth,
     margin,
     helperText,
-    classes,
     ...other
   } = props;
+  const { classes } = useStyles();
 
   const errorText = getIn(errors, field.name);
   const touchedVal = getIn(touched, field.name);
@@ -108,7 +107,7 @@ const FormikCheckbox = withStyles((theme) => ({
 
   return (
     <FormControl
-      className={classes.root}
+      variant="standard"
       fullWidth={fullWidth}
       required={required}
       error={hasError}
@@ -123,7 +122,7 @@ const FormikCheckbox = withStyles((theme) => ({
       {hasError && <FormHelperText>{errorText}</FormHelperText>}
     </FormControl>
   );
-});
+};
 FormikCheckbox.defaultProps = {
   required: false,
   fullWidth: true,
@@ -141,28 +140,17 @@ export const FormAwareCheckBox = (props) => (
 );
 
 /**
- *
+ * Wraps the custom FormikSelect so that we can maintain the same Dataset styling throughout
  * */
 export const FormAwareSelect = ({
-  InputProps = {}, InputLabelProps = {}, inputProps = {}, ...props
+  options, ...props
 }) => (
-  <Field
+  <FormikSelect
     {...props}
     margin="dense"
     variant="outlined"
     fullWidth
-    InputProps={{
-      ...InputProps,
-      style: { borderRadius: 0 }
-    }}
-    inputProps={{
-      'aria-label': props.label,
-      ...inputProps
-    }}
-    InputLabelProps={{
-      shrink: true,
-      ...InputLabelProps,
-    }}
-    component={Select}
+    options={options}
+    squareCorners
   />
 );

@@ -1,7 +1,7 @@
 import React, { useEffect } from 'react';
-import FormControl from '@material-ui/core/FormControl';
-import FormGroup from '@material-ui/core/FormGroup';
-import Grid from '@material-ui/core/Grid';
+import FormControl from '@mui/material/FormControl';
+import FormGroup from '@mui/material/FormGroup';
+import Grid from '@mui/material/Grid';
 import invert from 'lodash/invert';
 import { FormAwareSelect } from '../FormFields';
 import { GEO_ADMINS } from './constants';
@@ -31,7 +31,7 @@ const MultiColumnGeoSelector = ({
   }, [editingColumn.geo_type, editingColumn.name, disabled, setFieldValue]);
 
   return (
-    <FormControl>
+    <FormControl variant="standard">
       <FormGroup>
         <Grid
           container

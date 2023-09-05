@@ -1,8 +1,8 @@
 import React, { useEffect } from 'react';
-import FormControl from '@material-ui/core/FormControl';
-import FormGroup from '@material-ui/core/FormGroup';
-import Grid from '@material-ui/core/Grid';
-import Typography from '@material-ui/core/Typography';
+import FormControl from '@mui/material/FormControl';
+import FormGroup from '@mui/material/FormGroup';
+import Grid from '@mui/material/Grid';
+import Typography from '@mui/material/Typography';
 
 import { ExternalLink } from '../../components/Links';
 import { FormAwareSelect } from '../FormFields';
@@ -44,7 +44,7 @@ const MultiColumnDateSelector = ({
   };
 
   return (
-    <FormControl>
+    <FormControl variant="standard">
       <FormGroup>
         <Typography variant="caption">
           <ExternalLink href="https://docs.python.org/3/library/datetime.html#strftime-and-strptime-format-codes">

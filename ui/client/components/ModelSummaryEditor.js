@@ -2,8 +2,8 @@ import React, { useCallback, useState } from 'react';
 
 import { FormikProvider, useFormik } from 'formik';
 
-import Container from '@material-ui/core/Container';
-import { makeStyles } from '@material-ui/core/styles';
+import Container from '@mui/material/Container';
+import { makeStyles } from 'tss-react/mui';
 
 import FullScreenDialog from './FullScreenDialog';
 import ModelRegionForm from './ModelRegionForm';
@@ -11,9 +11,9 @@ import { useModel } from './SWRHooks';
 import { ModelDetailFields, detailValidationSchema } from './ModelDetailForm';
 import { ModelOverviewFields, overviewValidationSchema } from './ModelOverviewForm';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   root: {
-    margin: [[theme.spacing(1), 'auto', theme.spacing(4)]],
+    margin: `${theme.spacing(1)} auto ${theme.spacing(4)}`,
   },
 }));
 
@@ -48,7 +48,7 @@ export const ModelSummaryEditor = ({
   const { mutateModel } = useModel(model.id);
   const [parsedModel, setParsedModel] = useState(formatModel(model));
 
-  const classes = useStyles();
+  const { classes } = useStyles();
 
   const handleSubmit = async (modelInfo) => {
     // pull out the regions formatted for display ('geography' holds the values the backend wants)

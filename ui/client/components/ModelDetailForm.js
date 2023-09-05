@@ -2,23 +2,18 @@ import React, { useEffect } from 'react';
 
 import * as yup from 'yup';
 
-import Autocomplete from '@material-ui/lab/Autocomplete';
-import Button from '@material-ui/core/Button';
+import Autocomplete from '@mui/material/Autocomplete';
+import Button from '@mui/material/Button';
 
-import DateFnsUtils from '@date-io/date-fns';
-import {
-  MuiPickersUtilsProvider,
-} from '@material-ui/pickers';
-
-import { KeyboardDatePicker } from 'material-ui-formik-components/KeyboardDatePicker';
-import TextField from '@material-ui/core/TextField';
+import TextField from '@mui/material/TextField';
 import axios from 'axios';
-import { makeStyles } from '@material-ui/core/styles';
-import { Field, FormikProvider, useFormik } from 'formik';
+import { makeStyles } from 'tss-react/mui';
+import { FormikProvider, useFormik } from 'formik';
 
 import FormikTextField from './FormikTextField';
+import FormikDatePicker from './formikComponents/FormikDatePicker';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   desc: {
     marginTop: theme.spacing(2),
   },
@@ -110,7 +105,7 @@ export const DomainsAutocomplete = ({
 export const ModelDetailFields = ({
   formik
 }) => {
-  const classes = useStyles();
+  const { classes } = useStyles();
 
   return (
     <>
@@ -130,28 +125,20 @@ export const ModelDetailFields = ({
         label="Maintainer Organization"
         formik={formik}
       />
-      <MuiPickersUtilsProvider utils={DateFnsUtils}>
-        <div className={classes.datePickerContainer}>
-          <Field
-            component={KeyboardDatePicker}
-            data-test="modelFormStartDate"
-            format="MM/dd/yyyy"
-            label="Model Start Date"
-            name="period.gte"
-            placeholder="mm/dd/yyyy"
-            variant="inline"
-          />
-          <Field
-            format="MM/dd/yyyy"
-            component={KeyboardDatePicker}
-            data-test="modelFormEndDate"
-            label="Model End Date"
-            name="period.lte"
-            placeholder="mm/dd/yyyy"
-            variant="inline"
-          />
-        </div>
-      </MuiPickersUtilsProvider>
+      <div className={classes.datePickerContainer}>
+        <FormikDatePicker
+          data-test="modelFormStartDate"
+          format="MM/dd/yyyy"
+          label="Model Start Date"
+          name="period.gte"
+        />
+        <FormikDatePicker
+          format="MM/dd/yyyy"
+          data-test="modelFormEndDate"
+          label="Model End Date"
+          name="period.lte"
+        />
+      </div>
 
       <DomainsAutocomplete formik={formik} />
     </>
@@ -161,7 +148,7 @@ export const ModelDetailFields = ({
 export const ModelDetail = ({
   modelInfo, handleBack, handleNext
 }) => {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const formik = useFormik({
     initialValues: modelInfo,
     validationSchema: detailValidationSchema,
@@ -187,6 +174,7 @@ export const ModelDetail = ({
             <Button
               data-test="modelFormDetailBackBtn"
               onClick={() => handleBack(formik.values)}
+              color="grey"
             >
               Back
             </Button>

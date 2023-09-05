@@ -2,17 +2,19 @@ import React, { useEffect, useState } from 'react';
 
 import axios from 'axios';
 
-import ArrowBackIcon from '@material-ui/icons/ArrowBack';
-import Button from '@material-ui/core/Button';
-import CheckIcon from '@material-ui/icons/Check';
-import Container from '@material-ui/core/Container';
-import Fab from '@material-ui/core/Fab';
-import Grid from '@material-ui/core/Grid';
-import Tooltip from '@material-ui/core/Tooltip';
-import Typography from '@material-ui/core/Typography';
-import useMediaQuery from '@material-ui/core/useMediaQuery';
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+import Button from '@mui/material/Button';
+import CheckIcon from '@mui/icons-material/Check';
+import Container from '@mui/material/Container';
+import Fab from '@mui/material/Fab';
+import Grid from '@mui/material/Grid';
+import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
+import useMediaQuery from '@mui/material/useMediaQuery';
 
-import { makeStyles, useTheme } from '@material-ui/core/styles';
+import { useTheme } from '@mui/material/styles';
+
+import { makeStyles } from 'tss-react/mui';
 
 import { Link, useHistory } from 'react-router-dom';
 
@@ -35,9 +37,9 @@ import ViewRuns from './ViewRuns';
 
 import { useDirective } from './SWRHooks';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   root: {
-    padding: [[theme.spacing(10), theme.spacing(2), theme.spacing(2)]],
+    padding: `${theme.spacing(10)} ${theme.spacing(2)} ${theme.spacing(2)}`,
   },
   headerContainer: {
     display: 'flex',
@@ -147,9 +149,9 @@ const SummaryContents = ({
 
   const [endSessionDialog, setEndSessionDialog] = useState(false);
 
-  const classes = useStyles();
+  const { classes } = useStyles();
   const theme = useTheme();
-  const mediumBreakpoint = useMediaQuery(theme.breakpoints.down('md'));
+  const mediumBreakpoint = useMediaQuery(theme.breakpoints.down('lg'));
 
   const onUnload = (e) => {
     // preventDefault here triggers the confirm dialog
@@ -238,6 +240,7 @@ const SummaryContents = ({
               size="small"
               startIcon={<ArrowBackIcon />}
               data-test="backToTerminalBtn"
+              color="grey"
             >
               Back to Terminal
             </Button>
@@ -324,6 +327,7 @@ const SummaryContents = ({
                 onClick={() => setOpenModelEdit(true)}
                 className={classes.modelEditButton}
                 disabled={disabledMode}
+                color="grey"
               >
                 Edit
               </Button>

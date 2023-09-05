@@ -4,9 +4,9 @@ import {
   Form, FormikProvider, useFormik
 } from 'formik';
 
-import Button from '@material-ui/core/Button';
-import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
+import Button from '@mui/material/Button';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
 
 import RunnerParameter from './RunnerParameter';
 import { RunCreationSchema, getRunDefaults } from './runnerTools';

@@ -1,11 +1,12 @@
 import React from 'react';
 
-import { withStyles } from '@material-ui/core/styles';
-import Typography from '@material-ui/core/Typography';
-import Paper from '@material-ui/core/Paper';
-import Card from '@material-ui/core/Card';
-import CardContent from '@material-ui/core/CardContent';
-import Grid from '@material-ui/core/Grid';
+import { withStyles } from 'tss-react/mui';
+
+import Typography from '@mui/material/Typography';
+import Paper from '@mui/material/Paper';
+import Card from '@mui/material/Card';
+import CardContent from '@mui/material/CardContent';
+import Grid from '@mui/material/Grid';
 
 import isEmpty from 'lodash/isEmpty';
 
@@ -162,7 +163,7 @@ function loadConfig(labels, datasets) {
 
 const styles = (theme) => ({
   cardContent: {
-    [theme.breakpoints.down('sm')]: {
+    [theme.breakpoints.down('md')]: {
       padding: theme.spacing(0.5)
     }
   },
@@ -172,7 +173,7 @@ const styles = (theme) => ({
   },
   cardTextValue: {
     fontWeight: '100',
-    [theme.breakpoints.down('xs')]: {
+    [theme.breakpoints.down('sm')]: {
       fontSize: '0.7rem'
     }
   },
@@ -291,4 +292,4 @@ const Stats = ({
   );
 };
 
-export default withStyles(styles)(React.memo(Stats));
+export default withStyles(React.memo(Stats), styles);

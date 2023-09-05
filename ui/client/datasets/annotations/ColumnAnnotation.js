@@ -2,15 +2,13 @@ import React, { useCallback } from 'react';
 
 import _values from 'lodash/values';
 
-import { RadioGroup } from 'material-ui-formik-components/RadioGroup';
-import { Switch } from 'material-ui-formik-components/Switch';
-import { withStyles } from '@material-ui/core/styles';
-import { Field } from 'formik';
-import Typography from '@material-ui/core/Typography';
+import Typography from '@mui/material/Typography';
 
 import { Aliases } from './Aliases';
 import Autocomplete from '../../components/Autocomplete';
 import { FormAwareCheckBox, FormAwareSelect, FormAwareTextField } from '../FormFields';
+import FormikSwitch from '../../components/formikComponents/FormikSwitch';
+import FormikRadioGroup from '../../components/formikComponents/FormikRadioGroup';
 
 import FormatValidationInput from '../FormFields/FormatValidationInput';
 import MultiColumnDateSelector from './MultiColumnDateSelector';
@@ -108,10 +106,9 @@ export const GeoControls = ({
       />
 
       {values.geo_type === 'coordinates' && (
-        <Field
+        <FormikRadioGroup
           name="coord_format"
           label="Coordinate Format"
-          component={RadioGroup}
           options={[
             { value: 'lonlat', label: 'Longitude,Latitude' },
             { value: 'latlon', label: 'Latitude,Longitude' },
@@ -287,14 +284,8 @@ const widgets = {
 /**
  *
  * */
-export const ColumnAnnotation = withStyles((theme) => ({
-  root: {
-  },
-  qualifies: {
-    padding: theme.spacing(1)
-  }
-}))(({
-  classes, editingColumnName, columns,
+export const ColumnAnnotation = ({
+  editingColumnName, columns,
   values, setFieldValue, validateDateFormat,
   annotatedColumns, fieldsConfig = () => ({}),
   focusRef
@@ -310,7 +301,7 @@ export const ColumnAnnotation = withStyles((theme) => ({
   const TypeWidget = widgets[values?.category];
 
   return (
-    <div className={classes.root}>
+    <div>
 
       <FormAwareTextField
         margin="dense"
@@ -324,9 +315,6 @@ export const ColumnAnnotation = withStyles((theme) => ({
       <FormAwareSelect
         name="category"
         label="Type"
-        inputProps={{
-          'aria-label': 'type'
-        }}
         options={[
           { value: 'feature', label: 'Feature' },
           { value: 'geo', label: 'Geo' },
@@ -355,15 +343,14 @@ export const ColumnAnnotation = withStyles((theme) => ({
         fieldsConfig={fieldsConfig}
       />
 
-      <Field
+      <FormikSwitch
         name="isQualifies"
         label="Field Qualifies Another"
-        component={Switch}
         {...fieldsConfig('isQualifies')}
       />
 
       {values?.isQualifies && (
-        <div className={classes.qualifies}>
+        <div style={{ padding: '8px' }}>
           <Autocomplete
             label="Columns to Qualify"
             options={removeSelf(annotatedColumns, editingColumnName)
@@ -392,5 +379,5 @@ export const ColumnAnnotation = withStyles((theme) => ({
 
     </div>
   );
-});
+};
 ColumnAnnotation.displayName = 'ColumnAnnotation';

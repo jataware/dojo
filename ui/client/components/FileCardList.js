@@ -1,24 +1,24 @@
 import React, { useEffect, useState } from 'react';
 
-import AddCircleOutlineIcon from '@material-ui/icons/AddCircleOutline';
-import Card from '@material-ui/core/Card';
-import ClearIcon from '@material-ui/icons/Clear';
-import IconButton from '@material-ui/core/IconButton';
-import KeyboardArrowDown from '@material-ui/icons/KeyboardArrowDown';
-import KeyboardArrowRight from '@material-ui/icons/KeyboardArrowRight';
-import RemoveCircleOutlineIcon from '@material-ui/icons/RemoveCircleOutline';
-import Tooltip from '@material-ui/core/Tooltip';
-import Typography from '@material-ui/core/Typography';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import Card from '@mui/material/Card';
+import ClearIcon from '@mui/icons-material/Clear';
+import IconButton from '@mui/material/IconButton';
+import KeyboardArrowDown from '@mui/icons-material/KeyboardArrowDown';
+import KeyboardArrowRight from '@mui/icons-material/KeyboardArrowRight';
+import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
+import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
 
-import { makeStyles } from '@material-ui/core/styles';
+import { makeStyles } from 'tss-react/mui';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   card: {
     backgroundColor: theme.palette.grey[300],
     color: theme.palette.text.secondary,
     marginBottom: theme.spacing(1),
     whiteSpace: 'nowrap',
-    padding: [[theme.spacing(1), theme.spacing(2), theme.spacing(1)]],
+    padding: `${theme.spacing(1)} ${theme.spacing(2)} ${theme.spacing(1)}`,
   },
   mainWrapper: {
     display: 'flex',
@@ -52,7 +52,7 @@ const useStyles = makeStyles((theme) => ({
 
 // this is broken out into its own component so it can toggle its own open/closed state
 function FileParams({ params, name }) {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const [showParams, setShowParams] = useState(false);
 
   const displayParameter = (param, i) => {
@@ -97,7 +97,7 @@ export default function FileCardList({
   secondaryClickHandler, secondaryIcon, outputs, hideExpandHeader
 }) {
   const [expanded, setExpanded] = useState(false || hideExpandHeader);
-  const classes = useStyles();
+  const { classes } = useStyles();
 
   useEffect(() => {
     if (loading || error || !files.length) {
@@ -155,6 +155,7 @@ export default function FileCardList({
                     component="span"
                     onClick={() => primaryClickHandler(file)}
                     disabled={disableClick}
+                    size="large"
                   >
                     {primaryIcon}
                   </IconButton>
@@ -163,6 +164,7 @@ export default function FileCardList({
                     component="span"
                     onClick={() => secondaryClickHandler(file)}
                     disabled={disableClick}
+                    size="large"
                   >
                     {secondaryIcon}
                   </IconButton>
@@ -187,19 +189,19 @@ export default function FileCardList({
     <>
       <span className={classes.headerContainer}>
         {!hideExpandHeader && (
-          <>
-            <Typography
-              align="center"
-              color="textSecondary"
-              variant="h6"
-              gutterBottom
-            >
-              {`${name} Files`}
-            </Typography>
-            <IconButton onClick={() => setExpanded((prevExpanded) => !prevExpanded)}>
-              { expanded ? <RemoveCircleOutlineIcon /> : <AddCircleOutlineIcon />}
-            </IconButton>
-          </>
+        <>
+          <Typography
+            align="center"
+            color="textSecondary"
+            variant="h6"
+            gutterBottom
+          >
+            {`${name} Files`}
+          </Typography>
+          <IconButton onClick={() => setExpanded((prevExpanded) => !prevExpanded)} size="large">
+            { expanded ? <RemoveCircleOutlineIcon /> : <AddCircleOutlineIcon />}
+          </IconButton>
+        </>
         )}
       </span>
       {displayCards()}

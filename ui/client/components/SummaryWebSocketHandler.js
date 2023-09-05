@@ -4,7 +4,7 @@ import axios from 'axios';
 
 import { useHistory } from 'react-router-dom';
 
-import Button from '@material-ui/core/Button';
+import Button from '@mui/material/Button';
 
 import BasicAlert from './BasicAlert';
 

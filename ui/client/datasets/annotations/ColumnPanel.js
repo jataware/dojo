@@ -1,18 +1,17 @@
 import React, { useEffect, useRef } from 'react';
-import clsx from 'clsx';
 import { Form, Formik } from 'formik';
 import * as yup from 'yup';
 
-import { withStyles } from '@material-ui/core/styles';
+import { makeStyles } from 'tss-react/mui';
 
-import Button from '@material-ui/core/Button';
-import CloseIcon from '@material-ui/icons/Close';
-import InfoRoundedIcon from '@material-ui/icons/InfoRounded';
-import EqualizerIcon from '@material-ui/icons/Equalizer';
-import Drawer from '@material-ui/core/Drawer';
-import Grid from '@material-ui/core/Grid';
-import IconButton from '@material-ui/core/IconButton';
-import Typography from '@material-ui/core/Typography';
+import Button from '@mui/material/Button';
+import CloseIcon from '@mui/icons-material/Close';
+import InfoRoundedIcon from '@mui/icons-material/InfoRounded';
+import EqualizerIcon from '@mui/icons-material/Equalizer';
+import Drawer from '@mui/material/Drawer';
+import Grid from '@mui/material/Grid';
+import IconButton from '@mui/material/IconButton';
+import Typography from '@mui/material/Typography';
 
 import assignWith from 'lodash/assignWith';
 import difference from 'lodash/difference';
@@ -24,6 +23,72 @@ import { CATEGORIES, LATLON_MAPPINGS } from './constants';
 import { ColumnAnnotation } from './ColumnAnnotation';
 import { cleanUnusedFields, verifyConditionalRequiredFields, verifyQualifierPrimaryRules } from './annotationRules';
 import Stats from './Stats';
+
+const useStyles = makeStyles()(({ palette, spacing, breakpoints }) => ({
+  root: {
+    width: '40%',
+    minWidth: '25rem',
+    background: 'none',
+    borderLeft: 'none',
+  },
+  expanded: {
+    minWidth: '35rem',
+    width: '60%',
+
+    [breakpoints.down('sm')]: {
+      minWidth: 'unset',
+      width: '90vw',
+    },
+  },
+  drawerControls: {
+    display: 'flex',
+    justifyContent: 'flex-end'
+  },
+  highlightHeading: {
+    fontWeight: 'bold'
+  },
+  buttonContainer: {
+    marginTop: spacing(0.5),
+    display: 'flex',
+    '& > div': {
+      display: 'flex',
+      flex: 1,
+      justifyContent: 'flex-end'
+    }
+  },
+  editPanel: {
+    padding: '2rem',
+    paddingTop: '0.5rem',
+    background: palette.common.white,
+    flex: 1
+  },
+  tabsPanel: {
+    borderRight: '1px solid gray', // TODO tweak subtle border color
+
+    '& > div': {
+      marginTop: '5rem',
+      height: '10rem',
+      width: 0,
+      paddingRight: '3rem',
+      background: palette.common.white,
+      marginRight: -1, // Overlap and hide left border of panel itself
+      display: 'flex',
+      alignItems: 'center',
+      border: '1px solid gray', // TODO tweak color
+      borderRadius: '6px 0 0 6px',
+      borderRight: 'lightgray', // theme color
+    }
+  },
+  statisticsButton: {
+    transform: 'rotate(270deg)',
+    marginLeft: -6,
+
+    '&:hover': {
+      backgroundColor: 'transparent',
+      boxShadow: 'none',
+    }
+  }
+}));
 
 // TODO convert ColumnPanel to folder- have index, form, and stats/maps files within it
 
@@ -176,72 +241,8 @@ function generateMultiPartData(columnName, values) {
 /**
  *
  * */
-export default withStyles(({ palette, spacing, breakpoints }) => ({
-  root: {
-    width: '40%',
-    minWidth: '25rem',
-    background: 'none',
-    borderLeft: 'none',
-  },
-  expanded: {
-    minWidth: '35rem',
-    width: '60%',
-
-    [breakpoints.down('sm')]: {
-      minWidth: 'unset',
-      width: '90vw',
-    },
-  },
-  drawerControls: {
-    display: 'flex',
-    justifyContent: 'flex-end'
-  },
-  highlightHeading: {
-    fontWeight: 'bold'
-  },
-  buttonContainer: {
-    marginTop: spacing(0.5),
-    display: 'flex',
-    '& > div': {
-      display: 'flex',
-      flex: 1,
-      justifyContent: 'flex-end'
-    }
-  },
-  editPanel: {
-    padding: '2rem',
-    paddingTop: '0.5rem',
-    background: palette.common.white,
-    flex: 1
-  },
-  tabsPanel: {
-    borderRight: '1px solid gray', // TODO tweak subtle border color
-
-    '& > div': {
-      marginTop: '5rem',
-      height: '10rem',
-      width: 0,
-      paddingRight: '3rem',
-      background: palette.common.white,
-      marginRight: -1, // Overlap and hide left border of panel itself
-      display: 'flex',
-      alignItems: 'center',
-      border: '1px solid gray', // TODO tweak color
-      borderRadius: '6px 0 0 6px',
-      borderRight: 'lightgray', // theme color
-    }
-  },
-  statisticsButton: {
-    transform: 'rotate(270deg)',
-    marginLeft: -6,
-
-    '&:hover': {
-      backgroundColor: 'transparent',
-      boxShadow: 'none',
-    }
-  }
-}))(({
-  anchorPosition = 'right', classes,
+export default ({
+  anchorPosition = 'right',
   columnName, headerName, columns,
   annotations, annotateColumns, inferredData,
   multiPartData, setMultiPartData,
@@ -253,6 +254,8 @@ export default withStyles(({ palette, spacing, breakpoints }) => ({
   // focusRef is passed down to columnAnnotation to autofocus on the first input
   // which we have to do manually due to the potential focus on grid cells (MUI autofocus fails)
   const focusRef = useRef(null);
+
+  const { classes, cx } = useStyles();
 
   useEffect(() => {
     if (focusRef.current) {
@@ -324,7 +327,7 @@ export default withStyles(({ palette, spacing, breakpoints }) => ({
   return (
     <Drawer
       variant="persistent"
-      classes={{ paper: clsx({ [classes.root]: true, [classes.expanded]: displayStatistics }) }}
+      classes={{ paper: cx({ [classes.root]: true, [classes.expanded]: displayStatistics }) }}
       anchor={anchorPosition}
       open={Boolean(columnName)}
       onClose={onClose}
@@ -351,7 +354,7 @@ export default withStyles(({ palette, spacing, breakpoints }) => ({
           <div className={classes.editPanel}>
 
             <div className={classes.drawerControls}>
-              <IconButton onClick={onClose}>
+              <IconButton onClick={onClose} size="large">
                 <CloseIcon />
               </IconButton>
             </div>
@@ -493,7 +496,7 @@ export default withStyles(({ palette, spacing, breakpoints }) => ({
                         </Button>
 
                         <div>
-                          <Button onClick={onClose}>
+                          <Button onClick={onClose} color="grey">
                             Cancel
                           </Button>
 
@@ -519,4 +522,4 @@ export default withStyles(({ palette, spacing, breakpoints }) => ({
       )}
     </Drawer>
   );
-});
+};

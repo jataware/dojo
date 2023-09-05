@@ -3,19 +3,23 @@ import React, { useCallback, useState } from 'react';
 import isFinite from 'lodash/isFinite';
 import trim from 'lodash/trim';
 
-import ArrowForwardIcon from '@material-ui/icons/ArrowForward';
-import Button from '@material-ui/core/Button';
-import Checkbox from '@material-ui/core/Checkbox';
-import FormControl from '@material-ui/core/FormControl';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import FormHelperText from '@material-ui/core/FormHelperText';
-import InputLabel from '@material-ui/core/InputLabel';
-import MenuItem from '@material-ui/core/MenuItem';
-import Select from '@material-ui/core/Select';
-import TextField from '@material-ui/core/TextField';
-import Tooltip from '@material-ui/core/Tooltip';
-import Typography from '@material-ui/core/Typography';
-import { withStyles } from '@material-ui/core/styles';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import Button from '@mui/material/Button';
+import FormControl from '@mui/material/FormControl';
+import InputLabel from '@mui/material/InputLabel';
+import MenuItem from '@mui/material/MenuItem';
+import Select from '@mui/material/Select';
+import Typography from '@mui/material/Typography';
+
+import { makeStyles } from 'tss-react/mui';
+
+import Checkbox from '@mui/material/Checkbox';
+
+import FormControlLabel from '@mui/material/FormControlLabel';
+import FormHelperText from '@mui/material/FormHelperText';
+
+import TextField from '@mui/material/TextField';
+import Tooltip from '@mui/material/Tooltip';
 
 import PreviewTransformation from './PreviewTransformation';
 import { areLatLngAnnotated, generateProcessGeoResArgs } from './dataTransformationHelpers';
@@ -35,7 +39,7 @@ const aggregationFunctions = [
   'last',
 ];
 
-export default withStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   selectWrapper: {
     width: '200px',
   },
@@ -45,13 +49,13 @@ export default withStyles((theme) => ({
     alignItems: 'flex-start',
     gap: theme.spacing(6),
     width: '100%',
-    margin: [[theme.spacing(8), 0]],
+    margin: `${theme.spacing(8)} 0`,
     flexWrap: 'wrap',
   },
   textWrapper: {
     backgroundColor: theme.palette.grey[200],
     borderRadius: theme.shape.borderRadius,
-    padding: [[theme.spacing(4), 0]]
+    padding: `${theme.spacing(4)} 0`
   },
   oldToNew: {
     marginTop: theme.spacing(10),
@@ -70,8 +74,9 @@ export default withStyles((theme) => ({
   resolutionText: {
     fontWeight: '350',
   },
-}))(({
-  classes,
+}));
+
+export default ({
   closeDrawer,
   oldResolution,
   resolutionOptions,
@@ -84,6 +89,7 @@ export default withStyles((theme) => ({
   annotations,
   cleanupRef,
 }) => {
+  const { classes } = useStyles();
   const [selectedResolution, setSelectedResolution] = useState(savedResolution || '');
   const [selectedAggregation, setSelectedAggregation] = useState(savedAggregation || '');
   const [saveAttempt, setSaveAttempt] = useState(false);
@@ -226,6 +232,7 @@ export default withStyles((theme) => ({
             Aggregation Function
           </InputLabel>
           <Select
+            variant="standard"
             value={selectedAggregation}
             onChange={handleChangeAggregation}
             label="Aggregation Function"
@@ -253,6 +260,7 @@ export default withStyles((theme) => ({
         <FormControl variant="outlined" className={classes.selectWrapper}>
           <InputLabel>Resolution</InputLabel>
           <Select
+            variant="standard"
             value={selectedResolution}
             onChange={handleChangeResolution}
             label="Resolution"
@@ -355,4 +363,4 @@ export default withStyles((theme) => ({
       )}
     </div>
   );
-});
+};

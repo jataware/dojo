@@ -4,22 +4,22 @@ import React, {
 
 import axios from 'axios';
 import debounce from 'lodash/debounce';
-import { format } from 'date-fns';
-
-import Button from '@material-ui/core/Button';
-import { GridOverlay, DataGrid } from '@material-ui/data-grid';
-import Typography from '@material-ui/core/Typography';
-import { withStyles } from '@material-ui/core/styles';
-
-import LinearProgress from '@material-ui/core/LinearProgress';
-import CancelIcon from '@material-ui/icons/Cancel';
-import IconButton from '@material-ui/core/IconButton';
-import InputAdornment from '@material-ui/core/InputAdornment';
-import TextField from '@material-ui/core/TextField';
 import map from 'lodash/map';
 import get from 'lodash/get';
 
-import Container from '@material-ui/core/Container';
+import { format } from 'date-fns';
+
+import Button from '@mui/material/Button';
+import { GridOverlay, DataGrid } from '@mui/x-data-grid';
+import Typography from '@mui/material/Typography';
+import LinearProgress from '@mui/material/LinearProgress';
+import CancelIcon from '@mui/icons-material/Cancel';
+import IconButton from '@mui/material/IconButton';
+import InputAdornment from '@mui/material/InputAdornment';
+import TextField from '@mui/material/TextField';
+import Container from '@mui/material/Container';
+
+import { makeStyles } from 'tss-react/mui';
 
 import { Link as RouteLink } from 'react-router-dom';
 
@@ -96,10 +96,7 @@ const documentColumns = [
   },
 ];
 
-/**
- * The root component for the document browser, rendering the page Container, DataGrid, and Dialog
- */
-const ViewDocumentsGrid = withStyles(() => ({
+const useStyles = makeStyles()(() => ({
   root: {
     flex: 1,
     display: 'flex',
@@ -114,7 +111,13 @@ const ViewDocumentsGrid = withStyles(() => ({
     alignItems: 'center',
     marginBottom: '1rem',
   }
-}))(({ classes }) => {
+}));
+
+/**
+ * The root component for the document browser, rendering the page Container, DataGrid, and Dialog
+ */
+const ViewDocumentsGrid = () => {
+  const { classes } = useStyles();
   // use refs here to have references that won't trigger any rerenders
   const scrollIdRef = useRef(null);
   const cachedDocumentsRef = useRef({});
@@ -324,7 +327,7 @@ const ViewDocumentsGrid = withStyles(() => ({
               InputProps={{
                 endAdornment: (
                   <InputAdornment position="end">
-                    <IconButton onClick={clearSearch}><CancelIcon /></IconButton>
+                    <IconButton onClick={clearSearch} size="large"><CancelIcon /></IconButton>
                   </InputAdornment>
                 )
               }}
@@ -408,6 +411,6 @@ const ViewDocumentsGrid = withStyles(() => ({
 
     </Container>
   );
-});
+};
 
 export default ViewDocumentsGrid;

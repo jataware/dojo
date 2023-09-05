@@ -2,19 +2,20 @@ import React, { useEffect, useState } from 'react';
 import { Form, Formik } from 'formik';
 
 import isEmpty from 'lodash/isEmpty';
-import Accordion from '@material-ui/core/Accordion';
-import AccordionDetails from '@material-ui/core/AccordionDetails';
-import AccordionSummary from '@material-ui/core/AccordionSummary';
+import Accordion from '@mui/material/Accordion';
+import AccordionDetails from '@mui/material/AccordionDetails';
+import AccordionSummary from '@mui/material/AccordionSummary';
 import axios from 'axios';
-import Container from '@material-ui/core/Container';
-import ExpandMoreIcon from '@material-ui/icons/ExpandMore';
-import Grid from '@material-ui/core/Grid';
-import Typography from '@material-ui/core/Typography';
+import Container from '@mui/material/Container';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import Grid from '@mui/material/Grid';
+import Typography from '@mui/material/Typography';
 
 import * as yup from 'yup';
 import get from 'lodash/get';
 
-import { withStyles } from '@material-ui/core/styles';
+import { makeStyles } from 'tss-react/mui';
+
 import { DomainsAutocomplete } from '../components/ModelDetailForm';
 
 import { Navigation } from '.';
@@ -48,11 +49,8 @@ const checkRequired = (fieldName) => get(formSchema, `fields.${fieldName}.exclus
 /**
  *
  * */
-const Section = withStyles(() => ({
-  root: {
-  }
-}))(({ title, children, classes }) => (
-  <section className={classes.root}>
+const Section = ({ title, children }) => (
+  <section>
     <Typography
       variant="h6"
       color="textSecondary"
@@ -63,7 +61,7 @@ const Section = withStyles(() => ({
 
     {children}
   </section>
-));
+);
 
 /**
  *
@@ -111,12 +109,9 @@ const BaseData = ({
   </Section>
 );
 
-/**
- *
- * */
-export default withStyles(({ spacing }) => ({
+const useStyles = makeStyles()(({ spacing }) => ({
   root: {
-    padding: [[spacing(4), spacing(4), spacing(2), spacing(4)]],
+    padding: `${spacing(4)} ${spacing(4)} ${spacing(2)} ${spacing(4)}`,
   },
   header: {
     marginBottom: spacing(6),
@@ -127,14 +122,21 @@ export default withStyles(({ spacing }) => ({
   accordionContent: {
     flexGrow: 0
   }
-}))(({
-  classes, datasetInfo, setDatasetInfo, stepTitle, handleNext, handleBack, modelId,
+}));
+
+/**
+ *
+ * */
+export default ({
+  datasetInfo, setDatasetInfo, stepTitle, handleNext, handleBack, modelId,
   annotations, setAnnotations, ...props
 }) => {
   const [fileMetadata, setFileMetadata] = useState({
     filename: null,
   });
   const [loading, setLoading] = useState(false);
+
+  const { classes } = useStyles();
 
   const back = (/* event*/) => {}; // Do nothing
 
@@ -286,4 +288,4 @@ export default withStyles(({ spacing }) => ({
 
     </Container>
   );
-});
+};

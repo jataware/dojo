@@ -1,31 +1,32 @@
 import React, { useState } from 'react';
 
-import { withStyles } from '@material-ui/core/styles';
+import { makeStyles } from 'tss-react/mui';
 
-import CloseIcon from '@material-ui/icons/Close';
-import Drawer from '@material-ui/core/Drawer';
-import IconButton from '@material-ui/core/IconButton';
+import CloseIcon from '@mui/icons-material/Close';
+import Drawer from '@mui/material/Drawer';
+import IconButton from '@mui/material/IconButton';
 
 import ConfirmDialog from './ConfirmDialog';
 
-export default withStyles(({ spacing }) => ({
+const useStyles = makeStyles()((theme) => ({
   root: {
     width: '30%',
     minWidth: '20rem',
-    padding: spacing(3)
+    padding: theme.spacing(3)
   },
   wideRoot: {
     width: '40%',
     minWidth: '20rem',
-    padding: spacing(3)
+    padding: theme.spacing(3)
   },
   drawerControls: {
     display: 'flex',
     justifyContent: 'flex-end'
   },
-}))(({
+}));
+
+export default ({
   anchorPosition,
-  classes,
   children,
   confirmBody = 'Please confirm that you want to discard your changes.',
   confirmTitle = 'Are you sure you want to discard your work?',
@@ -37,6 +38,7 @@ export default withStyles(({ spacing }) => ({
   ...props
 }) => {
   const [confirmClose, setConfirmClose] = useState(false);
+  const { classes } = useStyles();
 
   const handleClose = (event) => {
     if (noConfirm) {
@@ -73,7 +75,7 @@ export default withStyles(({ spacing }) => ({
       >
         <>
           <div className={classes.drawerControls}>
-            <IconButton onClick={handleClose}>
+            <IconButton onClick={handleClose} size="large">
               <CloseIcon />
             </IconButton>
           </div>
@@ -82,16 +84,16 @@ export default withStyles(({ spacing }) => ({
       </Drawer>
 
       {/* unmount the dialog so we reset its state entirely
-        otherwise it can get into a closing state if opened again */}
+      otherwise it can get into a closing state if opened again */}
       {confirmClose && (
-        <ConfirmDialog
-          accept={handleConfirmedClose}
-          body={confirmBody}
-          open={confirmClose}
-          reject={() => setConfirmClose(false)}
-          title={confirmTitle}
-        />
+      <ConfirmDialog
+        accept={handleConfirmedClose}
+        body={confirmBody}
+        open={confirmClose}
+        reject={() => setConfirmClose(false)}
+        title={confirmTitle}
+      />
       )}
     </>
   );
-});
+};

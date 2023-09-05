@@ -2,14 +2,14 @@
 
 import React from 'react';
 
-import { Field } from 'formik';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemText from '@material-ui/core/ListItemText';
-import { Select, TextField } from 'material-ui-formik-components';
+import ListItem from '@mui/material/ListItem';
+import ListItemText from '@mui/material/ListItemText';
 
-import { makeStyles } from '@material-ui/core/styles';
+import { makeStyles } from 'tss-react/mui';
 
 import HelperTip from '../HelperTip';
+import FormikTextField from '../formikComponents/FormikTextField';
+import FormikSelect from '../formikComponents/FormikSelect';
 import { isNum, patchOptions } from './runnerTools';
 
 const makeOptionConverter = (type, option) => ({
@@ -17,7 +17,7 @@ const makeOptionConverter = (type, option) => ({
   value: isNum(type) ? Number(option) : option
 });
 
-const useStyles = makeStyles(() => ({
+const useStyles = makeStyles()(() => ({
   runField: {
     display: 'flex',
     flexDirection: 'column',
@@ -41,10 +41,15 @@ const RunnerParameter = ({
   min,
   max,
 }) => {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const minWarning = min ? `'${name}' ≥ ${min}.` : '';
   const maxWarning = max ? `'${name}' ≤ ${max}.` : '';
   const limitWarning = min + max ? `${minWarning} ${maxWarning}` : undefined;
+
+  const parsedOptions = patchOptions(options, default_value).map(
+    (option) => makeOptionConverter(type, option)
+  );
+
   return (
     <ListItem
       key={name}
@@ -61,17 +66,23 @@ const RunnerParameter = ({
           dark
         />
       </div>
-      <Field
-        name={name}
-        margin="dense"
-        label={`${name} (${unit})`}
-        variant="outlined"
-        component={predefined ? Select : TextField}
-        options={predefined
-          ? patchOptions(options, default_value).map(
-            (option) => makeOptionConverter(type, option)
-          ) : undefined}
-      />
+      {predefined ? (
+        <FormikSelect
+          name={name}
+          margin="dense"
+          label={`${name} (${unit})`}
+          variant="outlined"
+          options={parsedOptions}
+        />
+      ) : (
+        <FormikTextField
+          name={name}
+          margin="dense"
+          label={`${name} (${unit})`}
+          variant="outlined"
+        />
+      )}
+
     </ListItem>
   );
 };

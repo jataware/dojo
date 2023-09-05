@@ -1,23 +1,22 @@
 import React from 'react';
 
-import Paper from '@material-ui/core/Paper';
-import Table from '@material-ui/core/Table';
-import TableBody from '@material-ui/core/TableBody';
-import TableCell from '@material-ui/core/TableCell';
-import TableContainer from '@material-ui/core/TableContainer';
-import TableHead from '@material-ui/core/TableHead';
-import TableRow from '@material-ui/core/TableRow';
+import Paper from '@mui/material/Paper';
+import Table from '@mui/material/Table';
+import TableBody from '@mui/material/TableBody';
+import TableCell from '@mui/material/TableCell';
+import TableContainer from '@mui/material/TableContainer';
+import TableHead from '@mui/material/TableHead';
+import TableRow from '@mui/material/TableRow';
 
-import { makeStyles, withStyles } from '@material-ui/core/styles';
+import { makeStyles, withStyles } from 'tss-react/mui';
 
 import AliasDialog from './AliasDialog';
 import CollapseText from './CollapseText';
 
-const StyledTableCell = withStyles((theme) => ({
-
+const StyledTableCell = withStyles(TableCell, (theme) => ({
   root: {
     color: theme.palette.common.black,
-    padding: [[theme.spacing(1), theme.spacing(2)]],
+    padding: `${theme.spacing(1)} ${theme.spacing(2)}`,
     minWidth: '190px',
     maxWidth: '350px',
     maxHeight: '100px',
@@ -27,7 +26,7 @@ const StyledTableCell = withStyles((theme) => ({
   head: {
     backgroundColor: theme.palette.common.white,
     color: theme.palette.common.black,
-    padding: [[theme.spacing(1), theme.spacing(2)]],
+    padding: `${theme.spacing(1)} ${theme.spacing(2)}`,
     minWidth: '100px',
     fontWeight: 'bold',
     fontSize: '17px',
@@ -35,18 +34,18 @@ const StyledTableCell = withStyles((theme) => ({
   body: {
     fontSize: 14,
   },
-}))(TableCell);
+}));
 
-const StyledTableRow = withStyles((theme) => ({
+const StyledTableRow = withStyles(TableRow, (theme) => ({
   root: {
     '&:nth-of-type(odd)': {
       backgroundColor: theme.palette.action.hover,
       color: theme.palette.common.black,
     },
   },
-}))(TableRow);
+}));
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   indexRow: {
     maxWidth: '75px',
     backgroundColor: theme.palette.action.hover,
@@ -57,7 +56,7 @@ function DatasetSummaryOutputsTable({ dataset }) {
   const columns = [...dataset?.outputs, ...(dataset?.qualifier_outputs || [])
     .filter((qual) => !['admin1', 'admin2', 'admin3', 'country', 'lat', 'lng'].includes(qual.name))];
 
-  const classes = useStyles();
+  const { classes } = useStyles();
 
   return (
     <div>

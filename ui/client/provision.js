@@ -2,17 +2,17 @@ import React, { useEffect, useState } from 'react';
 
 import axios from 'axios';
 
-import Button from '@material-ui/core/Button';
-import Container from '@material-ui/core/Container';
-import FormControl from '@material-ui/core/FormControl';
-import Grid from '@material-ui/core/Grid';
-import Link from '@material-ui/core/Link';
-import Paper from '@material-ui/core/Paper';
-import TextField from '@material-ui/core/TextField';
-import Typography from '@material-ui/core/Typography';
-import Autocomplete, { createFilterOptions } from '@material-ui/lab/Autocomplete';
+import Button from '@mui/material/Button';
+import Container from '@mui/material/Container';
+import FormControl from '@mui/material/FormControl';
+import Grid from '@mui/material/Grid';
+import Link from '@mui/material/Link';
+import Paper from '@mui/material/Paper';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
+import Autocomplete, { createFilterOptions } from '@mui/material/Autocomplete';
 
-import { makeStyles } from '@material-ui/core/styles';
+import { makeStyles } from 'tss-react/mui';
 import { useHistory, useLocation, useParams } from 'react-router-dom';
 
 import { useModel } from './components/SWRHooks';
@@ -20,13 +20,13 @@ import { useModel } from './components/SWRHooks';
 import BasicAlert from './components/BasicAlert';
 import LoadingOverlay from './components/LoadingOverlay';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   formControl: {
     minWidth: 200,
   },
   root: {
     flexGrow: 1,
-    padding: [[theme.spacing(10), theme.spacing(2), theme.spacing(20)]],
+    padding: `${theme.spacing(10)} ${theme.spacing(2)} ${theme.spacing(20)}`,
   },
   gridContainer: {
     minHeight: '100vh',
@@ -54,7 +54,7 @@ const useStyles = makeStyles((theme) => ({
     height: '43px',
   },
   explainerText: {
-    margin: [[0, theme.spacing(1), theme.spacing(2)]]
+    margin: `0 ${theme.spacing(1)} ${theme.spacing(2)}`
   }
 }));
 
@@ -67,7 +67,7 @@ function useQuery() {
 }
 
 const Provision = () => {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const history = useHistory();
   const query = useQuery();
   const relaunch = query.has('relaunch');
@@ -283,6 +283,7 @@ const Provision = () => {
                     href="https://www.dojo-modeling.com/cheatsheet.html#dojo-terminal-commands"
                     target="_blank"
                     rel="noopener"
+                    underline="hover"
                   >
                     Built-in &quot;dojo&quot; command
                   </Link>
@@ -302,6 +303,7 @@ const Provision = () => {
                   href="https://www.dojo-modeling.com/docker.html"
                   target="_blank"
                   rel="noopener"
+                  underline="hover"
                 >
                   Dojo’s docs
                 </Link>
@@ -311,7 +313,7 @@ const Provision = () => {
           </div>
 
           <Grid item xs={12} className={classes.gridItem}>
-            <FormControl className={classes.formControl} fullWidth>
+            <FormControl variant="standard" className={classes.formControl} fullWidth>
               {/* don't show the loading spinner if we have the relaunch param as in that case
                 we aren't fetching base images */}
               {baseImageList.length || relaunch ? (
@@ -328,6 +330,7 @@ const Provision = () => {
                   selectOnFocus
                   renderInput={(params) => (
                     <TextField
+                      variant="standard"
                       {...params}
                       label={
                         relaunch ? 'Your existing image has been preselected below'
@@ -351,7 +354,7 @@ const Provision = () => {
           </Grid>
 
           <Grid item xs={12} className={classes.gridItem}>
-            <FormControl className={classes.formControl}>
+            <FormControl variant="standard" className={classes.formControl}>
               <Button
                 color="primary"
                 data-test="modelContainerLaunchBtn"

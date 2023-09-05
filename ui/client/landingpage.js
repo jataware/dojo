@@ -4,25 +4,25 @@ import axios from 'axios';
 
 import { Link as RouterLink } from 'react-router-dom';
 
-import Button from '@material-ui/core/Button';
-import Container from '@material-ui/core/Container';
-import CssBaseline from '@material-ui/core/CssBaseline';
-import Link from '@material-ui/core/Link';
-import Typography from '@material-ui/core/Typography';
+import Button from '@mui/material/Button';
+import Container from '@mui/material/Container';
+import CssBaseline from '@mui/material/CssBaseline';
+import Link from '@mui/material/Link';
+import Typography from '@mui/material/Typography';
 
-import ArrowForwardIcon from '@material-ui/icons/ArrowForward';
-import AssessmentIcon from '@material-ui/icons/Assessment';
-import PageviewIcon from '@material-ui/icons/Pageview';
-import ComputerIcon from '@material-ui/icons/Computer';
-import GitHubIcon from '@material-ui/icons/GitHub';
-import LoopIcon from '@material-ui/icons/Loop';
-import MenuBookIcon from '@material-ui/icons/MenuBook';
+import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
+import AssessmentIcon from '@mui/icons-material/Assessment';
+import PageviewIcon from '@mui/icons-material/Pageview';
+import ComputerIcon from '@mui/icons-material/Computer';
+import GitHubIcon from '@mui/icons-material/GitHub';
+import LoopIcon from '@mui/icons-material/Loop';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
 
 import useSWRImmutable from 'swr/immutable';
 
-import { makeStyles } from '@material-ui/core/styles';
+import { makeStyles } from 'tss-react/mui';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   topContentWrapper: {
     display: 'flex',
     justifyContent: 'center',
@@ -32,8 +32,8 @@ const useStyles = makeStyles((theme) => ({
     [theme.breakpoints.up('lg')]: {
       padding: theme.spacing(4),
     },
-    [theme.breakpoints.down('lg')]: {
-      padding: [[theme.spacing(3), theme.spacing(4), theme.spacing(1)]],
+    [theme.breakpoints.down('xl')]: {
+      padding: `${theme.spacing(3)} ${theme.spacing(4)} ${theme.spacing(1)}`,
     },
   },
   topHeaderTitle: {
@@ -43,7 +43,7 @@ const useStyles = makeStyles((theme) => ({
     [theme.breakpoints.up('lg')]: {
       marginBottom: theme.spacing(6),
     },
-    [theme.breakpoints.down('lg')]: {
+    [theme.breakpoints.down('xl')]: {
       marginBottom: theme.spacing(3),
     },
   },
@@ -52,7 +52,7 @@ const useStyles = makeStyles((theme) => ({
     [theme.breakpoints.up('lg')]: {
       marginBottom: theme.spacing(6),
     },
-    [theme.breakpoints.down('lg')]: {
+    [theme.breakpoints.down('xl')]: {
       marginBottom: theme.spacing(3),
     },
   },
@@ -60,8 +60,8 @@ const useStyles = makeStyles((theme) => ({
     backgroundColor: theme.palette.grey[100],
     padding: theme.spacing(4),
     height: '100%',
-    [theme.breakpoints.down('lg')]: {
-      padding: [[theme.spacing(3), theme.spacing(4), theme.spacing(4)]],
+    [theme.breakpoints.down('xl')]: {
+      padding: `${theme.spacing(3)} ${theme.spacing(4)} ${theme.spacing(4)}`,
     },
   },
   bottomContentContainer: {
@@ -139,7 +139,7 @@ const useRuns = () => {
 };
 
 const LandingPage = () => {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const [loggedIn] = useState(true);
 
   const { models, modelsLoading, modelsError } = useModels();

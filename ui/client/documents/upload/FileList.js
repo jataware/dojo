@@ -1,25 +1,23 @@
 import React from 'react';
-import { withStyles } from '@material-ui/core/styles';
 
-import ClearIcon from '@material-ui/icons/Clear';
-import IconButton from '@material-ui/core/IconButton';
-import List from '@material-ui/core/List';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemIcon from '@material-ui/core/ListItemIcon';
-import ListItemText from '@material-ui/core/ListItemText';
-import ListItemSecondaryAction from '@material-ui/core/ListItemSecondaryAction';
-import ListSubheader from '@material-ui/core/ListSubheader';
-import Paper from '@material-ui/core/Paper';
-import RadioGroup from '@material-ui/core/RadioGroup';
-import Radio from '@material-ui/core/Radio';
+import ClearIcon from '@mui/icons-material/Clear';
+import IconButton from '@mui/material/IconButton';
+import List from '@mui/material/List';
+import ListItem from '@mui/material/ListItem';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
+import ListItemSecondaryAction from '@mui/material/ListItemSecondaryAction';
+import ListSubheader from '@mui/material/ListSubheader';
+import Paper from '@mui/material/Paper';
+import RadioGroup from '@mui/material/RadioGroup';
+import Radio from '@mui/material/Radio';
+
+import { makeStyles } from 'tss-react/mui';
 
 import { formatBytes } from '../utils';
 
-/**
- *
- **/
-export const FileTile = withStyles(() => ({
-  root: {
+const useStyles = makeStyles()(() => ({
+  fileTileRoot: {
     cursor: 'pointer'
   },
   dataGrouping: {
@@ -37,47 +35,7 @@ export const FileTile = withStyles(() => ({
   },
   filenameText: {
     wordBreak: 'break-all'
-  }
-}))(({
-  classes, file, value, onClick, selected, onDelete
-}) => {
-  const handleDeleteClick = (event) => {
-    event.stopPropagation();
-    onDelete();
-  };
-
-  return (
-    <ListItem
-      selected={selected}
-      className={classes.root}
-      button
-      onClick={onClick}
-    >
-
-      <ListItemIcon className={classes.selectedContainer}>
-        <Radio value={value} disableRipple />
-      </ListItemIcon>
-
-      <ListItemText
-        classes={{ primary: classes.filenameText }}
-        primary={file.name}
-        secondary={`Size: ${formatBytes(file.size)}`}
-      />
-
-      <ListItemSecondaryAction>
-        <IconButton edge="end" aria-label="delete" onClick={handleDeleteClick}>
-          <ClearIcon />
-        </IconButton>
-      </ListItemSecondaryAction>
-
-    </ListItem>
-  );
-});
-
-/**
- *
- **/
-export const SelectedFileList = withStyles(() => ({
+  },
   root: {
     border: '1px solid #eaeaea',
     borderRadius: 0,
@@ -94,35 +52,84 @@ export const SelectedFileList = withStyles(() => ({
     right: 0,
     backgroundColor: 'white'
   }
-}))(({
-  classes, files, onItemClick, onDelete, selectedIndex
-}) => (
-  <Paper
-    className={classes.root}
-  >
-    <RadioGroup
-      value={`${selectedIndex}`}
+}));
+
+/**
+ *
+ **/
+export const FileTile = ({
+  file, value, onClick, selected, onDelete
+}) => {
+  const { classes } = useStyles();
+
+  const handleDeleteClick = (event) => {
+    event.stopPropagation();
+    onDelete();
+  };
+
+  return (
+    <ListItem
+      selected={selected}
+      className={classes.fileTileRoot}
+      button
+      onClick={onClick}
     >
 
-      <List
-        subheader={(
-          <ListSubheader component="div">
-            Files
-          </ListSubheader>
-        )}
-        className={classes.list}
+      <ListItemIcon className={classes.selectedContainer}>
+        <Radio value={value} disableRipple />
+      </ListItemIcon>
+
+      <ListItemText
+        classes={{ primary: classes.filenameText }}
+        primary={file.name}
+        secondary={`Size: ${formatBytes(file.size)}`}
+      />
+
+      <ListItemSecondaryAction>
+        <IconButton edge="end" aria-label="delete" onClick={handleDeleteClick} size="large">
+          <ClearIcon />
+        </IconButton>
+      </ListItemSecondaryAction>
+
+    </ListItem>
+  );
+};
+
+/**
+ *
+ **/
+export const SelectedFileList = ({
+  files, onItemClick, onDelete, selectedIndex
+}) => {
+  const { classes } = useStyles();
+  return (
+    <Paper
+      className={classes.root}
+    >
+      <RadioGroup
+        value={`${selectedIndex}`}
       >
-        {files.map((file, index) => file && (
-          <FileTile
-            onDelete={() => onDelete(index)}
-            selected={index === selectedIndex}
-            onClick={() => onItemClick(index)}
-            value={`${index}`}
-            file={file}
-            key={file.path + file.size}
-          />
-        ))}
-      </List>
-    </RadioGroup>
-  </Paper>
-));
+
+        <List
+          subheader={(
+            <ListSubheader component="div">
+              Files
+            </ListSubheader>
+          )}
+          className={classes.list}
+        >
+          {files.map((file, index) => file && (
+            <FileTile
+              onDelete={() => onDelete(index)}
+              selected={index === selectedIndex}
+              onClick={() => onItemClick(index)}
+              value={`${index}`}
+              file={file}
+              key={file.path + file.size}
+            />
+          ))}
+        </List>
+      </RadioGroup>
+    </Paper>
+  );
+};

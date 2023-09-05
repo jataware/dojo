@@ -1,16 +1,17 @@
 import React from 'react';
 
-import InfoIcon from '@material-ui/icons/Info';
-import CheckIcon from '@material-ui/icons/Check';
+import InfoIcon from '@mui/icons-material/Info';
+import CheckIcon from '@mui/icons-material/Check';
 
-import CircularProgress from '@material-ui/core/CircularProgress';
-import ListItem from '@material-ui/core/ListItem';
-import ListItemIcon from '@material-ui/core/ListItemIcon';
-import ListItemText from '@material-ui/core/ListItemText';
-import Tooltip from '@material-ui/core/Tooltip';
-import { withStyles } from '@material-ui/core/styles';
+import CircularProgress from '@mui/material/CircularProgress';
+import ListItem from '@mui/material/ListItem';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import ListItemText from '@mui/material/ListItemText';
+import Tooltip from '@mui/material/Tooltip';
 
-const TransformationButton = withStyles(({ palette }) => ({
+import { makeStyles } from 'tss-react/mui';
+
+const useStyles = makeStyles()(({ palette }) => ({
   complete: {
     color: palette.grey[500],
   },
@@ -33,8 +34,9 @@ const TransformationButton = withStyles(({ palette }) => ({
     display: 'flex',
     justifyContent: 'center',
   },
-}))(({
-  classes,
+}));
+
+const TransformationButton = ({
   isComplete,
   Icon,
   title,
@@ -43,6 +45,7 @@ const TransformationButton = withStyles(({ palette }) => ({
   required,
   error,
 }) => {
+  const { classes } = useStyles();
   const displayIcon = () => {
     if (isComplete) {
       return <CheckIcon className={classes.check} fontSize="large" />;
@@ -105,6 +108,6 @@ const TransformationButton = withStyles(({ palette }) => ({
       </span>
     </Tooltip>
   );
-});
+};
 
 export default TransformationButton;

@@ -1,14 +1,14 @@
 import React from 'react';
-import clsx from 'clsx';
 
-import Button from '@material-ui/core/Button';
-import Divider from '@material-ui/core/Divider';
-import Typography from '@material-ui/core/Typography';
-import { makeStyles } from '@material-ui/core/styles';
+import Button from '@mui/material/Button';
+import Divider from '@mui/material/Divider';
+import Typography from '@mui/material/Typography';
+import { makeStyles } from 'tss-react/mui';
 
-import TimelineIcon from '@material-ui/icons/Timeline'; // feature
-import LanguageIcon from '@material-ui/icons/Language'; // geo
-import EventIcon from '@material-ui/icons/Event'; // date
+import TimelineIcon from '@mui/icons-material/Timeline'; // feature
+import LanguageIcon from '@mui/icons-material/Language'; // geo
+import EventIcon from '@mui/icons-material/Event'; // date
+// import { keyframes } from '@emotion/react';
 
 // TODO use colors from theme
 const inferredColor = '#337288'; // inferred/hint/"action" blue-gray
@@ -27,11 +27,21 @@ const mapTypeIcon = {
   time: EventIcon // date
 };
 
-const useStyles = makeStyles((theme) => ({
+// MUI-TODO: animation is not displaying properly in v5, sort this out later
+// const buttonPulse = keyframes`
+//   from {
+//     outline 2px solid #86b5e3;
+//   }
+//   to {
+//     outline: 2px solid white;
+//   }
+// `;
+
+const useStyles = makeStyles()((theme) => ({
   multipartRoot: {
     position: 'absolute',
     left: 0,
-    top: 0,
+    top: '8px',
     display: 'flex',
     justifyContent: 'center',
   },
@@ -42,7 +52,7 @@ const useStyles = makeStyles((theme) => ({
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-    margin: [[theme.spacing(1), 0]],
+    margin: `${theme.spacing(1)} 0`,
   },
   upperWrapperMulti: {
     // left margin to keep the button centered between the columns (accounting for the icon)
@@ -59,21 +69,17 @@ const useStyles = makeStyles((theme) => ({
     color: theme.palette.primary.contrastText,
     borderRadius: theme.shape.borderRadius,
     fontSize: '0.6rem',
-    padding: [[0, theme.spacing(0.5)]],
+    padding: `0 ${theme.spacing(0.5)}`,
+  },
+  // specific spacing for the multipart header badge to match that of the single header badge
+  statusBadgeMulti: {
+    top: -5,
   },
   selectedHeader: {
     fontWeight: 'bold'
   },
   headerWrapper: {
     width: '100%',
-  },
-  headerText: {
-    // magic number that pushes us down to put the border-bottom exactly on top of the columns
-    lineHeight: '32px',
-    width: '100%',
-  },
-  bottomBorder: {
-    borderBottom: `2px solid ${annotatedColor}`,
   },
   // very specific styling in this divider to replicate the Datagrid column header separator
   divider: {
@@ -85,22 +91,13 @@ const useStyles = makeStyles((theme) => ({
   },
   highlightedButton: {
     backgroundColor: theme.palette.grey[100],
-    animation: '$pulse 1.5s infinite alternate',
   },
-  '@keyframes pulse': {
-    from: {
-      outline: `1px solid ${theme.palette.primary.light}`,
-    },
-    to: {
-      outline: '1px solid white',
-    }
-  }
 }));
 
 const MultiPartHeader = ({
   status, colSpan, TypeIcon, qualifies, showMarkers, buttonClick, column
 }) => {
-  const classes = useStyles();
+  const { classes, cx } = useStyles();
   const shouldDisplayStatus = ((['inferred', 'primary'].includes(status) || qualifies));
 
   return (
@@ -111,16 +108,17 @@ const MultiPartHeader = ({
       {showMarkers && shouldDisplayStatus && (
         <Typography
           variant="caption"
-          className={clsx([classes.statusBadge])}
+          className={cx(classes.statusBadge, classes.statusBadgeMulti)}
         >
           {qualifies ? 'qualifier' : status}
         </Typography>
       )}
-      <div className={clsx([classes.upperWrapper, classes.upperWrapperMulti])}>
+      <div className={cx([classes.upperWrapper, classes.upperWrapperMulti])}>
         <Button
           variant="outlined"
           size="small"
           onClick={() => buttonClick(column)}
+          color="grey"
         >
           Edit
         </Button>
@@ -147,7 +145,7 @@ const Header = ({
   buttonClick,
   drawerOpen = false,
 }) => {
-  const classes = useStyles();
+  const { classes, cx } = useStyles();
   const isAnnotated = ['annotated', 'primary'].includes(status);
   const isInferred = status === 'inferred' && !isMultiPartMember;
   // only display the status badge if it is inferred or primary OR it is a qualifier
@@ -163,11 +161,7 @@ const Header = ({
 
     <div
       style={{ color: !isInferredButDisabled && mapStatusColor[status] }}
-      className={
-        clsx({
-          [classes.headerWrapper]: true,
-        })
-      }
+      className={classes.headerWrapper}
     >
 
       {isMultiPartBase && (
@@ -191,8 +185,14 @@ const Header = ({
           <Button
             variant="outlined"
             disabled={isMultiPartMember}
+            // MUI-TODO
+            // sx={{
+            // eslint-disable-next-line max-len
+            //   animation: isHighlighted && !isAnnotated ? `${buttonPulse} 1.5s infinite alternate` : '',
+            // }}
             style={{ visibility: isMultiPartMember ? 'hidden' : 'visible' }}
             size="small"
+            color="grey"
             onClick={() => buttonClick(column)}
             /* Disable the pulse animation when the drawer is open or once it's annotated */
             className={
@@ -221,11 +221,7 @@ const Header = ({
       )}
 
       <Typography
-        className={clsx({
-          [classes.headerText]: true,
-          [classes.selectedHeader]: isHighlighted,
-          [classes.bottomBorder]: isAnnotated,
-        })}
+        className={cx({ [classes.selectedHeader]: isHighlighted })}
         variant="subtitle1"
         align="center"
       >

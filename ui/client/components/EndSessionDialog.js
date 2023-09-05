@@ -2,29 +2,29 @@ import React, { useState } from 'react';
 
 import axios from 'axios';
 
-import Button from '@material-ui/core/Button';
-import Dialog from '@material-ui/core/Dialog';
-import DialogActions from '@material-ui/core/DialogActions';
-import DialogContent from '@material-ui/core/DialogContent';
-import DialogContentText from '@material-ui/core/DialogContentText';
-import DialogTitle from '@material-ui/core/DialogTitle';
-import Link from '@material-ui/core/Link';
-import NavigateNextIcon from '@material-ui/icons/NavigateNext';
-import TextField from '@material-ui/core/TextField';
-import Typography from '@material-ui/core/Typography';
+import Button from '@mui/material/Button';
+import Dialog from '@mui/material/Dialog';
+import DialogActions from '@mui/material/DialogActions';
+import DialogContent from '@mui/material/DialogContent';
+import DialogContentText from '@mui/material/DialogContentText';
+import DialogTitle from '@mui/material/DialogTitle';
+import Link from '@mui/material/Link';
+import NavigateNextIcon from '@mui/icons-material/NavigateNext';
+import TextField from '@mui/material/TextField';
+import Typography from '@mui/material/Typography';
 
-import { makeStyles } from '@material-ui/core/styles';
+import { makeStyles } from 'tss-react/mui';
 
 import { useDirective, useModel } from './SWRHooks';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   root: {
     minHeight: '340px',
     minWidth: '500px',
   },
   textArea: {
     width: '100%',
-    margin: [[theme.spacing(1), 0]],
+    margin: `${theme.spacing(1)} 0`,
   },
   directiveText: {
     backgroundColor: '#445d6e',
@@ -46,7 +46,7 @@ const EndSessionDialog = ({
   const [commitMessage, setCommitMessage] = useState();
   const [published, setPublished] = useState(false);
 
-  const classes = useStyles();
+  const { classes } = useStyles();
   const { directive } = useDirective(model.id);
   const { mutateModel } = useModel(model.id);
 
@@ -85,16 +85,16 @@ const EndSessionDialog = ({
         open={open}
         onClose={handleClose}
       >
-        <DialogTitle id="alert-dialog-title" align="center" disableTypography>
+        <DialogTitle id="alert-dialog-title" align="center">
           <Typography variant="h5">Your model was successfully published!</Typography>
         </DialogTitle>
         <DialogContent>
           <DialogContentText align="center">
-            View your model on <Link href={causemosUrl}>Causemos</Link>
+            View your model on <Link href={causemosUrl} underline="hover">Causemos</Link>
           </DialogContentText>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleClose}>Close</Button>
+          <Button onClick={handleClose} color="grey">Close</Button>
         </DialogActions>
       </Dialog>
     );
@@ -108,7 +108,7 @@ const EndSessionDialog = ({
       aria-describedby="alert-dialog-description"
       classes={{ paper: classes.root }}
     >
-      <DialogTitle id="alert-dialog-title" align="center" disableTypography>
+      <DialogTitle id="alert-dialog-title" align="center">
         <Typography variant="h5">Are you ready to publish the model?</Typography>
       </DialogTitle>
       <DialogContent>

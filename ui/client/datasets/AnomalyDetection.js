@@ -1,27 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import clsx from 'clsx';
-
-import Container from '@material-ui/core/Container';
-import Typography from '@material-ui/core/Typography';
-
-import { withStyles } from '@material-ui/core/styles';
-
 import axios from 'axios';
+
+import Container from '@mui/material/Container';
+import Typography from '@mui/material/Typography';
+
+import { makeStyles } from 'tss-react/mui';
+
 import { Navigation } from '.';
 
-const mapConfidenceMessage = {
-  low: 'File looks good!',
-  medium: 'File might have problems.',
-  high: 'File will probably have problems.'
-};
-
-const RunJob = withStyles(({ spacing }) => ({
+const useStyles = makeStyles()((theme) => ({
   root: {
     display: 'flex',
     flexDirection: 'column',
     flex: 1,
     height: '100%',
-    padding: [[0, spacing(4), spacing(2), spacing(4)]],
+    padding: `0 ${theme.spacing(4)} ${theme.spacing(2)} ${theme.spacing(4)}`,
   },
   header: {
   },
@@ -60,10 +53,19 @@ const RunJob = withStyles(({ spacing }) => ({
   riskhight: {
     color: 'rgba(255,0,0,0.4)',
   },
-}))(({
-  classes, datasetInfo, setDatasetInfo, stepTitle, handleNext, handleBack, job_id, ...props
+}));
+
+const mapConfidenceMessage = {
+  low: 'File looks good!',
+  medium: 'File might have problems.',
+  high: 'File will probably have problems.'
+};
+
+const RunJob = ({
+  datasetInfo, setDatasetInfo, stepTitle, handleNext, handleBack, job_id, ...props
 }) => {
   const [jobData, setJobData] = useState(null);
+  const { classes, cx } = useStyles();
 
   useEffect(() => {
     const updateJobData = () => {
@@ -111,7 +113,7 @@ const RunJob = withStyles(({ spacing }) => ({
           &nbsp;
         {
             jobData?.result ? (
-              <div className={clsx([
+              <div className={cx([
                 classes.riskResult,
                 classes[`risk${jobData?.result?.anomalyConfidence}`]
               ])}
@@ -144,5 +146,6 @@ const RunJob = withStyles(({ spacing }) => ({
       />
     </Container>
   );
-});
+};
+
 export default RunJob;

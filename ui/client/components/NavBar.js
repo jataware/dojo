@@ -2,21 +2,23 @@ import React, { useContext } from 'react';
 
 import { Link } from 'react-router-dom';
 
-import AppBar from '@material-ui/core/AppBar';
-import Button from '@material-ui/core/Button';
-import IconButton from '@material-ui/core/IconButton';
-import Toolbar from '@material-ui/core/Toolbar';
-import Tooltip from '@material-ui/core/Tooltip';
-import { lighten, makeStyles } from '@material-ui/core/styles';
+import AppBar from '@mui/material/AppBar';
+import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
+import Toolbar from '@mui/material/Toolbar';
+import Tooltip from '@mui/material/Tooltip';
+import { lighten } from '@mui/material/styles';
+
+import { makeStyles } from 'tss-react/mui';
 
 import { ThemeContext } from './ThemeContextProvider';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   appBarRoot: {
     backgroundColor: lighten(theme.palette.primary.light, 0.6),
   },
   toolbar: {
-    padding: [[0, theme.spacing(5)]],
+    padding: `0 ${theme.spacing(5)}`,
     gap: theme.spacing(3),
   },
   dojoIcon: {
@@ -30,7 +32,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 const NavBar = () => {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const { showNavBar } = useContext(ThemeContext);
 
   if (!showNavBar) {
@@ -56,30 +58,46 @@ const NavBar = () => {
         <Button
           component={Link}
           to="/models"
+          color="grey"
         >
           Models
         </Button>
         <Button
           component={Link}
           to="/datasets"
+          color="grey"
         >
           Datasets
         </Button>
         <Button
           component={Link}
           to="/runs"
+          color="grey"
         >
           Model Runs
         </Button>
         <Button
           component={Link}
           to="/documents"
+          color="grey"
         >
           Documents
         </Button>
         <span className={classes.spacer} />
-        <Button href="https://www.dojo-modeling.com" target="_blank">Documentation</Button>
-        <Button href="https://github.com/jataware/dojo" target="_blank">GitHub</Button>
+        <Button
+          href="https://www.dojo-modeling.com"
+          target="_blank"
+          color="grey"
+        >
+          Documentation
+        </Button>
+        <Button
+          href="https://github.com/jataware/dojo"
+          target="_blank"
+          color="grey"
+        >
+          GitHub
+        </Button>
       </Toolbar>
     </AppBar>
   );

@@ -1,20 +1,20 @@
 import React, { useState } from 'react';
 
-import AppBar from '@material-ui/core/AppBar';
-import Box from '@material-ui/core/Box';
-import Button from '@material-ui/core/Button';
-import CloseIcon from '@material-ui/icons/Close';
-import Dialog from '@material-ui/core/Dialog';
-import IconButton from '@material-ui/core/IconButton';
-import Slide from '@material-ui/core/Slide';
-import Toolbar from '@material-ui/core/Toolbar';
-import Typography from '@material-ui/core/Typography';
+import AppBar from '@mui/material/AppBar';
+import Box from '@mui/material/Box';
+import Button from '@mui/material/Button';
+import CloseIcon from '@mui/icons-material/Close';
+import Dialog from '@mui/material/Dialog';
+import IconButton from '@mui/material/IconButton';
+import Slide from '@mui/material/Slide';
+import Toolbar from '@mui/material/Toolbar';
+import Typography from '@mui/material/Typography';
 
-import { makeStyles } from '@material-ui/core/styles';
+import { makeStyles } from 'tss-react/mui';
 
 import ConfirmDialog from './ConfirmDialog';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   title: {
     marginLeft: theme.spacing(2),
     flex: 1,
@@ -33,7 +33,7 @@ const FullScreenDialog = ({
 }) => {
   const saveVisible = showSave !== false;
   const [openConfirmCloseDialog, setOpenConfirmCloseDialog] = useState(false);
-  const classes = useStyles();
+  const { classes } = useStyles();
   const handleClose = () => {
     if (noConfirm) {
       setOpen(false);
@@ -62,6 +62,8 @@ const FullScreenDialog = ({
         open={open}
         onClose={handleClose}
         TransitionComponent={Transition}
+        // lower this so the dialog doesn't conflict with drawers etc
+        sx={{ zIndex: '99' }}
         {...props}
       >
         <AppBar position="sticky">
@@ -72,6 +74,7 @@ const FullScreenDialog = ({
               data-test="fullScreenDialogCloseBtn"
               edge="start"
               onClick={handleClose}
+              size="large"
             >
               <CloseIcon />
             </IconButton>

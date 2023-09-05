@@ -5,10 +5,12 @@ import React, {
   useState
 } from 'react';
 
-import Button from '@material-ui/core/Button';
-import Tooltip from '@material-ui/core/Tooltip';
-import Typography from '@material-ui/core/Typography';
-import { withStyles, useTheme } from '@material-ui/core/styles';
+import Button from '@mui/material/Button';
+import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
+import { useTheme } from '@mui/material/styles';
+
+import { makeStyles } from 'tss-react/mui';
 
 import '@geoman-io/leaflet-geoman-free';
 import '@geoman-io/leaflet-geoman-free/dist/leaflet-geoman.css';
@@ -126,7 +128,7 @@ const Geoman = ({ setDrawings, mapBoundsLatLng, setDisableDrawerClose }) => {
   return null;
 };
 
-export default withStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   noMapData: {
     paddingTop: theme.spacing(14),
   },
@@ -147,12 +149,13 @@ export default withStyles((theme) => ({
   underMapContent: {
     display: 'flex',
     justifyContent: 'space-between',
-    margin: [[theme.spacing(2), theme.spacing(1)]],
+    margin: `${theme.spacing(2)} ${theme.spacing(1)}`,
     gap: theme.spacing(2),
   },
-}))(({
+}));
+
+export default ({
   mapBounds,
-  classes,
   saveDrawings,
   savedDrawings,
   closeDrawer,
@@ -163,6 +166,7 @@ export default withStyles((theme) => ({
   annotations,
   cleanupRef,
 }) => {
+  const { classes } = useStyles();
   const [drawings, setDrawings] = useState([]);
   const theme = useTheme();
   const [map, setMap] = useState(null);
@@ -313,4 +317,4 @@ export default withStyles((theme) => ({
       )}
     </div>
   );
-});
+};

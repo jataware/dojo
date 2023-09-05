@@ -1,16 +1,14 @@
 import React, { useCallback, useEffect, useState } from 'react';
 
-import clsx from 'clsx';
+import Button from '@mui/material/Button';
+import Card from '@mui/material/Card';
+import CardActions from '@mui/material/CardActions';
+import CardContent from '@mui/material/CardContent';
+import CircularProgress from '@mui/material/CircularProgress';
+import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
 
-import Button from '@material-ui/core/Button';
-import Card from '@material-ui/core/Card';
-import CardActions from '@material-ui/core/CardActions';
-import CardContent from '@material-ui/core/CardContent';
-import CircularProgress from '@material-ui/core/CircularProgress';
-import Tooltip from '@material-ui/core/Tooltip';
-import Typography from '@material-ui/core/Typography';
-
-import { withStyles } from '@material-ui/core/styles';
+import { makeStyles } from 'tss-react/mui';
 
 import useElwoodData from './useElwoodData';
 import BasicAlert from '../../components/BasicAlert';
@@ -63,7 +61,7 @@ const Previewed = ({
   return null;
 };
 
-export default withStyles(() => ({
+const useStyles = makeStyles()(() => ({
   root: {
     width: '275px',
     margin: '0 auto',
@@ -89,8 +87,9 @@ export default withStyles(() => ({
   cardContent: {
     position: 'relative',
   },
-}))(({
-  classes,
+}));
+
+export default ({
   datasetId,
   jobString,
   createPreviewArgs,
@@ -98,6 +97,7 @@ export default withStyles(() => ({
   cleanupRef,
   disabled,
 }) => {
+  const { classes, cx } = useStyles();
   const [showPreview, setShowPreview] = useState(false);
   const [loading, setLoading] = useState(false);
   const [after, setAfter] = useState('___');
@@ -149,7 +149,7 @@ export default withStyles(() => ({
           </Typography>
           <Typography
             variant="subtitle1"
-            className={clsx(classes.extraGutter, classes.titleWeight)}
+            className={cx(classes.extraGutter, classes.titleWeight)}
             color="textSecondary"
           >
             after transformation:
@@ -172,7 +172,11 @@ export default withStyles(() => ({
             arrow
           >
             <span>
-              <Button onClick={startPreview} disabled={loading || disabled}>
+              <Button
+                onClick={startPreview}
+                disabled={loading || disabled}
+                color="grey"
+              >
                 Preview
               </Button>
             </span>
@@ -190,4 +194,4 @@ export default withStyles(() => ({
       />
     </>
   );
-});
+};

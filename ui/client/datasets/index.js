@@ -1,23 +1,23 @@
 import React from 'react';
-import Button from '@material-ui/core/Button';
-import { withStyles } from '@material-ui/core/styles';
+import Button from '@mui/material/Button';
 
 /**
  *
  * */
-export const Navigation = withStyles(({ spacing }) => ({
-  buttonContainer: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    marginTop: spacing(2)
-  },
-}))(({
-  classes, handleNext, handleBack, label, disabled, disableNext, ...props
+export const Navigation = ({
+  handleNext, handleBack, label, disabled, disableNext, ...props
 }) => (
-  <div className={classes.buttonContainer}>
+  <div
+    style={{
+      display: 'flex',
+      justifyContent: 'space-between',
+      marginTop: '16px',
+    }}
+  >
     <Button
       onClick={handleBack}
       disabled={disabled}
+      color="grey"
     >
       Back
     </Button>
@@ -33,4 +33,4 @@ export const Navigation = withStyles(({ spacing }) => ({
       </Button>
     )}
   </div>
-));
+);

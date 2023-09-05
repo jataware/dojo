@@ -1,27 +1,27 @@
 import React, { useEffect, useRef, useState } from 'react';
 
-import Container from '@material-ui/core/Container';
-import Divider from '@material-ui/core/Divider';
-import Paper from '@material-ui/core/Paper';
-import TextField from '@material-ui/core/TextField';
+import Container from '@mui/material/Container';
+import Divider from '@mui/material/Divider';
+import Paper from '@mui/material/Paper';
+import TextField from '@mui/material/TextField';
 
-import { makeStyles } from '@material-ui/core/styles';
+import { makeStyles } from 'tss-react/mui';
 
 // we need these to be consistent in multiple places
 // so the line numbers and text lines match up
 const LINE_HEIGHT = 21;
 const FONT_SIZE = '14px';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   root: {
     display: 'flex',
     fontFamily: 'monospace',
     margin: theme.spacing(4),
     backgroundColor: theme.palette.grey[100],
-    padding: [[theme.spacing(3), 0]],
+    padding: `${theme.spacing(3)} 0`,
   },
   divider: {
-    margin: [[0, '14px']],
+    margin: '0 14px',
   },
   textareaAutosize: {
     overflow: 'auto',
@@ -61,7 +61,7 @@ const displayLineNumbers = () => {
 };
 
 const SimpleEditor = ({ editorContents, setEditorContents }) => {
-  const classes = useStyles();
+  const { classes } = useStyles();
   // we need this ref to access the height of the textarea so we can display
   // the appropriate number of line numbers
   const textRef = useRef(null);
@@ -103,6 +103,7 @@ const SimpleEditor = ({ editorContents, setEditorContents }) => {
         </div>
         <Divider orientation="vertical" flexItem className={classes.divider} />
         <TextField
+          variant="standard"
           id="textField"
           data-test="terminalEditorTextArea"
           multiline

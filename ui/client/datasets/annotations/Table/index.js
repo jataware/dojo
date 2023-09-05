@@ -1,18 +1,18 @@
 import React, { useRef, useState } from 'react';
 
-import clsx from 'clsx';
 import get from 'lodash/get';
 import find from 'lodash/find';
 import isEmpty from 'lodash/isEmpty';
 
-import { withStyles } from '@material-ui/core/styles';
-import { GridOverlay, DataGrid } from '@material-ui/data-grid';
-import FormControlLabel from '@material-ui/core/FormControlLabel';
-import Checkbox from '@material-ui/core/Checkbox';
-import Button from '@material-ui/core/Button';
-import Tooltip from '@material-ui/core/Tooltip';
-import LinearProgress from '@material-ui/core/LinearProgress';
-import InboxIcon from '@material-ui/icons/MoveToInbox';
+import { makeStyles } from 'tss-react/mui';
+
+import { GridOverlay, DataGrid } from '@mui/x-data-grid';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Checkbox from '@mui/material/Checkbox';
+import Button from '@mui/material/Button';
+import Tooltip from '@mui/material/Tooltip';
+import LinearProgress from '@mui/material/LinearProgress';
+import InboxIcon from '@mui/icons-material/MoveToInbox';
 
 import { groupColumns } from './helpers';
 import BasicAlert from '../../../components/BasicAlert';
@@ -23,52 +23,25 @@ import AnnotationDialog from './UploadAnnotationFileDialog';
 
 const rowsPerPageOptions = [25, 50, 100];
 
-const Cell = withStyles(({ palette, spacing }) => ({
-  root: {
+const ROW_HEIGHT = 52;
+const HEADER_HEIGHT = 80;
+
+const useStyles = makeStyles()((theme) => ({
+  cellRoot: {
     marginLeft: -6,
     width: '115%',
     marginRight: -6,
     // NOTE How much to space cell content left. We can also use flex + center items
-    paddingLeft: spacing(2),
+    paddingLeft: theme.spacing(2),
     cursor: 'pointer',
   },
   hoveredCell: {
-    backgroundColor: palette.grey[100],
+    width: '115%',
+    height: '100%',
+    display: 'flex',
+    alignItems: 'center',
+    backgroundColor: theme.palette.grey[100],
   },
-}))(({
-  isHighlighted, classes, value
-}) => (
-  <span
-    className={clsx({
-      [classes.root]: true,
-      [classes.hoveredCell]: isHighlighted,
-    })}
-  >
-    {value}
-  </span>
-));
-
-const ROW_HEIGHT = 52;
-const HEADER_HEIGHT = 80;
-
-/**
- * Blue linear loading animation displayed when table loading/searching of
- * features is still in progress.
- */
-function CustomLoadingOverlay() {
-  return (
-    <GridOverlay>
-      <div style={{
-        position: 'absolute', top: 0, width: '100%', zIndex: 15
-      }}
-      >
-        <LinearProgress style={{ height: 3 }} />
-      </div>
-    </GridOverlay>
-  );
-}
-
-export default withStyles(({ palette }) => ({
   root: {
     display: 'flex',
     flexDirection: 'column',
@@ -79,13 +52,19 @@ export default withStyles(({ palette }) => ({
     maxHeight: `${(ROW_HEIGHT * 15) + HEADER_HEIGHT + 10}px`,
   },
   row: {
-    backgroundColor: `${palette.common.white} !important`
+    backgroundColor: `${theme.palette.common.white} !important`
   },
   disabledEvents: {
     pointerEvents: 'none'
   },
   columnHeaderTitle: {
     padding: '0 4px !important',
+  },
+  displayUnderline: {
+    borderBottom: '2px solid #66BB6A',
+  },
+  noUnderline: {
+    borderBottom: `2px solid ${theme.palette.common.white}`,
   },
   hideHeaderBorder: {
     // hide the blue outline on the datagrid header when focused
@@ -122,13 +101,49 @@ export default withStyles(({ palette }) => ({
       visibility: 'hidden',
     },
   },
-}), { name: 'TableAnnotation' })(({
-  classes, annotateColumns, rows,
+}));
+
+const Cell = ({
+  isHighlighted, value
+}) => {
+  const { classes, cx } = useStyles();
+  return (
+    <span
+      className={cx({
+        [classes.cellRoot]: true,
+        [classes.hoveredCell]: isHighlighted,
+      })}
+    >
+      {value}
+    </span>
+  );
+};
+
+/**
+ * Blue linear loading animation displayed when table loading/searching of
+ * features is still in progress.
+ */
+function CustomLoadingOverlay() {
+  return (
+    <GridOverlay>
+      <div style={{
+        position: 'absolute', top: 0, width: '100%', zIndex: 15
+      }}
+      >
+        <LinearProgress style={{ height: 3 }} />
+      </div>
+    </GridOverlay>
+  );
+}
+
+export default ({
+  annotateColumns, rows,
   columns, annotations, inferredData,
   loading, multiPartData, setMultiPartData,
   validateDateFormat, columnStats,
   fieldsConfig, addingAnnotationsAllowed, onUploadAnnotations, datasetID
 }) => {
+  const { classes, cx } = useStyles();
   const [pageSize, setPageSize] = useState(rowsPerPageOptions[0]);
   const [highlightedColumn, setHighlightedColumn] = useState(null);
   const [editingColumn, setEditingColumn] = useState(null);
@@ -220,39 +235,47 @@ export default withStyles(({ palette }) => ({
   const sortedColumns = groupColumns(columns, multiPartData, annotations);
 
   const formattedColumns = sortedColumns
-    .map((column) => ({
-      ...column,
+    .map((column) => {
+      const columnAttributes = calcColumnAttrs(column.field);
+      const isAnnotated = ['annotated', 'primary'].includes(columnAttributes.status);
+      return {
+        ...column,
 
-      flex: 1,
-      minWidth: 200,
-      sortable: false,
-      disableReorder: true,
-      // add this class to hide the vertical separators between the headers
-      // we'll add it manually in the Header itself so that we can handle multiparts
-      headerClassName: classes.hideRightSeparator,
+        flex: 1,
+        minWidth: 200,
+        sortable: false,
+        disableReorder: true,
+        // add this class to hide the vertical separators between the headers
+        // we'll add it manually in the Header itself so that we can handle multiparts
+        headerClassName: cx(
+          classes.hideRightSeparator,
+          { [classes.displayUnderline]: isAnnotated, [classes.noUnderline]: !isAnnotated }
+        ),
 
-      headerName: column.field,
+        headerName: column.field,
+        headerAlign: 'center',
 
-      renderHeader: ({ colDef }) => (
-        <Header
-          addingAnnotationsAllowed={addingAnnotationsAllowed}
-          showMarkers={isShowMarkers}
-          {...calcColumnAttrs(colDef.field)}
-          heading={colDef.headerName}
-          column={column}
-          buttonClick={openAnnotationPanel}
-          isHighlighted={(colDef.field === highlightedColumn)}
-          drawerOpen={Boolean(editingColumn)}
-        />
-      ),
+        renderHeader: ({ colDef }) => (
+          <Header
+            addingAnnotationsAllowed={addingAnnotationsAllowed}
+            showMarkers={isShowMarkers}
+            {...columnAttributes}
+            heading={colDef.headerName}
+            column={column}
+            buttonClick={openAnnotationPanel}
+            isHighlighted={(colDef.field === highlightedColumn)}
+            drawerOpen={Boolean(editingColumn)}
+          />
+        ),
 
-      renderCell: ({ colDef, value }) => (
-        <Cell
-          {...calcColumnAttrs(colDef.field)}
-          value={value}
-        />
-      )
-    }));
+        renderCell: ({ value }) => (
+          <Cell
+            {...columnAttributes}
+            value={value}
+          />
+        )
+      };
+    });
 
   const gridRef = useRef(null);
 
@@ -263,20 +286,22 @@ export default withStyles(({ palette }) => ({
     });
   }
 
-  const highlightColumn = (cell, event) => {
-    // Get the next column to highlight from relatedTarget - this works for arrow key navigation
-    const clicked = event.relatedTarget;
-    if (clicked?.getAttribute('role') !== 'cell') {
-      // only continue if the user has clicked on a 'cell'
-      return;
-    }
+  // TODO: this isn't working with datagrid V5+ because onCellBlur was deprecated
+  // we need a new way to hook it into the DG flow
+  // or more likely come up with a less brittle solution
+  // const highlightColumn = (cell, event) => {
+  //   // Get the next column to highlight from relatedTarget - this works for arrow key navigation
+  //   const clicked = event.target.nextSibling;
+  //   if (clicked?.getAttribute('role') !== 'cell') {
+  //     // only continue if the user has clicked on a 'cell'
+  //     return;
+  //   }
+  //   // Fetch the column name out of the element's data-field attribute
+  //   const nextHighlight = clicked.getAttribute('data-field');
 
-    // Fetch the column name out of the element's data-field attribute
-    const nextHighlight = clicked.getAttribute('data-field');
-
-    // and set our state to the column name, if it existed
-    if (nextHighlight) setHighlightedColumn(nextHighlight);
-  };
+  //   // and set our state to the column name, if it existed
+  //   if (nextHighlight) setHighlightedColumn(nextHighlight);
+  // };
 
   const handleCellKeyDown = (cell, event) => {
     if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
@@ -355,10 +380,10 @@ export default withStyles(({ palette }) => ({
           LoadingOverlay: CustomLoadingOverlay
         }}
         classes={{
-          root: clsx([classes.grid, classes.gridScroll, classes.hideHeaderBorder]),
+          root: cx([classes.grid, classes.gridScroll, classes.hideHeaderBorder]),
           row: classes.row,
-          cell: clsx({ [classes.disabledEvents]: isEditing }),
-          columnHeader: clsx({
+          cell: cx({ [classes.disabledEvents]: isEditing }),
+          columnHeader: cx({
             [classes.disabledEvents]: isEditing,
             [classes.columnHeaderTitle]: true,
           }),
@@ -373,7 +398,7 @@ export default withStyles(({ palette }) => ({
         onColumnHeaderDoubleClick={openAnnotationPanel}
         GridSortModel={null}
         onCellKeyDown={handleCellKeyDown}
-        onCellBlur={highlightColumn}
+        // onCellBlur={highlightColumn}
         onCellClick={(cell) => setHighlightedColumn(cell.field)}
       />
 
@@ -415,4 +440,4 @@ export default withStyles(({ palette }) => ({
       />
     </div>
   );
-});
+};

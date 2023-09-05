@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 
-import Button from '@material-ui/core/Button';
-import Dialog from '@material-ui/core/Dialog';
-import Typography from '@material-ui/core/Typography';
+import Button from '@mui/material/Button';
+import Dialog from '@mui/material/Dialog';
+import Typography from '@mui/material/Typography';
 
-import { makeStyles } from '@material-ui/core/styles';
+import { makeStyles } from 'tss-react/mui';
 
-const useStyles = makeStyles(() => ({
+const useStyles = makeStyles()(() => ({
   buttons: {
     backgroundColor: '#C8C8C8',
   },
@@ -16,7 +16,7 @@ const useStyles = makeStyles(() => ({
 }));
 
 function AliasDialog({ column }) {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const [open, setOpen] = useState(false);
 
   const handleClose = () => {
@@ -29,6 +29,7 @@ function AliasDialog({ column }) {
       <Button
         className={classes.buttons}
         onClick={() => setOpen(true)}
+        color="grey"
       >
         Aliases:
 

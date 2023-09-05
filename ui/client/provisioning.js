@@ -4,26 +4,26 @@ import React, {
 
 import axios from 'axios';
 
-import Backdrop from '@material-ui/core/Backdrop';
-import Button from '@material-ui/core/Button';
-import LinearProgress from '@material-ui/core/LinearProgress';
-import Link from '@material-ui/core/Link';
-import Paper from '@material-ui/core/Paper';
-import Typography from '@material-ui/core/Typography';
+import Backdrop from '@mui/material/Backdrop';
+import Button from '@mui/material/Button';
+import LinearProgress from '@mui/material/LinearProgress';
+import Link from '@mui/material/Link';
+import Paper from '@mui/material/Paper';
+import Typography from '@mui/material/Typography';
 
-import { makeStyles } from '@material-ui/core/styles';
+import { makeStyles } from 'tss-react/mui';
 import { useHistory, useParams } from 'react-router-dom';
 
 import LoadingOverlay from './components/LoadingOverlay';
 import { ThemeContext } from './components/ThemeContextProvider';
 
-const useStyles = makeStyles((theme) => ({
+const useStyles = makeStyles()((theme) => ({
   backdrop: {
     zIndex: theme.zIndex.drawer + 1,
   },
   progressWrapper: {
     height: theme.spacing(3),
-    margin: [[theme.spacing(3), 0, theme.spacing(4)]],
+    margin: `${theme.spacing(3)} 0 ${theme.spacing(4)}`,
   },
   paper: {
     minHeight: '315px',
@@ -98,7 +98,7 @@ const Provisioning = () => {
 
   const { modelId } = useParams();
   const history = useHistory();
-  const classes = useStyles();
+  const { classes } = useStyles();
 
   const [provisionState, setProvisionState] = useState('');
 
@@ -159,14 +159,24 @@ const Provisioning = () => {
             </Typography>
             <Typography variant="subtitle1" align="center" gutterBottom>
               Please contact Jataware at&nbsp;
-              <Link href="mailto:dojo@jataware.com" color="inherit">dojo@jataware.com</Link> for assistance.
+              <Link href="mailto:dojo@jataware.com" color="inherit" underline="hover">dojo@jataware.com</Link> for assistance.
             </Typography>
           </div>
           <div className={classes.failNavButtons}>
-            <Button onClick={() => history.goBack()} variant="contained" disableElevation>
+            <Button
+              onClick={() => history.goBack()}
+              variant="contained"
+              disableElevation
+              color="grey"
+            >
               Return to the Provision Page
             </Button>
-            <Button href={`/summary/${modelId}`} variant="contained" disableElevation>
+            <Button
+              href={`/summary/${modelId}`}
+              variant="contained"
+              disableElevation
+              color="grey"
+            >
               Go to the Model Summary Page
             </Button>
           </div>

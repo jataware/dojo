@@ -2,17 +2,41 @@ import React, { useState } from 'react';
 import { useField } from 'formik';
 import * as XLSX from 'xlsx/xlsx.mjs';
 import * as GeoTiff from 'geotiff';
-import { withStyles } from '@material-ui/core/styles';
-import Autocomplete from '@material-ui/lab/Autocomplete';
-import Button from '@material-ui/core/Button';
-import MenuItem from '@material-ui/core/MenuItem';
-import Select from '@material-ui/core/Select';
-import TextField from '@material-ui/core/TextField';
-import { Tooltip, Typography } from '@material-ui/core';
+
+import Autocomplete from '@mui/material/Autocomplete';
+import Button from '@mui/material/Button';
+import MenuItem from '@mui/material/MenuItem';
+import Select from '@mui/material/Select';
+import TextField from '@mui/material/TextField';
+import { Tooltip, Typography } from '@mui/material';
 import get from 'lodash/get';
 import isFunction from 'lodash/isFunction';
 
+import { makeStyles } from 'tss-react/mui';
+
 import { matchFileNameExtension } from '../utils';
+
+const useStyles = makeStyles()((theme) => ({
+  root: {
+    margin: `${theme.spacing(1)} 0`,
+    '& .MuiFormHelperText-root': {
+      marginLeft: 7,
+      marginRight: 5,
+    }
+  },
+  warning: {
+    backgroundColor: 'pink'
+  },
+  uploadedFileData: {
+    padding: `${theme.spacing(1)} ${theme.spacing(0)}`,
+    '& .filename': {
+      fontWeight: 'bold'
+    },
+    '& button': {
+      marginTop: theme.spacing(0.5)
+    }
+  }
+}));
 
 const NullGeotiffTooltip = ({ ...props }) => (
   <Tooltip
@@ -275,20 +299,14 @@ export const ExtraInput = ({
 /**
  *
  * */
-export const FileInput = withStyles(({ spacing }) => ({
-  root: {
-    margin: [[spacing(1), 0]],
-    '& .MuiFormHelperText-root': {
-      marginLeft: 7,
-      marginRight: 5,
-    }
-  }
-}))(({
+export const FileInput = ({
   formik, datasetInfo, setDatasetInfo, fileMetadata, setFileMetadata,
   name, label, onFileSelect, InputProps = {}, required, requiredFn,
-  classes, inputProps = {}, ...props
+  inputProps = {}, ...props
 }) => {
   const [{ onChange, value, ...field }, meta] = useField({ ...props, name });
+
+  const { classes } = useStyles();
 
   function handleChange(event) {
     // Set value in form context
@@ -325,33 +343,22 @@ export const FileInput = withStyles(({ spacing }) => ({
       {...props}
     />
   );
-});
+};
 
 /**
  *
  * */
-export const FileSelector = withStyles(({ spacing }) => ({
-  warning: {
-    backgroundColor: 'pink'
-  },
-  uploadedFileData: {
-    padding: [[spacing(1), spacing(0)]],
-    '& .filename': {
-      fontWeight: 'bold'
-    },
-    '& button': {
-      marginTop: spacing(0.5)
-    }
-  }
-}))((allProps) => {
+export const FileSelector = ((allProps) => {
   const {
-    formik, classes,
+    formik,
     fileMetadata, setFileMetadata,
     isUpdatingUploadedFile, setUpdatingUploadedFile,
     displayUploadedFile,
     uploadedFilesData,
     ...props
   } = allProps;
+
+  const { classes } = useStyles();
 
   const [message, setMessage] = useState(null);
 
@@ -473,6 +480,7 @@ export const FileSelector = withStyles(({ spacing }) => ({
             <Button
               variant="outlined"
               size="small"
+              color="grey"
               onClick={() => setUpdatingUploadedFile(true)}
             >
               Replace File
@@ -492,6 +500,7 @@ export const FileSelector = withStyles(({ spacing }) => ({
               <Button
                 variant="outlined"
                 size="small"
+                color="grey"
                 onClick={() => setUpdatingUploadedFile(false)}
               >
                 Cancel and use original
