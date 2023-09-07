@@ -4,7 +4,6 @@ import { createRoot } from 'react-dom/client';
 import './style.css';
 
 import CssBaseline from '@mui/material/CssBaseline';
-import ReactDOM from 'react-dom';
 import {
   Route,
   BrowserRouter as Router,
