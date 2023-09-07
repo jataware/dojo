@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 
 import Step from '@mui/material/Step';
 import StepLabel from '@mui/material/StepLabel';
@@ -17,6 +17,7 @@ import { ErrorBoundary } from 'react-error-boundary';
 import { DefaultErrorFallback } from '../components/DefaultErrorFallback';
 import Prompt from './PromptDialog';
 import flows from './Flows';
+import { FlowContext } from './FlowContext';
 
 const useStyles = makeStyles()(({ spacing, breakpoints }) => ({
   root: {
@@ -140,6 +141,8 @@ const InnerStepper = ({ match, updateLocation, ...props }) => {
   const location = useLocation();
   const flow = flows[flowslug];
 
+  const { setDirection } = useContext(FlowContext);
+
   const [activeStep, setActiveStep] = React.useState(() => {
     // Start at step as defined by url path
     if (datasetId && step) {
@@ -262,6 +265,8 @@ const InnerStepper = ({ match, updateLocation, ...props }) => {
 
     const newPath = `/datasets/${flowslug}/${prevStep.slug}/${datasetInfo.id}`;
 
+    // set the FlowContext so that RunJobs knows to skip processing if we're going back
+    setDirection('back');
     if (shouldUpdateLocation) {
       history.push(newPath + history.location.search);
     } else {
@@ -285,6 +290,8 @@ const InnerStepper = ({ match, updateLocation, ...props }) => {
       setRawFileName(filename);
     }
 
+    // set the FlowContext so that we don't keep 'back' forever if going back and forth
+    setDirection('next');
     if (shouldUpdateLocation) {
       if (currentStep.component.SKIP) {
         history.replace(newPath);
@@ -367,6 +374,7 @@ const InnerStepper = ({ match, updateLocation, ...props }) => {
 };
 
 const HorizontalLinearStepper = ({ match, updateLocation, ...props }) => {
+  const [direction, setDirection] = useState();
   const { flowslug } = match?.params;
   // Return "404" immediately if the flow slug doesn't exist
   if (!flows.hasOwnProperty(flowslug)) {
@@ -374,7 +382,11 @@ const HorizontalLinearStepper = ({ match, updateLocation, ...props }) => {
     return <h2>404 Not Found</h2>;
   }
 
-  return <InnerStepper match={match} updateLocation={updateLocation} {...props} />;
+  return (
+    <FlowContext.Provider value={{ direction, setDirection }}>
+      <InnerStepper match={match} updateLocation={updateLocation} {...props} />
+    </FlowContext.Provider>
+  );
 };
 
 export default HorizontalLinearStepper;
