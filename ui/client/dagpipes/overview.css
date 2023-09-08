@@ -1,0 +1,83 @@
+.react-flow__node-save, .react-flow__node-load,
+.react-flow__node-sum, .react-flow__node-multiply,
+.react-flow__node-country_split, .react-flow__node-threshold
+{
+  font-size: 10px;
+  width: 180px;
+  background: #f5f5f6;
+  color: #222;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 15%), 0 2px 4px -1px rgb(0 0 0 / 8%);
+  border-radius: 2px;
+  border: 1px solid #f5f5f6;
+  &.selected {
+    border-color: #BBB;
+  }
+}
+
+.react-flow__node-sum {
+  width: 15rem;
+}
+
+.wrap-full-size {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.react-flow__node-load .react-flow__handle {
+  bottom: -21px;
+  right: -15px;
+  width: 11px;
+  height: 11px;
+  border-radius: 2px;
+  background-color: #778899;
+}
+
+.react-flow__node-save .react-flow__handle {
+  top: -7px;
+  right: -15px;
+  width: 11px;
+  height: 11px;
+  border-radius: 2px;
+  background-color: #778899;
+}
+
+.react-flow__node.circle {
+  border-radius: 50%;
+  width: 60px;
+  height: 60px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: 700;
+}
+
+.react-flow__node.annotation {
+  border-radius: 0;
+  text-align: left;
+  background: white;
+  border: none;
+  line-height: 1.4;
+  width: 225px;
+  box-shadow: 0 4px 6px -1px rgb(0 0 0 / 15%), 0 2px 4px -1px rgb(0 0 0 / 8%);
+}
+
+.react-flow__node.annotation .react-flow__handle {
+  display: none;
+}
+
+
+.reactflow-wrapper {
+  display: flex;
+  height: 100%;
+  width: 100%;
+}
+
+.dndflow .selectall {
+  margin-top: 10px;
+}
+
