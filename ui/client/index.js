@@ -37,6 +37,7 @@ import ViewRuns from './components/ViewRuns';
 import DatasetRegistrationStepper from './datasets/RegistrationStepper';
 import DatasetPreview from './datasets/Preview';
 import DatasetAnnotate from './datasets/Annotate';
+import DagpipesApp from './dagpipes/DagpipesApp';
 
 export default function Main() {
   return (
@@ -61,6 +62,7 @@ export default function Main() {
         <Route component={ViewRuns} exact path="/runs" />
         <Route component={RunSummary} exact path="/runs/:runid" />
         <Route component={RunLogs} exact path="/runlogs/:runid" />
+        <Route component={DagpipesApp} exact path="/dagpipes" />
         <Route path="/*" render={() => <h2>404 Not Found</h2>} />
       </Switch>
     </Router>
