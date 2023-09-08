@@ -1,5 +1,5 @@
 import React from 'react';
-import { useStyles } from 'tss-react/mui';
+import { makeStyles } from 'tss-react/mui';
 import HomeIcon from '@mui/icons-material/Home';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import MailIcon from '@mui/icons-material/MailOutline';
@@ -16,6 +16,50 @@ import ScenarioSelection from './ScenarioSelection';
 import { setEdgeType } from './dagSlice';
 import { graphEdgeTypes } from './constants';
 import capitalize from 'lodash/capitalize';
+
+const useStyles = makeStyles()(() => ({
+  main: {
+    gridArea: 'main',
+    position: 'relative',
+    background: '#fff',
+    borderRadius: '6px',
+    color: 'rgba(0,0,0,.87)',
+    border: '1px solid #e5e5e5ad',
+    marginLeft: '0.5rem',
+  },
+  // TODO: not currently used anywhere, perhaps was intended to be global
+  ul: {
+    marginBlockStart: 0,
+    marginBlockEnd: 0,
+    marginInlineStart: 0,
+    marginInlineEnd: 0,
+    paddingInlineStart: 0,
+  },
+  nav: {
+    paddingRight: '1rem',
+    ul: {
+      marginBlockStart: '1rem',
+      marginBlockEnd: '1rem',
+      marginInlineStart: '0px',
+      marginInlineEnd: '0px',
+      paddingInlineStart: '1rem',
+      display: 'flex',
+    }
+  },
+  aside: {
+    gridArea: 'aside',
+    marginRight: '0.5rem',
+    background: '#fff',
+    borderRadius: '6px',
+    color: 'rgba(0,0,0,.87)',
+    border: '1px solid #e5e5e5ad',
+  },
+  footer: {
+    gridArea: 'footer',
+    // border: 1px dashed green;
+    padding: '1rem',
+  },
+}));
 
 const Link = ({children}) => {
   const { css } = useStyles();
@@ -42,7 +86,6 @@ const Link = ({children}) => {
 
 const edgeTypeOptions = graphEdgeTypes.map(t => ({value: t === 'bezier' ? 'default' : t, label: capitalize(t)}));
 
-
 const EdgeTypeSelector = () => {
   const dispatch = useDispatch();
 
@@ -67,9 +110,10 @@ const EdgeTypeSelector = () => {
 
 const Footer = () => {
   const { nodeCount, unsavedChanges } = useSelector((state) => state.dag);
+  const { classes } = useStyles();
 
   return (
-    <footer style={{ background: 'white' }}>
+    <footer className={classes.footer} style={{ background: 'white' }}>
       <div>
         {nodeCount} nodes. {unsavedChanges && (<span>Unsaved Changes.</span>)}
       </div>
@@ -78,11 +122,22 @@ const Footer = () => {
 };
 
 const GridLayout = ({children}) => {
-  const { css, cx } = useStyles();
+  const { classes, css, cx } = useStyles();
   return (
     <div className="container">
 
-      <header>
+      <header
+        className={css`
+            font-weight: bold;
+            padding: 0.2rem 2rem;
+            grid-area: header;
+            display: flex;
+            align-items: center;
+
+            background-color: #292929;
+            box-shadow: 0 4px 20px 0 rgba(0,0,0,.14), 0 7px 10px -5px rgba(0,0,0,.4);
+        `}
+      >
 
         <div
           className={cx([
@@ -100,7 +155,7 @@ const GridLayout = ({children}) => {
         >
         </div>
 
-        <nav>
+        <nav className={classes.nav}>
           <ul>
             <li><Link>
                   <HomeIcon />&nbsp;&nbsp;Home
@@ -122,7 +177,7 @@ const GridLayout = ({children}) => {
         </nav>
       </header>
 
-      <main>
+      <main className={classes.main} >
         {children}
       </main>
 

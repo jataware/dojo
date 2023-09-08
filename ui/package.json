@@ -72,6 +72,8 @@
     "nodemon": "^2.0.7",
     "nodemon-webpack-plugin": "^4.4.4",
     "storybook": "^7.4.1",
+    "sass": "^1.66.1",
+    "sass-loader": "^13.3.2",
     "style-loader": "^2.0.0",
     "url-loader": "^4.1.1",
     "webpack": "^5.24.2",
