@@ -83,6 +83,13 @@ const NavBar = () => {
         >
           Documents
         </Button>
+        <Button
+          component={Link}
+          to="/dagpipes"
+          color="grey"
+        >
+          Dagpipes
+        </Button>
         <span className={classes.spacer} />
         <Button
           href="https://www.dojo-modeling.com"
