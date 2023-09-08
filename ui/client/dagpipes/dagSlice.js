@@ -1,8 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
 
-/* eslint-disable no-param-reassign */
 const initialState = {
-  modelerStep: 0,
   nodeCount: 0,
   edgeCount: 0,
   selectedNodeId: null,
@@ -10,22 +8,14 @@ const initialState = {
   selectedNodeLabel: null,
   selectedNodeInput: null,
   edgeType: 'default',
-  unsavedChanges: false,
-  savedDatasets: [],
-  geoResolutionColumn: null,
-  timeResolutionColumn: null,
-  // selectedFeatures keeps track of which features have been chosen in Load Nodes
-  // to prevent duplicates
-  selectedFeatures: [],
-  flowcastJobId: null,
+  unsavedChanges: false
 };
+
+
 export const dagSlice = createSlice({
   name: 'dag',
   initialState,
   reducers: {
-    nextModelerStep: (state) => {
-      state.modelerStep += 1;
-    },
     incrementNodeCount: (state) => {
       state.nodeCount += 1;
       state.unsavedChanges = true;
@@ -67,34 +57,13 @@ export const dagSlice = createSlice({
     },
     setSavedChanges: (state) => {
       state.unsavedChanges = false;
-    },
-    setSavedDatasets: (state, action) => {
-      state.savedDatasets = action.payload;
-    },
-    setGeoResolutionColumn: (state, action) => {
-      state.geoResolutionColumn = action.payload;
-    },
-    setTimeResolutionColumn: (state, action) => {
-      state.timeResolutionColumn = action.payload;
-    },
-    addSelectedFeature: (state, action) => {
-      state.selectedFeatures.push(action.payload);
-    },
-    removeSelectedFeature: (state, action) => {
-      const filteredFeatures = state.selectedFeatures.filter((feature) => (
-        feature !== action.payload
-      ));
-      state.selectedFeatures = filteredFeatures;
-    },
-    setFlowcastJobId: (state, action) => {
-      state.flowcastJobId = action.payload;
-    },
+    }
   },
 });
 
+
 // Action creators are generated for each case reducer function
 export const {
-  nextModelerStep,
   incrementNodeCount,
   incrementEdgeCount,
   decrementNodeCount,
@@ -105,13 +74,7 @@ export const {
   setSelectedNodeLabel,
   setEdgeType,
   setNodeCount,
-  setSavedChanges,
-  setSavedDatasets,
-  setGeoResolutionColumn,
-  setTimeResolutionColumn,
-  addSelectedFeature,
-  removeSelectedFeature,
-  setFlowcastJobId,
+  setSavedChanges
 } = dagSlice.actions;
 
 export default dagSlice.reducer;

@@ -1,32 +1,25 @@
 import React, { memo } from 'react';
-import {
-  Handle, Position
-} from 'reactflow';
-
+import { Handle, useReactFlow, useStoreApi, Position } from 'reactflow';
+import { useStyles } from 'tss-react/mui';
 import TextField from '@mui/material/TextField';
-
-import NodeBase from './NodeBase';
 import NodeTitles from './nodeLabels';
-import { topHandle } from './constants';
 
 /**
  *
  **/
-function FileSelect({
-  input, handleId, nodeId, onChange
-}) {
+function FileSelect({ input, handleId, nodeId, onChange }) {
   return (
-    <div>
+    <div className="custom-node__save">
       <Handle
         type="target"
         position={Position.Top}
         id={handleId}
-        style={topHandle}
       />
       <TextField
         className="nodrag"
-        label="Name"
+        label="Filename"
         value={input}
+        placeholder="output.nc"
         InputLabelProps={{
           shrink: true,
         }}
@@ -36,15 +29,31 @@ function FileSelect({
   );
 }
 
+
+
 function CustomNode({ id, data }) {
+  const { css } = useStyles();
+  const headerStyle = css`
+         padding: 8px 10px;
+         border-bottom: 1px solid #e2e8f0;
+      `;
+
+  const bodyStyle = css`
+         padding: 1rem;
+      `;
   return (
-    <NodeBase title={NodeTitles.SAVE}>
-      <FileSelect
-        nodeId={id}
-        input={data.input}
-        onChange={data.onChange}
-      />
-    </NodeBase>
+    <>
+      <div className={headerStyle}>
+        <strong>{NodeTitles.SAVE}</strong>
+      </div>
+      <div className={bodyStyle}>
+        <FileSelect
+          nodeId={id}
+          input={data.input}
+          onChange={data.onChange}
+        />
+      </div>
+    </>
   );
 }
 
