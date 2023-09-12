@@ -16,7 +16,7 @@ import ReactFlow, {
 import ButtonGroup from '@mui/material/ButtonGroup';
 import Button from '@mui/material/Button';
 
-import { useSelector, useDispatch } from 'react-redux';
+import { useDispatch } from 'react-redux';
 import {
   decrementNodeCount, incrementNodeCount,
   setNodeCount, selectNode, unselectNodes,
@@ -88,10 +88,6 @@ const OverviewFlow = () => {
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-
-  const {
-    edgeType
-  } = useSelector((state) => state.dag);
 
   const dispatch = useDispatch();
 
@@ -181,7 +177,10 @@ const OverviewFlow = () => {
   );
 
   const edgesWithUpdatedTypes = edges.map((edge) => {
-    edge.type = edgeType;
+    // TODO: remove this when time, removing it breaks the connections at the moment
+    // we aren't using multiple types now
+    // eslint-disable-next-line no-param-reassign
+    edge.type = 'default';
     return edge;
   });
 
@@ -220,8 +219,7 @@ const OverviewFlow = () => {
     };
 
     restoreFlow();
-  }, [setNodes// , setViewport
-  ]);
+  }, [setNodes]);
 
   return (
     <div className="wrap-full-size">
