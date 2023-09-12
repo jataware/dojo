@@ -287,6 +287,46 @@ def get_latest_indicators(size=10000):
         IndicatorsSchemaArray.append(res.get("_source"))
     return IndicatorsSchemaArray
 
+@router.get("/indicators/ncfiles", response_model=List[IndicatorSchema.IndicatorsSearchSchema])
+def get_nc_file_indicators(size=10000):
+    # match just .nc files
+    query = {
+        "_source": [
+            "description",
+            "name",
+            "id",
+            "created_at",
+            "deprecated",
+            "maintainer.name",
+            "maintainer.email",
+            "fileData.raw.url",
+            "fileData.raw.rawFileName",
+        ],
+        "query": {
+            "bool": {
+                "must": [
+                    {"match_all": {}},
+                    {"regexp": {
+                        "fileData.raw.url": ".*\\.nc"
+                    }},
+                    {"regexp": {
+                        "fileData.raw.rawFileName": ".*\\.nc"
+                    }},
+                ],
+                "filter": [
+                    {"term": {"published": True}}
+                ]
+            }
+        }
+    }
+
+    results = es.search(index="indicators", body=query, size=size)["hits"]["hits"]
+    IndicatorsSchemaArray = []
+    for res in results:
+        IndicatorsSchemaArray.append(res.get("_source"))
+
+    return IndicatorsSchemaArray
+
 
 @router.get("/indicators", response_model=DojoSchema.IndicatorSearchResult)
 def search_indicators(
