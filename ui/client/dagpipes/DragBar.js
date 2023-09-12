@@ -5,10 +5,10 @@ import NodeTitles from './nodeLabels';
 
 import './dragBar.scss';
 
-
 export default () => {
   const onDragStart = (event, nodeType) => {
     event.dataTransfer.setData('application/reactflow', nodeType);
+    // eslint-disable-next-line no-param-reassign
     event.dataTransfer.effectAllowed = 'move';
   };
 
@@ -23,7 +23,7 @@ export default () => {
           startIcon={<DragIndicatorIcon />}
           className="dndnode input"
           disableRipple
-          onDragStart={(event) => {return onDragStart(event, 'load');}}
+          onDragStart={(event) => onDragStart(event, 'load')}
           draggable
         >
           {NodeTitles.LOAD}
@@ -34,7 +34,7 @@ export default () => {
           startIcon={<DragIndicatorIcon />}
           className="dndnode input"
           disableRipple
-          onDragStart={(event) => {return onDragStart(event, 'threshold');}}
+          onDragStart={(event) => onDragStart(event, 'threshold')}
           draggable
         >
           {NodeTitles.THRESHOLD}
@@ -45,7 +45,7 @@ export default () => {
           startIcon={<DragIndicatorIcon />}
           className="dndnode input"
           disableRipple
-          onDragStart={(event) => {return onDragStart(event, 'multiply');}}
+          onDragStart={(event) => onDragStart(event, 'multiply')}
           draggable
         >
           {NodeTitles.MULTIPLY}
@@ -56,7 +56,7 @@ export default () => {
           startIcon={<DragIndicatorIcon />}
           className="dndnode input"
           disableRipple
-          onDragStart={(event) => {return onDragStart(event, 'country_split');}}
+          onDragStart={(event) => onDragStart(event, 'country_split')}
           draggable
         >
           {NodeTitles.COUNTRY_SPLIT}
@@ -67,7 +67,7 @@ export default () => {
           startIcon={<DragIndicatorIcon />}
           className="dndnode input"
           disableRipple
-          onDragStart={(event) => {return onDragStart(event, 'sum');}}
+          onDragStart={(event) => onDragStart(event, 'sum')}
           draggable
         >
           {NodeTitles.SUM}
@@ -79,7 +79,7 @@ export default () => {
           startIcon={<DragIndicatorIcon />}
           className="dndnode input"
           disableRipple
-          onDragStart={(event) => {return onDragStart(event, 'save');}}
+          onDragStart={(event) => onDragStart(event, 'save')}
           draggable
         >
           {NodeTitles.SAVE}

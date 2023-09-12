@@ -1,5 +1,6 @@
 import { createSlice } from '@reduxjs/toolkit';
 
+/* eslint-disable no-param-reassign */
 const initialState = {
   nodeCount: 0,
   edgeCount: 0,
@@ -10,8 +11,6 @@ const initialState = {
   edgeType: 'default',
   unsavedChanges: false
 };
-
-
 export const dagSlice = createSlice({
   name: 'dag',
   initialState,
@@ -60,7 +59,6 @@ export const dagSlice = createSlice({
     }
   },
 });
-
 
 // Action creators are generated for each case reducer function
 export const {
