@@ -1,20 +1,25 @@
 import React, { memo } from 'react';
-import { Handle, useReactFlow, useStoreApi, Position } from 'reactflow';
+import {
+  Handle, Position
+} from 'reactflow';
 import TextField from '@mui/material/TextField';
 import { useStyles } from 'tss-react/mui';
 
 import { threshold_ops } from './constants';
 import NodeTitles from './nodeLabels';
 
-const options = threshold_ops.map(i => ({value: i, label: i}));
+const options = threshold_ops.map((i) => ({ value: i, label: i }));
 
-function Select({ input, handleId, nodeId, onChange }) {
+function Select({
+  input, handleId, nodeId, onChange
+}) {
   const { css } = useStyles();
   return (
     <div className={css`
         position: relative;
         margin-bottom: 10px;
-    `}>
+    `}
+    >
       <Handle
         className={css`
           top: -63px;
@@ -83,8 +88,6 @@ function Select({ input, handleId, nodeId, onChange }) {
     </div>
   );
 }
-
-
 
 function CustomNode({ id, data }) {
   const { css } = useStyles();

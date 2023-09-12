@@ -1,6 +1,5 @@
 import * as React from 'react';
-import PropTypes from 'prop-types';
-import { useAutocomplete } from '@mui/base/useAutocomplete';
+import useAutocomplete from '@mui/material/useAutocomplete';
 import CheckIcon from '@mui/icons-material/Check';
 import CloseIcon from '@mui/icons-material/Close';
 import { styled } from '@mui/material/styles';
@@ -12,18 +11,12 @@ import { countries } from './constants';
 const Root = styled('div')(
   ({ theme }) => `
   color: ${
-    theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,.85)'
-  };
+  theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,.85)'
+};
   font-size: 14px;
 max-width: 100%;
 `,
 );
-
-const Label = styled('label')`
-  padding: 0 0 4px;
-  line-height: 1.5;
-  display: block;
-`;
 
 const InputWrapper = styled('div')(
   ({ theme }) => `
@@ -46,8 +39,8 @@ const InputWrapper = styled('div')(
   & input {
     background-color: ${theme.palette.mode === 'dark' ? '#141414' : '#fff'};
     color: ${
-      theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,.85)'
-    };
+  theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.65)' : 'rgba(0,0,0,.85)'
+};
     height: 20px;
     box-sizing: border-box;
     padding: 4px 6px;
@@ -71,11 +64,6 @@ function Tag(props) {
   );
 }
 
-Tag.propTypes = {
-  label: PropTypes.string.isRequired,
-  onDelete: PropTypes.func.isRequired,
-};
-
 const StyledTag = styled(Tag)(
   ({ theme }) => `
   display: flex;
@@ -84,8 +72,8 @@ const StyledTag = styled(Tag)(
   margin: 2px;
   line-height: 22px;
   background-color: ${
-    theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : '#fafafa'
-  };
+  theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.08)' : '#fafafa'
+};
   border: 1px solid ${theme.palette.mode === 'dark' ? '#303030' : '#e8e8e8'};
   border-radius: 2px;
   box-sizing: content-box;
@@ -163,11 +151,9 @@ const Listbox = styled('ul')(
 `,
 );
 
-
-export default function CustomizedHook({value, onChange}) {
+export default function CustomizedHook({ value, onChange }) {
   const {
     getRootProps,
-    getInputLabelProps,
     getInputProps,
     getTagProps,
     getListboxProps,
@@ -189,7 +175,7 @@ export default function CustomizedHook({value, onChange}) {
   return (
     <Root>
       <div {...getRootProps()}>
-        <InputWrapper ref={setAnchorEl} className={cx({'focused': focused, 'nodrag': true})}>
+        <InputWrapper ref={setAnchorEl} className={cx({ focused, nodrag: true })}>
           {listValues.map((option, index) => (
             <StyledTag label={option} {...getTagProps({ index })} />
           ))}
@@ -209,4 +195,3 @@ export default function CustomizedHook({value, onChange}) {
     </Root>
   );
 }
-
