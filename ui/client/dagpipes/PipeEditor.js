@@ -1,4 +1,6 @@
-import React, { useCallback, useRef, useState, useEffect } from 'react';
+import React, {
+  useCallback, useRef, useState
+} from 'react';
 
 import ReactFlow, {
   addEdge,
@@ -15,11 +17,11 @@ import ButtonGroup from '@mui/material/ButtonGroup';
 import Button from '@mui/material/Button';
 
 import { useSelector, useDispatch } from 'react-redux';
-import { decrementNodeCount, incrementNodeCount,
-         setNodeCount, selectNode, unselectNodes,
-         setSelectedNodeLabel, setSelectedNodeInput,
-         setSavedChanges
-       } from './dagSlice';
+import {
+  decrementNodeCount, incrementNodeCount,
+  setNodeCount, selectNode, unselectNodes,
+  setSavedChanges
+} from './dagSlice';
 
 import { nodes as initialNodes, edges as initialEdges } from './initial-elements';
 
@@ -31,11 +33,12 @@ import CountrySplitNode from './CountrySplitNode';
 import SumNode from './SumNode';
 
 import DragBar from './DragBar';
-import NodePropertyEditor from './NodePropertyEditor';
 
 import './overview.css';
 
-import { data, scenarios, dimensions, threshold_ops } from './constants';
+import {
+  dimensions, threshold_ops
+} from './constants';
 
 const nodeTypes = {
   load: LoadNode,
@@ -50,22 +53,12 @@ const minimapStyle = {
   height: 120,
 };
 
-const nodeTypeStyles = {
-  input: {
-    borderColor: 'green'
-  },
-  output: {
-    borderColor: 'blue'
-  },
-  default: {}
-};
-
 const initialNodeTypeValues = {
   load: 'pr',
   save: '',
   sum: (() => {
-    let acc = {};
-    dimensions.forEach(label => {
+    const acc = {};
+    dimensions.forEach((label) => {
       acc[label] = false;
     });
     return acc;
@@ -78,7 +71,6 @@ const initialNodeTypeValues = {
 };
 
 const genNodeId = () => `n_${window.crypto.randomUUID()}`;
-const genEdgeId = () => `e_${window.crypto.randomUUID()}`;
 
 const genNode = (type, position) => {
   const id = genNodeId();
@@ -91,85 +83,75 @@ const genNode = (type, position) => {
   };
 };
 
-
 const OverviewFlow = () => {
-
   const reactFlowWrapper = useRef(null);
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
   const {
-    selectedNodeId, selectedNodeLabel, selectedNodeInput, edgeType
+    edgeType
   } = useSelector((state) => state.dag);
 
   const dispatch = useDispatch();
 
   const setSelectedNode = (node) => {
-    dispatch(selectNode({id: node.id, type: node.type}));
+    dispatch(selectNode({ id: node.id, type: node.type }));
   };
 
   const setCurrentNode = (event, nodeEl) => {
-		const node = nodes.find((n) => n.id === nodeEl.id);
+    const node = nodes.find((n) => n.id === nodeEl.id);
     setSelectedNode(node);
-	};
+  };
 
   const [reactFlowInstance, setReactFlowInstance] = useState(null);
 
-  const onInit = (reactFlowInstance) => {
-    console.log('Flow loaded:', reactFlowInstance);
-    setReactFlowInstance(reactFlowInstance);
+  const onInit = (rfInstance) => {
+    console.log('Flow loaded:', rfInstance);
+    setReactFlowInstance(rfInstance);
   };
 
-  const onConnect = useCallback((params) => {
-    return setEdges((eds) => {
-      return addEdge(params, eds);
-    });
-  }, []);
+  const onConnect = useCallback((params) => setEdges((eds) => addEdge(params, eds)), []);
 
   const onDragOver = useCallback((event) => {
     event.preventDefault();
+    // eslint-disable-next-line no-param-reassign
     event.dataTransfer.dropEffect = 'move';
   }, []);
 
   // TODO cleanup
   const onNodeChange = (currNodeId, event) => {
+    setNodes((nds) => nds.map((node) => {
+      if (node.id !== currNodeId) {
+        return node;
+      }
 
-    setNodes((nds) =>
-      nds.map((node) => {
-        if (node.id !== currNodeId) {
-          return node;
-        }
+      let input;
 
-        let input;
-
-        if (node.type === 'sum') {
-          input = {
-            ...node.data.input,
-            [event.target.name]: event.target.checked
-          };
-        } else if (node.type === 'threshold') {
-
-          const property_changed = event.target.type === 'number' ? 'value' : 'type';
-
-          input = {
-            ...node.data.input,
-            [property_changed]: event.target.value
-          };
-
-        } else {
-          input = event.target.value;
-        }
-
-        return {
-          ...node,
-          data: {
-            ...node.data,
-            input
-          },
+      if (node.type === 'sum') {
+        input = {
+          ...node.data.input,
+          [event.target.name]: event.target.checked
         };
-      })
-    );
+      } else if (node.type === 'threshold') {
+        const property_changed = event.target.type === 'number' ? 'value' : 'type';
+
+        input = {
+          ...node.data.input,
+          [property_changed]: event.target.value
+        };
+      } else {
+        input = event.target.value;
+      }
+
+      return {
+        ...node,
+        data: {
+          ...node.data,
+          input
+        },
+      };
+    }));
   };
 
   const onDrop = useCallback(
@@ -210,11 +192,13 @@ const OverviewFlow = () => {
       window.localStorage.setItem('dagpipes-flow-session', JSON.stringify(flow));
       dispatch(setSavedChanges());
 
-      const forBackend = {...flow};
+      const forBackend = { ...flow };
       delete forBackend.viewport;
 
-      forBackend.edges = forBackend.edges.map(e => ({source: e.source, target: e.target, id: e.id}));
-      forBackend.nodes = forBackend.nodes.map(e => ({type: e.type, data: e.data, id: e.id}));
+      forBackend.edges = forBackend.edges.map((e) => (
+        { source: e.source, target: e.target, id: e.id }
+      ));
+      forBackend.nodes = forBackend.nodes.map((e) => ({ type: e.type, data: e.data, id: e.id }));
       console.log(JSON.stringify(forBackend, 2, null));
     }
   }, [reactFlowInstance]);
@@ -226,8 +210,8 @@ const OverviewFlow = () => {
       if (flow) {
         const { x = 0, y = 0, zoom = 1 } = flow.viewport;
 
-        const {nodes=[]} = flow;
-        nodes.map(n => {n.data.onChange = onNodeChange; return n;});
+        const { nodes = [] } = flow;
+        nodes.map((n) => { n.data.onChange = onNodeChange; return n; });
         setNodes(nodes);
         setEdges(flow.edges || []);
         dispatch(setNodeCount(nodes.length));
@@ -237,7 +221,7 @@ const OverviewFlow = () => {
 
     restoreFlow();
   }, [setNodes// , setViewport
-     ]);
+  ]);
 
   return (
     <div className="wrap-full-size">

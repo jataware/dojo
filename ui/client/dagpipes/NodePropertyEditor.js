@@ -1,21 +1,15 @@
-
 import React from 'react';
 
 import { useSelector, useDispatch } from 'react-redux';
 
 import {
-  setSelectedNodeLabel,
   setSelectedNodeInput,
 } from './dagSlice';
 
 import './updatenode.scss';
 
-export default (props) => {
-
-  const {
-    selectedNodeLabel, selectedNodeInput,
-    selectedNodeType
-  } = useSelector((state) => state.dag);
+export default () => {
+  const { selectedNodeInput, selectedNodeType } = useSelector((state) => state.dag);
 
   const dispatch = useDispatch();
 
@@ -54,4 +48,4 @@ export default (props) => {
 
     </div>
   );
-}
+};

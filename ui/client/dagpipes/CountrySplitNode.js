@@ -1,5 +1,7 @@
 import React, { memo } from 'react';
-import { Handle, useReactFlow, useStoreApi, Position } from 'reactflow';
+import {
+  Handle, Position
+} from 'reactflow';
 import { useStyles } from 'tss-react/mui';
 
 import AutoComplete from './Autocomplete';
@@ -8,19 +10,21 @@ import NodeTitles from './nodeLabels';
 /**
  *
  **/
-function Select({ input, handleId, nodeId, onChange }) {
-
+function Select({
+  input, handleId, nodeId, onChange
+}) {
   const { css } = useStyles();
 
   const handleChange = (_, newValue) => {
-    onChange(nodeId, {target: {value: newValue }});
+    onChange(nodeId, { target: { value: newValue } });
   };
 
   return (
     <div className={css`
         position: relative;
         margin-bottom: 10px;
-    `}>
+    `}
+    >
       <Handle
         className={css`
           top: -56px;
@@ -54,9 +58,6 @@ function Select({ input, handleId, nodeId, onChange }) {
     </div>
   );
 }
-
-
-
 
 // reduce by country => from re-gridded to country data
 function CustomNode({ id, data }) {

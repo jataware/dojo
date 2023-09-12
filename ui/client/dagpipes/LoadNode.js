@@ -1,21 +1,22 @@
 import React, { memo } from 'react';
 import { useStyles } from 'tss-react/mui';
-import { Handle, useReactFlow, useStoreApi, Position } from 'reactflow';
+import {
+  Handle, Position
+} from 'reactflow';
 import TextField from '@mui/material/TextField';
 
-import { data, dojoMockDatasources } from './constants';
+import { constantData, dojoMockDatasources } from './constants';
 import NodeTitles from './nodeLabels';
 
 const options = [
-  ...data,
+  ...constantData,
   ...dojoMockDatasources,
-].map(i => ({
+].map((i) => ({
   label: i,
   value: i
     .split('(')[0]
     .trim()
 }));
-
 
 function Select({ input, nodeId, onChange }) {
   const { css } = useStyles();
@@ -23,7 +24,8 @@ function Select({ input, nodeId, onChange }) {
     <div className={css`
         position: relative;
         margin-bottom: 10px;
-    `}>
+    `}
+    >
       <TextField
         select
         label="Data Source"
@@ -49,7 +51,6 @@ function Select({ input, nodeId, onChange }) {
     </div>
   );
 }
-
 
 function CustomNode({ id, data }) {
   const { css } = useStyles();

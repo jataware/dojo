@@ -1,21 +1,15 @@
 import React from 'react';
+
 import { makeStyles } from 'tss-react/mui';
-import HomeIcon from '@mui/icons-material/Home';
-import GitHubIcon from '@mui/icons-material/GitHub';
-import MailIcon from '@mui/icons-material/MailOutline';
-
-import PngLogo from "./assets/DAG|PIPES.png";
-import DojoLogo from "./assets/dojo_logo.svg";
-
-import './layout.scss';
 
 import { useSelector, useDispatch } from 'react-redux';
 
-import ScenarioSelection from './ScenarioSelection';
+import capitalize from 'lodash/capitalize';
+
+import './layout.scss';
 
 import { setEdgeType } from './dagSlice';
 import { graphEdgeTypes } from './constants';
-import capitalize from 'lodash/capitalize';
 
 const useStyles = makeStyles()(() => ({
   main: {
@@ -35,17 +29,6 @@ const useStyles = makeStyles()(() => ({
     marginInlineEnd: 0,
     paddingInlineStart: 0,
   },
-  nav: {
-    paddingRight: '1rem',
-    ul: {
-      marginBlockStart: '1rem',
-      marginBlockEnd: '1rem',
-      marginInlineStart: '0px',
-      marginInlineEnd: '0px',
-      paddingInlineStart: '1rem',
-      display: 'flex',
-    }
-  },
   aside: {
     gridArea: 'aside',
     marginRight: '0.5rem',
@@ -61,30 +44,7 @@ const useStyles = makeStyles()(() => ({
   },
 }));
 
-const Link = ({children}) => {
-  const { css } = useStyles();
-  return (
-    <a
-      href="/"
-      className={css`
-        color: white;
-        text-decoration: none;
-        padding: 0.5rem;
-        border-radius: 4px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        &:hover {
-          background: #DDDDDD30;
-        }
-      `}
-    >
-      {children}
-    </a>
-  );
-};
-
-const edgeTypeOptions = graphEdgeTypes.map(t => ({value: t === 'bezier' ? 'default' : t, label: capitalize(t)}));
+const edgeTypeOptions = graphEdgeTypes.map((t) => ({ value: t === 'bezier' ? 'default' : t, label: capitalize(t) }));
 
 const EdgeTypeSelector = () => {
   const dispatch = useDispatch();
@@ -94,7 +54,7 @@ const EdgeTypeSelector = () => {
   return (
     <select
       value={edgeType}
-      onChange={(e) => {dispatch(setEdgeType(e.target.value)); }}
+      onChange={(e) => { dispatch(setEdgeType(e.target.value)); }}
     >
       {edgeTypeOptions.map((option) => (
         <option
@@ -121,68 +81,16 @@ const Footer = () => {
   );
 };
 
-const GridLayout = ({children}) => {
-  const { classes, css, cx } = useStyles();
+const GridLayout = ({ children }) => {
+  const { classes, css } = useStyles();
   return (
     <div className="container">
-
-      <header
-        className={css`
-            font-weight: bold;
-            padding: 0.2rem 2rem;
-            grid-area: header;
-            display: flex;
-            align-items: center;
-
-            background-color: #292929;
-            box-shadow: 0 4px 20px 0 rgba(0,0,0,.14), 0 7px 10px -5px rgba(0,0,0,.4);
-        `}
-      >
-
-        <div
-          className={cx([
-            css`
-               background-image: url(${DojoLogo});
-               background-color: #26c6da;
-               border-radius: 7px;
-               cursor: pointer;
-               background-position-x: -3px;
-               background-position-y: -1px;
-               background-size: cover;
-             `,
-            'logo'
-          ])}
-        >
-        </div>
-
-        <nav className={classes.nav}>
-          <ul>
-            <li><Link>
-                  <HomeIcon />&nbsp;&nbsp;Home
-                </Link>
-            </li>
-            &nbsp;
-            &nbsp;
-            &nbsp;
-            <li><Link>
-                  <GitHubIcon />&nbsp;&nbsp;Github
-                </Link></li>
-            &nbsp;
-            &nbsp;
-            &nbsp;
-            <li><Link>
-                  <MailIcon />&nbsp;&nbsp;Contact
-                </Link></li>
-          </ul>
-        </nav>
-      </header>
-
-      <main className={classes.main} >
+      <main className={classes.main}>
         {children}
       </main>
 
       <aside className={css`background: white; padding-bottom: 1.5rem;`}>
-       <h3 className={css`
+        <h3 className={css`
              background: linear-gradient(60deg,#26c6da,#00acc1);
              padding: 1.33rem 0;
              border-top-left-radius: 5px;
@@ -190,7 +98,8 @@ const GridLayout = ({children}) => {
              margin-top: -1px;
              width: 100%;
              color: white;`}
-          >Settings</h3>
+        >Settings
+        </h3>
 
         {/* <h4 className={css`color: gray;`}> */}
         {/*   Scenarios */}
@@ -211,6 +120,5 @@ const GridLayout = ({children}) => {
     </div>
   );
 };
-
 
 export default GridLayout;

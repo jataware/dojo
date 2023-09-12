@@ -1,5 +1,7 @@
 import React, { memo } from 'react';
-import { Handle, useReactFlow, useStoreApi, Position } from 'reactflow';
+import {
+  Handle, Position
+} from 'reactflow';
 import { useStyles } from 'tss-react/mui';
 import TextField from '@mui/material/TextField';
 import NodeTitles from './nodeLabels';
@@ -7,7 +9,9 @@ import NodeTitles from './nodeLabels';
 /**
  *
  **/
-function FileSelect({ input, handleId, nodeId, onChange }) {
+function FileSelect({
+  input, handleId, nodeId, onChange
+}) {
   return (
     <div className="custom-node__save">
       <Handle
@@ -28,8 +32,6 @@ function FileSelect({ input, handleId, nodeId, onChange }) {
     </div>
   );
 }
-
-
 
 function CustomNode({ id, data }) {
   const { css } = useStyles();
