@@ -31,6 +31,7 @@ import MultiplyNode from './MultiplyNode';
 import ThresholdNode from './ThresholdNode';
 import CountrySplitNode from './CountrySplitNode';
 import SumNode from './SumNode';
+import Layout from './Layout';
 
 import DragBar from './DragBar';
 
@@ -222,58 +223,60 @@ const OverviewFlow = () => {
   }, [setNodes]);
 
   return (
-    <div className="wrap-full-size">
-      <ReactFlowProvider>
-        <div
-          className="reactflow-wrapper"
-          ref={reactFlowWrapper}
-        >
-          <ReactFlow
-            nodes={nodes}
-            edges={edgesWithUpdatedTypes}
-            onNodesChange={onNodesChange}
-            onEdgesChange={onEdgesChange}
-            onNodesDelete={() => dispatch(decrementNodeCount())}
-            onNodeClick={setCurrentNode}
-            onPaneClick={() => dispatch(unselectNodes())}
-            onConnect={onConnect}
-            onInit={onInit}
-            fitView
-            snapToGrid
-            nodeTypes={nodeTypes}
-            onDrop={onDrop}
-            onDragOver={onDragOver}
+    <Layout>
+      <div className="wrap-full-size">
+        <ReactFlowProvider>
+          <div
+            className="reactflow-wrapper"
+            ref={reactFlowWrapper}
           >
-            <MiniMap
-              style={minimapStyle}
-              zoomable
-              pannable
-            />
-            <Controls />
-            <Background
-              color="#aaa"
-              gap={16}
-            />
+            <ReactFlow
+              nodes={nodes}
+              edges={edgesWithUpdatedTypes}
+              onNodesChange={onNodesChange}
+              onEdgesChange={onEdgesChange}
+              onNodesDelete={() => dispatch(decrementNodeCount())}
+              onNodeClick={setCurrentNode}
+              onPaneClick={() => dispatch(unselectNodes())}
+              onConnect={onConnect}
+              onInit={onInit}
+              fitView
+              snapToGrid
+              nodeTypes={nodeTypes}
+              onDrop={onDrop}
+              onDragOver={onDragOver}
+            >
+              <MiniMap
+                style={minimapStyle}
+                zoomable
+                pannable
+              />
+              <Controls />
+              <Background
+                color="#aaa"
+                gap={16}
+              />
 
-            {/* selectedNodeId && ( */
-            /*   <Panel position="top-right" style={{background: 'white'}}> */
-            /*     <NodePropertyEditor /> */
-            /*   </Panel> */
-            /* ) */}
+              {/* selectedNodeId && ( */
+              /*   <Panel position="top-right" style={{background: 'white'}}> */
+              /*     <NodePropertyEditor /> */
+              /*   </Panel> */
+              /* ) */}
 
-          </ReactFlow>
-        </div>
-        <Panel position="top-left">
-          <ButtonGroup disableElevation>
-            <Button onClick={onSave}>SAVE</Button>
-            <Button onClick={onRestore}>LOAD</Button>
-          </ButtonGroup>
-        </Panel>
-        <Panel position="bottom-center">
-          <DragBar />
-        </Panel>
-      </ReactFlowProvider>
-    </div>
+            </ReactFlow>
+          </div>
+          <Panel position="top-left">
+            <ButtonGroup disableElevation>
+              <Button onClick={onSave}>SAVE</Button>
+              <Button onClick={onRestore}>LOAD</Button>
+            </ButtonGroup>
+          </Panel>
+          <Panel position="bottom-center">
+            <DragBar />
+          </Panel>
+        </ReactFlowProvider>
+      </div>
+    </Layout>
   );
 };
 
