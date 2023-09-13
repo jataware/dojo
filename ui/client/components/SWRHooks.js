@@ -195,3 +195,13 @@ export function useParams(modelId) {
     paramsError: error,
   };
 }
+
+export function useNCDatasets() {
+  const { data, error } = useSWR('api/dojo/indicators/ncfiles', fetcher);
+
+  return {
+    datasets: data,
+    datasetsLoading: !error && !data,
+    datasetsError: error,
+  };
+}
