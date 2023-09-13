@@ -9,7 +9,8 @@ const initialState = {
   selectedNodeLabel: null,
   selectedNodeInput: null,
   edgeType: 'default',
-  unsavedChanges: false
+  unsavedChanges: false,
+  savedDatasets: [],
 };
 export const dagSlice = createSlice({
   name: 'dag',
@@ -56,7 +57,10 @@ export const dagSlice = createSlice({
     },
     setSavedChanges: (state) => {
       state.unsavedChanges = false;
-    }
+    },
+    setSavedDatasets: (state, action) => {
+      state.savedDatasets = action.payload;
+    },
   },
 });
 
@@ -72,7 +76,8 @@ export const {
   setSelectedNodeLabel,
   setEdgeType,
   setNodeCount,
-  setSavedChanges
+  setSavedChanges,
+  setSavedDatasets,
 } = dagSlice.actions;
 
 export default dagSlice.reducer;
