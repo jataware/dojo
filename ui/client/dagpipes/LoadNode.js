@@ -1,4 +1,7 @@
 import React, { memo } from 'react';
+
+import { useSelector } from 'react-redux';
+
 import { useStyles } from 'tss-react/mui';
 import {
   Handle, Position
@@ -20,6 +23,7 @@ const options = [
 
 function Select({ input, nodeId, onChange }) {
   const { css } = useStyles();
+  const { savedDatasets } = useSelector((state) => state.dag);
   return (
     <div className={css`
         position: relative;
@@ -35,14 +39,21 @@ function Select({ input, nodeId, onChange }) {
           native: true
         }}
       >
-        {options.map((option) => (
+        {Object.values(savedDatasets).map((datasetArray, arrayIndex) => {
+          return datasetArray.map((datasetItem, itemIndex) => (
+            <option key={`${arrayIndex}-${itemIndex}`} value={datasetItem}>
+              {datasetItem}
+            </option>
+          ));
+        })}
+        {/*{options.map((option) => (
           <option
             key={option.value}
             value={option.value}
           >
             {option.label}
           </option>
-        ))}
+        ))}*/}
       </TextField>
       <Handle
         type="source"
