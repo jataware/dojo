@@ -22,12 +22,19 @@ function Select({
     >
       <Handle
         className={css`
-          top: -63px;
+          top: -20px;
           width: 11px;
           height: 11px;
           border-radius: 2px;
           background-color: #778899;
         `}
+        style={{
+          top: '-53px',
+          width: '11px',
+          height: '11px',
+          borderRadius: '2px',
+          backgroundColor: '#778899',
+        }}
         type="target"
         position={Position.Top}
         id={handleId}

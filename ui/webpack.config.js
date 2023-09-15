@@ -57,6 +57,7 @@ module.exports = {
     port: 8080,
     historyApiFallback: true,
     disableHostCheck: true,
+    hot: true,
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Headers': 'Origin, X-Requested-With, Content-Type, Accept'

@@ -6,20 +6,20 @@ import { useStyles } from 'tss-react/mui';
 import {
   Handle, Position
 } from 'reactflow';
+
+// https://mui.com/material-ui/react-select/#grouping
+// TODO: listsubheader for each dataset
+// menuitem for each option
+import ListSubheader from '@mui/material/ListSubheader';
+import MenuItem from '@mui/material/MenuItem';
 import TextField from '@mui/material/TextField';
 
 import { constantData, dojoMockDatasources } from './constants';
 import NodeTitles from './nodeLabels';
 
-const options = [
-  ...constantData,
-  ...dojoMockDatasources,
-].map((i) => ({
-  label: i,
-  value: i
-    .split('(')[0]
-    .trim()
-}));
+// const useStyles = makeStyles()(() => ({
+
+// }));
 
 function Select({ input, nodeId, onChange }) {
   const { css } = useStyles();
@@ -27,7 +27,7 @@ function Select({ input, nodeId, onChange }) {
   return (
     <div className={css`
         position: relative;
-        margin-bottom: 10px;
+        margin-bottom: 13px;
     `}
     >
       <TextField
@@ -39,21 +39,17 @@ function Select({ input, nodeId, onChange }) {
           native: true
         }}
       >
-        {Object.values(savedDatasets).map((datasetArray, arrayIndex) => {
-          return datasetArray.map((datasetItem, itemIndex) => (
-            <option key={`${arrayIndex}-${itemIndex}`} value={datasetItem}>
-              {datasetItem}
-            </option>
-          ));
+        {Object.values(savedDatasets).map((dataset, arrayIndex) => {
+          return (
+            <optgroup key={`${arrayIndex}-${dataset.name}`} label={dataset.name}>
+              {dataset.features.map((feature, itemIndex) => (
+                <option key={`${arrayIndex}-${itemIndex}`} value={`${feature}::${savedDatasets.arrayIndex}`}>
+                  {feature}
+                </option>
+              ))};
+            </optgroup>
+          );
         })}
-        {/*{options.map((option) => (
-          <option
-            key={option.value}
-            value={option.value}
-          >
-            {option.label}
-          </option>
-        ))}*/}
       </TextField>
       <Handle
         type="source"
@@ -64,6 +60,7 @@ function Select({ input, nodeId, onChange }) {
 }
 
 function CustomNode({ id, data }) {
+  console.log('NODE DATA', data)
   const { css } = useStyles();
   const headerStyle = css`
            padding: 8px 10px;
