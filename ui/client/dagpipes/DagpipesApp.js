@@ -2,17 +2,28 @@ import React from 'react';
 import './App.css';
 import 'reactflow/dist/style.css';
 
-import { Provider } from 'react-redux';
+import isEmpty from 'lodash/isEmpty';
+
+import { Provider, useSelector } from 'react-redux';
 
 import { store } from './store';
 import DagDatasetSelector from './DagDatasetSelector';
 import PipeEditor from './PipeEditor';
 
+const DagSteps = () => {
+  const { savedDatasets } = useSelector((state) => state.dag);
+  console.log('THIS IS savedDatasets', savedDatasets, isEmpty(savedDatasets))
+  if (!isEmpty(savedDatasets)) {
+    return <PipeEditor />;
+  }
+
+  return <DagDatasetSelector />;
+};
+
 function App() {
   return (
     <Provider store={store}>
-      <DagDatasetSelector />
-      <PipeEditor />
+      <DagSteps />
     </Provider>
   );
 }

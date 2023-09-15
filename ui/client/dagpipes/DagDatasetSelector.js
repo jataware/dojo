@@ -73,18 +73,21 @@ const DagDatasetSelector = () => {
   const handleNext = async () => {
     const annotations = selectedDatasets.map(async (datasetId) => {
       // get the annotations for each selected dataset so that we can get the column names
-      const datasetAnnotation = await axios.get(`/api/dojo/indicators/${datasetId}/annotations`);
+      const datasetAnnotation = await axios.get(`/api/dojo/indicators/${datasetId}`);
       return datasetAnnotation;
     });
 
     // once all our requests have returned
     Promise.all(annotations).then((responses) => {
+      console.log('THIS IS RESPONSES', responses)
       // build up an object
       const parsedDatasets = responses.reduce((accumulator, response, index) => {
-        // add to our object with the dataset id as key, and the column names array as value
-        accumulator[selectedDatasets[index]] = Object.keys(
-          response.data.metadata.column_statistics
-        );
+        // retrieve all the feature names and put them into an array
+        const allFeatureNames = response.data.outputs.map((feature) => feature.name);
+        // store the name and features under the dataset id
+        accumulator[selectedDatasets[index]] = {
+          name: response.data.name, features: allFeatureNames
+        };
         return accumulator;
       }, {});
 
