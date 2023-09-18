@@ -7,14 +7,8 @@ import {
   Handle, Position
 } from 'reactflow';
 
-// https://mui.com/material-ui/react-select/#grouping
-// TODO: listsubheader for each dataset
-// menuitem for each option
-import ListSubheader from '@mui/material/ListSubheader';
-import MenuItem from '@mui/material/MenuItem';
 import TextField from '@mui/material/TextField';
 
-import { constantData, dojoMockDatasources } from './constants';
 import NodeTitles from './nodeLabels';
 
 // const useStyles = makeStyles()(() => ({
@@ -39,17 +33,16 @@ function Select({ input, nodeId, onChange }) {
           native: true
         }}
       >
-        {Object.values(savedDatasets).map((dataset, arrayIndex) => {
-          return (
-            <optgroup key={`${arrayIndex}-${dataset.name}`} label={dataset.name}>
-              {dataset.features.map((feature, itemIndex) => (
-                <option key={`${arrayIndex}-${itemIndex}`} value={`${feature}::${savedDatasets.arrayIndex}`}>
-                  {feature}
-                </option>
-              ))};
-            </optgroup>
-          );
-        })}
+        {Object.keys(savedDatasets).map((datasetId) => (
+          <optgroup key={datasetId} label={savedDatasets[datasetId].name}>
+            {savedDatasets[datasetId].features.map((feature, itemIndex) => (
+              // eslint-disable-next-line react/no-array-index-key
+              <option key={`${datasetId}-${itemIndex}`} value={`${feature}::${datasetId}`}>
+                {feature}
+              </option>
+            ))};
+          </optgroup>
+        ))}
       </TextField>
       <Handle
         type="source"
@@ -60,7 +53,6 @@ function Select({ input, nodeId, onChange }) {
 }
 
 function CustomNode({ id, data }) {
-  console.log('NODE DATA', data)
   const { css } = useStyles();
   const headerStyle = css`
            padding: 8px 10px;
@@ -71,9 +63,10 @@ function CustomNode({ id, data }) {
            padding: 1rem 0.75rem 0.25rem 0.75rem;
            select {
              padding-top: 0.5rem;
-             padding-bottom: 0.5rem;
+             padding-bottom: 2.5rem;
            }
         `;
+
   return (
     <>
       <div className={headerStyle}>
