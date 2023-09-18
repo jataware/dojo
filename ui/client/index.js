@@ -1,9 +1,9 @@
 import React from 'react';
+import { createRoot } from 'react-dom/client';
 
 import './style.css';
 
 import CssBaseline from '@mui/material/CssBaseline';
-import ReactDOM from 'react-dom';
 import {
   Route,
   BrowserRouter as Router,
@@ -67,7 +67,11 @@ export default function Main() {
   );
 }
 
-ReactDOM.render(
+const container = document.getElementById('app');
+
+const root = createRoot(container);
+
+root.render(
   <StyledEngineProvider injectFirst>
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -78,7 +82,6 @@ ReactDOM.render(
       </ThemeContextProvider>
     </ThemeProvider>
   </StyledEngineProvider>,
-  document.getElementById('app')
 );
 
 module.hot.accept();

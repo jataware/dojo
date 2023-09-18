@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 
 import { CircularProgress } from '@mui/material';
 import Chip from '@mui/material/Chip';
@@ -9,7 +9,9 @@ import Typography from '@mui/material/Typography';
 import { makeStyles } from 'tss-react/mui';
 
 import axios from 'axios';
+
 import { Navigation } from '.';
+import { FlowContext } from './FlowContext';
 
 const useStyles = makeStyles()((theme) => ({
   root: {
@@ -54,50 +56,41 @@ const RunJobs = ({
 }) => {
   const { classes } = useStyles();
 
-  // Don't proceed if we don't have a job set.
-  if (jobs === null) {
-    return null;
-  }
-
-  // TODO: This file needs refactoring so that we aren't conditionally running these hooks
-  // and running the useEffect without all of its deps
-  /* eslint-disable */
   const [jobData, setJobData] = useState(null);
   const [jobIndex, setJobIndex] = useState(0);
 
-
-  const updateJobData = ({ firstRun } = {}) => {
-    const job = jobs[jobIndex];
-    // const job_id = job.id;
-    const url = `/api/dojo/job/${datasetInfo.id}/${job.id}`;
-    let context;
-    if (job.send_context) {
-      context = {
-        uuid: datasetInfo.id,
-        dataset: datasetInfo,
-        annotations,
-      };
-    }
-    const payload = {
-      context,
-      ...job.args,
-      filename: rawFileName,
-      force_restart: firstRun,
-    };
-    axios({
-      method: 'post',
-      url,
-      data: payload,
-    }).then((response) => {
-      setJobData(response.data);
-    }); // TODO catch , finally
-  };
-
   useEffect(() => {
+    const updateJobData = ({ firstRun } = {}) => {
+      const job = jobs[jobIndex];
+      // const job_id = job.id;
+      const url = `/api/dojo/job/${datasetInfo.id}/${job.id}`;
+      let context;
+      if (job.send_context) {
+        context = {
+          uuid: datasetInfo.id,
+          dataset: datasetInfo,
+          annotations,
+        };
+      }
+      const payload = {
+        context,
+        ...job.args,
+        filename: rawFileName,
+        force_restart: firstRun,
+      };
+      axios({
+        method: 'post',
+        url,
+        data: payload,
+      }).then((response) => {
+        setJobData(response.data);
+      }); // TODO catch , finally
+    };
+
     let timeoutHandle;
 
     if (!(datasetInfo?.id)) {
-      return null;
+      return;
     }
 
     if (jobData === null) {
@@ -135,11 +128,22 @@ const RunJobs = ({
     // Crucially important on the last time we run into between unmounting
     //  (eg navigating out of RunJob page by pressing back button)
     //  in order to remove the setTimeout and updateJobData fn invocation.
-    return function cleanup() {
+    return () => {
       clearTimeout(timeoutHandle);
     };
-  }, [jobData, datasetInfo.id]);
-  /* eslint-enable */
+  }, [
+    jobData,
+    datasetInfo.id,
+    annotations,
+    datasetInfo,
+    handleNext,
+    jobIndex,
+    jobs,
+    props,
+    rawFileName,
+    setAnnotations,
+    setDatasetInfo,
+  ]);
 
   // clear rqworker jobs and go back to previous step
   // currently only applies to the 'BasicRegistrationFlow' but shouldn't harm others
@@ -202,4 +206,54 @@ const RunJobs = ({
   );
 };
 RunJobs.SKIP = true; // TODO probably set within flow descriptor object in Flows.js
-export default RunJobs;
+
+// Wrapper component to handle cancelling RunJobs if there are no jobs
+const RunJobsWrapper = ({
+  datasetInfo, setDatasetInfo, stepTitle, annotations, setAnnotations,
+  handleNext, handleBack, jobs, rawFileName, ...props
+}) => {
+  const { direction } = useContext(FlowContext);
+  const { classes } = useStyles();
+
+  useEffect(() => {
+    if (direction && direction === 'back') {
+      // if the FlowContext tells us we're navigating back, then skip RunJobs altogether
+      handleBack();
+    }
+  }, [direction, handleBack]);
+
+  if (jobs === null || !jobs?.length) {
+    return (
+      <Container
+        className={classes.root}
+        component="main"
+        maxWidth="lg"
+      >
+        <Typography variant="h6" align="center" sx={{ margin: 12 }}>
+          There was an unexpected error. Please go back to the previous step and try again.
+        </Typography>
+        <Navigation
+          disableNext
+          handleBack={handleBack}
+        />
+      </Container>
+    );
+  }
+
+  return (
+    <RunJobs
+      datasetInfo={datasetInfo}
+      setDatasetInfo={setDatasetInfo}
+      stepTitle={stepTitle}
+      annotations={annotations}
+      setAnnotations={setAnnotations}
+      handleNext={handleNext}
+      handleBack={handleBack}
+      jobs={jobs}
+      rawFileName={rawFileName}
+      {...props}
+    />
+  );
+};
+
+export default RunJobsWrapper;

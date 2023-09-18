@@ -170,6 +170,7 @@ export default ({
   const [drawings, setDrawings] = useState([]);
   const theme = useTheme();
   const [map, setMap] = useState(null);
+
   // use a ref for this so we don't recreate it on every render
   const mapBoundsLatLng = useRef(null);
   const [outerBounds, setOuterBounds] = useState(null);
@@ -204,6 +205,14 @@ export default ({
       setOuterBounds([outerBoundsLatLngs, innerBoundsArray]);
     }
   }, [map, mapBounds]);
+
+  const handleMapCreated = (leafletMap) => {
+    // once the map shows up in the MapContainer's ref
+    if (leafletMap) {
+      // load it into our react state so we can manipulate it in the useEffect
+      setMap(leafletMap);
+    }
+  };
 
   // pseudo-ref that will allow us to know when the node is available on the page
   // https://reactjs.org/docs/hooks-faq.html#how-can-i-measure-a-dom-node
@@ -242,9 +251,7 @@ export default ({
               border: `1px solid ${theme.palette.grey[400]}`,
               borderRadius: theme.shape.borderRadius,
             }}
-            // don't allow much bounce outside of the map bounds
-            // maxBoundsViscosity={1}
-            whenCreated={setMap}
+            ref={handleMapCreated}
           >
             <Geoman
               setDrawings={setDrawings}
