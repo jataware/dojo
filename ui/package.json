@@ -29,6 +29,7 @@
     "@babel/preset-env": "^7.13.9",
     "@babel/preset-react": "^7.12.13",
     "@cypress/react18": "2.0.0",
+    "@cypress/webpack-dev-server": "1.8.4",
     "@elastic/elasticsearch": "^7.17.12",
     "@faker-js/faker": "^8.0.2",
     "@storybook/addon-essentials": "^7.4.1",
