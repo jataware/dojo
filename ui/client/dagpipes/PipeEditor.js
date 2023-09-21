@@ -240,7 +240,6 @@ const OverviewFlow = () => {
               onPaneClick={() => dispatch(unselectNodes())}
               onConnect={onConnect}
               onInit={onInit}
-              fitView
               snapToGrid
               nodeTypes={nodeTypes}
               onDrop={onDrop}
