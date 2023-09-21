@@ -1,21 +1,13 @@
 import React from 'react';
 
+import Typography from '@mui/material/Typography';
 import { makeStyles } from 'tss-react/mui';
 
 import { useSelector } from 'react-redux';
 
 import './layout.scss';
 
-const useStyles = makeStyles()(() => ({
-  main: {
-    gridArea: 'main',
-    position: 'relative',
-    background: '#fff',
-    borderRadius: '6px',
-    color: 'rgba(0,0,0,.87)',
-    border: '1px solid #e5e5e5ad',
-    marginLeft: '0.5rem',
-  },
+const useStyles = makeStyles()((theme) => ({
   // TODO: not currently used anywhere, perhaps was intended to be global
   ul: {
     marginBlockStart: 0,
@@ -26,8 +18,9 @@ const useStyles = makeStyles()(() => ({
   },
   footer: {
     gridArea: 'footer',
-    // border: 1px dashed green;
-    padding: '1rem',
+    borderTop: `1px solid ${theme.palette.grey[400]}`,
+    height: '38px',
+    backgroundColor: theme.palette.grey[200],
   },
 }));
 
@@ -36,10 +29,10 @@ const Footer = () => {
   const { classes } = useStyles();
 
   return (
-    <footer className={classes.footer} style={{ background: 'white' }}>
-      <div>
+    <footer className={classes.footer}>
+      <Typography variant="subtitle2" sx={{ p: 1 }}>
         {nodeCount} nodes. {unsavedChanges && (<span>Unsaved Changes.</span>)}
-      </div>
+      </Typography>
     </footer>
   );
 };
@@ -48,9 +41,7 @@ const GridLayout = ({ children }) => {
   const { classes } = useStyles();
   return (
     <div className="container">
-      <main className={classes.main}>
         {children}
-      </main>
       <Footer />
 
     </div>
