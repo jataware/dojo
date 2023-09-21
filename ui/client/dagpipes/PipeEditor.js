@@ -33,7 +33,7 @@ import MultiplyNode from './MultiplyNode';
 import ThresholdNode from './ThresholdNode';
 import CountrySplitNode from './CountrySplitNode';
 import SumNode from './SumNode';
-import Layout from './Layout';
+import Footer from './Footer';
 
 import DragBar from './DragBar';
 
@@ -89,7 +89,23 @@ const genNode = (type, position) => {
 const useStyles = makeStyles()(() => ({
   providerWrapper: {
     display: 'flex',
+    height: '100%'
   },
+  fullWrapper: {
+    position: 'absolute',
+    top: '50px',
+    bottom: '0',
+    left: '0',
+    right: '0',
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
+  },
+  reactFlowStyleWrapper: {
+    display: 'flex',
+    height: '100%',
+    width: '100%',
+  }
 }));
 
 const OverviewFlow = () => {
@@ -232,72 +248,65 @@ const OverviewFlow = () => {
   }, [setNodes]);
 
   return (
-    <Layout>
-      <div className="wrap-full-size">
-        <ReactFlowProvider className={classes.providerWrapper}>
-          <div className={classes.providerWrapper}>
-            <div
-              className="reactflow-wrapper"
-              ref={reactFlowWrapper}
+    <div className={classes.fullWrapper}>
+      <ReactFlowProvider className={classes.providerWrapper}>
+        <div className={classes.providerWrapper}>
+          <div
+            className={classes.reactFlowStyleWrapper}
+            ref={reactFlowWrapper}
+          >
+            <ReactFlow
+              nodes={nodes}
+              edges={edgesWithUpdatedTypes}
+              onNodesChange={onNodesChange}
+              onEdgesChange={onEdgesChange}
+              onNodesDelete={() => dispatch(decrementNodeCount())}
+              onNodeClick={setCurrentNode}
+              onPaneClick={() => dispatch(unselectNodes())}
+              onConnect={onConnect}
+              onInit={onInit}
+              snapToGrid
+              nodeTypes={nodeTypes}
+              onDrop={onDrop}
+              onDragOver={onDragOver}
             >
-              <ReactFlow
-                nodes={nodes}
-                edges={edgesWithUpdatedTypes}
-                onNodesChange={onNodesChange}
-                onEdgesChange={onEdgesChange}
-                onNodesDelete={() => dispatch(decrementNodeCount())}
-                onNodeClick={setCurrentNode}
-                onPaneClick={() => dispatch(unselectNodes())}
-                onConnect={onConnect}
-                onInit={onInit}
-                snapToGrid
-                nodeTypes={nodeTypes}
-                onDrop={onDrop}
-                onDragOver={onDragOver}
-              >
-                <MiniMap
-                  style={minimapStyle}
-                  zoomable
-                  pannable
-                />
-                <Controls />
-                <Background
-                  color="#aaa"
-                  gap={16}
-                />
+              <MiniMap
+                style={minimapStyle}
+                zoomable
+                pannable
+              />
+              <Controls />
+              <Background
+                color="#aaa"
+                gap={16}
+              />
 
-                {/* selectedNodeId && ( */
-                /*   <Panel position="top-right" style={{background: 'white'}}> */
-                /*     <NodePropertyEditor /> */
-                /*   </Panel> */
-                /* ) */}
-
-              </ReactFlow>
-              <Panel position="top-left">
-                <ButtonGroup disableElevation>
-                  <Button
-                    variant="outlined"
-                    sx={{ backgroundColor: 'white', color: 'black' }}
-                    onClick={onSave}
-                  >
-                    SAVE
-                  </Button>
-                  <Button
-                    variant="outlined"
-                    sx={{ backgroundColor: 'white', color: 'black' }}
-                    onClick={onRestore}
-                  >
-                    LOAD
-                  </Button>
-                </ButtonGroup>
-              </Panel>
-            </div>
-            <DragBar />
+            </ReactFlow>
+            <Panel position="top-left">
+              <ButtonGroup disableElevation>
+                <Button
+                  variant="outlined"
+                  sx={{ backgroundColor: 'white', color: 'black' }}
+                  onClick={onSave}
+                >
+                  SAVE
+                </Button>
+                <Button
+                  variant="outlined"
+                  sx={{ backgroundColor: 'white', color: 'black' }}
+                  onClick={onRestore}
+                >
+                  LOAD
+                </Button>
+              </ButtonGroup>
+            </Panel>
           </div>
+          <DragBar />
+        </div>
 
-        </ReactFlowProvider>
-      </div>
-    </Layout>
+      </ReactFlowProvider>
+      <Footer />
+    </div>
   );
 };
 

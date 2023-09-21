@@ -2,35 +2,20 @@ import React, { memo } from 'react';
 
 import { useSelector } from 'react-redux';
 
-import { makeStyles } from 'tss-react/mui';
 import {
   Handle, Position
 } from 'reactflow';
 
 import TextField from '@mui/material/TextField';
 
+import { bottomHandle } from './constants';
 import NodeTitles from './nodeLabels';
-
-const useStyles = makeStyles()(() => ({
-  selectWrapper: {
-    position: 'relative',
-    marginBottom: '10px',
-  },
-  headerStyle: {
-    padding: '8px 10px',
-    borderBottom: '1px solid #e2e8f0',
-  },
-  bodyStyle: {
-    padding: '1rem 0.75rem 0.25rem 0.75rem',
-  },
-}));
+import NodeBase from './NodeBase';
 
 function Select({ input, nodeId, onChange }) {
-  const { classes } = useStyles();
   const { savedDatasets } = useSelector((state) => state.dag);
-
   return (
-    <div className={classes.selectWrapper}>
+    <div>
       <TextField
         select
         label="Data Source"
@@ -40,7 +25,7 @@ function Select({ input, nodeId, onChange }) {
           native: true,
           sx: {
             height: '56px',
-            width: '154px'
+            width: '146px'
           }
         }}
       >
@@ -58,28 +43,20 @@ function Select({ input, nodeId, onChange }) {
       <Handle
         type="source"
         position={Position.Bottom}
+        style={bottomHandle}
       />
     </div>
   );
 }
 
-function CustomNode({ id, data }) {
-  const { classes } = useStyles();
-
-  return (
-    <>
-      <div className={classes.headerStyle}>
-        <strong>{NodeTitles.LOAD}</strong>
-      </div>
-      <div className={classes.bodyStyle}>
-        <Select
-          nodeId={id}
-          onChange={data.onChange}
-          input={data.input}
-        />
-      </div>
-    </>
-  );
-}
+const CustomNode = ({ id, data }) => (
+  <NodeBase title={NodeTitles.LOAD}>
+    <Select
+      nodeId={id}
+      onChange={data.onChange}
+      input={data.input}
+    />
+  </NodeBase>
+);
 
 export default memo(CustomNode);
