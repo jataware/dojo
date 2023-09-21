@@ -85,10 +85,10 @@ const NavBar = () => {
         </Button>
         <Button
           component={Link}
-          to="/dagpipes"
+          to="/modeler"
           color="grey"
         >
-          Dagpipes
+          Data Modeler
         </Button>
         <span className={classes.spacer} />
         <Button
