@@ -16,6 +16,8 @@ import ReactFlow, {
 import ButtonGroup from '@mui/material/ButtonGroup';
 import Button from '@mui/material/Button';
 
+import { makeStyles } from 'tss-react/mui';
+
 import { useDispatch } from 'react-redux';
 import {
   decrementNodeCount, incrementNodeCount,
@@ -84,8 +86,15 @@ const genNode = (type, position) => {
   };
 };
 
+const useStyles = makeStyles()(() => ({
+  providerWrapper: {
+    display: 'flex',
+  },
+}));
+
 const OverviewFlow = () => {
   const reactFlowWrapper = useRef(null);
+  const { classes } = useStyles();
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
@@ -225,54 +234,67 @@ const OverviewFlow = () => {
   return (
     <Layout>
       <div className="wrap-full-size">
-        <ReactFlowProvider>
-          <div
-            className="reactflow-wrapper"
-            ref={reactFlowWrapper}
-          >
-            <ReactFlow
-              nodes={nodes}
-              edges={edgesWithUpdatedTypes}
-              onNodesChange={onNodesChange}
-              onEdgesChange={onEdgesChange}
-              onNodesDelete={() => dispatch(decrementNodeCount())}
-              onNodeClick={setCurrentNode}
-              onPaneClick={() => dispatch(unselectNodes())}
-              onConnect={onConnect}
-              onInit={onInit}
-              snapToGrid
-              nodeTypes={nodeTypes}
-              onDrop={onDrop}
-              onDragOver={onDragOver}
+        <ReactFlowProvider className={classes.providerWrapper}>
+          <div className={classes.providerWrapper}>
+            <div
+              className="reactflow-wrapper"
+              ref={reactFlowWrapper}
             >
-              <MiniMap
-                style={minimapStyle}
-                zoomable
-                pannable
-              />
-              <Controls />
-              <Background
-                color="#aaa"
-                gap={16}
-              />
+              <ReactFlow
+                nodes={nodes}
+                edges={edgesWithUpdatedTypes}
+                onNodesChange={onNodesChange}
+                onEdgesChange={onEdgesChange}
+                onNodesDelete={() => dispatch(decrementNodeCount())}
+                onNodeClick={setCurrentNode}
+                onPaneClick={() => dispatch(unselectNodes())}
+                onConnect={onConnect}
+                onInit={onInit}
+                snapToGrid
+                nodeTypes={nodeTypes}
+                onDrop={onDrop}
+                onDragOver={onDragOver}
+              >
+                <MiniMap
+                  style={minimapStyle}
+                  zoomable
+                  pannable
+                />
+                <Controls />
+                <Background
+                  color="#aaa"
+                  gap={16}
+                />
 
-              {/* selectedNodeId && ( */
-              /*   <Panel position="top-right" style={{background: 'white'}}> */
-              /*     <NodePropertyEditor /> */
-              /*   </Panel> */
-              /* ) */}
+                {/* selectedNodeId && ( */
+                /*   <Panel position="top-right" style={{background: 'white'}}> */
+                /*     <NodePropertyEditor /> */
+                /*   </Panel> */
+                /* ) */}
 
-            </ReactFlow>
-          </div>
-          <Panel position="top-left">
-            <ButtonGroup disableElevation>
-              <Button onClick={onSave}>SAVE</Button>
-              <Button onClick={onRestore}>LOAD</Button>
-            </ButtonGroup>
-          </Panel>
-          <Panel position="bottom-center">
+              </ReactFlow>
+              <Panel position="top-left">
+                <ButtonGroup disableElevation>
+                  <Button
+                    variant="outlined"
+                    sx={{ backgroundColor: 'white', color: 'black' }}
+                    onClick={onSave}
+                  >
+                    SAVE
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    sx={{ backgroundColor: 'white', color: 'black' }}
+                    onClick={onRestore}
+                  >
+                    LOAD
+                  </Button>
+                </ButtonGroup>
+              </Panel>
+            </div>
             <DragBar />
-          </Panel>
+          </div>
+
         </ReactFlowProvider>
       </div>
     </Layout>
