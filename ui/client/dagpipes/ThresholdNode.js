@@ -5,8 +5,9 @@ import {
 import TextField from '@mui/material/TextField';
 import { useStyles } from 'tss-react/mui';
 
-import { threshold_ops } from './constants';
+import { threshold_ops, topHandle, bottomHandle } from './constants';
 import NodeTitles from './nodeLabels';
+import NodeBase from './NodeBase';
 
 const options = threshold_ops.map((i) => ({ value: i, label: i }));
 
@@ -15,26 +16,9 @@ function Select({
 }) {
   const { css } = useStyles();
   return (
-    <div className={css`
-        position: relative;
-        margin-bottom: 10px;
-    `}
-    >
+    <div>
       <Handle
-        className={css`
-          top: -20px;
-          width: 11px;
-          height: 11px;
-          border-radius: 2px;
-          background-color: #778899;
-        `}
-        style={{
-          top: '-53px',
-          width: '11px',
-          height: '11px',
-          borderRadius: '2px',
-          backgroundColor: '#778899',
-        }}
+        style={topHandle}
         type="target"
         position={Position.Top}
         id={handleId}
@@ -80,51 +64,23 @@ function Select({
       </div>
 
       <Handle
-        className={css`
-          bottom: -21px;
-          right: -15px;
-          width: 11px;
-          height: 11px;
-          border-radius: 2px;
-          background-color: #778899;
-        `}
         type="source"
         position={Position.Bottom}
         id={handleId}
+        style={bottomHandle}
       />
     </div>
   );
 }
 
-function CustomNode({ id, data }) {
-  const { css } = useStyles();
-
-  const headerStyle = css`
-    padding: 8px 10px;
-    border-bottom: 1px solid #e2e8f0;
-  `;
-
-  const bodyStyle = css`
-    padding: 1rem 0.75rem 0.25rem 0.75rem;
-    select {
-      padding-top: 0.5rem;
-      padding-bottom: 0.5rem;
-    }
-  `;
-  return (
-    <>
-      <div className={headerStyle}>
-        <strong>{NodeTitles.THRESHOLD}</strong>
-      </div>
-      <div className={bodyStyle}>
-        <Select
-          nodeId={id}
-          input={data.input}
-          onChange={data.onChange}
-        />
-      </div>
-    </>
-  );
-}
+const CustomNode = ({ id, data }) => (
+  <NodeBase title={NodeTitles.THRESHOLD}>
+    <Select
+      nodeId={id}
+      input={data.input}
+      onChange={data.onChange}
+    />
+  </NodeBase>
+);
 
 export default memo(CustomNode);

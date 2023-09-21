@@ -2,53 +2,34 @@ import React, { memo } from 'react';
 import {
   Handle, Position
 } from 'reactflow';
-import { useStyles } from 'tss-react/mui';
 
+import NodeBase from './NodeBase';
 import NodeTitles from './nodeLabels';
+import { topHandle, bottomHandle } from './constants';
 
 function CustomNode() {
-  const { css } = useStyles();
-  const headerStyle = css`
-      padding: 8px 10px;
-  `;
+  const leftHandle = { left: '51px', ...topHandle };
+  const rightHandle = { left: '128px', ...topHandle };
   return (
-    <div className={headerStyle}>
-      <strong>{NodeTitles.MULTIPLY}</strong>
+    <div>
+      <NodeBase title={NodeTitles.MULTIPLY} />
       <div className="custom-node__multiply">
         <Handle
-          className={css`
-              left: 50px;
-              width: 11px;
-              height: 11px;
-              border-radius: 2px;
-              background-color: #778899;
-            `}
           type="target"
           position={Position.Top}
           id="multiply-handle-1"
+          style={leftHandle}
         />
         <Handle
-          className={css`
-              left: 135px;
-              width: 11px;
-              height: 11px;
-              border-radius: 2px;
-              background-color: #778899;
-            `}
           type="target"
           id="multiply-handle-2"
           position={Position.Top}
+          style={rightHandle}
         />
         <Handle
-          className={css`
-              width: 11px;
-              height: 11px;
-              border-radius: 2px;
-              background-color: #778899;
-              bottom: -6px;
-            `}
           type="source"
           position={Position.Bottom}
+          style={bottomHandle}
         />
       </div>
     </div>

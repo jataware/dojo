@@ -2,47 +2,42 @@ import React, { memo } from 'react';
 import {
   Handle, Position
 } from 'reactflow';
-import { useStyles } from 'tss-react/mui';
+
 import { pink } from '@mui/material/colors';
 import FormGroup from '@mui/material/FormGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
-import { dimensions } from './constants';
+import Typography from '@mui/material/Typography';
 
+import { dimensions, topHandle, bottomHandle } from './constants';
+
+import NodeBase from './NodeBase';
 import NodeTitles from './nodeLabels';
 
-function Select({
+function DimensionCheckboxes({
   input, handleId, nodeId, onChange
 }) {
-  const { css } = useStyles();
-  const checkboxContainerStyle = css`
-      display: flex;
-      flex-direction: row;
-  `;
   return (
-    <div className={css`
-        position: relative;
-        margin-bottom: 10px;
-    `}
-    >
+    <div>
       <Handle
-        className={css`
-           top: -56px;
-           width: 11px;
-           height: 11px;
-           border-radius: 2px;
-           background-color: #778899;
-        `}
         type="target"
         position={Position.Top}
         id={handleId}
+        style={topHandle}
       />
-      <div>{NodeTitles.SUM_DIMENSION}</div>
+      <Typography variant="caption">
+        {NodeTitles.SUM_DIMENSION}
+      </Typography>
 
-      <FormGroup className={checkboxContainerStyle}>
+      <FormGroup sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
         {dimensions.map((label) => (
           <FormControlLabel
             key={label}
+            sx={{
+              // for short labels, use auto (2 columns per row)
+              // if it's a long label, start at column 1 and span 2 columns
+              gridColumn: label.length < 10 ? 'auto' : '1 / span 2',
+            }}
             control={(
               <Checkbox
                 onChange={onChange.bind(this, nodeId)}
@@ -56,57 +51,29 @@ function Select({
                   },
                 }}
               />
-)}
+            )}
             label={label}
           />
         ))}
       </FormGroup>
       <Handle
-        className={css`
-          bottom: -25px;
-          right: -15px;
-          width: 11px;
-          height: 11px;
-          border-radius: 2px;
-          background-color: #778899;
-        `}
         type="source"
         position={Position.Bottom}
         id={handleId}
+        style={bottomHandle}
       />
     </div>
   );
 }
 
-function CustomNode({ id, data }) {
-  const { css } = useStyles();
-  const headerStyle = css`
-           padding: 8px 10px;
-           border-bottom: 1px solid #e2e8f0;
-        `;
-
-  const bodyStyle = css`
-           padding: 0.5rem;
-           select {
-             width: 100%;
-             margin-top: 5px;
-             font-size: 10px;
-           }
-        `;
-  return (
-    <>
-      <div className={headerStyle}>
-        <strong>{NodeTitles.SUM}</strong>
-      </div>
-      <div className={bodyStyle}>
-        <Select
-          nodeId={id}
-          onChange={data.onChange}
-          input={data.input}
-        />
-      </div>
-    </>
-  );
-}
+const CustomNode = ({ id, data }) => (
+  <NodeBase title={NodeTitles.SUM}>
+    <DimensionCheckboxes
+      nodeId={id}
+      onChange={data.onChange}
+      input={data.input}
+    />
+  </NodeBase>
+);
 
 export default memo(CustomNode);
