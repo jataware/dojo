@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import axios from 'axios';
 
@@ -6,6 +6,7 @@ import { useDispatch } from 'react-redux';
 
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
+import Typography from '@mui/material/Typography';
 import { DataGrid } from '@mui/x-data-grid';
 
 import { useNCDatasets } from '../components/SWRHooks';
@@ -70,6 +71,10 @@ const DagDatasetSelector = () => {
   const [selectedDatasets, setSelectedDatasets] = useState([]);
   const dispatch = useDispatch();
 
+  useEffect(() => {
+    document.title = 'Data Modeler';
+  }, [])
+
   const handleNext = async () => {
     const annotations = selectedDatasets.map(async (datasetId) => {
       // get the annotations for each selected dataset so that we can get the column names
@@ -112,6 +117,12 @@ const DagDatasetSelector = () => {
 console.log('datasets', datasets)
   return (
     <Container maxWidth="lg">
+      <Typography align="center" sx={{ marginTop: 4 }} gutterBottom variant="h4">
+        Data Modeler
+      </Typography>
+      <Typography align="center" sx={{ marginBottom: 4 }} variant="subtitle1">
+        Select any number of netcdf datasets from the table below to load into the data modeler
+      </Typography>
       <DataGrid
         checkboxSelection
         autoHeight
