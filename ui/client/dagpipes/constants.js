@@ -1,3 +1,19 @@
+export const topHandle = {
+  top: '-6px',
+  width: '11px',
+  height: '11px',
+  borderRadius: '2px',
+  backgroundColor: '#778899',
+};
+
+export const bottomHandle = {
+  bottom: '-6px',
+  width: '11px',
+  height: '11px',
+  borderRadius: '2px',
+  backgroundColor: '#778899',
+};
+
 export const dojoMockDatasources = [
   'dojo:Weekly Fire Alerts by Country',
   'dojo:CRU Observed Monthly Precipitation',
