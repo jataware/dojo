@@ -11,7 +11,7 @@ import PipeEditor from './PipeEditor';
 
 const DagSteps = () => {
   const { savedDatasets } = useSelector((state) => state.dag);
-  console.log('THIS IS savedDatasets', savedDatasets, isEmpty(savedDatasets))
+
   if (!isEmpty(savedDatasets)) {
     return <PipeEditor />;
   }
