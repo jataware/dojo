@@ -30,8 +30,6 @@ export const constantData = [
   'land cover' // use
 ];
 
-export const graphEdgeTypes = ['smoothstep', 'step', 'bezier', 'straight'];
-
 export const threshold_ops = [
   'greater_than', 'greater_than_or_equal', 'less_than',
   'less_than_or_equal', 'equal', 'not_equal'

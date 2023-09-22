@@ -86,7 +86,7 @@ const genNode = (type, position) => {
   };
 };
 
-const useStyles = makeStyles()(() => ({
+const useStyles = makeStyles()((theme) => ({
   providerWrapper: {
     display: 'flex',
     height: '100%'
@@ -105,7 +105,14 @@ const useStyles = makeStyles()(() => ({
     display: 'flex',
     height: '100%',
     width: '100%',
-  }
+  },
+  opaqueButton: {
+    backgroundColor: 'white',
+    color: 'black',
+    '&:hover': {
+      backgroundColor: theme.palette.grey[100],
+    },
+  },
 }));
 
 const OverviewFlow = () => {
@@ -286,14 +293,14 @@ const OverviewFlow = () => {
               <ButtonGroup disableElevation>
                 <Button
                   variant="outlined"
-                  sx={{ backgroundColor: 'white', color: 'black' }}
+                  className={classes.opaqueButton}
                   onClick={onSave}
                 >
                   SAVE
                 </Button>
                 <Button
                   variant="outlined"
-                  sx={{ backgroundColor: 'white', color: 'black' }}
+                  className={classes.opaqueButton}
                   onClick={onRestore}
                 >
                   LOAD
