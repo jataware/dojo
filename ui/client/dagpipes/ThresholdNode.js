@@ -41,6 +41,7 @@ function Select({
         }}
         label="Type"
         select
+        // nodrag is a react-flow class that prevents this from moving when the select is open
         className="nodrag"
         value={input.type}
         onChange={onChange.bind(this, nodeId)}
