@@ -4,6 +4,8 @@ import axios from 'axios';
 
 import { useDispatch } from 'react-redux';
 
+import format from 'date-fns/format';
+
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
@@ -22,31 +24,27 @@ const expandableCell = ({ value, colDef }) => (
 
 const columns = [
   { field: 'name', headerName: 'Name', width: 130 },
-  { field: 'id', headerName: 'ID', width: 70 },
+  {
+    field: 'id',
+    headerName: 'ID',
+    renderCell: expandableCell,
+    width: 288,
+  },
   {
     field: 'created_at',
     headerName: 'Date Created',
-    // TODO: format date
-    // valueFormatter: (params) => (
-    //   new Date(params.created_at).toLocaleDateString(
-    //     'en-US',
-    //     {
-    //       timeZone: 'utc',
-    //       day: '2-digit',
-    //       month: '2-digit',
-    //       year: 'numeric'
-    //     },
-    //   )
-    // ),
-    width: 90,
+    valueFormatter: (params) => (
+      format(new Date(params.value), 'MM/dd/yyyy')
+    ),
+    width: 120,
   },
   {
     field: 'maintainer.name',
     headerName: 'Maintainer',
     description: 'This column has a value getter and is not sortable.',
     sortable: false,
-    width: 160,
     valueGetter: (params) => params.row?.maintainer.name,
+    width: 160,
   },
   {
     field: 'description',
@@ -57,15 +55,11 @@ const columns = [
   {
     field: 'fileData.raw.url',
     headerName: 'File Name',
-    minWidth: 100,
     valueGetter: (params) => params.row?.fileData.raw.url,
+    minWidth: 200,
   },
 ];
 
-// get all datasets from /indicators/ncfiles (bad endpoint name, change later)
-// let user select which datasets they want to join
-// when loading the next page, hit the annotations endpoint for those datasets to get the columns
-// /api/dojo/indicators/${datasetInfo.id}/annotations - Annotate.js - getAnnotations line 114/137
 const DagDatasetSelector = () => {
   const { datasets, datasetsLoading, datasetsError } = useNCDatasets();
   const [selectedDatasets, setSelectedDatasets] = useState([]);
@@ -73,7 +67,7 @@ const DagDatasetSelector = () => {
 
   useEffect(() => {
     document.title = 'Data Modeler';
-  }, [])
+  }, []);
 
   const handleNext = async () => {
     const annotations = selectedDatasets.map(async (datasetId) => {
@@ -84,7 +78,6 @@ const DagDatasetSelector = () => {
 
     // once all our requests have returned
     Promise.all(annotations).then((responses) => {
-      console.log('THIS IS RESPONSES', responses)
       // build up an object
       const parsedDatasets = responses.reduce((accumulator, response, index) => {
         // retrieve all the feature names and put them into an array
@@ -96,25 +89,23 @@ const DagDatasetSelector = () => {
         return accumulator;
       }, {});
 
-      console.log('THIS IS parsedDatasets', parsedDatasets);
       // and send it to redux
       dispatch(setSavedDatasets(parsedDatasets));
     });
   };
 
   const handleRowSelection = (rows) => {
-    console.log('Selecting a row?', rows);
     setSelectedDatasets(rows);
   };
 
   if (datasetsLoading) {
-    return <h3>Loading...</h3>
+    return <h3>Loading...</h3>;
   }
 
   if (datasetsError) {
-    return <h3>Error</h3>
+    return <h3>Error</h3>;
   }
-console.log('datasets', datasets)
+
   return (
     <Container maxWidth="lg">
       <Typography align="center" sx={{ marginTop: 4 }} gutterBottom variant="h4">
@@ -136,5 +127,5 @@ console.log('datasets', datasets)
     </Container>
   );
 };
-// id, name, description, created_at, maintainer, fileData, deprecated
+
 export default DagDatasetSelector;
