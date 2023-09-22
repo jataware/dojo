@@ -10,12 +10,12 @@ import ReactFlow, {
   Background,
   useNodesState,
   useEdgesState,
-  Panel
+  Panel,
+  useReactFlow,
 } from 'reactflow';
 
 import ButtonGroup from '@mui/material/ButtonGroup';
 import Button from '@mui/material/Button';
-import Tooltip from '@mui/material/Tooltip';
 
 import { makeStyles } from 'tss-react/mui';
 
@@ -84,7 +84,7 @@ const genNode = (type, position) => {
 };
 
 const useStyles = makeStyles()((theme) => ({
-  providerWrapper: {
+  innerWrapper: {
     display: 'flex',
     height: '100%'
   },
@@ -102,6 +102,8 @@ const useStyles = makeStyles()((theme) => ({
     display: 'flex',
     height: '100%',
     width: '100%',
+    minHeight: '400px',
+    minWidth: '400px',
   },
   opaqueButton: {
     backgroundColor: 'white',
@@ -112,23 +114,24 @@ const useStyles = makeStyles()((theme) => ({
   },
 }));
 
-const OverviewFlow = () => {
+const PipeEditor = () => {
   const reactFlowWrapper = useRef(null);
   const { classes } = useStyles();
 
   const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const { setViewport } = useReactFlow();
 
   const dispatch = useDispatch();
 
-  const setSelectedNode = (node) => {
+  const setSelectedNode = useCallback((node) => {
     dispatch(selectNode({ id: node.id, type: node.type }));
-  };
+  }, [dispatch]);
 
-  const setCurrentNode = (event, nodeEl) => {
+  const setCurrentNode = useCallback((event, nodeEl) => {
     const node = nodes.find((n) => n.id === nodeEl.id);
     setSelectedNode(node);
-  };
+  }, [nodes, setSelectedNode]);
 
   const [reactFlowInstance, setReactFlowInstance] = useState(null);
   const [miniMapHeight, setMiniMapHeight] = useState(120);
@@ -138,7 +141,7 @@ const OverviewFlow = () => {
     setReactFlowInstance(rfInstance);
   };
 
-  const onConnect = useCallback((params) => setEdges((eds) => addEdge(params, eds)), []);
+  const onConnect = useCallback((params) => setEdges((eds) => addEdge(params, eds)), [setEdges]);
 
   const onDragOver = useCallback((event) => {
     event.preventDefault();
@@ -147,7 +150,7 @@ const OverviewFlow = () => {
   }, []);
 
   // TODO cleanup
-  const onNodeChange = (currNodeId, event) => {
+  const onNodeChange = useCallback((currNodeId, event) => {
     setNodes((nds) => nds.map((node) => {
       if (node.id !== currNodeId) {
         return node;
@@ -179,7 +182,7 @@ const OverviewFlow = () => {
         },
       };
     }));
-  };
+  }, [setNodes]);
 
   const onDrop = useCallback(
     (event) => {
@@ -204,7 +207,7 @@ const OverviewFlow = () => {
       dispatch(incrementNodeCount());
       setSelectedNode(newNode);
     },
-    [reactFlowInstance]
+    [reactFlowInstance, dispatch, onNodeChange, setNodes, setSelectedNode]
   );
 
   const edgesWithUpdatedTypes = edges.map((edge) => {
@@ -231,7 +234,7 @@ const OverviewFlow = () => {
       forBackend.nodes = forBackend.nodes.map((e) => ({ type: e.type, data: e.data, id: e.id }));
       console.log(JSON.stringify(forBackend, 2, null));
     }
-  }, [reactFlowInstance]);
+  }, [reactFlowInstance, dispatch]);
 
   const onRestore = useCallback(() => {
     const restoreFlow = async () => {
@@ -240,17 +243,22 @@ const OverviewFlow = () => {
       if (flow) {
         const { x = 0, y = 0, zoom = 1 } = flow.viewport;
 
-        const { nodes = [] } = flow;
-        nodes.map((n) => { n.data.onChange = onNodeChange; return n; });
-        setNodes(nodes);
+        // extract nodes from the loaded flow, rename for use within this function
+        // so it doesn't conflict with upper scope `nodes` name, and provide a default []
+        const { nodes: flowNodes = [] } = flow;
+        // loop over the loaded nodes and apply our onNodeChange function to them
+        // this gets applied when a node is dropped in onDrop
+        // eslint-disable-next-line no-param-reassign
+        flowNodes.forEach((n) => { n.data.onChange = onNodeChange; });
+        setNodes(flowNodes);
         setEdges(flow.edges || []);
-        dispatch(setNodeCount(nodes.length));
-        // setViewport({ x, y, zoom }); // TODO
+        dispatch(setNodeCount(flowNodes.length));
+        setViewport({ x, y, zoom });
       }
     };
 
     restoreFlow();
-  }, [setNodes]);
+  }, [setNodes, dispatch, onNodeChange, setEdges, setViewport]);
 
   const onMiniMapClick = () => {
     if (miniMapHeight === 120) {
@@ -261,67 +269,73 @@ const OverviewFlow = () => {
   };
 
   return (
+    <div className={classes.innerWrapper}>
+      <div
+        className={classes.reactFlowStyleWrapper}
+        ref={reactFlowWrapper}
+      >
+        <ReactFlow
+          nodes={nodes}
+          edges={edgesWithUpdatedTypes}
+          onNodesChange={onNodesChange}
+          onEdgesChange={onEdgesChange}
+          onNodesDelete={() => dispatch(decrementNodeCount())}
+          onNodeClick={setCurrentNode}
+          onPaneClick={() => dispatch(unselectNodes())}
+          onConnect={onConnect}
+          onInit={onInit}
+          snapToGrid
+          nodeTypes={nodeTypes}
+          onDrop={onDrop}
+          onDragOver={onDragOver}
+        >
+          <MiniMap
+            style={{ height: miniMapHeight }}
+            zoomable
+            pannable
+            onClick={onMiniMapClick}
+          />
+          <Controls />
+          <Background
+            color="#aaa"
+            gap={16}
+          />
+
+        </ReactFlow>
+        <Panel position="top-left">
+          <ButtonGroup disableElevation>
+            <Button
+              variant="outlined"
+              className={classes.opaqueButton}
+              onClick={onSave}
+            >
+              SAVE
+            </Button>
+            <Button
+              variant="outlined"
+              className={classes.opaqueButton}
+              onClick={onRestore}
+            >
+              LOAD
+            </Button>
+          </ButtonGroup>
+        </Panel>
+      </div>
+      <DragBar />
+    </div>
+  );
+};
+
+const PipeEditorWrapper = () => {
+  const { classes } = useStyles();
+  return (
     <div className={classes.fullWrapper}>
       <ReactFlowProvider className={classes.providerWrapper}>
-        <div className={classes.providerWrapper}>
-          <div
-            className={classes.reactFlowStyleWrapper}
-            ref={reactFlowWrapper}
-          >
-            <ReactFlow
-              nodes={nodes}
-              edges={edgesWithUpdatedTypes}
-              onNodesChange={onNodesChange}
-              onEdgesChange={onEdgesChange}
-              onNodesDelete={() => dispatch(decrementNodeCount())}
-              onNodeClick={setCurrentNode}
-              onPaneClick={() => dispatch(unselectNodes())}
-              onConnect={onConnect}
-              onInit={onInit}
-              snapToGrid
-              nodeTypes={nodeTypes}
-              onDrop={onDrop}
-              onDragOver={onDragOver}
-            >
-              <MiniMap
-                style={{ height: miniMapHeight }}
-                zoomable
-                pannable
-                onClick={onMiniMapClick}
-              />
-              <Controls />
-              <Background
-                color="#aaa"
-                gap={16}
-              />
-
-            </ReactFlow>
-            <Panel position="top-left">
-              <ButtonGroup disableElevation>
-                <Button
-                  variant="outlined"
-                  className={classes.opaqueButton}
-                  onClick={onSave}
-                >
-                  SAVE
-                </Button>
-                <Button
-                  variant="outlined"
-                  className={classes.opaqueButton}
-                  onClick={onRestore}
-                >
-                  LOAD
-                </Button>
-              </ButtonGroup>
-            </Panel>
-          </div>
-          <DragBar />
-        </div>
-
+        <PipeEditor />
       </ReactFlowProvider>
       <Footer />
     </div>
   );
 };
 
-export default OverviewFlow;
+export default PipeEditorWrapper;
