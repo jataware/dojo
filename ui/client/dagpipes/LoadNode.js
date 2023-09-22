@@ -20,6 +20,8 @@ function Select({ input, nodeId, onChange }) {
         select
         label="Data Source"
         value={input}
+        // nodrag is a react-flow class that prevents this from moving when the select is open
+        className="nodrag"
         onChange={onChange.bind(this, nodeId)}
         SelectProps={{
           native: true,
