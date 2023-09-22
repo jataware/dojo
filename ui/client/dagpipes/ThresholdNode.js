@@ -3,7 +3,6 @@ import {
   Handle, Position
 } from 'reactflow';
 import TextField from '@mui/material/TextField';
-import { useStyles } from 'tss-react/mui';
 
 import { threshold_ops, topHandle, bottomHandle } from './constants';
 import NodeTitles from './nodeLabels';
@@ -14,7 +13,6 @@ const options = threshold_ops.map((i) => ({ value: i, label: i }));
 function Select({
   input, handleId, nodeId, onChange
 }) {
-  const { css } = useStyles();
   return (
     <div>
       <Handle
@@ -24,44 +22,41 @@ function Select({
         id={handleId}
       />
 
-      <div className={css`margin-bottom: 1rem;`}>
-        <TextField
-          type="number"
-          className="nodrag"
-          label="Value"
-          value={input.value}
-          placeholder="1"
-          onChange={onChange.bind(this, nodeId)}
-          InputLabelProps={{
-            shrink: true,
-          }}
-        />
-      </div>
+      <TextField
+        type="number"
+        className="nodrag"
+        label="Value"
+        value={input.value}
+        placeholder="1"
+        onChange={onChange.bind(this, nodeId)}
+        InputLabelProps={{
+          shrink: true,
+        }}
+        sx={{ marginBottom: 2 }}
+      />
 
-      <div>
-        <TextField
-          InputLabelProps={{
-            shrink: true,
-          }}
-          label="Type"
-          select
-          className="nodrag"
-          value={input.type}
-          onChange={onChange.bind(this, nodeId)}
-          SelectProps={{
-            native: true
-          }}
-        >
-          {options.map((option) => (
-            <option
-              key={option.value}
-              value={option.value}
-            >
-              {option.label}
-            </option>
-          ))}
-        </TextField>
-      </div>
+      <TextField
+        InputLabelProps={{
+          shrink: true,
+        }}
+        label="Type"
+        select
+        className="nodrag"
+        value={input.type}
+        onChange={onChange.bind(this, nodeId)}
+        SelectProps={{
+          native: true
+        }}
+      >
+        {options.map((option) => (
+          <option
+            key={option.value}
+            value={option.value}
+          >
+            {option.label}
+          </option>
+        ))}
+      </TextField>
 
       <Handle
         type="source"

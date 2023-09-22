@@ -13,6 +13,11 @@ const useStyles = makeStyles()((theme) => ({
     backgroundColor: theme.palette.grey[200],
     width: '100%',
   },
+  text: {
+    padding: `${theme.spacing(1)} ${theme.spacing(2)}`,
+    display: 'flex',
+    justifyContent: 'space-between',
+  },
 }));
 
 const Footer = () => {
@@ -21,8 +26,13 @@ const Footer = () => {
 
   return (
     <footer className={classes.footer}>
-      <Typography variant="subtitle2" sx={{ padding: 1 }}>
-        {nodeCount} nodes. {unsavedChanges && (<span>Unsaved Changes.</span>)}
+      <Typography variant="subtitle2" className={classes.text}>
+        <span>
+          {nodeCount} node{nodeCount === 1 ? '' : 's'}. {unsavedChanges && (<span>Unsaved Changes.</span>)}
+        </span>
+        <span>
+          Data Modeler
+        </span>
       </Typography>
     </footer>
   );

@@ -1,5 +1,4 @@
 import React from 'react';
-import './App.css';
 import 'reactflow/dist/style.css';
 
 import isEmpty from 'lodash/isEmpty';
