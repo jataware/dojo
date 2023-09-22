@@ -15,6 +15,7 @@ import ReactFlow, {
 
 import ButtonGroup from '@mui/material/ButtonGroup';
 import Button from '@mui/material/Button';
+import Tooltip from '@mui/material/Tooltip';
 
 import { makeStyles } from 'tss-react/mui';
 
@@ -50,10 +51,6 @@ const nodeTypes = {
   threshold: ThresholdNode,
   country_split: CountrySplitNode,
   sum: SumNode,
-};
-
-const minimapStyle = {
-  height: 120,
 };
 
 const initialNodeTypeValues = {
@@ -134,6 +131,7 @@ const OverviewFlow = () => {
   };
 
   const [reactFlowInstance, setReactFlowInstance] = useState(null);
+  const [miniMapHeight, setMiniMapHeight] = useState(120);
 
   const onInit = (rfInstance) => {
     console.log('Flow loaded:', rfInstance);
@@ -254,6 +252,14 @@ const OverviewFlow = () => {
     restoreFlow();
   }, [setNodes]);
 
+  const onMiniMapClick = () => {
+    if (miniMapHeight === 120) {
+      setMiniMapHeight(20);
+    } else {
+      setMiniMapHeight(120);
+    }
+  };
+
   return (
     <div className={classes.fullWrapper}>
       <ReactFlowProvider className={classes.providerWrapper}>
@@ -278,9 +284,10 @@ const OverviewFlow = () => {
               onDragOver={onDragOver}
             >
               <MiniMap
-                style={minimapStyle}
+                style={{ height: miniMapHeight }}
                 zoomable
                 pannable
+                onClick={onMiniMapClick}
               />
               <Controls />
               <Background
