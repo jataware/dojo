@@ -6,6 +6,9 @@ import {
   Handle, Position
 } from 'reactflow';
 
+import FormGroup from '@mui/material/FormGroup';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Checkbox from '@mui/material/Checkbox';
 import TextField from '@mui/material/TextField';
 
 import { bottomHandle } from './constants';
@@ -27,7 +30,7 @@ function Select({ input, nodeId, onChange }) {
           native: true,
           sx: {
             height: '56px',
-            width: '146px'
+            width: '206px'
           }
         }}
       >
@@ -42,6 +45,18 @@ function Select({ input, nodeId, onChange }) {
           </optgroup>
         ))}
       </TextField>
+      <FormGroup sx={{ marginY: 1 }}>
+        <FormControlLabel
+          control={<Checkbox defaultChecked />}
+          label="Select as Geo Resolution"
+          slotProps={{ typography: { variant: 'caption' } }}
+        />
+        <FormControlLabel
+          control={<Checkbox />}
+          label="Select as Time Resolution"
+          slotProps={{ typography: { variant: 'caption' } }}
+        />
+      </FormGroup>
       <Handle
         type="source"
         position={Position.Bottom}

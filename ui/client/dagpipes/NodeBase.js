@@ -3,8 +3,8 @@ import React from 'react';
 import Divider from '@mui/material/Divider';
 import Typography from '@mui/material/Typography';
 
-const NodeBase = ({ children, title }) => (
-  <>
+const NodeBase = ({ children, title, style }) => (
+  <div style={style}>
     <Typography variant="subtitle2" sx={{ padding: 1 }}>
       {title}
     </Typography>
@@ -16,7 +16,7 @@ const NodeBase = ({ children, title }) => (
         </div>
       </>
     )}
-  </>
+  </div>
 );
 
 export default NodeBase;
