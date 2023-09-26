@@ -26,8 +26,6 @@ import {
   setSavedChanges
 } from './dagSlice';
 
-import { nodes as initialNodes, edges as initialEdges } from './initial-elements';
-
 import LoadNode from './LoadNode';
 import SaveNode from './SaveNode';
 import MultiplyNode from './MultiplyNode';
@@ -118,8 +116,8 @@ const PipeEditor = () => {
   const reactFlowWrapper = useRef(null);
   const { classes } = useStyles();
 
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+  const [nodes, setNodes, onNodesChange] = useNodesState([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
   const { setViewport } = useReactFlow();
 
   const dispatch = useDispatch();
