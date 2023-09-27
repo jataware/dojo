@@ -110,6 +110,9 @@ const useStyles = makeStyles()((theme) => ({
       backgroundColor: theme.palette.grey[100],
     },
   },
+  processingButtonWrapper: {
+    margin: `${theme.spacing(4)} ${theme.spacing(2)} ${theme.spacing(2)}`,
+  },
 }));
 
 const PipeEditor = () => {
@@ -319,7 +322,18 @@ const PipeEditor = () => {
           </ButtonGroup>
         </Panel>
       </div>
-      <DragBar />
+      <div>
+        <DragBar />
+        <div className={classes.processingButtonWrapper}>
+          <Button
+            variant="contained"
+            color="primary"
+            fullWidth
+          >
+            Process
+          </Button>
+        </div>
+      </div>
     </div>
   );
 };

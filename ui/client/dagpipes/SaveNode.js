@@ -7,6 +7,7 @@ import TextField from '@mui/material/TextField';
 
 import NodeBase from './NodeBase';
 import NodeTitles from './nodeLabels';
+import { topHandle } from './constants';
 
 /**
  *
@@ -15,11 +16,12 @@ function FileSelect({
   input, handleId, nodeId, onChange
 }) {
   return (
-    <div className="custom-node__save">
+    <div>
       <Handle
         type="target"
         position={Position.Top}
         id={handleId}
+        style={topHandle}
       />
       <TextField
         className="nodrag"
