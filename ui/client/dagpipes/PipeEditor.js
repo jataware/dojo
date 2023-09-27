@@ -19,7 +19,7 @@ import Button from '@mui/material/Button';
 
 import { makeStyles } from 'tss-react/mui';
 
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import {
   decrementNodeCount, incrementNodeCount,
   setNodeCount, selectNode, unselectNodes,
@@ -115,9 +115,12 @@ const useStyles = makeStyles()((theme) => ({
   },
 }));
 
-const PipeEditor = () => {
+const PipeEditor = ({ setStep }) => {
   const reactFlowWrapper = useRef(null);
   const { classes } = useStyles();
+  const {
+    geoResolutionColumn, timeResolutionColumn
+  } = useSelector((state) => state.dag);
 
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
@@ -329,6 +332,8 @@ const PipeEditor = () => {
             variant="contained"
             color="primary"
             fullWidth
+            disabled={!geoResolutionColumn || !timeResolutionColumn}
+            onClick={() => setStep('process')}
           >
             Process
           </Button>
@@ -338,12 +343,12 @@ const PipeEditor = () => {
   );
 };
 
-const PipeEditorWrapper = () => {
+const PipeEditorWrapper = ({ setStep }) => {
   const { classes } = useStyles();
   return (
     <div className={classes.fullWrapper}>
       <ReactFlowProvider className={classes.providerWrapper}>
-        <PipeEditor />
+        <PipeEditor setStep={setStep} />
       </ReactFlowProvider>
       <Footer />
     </div>

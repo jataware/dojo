@@ -1,22 +1,27 @@
-import React from 'react';
+import React, { useState } from 'react';
 import 'reactflow/dist/style.css';
 
-import isEmpty from 'lodash/isEmpty';
-
-import { Provider, useSelector } from 'react-redux';
+import { Provider } from 'react-redux';
 
 import { store } from './store';
 import DagDatasetSelector from './DagDatasetSelector';
 import PipeEditor from './PipeEditor';
+import ModelerProcessing from './ModelerProcessing';
 
 const DagSteps = () => {
-  const { savedDatasets } = useSelector((state) => state.dag);
+  const [step, setStep] = useState('select');
 
-  if (!isEmpty(savedDatasets)) {
-    return <PipeEditor />;
+  switch (step) {
+    case 'select':
+      return <DagDatasetSelector setStep={setStep} />;
+    case 'edit':
+      return <PipeEditor setStep={setStep} />;
+    case 'process':
+      return <ModelerProcessing setStep={setStep} />;
+    default:
+      // TODO: error page?
+      console.log('There was an error');
   }
-
-  return <DagDatasetSelector />;
 };
 
 function App() {
