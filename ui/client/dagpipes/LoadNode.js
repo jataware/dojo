@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useState } from 'react';
 
 import { useSelector } from 'react-redux';
 
@@ -14,9 +14,21 @@ import TextField from '@mui/material/TextField';
 import { bottomHandle } from './constants';
 import NodeTitles from './nodeLabels';
 import NodeBase from './NodeBase';
+// import { setGeoResolutionColumn, setTimeResolutionColumn } from './dagSlice';
 
 function Select({ input, nodeId, onChange }) {
   const { savedDatasets } = useSelector((state) => state.dag);
+  const [geoSelected, setGeoSelected] = useState(false);
+  const [timeSelected, setTimeSelected] = useState(false);
+
+  const handleGeoChange = (event) => {
+    setGeoSelected(event.target.checked);
+  };
+
+  const handleTimeChange = (event) => {
+    setTimeSelected(event.target.checked);
+  };
+
   return (
     <div>
       <TextField
@@ -47,14 +59,26 @@ function Select({ input, nodeId, onChange }) {
       </TextField>
       <FormGroup sx={{ marginY: 1 }}>
         <FormControlLabel
-          control={<Checkbox defaultChecked />}
+          control={(
+            <Checkbox
+              checked={geoSelected}
+              onChange={handleGeoChange}
+            />
+          )}
           label="Select as Geo Resolution"
           slotProps={{ typography: { variant: 'caption' } }}
+          disabled={timeSelected}
         />
         <FormControlLabel
-          control={<Checkbox />}
+          control={(
+            <Checkbox
+              checked={timeSelected}
+              onChange={handleTimeChange}
+            />
+          )}
           label="Select as Time Resolution"
           slotProps={{ typography: { variant: 'caption' } }}
+          disabled={geoSelected}
         />
       </FormGroup>
       <Handle

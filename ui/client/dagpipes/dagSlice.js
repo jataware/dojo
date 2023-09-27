@@ -11,6 +11,8 @@ const initialState = {
   edgeType: 'default',
   unsavedChanges: false,
   savedDatasets: [],
+  geoResolutionColumn: null,
+  timeResolutionColumn: null,
 };
 export const dagSlice = createSlice({
   name: 'dag',
@@ -61,6 +63,12 @@ export const dagSlice = createSlice({
     setSavedDatasets: (state, action) => {
       state.savedDatasets = action.payload;
     },
+    setGeoResolutionColumn: (state, action) => {
+      state.geoResolutionColumn = action.payload;
+    },
+    setTimeResolutionColumn: (state, action) => {
+      state.timeResolutionColumn = action.payload;
+    },
   },
 });
 
@@ -78,6 +86,8 @@ export const {
   setNodeCount,
   setSavedChanges,
   setSavedDatasets,
+  setGeoResolutionColumn,
+  setTimeResolutionColumn,
 } = dagSlice.actions;
 
 export default dagSlice.reducer;
