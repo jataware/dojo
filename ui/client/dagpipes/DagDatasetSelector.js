@@ -91,6 +91,7 @@ const DagDatasetSelector = () => {
 
       // and send it to redux
       dispatch(setSavedDatasets(parsedDatasets));
+      setStep('edit');
     });
   };
 

@@ -1,6 +1,6 @@
 import React, { memo, useState } from 'react';
 
-import { useSelector } from 'react-redux';
+import { useSelector, useDispatch } from 'react-redux';
 
 import {
   Handle, Position
@@ -14,20 +14,50 @@ import TextField from '@mui/material/TextField';
 import { bottomHandle } from './constants';
 import NodeTitles from './nodeLabels';
 import NodeBase from './NodeBase';
-// import { setGeoResolutionColumn, setTimeResolutionColumn } from './dagSlice';
+import { setGeoResolutionColumn, setTimeResolutionColumn } from './dagSlice';
 
 function Select({ input, nodeId, onChange }) {
-  const { savedDatasets } = useSelector((state) => state.dag);
+  const {
+    savedDatasets, geoResolutionColumn, timeResolutionColumn
+  } = useSelector((state) => state.dag);
+  const dispatch = useDispatch();
+
   const [geoSelected, setGeoSelected] = useState(false);
   const [timeSelected, setTimeSelected] = useState(false);
+  const [savedSelectValue, setSavedSelectValue] = useState(null);
 
   const handleGeoChange = (event) => {
     setGeoSelected(event.target.checked);
+    let columnUpdate = null;
+    // only dispatch the saved value if it's checked
+    if (event.target.checked) {
+      columnUpdate = savedSelectValue;
+    }
+    // otherwise clear the value with null
+    dispatch(setGeoResolutionColumn(columnUpdate));
   };
 
   const handleTimeChange = (event) => {
     setTimeSelected(event.target.checked);
+    let columnUpdate = null;
+    // only dispatch the saved value if it's checked
+    if (event.target.checked) {
+      columnUpdate = savedSelectValue;
+    }
+    // otherwise clear the value with null
+    dispatch(setTimeResolutionColumn(columnUpdate));
   };
+
+  const handleSelectChange = (event) => {
+    // capture the value of the select so we can send it along with our resolution checkbox
+    setSavedSelectValue(event.target.value);
+    onChange(nodeId, event);
+  };
+
+  const geoResolutionDisabled = !savedSelectValue || timeSelected
+    || (!geoSelected && Boolean(geoResolutionColumn));
+  const timeResolutionSelected = !savedSelectValue || geoSelected
+    || (!timeSelected && Boolean(timeResolutionColumn));
 
   return (
     <div>
@@ -37,15 +67,18 @@ function Select({ input, nodeId, onChange }) {
         value={input}
         // nodrag is a react-flow class that prevents this from moving when the select is open
         className="nodrag"
-        onChange={onChange.bind(this, nodeId)}
+        onChange={handleSelectChange}
+        required
         SelectProps={{
           native: true,
           sx: {
             height: '56px',
             width: '206px'
-          }
+          },
         }}
       >
+        {/* eslint-disable-next-line jsx-a11y/control-has-associated-label */}
+        <option value="" />
         {Object.keys(savedDatasets).map((datasetId) => (
           <optgroup key={datasetId} label={savedDatasets[datasetId].name}>
             {savedDatasets[datasetId].features.map((feature, itemIndex) => (
@@ -67,7 +100,7 @@ function Select({ input, nodeId, onChange }) {
           )}
           label="Select as Geo Resolution"
           slotProps={{ typography: { variant: 'caption' } }}
-          disabled={timeSelected}
+          disabled={geoResolutionDisabled}
         />
         <FormControlLabel
           control={(
@@ -78,7 +111,7 @@ function Select({ input, nodeId, onChange }) {
           )}
           label="Select as Time Resolution"
           slotProps={{ typography: { variant: 'caption' } }}
-          disabled={geoSelected}
+          disabled={timeResolutionSelected}
         />
       </FormGroup>
       <Handle
