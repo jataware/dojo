@@ -13,7 +13,7 @@ import { DataGrid } from '@mui/x-data-grid';
 
 import { useNCDatasets } from '../components/SWRHooks';
 import ExpandableDataGridCell from '../components/ExpandableDataGridCell';
-import { setSavedDatasets } from './dagSlice';
+import { setSavedDatasets, nextModelerStep } from './dagSlice';
 
 const expandableCell = ({ value, colDef }) => (
   <ExpandableDataGridCell
@@ -91,7 +91,7 @@ const DagDatasetSelector = () => {
 
       // and send it to redux
       dispatch(setSavedDatasets(parsedDatasets));
-      setStep('edit');
+      dispatch(nextModelerStep());
     });
   };
 

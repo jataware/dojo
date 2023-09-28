@@ -25,27 +25,14 @@ const ModelerResolution = () => {
   } = useSelector((state) => state.dag);
   const dispatch = useDispatch();
 
-  // const validNumber = (value) => (
-  //   value !== '' && isFinite(Number(value))
-  // );
-
-  const validNumber = (value) => {
-    // Regular expression to match numbers, commas, decimal points, and negative signs
-    const regex = /^[0-9,.-]+$/;
-    return value !== '' && regex.test(value);
-  };
+  const validNumber = (value) => (
+    value !== '' && isFinite(Number(value))
+  );
 
   const handleGeoChange = (event) => {
     // remove leading and trailing whitespace, as we only want valid numbers
     const trimmedValue = trim(event.target.value);
     setManualGeo(trimmedValue);
-
-    // allow the input to be cleared
-    if (event.target.value === '') {
-      setError(false);
-      dispatch(setGeoResolutionColumn(null));
-      return;
-    }
 
     // When we have the text input, validate that it's a number
     if (validNumber(trimmedValue)) {
@@ -55,6 +42,9 @@ const ModelerResolution = () => {
       setError(true);
       dispatch(setGeoResolutionColumn(null));
     }
+
+    // allow the input to be cleared
+    if (event.target.value === '') setError(false);
   };
 
   const handleTimeChange = (event) => {
@@ -78,7 +68,7 @@ const ModelerResolution = () => {
           onChange={handleTimeChange}
           fullWidth
           size="small"
-          sx={{ marginBottom: 2 }}
+          margin="normal"
         >
           {/* Blank item to allow users to clear their selection here */}
           <MenuItem value="" sx={{ fontStyle: 'italic', color: 'grey.600' }}>
@@ -96,15 +86,12 @@ const ModelerResolution = () => {
         onChange={handleGeoChange}
         fullWidth
         size="small"
+        margin="normal"
         InputLabelProps={{
           shrink: true
         }}
         error={error}
-        helperText={
-          error
-            ? 'Please enter a valid number'
-            : 'Enter a single number for a square grid or two numbers separated by a comma for x,y coordinates'
-          }
+        helperText={error ? 'Please enter a valid number' : ''}
       />
     </div>
   );

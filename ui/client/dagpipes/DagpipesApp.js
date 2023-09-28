@@ -1,7 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import 'reactflow/dist/style.css';
 
-import { Provider } from 'react-redux';
+import { Provider, useSelector } from 'react-redux';
 
 import { store } from './store';
 import DagDatasetSelector from './DagDatasetSelector';
@@ -9,15 +9,17 @@ import PipeEditor from './PipeEditor';
 import ModelerProcessing from './ModelerProcessing';
 
 const DagSteps = () => {
-  const [step, setStep] = useState('select');
+  const { modelerStep } = useSelector((state) => state.dag);
+  // TODO: change this to be in redux so we don't lose state every time there's a code change
+  // const [step, setStep] = useState('select');
 
-  switch (step) {
-    case 'select':
-      return <DagDatasetSelector setStep={setStep} />;
-    case 'edit':
-      return <PipeEditor setStep={setStep} />;
-    case 'process':
-      return <ModelerProcessing setStep={setStep} />;
+  switch (modelerStep) {
+    case 0:
+      return <DagDatasetSelector />;
+    case 1:
+      return <PipeEditor />;
+    case 2:
+      return <ModelerProcessing />;
     default:
       // TODO: error page?
       console.log('There was an error');

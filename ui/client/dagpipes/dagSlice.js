@@ -2,6 +2,7 @@ import { createSlice } from '@reduxjs/toolkit';
 
 /* eslint-disable no-param-reassign */
 const initialState = {
+  modelerStep: 0,
   nodeCount: 0,
   edgeCount: 0,
   selectedNodeId: null,
@@ -18,6 +19,9 @@ export const dagSlice = createSlice({
   name: 'dag',
   initialState,
   reducers: {
+    nextModelerStep: (state) => {
+      state.modelerStep += 1;
+    },
     incrementNodeCount: (state) => {
       state.nodeCount += 1;
       state.unsavedChanges = true;
@@ -74,6 +78,7 @@ export const dagSlice = createSlice({
 
 // Action creators are generated for each case reducer function
 export const {
+  nextModelerStep,
   incrementNodeCount,
   incrementEdgeCount,
   decrementNodeCount,

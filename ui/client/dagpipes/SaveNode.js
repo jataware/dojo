@@ -25,9 +25,8 @@ function FileSelect({
       />
       <TextField
         className="nodrag"
-        label="Filename"
+        label="Name"
         value={input}
-        placeholder="output.nc"
         InputLabelProps={{
           shrink: true,
         }}
