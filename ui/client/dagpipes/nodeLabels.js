@@ -1,9 +1,9 @@
 export default {
-  SUM: 'Sum',
+  SUM: 'Group By',
   SUM_DIMENSION: 'Dimension',
   LOAD: 'Load',
   SAVE: 'Save',
-  MULTIPLY: 'Multiply', // change example: 'Join'
-  COUNTRY_SPLIT: 'Reduce By Country', // was Country Split
+  MULTIPLY: 'Join', // change example: 'Join'
+  COUNTRY_SPLIT: 'Filter By Country', // was Country Split
   THRESHOLD: 'Threshold'
 };
