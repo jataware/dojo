@@ -23,7 +23,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import {
   decrementNodeCount, incrementNodeCount,
   setNodeCount, selectNode, unselectNodes,
-  setSavedChanges
+  setSavedChanges, nextModelerStep
 } from './dagSlice';
 
 import LoadNode from './LoadNode';
@@ -33,7 +33,7 @@ import ThresholdNode from './ThresholdNode';
 import CountrySplitNode from './CountrySplitNode';
 import SumNode from './SumNode';
 import Footer from './Footer';
-
+import ModelerResolution from './ModelerResolution';
 import DragBar from './DragBar';
 
 import './overview.css';
@@ -110,12 +110,15 @@ const useStyles = makeStyles()((theme) => ({
       backgroundColor: theme.palette.grey[100],
     },
   },
-  processingButtonWrapper: {
+  lowerSidebar: {
     margin: `${theme.spacing(4)} ${theme.spacing(2)} ${theme.spacing(2)}`,
+  },
+  wholeSidebar: {
+    width: '255px',
   },
 }));
 
-const PipeEditor = ({ setStep }) => {
+const PipeEditor = () => {
   const reactFlowWrapper = useRef(null);
   const { classes } = useStyles();
   const {
@@ -325,15 +328,17 @@ const PipeEditor = ({ setStep }) => {
           </ButtonGroup>
         </Panel>
       </div>
-      <div>
+      <div className={classes.wholeSidebar}>
         <DragBar />
-        <div className={classes.processingButtonWrapper}>
+        <div className={classes.lowerSidebar}>
+          <ModelerResolution />
           <Button
             variant="contained"
             color="primary"
             fullWidth
             disabled={!geoResolutionColumn || !timeResolutionColumn}
-            onClick={() => setStep('process')}
+            onClick={() => dispatch(nextModelerStep())}
+            sx={{ marginTop: 2 }}
           >
             Process
           </Button>
@@ -343,12 +348,12 @@ const PipeEditor = ({ setStep }) => {
   );
 };
 
-const PipeEditorWrapper = ({ setStep }) => {
+const PipeEditorWrapper = () => {
   const { classes } = useStyles();
   return (
     <div className={classes.fullWrapper}>
       <ReactFlowProvider className={classes.providerWrapper}>
-        <PipeEditor setStep={setStep} />
+        <PipeEditor />
       </ReactFlowProvider>
       <Footer />
     </div>
