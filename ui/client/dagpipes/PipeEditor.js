@@ -228,20 +228,28 @@ const PipeEditor = () => {
   const onSave = useCallback(() => {
     if (reactFlowInstance) {
       const flow = reactFlowInstance.toObject();
+      // add our resolution as a top level key
+      flow.resolution = { geoResolutionColumn, timeResolutionColumn };
 
+      // set the whole react-flow object in localStorage so we can recreate it
       window.localStorage.setItem('dagpipes-flow-session', JSON.stringify(flow));
+      // toggle the unsavedChanges state
       dispatch(setSavedChanges());
 
+      // remove viewport as the backend doesn't need it
       const forBackend = { ...flow };
       delete forBackend.viewport;
 
+      // TODO: is this actually what the backend needs?
+      // parse the edges and nodes into just what the backend cares about
       forBackend.edges = forBackend.edges.map((e) => (
         { source: e.source, target: e.target, id: e.id }
       ));
       forBackend.nodes = forBackend.nodes.map((e) => ({ type: e.type, data: e.data, id: e.id }));
+      // TODO: actually send the contents
       console.log(JSON.stringify(forBackend, 2, null));
     }
-  }, [reactFlowInstance, dispatch]);
+  }, [reactFlowInstance, dispatch, geoResolutionColumn, timeResolutionColumn]);
 
   const onRestore = useCallback(() => {
     const restoreFlow = async () => {
@@ -266,6 +274,12 @@ const PipeEditor = () => {
 
     restoreFlow();
   }, [setNodes, dispatch, onNodeChange, setEdges, setViewport]);
+
+  const onProcessClick = () => {
+    // TODO: hook this up to an endpoint
+    onSave();
+    dispatch(nextModelerStep());
+  };
 
   const onMiniMapClick = () => {
     if (miniMapHeight === 120) {
@@ -337,7 +351,7 @@ const PipeEditor = () => {
             color="primary"
             fullWidth
             disabled={!geoResolutionColumn || !timeResolutionColumn}
-            onClick={() => dispatch(nextModelerStep())}
+            onClick={onProcessClick}
             sx={{ marginTop: 2 }}
           >
             Process
