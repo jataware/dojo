@@ -11,14 +11,51 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
 import TextField from '@mui/material/TextField';
 
-import { bottomHandle } from './constants';
+import { bottomHandle, aggregation_functions } from './constants';
 import NodeTitles from './nodeLabels';
 import NodeBase from './NodeBase';
-import { setGeoResolutionColumn, setTimeResolutionColumn } from './dagSlice';
+import {
+  setGeoResolutionColumn, setTimeResolutionColumn, addSelectedFeature, removeSelectedFeature
+} from './dagSlice';
 
-function Select({ input, nodeId, onChange }) {
+const aggList = aggregation_functions.map((res) => ({ value: res, label: res }));
+
+const ModelerSelect = ({
+  value, label, onChange, options, children, name
+}) => (
+  <TextField
+    InputLabelProps={{
+      shrink: true,
+    }}
+    fullWidth
+    label={label}
+    select
+    // nodrag is a react-flow class that prevents this from moving when the select is open
+    className="nodrag"
+    value={value}
+    onChange={onChange}
+    SelectProps={{
+      native: true
+    }}
+    name={name}
+  >
+    {/* eslint-disable-next-line jsx-a11y/control-has-associated-label */}
+    <option value="" />
+    {children
+      || options.map((option) => (
+        <option
+          key={option.value}
+          value={option.value}
+        >
+          {option.label}
+        </option>
+      ))}
+  </TextField>
+);
+
+function SelectFeature({ input, nodeId, onChange }) {
   const {
-    savedDatasets, geoResolutionColumn, timeResolutionColumn
+    savedDatasets, geoResolutionColumn, timeResolutionColumn, selectedFeatures
   } = useSelector((state) => state.dag);
   const dispatch = useDispatch();
 
@@ -49,6 +86,16 @@ function Select({ input, nodeId, onChange }) {
   };
 
   const handleSelectChange = (event) => {
+    if (savedSelectValue) {
+      // if we've previously selected something, remove it from selectedFeatures
+      dispatch(removeSelectedFeature(savedSelectValue));
+    }
+    // we clear the select with an empty string, don't save this
+    if (event.target.value !== '') {
+      // add our selection to the selectedFeatures redux state, so we can prevent
+      // Load Nodes from being added
+      dispatch(addSelectedFeature(event.target.value));
+    }
     // capture the value of the select so we can send it along with our resolution checkbox
     setSavedSelectValue(event.target.value);
     onChange(nodeId, event);
@@ -61,35 +108,27 @@ function Select({ input, nodeId, onChange }) {
 
   return (
     <div>
-      <TextField
-        select
+      <ModelerSelect
+        value={input.data}
         label="Data Source"
-        value={input}
-        // nodrag is a react-flow class that prevents this from moving when the select is open
-        className="nodrag"
         onChange={handleSelectChange}
-        required
-        SelectProps={{
-          native: true,
-          sx: {
-            height: '56px',
-            width: '206px'
-          },
-        }}
+        name="data_source"
       >
-        {/* eslint-disable-next-line jsx-a11y/control-has-associated-label */}
-        <option value="" />
         {Object.keys(savedDatasets).map((datasetId) => (
           <optgroup key={datasetId} label={savedDatasets[datasetId].name}>
-            {savedDatasets[datasetId].features.map((feature, itemIndex) => (
-              // eslint-disable-next-line react/no-array-index-key
-              <option key={`${datasetId}-${itemIndex}`} value={`${feature}::${datasetId}`}>
-                {feature}
-              </option>
-            ))};
+            {savedDatasets[datasetId].features.map((feature, itemIndex) => {
+              const datasetFeature = `${feature}::${datasetId}`;
+              const disabled = selectedFeatures.indexOf(datasetFeature) !== -1;
+              return (
+                // eslint-disable-next-line react/no-array-index-key
+                <option key={`${datasetId}-${itemIndex}`} disabled={disabled} value={datasetFeature}>
+                  {feature}
+                </option>
+              );
+            })};
           </optgroup>
         ))}
-      </TextField>
+      </ModelerSelect>
       <FormGroup sx={{ marginY: 1 }}>
         <FormControlLabel
           control={(
@@ -114,6 +153,23 @@ function Select({ input, nodeId, onChange }) {
           disabled={timeResolutionSelected}
         />
       </FormGroup>
+
+      <div style={{ marginBottom: '16px' }}>
+        <ModelerSelect
+          value={input.geo_aggregation_function}
+          label="Geo Aggregation Function"
+          onChange={(event) => onChange(nodeId, event)}
+          options={aggList}
+          name="geo_aggregation_function"
+        />
+      </div>
+      <ModelerSelect
+        value={input.time_aggregation_function}
+        label="Time Aggregation Function"
+        onChange={(event) => onChange(nodeId, event)}
+        options={aggList}
+        name="time_aggregation_function"
+      />
       <Handle
         type="source"
         position={Position.Bottom}
@@ -125,7 +181,7 @@ function Select({ input, nodeId, onChange }) {
 
 const CustomNode = ({ id, data }) => (
   <NodeBase title={NodeTitles.LOAD}>
-    <Select
+    <SelectFeature
       nodeId={id}
       onChange={data.onChange}
       input={data.input}
