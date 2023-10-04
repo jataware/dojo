@@ -35,6 +35,10 @@ export const threshold_ops = [
   'less_than_or_equal', 'equal', 'not_equal'
 ];
 
+export const aggregation_functions = [
+  'conserve', 'min', 'max', 'mean', 'median', 'mode', 'interp_or_mean', 'nearest_or_mode',
+];
+
 // SUM
 export const dimensions = ['lat', 'lon', 'time', 'country', 'scenario', 'realization'];
 
