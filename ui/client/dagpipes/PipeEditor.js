@@ -39,7 +39,7 @@ import DragBar from './DragBar';
 import './overview.css';
 
 import {
-  dimensions, threshold_ops
+  dimensions, threshold_ops,
 } from './constants';
 
 const nodeTypes = {
@@ -52,7 +52,11 @@ const nodeTypes = {
 };
 
 const initialNodeTypeValues = {
-  load: 'pr',
+  load: {
+    data_source: '',
+    geo_aggregation_function: '',
+    time_aggregation_function: '',
+  },
   save: '',
   sum: (() => {
     const acc = {};
@@ -156,7 +160,6 @@ const PipeEditor = () => {
     event.dataTransfer.dropEffect = 'move';
   }, []);
 
-  // TODO cleanup
   const onNodeChange = useCallback((currNodeId, event) => {
     setNodes((nds) => nds.map((node) => {
       if (node.id !== currNodeId) {
@@ -176,6 +179,11 @@ const PipeEditor = () => {
         input = {
           ...node.data.input,
           [property_changed]: event.target.value
+        };
+      } else if (node.type === 'load') {
+        input = {
+          ...node.data.input,
+          [event.target.name]: event.target.value
         };
       } else {
         input = event.target.value;
@@ -300,6 +308,7 @@ const PipeEditor = () => {
           edges={edgesWithUpdatedTypes}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
+        // TODO: add an onNodesDelete handler to clean up deleted nodes - especially load nodes
           onNodesDelete={() => dispatch(decrementNodeCount())}
           onNodeClick={setCurrentNode}
           onPaneClick={() => dispatch(unselectNodes())}

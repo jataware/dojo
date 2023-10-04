@@ -14,6 +14,7 @@ const initialState = {
   savedDatasets: [],
   geoResolutionColumn: null,
   timeResolutionColumn: null,
+  selectedFeatures: [],
 };
 export const dagSlice = createSlice({
   name: 'dag',
@@ -73,6 +74,15 @@ export const dagSlice = createSlice({
     setTimeResolutionColumn: (state, action) => {
       state.timeResolutionColumn = action.payload;
     },
+    addSelectedFeature: (state, action) => {
+      state.selectedFeatures.push(action.payload);
+    },
+    removeSelectedFeature: (state, action) => {
+      const filteredFeatures = state.selectedFeatures.filter((feature) => (
+        feature !== action.payload
+      ));
+      state.selectedFeatures = filteredFeatures;
+    },
   },
 });
 
@@ -93,6 +103,8 @@ export const {
   setSavedDatasets,
   setGeoResolutionColumn,
   setTimeResolutionColumn,
+  addSelectedFeature,
+  removeSelectedFeature,
 } = dagSlice.actions;
 
 export default dagSlice.reducer;
