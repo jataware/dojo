@@ -309,7 +309,7 @@ const DataTransformation = ({
     if (hasLatLon || hasCountry) return;
     // we have no primary annotated lat/lon or country
     // so return a string to stop useElwoodData and use this string as the tooltip
-    return 'Nothing to review without annotated lat/lng columns marked as primary geo';
+    return 'Nothing to review without an annotated country column marked as primary geo';
   }, []);
 
   const generateFetchGeoResArgs = useCallback((argsAnnotations) => {
