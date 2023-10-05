@@ -301,10 +301,13 @@ const DataTransformation = ({
   }
 
   const generateFetchGadmArgs = useCallback((argsAnnotations) => {
-    const geoColumns = getPrimaryLatLonColumns(argsAnnotations.annotations.geo);
+    const hasLatLon = getPrimaryLatLonColumns(argsAnnotations.annotations.geo);
+    const hasCountry = argsAnnotations.annotations.geo.some((geoAnnotation) => (
+      geoAnnotation.geo_type === 'country'
+    ));
     // return nothing to tell useElwoodData to continue, the gadm calls have no arguments
-    if (geoColumns) return;
-    // we have no primary annotated lat/lon
+    if (hasLatLon || hasCountry) return;
+    // we have no primary annotated lat/lon or country
     // so return a string to stop useElwoodData and use this string as the tooltip
     return 'Nothing to review without annotated lat/lng columns marked as primary geo';
   }, []);
