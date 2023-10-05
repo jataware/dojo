@@ -7,7 +7,7 @@ from __future__ import annotations
 # es_url = settings.ELASTICSEARCH_URL
 # es = Elasticsearch(es_url)
 import xarray as xr
-from flowcast.pipeline import Pipeline, Variable
+from flowcast.pipeline import Pipeline, Variable, Threshold, ThresholdType
 from flowcast.regrid import RegridType
 from collections import defaultdict, deque
 from typing import TypedDict, Callable
@@ -116,6 +116,234 @@ example_flowcast = json.loads(
 """
 )
 
+
+example_header = json.loads(
+"""
+{
+  "metadata": {
+    "transformations": null,
+    "histograms": {
+      "datetime": null,
+      "X": {
+        "bins": [
+          36.3,
+          36.6933333333,
+          37.0866666667,
+          37.48,
+          37.8733333333,
+          38.2666666667,
+          38.66,
+          39.0533333333,
+          39.4466666667,
+          39.84,
+          40.2333333333
+        ],
+        "values": [
+          102384,
+          102384,
+          102384,
+          93852,
+          102384,
+          102384,
+          93852,
+          102384,
+          102384,
+          102384
+        ]
+      },
+      "d_flood": {
+        "bins": [
+          0,
+          0.0000205446,
+          0.0000410892,
+          0.0000616338,
+          0.0000821784,
+          0.000102723,
+          0.0001232676,
+          0.0001438122,
+          0.0001643568,
+          0.0001849014,
+          0.000205446
+        ],
+        "values": [
+          1006542,
+          44,
+          47,
+          88,
+          7,
+          9,
+          13,
+          10,
+          9,
+          7
+        ]
+      },
+      "Y": {
+        "bins": [
+          -3.5733333333,
+          -3.31,
+          -3.0466666667,
+          -2.7833333333,
+          -2.52,
+          -2.2566666667,
+          -1.9933333333,
+          -1.73,
+          -1.4666666667,
+          -1.2033333333,
+          -0.94
+        ],
+        "values": [
+          101952,
+          101952,
+          101952,
+          101952,
+          89208,
+          101952,
+          101952,
+          101952,
+          101952,
+          101952
+        ]
+      },
+      "time": null
+    },
+    "column_statistics": {
+      "datetime": {
+        "top": "2015-01-01 00:00:00",
+        "unique": 108,
+        "count": 1006776,
+        "freq": 9322
+      },
+      "X": {
+        "std": 1.1451197237,
+        "25%": 37.2749287749,
+        "min": 36.3,
+        "max": 40.2333333333,
+        "mean": 38.2666666667,
+        "75%": 39.2584045584,
+        "count": 1006776,
+        "50%": 38.2666666667
+      },
+      "d_flood": {
+        "std": 0.0000013154,
+        "25%": 0,
+        "min": 0,
+        "max": 0.000205446,
+        "mean": 1.78e-8,
+        "75%": 0,
+        "count": 1006776,
+        "50%": 0
+      },
+      "Y": {
+        "std": 0.7698624215,
+        "25%": -2.9318803419,
+        "min": -3.5733333333,
+        "max": -0.94,
+        "mean": -2.2566666667,
+        "75%": -1.5814529915,
+        "count": 1006776,
+        "50%": -2.2566666667
+      },
+      "time": {
+        "top": "0 days 00:00:00",
+        "unique": 108,
+        "count": 1006776,
+        "freq": 9322
+      }
+    },
+    "files": {
+      "raw_data.nc": {
+        "filetype": "netcdf",
+        "filename": "samplenetcdf.nc",
+        "rawFileName": "raw_data.nc"
+      }
+    },
+    "geotime_classify": {
+      "datetime": {
+        "format": "%Y-%m-%d %H:%M:%S",
+        "type_inference": "str",
+        "category": "time",
+        "subcategory": "date"
+      },
+      "time": {
+        "format": null,
+        "type_inference": "str",
+        "category": "time",
+        "subcategory": "date"
+      }
+    }
+  },
+  "annotations": {
+    "geo": [],
+    "date": [
+      {
+        "name": "datetime",
+        "display_name": "datetime",
+        "description": "test",
+        "type": "date",
+        "date_type": "date",
+        "primary_date": true,
+        "time_format": "%Y-%m-%d %H:%M:%S",
+        "associated_columns": null,
+        "qualifies": [],
+        "aliases": {}
+      }
+    ],
+    "feature": [
+      {
+        "name": "time",
+        "display_name": "time",
+        "description": "feat1",
+        "type": "feature",
+        "feature_type": "str",
+        "units": "feat1",
+        "units_description": "",
+        "qualifies": [],
+        "qualifierrole": "breakdown",
+        "aliases": {}
+      },
+      {
+        "name": "X",
+        "display_name": "X",
+        "description": "feat2",
+        "type": "feature",
+        "feature_type": "float",
+        "units": "feat2",
+        "units_description": "",
+        "qualifies": [],
+        "qualifierrole": "breakdown",
+        "aliases": {}
+      },
+      {
+        "name": "Y",
+        "display_name": "Y",
+        "description": "feat3",
+        "type": "feature",
+        "feature_type": "float",
+        "units": "feat3",
+        "units_description": "",
+        "qualifies": [],
+        "qualifierrole": "breakdown",
+        "aliases": {}
+      },
+      {
+        "name": "d_flood",
+        "display_name": "d_flood",
+        "description": "feat4",
+        "type": "feature",
+        "feature_type": "float",
+        "units": "feat4",
+        "units_description": "",
+        "qualifies": [],
+        "qualifierrole": "breakdown",
+        "aliases": {}
+      }
+    ]
+  }
+}
+"""
+)
+
 class NodeInput(TypedDict):
     data_source: str
     geo_aggregation_function: str
@@ -148,6 +376,14 @@ class FlowcastContext(TypedDict):
     dag: Graph
 
 
+
+def get_node_parents(node_id: str, graph: Graph, num_expected:int=None) -> list[str]:
+    parents = [edge['source'] for edge in graph['edges'] if edge['target'] == node_id]
+    if num_expected is not None:
+        assert len(parents) == num_expected, f'Node {node_id} has incorrect number of parents: {parents}. Expected {num_expected}.'
+    return parents
+
+
 def topological_sort(graph: Graph):
     nodes = {node['id']: node for node in graph['nodes']}
     edges = [(edge['source'], edge['target']) for edge in graph['edges']]
@@ -166,8 +402,7 @@ def topological_sort(graph: Graph):
 
     while queue:
         current = queue.popleft()
-        if current in seen:
-            raise ValueError("Graph is not a DAG")
+        assert current not in seen, "Graph is not a DAG"
         seen.add(current)
         result.append(nodes[current])
 
@@ -183,6 +418,12 @@ def topological_sort(graph: Graph):
 
 
 def get_data(features:list[NodeInput]):
+    """
+    Given a list of data ids and feature names:
+    - download the netcdf files and headers/annotations from elasticsearch
+    - create a dataloader function for each feature
+    - return a map from feature_name::data_id to dataloader
+    """
     #TODO: collect netcdfs and headers from elasticsearch
 
     datasets:dict[str, xr.Dataset] = {}            #map from dataset_id to xr.Dataset
@@ -230,17 +471,55 @@ def run_flowcast_job(context:FlowcastContext):
     topological_sort(graph)
 
 
-    # get the list of features to load
+    # Create data loaders for each load node
     features = [node['data']['input'] for node in graph['nodes'] if node['type'] == 'load']
-    pdb.set_trace()
-
     loaders = get_data(features)
-    #run the pipeline
-    #create loader functions for each dataset/variable (or do as they are loaded by the graph?)
-    pdb.set_trace()
-    ...
+
+    # create the pipeline
+    pipe = Pipeline()
+
+    # keep track of save nodes which need to be fed back into dojo (TODO)
+    saved_nodes: list[tuple[str, str]] = [] #list[(node_id, name)]
+
+    # insert each step into the pipeline
+    for node in graph['nodes']:
+        
+        if node['type'] == 'load':
+            pipe.load(node['id'], loaders[node['data']['input']['data_source']])
+            
+        elif node['type'] == 'threshold':
+            parent, = get_node_parents(node['id'], graph, num_expected=1)
+            pipe.threshold(node['id'], parent, Threshold(float(node['data']['input']['value']), ThresholdType[node['data']['input']['type']]))
+            
+        elif node['type'] == 'multiply':
+            left, right = get_node_parents(node['id'], graph, num_expected=2)
+            pipe.multiply(node['id'], left, right)
+                
+        #TODO: needs some updates to expected payload
+        # elif node['type'] == 'sum':
+        #     parent, = get_node_parents(node['id'], graph, num_expected=1)
+        #     #TODO: ideally pull this information from a canonical list from flowcast...
+        #     dims = [dim for dim in  ['lat', 'lon', 'time', 'country', 'scenario', 'realization'] if node['data']['input'][dim]]
+        #     pipe.sum_reduce(node['id'], parent, dims)
+            
+        elif node['type'] == 'save':
+            parent, = get_node_parents(node['id'], graph, num_expected=1)
+
+            # skip pipeline built-in saving
+            saved_nodes.append((parent, node['data']['input']))
+            
+        #TODO: handling other node types
+        
+        raise NotImplementedError(f'Parsing of node type {node["type"]} not implemented.')
+
+
+    # run the pipeline
+    pipe.execute()
 
     #TODO: dealing with output files
+    for node_id, name in saved_nodes:
+        todo = pipe.get_value(node_id).data
+        print(f'do something with {name} = {todo}')
 
 
 
