@@ -300,6 +300,18 @@ const DataTransformation = ({
     ]);
   }
 
+  const generateFetchGadmArgs = useCallback((argsAnnotations) => {
+    const hasLatLon = getPrimaryLatLonColumns(argsAnnotations.annotations.geo);
+    const hasCountry = argsAnnotations.annotations.geo.some((geoAnnotation) => (
+      geoAnnotation.geo_type === 'country'
+    ));
+    // return nothing to tell useElwoodData to continue, the gadm calls have no arguments
+    if (hasLatLon || hasCountry) return;
+    // we have no primary annotated lat/lon or country
+    // so return a string to stop useElwoodData and use this string as the tooltip
+    return 'Nothing to review without an annotated country column marked as primary geo';
+  }, []);
+
   const generateFetchGeoResArgs = useCallback((argsAnnotations) => {
     const geoColumns = getPrimaryLatLonColumns(argsAnnotations.annotations.geo);
     if (geoColumns) {
@@ -449,7 +461,7 @@ const DataTransformation = ({
     datasetId: datasetInfo.id,
     annotations,
     jobString: 'gadm_processors.resolution_alternatives',
-    generateArgs: () => {},
+    generateArgs: () => generateFetchGadmArgs(annotations),
     cleanupRef,
     onSuccess: onGadmResSuccess,
     onBackendFailure
@@ -462,7 +474,7 @@ const DataTransformation = ({
     datasetId: datasetInfo.id,
     annotations,
     jobString: 'gadm_processors.all_gadm_values',
-    generateArgs: () => {},
+    generateArgs: () => generateFetchGadmArgs(annotations),
     cleanupRef,
     onSuccess: onGadmCountriesSuccess,
     onBackendFailure
