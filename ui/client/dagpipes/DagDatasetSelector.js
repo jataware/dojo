@@ -122,7 +122,7 @@ const DagDatasetSelector = () => {
         rows={datasets}
         onSelectionModelChange={handleRowSelection}
       />
-      <Button onClick={handleNext}>
+      <Button onClick={handleNext} sx={{ marginY: 1 }} disabled={!selectedDatasets.length}>
         Use these datasets
       </Button>
     </Container>

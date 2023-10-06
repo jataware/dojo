@@ -7,6 +7,7 @@ import TextField from '@mui/material/TextField';
 import { threshold_ops, topHandle, bottomHandle } from './constants';
 import NodeTitles from './nodeLabels';
 import NodeBase from './NodeBase';
+import ModelerSelect from './ModelerSelect';
 
 const options = threshold_ops.map((i) => ({ value: i, label: i }));
 
@@ -35,29 +36,13 @@ function Select({
         sx={{ marginBottom: 2 }}
       />
 
-      <TextField
-        InputLabelProps={{
-          shrink: true,
-        }}
-        label="Type"
-        select
-        // nodrag is a react-flow class that prevents this from moving when the select is open
-        className="nodrag"
+      <ModelerSelect
         value={input.type}
-        onChange={onChange.bind(this, nodeId)}
-        SelectProps={{
-          native: true
-        }}
-      >
-        {options.map((option) => (
-          <option
-            key={option.value}
-            value={option.value}
-          >
-            {option.label}
-          </option>
-        ))}
-      </TextField>
+        label="Type"
+        onChange={(event) => onChange(nodeId, event)}
+        options={options}
+        name="type"
+      />
 
       <Handle
         type="source"

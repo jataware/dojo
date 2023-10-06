@@ -9,49 +9,19 @@ import {
 import FormGroup from '@mui/material/FormGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
-import TextField from '@mui/material/TextField';
 
-import { bottomHandle, aggregation_functions } from './constants';
 import NodeTitles from './nodeLabels';
 import NodeBase from './NodeBase';
+import ModelerSelect from './ModelerSelect';
 import {
-  setGeoResolutionColumn, setTimeResolutionColumn, addSelectedFeature, removeSelectedFeature
+  setGeoResolutionColumn,
+  setTimeResolutionColumn,
+  addSelectedFeature,
+  removeSelectedFeature,
 } from './dagSlice';
+import { bottomHandle, aggregation_functions } from './constants';
 
 const aggList = aggregation_functions.map((res) => ({ value: res, label: res }));
-
-const ModelerSelect = ({
-  value, label, onChange, options, children, name
-}) => (
-  <TextField
-    InputLabelProps={{
-      shrink: true,
-    }}
-    fullWidth
-    label={label}
-    select
-    // nodrag is a react-flow class that prevents this from moving when the select is open
-    className="nodrag"
-    value={value}
-    onChange={onChange}
-    SelectProps={{
-      native: true
-    }}
-    name={name}
-  >
-    {/* eslint-disable-next-line jsx-a11y/control-has-associated-label */}
-    <option value="" />
-    {children
-      || options.map((option) => (
-        <option
-          key={option.value}
-          value={option.value}
-        >
-          {option.label}
-        </option>
-      ))}
-  </TextField>
-);
 
 function SelectFeature({ input, nodeId, onChange }) {
   const {
@@ -118,7 +88,7 @@ function SelectFeature({ input, nodeId, onChange }) {
           <optgroup key={datasetId} label={savedDatasets[datasetId].name}>
             {savedDatasets[datasetId].features.map((feature, itemIndex) => {
               const datasetFeature = `${feature}::${datasetId}`;
-              const disabled = selectedFeatures.indexOf(datasetFeature) !== -1;
+              const disabled = selectedFeatures.includes(datasetFeature);
               return (
                 // eslint-disable-next-line react/no-array-index-key
                 <option key={`${datasetId}-${itemIndex}`} disabled={disabled} value={datasetFeature}>
