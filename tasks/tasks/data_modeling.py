@@ -25,6 +25,7 @@ es = Elasticsearch(es_url)
 
 
 # Type Specification for flowcast DAG payload
+# TODO: NodeData might not be correct for other node types
 class NodeInput(TypedDict):
     data_source: str
     geo_aggregation_function: str
@@ -220,12 +221,13 @@ def run_flowcast_job(context:FlowcastContext):
             
         elif node['type'] == 'save':
             parent, = get_node_parents(node['id'], graph, num_expected=1)
+            outname = f"{node['data']['input']}.nc"
+            pipe.save(parent, outname)
 
-            # skip pipeline built-in saving
-            saved_nodes.append((parent, node['data']['input']))
+            # keep track of save nodes
+            saved_nodes.append((parent, outname))
             
         #TODO: handling other node types
-        
         raise NotImplementedError(f'Parsing of node type {node["type"]} not implemented.')
 
 
