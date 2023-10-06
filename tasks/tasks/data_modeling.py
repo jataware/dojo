@@ -1,11 +1,16 @@
 from __future__ import annotations
 
-# from elasticsearch import Elasticsearch
-# from settings import settings
+from elasticsearch import Elasticsearch
+from settings import settings
+from utils import get_rawfile
+from api.validation.MetadataSchema import MetaModel, AnnotationSchema, GeoAnnotation, DateAnnotation
 
+es_url = settings.ELASTICSEARCH_URL
+es = Elasticsearch(es_url)
 
-# es_url = settings.ELASTICSEARCH_URL
-# es = Elasticsearch(es_url)
+import os
+import shutil
+import requests
 import xarray as xr
 from flowcast.pipeline import Pipeline, Variable, Threshold, ThresholdType
 from flowcast.regrid import RegridType
@@ -344,6 +349,7 @@ example_header = json.loads(
 """
 )
 
+# Type Specification for flowcast DAG payload
 class NodeInput(TypedDict):
     data_source: str
     geo_aggregation_function: str
@@ -375,6 +381,29 @@ class Graph(TypedDict):
 class FlowcastContext(TypedDict):
     dag: Graph
 
+
+
+# # Type Specification for dataset header payload
+# class DateAnnotation(TypedDict):
+#     name: str
+#     # display_name: str
+#     description: str
+#     # type: str
+#     # date_type: str
+#     primary_date: bool
+#     time_format: str
+
+# class GeoAnnotation(TypedDict):
+#     ...
+
+# class Annotations(TypedDict):
+#     geo: list[GeoAnnotation]
+#     date: list[DateAnnotation]
+#     # feature: list[dict]
+
+# class Header(TypedDict):
+#     metadata: dict
+#     annotations: Annotations
 
 
 def get_node_parents(node_id: str, graph: Graph, num_expected:int=None) -> list[str]:
@@ -427,41 +456,58 @@ def get_data(features:list[NodeInput]):
     #TODO: collect netcdfs and headers from elasticsearch
 
     datasets:dict[str, xr.Dataset] = {}            #map from dataset_id to xr.Dataset
-    annotations:dict[str, dict] = {}               #map from dataset_id to annotation
     loaders:dict[str, Callable[[], Variable]] = {} #map from variable_name::dataset_id to dataloader for that variable
 
+    # create temporary directory for storing netcdfs
+    tmpdir = './tmp_netcdf'
+    filename = 'raw_data.nc'
+    
     #collect all mentioned datasets and corresponding annotations
     dataset_ids = set(feature['data_source'].split('::')[1] for feature in features)
     for dataset_id in dataset_ids:
         # download netcdf from ES
+        rawfile_path = os.path.join(settings.DATASET_STORAGE_BASE_URL, dataset_id, filename)
+        file_path = os.path.join(tmpdir, f'{dataset_id}_{filename}')
+
+        raw_file_obj = get_rawfile(rawfile_path)
+        with open(file_path, "wb") as f:
+            f.write(raw_file_obj.read())
+        
         # grab annotation from endpoint
-        # datasets[dataset_id] = xr.open_dataset(...)
-        # annotations[dataset_id] = ...
-        pdb.set_trace()
+        metadata_path = os.path.join(settings.DOJO_URL, 'indicators', dataset_id, 'annotations')
+        metadata: MetaModel = requests.get(metadata_path).json()
+
+        # collect the time and geo annotations from the metadata
+        annotations: AnnotationSchema = metadata['annotations']
+        geo_annotations: list[GeoAnnotation] = annotations['geo']
+        time_annotations: list[DateAnnotation] = annotations['date']
+        assert len(geo_annotations) == 2, f'Expected 2 geo annotations (for latitude/longitude), got {len(geo_annotations)}: {geo_annotations=}'
+        assert len(time_annotations) == 1, f'Expected 1 time annotation, got {len(time_annotations)}: {time_annotations=}'
+        time_annotation, = filter(lambda a: a['date_type'] == 'date', time_annotations)
+        lat_annotation, = filter(lambda a: a['geo_type'] == 'latitude', geo_annotations)
+        lon_annotation, = filter(lambda a: a['geo_type'] == 'longitude', geo_annotations)
+
+        # load the netcdf and convert coordinate names to time, lat, lon
+        dataset = xr.open_dataset(file_path)
+        dataset = dataset.rename({time_annotation['name']: 'time', lat_annotation['name']: 'lat', lon_annotation['name']: 'lon'})
+
+        # store dataset in map
+        datasets[dataset_id] = dataset
+
 
     #create loaders for each variable
     for feature in features:
         data_source = feature['data_source']
         dataset_id, variable_name = data_source.split('::')
         
-        feature = datasets[dataset_id]#[variable_name]
-        annotation = annotations[dataset_id]
-        #TODO: convert coordinate names based on annotation to match those expected by the pipeline (time, lat, lon)
-        pdb.set_trace()
+        feature = datasets[dataset_id][variable_name]
         
         time_regrid_type = RegridType[feature.attrs['time_regrid_type']]
         geo_regrid_type = RegridType[feature.attrs['geo_regrid_type']]
         loaders[data_source] = lambda: Variable(feature, time_regrid_type, geo_regrid_type)
 
-
-
     # clean up downloaded netcdfs
-    for dataset_id in dataset_ids:
-        # delete netcdf
-        pdb.set_trace()
-        ...
-
-    
+    shutil.rmtree(tmpdir)
 
     return loaders
 
