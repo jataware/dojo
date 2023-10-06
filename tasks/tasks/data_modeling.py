@@ -5,9 +5,6 @@ from settings import settings
 from utils import get_rawfile
 from api.validation.MetadataSchema import MetaModel, AnnotationSchema, GeoAnnotation, DateAnnotation
 
-es_url = settings.ELASTICSEARCH_URL
-es = Elasticsearch(es_url)
-
 import os
 import shutil
 import requests
@@ -17,6 +14,13 @@ from flowcast.spacetime import Frequency, Resolution
 from flowcast.regrid import RegridType
 from collections import defaultdict, deque
 from typing import TypedDict, Callable
+
+
+
+es_url = settings.ELASTICSEARCH_URL
+es = Elasticsearch(es_url)
+
+
 
 
 
