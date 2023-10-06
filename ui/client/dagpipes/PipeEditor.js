@@ -95,7 +95,10 @@ const genNode = (type, position) => {
 const useStyles = makeStyles()((theme) => ({
   innerWrapper: {
     display: 'flex',
-    height: '100%'
+    // slightly more spacing than the height of the footer accounts for retina displays
+    // otherwise we get a persistent scrollbar on retina
+    height: 'calc(100% - 40px)',
+    minHeight: '620px',
   },
   fullWrapper: {
     position: 'absolute',
@@ -103,13 +106,9 @@ const useStyles = makeStyles()((theme) => ({
     bottom: '0',
     left: '0',
     right: '0',
-    display: 'flex',
-    flexDirection: 'column',
-    overflow: 'hidden',
+    overflow: 'auto',
   },
   reactFlowStyleWrapper: {
-    display: 'flex',
-    height: '100%',
     width: '100%',
     minHeight: '400px',
     minWidth: '400px',
@@ -398,7 +397,7 @@ const PipeEditorWrapper = () => {
   const { classes } = useStyles();
   return (
     <div className={classes.fullWrapper}>
-      <ReactFlowProvider className={classes.providerWrapper}>
+      <ReactFlowProvider>
         <PipeEditor />
       </ReactFlowProvider>
       <Footer />
