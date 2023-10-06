@@ -14,6 +14,8 @@ const initialState = {
   savedDatasets: [],
   geoResolutionColumn: null,
   timeResolutionColumn: null,
+  // selectedFeatures keeps track of which features have been chosen in Load Nodes
+  // to prevent duplicates
   selectedFeatures: [],
 };
 export const dagSlice = createSlice({

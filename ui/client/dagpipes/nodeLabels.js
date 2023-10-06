@@ -4,6 +4,6 @@ export default {
   LOAD: 'Load',
   SAVE: 'Save',
   MULTIPLY: 'Join', // change example: 'Join'
-  COUNTRY_SPLIT: 'Filter By Country', // was Country Split
+  FILTER_BY_COUNTRY: 'Filter By Country', // was Country Split
   THRESHOLD: 'Threshold'
 };

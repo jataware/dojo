@@ -21,16 +21,23 @@ import { makeStyles } from 'tss-react/mui';
 
 import { useDispatch, useSelector } from 'react-redux';
 import {
-  decrementNodeCount, incrementNodeCount,
-  setNodeCount, selectNode, unselectNodes,
-  setSavedChanges, nextModelerStep
+  decrementNodeCount,
+  incrementNodeCount,
+  setNodeCount,
+  selectNode,
+  unselectNodes,
+  setSavedChanges,
+  nextModelerStep,
+  removeSelectedFeature,
+  setGeoResolutionColumn,
+  setTimeResolutionColumn,
 } from './dagSlice';
 
 import LoadNode from './LoadNode';
 import SaveNode from './SaveNode';
 import MultiplyNode from './MultiplyNode';
 import ThresholdNode from './ThresholdNode';
-import CountrySplitNode from './CountrySplitNode';
+import FilterByCountryNode from './FilterByCountryNode';
 import SumNode from './SumNode';
 import Footer from './Footer';
 import ModelerResolution from './ModelerResolution';
@@ -47,7 +54,7 @@ const nodeTypes = {
   save: SaveNode,
   multiply: MultiplyNode,
   threshold: ThresholdNode,
-  country_split: CountrySplitNode,
+  filter_by_country: FilterByCountryNode,
   sum: SumNode,
 };
 
@@ -69,7 +76,7 @@ const initialNodeTypeValues = {
     value: '',
     type: threshold_ops[0]
   },
-  country_split: []
+  filter_by_country: []
 };
 
 const genNodeId = () => `n_${window.crypto.randomUUID()}`;
@@ -283,6 +290,23 @@ const PipeEditor = () => {
     restoreFlow();
   }, [setNodes, dispatch, onNodeChange, setEdges, setViewport]);
 
+  const onNodesDelete = useCallback((deletedNodes) => {
+    dispatch(decrementNodeCount());
+    deletedNodes.forEach((node) => {
+      if (node.type === 'load') {
+        // All the following are in the redux state and not in react-flow, so manually manage them
+        const featureId = node.data.input.data_source;
+        // clear the selected features from our redux state - we use this to prevent duplicate
+        // features in Load Nodes, so we have to clear it when we delete the node
+        dispatch(removeSelectedFeature(featureId));
+
+        // clear geo or resolution if either match the featureId - these are also in redux state
+        if (featureId === geoResolutionColumn) dispatch(setGeoResolutionColumn(null));
+        if (featureId === timeResolutionColumn) dispatch(setTimeResolutionColumn(null));
+      }
+    });
+  }, [dispatch, geoResolutionColumn, timeResolutionColumn]);
+
   const onProcessClick = () => {
     // TODO: hook this up to an endpoint
     onSave();
@@ -308,8 +332,7 @@ const PipeEditor = () => {
           edges={edgesWithUpdatedTypes}
           onNodesChange={onNodesChange}
           onEdgesChange={onEdgesChange}
-        // TODO: add an onNodesDelete handler to clean up deleted nodes - especially load nodes
-          onNodesDelete={() => dispatch(decrementNodeCount())}
+          onNodesDelete={onNodesDelete}
           onNodeClick={setCurrentNode}
           onPaneClick={() => dispatch(unselectNodes())}
           onConnect={onConnect}

@@ -57,7 +57,7 @@ export const operations = [
 
   'multiply', // : 2 inputs, no settings
 
-  'country_split', // 1 input , setting is which countries by name, for example I've been using ['China', 'India', 'United States', 'Canada', 'Mexico']
+  'filter_by_country', // 1 input , setting is which countries by name, for example I've been using ['China', 'India', 'United States', 'Canada', 'Mexico']
 
   'sum', // 1 input, setting is which dimensions to sum over, by name (possible dimensions will probably just be lat, lon, time, scenario, realization)
 
