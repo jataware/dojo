@@ -31,7 +31,7 @@ const MultiColumnGeoSelector = ({
   }, [editingColumn.geo_type, editingColumn.name, disabled, setFieldValue]);
 
   return (
-    <FormControl variant="standard">
+    <FormControl variant="standard" fullWidth>
       <FormGroup>
         <Grid
           container
