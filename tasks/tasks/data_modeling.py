@@ -213,11 +213,10 @@ def run_flowcast_job(context:FlowcastContext):
             pipe.multiply(node['id'], left, right)
                 
         #TODO: needs some updates to expected payload
-        # elif node['type'] == 'sum':
+        # elif node['type'] == 'sum_reduce':
         #     parent, = get_node_parents(node['id'], graph, num_expected=1)
         #     #TODO: ideally pull this information from a canonical list from flowcast...
-        #     dims = [dim for dim in  ['lat', 'lon', 'time', 'country', 'scenario', 'realization'] if node['data']['input'][dim]]
-        #     pipe.sum_reduce(node['id'], parent, dims)
+        #     pipe.sum_reduce(node['id'], parent, dims=node['data']['input']['dims'])
             
         elif node['type'] == 'save':
             parent, = get_node_parents(node['id'], graph, num_expected=1)
