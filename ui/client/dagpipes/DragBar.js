@@ -66,10 +66,10 @@ export default () => {
         variant="outlined"
         startIcon={<DragIndicatorIcon />}
         disableRipple
-        onDragStart={(event) => onDragStart(event, 'country_split')}
+        onDragStart={(event) => onDragStart(event, 'filter_by_country')}
         draggable
       >
-        {NodeTitles.COUNTRY_SPLIT}
+        {NodeTitles.FILTER_BY_COUNTRY}
       </Button>
 
       <Button

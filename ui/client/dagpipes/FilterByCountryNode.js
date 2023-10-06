@@ -45,7 +45,7 @@ function Select({
 
 // reduce by country => from re-gridded to country data
 const CustomNode = ({ id, data }) => (
-  <NodeBase title={NodeTitles.COUNTRY_SPLIT}>
+  <NodeBase title={NodeTitles.FILTER_BY_COUNTRY}>
     <Select
       nodeId={id}
       input={data.input}
