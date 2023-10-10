@@ -187,6 +187,10 @@ logs:
 	COMPOSE_PROFILES="*" docker compose $(addprefix -f , $(DOCKER_COMPOSE_FILES)) logs
 
 
+.PHONY: docker_build-httpd
+docker_build-httpd:
+	(cd httpd && docker build -t dojo_httpd:dev .)
+
 .PHONY: docker_build-api
 docker_build-api:
 	(cd api && docker build -t dojo_api:dev .)
@@ -230,7 +234,8 @@ docker_build-all: docker_build-api \
 	docker_build-rqworker \
 	docker_build-terminal \
 	docker_build-worker \
-	docker_build-ui
+	docker_build-ui \
+	docker_build-httpd
 
 .PHONY: print-version
 print-version:
@@ -245,6 +250,7 @@ bump-version:
 
 .PHONY: docker_tag
 docker_tag: check-VERSION
+	docker tag dojo_httpd:dev registry.gitlab.com/jataware/dojo/httpd:${VERSION}
 	docker tag dojo_api:dev registry.gitlab.com/jataware/dojo/api:${VERSION}
 	docker tag dojo_ui:dev registry.gitlab.com/jataware/dojo/ui:${VERSION}
 	#docker tag dojo_router:dev registry.gitlab.com/jataware/dojo/router:${VERSION}
@@ -262,6 +268,7 @@ gitlab-docker-login:| check-GITLAB_USER check-GITLAB_PASS
 .PHONY: docker_push
 docker_push:| gitlab-docker-login check-VERSION
 	@echo "push ${VERSION}"
+	docker push registry.gitlab.com/jataware/dojo/httpd:${VERSION}
 	docker push registry.gitlab.com/jataware/dojo/api:${VERSION}
 	docker push registry.gitlab.com/jataware/dojo/terminal:${VERSION}
 	docker push registry.gitlab.com/jataware/dojo/worker:${VERSION}
