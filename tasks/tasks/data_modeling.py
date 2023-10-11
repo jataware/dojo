@@ -13,7 +13,8 @@ from flowcast.pipeline import Pipeline, Variable, Threshold, ThresholdType
 from flowcast.spacetime import Frequency, Resolution
 from flowcast.regrid import RegridType
 from collections import defaultdict, deque
-from typing import TypedDict, Callable
+from typing import Callable
+from pydantic import BaseModel, Field
 
 
 
@@ -25,37 +26,46 @@ es = Elasticsearch(es_url)
 
 
 # Type Specification for flowcast DAG payload
-# TODO: NodeData might not be correct for other node types
-class NodeInput(TypedDict):
-    data_source: str
-    geo_aggregation_function: str
-    time_aggregation_function: str
+class LoadNode(BaseModel):
+    data_source: str = Field(..., description='The data source to load. Format: <feature_name>::<dataset_id>', example='d_flood::8987a98e-4128-4602-9f72-e3efa1b53668')
+    geo_aggregation_function: str = Field(..., description='The aggregation function to use for geo resolution. Options: conserve, min, max, mean, median, mode, interp_or_mean, nearest_or_mode', example='min')
+    time_aggregation_function: str = Field(..., description='The aggregation function to use for time resolution. Options: conserve, min, max, mean, median, mode, interp_or_mean, nearest_or_mode', example='median')
 
-class NodeData(TypedDict):
-    label: str
-    input: NodeInput
+class ThresholdNode(BaseModel):
+    value: str = Field(..., description='The threshold value', example='12')
+    type: str = Field(..., description='The threshold type. Options: greater_than, greater_than_or_equal, less_than, less_than_or_equal, equal, not_equal', example='greater_than')
 
-class Node(TypedDict):
-    type: str
-    data: NodeData
-    id: str
+class NodeData(BaseModel):
+    label: str = Field(..., description='The label of node (just repeats the node type)', example='load')
+    input: LoadNode|ThresholdNode|str|None = Field(..., description='The input data for the node. Shape depends on the node type', example={'data_source': 'd_flood::8987a98e-4128-4602-9f72-e3efa1b53668', 'geo_aggregation_function': 'min', 'time_aggregation_function': 'median'})
+            # SaveNode's input is just a string
+            # MultiplyNode doesn't have any input
 
-class Edge(TypedDict):
-    source: str
-    target: str
-    id: str
+class Node(BaseModel):
+    type: str = Field(..., description='The type of node. Options: load, threshold, save, multiply', example='load')
+    data: NodeData = Field(..., description='The data of the node. Shape depends on the node type', example={'label': 'load', 'input': {'data_source': 'd_flood::8987a98e-4128-4602-9f72-e3efa1b53668', 'geo_aggregation_function': 'min', 'time_aggregation_function': 'median'}})
+    id: str = Field(..., description='The unique id of the node in the graph', example='n_90d60ae6-a0d1-4fb7-960e-640843bff138')
 
-class DagResolution(TypedDict):
-    geoResolutionColumn: str
-    timeResolutionColumn: str
+class Edge(BaseModel):
+    source: str = Field(..., description='The id of the source node', example='n_90d60ae6-a0d1-4fb7-960e-640843bff138')
+    target: str = Field(..., description='The id of the target node', example='n_156a6819-b768-45ee-bceb-1e7c7c96bf03')
+    id: str = Field(..., description='The unique id of the edge in the graph', example='reactflow__edge-n_90d60ae6-a0d1-4fb7-960e-640843bff138-n_156a6819-b768-45ee-bceb-1e7c7c96bf03')
 
-class Graph(TypedDict):
-    nodes: list[Node]
-    edges: list[Edge]
-    resolution: DagResolution
+class DagResolution(BaseModel):
+    geoResolutionColumn: str = Field(..., description='Either the name of a load node (<feature_name>::<dataset_id>) or a pair of lat/lon deltas, or a single value for a square grid delta', example='0.25,0.25')
+    timeResolutionColumn: str = Field(..., description='Either the name of a load node (<feature_name>::<dataset_id>) or a time frequency. Options: monthly, yearly, decadal', example='monthly')
 
-class FlowcastContext(TypedDict):
-    dag: Graph
+class Graph(BaseModel):
+    nodes: list[Node] = Field(..., description='The nodes in the graph')
+    edges: list[Edge] = Field(..., description='The edges in the graph')
+    resolution: DagResolution = Field(..., description='The targeted geo and temporal resolutions of the graph')
+
+class FlowcastContext(BaseModel):
+    dag: Graph = Field(..., description='The flowcast DAG to run')
+
+
+
+
 
 
 def get_node_parents(node_id: str, graph: Graph, num_expected:int=None) -> list[str]:
@@ -98,7 +108,7 @@ def topological_sort(graph: Graph):
 
 
 
-def get_data(features:list[NodeInput]):
+def get_data(features:list[LoadNode]):
     """
     Given a list of data ids and feature names:
     - download the netcdf files and headers/annotations from elasticsearch
@@ -181,9 +191,12 @@ def run_flowcast_job(context:FlowcastContext):
         # get the load node that corresponds to the geo resolution
         node, = filter(lambda node: node['type'] == 'load' and node['data']['input']['data_source'] == graph['resolution']['geoResolutionColumn'], graph['nodes'])
         pipe.set_geo_resolution(node['id'])
-    else:
+    elif ',' in graph['resolution']['geoResolutionColumn']:
         lat,lon = graph['resolution']['geoResolutionColumn'].split(',')
         pipe.set_geo_resolution(Resolution(float(lat), float(lon)))
+    else:
+        res = graph['resolution']['geoResolutionColumn']
+        pipe.set_geo_resolution(Resolution(float(res)))
     
     # set the targeted time resolution of the pipeline
     if '::' in graph['resolution']['timeResolutionColumn']:
