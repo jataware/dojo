@@ -37,7 +37,7 @@ class ThresholdNode(BaseModel):
 
 class NodeData(BaseModel):
     label: str = Field(..., description='The label of node (just repeats the node type)', example='load')
-    input: LoadNode|ThresholdNode|str|None = Field(..., description='The input data for the node. Shape depends on the node type', example={'data_source': 'd_flood::8987a98e-4128-4602-9f72-e3efa1b53668', 'geo_aggregation_function': 'min', 'time_aggregation_function': 'median'})
+    input: LoadNode|ThresholdNode|str|None = Field(..., description='Any settings for the node. Shape depends on the node type', example={'data_source': 'd_flood::8987a98e-4128-4602-9f72-e3efa1b53668', 'geo_aggregation_function': 'min', 'time_aggregation_function': 'median'})
             # SaveNode's input is just a string
             # MultiplyNode doesn't have any input
 
