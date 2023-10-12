@@ -12,6 +12,7 @@ RUN mkdir ~/elwood_data && \
 
 ENV CPLUS_INCLUDE_PATH=/usr/include/gdal
 ENV C_INCLUDE_PATH=/usr/include/gdal
+ENV GADM_DIR=/root/elwood_data
 
 RUN pip install --upgrade pip
 RUN pip install numpy==1.22  # Numpy must be installed before GDAL (in requirements.txt) to prevent issues
