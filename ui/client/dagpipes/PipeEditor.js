@@ -2,6 +2,8 @@ import React, {
   useCallback, useRef, useState
 } from 'react';
 
+import axios from 'axios';
+
 import ReactFlow, {
   addEdge,
   ReactFlowProvider,
@@ -240,6 +242,7 @@ const PipeEditor = () => {
   });
 
   const onSave = useCallback(() => {
+    let forBackend;
     if (reactFlowInstance) {
       const flow = reactFlowInstance.toObject();
       // add our resolution as a top level key
@@ -251,7 +254,7 @@ const PipeEditor = () => {
       dispatch(setSavedChanges());
 
       // remove viewport as the backend doesn't need it
-      const forBackend = { ...flow };
+      forBackend = { ...flow };
       delete forBackend.viewport;
 
       // TODO: is this actually what the backend needs?
@@ -263,8 +266,10 @@ const PipeEditor = () => {
       // TODO: actually send the contents
       console.log(JSON.stringify(forBackend, 2, null));
     }
+    return forBackend;
   }, [reactFlowInstance, dispatch, geoResolutionColumn, timeResolutionColumn]);
 
+  // TODO: do we want to keep restore? it currently doesn't work with the redux state
   const onRestore = useCallback(() => {
     const restoreFlow = async () => {
       const flow = JSON.parse(localStorage.getItem('dagpipes-flow-session'));
@@ -306,9 +311,17 @@ const PipeEditor = () => {
     });
   }, [dispatch, geoResolutionColumn, timeResolutionColumn]);
 
+  // TODO: don't let this happen/disable button if there are no nodes
   const onProcessClick = () => {
-    // TODO: hook this up to an endpoint
-    onSave();
+    // TODO: spinner while waiting for response?
+    const flowValue = onSave();
+    axios.post(
+      '/api/dojo/data-modeling',
+      { data: flowValue },
+      { headers: { 'Content-Type': 'application/json' } }
+    ).then((resp) => console.log('Successfully created data modeling on the backend:', resp))
+      .catch((error) => console.log('There was an error creating the data modeling:', error));
+
     dispatch(nextModelerStep());
   };
 
