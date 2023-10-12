@@ -1,0 +1,1159 @@
+name: tasks
+services:
+  airflow-init:
+    command:
+    - version
+    depends_on:
+      airflow-postgres:
+        condition: service_healthy
+      airflow-redis:
+        condition: service_healthy
+    environment:
+      _AIRFLOW_DB_UPGRADE: "true"
+      _AIRFLOW_WWW_USER_CREATE: "true"
+      _AIRFLOW_WWW_USER_PASSWORD: jataware
+      _AIRFLOW_WWW_USER_USERNAME: jataware
+      AIRFLOW__API__AUTH_BACKEND: airflow.api.auth.backend.basic_auth
+      AIRFLOW__CELERY__BROKER_URL: redis://:@airflow-redis:6379/0
+      AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow@airflow-postgres/airflow
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
+      AIRFLOW__CORE__EXECUTOR: CeleryExecutor
+      AIRFLOW__CORE__FERNET_KEY: ""
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-postgres/airflow
+      AIRFLOW_CONN_AWS_DEFAULT: aws://miniouser:miniopass@
+      BUCKET: jataware-world-modelers-dev
+      BUCKET_DIR: ""
+      CAUSEMOS_BASE_URL: ""
+      CAUSEMOS_PWD: $${CAUSEMOS_PWD}
+      CAUSEMOS_USER: worldmodelers
+      DAG_CONCURRENCY: "10"
+      DAG_MAX_ACTIVE_RUNS: "3"
+      DMC_DEBUG: ""
+      DMC_LOCAL_DIR: /data
+      DOCKER_URL: docker.dojo-stack:8375
+      ELWOOD_VERSION: stable
+    image: apache/airflow:2.0.1
+    networks:
+      default: null
+      dojo-stack: null
+    user: 50000:50000
+    volumes:
+    - type: bind
+      source: /Users/brandonrose/repos/WM/dojo-2023/dmc/docker.py
+      target: /home/airflow/.local/lib/python3.6/site-packages/airflow/providers/docker/operators/docker.py
+      bind:
+        create_host_path: true
+    - type: volume
+      source: dmc-data-mappers
+      target: /mappers
+      volume: {}
+    - type: volume
+      source: dmc-data-model_configs
+      target: /model_configs
+      volume: {}
+    - type: bind
+      source: /Users/brandonrose/repos/WM/dojo-2023/dmc/dags
+      target: /opt/airflow/dags
+      bind:
+        create_host_path: true
+    - type: bind
+      source: /Users/brandonrose/repos/WM/dojo-2023/dmc/logs
+      target: /opt/airflow/logs
+      bind:
+        create_host_path: true
+    - type: bind
+      source: /Users/brandonrose/repos/WM/dojo-2023/dmc/plugins
+      target: /opt/airflow/plugins
+      bind:
+        create_host_path: true
+    - type: volume
+      source: dmc-data-results
+      target: /results
+      volume: {}
+    - type: bind
+      source: /var/run/docker.sock
+      target: /var/run/docker.sock
+      bind:
+        create_host_path: true
+  airflow-postgres:
+    environment:
+      DMC_LOCAL_DIR: /data
+      DOCKER_URL: docker.dojo-stack:8375
+      ELWOOD_VERSION: stable
+      POSTGRES_DB: airflow
+      POSTGRES_PASSWORD: airflow
+      POSTGRES_USER: airflow
+    healthcheck:
+      test:
+      - CMD
+      - pg_isready
+      - -U
+      - airflow
+      interval: 5s
+      retries: 5
+    image: postgres:13
+    networks:
+      default: null
+      dojo-stack: null
+    restart: always
+    volumes:
+    - type: volume
+      source: postgres-db-volume
+      target: /var/lib/postgresql/data
+      volume: {}
+  airflow-redis:
+    environment:
+      DMC_LOCAL_DIR: /data
+      DOCKER_URL: docker.dojo-stack:8375
+      ELWOOD_VERSION: stable
+    healthcheck:
+      test:
+      - CMD
+      - redis-cli
+      - ping
+      timeout: 30s
+      interval: 5s
+      retries: 50
+    image: redis:latest
+    networks:
+      default: null
+      dojo-stack: null
+    ports:
+    - mode: ingress
+      target: 6379
+      published: "6390"
+      protocol: tcp
+    restart: always
+  airflow-scheduler:
+    command:
+    - scheduler
+    depends_on:
+      airflow-postgres:
+        condition: service_healthy
+      airflow-redis:
+        condition: service_healthy
+    environment:
+      AIRFLOW__API__AUTH_BACKEND: airflow.api.auth.backend.basic_auth
+      AIRFLOW__CELERY__BROKER_URL: redis://:@airflow-redis:6379/0
+      AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow@airflow-postgres/airflow
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
+      AIRFLOW__CORE__EXECUTOR: CeleryExecutor
+      AIRFLOW__CORE__FERNET_KEY: ""
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-postgres/airflow
+      AIRFLOW_CONN_AWS_DEFAULT: aws://miniouser:miniopass@
+      BUCKET: jataware-world-modelers-dev
+      BUCKET_DIR: ""
+      CAUSEMOS_BASE_URL: ""
+      CAUSEMOS_PWD: $${CAUSEMOS_PWD}
+      CAUSEMOS_USER: worldmodelers
+      DAG_CONCURRENCY: "10"
+      DAG_MAX_ACTIVE_RUNS: "3"
+      DMC_DEBUG: ""
+      DMC_LOCAL_DIR: /data
+      DOCKER_URL: docker.dojo-stack:8375
+      ELWOOD_VERSION: stable
+    image: apache/airflow:2.0.1
+    networks:
+      default: null
+      dojo-stack: null
+    restart: always
+    user: 50000:50000
+    volumes:
+    - type: bind
+      source: /Users/brandonrose/repos/WM/dojo-2023/dmc/docker.py
+      target: /home/airflow/.local/lib/python3.6/site-packages/airflow/providers/docker/operators/docker.py
+      bind:
+        create_host_path: true
+    - type: volume
+      source: dmc-data-mappers
+      target: /mappers
+      volume: {}
+    - type: volume
+      source: dmc-data-model_configs
+      target: /model_configs
+      volume: {}
+    - type: bind
+      source: /Users/brandonrose/repos/WM/dojo-2023/dmc/dags
+      target: /opt/airflow/dags
+      bind:
+        create_host_path: true
+    - type: bind
+      source: /Users/brandonrose/repos/WM/dojo-2023/dmc/logs
+      target: /opt/airflow/logs
+      bind:
+        create_host_path: true
+    - type: bind
+      source: /Users/brandonrose/repos/WM/dojo-2023/dmc/plugins
+      target: /opt/airflow/plugins
+      bind:
+        create_host_path: true
+    - type: volume
+      source: dmc-data-results
+      target: /results
+      volume: {}
+    - type: bind
+      source: /var/run/docker.sock
+      target: /var/run/docker.sock
+      bind:
+        create_host_path: true
+  airflow-webserver:
+    command:
+    - webserver
+    depends_on:
+      airflow-postgres:
+        condition: service_healthy
+      airflow-redis:
+        condition: service_healthy
+    environment:
+      AIRFLOW__API__AUTH_BACKEND: airflow.api.auth.backend.basic_auth
+      AIRFLOW__CELERY__BROKER_URL: redis://:@airflow-redis:6379/0
+      AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow@airflow-postgres/airflow
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
+      AIRFLOW__CORE__EXECUTOR: CeleryExecutor
+      AIRFLOW__CORE__FERNET_KEY: ""
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-postgres/airflow
+      AIRFLOW_CONN_AWS_DEFAULT: aws://miniouser:miniopass@
+      BUCKET: jataware-world-modelers-dev
+      BUCKET_DIR: ""
+      CAUSEMOS_BASE_URL: ""
+      CAUSEMOS_PWD: $${CAUSEMOS_PWD}
+      CAUSEMOS_USER: worldmodelers
+      DAG_CONCURRENCY: "10"
+      DAG_MAX_ACTIVE_RUNS: "3"
+      DMC_DEBUG: ""
+      DMC_LOCAL_DIR: /data
+      DOCKER_URL: docker.dojo-stack:8375
+      ELWOOD_VERSION: stable
+    expose:
+    - "8080"
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - --fail
+      - http://localhost:8080/health
+      timeout: 10s
+      interval: 10s
+      retries: 5
+    image: apache/airflow:2.0.1
+    networks:
+      default: null
+      dojo-stack: null
+    ports:
+    - mode: ingress
+      target: 8080
+      published: "8090"
+      protocol: tcp
+    restart: always
+    user: 50000:50000
+    volumes:
+    - type: bind
+      source: /Users/brandonrose/repos/WM/dojo-2023/dmc/docker.py
+      target: /home/airflow/.local/lib/python3.6/site-packages/airflow/providers/docker/operators/docker.py
+      bind:
+        create_host_path: true
+    - type: volume
+      source: dmc-data-mappers
+      target: /mappers
+      volume: {}
+    - type: volume
+      source: dmc-data-model_configs
+      target: /model_configs
+      volume: {}
+    - type: bind
+      source: /Users/brandonrose/repos/WM/dojo-2023/dmc/dags
+      target: /opt/airflow/dags
+      bind:
+        create_host_path: true
+    - type: bind
+      source: /Users/brandonrose/repos/WM/dojo-2023/dmc/logs
+      target: /opt/airflow/logs
+      bind:
+        create_host_path: true
+    - type: bind
+      source: /Users/brandonrose/repos/WM/dojo-2023/dmc/plugins
+      target: /opt/airflow/plugins
+      bind:
+        create_host_path: true
+    - type: volume
+      source: dmc-data-results
+      target: /results
+      volume: {}
+    - type: bind
+      source: /var/run/docker.sock
+      target: /var/run/docker.sock
+      bind:
+        create_host_path: true
+  airflow-worker:
+    command:
+    - celery
+    - worker
+    depends_on:
+      airflow-postgres:
+        condition: service_healthy
+      airflow-redis:
+        condition: service_healthy
+    environment:
+      AIRFLOW__API__AUTH_BACKEND: airflow.api.auth.backend.basic_auth
+      AIRFLOW__CELERY__BROKER_URL: redis://:@airflow-redis:6379/0
+      AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow@airflow-postgres/airflow
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
+      AIRFLOW__CORE__EXECUTOR: CeleryExecutor
+      AIRFLOW__CORE__FERNET_KEY: ""
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-postgres/airflow
+      AIRFLOW_CONN_AWS_DEFAULT: aws://miniouser:@
+      BUCKET: jataware-world-modelers-dev
+      BUCKET_DIR: ""
+      CAUSEMOS_BASE_URL: ""
+      CAUSEMOS_PWD: $${CAUSEMOS_PWD}
+      CAUSEMOS_USER: worldmodelers
+      DAG_CONCURRENCY: "10"
+      DAG_MAX_ACTIVE_RUNS: "3"
+      DMC_DEBUG: ""
+      DMC_LOCAL_DIR: /data
+      DOCKER_URL: docker.dojo-stack:8375
+      ELWOOD_VERSION: stable
+    image: apache/airflow:2.0.1
+    networks:
+      default: null
+      dojo-stack: null
+    restart: always
+    user: 50000:50000
+    volumes:
+    - type: bind
+      source: /Users/brandonrose/repos/WM/dojo-2023/dmc/docker.py
+      target: /home/airflow/.local/lib/python3.6/site-packages/airflow/providers/docker/operators/docker.py
+      bind:
+        create_host_path: true
+    - type: volume
+      source: dmc-data-mappers
+      target: /mappers
+      volume: {}
+    - type: volume
+      source: dmc-data-model_configs
+      target: /model_configs
+      volume: {}
+    - type: bind
+      source: /Users/brandonrose/repos/WM/dojo-2023/dmc/dags
+      target: /opt/airflow/dags
+      bind:
+        create_host_path: true
+    - type: bind
+      source: /Users/brandonrose/repos/WM/dojo-2023/dmc/logs
+      target: /opt/airflow/logs
+      bind:
+        create_host_path: true
+    - type: bind
+      source: /Users/brandonrose/repos/WM/dojo-2023/dmc/plugins
+      target: /opt/airflow/plugins
+      bind:
+        create_host_path: true
+    - type: volume
+      source: dmc-data-results
+      target: /results
+      volume: {}
+    - type: bind
+      source: /var/run/docker.sock
+      target: /var/run/docker.sock
+      bind:
+        create_host_path: true
+  api:
+    image: jataware/dojo:tasks-api-stable
+    command:
+    - uvicorn
+    - server:api
+    - --host
+    - 0.0.0.0
+    - --port
+    - "80"
+    - --reload
+    - --reload-dir
+    - src
+    - --log-config
+    - logging.yaml
+    container_name: dojo-api
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    environment:
+      AWS_ACCESS_KEY_ID: miniouser
+      AWS_SECRET_ACCESS_KEY: miniopass
+      BIND_PORT: "8000"
+      BUCKET: jataware-world-modelers-dev
+      CAUSEMOS_DEBUG: "true"
+      CAUSEMOS_IND_URL: http://testmos:8012/api/maas
+      CAUSEMOS_PWD: $${CAUSEMOS_PWD}
+      CAUSEMOS_UI_URL: https://causemos.uncharted.software
+      CAUSEMOS_USER: worldmodelers
+      CONFIG_STORAGE_BASE: s3://dojo/configs/
+      DATASET_STORAGE_BASE_URL: s3://datasets/
+      DISABLE_SEMANTIC_HIGHLIGHT: "false"
+      DMC_BUCKET: jataware-world-modelers-dev
+      DMC_LOCAL_DIR: /data
+      DMC_PASSWORD: jataware
+      DMC_PORT: "8080"
+      DMC_URL: airflow-webserver.dojo-stack
+      DMC_USER: jataware
+      DOCKER_PORT: "8375"
+      DOCKER_URL: docker.world-modelers
+      DOCKERHUB_AUTH: $${DOCKERHUB_AUTH}
+      DOCKERHUB_EMAIL: $${DOCKERHUB_EMAIL}
+      DOCKERHUB_PWD: $${DOCKERHUB_PWD}
+      DOCKERHUB_URL: https://hub.docker.com/v2
+      DOCKERHUB_USER: $${DOCKERHUB_USER}
+      DOCUMENT_STORAGE_BASE_URL: s3://documents/
+      DOJO_HOST: http://api.dojo-stack
+      DOJO_URL: http://api.dojo-stack
+      ELASTICSEARCH_PORT: "9200"
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      ELWOOD_VERSION: stable
+      PLUGINS: '{"causemos":"src.plugins.causemos.CausemosPlugin","logger":"src.plugins.logging.LoggingPlugin",
+        "sync":"src.plugins.sync.SyncPlugin"}'
+      REDIS_HOST: redis.dojo-stack
+      REDIS_PORT: "6379"
+      STORAGE_HOST: http://minio.dojo-stack:9000
+      TERMINAL_ENDPOINT: http://terminal.dojo-stack:3000
+      TERMINAL_WORKERS: docker.dojo-stack
+      UAZ_HITS: "10"
+      UAZ_THRESHOLD: "0.6"
+      UAZ_URL: http://linking.cs.arizona.edu/v1
+      UVICORN_RELOAD: "True"
+    expose:
+    - "8000"
+    networks:
+      dojo: null
+      dojo-stack: null
+    ports:
+    - mode: ingress
+      target: 80
+      published: "8000"
+      protocol: tcp
+    volumes:
+    - type: bind
+      source: /Users/brandonrose/repos/WM/dojo-2023/api
+      target: /api
+      bind:
+        create_host_path: true
+    - type: volume
+      source: dataset-storage
+      target: /datasets
+      volume: {}
+    - type: bind
+      source: /Users/brandonrose/repos/WM/dojo-2023/documents
+      target: /documents
+      bind:
+        create_host_path: true
+  docker:
+    image: jataware/dojo:tasks-docker-stable
+    container_name: docker
+    environment:
+      AWS_ACCESS_KEY_ID: miniouser
+      AWS_SECRET_ACCESS_KEY: miniopass
+      BIND_PORT: "8000"
+      BUCKET: jataware-world-modelers-dev
+      CAUSEMOS_DEBUG: "true"
+      CAUSEMOS_IND_URL: http://testmos:8012/api/maas
+      CAUSEMOS_PWD: $${CAUSEMOS_PWD}
+      CAUSEMOS_UI_URL: https://causemos.uncharted.software
+      CAUSEMOS_USER: worldmodelers
+      CONFIG_STORAGE_BASE: s3://dojo/configs/
+      DATASET_STORAGE_BASE_URL: s3://datasets/
+      DISABLE_SEMANTIC_HIGHLIGHT: "false"
+      DMC_BUCKET: jataware-world-modelers-dev
+      DMC_LOCAL_DIR: /data
+      DMC_PASSWORD: jataware
+      DMC_PORT: "8080"
+      DMC_URL: airflow-webserver.dojo-stack
+      DMC_USER: jataware
+      DOCKER_PORT: "8375"
+      DOCKER_URL: docker.world-modelers
+      DOCKERHUB_AUTH: $${DOCKERHUB_AUTH}
+      DOCKERHUB_EMAIL: $${DOCKERHUB_EMAIL}
+      DOCKERHUB_PWD: $${DOCKERHUB_PWD}
+      DOCKERHUB_URL: https://hub.docker.com/v2
+      DOCKERHUB_USER: $${DOCKERHUB_USER}
+      DOCUMENT_STORAGE_BASE_URL: s3://documents/
+      DOJO_HOST: http://api.dojo-stack
+      DOJO_URL: http://api.dojo-stack
+      ELASTICSEARCH_PORT: "9200"
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      ELWOOD_VERSION: stable
+      PLUGINS: '{"causemos":"src.plugins.causemos.CausemosPlugin","logger":"src.plugins.logging.LoggingPlugin",
+        "sync":"src.plugins.sync.SyncPlugin"}'
+      REDIS_HOST: redis.dojo-stack
+      REDIS_PORT: "6379"
+      STORAGE_HOST: http://minio.dojo-stack:9000
+      TERMINAL_ENDPOINT: http://terminal.dojo-stack:3000
+      TERMINAL_WORKERS: docker.dojo-stack
+      UAZ_HITS: "10"
+      UAZ_THRESHOLD: "0.6"
+      UAZ_URL: http://linking.cs.arizona.edu/v1
+      UVICORN_RELOAD: "True"
+    expose:
+    - "8375"
+    networks:
+      default: null
+      dojo-stack: null
+    privileged: true
+    volumes:
+    - type: volume
+      source: dmc-data-mappers
+      target: /data/mappers
+      volume: {}
+    - type: volume
+      source: dmc-data-model_configs
+      target: /data/model_configs
+      volume: {}
+    - type: volume
+      source: dmc-data-results
+      target: /data/results
+      volume: {}
+    - type: volume
+      source: docker
+      target: /var/lib/docker
+      volume: {}
+  elasticsearch:
+    container_name: elasticsearch
+    environment:
+      AWS_ACCESS_KEY_ID: miniouser
+      AWS_SECRET_ACCESS_KEY: miniopass
+      BIND_PORT: "8000"
+      BUCKET: jataware-world-modelers-dev
+      CAUSEMOS_DEBUG: "true"
+      CAUSEMOS_IND_URL: http://testmos:8012/api/maas
+      CAUSEMOS_PWD: $${CAUSEMOS_PWD}
+      CAUSEMOS_UI_URL: https://causemos.uncharted.software
+      CAUSEMOS_USER: worldmodelers
+      CONFIG_STORAGE_BASE: s3://dojo/configs/
+      DATASET_STORAGE_BASE_URL: s3://datasets/
+      DISABLE_SEMANTIC_HIGHLIGHT: "false"
+      DMC_BUCKET: jataware-world-modelers-dev
+      DMC_LOCAL_DIR: /data
+      DMC_PASSWORD: jataware
+      DMC_PORT: "8080"
+      DMC_URL: airflow-webserver.dojo-stack
+      DMC_USER: jataware
+      DOCKER_PORT: "8375"
+      DOCKER_URL: docker.world-modelers
+      DOCKERHUB_AUTH: $${DOCKERHUB_AUTH}
+      DOCKERHUB_EMAIL: $${DOCKERHUB_EMAIL}
+      DOCKERHUB_PWD: $${DOCKERHUB_PWD}
+      DOCKERHUB_URL: https://hub.docker.com/v2
+      DOCKERHUB_USER: $${DOCKERHUB_USER}
+      DOCUMENT_STORAGE_BASE_URL: s3://documents/
+      DOJO_HOST: http://api.dojo-stack
+      DOJO_URL: http://api.dojo-stack
+      ELASTICSEARCH_PORT: "9200"
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      ELWOOD_VERSION: stable
+      ES_JAVA_OPTS: -Xms512m -Xmx512m
+      PLUGINS: '{"causemos":"src.plugins.causemos.CausemosPlugin","logger":"src.plugins.logging.LoggingPlugin",
+        "sync":"src.plugins.sync.SyncPlugin"}'
+      REDIS_HOST: redis.dojo-stack
+      REDIS_PORT: "6379"
+      STORAGE_HOST: http://minio.dojo-stack:9000
+      TERMINAL_ENDPOINT: http://terminal.dojo-stack:3000
+      TERMINAL_WORKERS: docker.dojo-stack
+      UAZ_HITS: "10"
+      UAZ_THRESHOLD: "0.6"
+      UAZ_URL: http://linking.cs.arizona.edu/v1
+      UVICORN_RELOAD: "True"
+      bootstrap.memory_lock: "true"
+      discovery.type: single-node
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - --fail
+      - http://localhost:9200/_cluster/health
+      timeout: 3s
+      interval: 3s
+      retries: 20
+    image: docker.elastic.co/elasticsearch/elasticsearch:7.11.2
+    networks:
+      dojo: null
+      dojo-stack: null
+    ports:
+    - mode: ingress
+      target: 9200
+      published: "9200"
+      protocol: tcp
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+    volumes:
+    - type: volume
+      source: dojo_esdata
+      target: /usr/share/elasticsearch/data
+      volume: {}
+  flower:
+    command:
+    - celery
+    - flower
+    depends_on:
+      airflow-postgres:
+        condition: service_healthy
+      airflow-redis:
+        condition: service_healthy
+    environment:
+      AIRFLOW__API__AUTH_BACKEND: airflow.api.auth.backend.basic_auth
+      AIRFLOW__CELERY__BROKER_URL: redis://:@airflow-redis:6379/0
+      AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow@airflow-postgres/airflow
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
+      AIRFLOW__CORE__EXECUTOR: CeleryExecutor
+      AIRFLOW__CORE__FERNET_KEY: ""
+      AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+      AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-postgres/airflow
+      AIRFLOW_CONN_AWS_DEFAULT: aws://miniouser:miniopass@
+      BUCKET: jataware-world-modelers-dev
+      BUCKET_DIR: ""
+      CAUSEMOS_BASE_URL: ""
+      CAUSEMOS_PWD: $${CAUSEMOS_PWD}
+      CAUSEMOS_USER: worldmodelers
+      DAG_CONCURRENCY: "10"
+      DAG_MAX_ACTIVE_RUNS: "3"
+      DMC_DEBUG: ""
+      DMC_LOCAL_DIR: /data
+      DOCKER_URL: docker.dojo-stack:8375
+      ELWOOD_VERSION: stable
+    healthcheck:
+      test:
+      - CMD
+      - curl
+      - --fail
+      - http://localhost:5555/
+      timeout: 10s
+      interval: 10s
+      retries: 5
+    image: apache/airflow:2.0.1
+    networks:
+      default: null
+      dojo-stack: null
+    ports:
+    - mode: ingress
+      target: 5555
+      published: "5555"
+      protocol: tcp
+    restart: always
+    user: 50000:50000
+    volumes:
+    - type: bind
+      source: /Users/brandonrose/repos/WM/dojo-2023/dmc/docker.py
+      target: /home/airflow/.local/lib/python3.6/site-packages/airflow/providers/docker/operators/docker.py
+      bind:
+        create_host_path: true
+    - type: bind
+      source: /Users/brandonrose/repos/WM/dojo-2023/dmc/mappers
+      target: /mappers
+      bind:
+        create_host_path: true
+    - type: bind
+      source: /Users/brandonrose/repos/WM/dojo-2023/dmc/model_configs
+      target: /model_configs
+      bind:
+        create_host_path: true
+    - type: bind
+      source: /Users/brandonrose/repos/WM/dojo-2023/dmc/dags
+      target: /opt/airflow/dags
+      bind:
+        create_host_path: true
+    - type: bind
+      source: /Users/brandonrose/repos/WM/dojo-2023/dmc/logs
+      target: /opt/airflow/logs
+      bind:
+        create_host_path: true
+    - type: bind
+      source: /Users/brandonrose/repos/WM/dojo-2023/dmc/plugins
+      target: /opt/airflow/plugins
+      bind:
+        create_host_path: true
+    - type: bind
+      source: /Users/brandonrose/repos/WM/dojo-2023/dmc/results
+      target: /results
+      bind:
+        create_host_path: true
+    - type: bind
+      source: /var/run/docker.sock
+      target: /var/run/docker.sock
+      bind:
+        create_host_path: true
+  kibana:
+    container_name: kibana
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    environment:
+      AWS_ACCESS_KEY_ID: miniouser
+      AWS_SECRET_ACCESS_KEY: miniopass
+      BIND_PORT: "8000"
+      BUCKET: jataware-world-modelers-dev
+      CAUSEMOS_DEBUG: "true"
+      CAUSEMOS_IND_URL: http://testmos:8012/api/maas
+      CAUSEMOS_PWD: $${CAUSEMOS_PWD}
+      CAUSEMOS_UI_URL: https://causemos.uncharted.software
+      CAUSEMOS_USER: worldmodelers
+      CONFIG_STORAGE_BASE: s3://dojo/configs/
+      DATASET_STORAGE_BASE_URL: s3://datasets/
+      DISABLE_SEMANTIC_HIGHLIGHT: "false"
+      DMC_BUCKET: jataware-world-modelers-dev
+      DMC_LOCAL_DIR: /data
+      DMC_PASSWORD: jataware
+      DMC_PORT: "8080"
+      DMC_URL: airflow-webserver.dojo-stack
+      DMC_USER: jataware
+      DOCKER_PORT: "8375"
+      DOCKER_URL: docker.world-modelers
+      DOCKERHUB_AUTH: $${DOCKERHUB_AUTH}
+      DOCKERHUB_EMAIL: $${DOCKERHUB_EMAIL}
+      DOCKERHUB_PWD: $${DOCKERHUB_PWD}
+      DOCKERHUB_URL: https://hub.docker.com/v2
+      DOCKERHUB_USER: $${DOCKERHUB_USER}
+      DOCUMENT_STORAGE_BASE_URL: s3://documents/
+      DOJO_HOST: http://api.dojo-stack
+      DOJO_URL: http://api.dojo-stack
+      ELASTICSEARCH_PORT: "9200"
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      ELWOOD_VERSION: stable
+      PLUGINS: '{"causemos":"src.plugins.causemos.CausemosPlugin","logger":"src.plugins.logging.LoggingPlugin",
+        "sync":"src.plugins.sync.SyncPlugin"}'
+      REDIS_HOST: redis.dojo-stack
+      REDIS_PORT: "6379"
+      STORAGE_HOST: http://minio.dojo-stack:9000
+      TERMINAL_ENDPOINT: http://terminal.dojo-stack:3000
+      TERMINAL_WORKERS: docker.dojo-stack
+      UAZ_HITS: "10"
+      UAZ_THRESHOLD: "0.6"
+      UAZ_URL: http://linking.cs.arizona.edu/v1
+      UVICORN_RELOAD: "True"
+    image: docker.elastic.co/kibana/kibana:7.11.2
+    networks:
+      dojo: null
+      dojo-stack: null
+    ports:
+    - mode: ingress
+      target: 5601
+      published: "5601"
+      protocol: tcp
+  minio:
+    command:
+    - minio
+    - server
+    - -console-address
+    - :9001
+    - /data
+    environment:
+      MINIO_ROOT_PASSWORD: miniopass
+      MINIO_ROOT_USER: miniouser
+    image: minio/minio:RELEASE.2021-07-27T02-40-15Z
+    networks:
+      dojo-stack: {}
+    ports:
+    - mode: ingress
+      target: 9000
+      published: "9000"
+      protocol: tcp
+    - mode: ingress
+      target: 9001
+      published: "9001"
+      protocol: tcp
+    volumes:
+    - type: bind
+      source: /Users/brandonrose/repos/WM/dojo-2023/data
+      target: /data
+      bind:
+        create_host_path: true
+  perm-fixer:
+    image: jataware/dojo:tasks-perm-fixer-stable
+    networks:
+      default: null
+    volumes:
+    - type: volume
+      source: dmc-data-results
+      target: /data/results
+      volume: {}
+    - type: volume
+      source: dmc-data-mappers
+      target: /data/mappers
+      volume: {}
+    - type: volume
+      source: dmc-data-model_configs
+      target: /data/model_configs
+      volume: {}
+  redis:
+    container_name: redis1
+    environment:
+      AWS_ACCESS_KEY_ID: miniouser
+      AWS_SECRET_ACCESS_KEY: miniopass
+      BIND_PORT: "8000"
+      BUCKET: jataware-world-modelers-dev
+      CAUSEMOS_DEBUG: "true"
+      CAUSEMOS_IND_URL: http://testmos:8012/api/maas
+      CAUSEMOS_PWD: $${CAUSEMOS_PWD}
+      CAUSEMOS_UI_URL: https://causemos.uncharted.software
+      CAUSEMOS_USER: worldmodelers
+      CONFIG_STORAGE_BASE: s3://dojo/configs/
+      DATASET_STORAGE_BASE_URL: s3://datasets/
+      DISABLE_SEMANTIC_HIGHLIGHT: "false"
+      DMC_BUCKET: jataware-world-modelers-dev
+      DMC_LOCAL_DIR: /data
+      DMC_PASSWORD: jataware
+      DMC_PORT: "8080"
+      DMC_URL: airflow-webserver.dojo-stack
+      DMC_USER: jataware
+      DOCKER_PORT: "8375"
+      DOCKER_URL: docker.world-modelers
+      DOCKERHUB_AUTH: $${DOCKERHUB_AUTH}
+      DOCKERHUB_EMAIL: $${DOCKERHUB_EMAIL}
+      DOCKERHUB_PWD: $${DOCKERHUB_PWD}
+      DOCKERHUB_URL: https://hub.docker.com/v2
+      DOCKERHUB_USER: $${DOCKERHUB_USER}
+      DOCUMENT_STORAGE_BASE_URL: s3://documents/
+      DOJO_HOST: http://api.dojo-stack
+      DOJO_URL: http://api.dojo-stack
+      ELASTICSEARCH_PORT: "9200"
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      ELWOOD_VERSION: stable
+      PLUGINS: '{"causemos":"src.plugins.causemos.CausemosPlugin","logger":"src.plugins.logging.LoggingPlugin",
+        "sync":"src.plugins.sync.SyncPlugin"}'
+      REDIS_HOST: redis.dojo-stack
+      REDIS_PORT: "6379"
+      STORAGE_HOST: http://minio.dojo-stack:9000
+      TERMINAL_ENDPOINT: http://terminal.dojo-stack:3000
+      TERMINAL_WORKERS: docker.dojo-stack
+      UAZ_HITS: "10"
+      UAZ_THRESHOLD: "0.6"
+      UAZ_URL: http://linking.cs.arizona.edu/v1
+      UVICORN_RELOAD: "True"
+    image: redis
+    networks:
+      dojo: null
+      dojo-stack: null
+    ports:
+    - mode: ingress
+      target: 6379
+      published: "6379"
+      protocol: tcp
+  rqworker:
+    build:
+      context: $PWD/tasks
+      dockerfile: Dockerfile
+    command:
+    - rq
+    - worker
+    - --url
+    - redis://redis.dojo-stack:6379
+    - high
+    - default
+    - low
+    container_name: dojo-rq-worker
+    depends_on:
+      redis:
+        condition: service_started
+    environment:
+      AWS_ACCESS_KEY_ID: miniouser
+      AWS_SECRET_ACCESS_KEY: miniopass
+      BIND_PORT: "8000"
+      BUCKET: jataware-world-modelers-dev
+      CAUSEMOS_DEBUG: "true"
+      CAUSEMOS_IND_URL: http://testmos:8012/api/maas
+      CAUSEMOS_PWD: $${CAUSEMOS_PWD}
+      CAUSEMOS_UI_URL: https://causemos.uncharted.software
+      CAUSEMOS_USER: worldmodelers
+      CONFIG_STORAGE_BASE: s3://dojo/configs/
+      DATASET_STORAGE_BASE_URL: s3://datasets/
+      DISABLE_SEMANTIC_HIGHLIGHT: "false"
+      DMC_BUCKET: jataware-world-modelers-dev
+      DMC_LOCAL_DIR: /data
+      DMC_PASSWORD: jataware
+      DMC_PORT: "8080"
+      DMC_URL: airflow-webserver.dojo-stack
+      DMC_USER: jataware
+      DOCKER_PORT: "8375"
+      DOCKER_URL: docker.world-modelers
+      DOCKERHUB_AUTH: $${DOCKERHUB_AUTH}
+      DOCKERHUB_EMAIL: $${DOCKERHUB_EMAIL}
+      DOCKERHUB_PWD: $${DOCKERHUB_PWD}
+      DOCKERHUB_URL: https://hub.docker.com/v2
+      DOCKERHUB_USER: $${DOCKERHUB_USER}
+      DOCUMENT_STORAGE_BASE_URL: s3://documents/
+      DOJO_HOST: http://api.dojo-stack
+      DOJO_URL: http://api.dojo-stack
+      ELASTICSEARCH_PORT: "9200"
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      ELWOOD_VERSION: stable
+      PLUGINS: '{"causemos":"src.plugins.causemos.CausemosPlugin","logger":"src.plugins.logging.LoggingPlugin",
+        "sync":"src.plugins.sync.SyncPlugin"}'
+      REDIS_HOST: redis.dojo-stack
+      REDIS_PORT: "6379"
+      STORAGE_HOST: http://minio.dojo-stack:9000
+      TERMINAL_ENDPOINT: http://terminal.dojo-stack:3000
+      TERMINAL_WORKERS: docker.dojo-stack
+      UAZ_HITS: "10"
+      UAZ_THRESHOLD: "0.6"
+      UAZ_URL: http://linking.cs.arizona.edu/v1
+      UVICORN_RELOAD: "True"
+    networks:
+      dojo: null
+      dojo-stack: null
+    volumes:
+    - type: volume
+      source: dataset-storage
+      target: /datasets
+      volume: {}
+  terminal:
+    image: jataware/dojo:tasks-terminal-stable
+    command:
+    - -debug
+    - -pull-images=false
+    container_name: terminal
+    depends_on:
+      redis:
+        condition: service_started
+    environment:
+      AWS_ACCESS_KEY_ID: miniouser
+      AWS_SECRET_ACCESS_KEY: miniopass
+      BIND_PORT: "8000"
+      BUCKET: jataware-world-modelers-dev
+      CAUSEMOS_DEBUG: "true"
+      CAUSEMOS_IND_URL: http://testmos:8012/api/maas
+      CAUSEMOS_PWD: $${CAUSEMOS_PWD}
+      CAUSEMOS_UI_URL: https://causemos.uncharted.software
+      CAUSEMOS_USER: worldmodelers
+      CONFIG_STORAGE_BASE: s3://dojo/configs/
+      DATASET_STORAGE_BASE_URL: s3://datasets/
+      DISABLE_SEMANTIC_HIGHLIGHT: "false"
+      DMC_BUCKET: jataware-world-modelers-dev
+      DMC_LOCAL_DIR: /data
+      DMC_PASSWORD: jataware
+      DMC_PORT: "8080"
+      DMC_URL: airflow-webserver.dojo-stack
+      DMC_USER: jataware
+      DOCKER_PORT: "8375"
+      DOCKER_URL: docker.world-modelers
+      DOCKERHUB_AUTH: $${DOCKERHUB_AUTH}
+      DOCKERHUB_EMAIL: $${DOCKERHUB_EMAIL}
+      DOCKERHUB_PWD: $${DOCKERHUB_PWD}
+      DOCKERHUB_URL: https://hub.docker.com/v2
+      DOCKERHUB_USER: $${DOCKERHUB_USER}
+      DOCUMENT_STORAGE_BASE_URL: s3://documents/
+      DOJO_HOST: http://api.dojo-stack
+      DOJO_URL: http://api.dojo-stack
+      ELASTICSEARCH_PORT: "9200"
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      ELWOOD_VERSION: stable
+      PLUGINS: '{"causemos":"src.plugins.causemos.CausemosPlugin","logger":"src.plugins.logging.LoggingPlugin",
+        "sync":"src.plugins.sync.SyncPlugin"}'
+      REDIS_HOST: redis.dojo-stack
+      REDIS_PORT: "6379"
+      STORAGE_HOST: http://minio.dojo-stack:9000
+      TERMINAL_ENDPOINT: http://terminal.dojo-stack:3000
+      TERMINAL_WORKERS: docker.dojo-stack
+      UAZ_HITS: "10"
+      UAZ_THRESHOLD: "0.6"
+      UAZ_URL: http://linking.cs.arizona.edu/v1
+      UVICORN_RELOAD: "True"
+    networks:
+      default: null
+      dojo-stack: null
+    ports:
+    - mode: ingress
+      target: 3000
+      published: "3000"
+      protocol: tcp
+    volumes:
+    - type: bind
+      source: /Users/brandonrose/repos/WM/dojo-2023/terminal/api/server/settings.yaml
+      target: /home/app/connector/settings.yaml
+      bind:
+        create_host_path: true
+  testmos:
+    image: jataware/dojo:tasks-testmos-stable
+    environment:
+      AWS_ACCESS_KEY_ID: miniouser
+      AWS_SECRET_ACCESS_KEY: miniopass
+      BIND_PORT: "8000"
+      BUCKET: jataware-world-modelers-dev
+      CAUSEMOS_DEBUG: "true"
+      CAUSEMOS_IND_URL: http://testmos:8012/api/maas
+      CAUSEMOS_PWD: $${CAUSEMOS_PWD}
+      CAUSEMOS_UI_URL: https://causemos.uncharted.software
+      CAUSEMOS_USER: worldmodelers
+      CONFIG_STORAGE_BASE: s3://dojo/configs/
+      DATASET_STORAGE_BASE_URL: s3://datasets/
+      DISABLE_SEMANTIC_HIGHLIGHT: "false"
+      DMC_BUCKET: jataware-world-modelers-dev
+      DMC_LOCAL_DIR: /data
+      DMC_PASSWORD: jataware
+      DMC_PORT: "8080"
+      DMC_URL: airflow-webserver.dojo-stack
+      DMC_USER: jataware
+      DOCKER_PORT: "8375"
+      DOCKER_URL: docker.world-modelers
+      DOCKERHUB_AUTH: $${DOCKERHUB_AUTH}
+      DOCKERHUB_EMAIL: $${DOCKERHUB_EMAIL}
+      DOCKERHUB_PWD: $${DOCKERHUB_PWD}
+      DOCKERHUB_URL: https://hub.docker.com/v2
+      DOCKERHUB_USER: $${DOCKERHUB_USER}
+      DOCUMENT_STORAGE_BASE_URL: s3://documents/
+      DOJO_HOST: http://api.dojo-stack
+      DOJO_URL: http://api.dojo-stack
+      ELASTICSEARCH_PORT: "9200"
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      ELWOOD_VERSION: stable
+      PLUGINS: '{"causemos":"src.plugins.causemos.CausemosPlugin","logger":"src.plugins.logging.LoggingPlugin",
+        "sync":"src.plugins.sync.SyncPlugin"}'
+      REDIS_HOST: redis.dojo-stack
+      REDIS_PORT: "6379"
+      STORAGE_HOST: http://minio.dojo-stack:9000
+      TERMINAL_ENDPOINT: http://terminal.dojo-stack:3000
+      TERMINAL_WORKERS: docker.dojo-stack
+      UAZ_HITS: "10"
+      UAZ_THRESHOLD: "0.6"
+      UAZ_URL: http://linking.cs.arizona.edu/v1
+      UVICORN_RELOAD: "True"
+    networks:
+      dojo-stack: null
+    ports:
+    - mode: ingress
+      target: 8012
+      published: "8012"
+      protocol: tcp
+  ui:
+    image: jataware/dojo:tasks-ui-stable
+    command:
+    - npx
+    - webpack
+    - serve
+    - --mode
+    - development
+    - --config
+    - ./webpack.config.dev.js
+    - --host
+    - 0.0.0.0
+    container_name: ui
+    environment:
+      AWS_ACCESS_KEY_ID: miniouser
+      AWS_SECRET_ACCESS_KEY: miniopass
+      BIND_PORT: "8000"
+      BUCKET: jataware-world-modelers-dev
+      CAUSEMOS_DEBUG: "true"
+      CAUSEMOS_IND_URL: http://testmos:8012/api/maas
+      CAUSEMOS_PWD: $${CAUSEMOS_PWD}
+      CAUSEMOS_UI_URL: https://causemos.uncharted.software
+      CAUSEMOS_USER: worldmodelers
+      CONFIG_STORAGE_BASE: s3://dojo/configs/
+      DATASET_STORAGE_BASE_URL: s3://datasets/
+      DISABLE_SEMANTIC_HIGHLIGHT: "false"
+      DMC_BUCKET: jataware-world-modelers-dev
+      DMC_LOCAL_DIR: /data
+      DMC_PASSWORD: jataware
+      DMC_PORT: "8080"
+      DMC_URL: airflow-webserver.dojo-stack
+      DMC_USER: jataware
+      DOCKER_PORT: "8375"
+      DOCKER_URL: docker.world-modelers
+      DOCKERHUB_AUTH: $${DOCKERHUB_AUTH}
+      DOCKERHUB_EMAIL: $${DOCKERHUB_EMAIL}
+      DOCKERHUB_PWD: $${DOCKERHUB_PWD}
+      DOCKERHUB_URL: https://hub.docker.com/v2
+      DOCKERHUB_USER: $${DOCKERHUB_USER}
+      DOCUMENT_STORAGE_BASE_URL: s3://documents/
+      DOJO_HOST: http://api.dojo-stack
+      DOJO_URL: http://api.dojo-stack
+      ELASTICSEARCH_PORT: "9200"
+      ELASTICSEARCH_URL: http://elasticsearch:9200
+      ELWOOD_VERSION: stable
+      NODE_OPTIONS: --max-old-space-size=8192
+      PLUGINS: '{"causemos":"src.plugins.causemos.CausemosPlugin","logger":"src.plugins.logging.LoggingPlugin",
+        "sync":"src.plugins.sync.SyncPlugin"}'
+      REDIS_HOST: redis.dojo-stack
+      REDIS_PORT: "6379"
+      STORAGE_HOST: http://minio.dojo-stack:9000
+      TERMINAL_ENDPOINT: http://terminal.dojo-stack:3000
+      TERMINAL_WORKERS: docker.dojo-stack
+      UAZ_HITS: "10"
+      UAZ_THRESHOLD: "0.6"
+      UAZ_URL: http://linking.cs.arizona.edu/v1
+      UVICORN_RELOAD: "True"
+    expose:
+    - "8080"
+    networks:
+      dojo-stack: null
+    ports:
+    - mode: ingress
+      target: 8080
+      published: "8080"
+      protocol: tcp
+    volumes:
+    - type: bind
+      source: /Users/brandonrose/repos/WM/dojo-2023/ui
+      target: /ui
+      bind:
+        create_host_path: true
+networks:
+  default:
+    name: workers_default
+  dojo:
+    name: tasks_dojo
+    driver: bridge
+  dojo-stack:
+    name: dojo-stack
+    driver: bridge
+volumes:
+  dataset-storage:
+    name: tasks_dataset-storage
+  dmc-data-mappers:
+    name: tasks_dmc-data-mappers
+  dmc-data-model_configs:
+    name: tasks_dmc-data-model_configs
+  dmc-data-results:
+    name: tasks_dmc-data-results
+  docker:
+    name: workers_docker
+  dojo_esdata:
+    name: api_dojo_esdata
+    driver: local
+  postgres-db-volume:
+    name: dmc_postgres-db-volume
+x-airflow-common:
+  depends_on:
+    airflow-postgres:
+      condition: service_healthy
+    airflow-redis:
+      condition: service_healthy
+  environment:
+    AIRFLOW__API__AUTH_BACKEND: airflow.api.auth.backend.basic_auth
+    AIRFLOW__CELERY__BROKER_URL: redis://:@airflow-redis:6379/0
+    AIRFLOW__CELERY__RESULT_BACKEND: db+postgresql://airflow:airflow@airflow-postgres/airflow
+    AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: "true"
+    AIRFLOW__CORE__EXECUTOR: CeleryExecutor
+    AIRFLOW__CORE__FERNET_KEY: ""
+    AIRFLOW__CORE__LOAD_EXAMPLES: "false"
+    AIRFLOW__CORE__SQL_ALCHEMY_CONN: postgresql+psycopg2://airflow:airflow@airflow-postgres/airflow
+    AIRFLOW_CONN_AWS_DEFAULT: aws://miniouser:miniopass@
+    BUCKET: jataware-world-modelers-dev
+    BUCKET_DIR: ""
+    CAUSEMOS_BASE_URL: ""
+    CAUSEMOS_PWD: $${CAUSEMOS_PWD}
+    CAUSEMOS_USER: worldmodelers
+    DAG_CONCURRENCY: 10
+    DAG_MAX_ACTIVE_RUNS: 3
+    DMC_DEBUG: ""
+    DMC_LOCAL_DIR: /Users/brandonrose/repos/WM/dojo-2023
+    DOCKER_URL: http://docker.world-modelers:8375
+    ELWOOD_VERSION: stable
+  image: apache/airflow:2.0.1
+  user: 50000:50000
+  volumes:
+  - ./dags:/opt/airflow/dags
+  - ./logs:/opt/airflow/logs
+  - ./plugins:/opt/airflow/plugins
+  - ./docker.py:/home/airflow/.local/lib/python3.6/site-packages/airflow/providers/docker/operators/docker.py
+  - ./results:/results
+  - ./mappers:/mappers
+  - ./model_configs:/model_configs
