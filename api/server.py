@@ -14,6 +14,7 @@ from src import (
     models,
     ui,
     runs,
+    data_modelings
 )
 from src.settings import settings
 
@@ -29,6 +30,8 @@ api.include_router(documents.router, tags=["Documents"])
 api.include_router(terminal.router, prefix="/terminal", tags=["Terminal"])
 api.include_router(ui.router, prefix="/ui", tags=["Dojo UI"])
 api.include_router(data.router, tags=["Data"])
+api.include_router(data_modelings.router, tags="Data Modelings")
+
 
 
 def setup_elasticsearch_indexes():
@@ -235,6 +238,16 @@ def setup_elasticsearch_indexes():
                 }
             }
         },
+        "data_modelings": {
+            "mappings": {
+                "properties": {
+                    "data": {
+                        "type": "object",
+                        "enabled": False
+                    }
+                }
+            }
+        }
     }
     es = Elasticsearch([settings.ELASTICSEARCH_URL], port=settings.ELASTICSEARCH_PORT)
 
