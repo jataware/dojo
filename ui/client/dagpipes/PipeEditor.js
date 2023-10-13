@@ -315,14 +315,23 @@ const PipeEditor = () => {
   const onProcessClick = () => {
     // TODO: spinner while waiting for response?
     const flowValue = onSave();
+
     axios.post(
       '/api/dojo/data-modeling',
       { data: flowValue },
       { headers: { 'Content-Type': 'application/json' } }
-    ).then((resp) => console.log('Successfully created data modeling on the backend:', resp))
+    ).then((resp) => {
+      console.log('Successfully created data modeling on the backend:', resp);
+      const UUID = crypto.randomUUID();
+      axios.post(
+        `/api/dojo/job/${UUID}/data_modeling.run_flowcast_job`,
+        { dag: flowValue },
+        { headers: { 'Content-Type': 'application/json' } }
+      );
+    })
       .catch((error) => console.log('There was an error creating the data modeling:', error));
 
-    dispatch(nextModelerStep());
+    // dispatch(nextModelerStep());
   };
 
   const onMiniMapClick = () => {
