@@ -40,7 +40,7 @@ services:
     user: 50000:50000
     volumes:
     - type: bind
-      source: /Users/brandonrose/repos/WM/dojo-2023/dmc/docker.py
+      source: $PWD/dmc/docker.py
       target: /home/airflow/.local/lib/python3.6/site-packages/airflow/providers/docker/operators/docker.py
       bind:
         create_host_path: true
@@ -53,17 +53,17 @@ services:
       target: /model_configs
       volume: {}
     - type: bind
-      source: /Users/brandonrose/repos/WM/dojo-2023/dmc/dags
+      source: $PWD/dmc/dags
       target: /opt/airflow/dags
       bind:
         create_host_path: true
     - type: bind
-      source: /Users/brandonrose/repos/WM/dojo-2023/dmc/logs
+      source: $PWD/dmc/logs
       target: /opt/airflow/logs
       bind:
         create_host_path: true
     - type: bind
-      source: /Users/brandonrose/repos/WM/dojo-2023/dmc/plugins
+      source: $PWD/dmc/plugins
       target: /opt/airflow/plugins
       bind:
         create_host_path: true
@@ -162,7 +162,7 @@ services:
     user: 50000:50000
     volumes:
     - type: bind
-      source: /Users/brandonrose/repos/WM/dojo-2023/dmc/docker.py
+      source: $PWD/dmc/docker.py
       target: /home/airflow/.local/lib/python3.6/site-packages/airflow/providers/docker/operators/docker.py
       bind:
         create_host_path: true
@@ -175,17 +175,17 @@ services:
       target: /model_configs
       volume: {}
     - type: bind
-      source: /Users/brandonrose/repos/WM/dojo-2023/dmc/dags
+      source: $PWD/dmc/dags
       target: /opt/airflow/dags
       bind:
         create_host_path: true
     - type: bind
-      source: /Users/brandonrose/repos/WM/dojo-2023/dmc/logs
+      source: $PWD/dmc/logs
       target: /opt/airflow/logs
       bind:
         create_host_path: true
     - type: bind
-      source: /Users/brandonrose/repos/WM/dojo-2023/dmc/plugins
+      source: $PWD/dmc/plugins
       target: /opt/airflow/plugins
       bind:
         create_host_path: true
@@ -251,7 +251,7 @@ services:
     user: 50000:50000
     volumes:
     - type: bind
-      source: /Users/brandonrose/repos/WM/dojo-2023/dmc/docker.py
+      source: $PWD/dmc/docker.py
       target: /home/airflow/.local/lib/python3.6/site-packages/airflow/providers/docker/operators/docker.py
       bind:
         create_host_path: true
@@ -264,17 +264,17 @@ services:
       target: /model_configs
       volume: {}
     - type: bind
-      source: /Users/brandonrose/repos/WM/dojo-2023/dmc/dags
+      source: $PWD/dmc/dags
       target: /opt/airflow/dags
       bind:
         create_host_path: true
     - type: bind
-      source: /Users/brandonrose/repos/WM/dojo-2023/dmc/logs
+      source: $PWD/dmc/logs
       target: /opt/airflow/logs
       bind:
         create_host_path: true
     - type: bind
-      source: /Users/brandonrose/repos/WM/dojo-2023/dmc/plugins
+      source: $PWD/dmc/plugins
       target: /opt/airflow/plugins
       bind:
         create_host_path: true
@@ -325,7 +325,7 @@ services:
     user: 50000:50000
     volumes:
     - type: bind
-      source: /Users/brandonrose/repos/WM/dojo-2023/dmc/docker.py
+      source: $PWD/dmc/docker.py
       target: /home/airflow/.local/lib/python3.6/site-packages/airflow/providers/docker/operators/docker.py
       bind:
         create_host_path: true
@@ -338,17 +338,17 @@ services:
       target: /model_configs
       volume: {}
     - type: bind
-      source: /Users/brandonrose/repos/WM/dojo-2023/dmc/dags
+      source: $PWD/dmc/dags
       target: /opt/airflow/dags
       bind:
         create_host_path: true
     - type: bind
-      source: /Users/brandonrose/repos/WM/dojo-2023/dmc/logs
+      source: $PWD/dmc/logs
       target: /opt/airflow/logs
       bind:
         create_host_path: true
     - type: bind
-      source: /Users/brandonrose/repos/WM/dojo-2023/dmc/plugins
+      source: $PWD/dmc/plugins
       target: /opt/airflow/plugins
       bind:
         create_host_path: true
@@ -434,7 +434,7 @@ services:
       protocol: tcp
     volumes:
     - type: bind
-      source: /Users/brandonrose/repos/WM/dojo-2023/api
+      source: $PWD/api
       target: /api
       bind:
         create_host_path: true
@@ -443,7 +443,7 @@ services:
       target: /datasets
       volume: {}
     - type: bind
-      source: /Users/brandonrose/repos/WM/dojo-2023/documents
+      source: $PWD/documents
       target: /documents
       bind:
         create_host_path: true
@@ -643,37 +643,37 @@ services:
     user: 50000:50000
     volumes:
     - type: bind
-      source: /Users/brandonrose/repos/WM/dojo-2023/dmc/docker.py
+      source: $PWD/dmc/docker.py
       target: /home/airflow/.local/lib/python3.6/site-packages/airflow/providers/docker/operators/docker.py
       bind:
         create_host_path: true
     - type: bind
-      source: /Users/brandonrose/repos/WM/dojo-2023/dmc/mappers
+      source: $PWD/dmc/mappers
       target: /mappers
       bind:
         create_host_path: true
     - type: bind
-      source: /Users/brandonrose/repos/WM/dojo-2023/dmc/model_configs
+      source: $PWD/dmc/model_configs
       target: /model_configs
       bind:
         create_host_path: true
     - type: bind
-      source: /Users/brandonrose/repos/WM/dojo-2023/dmc/dags
+      source: $PWD/dmc/dags
       target: /opt/airflow/dags
       bind:
         create_host_path: true
     - type: bind
-      source: /Users/brandonrose/repos/WM/dojo-2023/dmc/logs
+      source: $PWD/dmc/logs
       target: /opt/airflow/logs
       bind:
         create_host_path: true
     - type: bind
-      source: /Users/brandonrose/repos/WM/dojo-2023/dmc/plugins
+      source: $PWD/dmc/plugins
       target: /opt/airflow/plugins
       bind:
         create_host_path: true
     - type: bind
-      source: /Users/brandonrose/repos/WM/dojo-2023/dmc/results
+      source: $PWD/dmc/results
       target: /results
       bind:
         create_host_path: true
@@ -763,7 +763,7 @@ services:
       protocol: tcp
     volumes:
     - type: bind
-      source: /Users/brandonrose/repos/WM/dojo-2023/data
+      source: $PWD/data
       target: /data
       bind:
         create_host_path: true
@@ -967,7 +967,7 @@ services:
       protocol: tcp
     volumes:
     - type: bind
-      source: /Users/brandonrose/repos/WM/dojo-2023/terminal/api/server/settings.yaml
+      source: $PWD/terminal/api/server/settings.yaml
       target: /home/app/connector/settings.yaml
       bind:
         create_host_path: true
@@ -1091,7 +1091,7 @@ services:
       protocol: tcp
     volumes:
     - type: bind
-      source: /Users/brandonrose/repos/WM/dojo-2023/ui
+      source: $PWD/ui
       target: /ui
       bind:
         create_host_path: true
