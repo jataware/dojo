@@ -17,6 +17,9 @@ from typing import Callable, Union, List
 from pydantic import BaseModel, Field
 
 
+import logging
+logging.basicConfig()
+logging.getLogger().setLevel(logging.INFO)
 
 es_url = settings.ELASTICSEARCH_URL
 es = Elasticsearch(es_url)
@@ -163,13 +166,11 @@ def get_data(features:list[LoadNode]):
     #create loaders for each variable
     for feature in features:
         data_source = feature['data_source']
-        dataset_id, variable_name = data_source.split('::')
-        
-        feature = datasets[dataset_id][variable_name]
-        
-        time_regrid_type = RegridType[feature.attrs['time_regrid_type']]
-        geo_regrid_type = RegridType[feature.attrs['geo_regrid_type']]
-        loaders[data_source] = lambda: Variable(feature, time_regrid_type, geo_regrid_type)
+        variable_name, dataset_id = data_source.split('::')
+        data = datasets[dataset_id][variable_name]
+        time_regrid_type = RegridType[feature['time_aggregation_function']]
+        geo_regrid_type = RegridType[feature['geo_aggregation_function']]
+        loaders[data_source] = lambda: Variable(data, time_regrid_type, geo_regrid_type)
 
     # clean up downloaded netcdfs
     shutil.rmtree(tmpdir)
@@ -216,7 +217,7 @@ def run_flowcast_job(context:FlowcastContext):
 
     # insert each step into the pipeline
     for node in graph['nodes']:
-        
+        logging.info(f'Processing node {node["id"]} of type {node["type"]}')
         if node['type'] == 'load':
             pipe.load(node['id'], loaders[node['data']['input']['data_source']])
             
@@ -243,7 +244,8 @@ def run_flowcast_job(context:FlowcastContext):
             saved_nodes.append((parent, outname))
             
         #TODO: handling other node types
-        raise NotImplementedError(f'Parsing of node type {node["type"]} not implemented.')
+        else:
+            raise NotImplementedError(f'Parsing of node type {node["type"]} not implemented.')
 
 
     # run the pipeline
