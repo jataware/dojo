@@ -33,6 +33,7 @@ import {
   removeSelectedFeature,
   setGeoResolutionColumn,
   setTimeResolutionColumn,
+  setFlowcastJobId,
 } from './dagSlice';
 
 import LoadNode from './LoadNode';
@@ -325,13 +326,15 @@ const PipeEditor = () => {
       const UUID = crypto.randomUUID();
       axios.post(
         `/api/dojo/job/${UUID}/data_modeling.run_flowcast_job`,
-        { dag: flowValue },
+        { context: { dag: flowValue } },
         { headers: { 'Content-Type': 'application/json' } }
-      );
-    })
-      .catch((error) => console.log('There was an error creating the data modeling:', error));
-
-    // dispatch(nextModelerStep());
+      ).then((successResp) => {
+        console.log('Successfully started the Run Flowcast job with job id:', successResp.id);
+        dispatch(setFlowcastJobId(successResp.id));
+        dispatch(nextModelerStep());
+      // TODO: snackbar errors for both of these, since they stop processing/next step from happening
+      }).catch((error) => console.log('There was an error starting the Flowcast job:', error));
+    }).catch((error) => console.log('There was an error creating the data modeling:', error));
   };
 
   const onMiniMapClick = () => {
