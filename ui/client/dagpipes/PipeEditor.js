@@ -325,7 +325,7 @@ const PipeEditor = () => {
       const UUID = crypto.randomUUID();
       axios.post(
         `/api/dojo/job/${UUID}/data_modeling.run_flowcast_job`,
-        { dag: flowValue },
+        { context: { dag: flowValue } },
         { headers: { 'Content-Type': 'application/json' } }
       );
     })

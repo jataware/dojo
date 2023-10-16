@@ -123,6 +123,9 @@ def get_data(features:list[LoadNode]):
     # create temporary directory for storing netcdfs
     tmpdir = './tmp_netcdf'
     filename = 'raw_data.nc'
+    if not os.path.exists(tmpdir):
+        os.mkdir(tmpdir)
+
     
     #collect all mentioned datasets and corresponding annotations
     dataset_ids = set(feature['data_source'].split('::')[1] for feature in features)
