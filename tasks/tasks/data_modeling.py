@@ -3,7 +3,7 @@ from __future__ import annotations
 from elasticsearch import Elasticsearch
 from settings import settings
 from utils import get_rawfile
-from api.validation.MetadataSchema import MetaModel, AnnotationSchema, GeoAnnotation, DateAnnotation
+# from api.validation.MetadataSchema import MetaModel, AnnotationSchema, GeoAnnotation, DateAnnotation
 
 import os
 import shutil
@@ -13,7 +13,7 @@ from flowcast.pipeline import Pipeline, Variable, Threshold, ThresholdType
 from flowcast.spacetime import Frequency, Resolution
 from flowcast.regrid import RegridType
 from collections import defaultdict, deque
-from typing import Callable
+from typing import Callable, Union, List
 from pydantic import BaseModel, Field
 
 
@@ -37,7 +37,7 @@ class ThresholdNode(BaseModel):
 
 class NodeData(BaseModel):
     label: str = Field(..., description='The label of node (just repeats the node type)', example='load')
-    input: LoadNode|ThresholdNode|str|None = Field(..., description='Any settings for the node. Shape depends on the node type', example={'data_source': 'd_flood::8987a98e-4128-4602-9f72-e3efa1b53668', 'geo_aggregation_function': 'min', 'time_aggregation_function': 'median'})
+    input: Union[LoadNode,ThresholdNode,str,None] = Field(..., description='Any settings for the node. Shape depends on the node type', example={'data_source': 'd_flood::8987a98e-4128-4602-9f72-e3efa1b53668', 'geo_aggregation_function': 'min', 'time_aggregation_function': 'median'})
             # SaveNode's input is just a string
             # MultiplyNode doesn't have any input
 
@@ -56,8 +56,8 @@ class DagResolution(BaseModel):
     timeResolutionColumn: str = Field(..., description='Either the name of a load node (<feature_name>::<dataset_id>) or a time frequency. Options: monthly, yearly, decadal', example='monthly')
 
 class Graph(BaseModel):
-    nodes: list[Node] = Field(..., description='The nodes in the graph')
-    edges: list[Edge] = Field(..., description='The edges in the graph')
+    nodes: List[Node] = Field(..., description='The nodes in the graph')
+    edges: List[Edge] = Field(..., description='The edges in the graph')
     resolution: DagResolution = Field(..., description='The targeted geo and temporal resolutions of the graph')
 
 class FlowcastContext(BaseModel):
@@ -137,12 +137,12 @@ def get_data(features:list[LoadNode]):
         
         # grab annotation from endpoint
         metadata_path = os.path.join(settings.DOJO_URL, 'indicators', dataset_id, 'annotations')
-        metadata: MetaModel = requests.get(metadata_path).json()
+        metadata = requests.get(metadata_path).json()
 
         # collect the time and geo annotations from the metadata
-        annotations: AnnotationSchema = metadata['annotations']
-        geo_annotations: list[GeoAnnotation] = annotations['geo']
-        time_annotations: list[DateAnnotation] = annotations['date']
+        annotations = metadata['annotations']
+        geo_annotations: list = annotations['geo']
+        time_annotations: list = annotations['date']
         assert len(geo_annotations) == 2, f'Expected 2 geo annotations (for latitude/longitude), got {len(geo_annotations)}: {geo_annotations=}'
         assert len(time_annotations) == 1, f'Expected 1 time annotation, got {len(time_annotations)}: {time_annotations=}'
         time_annotation, = filter(lambda a: a['date_type'] == 'date', time_annotations)
