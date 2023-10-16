@@ -17,6 +17,7 @@ const initialState = {
   // selectedFeatures keeps track of which features have been chosen in Load Nodes
   // to prevent duplicates
   selectedFeatures: [],
+  flowcastJobId: null,
 };
 export const dagSlice = createSlice({
   name: 'dag',
@@ -85,6 +86,9 @@ export const dagSlice = createSlice({
       ));
       state.selectedFeatures = filteredFeatures;
     },
+    setFlowcastJobId: (state, action) => {
+      state.flowcastJobId = action.payload;
+    },
   },
 });
 
@@ -107,6 +111,7 @@ export const {
   setTimeResolutionColumn,
   addSelectedFeature,
   removeSelectedFeature,
+  setFlowcastJobId,
 } = dagSlice.actions;
 
 export default dagSlice.reducer;
