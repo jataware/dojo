@@ -329,8 +329,8 @@ const PipeEditor = () => {
         { context: { dag: flowValue } },
         { headers: { 'Content-Type': 'application/json' } }
       ).then((successResp) => {
-        console.log('Successfully started the Run Flowcast job with job id:', successResp.id);
-        dispatch(setFlowcastJobId(successResp.id));
+        console.log('Successfully started the Run Flowcast job', successResp);
+        dispatch(setFlowcastJobId(successResp.data.id));
         dispatch(nextModelerStep());
       // TODO: snackbar errors for both of these, since they stop processing/next step from happening
       }).catch((error) => console.log('There was an error starting the Flowcast job:', error));

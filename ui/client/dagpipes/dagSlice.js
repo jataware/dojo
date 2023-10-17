@@ -18,6 +18,8 @@ const initialState = {
   // to prevent duplicates
   selectedFeatures: [],
   flowcastJobId: null,
+// TODO: should completedDatasetIds be [] and setter be pushing? probably not, since we're always doing bulk
+  completedDatasetIds: null,
 };
 export const dagSlice = createSlice({
   name: 'dag',
@@ -89,6 +91,9 @@ export const dagSlice = createSlice({
     setFlowcastJobId: (state, action) => {
       state.flowcastJobId = action.payload;
     },
+    setCompletedDatasetIds: (state, action) => {
+      state.completedDatasetIds = action.payload;
+    },
   },
 });
 
@@ -112,6 +117,7 @@ export const {
   addSelectedFeature,
   removeSelectedFeature,
   setFlowcastJobId,
+  setCompletedDatasetIds,
 } = dagSlice.actions;
 
 export default dagSlice.reducer;

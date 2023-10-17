@@ -7,6 +7,7 @@ import { store } from './store';
 import DagDatasetSelector from './DagDatasetSelector';
 import PipeEditor from './PipeEditor';
 import ModelerProcessing from './ModelerProcessing';
+import ModelerSummary from './ModelerSummary';
 
 const DagSteps = () => {
   const { modelerStep } = useSelector((state) => state.dag);
@@ -20,6 +21,8 @@ const DagSteps = () => {
       return <PipeEditor />;
     case 2:
       return <ModelerProcessing />;
+    case 3:
+      return <ModelerSummary />;
     default:
       // TODO: error page?
       console.log('There was an error');
