@@ -281,6 +281,7 @@ def run_flowcast_job(context:FlowcastContext):
 
     # result object
     result = {
+        'message': 'successfully ran flowcast job',
         'output-files': [name for _,name in saved_nodes]
     }
 
