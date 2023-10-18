@@ -9,6 +9,8 @@ import os
 import shutil
 import requests
 import xarray as xr
+import pandas as pd
+from cftime import DatetimeNoLeap
 from flowcast.pipeline import Pipeline, Variable, Threshold, ThresholdType
 from flowcast.spacetime import Frequency, Resolution
 from flowcast.regrid import RegridType
@@ -91,7 +93,6 @@ def topological_sort(graph: Graph):
     queue = deque([node_id for node_id in nodes if in_degree[node_id] == 0])
 
     result = []
-    p = Pipeline()
     seen = set() # keep track of nodes that have been visited
 
     while queue:
@@ -158,6 +159,18 @@ def get_data(features:list[LoadNode]):
         # load the netcdf and convert coordinate names to time, lat, lon
         dataset = xr.open_dataset(file_path)
         dataset = dataset.rename({time_annotation['name']: 'time', lat_annotation['name']: 'lat', lon_annotation['name']: 'lon'})
+
+        # ensure the time dimension is of type cftime.DatetimeNoLeap
+        if isinstance(dataset['time'].values[0], str):
+            # time_annotation['time_format'] # e.g. '%Y-%m-%d %H:%M:%S'
+            times = [pd.to_datetime(t, format=time_annotation['time_format']) for t in dataset['time'].values]
+            times = [DatetimeNoLeap(t.year, t.month, t.day, t.hour, t.minute, t.second) for t in times]
+            dataset['time'] = times
+        elif isinstance(dataset['time'].values[0], DatetimeNoLeap):
+            pass
+        else:
+            raise Exception('unhandled time type', type(dataset['time'].values[0]))
+
 
         # store dataset in map
         datasets[dataset_id] = dataset
@@ -242,6 +255,11 @@ def run_flowcast_job(context:FlowcastContext):
 
             # keep track of save nodes
             saved_nodes.append((parent, outname))
+
+        elif node['type'] == 'filter_by_country':
+            parent, = get_node_parents(node['id'], graph, num_expected=1)
+            countries = node['data']['input']
+            pipe.reverse_geocode(node['id'], parent, places=countries, admin_level=0)
             
         #TODO: handling other node types
         else:
