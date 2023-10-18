@@ -2,7 +2,7 @@ import React, { useEffect } from 'react';
 
 import axios from 'axios';
 
-import { dispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 
 import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
@@ -48,20 +48,21 @@ const repeatFetch = async ({ jobId, onSuccess }) => {
 
 const ModelerProcessing = () => {
   const { flowcastJobId } = useSelector((state) => state.dag);
-
-  const onSuccess = (resp) => {
-    console.log('Successful!', resp);
-    // TODO: determine what part of resp to set once we actually get this back
-    dispatch(setCompletedDatasetIds(mockDatasets));
-    dispatch(nextModelerStep());
-  };
+  const dispatch = useDispatch();
 
   useEffect(() => {
+    const onSuccess = (resp) => {
+      console.log('Successful!', resp);
+      // TODO: determine what part of resp to set once we actually get this back
+      dispatch(setCompletedDatasetIds(mockDatasets));
+      dispatch(nextModelerStep());
+    };
+
     console.log('this is the jobId', flowcastJobId);
     // repeatFetch({ jobId: flowcastJobId, onSuccess });
     // TODO: remove this - just mocked while the job doesn't return anything
     if (flowcastJobId) onSuccess('success!');
-  }, [flowcastJobId]);
+  }, [flowcastJobId, dispatch]);
 
   return (
     <Container
