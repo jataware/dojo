@@ -278,3 +278,10 @@ def run_flowcast_job(context:FlowcastContext):
     for node_id, name in saved_nodes:
         todo = pipe.get_value(node_id).data
         print(f'######### OUTPUT ##########: do something with\n{name} =\n{todo}\n')
+
+    # result object
+    result = {
+        'output-files': [name for _,name in saved_nodes]
+    }
+
+    return result
