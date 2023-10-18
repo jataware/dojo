@@ -19,9 +19,9 @@ from typing import Callable, Union, List
 from pydantic import BaseModel, Field
 
 
-import logging
-logging.basicConfig()
-logging.getLogger().setLevel(logging.INFO)
+# import logging
+# logging.basicConfig()
+# logging.getLogger().setLevel(logging.INFO)
 
 es_url = settings.ELASTICSEARCH_URL
 es = Elasticsearch(es_url)
@@ -230,7 +230,7 @@ def run_flowcast_job(context:FlowcastContext):
 
     # insert each step into the pipeline
     for node in graph['nodes']:
-        logging.info(f'Processing node {node["id"]} of type {node["type"]}')
+        print(f'Processing node {node["id"]} of type {node["type"]}')
         if node['type'] == 'load':
             pipe.load(node['id'], loaders[node['data']['input']['data_source']])
             
@@ -242,12 +242,16 @@ def run_flowcast_job(context:FlowcastContext):
             left, right = get_node_parents(node['id'], graph, num_expected=2)
             pipe.multiply(node['id'], left, right)
                 
-        #TODO: needs some updates to expected payload
-        # elif node['type'] == 'sum_reduce':
-        #     parent, = get_node_parents(node['id'], graph, num_expected=1)
-        #     #TODO: ideally pull this information from a canonical list from flowcast...
-        #     pipe.sum_reduce(node['id'], parent, dims=node['data']['input']['dims'])
-            
+        ################# TODO: needs some updates to expected payload #################
+        elif node['type'] == 'sum': #rename to sum_reduce
+            parent, = get_node_parents(node['id'], graph, num_expected=1)
+            dim_map:dict[str,bool] = node['data']['input']
+            assert not dim_map['scenario'], '`scenario` is no longer a valid dimension for group by'
+            assert not dim_map['realization'], '`realization` is no longer a valid dimension for group by'
+            dims = [dim for dim,present in dim_map.items() if present]
+            pipe.sum_reduce(node['id'], parent, dims=dims)
+        ################################################################################
+
         elif node['type'] == 'save':
             parent, = get_node_parents(node['id'], graph, num_expected=1)
             outname = f"{node['data']['input']}.nc"
@@ -263,6 +267,7 @@ def run_flowcast_job(context:FlowcastContext):
             
         #TODO: handling other node types
         else:
+            print(f'unhandled node: {node}', flush=True)
             raise NotImplementedError(f'Parsing of node type {node["type"]} not implemented.')
 
 
@@ -272,4 +277,4 @@ def run_flowcast_job(context:FlowcastContext):
     #TODO: dealing with output files
     for node_id, name in saved_nodes:
         todo = pipe.get_value(node_id).data
-        print(f'do something with {name} = {todo}')
+        print(f'######### OUTPUT ##########: do something with\n{name} =\n{todo}\n')
