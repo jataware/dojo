@@ -140,7 +140,8 @@ const PipeEditor = () => {
 
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
-  const { setViewport } = useReactFlow();
+  // TODO: only used in onRestore, remove if removing that
+  // const { setViewport } = useReactFlow();
 
   const dispatch = useDispatch();
 
@@ -270,30 +271,30 @@ const PipeEditor = () => {
     return forBackend;
   }, [reactFlowInstance, dispatch, geoResolutionColumn, timeResolutionColumn]);
 
-  // TODO: do we want to keep restore? it currently doesn't work with the redux state
-  const onRestore = useCallback(() => {
-    const restoreFlow = async () => {
-      const flow = JSON.parse(localStorage.getItem('dagpipes-flow-session'));
+  // // TODO: do we want to keep restore? it currently doesn't work with the redux state
+  // const onRestore = useCallback(() => {
+  //   const restoreFlow = async () => {
+  //     const flow = JSON.parse(localStorage.getItem('dagpipes-flow-session'));
 
-      if (flow) {
-        const { x = 0, y = 0, zoom = 1 } = flow.viewport;
+  //     if (flow) {
+  //       const { x = 0, y = 0, zoom = 1 } = flow.viewport;
 
-        // extract nodes from the loaded flow, rename for use within this function
-        // so it doesn't conflict with upper scope `nodes` name, and provide a default []
-        const { nodes: flowNodes = [] } = flow;
-        // loop over the loaded nodes and apply our onNodeChange function to them
-        // this gets applied when a node is dropped in onDrop
-        // eslint-disable-next-line no-param-reassign
-        flowNodes.forEach((n) => { n.data.onChange = onNodeChange; });
-        setNodes(flowNodes);
-        setEdges(flow.edges || []);
-        dispatch(setNodeCount(flowNodes.length));
-        setViewport({ x, y, zoom });
-      }
-    };
+  //       // extract nodes from the loaded flow, rename for use within this function
+  //       // so it doesn't conflict with upper scope `nodes` name, and provide a default []
+  //       const { nodes: flowNodes = [] } = flow;
+  //       // loop over the loaded nodes and apply our onNodeChange function to them
+  //       // this gets applied when a node is dropped in onDrop
+  //       // eslint-disable-next-line no-param-reassign
+  //       flowNodes.forEach((n) => { n.data.onChange = onNodeChange; });
+  //       setNodes(flowNodes);
+  //       setEdges(flow.edges || []);
+  //       dispatch(setNodeCount(flowNodes.length));
+  //       setViewport({ x, y, zoom });
+  //     }
+  //   };
 
-    restoreFlow();
-  }, [setNodes, dispatch, onNodeChange, setEdges, setViewport]);
+  //   restoreFlow();
+  // }, [setNodes, dispatch, onNodeChange, setEdges, setViewport]);
 
   const onNodesDelete = useCallback((deletedNodes) => {
     dispatch(decrementNodeCount());
@@ -379,7 +380,7 @@ const PipeEditor = () => {
           />
 
         </ReactFlow>
-        <Panel position="top-left">
+        {/*<Panel position="top-left">
           <ButtonGroup disableElevation>
             <Button
               variant="outlined"
@@ -396,7 +397,7 @@ const PipeEditor = () => {
               LOAD
             </Button>
           </ButtonGroup>
-        </Panel>
+        </Panel>*/}
       </div>
       <div className={classes.wholeSidebar}>
         <DragBar />
@@ -406,7 +407,7 @@ const PipeEditor = () => {
             variant="contained"
             color="primary"
             fullWidth
-            disabled={!geoResolutionColumn || !timeResolutionColumn}
+            disabled={!geoResolutionColumn || !timeResolutionColumn || !nodes.length}
             onClick={onProcessClick}
             sx={{ marginTop: 2 }}
           >
