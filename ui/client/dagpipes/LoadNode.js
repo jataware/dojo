@@ -71,9 +71,11 @@ function SelectFeature({ input, nodeId, onChange }) {
     onChange(nodeId, event);
   };
 
-  const geoResolutionDisabled = !savedSelectValue || timeSelected
+  // disable when there is no feature selected, or when geo/time is selected elsewhere
+  // but keep enabled if it's in this node so it can be unchecked
+  const geoResolutionDisabled = !savedSelectValue
     || (!geoSelected && Boolean(geoResolutionColumn));
-  const timeResolutionSelected = !savedSelectValue || geoSelected
+  const timeResolutionSelected = !savedSelectValue
     || (!timeSelected && Boolean(timeResolutionColumn));
 
   return (

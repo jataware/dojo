@@ -59,9 +59,9 @@ const ModelerProcessing = () => {
     };
 
     console.log('this is the jobId', flowcastJobId);
-    // repeatFetch({ jobId: flowcastJobId, onSuccess });
+    repeatFetch({ jobId: flowcastJobId, onSuccess });
     // TODO: remove this - just mocked while the job doesn't return anything
-    if (flowcastJobId) onSuccess('success!');
+    // if (flowcastJobId) onSuccess('success!');
   }, [flowcastJobId, dispatch]);
 
   return (
