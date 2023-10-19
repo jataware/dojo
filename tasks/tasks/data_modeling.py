@@ -9,6 +9,8 @@ import os
 import shutil
 import requests
 import xarray as xr
+import pandas as pd
+from cftime import DatetimeNoLeap
 from flowcast.pipeline import Pipeline, Variable, Threshold, ThresholdType
 from flowcast.spacetime import Frequency, Resolution
 from flowcast.regrid import RegridType
@@ -17,9 +19,9 @@ from typing import Callable, Union, List
 from pydantic import BaseModel, Field
 
 
-import logging
-logging.basicConfig()
-logging.getLogger().setLevel(logging.INFO)
+# import logging
+# logging.basicConfig()
+# logging.getLogger().setLevel(logging.INFO)
 
 es_url = settings.ELASTICSEARCH_URL
 es = Elasticsearch(es_url)
@@ -91,7 +93,6 @@ def topological_sort(graph: Graph):
     queue = deque([node_id for node_id in nodes if in_degree[node_id] == 0])
 
     result = []
-    p = Pipeline()
     seen = set() # keep track of nodes that have been visited
 
     while queue:
@@ -159,6 +160,18 @@ def get_data(features:list[LoadNode]):
         dataset = xr.open_dataset(file_path)
         dataset = dataset.rename({time_annotation['name']: 'time', lat_annotation['name']: 'lat', lon_annotation['name']: 'lon'})
 
+        # ensure the time dimension is of type cftime.DatetimeNoLeap
+        if isinstance(dataset['time'].values[0], str):
+            # time_annotation['time_format'] # e.g. '%Y-%m-%d %H:%M:%S'
+            times = [pd.to_datetime(t, format=time_annotation['time_format']) for t in dataset['time'].values]
+            times = [DatetimeNoLeap(t.year, t.month, t.day, t.hour, t.minute, t.second) for t in times]
+            dataset['time'] = times
+        elif isinstance(dataset['time'].values[0], DatetimeNoLeap):
+            pass
+        else:
+            raise Exception('unhandled time type', type(dataset['time'].values[0]))
+
+
         # store dataset in map
         datasets[dataset_id] = dataset
 
@@ -217,7 +230,7 @@ def run_flowcast_job(context:FlowcastContext):
 
     # insert each step into the pipeline
     for node in graph['nodes']:
-        logging.info(f'Processing node {node["id"]} of type {node["type"]}')
+        print(f'Processing node {node["id"]} of type {node["type"]}')
         if node['type'] == 'load':
             pipe.load(node['id'], loaders[node['data']['input']['data_source']])
             
@@ -229,12 +242,16 @@ def run_flowcast_job(context:FlowcastContext):
             left, right = get_node_parents(node['id'], graph, num_expected=2)
             pipe.multiply(node['id'], left, right)
                 
-        #TODO: needs some updates to expected payload
-        # elif node['type'] == 'sum_reduce':
-        #     parent, = get_node_parents(node['id'], graph, num_expected=1)
-        #     #TODO: ideally pull this information from a canonical list from flowcast...
-        #     pipe.sum_reduce(node['id'], parent, dims=node['data']['input']['dims'])
-            
+        ################# TODO: needs some updates to expected payload #################
+        elif node['type'] == 'sum': #rename to sum_reduce
+            parent, = get_node_parents(node['id'], graph, num_expected=1)
+            dim_map:dict[str,bool] = node['data']['input']
+            assert not dim_map['scenario'], '`scenario` is no longer a valid dimension for group by'
+            assert not dim_map['realization'], '`realization` is no longer a valid dimension for group by'
+            dims = [dim for dim,present in dim_map.items() if present]
+            pipe.sum_reduce(node['id'], parent, dims=dims)
+        ################################################################################
+
         elif node['type'] == 'save':
             parent, = get_node_parents(node['id'], graph, num_expected=1)
             outname = f"{node['data']['input']}.nc"
@@ -242,9 +259,15 @@ def run_flowcast_job(context:FlowcastContext):
 
             # keep track of save nodes
             saved_nodes.append((parent, outname))
+
+        elif node['type'] == 'filter_by_country':
+            parent, = get_node_parents(node['id'], graph, num_expected=1)
+            countries = node['data']['input']
+            pipe.reverse_geocode(node['id'], parent, places=countries, admin_level=0)
             
         #TODO: handling other node types
         else:
+            print(f'unhandled node: {node}', flush=True)
             raise NotImplementedError(f'Parsing of node type {node["type"]} not implemented.')
 
 
@@ -254,4 +277,12 @@ def run_flowcast_job(context:FlowcastContext):
     #TODO: dealing with output files
     for node_id, name in saved_nodes:
         todo = pipe.get_value(node_id).data
-        print(f'do something with {name} = {todo}')
+        print(f'######### OUTPUT ##########: do something with\n{name} =\n{todo}\n')
+
+    # result object
+    result = {
+        'message': 'successfully ran flowcast job',
+        'output-files': [name for _,name in saved_nodes]
+    }
+
+    return result
