@@ -26,11 +26,26 @@ function FileSelect({
       <TextField
         className="nodrag"
         label="Name"
-        value={input}
+        name="name"
+        value={input.name}
         InputLabelProps={{
           shrink: true,
         }}
         onChange={onChange.bind(this, nodeId)}
+        sx={{ marginBottom: 2, backgroundColor: 'grey.50' }}
+      />
+      <TextField
+        className="nodrag"
+        label="Description"
+        name="description"
+        value={input.description}
+        InputLabelProps={{
+          shrink: true,
+        }}
+        onChange={onChange.bind(this, nodeId)}
+        multiline
+        minRows={3}
+        sx={{ backgroundColor: 'grey.50' }}
       />
     </div>
   );

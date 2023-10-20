@@ -33,7 +33,7 @@ function Select({
         InputLabelProps={{
           shrink: true,
         }}
-        sx={{ marginBottom: 2 }}
+        sx={{ marginBottom: 2, backgroundColor: 'grey.50' }}
       />
 
       <ModelerSelect

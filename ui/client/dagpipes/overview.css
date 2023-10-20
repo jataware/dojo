@@ -19,6 +19,12 @@
   }
 }
 
-.react-flow__node-sum, .react-flow__node-load {
-  width: 15rem;
+.react-flow__node-sum,
+.react-flow__node-load,
+.react-flow__node-save, {
+  width: 16rem;
+}
+
+.react-flow__node-filter_by_country, {
+  width: 20rem;
 }

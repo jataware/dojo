@@ -2,7 +2,6 @@ import { createSlice } from '@reduxjs/toolkit';
 
 /* eslint-disable no-param-reassign */
 const initialState = {
-  modelerStep: 0,
   nodeCount: 0,
   edgeCount: 0,
   selectedNodeId: null,
@@ -17,8 +16,9 @@ const initialState = {
   // selectedFeatures keeps track of which features have been chosen in Load Nodes
   // to prevent duplicates
   selectedFeatures: [],
+  // All of the below are not handling the react-flow step specifically
+  modelerStep: 0,
   flowcastJobId: null,
-// TODO: should completedDatasetIds be [] and setter be pushing? probably not, since we're always doing bulk
   completedDatasetIds: null,
 };
 export const dagSlice = createSlice({
