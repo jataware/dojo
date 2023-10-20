@@ -20,6 +20,7 @@ const ModelerSelect = ({
       native: true
     }}
     name={name}
+    sx={{ backgroundColor: 'grey.50' }}
   >
     {/* eslint-disable-next-line jsx-a11y/control-has-associated-label */}
     <option value="" />

@@ -67,7 +67,10 @@ const initialNodeTypeValues = {
     geo_aggregation_function: '',
     time_aggregation_function: '',
   },
-  save: '',
+  save: {
+    name: '',
+    description: '',
+  },
   sum: (() => {
     const acc = {};
     dimensions.forEach((label) => {
@@ -79,7 +82,7 @@ const initialNodeTypeValues = {
     value: '',
     type: threshold_ops[0]
   },
-  filter_by_country: []
+  filter_by_country: [],
 };
 
 const genNodeId = () => `n_${window.crypto.randomUUID()}`;
@@ -190,7 +193,7 @@ const PipeEditor = () => {
           ...node.data.input,
           [property_changed]: event.target.value
         };
-      } else if (node.type === 'load') {
+      } else if (node.type === 'load' || node.type === 'save') {
         input = {
           ...node.data.input,
           [event.target.name]: event.target.value

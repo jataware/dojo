@@ -3,12 +3,12 @@ import {
   Handle, Position
 } from 'reactflow';
 
-import Typography from '@mui/material/Typography';
+import Autocomplete from '@mui/material/Autocomplete';
+import TextField from '@mui/material/TextField';
 
-import AutoComplete from './Autocomplete';
 import NodeTitles from './nodeLabels';
 import NodeBase from './NodeBase';
-import { topHandle, bottomHandle } from './constants';
+import { topHandle, bottomHandle, countries } from './constants';
 
 /**
  *
@@ -16,7 +16,11 @@ import { topHandle, bottomHandle } from './constants';
 function Select({
   input, handleId, nodeId, onChange
 }) {
-  const handleChange = (_, newValue) => {
+  // local input value for the autocomplete - this never seems to actually change?
+  // but is required to make it work
+  const [inputValue, setInputValue] = React.useState('');
+
+  const handleChange = (newValue) => {
     onChange(nodeId, { target: { value: newValue } });
   };
 
@@ -28,10 +32,35 @@ function Select({
         id={handleId}
         style={topHandle}
       />
-      <Typography variant="caption" gutterBottom>Countries</Typography>
-      <AutoComplete
+      <Autocomplete
         value={input}
-        onChange={handleChange}
+        inputValue={inputValue}
+        onChange={(event, newVal) => handleChange(newVal)}
+        onInputChange={(event, newInputValue) => {
+          setInputValue(newInputValue);
+        }}
+        multiple
+        options={countries}
+        // adjustments to move the close icon on top of the open icon
+        // so we have more space for the country chips side by side
+        sx={{
+          '& .MuiAutocomplete-endAdornment': {
+            display: 'flex',
+            flexDirection: 'column',
+            top: !input.length ? 'calc(50% - 14px)' : 'calc(30% - 14px)',
+          },
+        }}
+        renderInput={(params) => (
+          <TextField
+            {...params}
+            label="Countries"
+            variant="outlined"
+            InputLabelProps={{
+              shrink: true,
+            }}
+            sx={{ backgroundColor: 'grey.50', }}
+          />
+        )}
       />
       <Handle
         type="source"
