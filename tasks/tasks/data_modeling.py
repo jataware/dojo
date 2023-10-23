@@ -220,6 +220,15 @@ def post_data_to_dojo(data: xr.Dataset, name: str, dataset_description:str, feat
         },
         "file_metadata": {
             "filetype": "nc"
+        },
+        #TODO: this probably isn't the right way to set the filedata stuff 
+        # it looks like the endpoint is supposed to be setting it, but that wasn't working, while hardcoding it here did
+        "fileData": {
+            "raw": {
+                "uploaded": True,
+                "url": "data.nc",
+                "rawFileName": "raw_data.nc"
+            }
         }
     }
     
@@ -267,11 +276,20 @@ def post_data_to_dojo(data: xr.Dataset, name: str, dataset_description:str, feat
         'dictionary': ('dictionary.csv', dictionary.to_csv(), 'text/csv')
     })
     
-    print(f'post response:', response.text)
+    return response.json()
 
-def run_flowcast_job(context:FlowcastContext):
+def run_flowcast_job(context:FlowcastContext) -> dict:
+    try:
+        return unhandled_run_flowcast_job(context)
+    except Exception as e:
+        print(f'Error running flowcast job: {e}', flush=True)
+        return {
+            'message': 'error running flowcast job',
+            'error': str(e)
+        }
+
+def unhandled_run_flowcast_job(context:FlowcastContext) -> dict:
     
-    # try:
     graph = context['dag']
     topological_sort(graph)
 
@@ -356,28 +374,25 @@ def run_flowcast_job(context:FlowcastContext):
     pipe.execute()
 
     #TODO: dealing with output files
-    for node_id, name in saved_nodes:
+    results = []
+    for node_id, save_props in saved_nodes:
         data = pipe.get_value(node_id).data
         parent_datasets_str = '- ' + '\n- '.join(loaders.keys())
-        post_data_to_dojo(
+        name = save_props['name']
+        feature_description = save_props['description']
+        results.append(post_data_to_dojo(
             data,
             name,
-            dataset_description=f"Derived dataset generated via Dojo Data Modeling process.\nParent Dataset Features:\n{parent_datasets_str}\n\nTODO: add description field in save node for user to fill in a more detailed description.",
-            feature_description=f'TODO: need to get feature description from save node'
-        )
+            dataset_description=f"Derived dataset generated via Dojo Data Modeling process.\nParent Dataset Features:\n{parent_datasets_str}",
+            feature_description=feature_description
+        ))
 
 
     # result object
     result = {
         'message': 'successfully ran flowcast job',
-        'output-files': [name for _,name in saved_nodes]
+        'output-files': [name for _,name in saved_nodes],
+        'results': results
     }
 
     return result
-    
-    # except Exception as e:
-    #     print(f'Error running flowcast job: {e}', flush=True)
-    #     return {
-    #         'message': 'error running flowcast job',
-    #         'error': str(e)
-    #     }
