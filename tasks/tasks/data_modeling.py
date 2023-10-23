@@ -198,6 +198,12 @@ def get_data(features:list[LoadNode]):
 
     return loaders
 
+dtype_kind_map = {
+    'b': 'bool',
+    'i': 'int',
+    'u': 'int',
+    'f': 'float',
+}
 
 def post_data_to_dojo(data: xr.Dataset, name: str, dataset_description:str, feature_description:str):
     print(f'######### Saving to dojo:\n{name}\n{dataset_description}\n{feature_description}\n{data}\n#########')
@@ -216,15 +222,31 @@ def post_data_to_dojo(data: xr.Dataset, name: str, dataset_description:str, feat
             "filetype": "nc"
         }
     }
+    
+    #get datatype of data
+    datatype = dtype_kind_map[data.data.dtype.kind]
+
+    latlon_primary = 'Y' if 'admin0' not in data.coords else ''
+    
     #create annotation
     column_names=[
         'field_name',   'group',        'display_name', 'description',      'data_type',    'units',    'units_description',    'primary',  'date_format',      'gadm_level',   'resolve_to_gadm',  'coord_format', 'qualifies',    'qualifier_role']
+    
     rows = [
-        ['lat',         'latlonpair',   'Latitude',     'geo coordinates',  'latitude',     '',         '',                     'Y',        '',                 'admin1',       '',                 '',             '',             ''],
-        ['lon',         'latlonpair',   'Longitude',    'geo coordinates',  'longitude',    '',         '',                     'Y',        '',                 'admin1',       '',                 '',             '',             ''],
-        ['time',        'main_date',    'Date',         'time coordinates', 'date',         '',         '',                     'Y',        '%Y-%m-%d %H:%M:%S','',             '',                 '',             '',             ''],
-        [name,          '',             name,           feature_description,'float',        'todo',     'figure out units',     '',         '',                 '',             '',                 '',             '',             ''] 
+        [name,          '',             name,           feature_description, datatype,      'todo',     'figure out units',     '',             '',                 '',             '',                 '',             '',             ''] 
     ]
+    if 'time' in data.coords: rows.append(
+        ['time',        'main_date',    'Date',         'time coordinates', 'date',         '',         '',                     'Y',            '%Y-%m-%d %H:%M:%S','',             '',                 '',             '',             '']
+    )
+    if 'lat' in data.coords: rows.append(
+        ['lat',         'latlonpair',   'Latitude',     'geo coordinates',  'latitude',     '',         '',                     latlon_primary, '',                 'admin1',       '',                 '',             '',             ''],
+    )
+    if 'lon' in data.coords: rows.append(
+        ['lon',         'latlonpair',   'Longitude',    'geo coordinates',  'longitude',    '',         '',                     latlon_primary, '',                 'admin1',       '',                 '',             '',             ''],
+    )
+    if 'admin0' in data.coords: rows.append(
+        ['admin0',      'main_geo',     'Country',      'gadm level 0',     'admin0',       '',         '',                     'Y',            '',                 'admin0',       '',                 '',             '',             ''],
+    )
     dictionary = pd.DataFrame(rows, columns=column_names)
 
     
