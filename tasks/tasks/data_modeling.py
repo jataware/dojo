@@ -6,10 +6,12 @@ from utils import get_rawfile
 # from api.validation.MetadataSchema import MetaModel, AnnotationSchema, GeoAnnotation, DateAnnotation
 
 import os
+import json
 import shutil
 import requests
 import xarray as xr
 import pandas as pd
+import numpy as np
 from cftime import DatetimeNoLeap
 from flowcast.pipeline import Pipeline, Variable, Threshold, ThresholdType
 from flowcast.spacetime import Frequency, Resolution
@@ -168,6 +170,12 @@ def get_data(features:list[LoadNode]):
             dataset['time'] = times
         elif isinstance(dataset['time'].values[0], DatetimeNoLeap):
             pass
+        elif isinstance(dataset['time'].values[0], np.datetime64):
+            def to_cftime(t: np.datetime64) -> DatetimeNoLeap:
+                dt = pd.to_datetime(t)
+                return DatetimeNoLeap(dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second)
+            times = [to_cftime(t) for t in dataset['time'].values]
+            dataset['time'] = times
         else:
             raise Exception('unhandled time type', type(dataset['time'].values[0]))
 
@@ -190,8 +198,98 @@ def get_data(features:list[LoadNode]):
 
     return loaders
 
+dtype_kind_map = {
+    'b': 'bool',
+    'i': 'int',
+    'u': 'int',
+    'f': 'float',
+}
 
-def run_flowcast_job(context:FlowcastContext):
+def post_data_to_dojo(data: xr.Dataset, name: str, dataset_description:str, feature_description:str):
+    print(f'######### Saving to dojo:\n{name}\n{dataset_description}\n{feature_description}\n{data}\n#########')
+    #create indicator
+    metadata = {
+        "name": name,
+        "description": dataset_description,
+        "domains": ["Logic"],
+        "maintainer": {
+            "name": "TODO: who derived the dataset",
+            "email": "todo@jataware2.com",
+            "organization": "Jataware2",
+            "website": "jataware.com"
+        },
+        "file_metadata": {
+            "filetype": "nc"
+        },
+        #TODO: this probably isn't the right way to set the filedata stuff 
+        # it looks like the endpoint is supposed to be setting it, but that wasn't working, while hardcoding it here did
+        "fileData": {
+            "raw": {
+                "uploaded": True,
+                "url": "data.nc",
+                "rawFileName": "raw_data.nc"
+            }
+        }
+    }
+    
+    #get datatype of data
+    datatype = dtype_kind_map[data.data.dtype.kind]
+
+    latlon_primary = 'Y' if 'admin0' not in data.coords else ''
+    
+    #create annotation
+    column_names=[
+        'field_name',   'group',        'display_name', 'description',      'data_type',    'units',    'units_description',    'primary',  'date_format',      'gadm_level',   'resolve_to_gadm',  'coord_format', 'qualifies',    'qualifier_role']
+    
+    rows = [
+        [name,          '',             name,           feature_description, datatype,      'todo',     'figure out units',     '',             '',                 '',             '',                 '',             '',             ''] 
+    ]
+    if 'time' in data.coords: rows.append(
+        ['time',        'main_date',    'Date',         'time coordinates', 'date',         '',         '',                     'Y',            '%Y-%m-%d %H:%M:%S','',             '',                 '',             '',             '']
+    )
+    if 'lat' in data.coords: rows.append(
+        ['lat',         'latlonpair',   'Latitude',     'geo coordinates',  'latitude',     '',         '',                     latlon_primary, '',                 'admin1',       '',                 '',             '',             ''],
+    )
+    if 'lon' in data.coords: rows.append(
+        ['lon',         'latlonpair',   'Longitude',    'geo coordinates',  'longitude',    '',         '',                     latlon_primary, '',                 'admin1',       '',                 '',             '',             ''],
+    )
+    if 'admin0' in data.coords: rows.append(
+        ['admin0',      'main_geo',     'Country',      'gadm level 0',     'admin0',       '',         '',                     'Y',            '',                 'admin0',       '',                 '',             '',             ''],
+    )
+    dictionary = pd.DataFrame(rows, columns=column_names)
+
+    
+    #convert data to netcdf bytes
+    dataset = xr.Dataset({name: data})
+    dataset.to_netcdf('data.nc')
+    with open('data.nc', 'rb') as f:
+        data_bytes = f.read()
+    os.remove('data.nc')
+
+    
+    #make post request
+    # e.g. as a curl command:
+    # curl -v -F "metadata=@metadata.json" -F "data=@data.csv" -F "dictionary=@dictionary.csv" http://localhost:8000/indicators/register
+    response = requests.post(f'{settings.DOJO_URL}/indicators/register', files={
+        'metadata': ('metadata.json', json.dumps(metadata), 'application/json'),
+        'data': ('data.nc', data_bytes, 'application/octet-stream'),
+        'dictionary': ('dictionary.csv', dictionary.to_csv(), 'text/csv')
+    })
+    
+    return response.json()
+
+def run_flowcast_job(context:FlowcastContext) -> dict:
+    try:
+        return unhandled_run_flowcast_job(context)
+    except Exception as e:
+        print(f'Error running flowcast job: {e}', flush=True)
+        return {
+            'message': 'error running flowcast job',
+            'error': str(e)
+        }
+
+def unhandled_run_flowcast_job(context:FlowcastContext) -> dict:
+    
     graph = context['dag']
     topological_sort(graph)
 
@@ -246,16 +344,17 @@ def run_flowcast_job(context:FlowcastContext):
         elif node['type'] == 'sum': #rename to sum_reduce
             parent, = get_node_parents(node['id'], graph, num_expected=1)
             dim_map:dict[str,bool] = node['data']['input']
-            assert not dim_map['scenario'], '`scenario` is no longer a valid dimension for group by'
-            assert not dim_map['realization'], '`realization` is no longer a valid dimension for group by'
+            for dim, selected in dim_map.items():
+                if selected and dim not in ['time', 'lat', 'lon']:
+                    raise Exception(f'Unsupported dimension `{dim}` selected for group by node. Only supported dimensions are `time`, `lat`, `lon`')
             dims = [dim for dim,present in dim_map.items() if present]
             pipe.sum_reduce(node['id'], parent, dims=dims)
         ################################################################################
 
         elif node['type'] == 'save':
             parent, = get_node_parents(node['id'], graph, num_expected=1)
-            outname = f"{node['data']['input']}.nc"
-            pipe.save(parent, outname)
+            outname = node['data']['input']
+            # pipe.save(parent, outname) #just use the in memory data for making the post request
 
             # keep track of save nodes
             saved_nodes.append((parent, outname))
@@ -275,14 +374,25 @@ def run_flowcast_job(context:FlowcastContext):
     pipe.execute()
 
     #TODO: dealing with output files
-    for node_id, name in saved_nodes:
-        todo = pipe.get_value(node_id).data
-        print(f'######### OUTPUT ##########: do something with\n{name} =\n{todo}\n')
+    results = []
+    for node_id, save_props in saved_nodes:
+        data = pipe.get_value(node_id).data
+        parent_datasets_str = '- ' + '\n- '.join(loaders.keys())
+        name = save_props['name']
+        feature_description = save_props['description']
+        results.append(post_data_to_dojo(
+            data,
+            name,
+            dataset_description=f"Derived dataset generated via Dojo Data Modeling process.\nParent Dataset Features:\n{parent_datasets_str}",
+            feature_description=feature_description
+        ))
+
 
     # result object
     result = {
         'message': 'successfully ran flowcast job',
-        'output-files': [name for _,name in saved_nodes]
+        'output-files': [name for _,name in saved_nodes],
+        'results': results
     }
 
     return result
