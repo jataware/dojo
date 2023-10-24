@@ -53,15 +53,16 @@ const ModelerProcessing = () => {
   useEffect(() => {
     const onSuccess = (resp) => {
       console.log('Successful!', resp);
-      // TODO: determine what part of resp to set once we actually get this back
-      dispatch(setCompletedDatasetIds(mockDatasets));
-      dispatch(nextModelerStep());
+      if (resp.results) {
+        const derivedDatasets = resp.results.map((dataset) => dataset.id);
+        dispatch(setCompletedDatasetIds(derivedDatasets));
+        dispatch(nextModelerStep());
+      }
+      // TODO: handle errors - task needs to be modified to return an actual error
     };
 
     console.log('this is the jobId', flowcastJobId);
     repeatFetch({ jobId: flowcastJobId, onSuccess });
-    // TODO: remove this - just mocked while the job doesn't return anything
-    // if (flowcastJobId) onSuccess('success!');
   }, [flowcastJobId, dispatch]);
 
   return (
