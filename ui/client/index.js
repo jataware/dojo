@@ -19,7 +19,7 @@ import ThemeContextProvider from './components/ThemeContextProvider';
 
 // pages
 import Admin from './admin';
-import AIAssistant from './components/AIAssistant';
+import AIAssistant from './components/aiAssistant/AIAssistant';
 import DatasetSummary from './dataset_summary';
 import LandingPage from './landingpage';
 import Model from './model';
