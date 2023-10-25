@@ -194,7 +194,7 @@ describe('Register/Publish Test Model', { browser: ['chrome', 'chromium', 'firef
 
                     cy.findByText(/Uploading Model to Docker.+/i);
 
-                    cy.wait(10000);
+                    cy.wait(4000);
 
                     cy.findByText(/Upload Complete.+/i, {timeout: 25000});
 

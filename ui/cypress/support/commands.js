@@ -149,7 +149,7 @@ Cypress.Commands.add("uploadFile", ({type, id, variant}) => {
 
   if (type === 'dataset') {
 
-    cy.log('Uploading dataset seed-file.')
+    cy.log('Uploading dataset seed-file.');
 
     // NOTE For now ignore variant since this is used once.
 
