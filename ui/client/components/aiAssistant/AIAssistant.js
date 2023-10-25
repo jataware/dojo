@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 
+import trim from 'lodash/trim';
+
 import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
 import Paper from '@mui/material/Paper';
@@ -20,38 +22,60 @@ const useStyles = makeStyles()((theme) => ({
     padding: `${theme.spacing(4)} 0`,
   },
   input: {
-    width: '650px',
+    padding: `${theme.spacing(1)} ${theme.spacing(4)} ${theme.spacing(3)}`,
+    width: theme.breakpoints.values.md,
+  },
+  inputBackdrop: {
     position: 'fixed',
     bottom: 0,
-    padding: theme.spacing(4),
-    margin: '0 auto',
-    left: '50%',
-    transform: 'translateX(-50%)',
+    left: 0,
+    width: '100%',
+    backgroundColor: 'white',
+    display: 'flex',
+    justifyContent: 'center',
+    borderTop: `1px solid ${theme.palette.grey[500]}`
   },
   paper: {
     padding: `${theme.spacing(2)} ${theme.spacing(4)}`,
-    margin: theme.spacing(2),
+    margin: `${theme.spacing(2)} ${theme.spacing(4)}`,
     display: 'flex',
     alignItems: 'center',
     gap: theme.spacing(3),
   }
 }));
-// TODO: after search, set searchphrase in a card/paper, show response below it
-// text input always lives at bottom of screen
+/** TODO:
+* - scroll to end of last card + a bits
+* - display extra info (documents used etc) in response card
+* - show arrow down icon on screen when content to scroll to (like chatgpt)?
+**/
 const AIAssistant = () => {
   const { classes } = useStyles();
   // TODO: this will eventually be loaded in?
-  const [previousSearches, setPreviousSearches] = useState([]);
+  const [previousSearches, setPreviousSearches] = useState(['test']);
   const [searchPhrase, setSearchPhrase] = useState('');
   useEffect(() => {
     document.title = 'AI Assistant';
   }, []);
 
+  // disable if no content, incl. if just whitespace
+  const inputDisabled = !searchPhrase.trim().length;
+
   const handleSearch = () => {
     if (searchPhrase.length) {
-      console.log('doing the search:', searchPhrase)
-      previousSearches.push(searchPhrase);
+      setPreviousSearches((prevVals) => ([...prevVals, searchPhrase]));
       setSearchPhrase('');
+    }
+  };
+
+  const handleKeyDown = (event) => {
+    if (event.key === 'Enter' && !event.shiftKey && !inputDisabled) {
+      // Enter submits if there is content and shift isn't pressed
+      // otherwise allow it to do the default and add a new line
+      handleSearch();
+      event.preventDefault();
+    } else if (event.key === 'Enter' && !event.shiftKey && inputDisabled) {
+      // if the input is disabled (no content), still don't allow a new line without shift
+      event.preventDefault();
     }
   };
 
@@ -65,43 +89,60 @@ const AIAssistant = () => {
         <div key={i}>
           <Paper variant="outlined" className={classes.paper}>
             <AccountBoxIcon color="primary" fontSize="large" />
-            <Typography variant="body1">{search}</Typography>
+            <Typography
+              variant="body1"
+              sx={{ whiteSpace: 'pre-wrap' }}
+            >
+              {search}
+            </Typography>
           </Paper>
-          <Paper variant="outlined" className={classes.paper} sx={{ backgroundColor: 'grey.100'}}>
+          <Paper
+            variant="outlined"
+            className={classes.paper}
+            sx={{ backgroundColor: 'grey.100' }}
+          >
             <ComputerIcon fontSize="large" />
-            <Typography variant="body1">{mockResponse}</Typography>
+            <Typography
+              variant="body1"
+              sx={{ whiteSpace: 'pre-wrap' }}
+            >
+              {mockResponse}
+            </Typography>
           </Paper>
         </div>
       ))}
-      <TextField
-        value={searchPhrase}
-        onChange={(event) => setSearchPhrase(event.target.value)}
-        variant="outlined"
-        multiline
-        className={classes.input}
-        sx={{
-          '& .MuiOutlinedInput-root': {
-            '&.Mui-focused fieldset': {
-              // same as the standard mui border color primary.main
-              // but with opacity 0.3 to clash less with the grey endAdornment icon
-              borderColor: 'rgba(26, 118, 210, 0.3)'
-            }
-          },
-        }}
-        InputProps={{
-          endAdornment: (
-            <InputAdornment position="end">
-              <IconButton
-                onClick={handleSearch}
-                edge="end"
-                disabled={!searchPhrase.length}
-              >
-                <SendIcon />
-              </IconButton>
-            </InputAdornment>
-          )
-        }}
-      />
+      <div className={classes.inputBackdrop}>
+        <TextField
+          value={searchPhrase}
+          onChange={(event) => setSearchPhrase(event.target.value)}
+          onKeyDown={handleKeyDown}
+          variant="outlined"
+          multiline
+          className={classes.input}
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              '&.Mui-focused fieldset': {
+                // same as the standard mui border color primary.main
+                // but with opacity 0.3 to clash less with the grey endAdornment icon
+                borderColor: 'rgba(26, 118, 210, 0.3)'
+              }
+            },
+          }}
+          InputProps={{
+            endAdornment: (
+              <InputAdornment position="end">
+                <IconButton
+                  onClick={handleSearch}
+                  edge="end"
+                  disabled={inputDisabled}
+                >
+                  <SendIcon />
+                </IconButton>
+              </InputAdornment>
+            )
+          }}
+        />
+      </div>
     </Container>
   );
 };
