@@ -83,7 +83,7 @@ const NavBar = () => {
         >
           Documents
         </Button>
-        {/*<Button
+        {/* <Button
           component={Link}
           to="/data-modeling"
           color="grey"

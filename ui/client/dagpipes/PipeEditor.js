@@ -12,11 +12,8 @@ import ReactFlow, {
   Background,
   useNodesState,
   useEdgesState,
-  Panel,
-  useReactFlow,
 } from 'reactflow';
 
-import ButtonGroup from '@mui/material/ButtonGroup';
 import Button from '@mui/material/Button';
 
 import { makeStyles } from 'tss-react/mui';
@@ -25,7 +22,6 @@ import { useDispatch, useSelector } from 'react-redux';
 import {
   decrementNodeCount,
   incrementNodeCount,
-  setNodeCount,
   selectNode,
   unselectNodes,
   setSavedChanges,
@@ -336,7 +332,8 @@ const PipeEditor = () => {
         console.log('Successfully started the Run Flowcast job', successResp);
         dispatch(setFlowcastJobId(successResp.data.id));
         dispatch(nextModelerStep());
-      // TODO: snackbar errors for both of these, since they stop processing/next step from happening
+      // TODO: snackbar errors for both of these
+      // since they stop processing/next step from happening
       }).catch((error) => console.log('There was an error starting the Flowcast job:', error));
     }).catch((error) => console.log('There was an error creating the data modeling:', error));
   };
@@ -383,7 +380,7 @@ const PipeEditor = () => {
           />
 
         </ReactFlow>
-        {/*<Panel position="top-left">
+        {/* <Panel position="top-left">
           <ButtonGroup disableElevation>
             <Button
               variant="outlined"

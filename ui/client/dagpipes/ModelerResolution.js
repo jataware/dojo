@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 
-import isFinite from 'lodash/isFinite';
 import trim from 'lodash/trim';
 
 import { useSelector, useDispatch } from 'react-redux';
@@ -24,10 +23,6 @@ const ModelerResolution = () => {
     geoResolutionColumn, timeResolutionColumn
   } = useSelector((state) => state.dag);
   const dispatch = useDispatch();
-
-  // const validNumber = (value) => (
-  //   value !== '' && isFinite(Number(value))
-  // );
 
   const validNumber = (value) => {
     // Regular expression to match numbers, commas, decimal points, and negative signs
