@@ -40,7 +40,7 @@ export const aggregation_functions = [
 ];
 
 // SUM
-export const dimensions = ['lat', 'lon', 'time', 'country', 'scenario', 'realization'];
+export const dimensions = ['lat', 'lon', 'time', 'country'];
 
 // Hidden for now
 export const scenarios = [
