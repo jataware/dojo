@@ -66,7 +66,7 @@ const DagDatasetSelector = () => {
   const dispatch = useDispatch();
 
   useEffect(() => {
-    document.title = 'Data Modeler';
+    document.title = 'Data Modeling';
   }, []);
 
   const handleNext = async () => {
@@ -110,10 +110,11 @@ const DagDatasetSelector = () => {
   return (
     <Container maxWidth="lg">
       <Typography align="center" sx={{ marginTop: 4 }} gutterBottom variant="h4">
-        Data Modeler
+        Data Modeling
       </Typography>
       <Typography align="center" sx={{ marginBottom: 4 }} variant="subtitle1">
-        Select any number of netcdf datasets from the table below to load into the data modeler
+        Select any number of netcdf datasets from
+        the table below to load into the data modeling tool
       </Typography>
       <DataGrid
         checkboxSelection

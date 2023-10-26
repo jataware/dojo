@@ -31,7 +31,7 @@ const Footer = () => {
           {nodeCount} node{nodeCount === 1 ? '' : 's'}. {unsavedChanges && (<span>Unsaved Changes.</span>)}
         </span>
         <span>
-          Data Modeler
+          Data Modeling
         </span>
       </Typography>
     </footer>

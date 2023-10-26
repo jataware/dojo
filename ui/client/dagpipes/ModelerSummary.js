@@ -24,7 +24,7 @@ const ModelerSummary = () => {
       maxWidth="md"
     >
       <Typography variant="h4" align="center" sx={{ marginY: 3 }}>
-        Datasets Derived From Graph
+        Result Datasets
       </Typography>
       <TableContainer component={Paper}>
         <Table

@@ -62,7 +62,7 @@ export default function Main() {
         <Route component={ViewRuns} exact path="/runs" />
         <Route component={RunSummary} exact path="/runs/:runid" />
         <Route component={RunLogs} exact path="/runlogs/:runid" />
-        <Route component={DagpipesApp} exact path="/modeler" />
+        <Route component={DagpipesApp} exact path="/data-modeling" />
         <Route path="/*" render={() => <h2>404 Not Found</h2>} />
       </Switch>
     </Router>
