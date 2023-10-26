@@ -12,6 +12,7 @@ import SendIcon from '@mui/icons-material/Send';
 import { makeStyles } from 'tss-react/mui';
 
 import { ThemeContext } from '../ThemeContextProvider';
+import AssistantChatCard from './AssistantChatCard';
 
 const mockResponse = `Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt
 ut labore et dolore magna aliqua. Et leo duis ut diam. Faucibus scelerisque eleifend donec pretium vulputate
@@ -62,11 +63,15 @@ const AIAssistant = () => {
 
   useEffect(() => {
     document.title = 'AI Assistant';
+    // Make the navbar position: fixed
     setFixedNavBar(true);
+    // and set it back to its default (static) when this effect cleans up
     return () => setFixedNavBar(false);
   }, [setFixedNavBar]);
 
   useEffect(() => {
+    // scroll to the bottom anytime we get a new search in
+    // TODO: when we have real responses come back, scroll to the bottom of those instead
     window.scroll({ top: document.body.scrollHeight, behavior: 'smooth' });
   }, [previousSearches]);
 
@@ -100,28 +105,8 @@ const AIAssistant = () => {
       {previousSearches.map((search, i) => (
         // eslint-disable-next-line react/no-array-index-key
         <div key={i}>
-          <Paper variant="outlined" className={classes.paper}>
-            <AccountBoxIcon color="primary" fontSize="large" />
-            <Typography
-              variant="body1"
-              sx={{ whiteSpace: 'pre-wrap' }}
-            >
-              {search}
-            </Typography>
-          </Paper>
-          <Paper
-            variant="outlined"
-            className={classes.paper}
-            sx={{ backgroundColor: 'grey.100' }}
-          >
-            <ComputerIcon fontSize="large" />
-            <Typography
-              variant="body1"
-              sx={{ whiteSpace: 'pre-wrap' }}
-            >
-              {mockResponse}
-            </Typography>
-          </Paper>
+          <AssistantChatCard text={search} />
+          <AssistantChatCard text={mockResponse} response />
         </div>
       ))}
       <div className={classes.inputBackdrop}>
