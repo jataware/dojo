@@ -33,14 +33,14 @@ const useStyles = makeStyles()((theme) => ({
 
 const NavBar = () => {
   const { classes } = useStyles();
-  const { showNavBar } = useContext(ThemeContext);
+  const { showNavBar, fixedNavBar } = useContext(ThemeContext);
 
   if (!showNavBar) {
     return null;
   }
 
   return (
-    <AppBar position="static" classes={{ root: classes.appBarRoot }}>
+    <AppBar position={fixedNavBar ? 'fixed' : 'static'} classes={{ root: classes.appBarRoot }}>
       <Toolbar variant="dense" disableGutters className={classes.toolbar}>
         <Tooltip title="Dojo home" arrow>
           <IconButton

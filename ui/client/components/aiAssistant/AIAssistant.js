@@ -1,6 +1,4 @@
-import React, { useEffect, useState } from 'react';
-
-import trim from 'lodash/trim';
+import React, { useContext, useEffect, useState } from 'react';
 
 import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
@@ -12,6 +10,8 @@ import ComputerIcon from '@mui/icons-material/Computer';
 import AccountBoxIcon from '@mui/icons-material/AccountBox';
 import SendIcon from '@mui/icons-material/Send';
 import { makeStyles } from 'tss-react/mui';
+
+import { ThemeContext } from '../ThemeContextProvider';
 
 const mockResponse = `Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt
 ut labore et dolore magna aliqua. Et leo duis ut diam. Faucibus scelerisque eleifend donec pretium vulputate
@@ -41,21 +41,34 @@ const useStyles = makeStyles()((theme) => ({
     display: 'flex',
     alignItems: 'center',
     gap: theme.spacing(3),
+  },
+  root: {
+    paddingBottom: '200px',
+    paddingTop: '50px',
   }
 }));
 /** TODO:
-* - scroll to end of last card + a bits
-* - display extra info (documents used etc) in response card
 * - show arrow down icon on screen when content to scroll to (like chatgpt)?
+* - add expandable (?) panel to response cards with list of documents used
+*   - ids, link to view pdf?
 **/
 const AIAssistant = () => {
   const { classes } = useStyles();
   // TODO: this will eventually be loaded in?
   const [previousSearches, setPreviousSearches] = useState(['test']);
   const [searchPhrase, setSearchPhrase] = useState('');
+
+  const { setFixedNavBar } = useContext(ThemeContext);
+
   useEffect(() => {
     document.title = 'AI Assistant';
-  }, []);
+    setFixedNavBar(true);
+    return () => setFixedNavBar(false);
+  }, [setFixedNavBar]);
+
+  useEffect(() => {
+    window.scroll({ top: document.body.scrollHeight, behavior: 'smooth' });
+  }, [previousSearches]);
 
   // disable if no content, incl. if just whitespace
   const inputDisabled = !searchPhrase.trim().length;
@@ -118,6 +131,7 @@ const AIAssistant = () => {
           onKeyDown={handleKeyDown}
           variant="outlined"
           multiline
+          maxRows={6}
           className={classes.input}
           sx={{
             '& .MuiOutlinedInput-root': {
