@@ -75,8 +75,12 @@ describe(
       cy.get('[data-test="modelForm-maintainer.email"]').type('test@example.com');
       cy.get('[data-test="modelForm-maintainer.organization"]')
         .type('Maintainer Test Organization');
-      cy.get('[data-test=modelFormStartDate]').type('01/01/2030');
-      cy.get('[data-test=modelFormEndDate]').type('01/01/2040');
+
+      cy.findByRole('textbox', {name: /model start date/i})
+        .type('01/01/2030');
+
+      cy.findByRole('textbox', {name: /model end date/i})
+        .type('01/01/2040');
 
       // add domains
       cy.get('[data-test=modelFormDomain]').type('politi').then(() => {
@@ -268,7 +272,8 @@ describe('Model output annotation', { browser: ['chrome', 'chromium', 'firefox']
 
             cy.findByRole('textbox', {name: /Description/i}).type('desc');
 
-            cy.findByRole('textbox', {name: /Domains/i}).type('Logic');
+            cy.findByRole('combobox').as('DomainsSelector');
+            cy.get('@DomainsSelector').type('Logic');
 
             // NOTE Protects against current Dojo App bug / race-condition (can click next until processed...)
             cy.wait('@FilePreAnalysis');
@@ -512,6 +517,8 @@ describe('Model Summary Page', { browser: ['chrome', 'chromium', 'firefox'] }, (
 
   it('All required Model properties are displayed on page', () => {
 
+    // NOTE Force a modelId here and remove cleanup fns to reuse same model
+    //      across debugging sessions
     // modelId = 'acab2a55-8356-4029-99c2-734b4939293e';
 
     const testModel = genBaseModel(modelId, 'base', {});
@@ -574,7 +581,7 @@ describe('Model Summary Page', { browser: ['chrome', 'chromium', 'firefox'] }, (
 
                     cy.log('Verify all regions are populated on summary.');
 
-                    cy.findByRole('heading', {name: /parameters\.json/i})
+                    cy.findByRole('heading', {name: /parameters\.json/i});
                     cy.findAllByRole('heading', {name: /accessory\.png/i});
                     cy.findAllByRole('heading', {name: /Test-Output-Name/i});
                   });

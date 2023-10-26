@@ -184,6 +184,19 @@ export function verifyConditionalRequiredFields(annotation) {
     });
   }
 
+  if (annotation['geo.multi-column']) {
+    [
+      'geo.multi-column.admin0',
+      'geo.multi-column.admin1',
+      'geo.multi-column.admin2',
+      'geo.multi-column.admin3',
+    ].forEach((valName) => {
+      if (!annotation[valName]) {
+        errors[valName] = 'Required';
+      }
+    });
+  }
+
   if (annotation.category === CATEGORIES.time) {
     if (!annotation.time_format && !annotation['date.multi-column'] && annotation.date_type !== 'epoch') {
       errors.time_format = 'Required';
