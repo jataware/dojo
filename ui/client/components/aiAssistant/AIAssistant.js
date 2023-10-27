@@ -1,13 +1,12 @@
 import React, { useContext, useEffect, useState } from 'react';
 
+import axios from 'axios';
+
 import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
-import Paper from '@mui/material/Paper';
 import Container from '@mui/material/Container';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
-import ComputerIcon from '@mui/icons-material/Computer';
-import AccountBoxIcon from '@mui/icons-material/AccountBox';
 import SendIcon from '@mui/icons-material/Send';
 import { makeStyles } from 'tss-react/mui';
 
@@ -52,11 +51,14 @@ const useStyles = makeStyles()((theme) => ({
 * - show arrow down icon on screen when content to scroll to (like chatgpt)?
 * - add expandable (?) panel to response cards with list of documents used
 *   - ids, link to view pdf?
+* - disable question input & search button while asking?
+*   - don't delete question until we get response
 **/
 const AIAssistant = () => {
   const { classes } = useStyles();
   // TODO: this will eventually be loaded in?
-  const [previousSearches, setPreviousSearches] = useState(['test']);
+  // rename from search to question?
+  const [previousSearches, setPreviousSearches] = useState([]);
   const [searchPhrase, setSearchPhrase] = useState('');
 
   const { setFixedNavBar } = useContext(ThemeContext);
@@ -78,10 +80,19 @@ const AIAssistant = () => {
   // disable if no content, incl. if just whitespace
   const inputDisabled = !searchPhrase.trim().length;
 
+  useEffect(() => {
+    console.log('responses', previousSearches)
+  }, [previousSearches]);
+
   const handleSearch = () => {
     if (searchPhrase.length) {
-      setPreviousSearches((prevVals) => ([...prevVals, searchPhrase]));
-      setSearchPhrase('');
+      const savedQuestionAnswerPair = { question: searchPhrase };
+      axios.get('/assets/mockAIAssistantQuery.json')
+        .then((response) => {
+          savedQuestionAnswerPair.response = response.data;
+          setPreviousSearches((oldPairs) => ([...oldPairs, savedQuestionAnswerPair]));
+          setSearchPhrase('');
+        });
     }
   };
 
@@ -104,10 +115,14 @@ const AIAssistant = () => {
       </Typography>
       {previousSearches.map((search, i) => (
         // eslint-disable-next-line react/no-array-index-key
-        <div key={i}>
-          <AssistantChatCard text={search} />
-          <AssistantChatCard text={mockResponse} response />
-        </div>
+        <React.Fragment key={i}>
+          <AssistantChatCard text={search.question} />
+          <AssistantChatCard
+            text={search.response.answer}
+            details={search.response.candidate_paragraphs}
+            response
+          />
+        </React.Fragment>
       ))}
       <div className={classes.inputBackdrop}>
         <TextField
