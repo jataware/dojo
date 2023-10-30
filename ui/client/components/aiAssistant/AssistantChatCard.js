@@ -5,6 +5,7 @@ import Collapse from '@mui/material/Collapse';
 import Divider from '@mui/material/Divider';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
+import Tooltip from '@mui/material/Tooltip';
 import ComputerIcon from '@mui/icons-material/Computer';
 import AccountBoxIcon from '@mui/icons-material/AccountBox';
 import AddBoxIcon from '@mui/icons-material/AddBox';
@@ -27,7 +28,41 @@ const useStyles = makeStyles()((theme) => ({
     gap: '1rem 0',
     marginTop: theme.spacing(2),
   },
+  paragraphDetails: {
+    display: 'flex',
+    justifyContent: 'space-evenly',
+    alignItems: 'center',
+    border: `1px solid #d7d7d7`,
+  },
 }));
+
+const AnswerText = ({ text, details }) => {
+  const embeddedNumber = /(\[\d+\])/;
+  const parts = text.split(embeddedNumber);
+
+  return (
+    <div>
+      {parts.map((part, i) => {
+        const match = part.match(embeddedNumber);
+        if (match) {
+          {/*TODO: match these to the correct reference - what is this reference?
+            - also on click (expand and) scroll to the paragraph in the details section
+            - in details section click to open document itself in sidebar or dialog or new tab
+          */}
+          const number = match[0].slice(1, -1);
+          console.log('DETAILS???', details[number])
+          return (
+            // eslint-disable-next-line react/no-array-index-key
+            <Tooltip key={i} arrow title={details[number]?.paragraph}>
+              <span style={{ cursor: 'pointer' }}>{part}</span>
+            </Tooltip>
+          );
+        }
+        return part;
+      })}
+    </div>
+  );
+};
 
 const AssistantChatCard = ({ text, details, response = false }) => {
   const [showDetails, setShowDetails] = useState(false);
@@ -44,9 +79,10 @@ const AssistantChatCard = ({ text, details, response = false }) => {
           : <AccountBoxIcon color="primary" fontSize="large" />}
         <Typography
           variant="body1"
+          component="div"
           sx={{ whiteSpace: 'pre-wrap' }}
         >
-          {text}
+          <AnswerText text={text} details={details} />
         </Typography>
       </div>
       {response && (
@@ -60,28 +96,40 @@ const AssistantChatCard = ({ text, details, response = false }) => {
             Show Details
           </Button>
           <Collapse in={showDetails}>
+          {/*TODO: use para_idx when we can click to show whole document */}
             <div className={classes.details}>
               {details.map((para, i) => (
-                <>
+                <React.Fragment key={`${para.root_name}/${para.paragraph_idx}`}>
                   <Typography
                     variant="body2"
-                    key={`${para.root_name}/${para.paragraph_idx}`}
                     sx={{
                       display: 'contents',
                     }}
+                    component="div"
                   >
-                    <span>
-                      [{para.paragraph_idx}]
-                    </span>
-                    <span>
-                      {para.paragraph}
-                    </span>
+                    <div>
+                      [{i}]
+                    </div>
+                    <div>
+                      <div>
+                        {para.paragraph}
+                      </div>
+                      <div className={classes.paragraphDetails}>
+                        <span>Filename: file.pdf</span>
+                        <Divider orientation="vertical" flexItem />
+                        <span>Paragraph # in file: {para.paragraph_idx}</span>
+                        <Divider orientation="vertical" flexItem />
+                        <span><Button variant="text">View PDF</Button></span>
+                      </div>
+                    </div>
                   </Typography>
-                  {/* Don't show the Divider for the final item */}
-                  {i < details.length - 1 && (
-                    <Divider sx={{ gridColumn: 'span 2' }} variant="middle" />
-                  )}
-                </>
+                  {/* Don't show the Divider for the final item
+                      TODO: no divider between items because we have the vertical dividers above instead?
+                  */}
+ {/*                 {i < details.length - 1 && (
+                    {<Divider sx={{ gridColumn: 'span 2' }} variant="middle" />}
+                  )}*/}
+                </React.Fragment>
               ))}
             </div>
           </Collapse>

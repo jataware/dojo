@@ -87,7 +87,7 @@ const AIAssistant = () => {
   const handleSearch = () => {
     if (searchPhrase.length) {
       const savedQuestionAnswerPair = { question: searchPhrase };
-      axios.get('/assets/mockAIAssistantQuery.json')
+      axios.get('/assets/mockQuery-long.json')
         .then((response) => {
           savedQuestionAnswerPair.response = response.data;
           setPreviousSearches((oldPairs) => ([...oldPairs, savedQuestionAnswerPair]));
