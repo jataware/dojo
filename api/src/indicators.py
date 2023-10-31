@@ -305,17 +305,15 @@ def get_nc_file_indicators(size=10000):
         "query": {
             "bool": {
                 "must": [
-                    {"match_all": {}},
-                    {"regexp": {
-                        "fileData.raw.url": ".*\\.nc"
-                    }},
-                    {"regexp": {
-                        "fileData.raw.rawFileName": ".*\\.nc"
+                    {"bool": {
+                        "should": [
+                            {"regexp": {"fileData.raw.url": ".*\\.nc"}},
+                            {"regexp": {"fileData.raw.rawFileName": ".*\\.nc"}},
+                        ],
+                        "minimum_should_match": 1,
                     }},
                 ],
-                "filter": [
-                    {"term": {"published": True}}
-                ]
+                "filter": [{"term": {"published": True}}],
             }
         }
     }
