@@ -507,6 +507,29 @@ def get_document_text(document_id: str,
     }
 
 
+@router.get("/documents/by-didx-name", include_in_schema=False)
+def get_document_by_didx_name(name: str):
+    """
+    Temporary endpoint that returns document id/data from DIDX filename.
+    Would have gone to bottom of file, but needs to overwrite
+    /documents/{id} below.
+    """
+    es_body = {
+        "query": {
+            "match": {
+                "filename.keyword": f"DIDX-documents/{name}.pdf"
+            }
+        },
+        "_source": ["title", "processed_at", "filename", "source_url", "description"]
+    }
+
+    result = es.search(index="documents", body=es_body)
+
+    hits = result["hits"]["hits"]
+
+    return format_document(hits[0])
+
+
 @router.get(
     "/documents/{document_id}", response_model=DocumentSchema.Model
 )
@@ -662,3 +685,6 @@ def get_document_uploaded_file(document_id: str):
     headers = {'Content-Disposition': f'inline; filename="{file_name}"'}
 
     return Response(content=file.read(), media_type="application/pdf", headers=headers)
+
+
+
