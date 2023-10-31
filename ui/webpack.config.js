@@ -8,6 +8,7 @@ const CopyWebpackPlugin = require("copy-webpack-plugin");
 
 const HtmlWebpackPlugin = require('html-webpack-plugin')
 const MiniCssExtractPlugin = require('mini-css-extract-plugin');
+const sass = require('sass');
 
 const ESLintPlugin = require('eslint-webpack-plugin');
 
@@ -26,8 +27,17 @@ module.exports = {
                 use: ['babel-loader']
             },
             {
-                test: /\.css$/i,
-                use: [MiniCssExtractPlugin.loader, 'css-loader'],
+                test: /\.(css|s[ac]ss)$/i,
+                use: [
+                  MiniCssExtractPlugin.loader,
+                  'css-loader',
+                  {
+                      loader: 'sass-loader',
+                      options: {
+                        implementation: sass,
+                      },
+                    },
+                  ],
                 sideEffects: true
             },
           {
@@ -47,6 +57,7 @@ module.exports = {
     port: 8080,
     historyApiFallback: true,
     disableHostCheck: true,
+    hot: true,
     headers: {
       'Access-Control-Allow-Origin': '*',
       'Access-Control-Allow-Headers': 'Origin, X-Requested-With, Content-Type, Accept'

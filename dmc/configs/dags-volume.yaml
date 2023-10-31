@@ -14,7 +14,7 @@ spec:
   accessModes:
     - ReadWriteMany
   hostPath:
-    path: "/Users/brandonrose/repos/WM/dojo/dmc/dags"
+    path: "$PWD/dmc/dags"
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim

@@ -156,7 +156,6 @@ export default ({
             Aggregation Function
           </InputLabel>
           <Select
-            variant="standard"
             value={selectedAggregation}
             onChange={handleChangeAggregation}
             label="Aggregation Function"
@@ -178,7 +177,6 @@ export default ({
             Resolution
           </InputLabel>
           <Select
-            variant="standard"
             data-testid="transform-select-temporal-resolution-resolution"
             value={selectedResolution}
             onChange={handleChangeResolution}
