@@ -13,10 +13,6 @@ import { makeStyles } from 'tss-react/mui';
 import { ThemeContext } from '../ThemeContextProvider';
 import AssistantChatCard from './AssistantChatCard';
 
-const mockResponse = `Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt
-ut labore et dolore magna aliqua. Et leo duis ut diam. Faucibus scelerisque eleifend donec pretium vulputate
-sapien nec sagittis aliquam. Pellentesque id nibh tortor id. Sed vulputate mi sit amet mauris commodo quis imperdiet massa.`
-
 const useStyles = makeStyles()((theme) => ({
   header: {
     padding: `${theme.spacing(4)} 0`,
@@ -84,15 +80,41 @@ const AIAssistant = () => {
     console.log('responses', previousSearches)
   }, [previousSearches]);
 
-  const handleSearch = () => {
+  const handleSearch = async () => {
     if (searchPhrase.length) {
-      const savedQuestionAnswerPair = { question: searchPhrase };
-      axios.get('/assets/mockQuery-long.json')
-        .then((response) => {
-          savedQuestionAnswerPair.response = response.data;
-          setPreviousSearches((oldPairs) => ([...oldPairs, savedQuestionAnswerPair]));
-          setSearchPhrase('');
+      // store all details for this query in this object: question, response, and documents
+      const queryDetails = { question: searchPhrase };
+      try {
+        // TODO: point this at the real endpoint before PR
+        const queryResp = await axios.get(`http://localhost:8001/mock-message?query=${searchPhrase}`);
+        queryDetails.response = queryResp.data;
+
+        // create an object with just the unique filenames as keys
+        const filenamesToDocs = queryResp.data.candidate_paragraphs.reduce((obj, curr) => (
+          { ...obj, [curr.root_name]: null }
+        ), {});
+
+        // go through the unique filenames and fetch the document data
+        const documentFetches = Object.keys(filenamesToDocs).map(async (filename) => {
+          const docFetchResp = await axios.get(`api/dojo/documents/by-didx-name?name=${filename}`);
+          return { filename, data: docFetchResp.data };
         });
+
+        // wait for all the document fetches to complete
+        const documentResults = await Promise.all(documentFetches);
+        // and map them to the filenames
+        documentResults.forEach(({ filename, data }) => {
+          filenamesToDocs[filename] = data;
+        });
+
+        queryDetails.documents = filenamesToDocs;
+
+        setPreviousSearches((oldPairs) => ([...oldPairs, queryDetails]));
+        setSearchPhrase('');
+      } catch (error) {
+        console.error(error);
+        // Handle errors
+      }
     }
   };
 
@@ -120,6 +142,7 @@ const AIAssistant = () => {
           <AssistantChatCard
             text={search.response.answer}
             details={search.response.candidate_paragraphs}
+            documents={search.documents}
             response
           />
         </React.Fragment>
