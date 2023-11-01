@@ -1,4 +1,5 @@
 import useSWR from 'swr';
+import useSWRImmutable from 'swr/immutable';
 
 const fetcher = async (url) => {
   const response = await fetch(url);
@@ -197,7 +198,9 @@ export function useParams(modelId) {
 }
 
 export function useNCDatasets() {
-  const { data, error } = useSWR('api/dojo/indicators/ncfiles', fetcher);
+  // immutable - don't refetch data
+  // this is causing issues with causemos keycloak for all swr hooks, but this one is important
+  const { data, error } = useSWRImmutable('api/dojo/indicators/ncfiles', fetcher);
 
   return {
     datasets: data,
