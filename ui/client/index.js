@@ -19,6 +19,7 @@ import ThemeContextProvider from './components/ThemeContextProvider';
 
 // pages
 import Admin from './admin';
+import AIAssistant from './components/AIAssistant';
 import DatasetSummary from './dataset_summary';
 import LandingPage from './landingpage';
 import Model from './model';
@@ -63,6 +64,7 @@ export default function Main() {
         <Route component={RunSummary} exact path="/runs/:runid" />
         <Route component={RunLogs} exact path="/runlogs/:runid" />
         <Route component={DagpipesApp} exact path="/data-modeling" />
+        <Route component={AIAssistant} exact path="/ai-assistant" />
         <Route path="/*" render={() => <h2>404 Not Found</h2>} />
       </Switch>
     </Router>
