@@ -30,7 +30,7 @@ api.include_router(documents.router, tags=["Documents"])
 api.include_router(terminal.router, prefix="/terminal", tags=["Terminal"])
 api.include_router(ui.router, prefix="/ui", tags=["Dojo UI"])
 api.include_router(data.router, tags=["Data"])
-api.include_router(data_modelings.router, tags="Data Modelings")
+api.include_router(data_modelings.router, tags=["Data Modelings"])
 
 
 
