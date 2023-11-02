@@ -159,8 +159,13 @@ def get_data(features:list[LoadNode]):
         lon_annotation, = filter(lambda a: a['geo_type'] == 'longitude', geo_annotations)
 
         # load the netcdf and convert coordinate names to time, lat, lon
-        dataset = xr.open_dataset(file_path)
-        dataset = dataset.rename({time_annotation['name']: 'time', lat_annotation['name']: 'lat', lon_annotation['name']: 'lon'})
+        dataset: xr.Dataset = xr.open_dataset(file_path)
+        if time_annotation['name'] in dataset.coords:
+            dataset = dataset.rename({time_annotation['name']: 'time'})
+        if lat_annotation['name'] in dataset.coords:
+            dataset = dataset.rename({lat_annotation['name']: 'lat'})
+        if lon_annotation['name'] in dataset.coords:
+            dataset = dataset.rename({lon_annotation['name']: 'lon'})
 
         # ensure the time dimension is of type cftime.DatetimeNoLeap
         if isinstance(dataset['time'].values[0], str):
