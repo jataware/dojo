@@ -7,7 +7,7 @@ from datetime import datetime
 from typing import Any, Dict, Generator, List, Optional
 from urllib.parse import urlparse
 from elasticsearch import Elasticsearch
-from elasticsearch.exceptions import RequestError
+from elasticsearch.exceptions import RequestError, NotFoundError
 from fastapi import (
     APIRouter,
     HTTPException,
@@ -523,11 +523,12 @@ def get_document_by_didx_name(name: str):
         "_source": ["title", "processed_at", "filename", "source_url", "description"]
     }
 
-    result = es.search(index="documents", body=es_body)
-
-    hits = result["hits"]["hits"]
-
-    return format_document(hits[0])
+    try:
+        result = es.search(index="documents", body=es_body)
+        hits = result["hits"]["hits"]
+        return format_document(hits[0])
+    except (NotFoundError, IndexError):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
 
 @router.get(
@@ -684,7 +685,10 @@ def get_document_uploaded_file(document_id: str):
 
     headers = {'Content-Disposition': f'inline; filename="{file_name}"'}
 
-    return Response(content=file.read(), media_type="application/pdf", headers=headers)
+    try:
+        return Response(content=file.read(), media_type="application/pdf", headers=headers)
+    except FileNotFoundError as e:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
 
 

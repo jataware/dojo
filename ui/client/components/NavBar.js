@@ -33,14 +33,14 @@ const useStyles = makeStyles()((theme) => ({
 
 const NavBar = () => {
   const { classes } = useStyles();
-  const { showNavBar } = useContext(ThemeContext);
+  const { showNavBar, fixedNavBar } = useContext(ThemeContext);
 
   if (!showNavBar) {
     return null;
   }
 
   return (
-    <AppBar position="static" classes={{ root: classes.appBarRoot }}>
+    <AppBar position={fixedNavBar ? 'fixed' : 'static'} classes={{ root: classes.appBarRoot }}>
       <Toolbar variant="dense" disableGutters className={classes.toolbar}>
         <Tooltip title="Dojo home" arrow>
           <IconButton
@@ -89,6 +89,13 @@ const NavBar = () => {
           color="grey"
         >
           Data Modeler
+        </Button>*/}
+        {/* <Button
+          component={Link}
+          to="/ai-assistant"
+          color="grey"
+        >
+          AI Assistant
         </Button>*/}
         <span className={classes.spacer} />
         <Button
