@@ -1,8 +1,11 @@
 import React, { useState } from 'react';
 
+import AppBar from '@mui/material/AppBar';
+import Toolbar from '@mui/material/Toolbar';
+import IconButton from '@mui/material/IconButton';
+import CloseIcon from '@mui/icons-material/Close';
 import Button from '@mui/material/Button';
 import Collapse from '@mui/material/Collapse';
-import DialogTitle from '@mui/material/DialogTitle';
 import Dialog from '@mui/material/Dialog';
 import Divider from '@mui/material/Divider';
 import Paper from '@mui/material/Paper';
@@ -77,10 +80,11 @@ const AssistantChatCard = ({
 
   const handleClose = () => {
     setDialogContent(null);
+    setOpen(false);
   };
 
-  const handlePDFClick = (pdf) => {
-    setDialogContent(pdf.source_url);
+  const handlePDFClick = async (pdf) => {
+    setDialogContent(pdf.id);
     setOpen(true);
   };
 
@@ -150,22 +154,31 @@ const AssistantChatCard = ({
           </Collapse>
         </div>
       )}
-      <Dialog open={open} onClose={handleClose}>
-        <DialogTitle>View PDF</DialogTitle>
-        <div style={{ height: '100%', width: '500px', }}>
-          <Typography variant="caption">{dialogContent}</Typography>
-          {/*
-            TODO: use dialogContent (url), for local dev swap in localhost:9000/9001 for s3 (?)
-            - possibly need to mess with nginx proxying to get minio to allow x-frame-origin from
-              localhost:8080
-          */}
-          {/* - doesn't work: <embed
-            src="http://localhost:9001/documents/2157e8b6-07eb-4a21-aa67-4f9c9b36d436-Dojo%20copy%2010.pdf"
+      <Dialog open={open} onClose={handleClose} maxWidth="lg">
+        <AppBar sx={{ position: 'relative', backgroundColor: 'grey.500' }}>
+          <Toolbar
+            variant="dense"
+            sx={{ display: 'flex', justifyContent: 'space-between', margin: [0, 1] }}
+          >
+            <Typography variant="h6" component="span">View PDF</Typography>
+            <IconButton
+              edge="end"
+              color="inherit"
+              onClick={handleClose}
+              aria-label="close"
+            >
+              <CloseIcon />
+            </IconButton>
+          </Toolbar>
+        </AppBar>
+        <div style={{ height: '800px', width: '700px', }}>
+          <embed
+            src={`/api/dojo/documents/${dialogContent}/file`}
             type="application/pdf"
-            width="600"
-            height="500"
             alt="pdf"
-          />*/}
+            height="700"
+            width="700"
+          />
 
         </div>
       </Dialog>
