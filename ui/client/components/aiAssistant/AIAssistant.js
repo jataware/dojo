@@ -76,17 +76,16 @@ const AIAssistant = () => {
   // disable if no content, incl. if just whitespace
   const inputDisabled = !searchPhrase.trim().length;
 
-  useEffect(() => {
-    console.log('responses', previousSearches)
-  }, [previousSearches]);
-
   const handleSearch = async () => {
     if (searchPhrase.length) {
       // store all details for this query in this object: question, response, and documents
       const queryDetails = { question: searchPhrase };
       try {
-        // TODO: point this at the real endpoint before PR
-        const queryResp = await axios.get(`http://localhost:8001/mock-message?query=${searchPhrase}`);
+        // TODO: Use this for local development, causemos-analyst for production
+        // const queryResp = await axios.get(`http://localhost:8001/mock-message?query=${searchPhrase}`);
+        const queryResp = await axios.get(
+          `https://causemos-analyst.dojo-modeling.com/ai-docs/message?query=${searchPhrase}`
+        );
         queryDetails.response = queryResp.data;
 
         // create an object with just the unique filenames as keys

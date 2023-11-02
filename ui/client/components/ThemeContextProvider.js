@@ -7,7 +7,10 @@ const ThemeContextProvider = ({ children }) => {
   const [fixedNavBar, setFixedNavBar] = useState(false);
 
   return (
-    <ThemeContext.Provider value={{ showNavBar, setShowNavBar, fixedNavBar, setFixedNavBar }}>
+    <ThemeContext.Provider value={{
+      showNavBar, setShowNavBar, fixedNavBar, setFixedNavBar
+    }}
+    >
       {children}
     </ThemeContext.Provider>
   );
