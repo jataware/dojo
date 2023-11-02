@@ -349,9 +349,17 @@ def unhandled_run_flowcast_job(context:FlowcastContext) -> dict:
         elif node['type'] == 'sum': #rename to sum_reduce
             parent, = get_node_parents(node['id'], graph, num_expected=1)
             dim_map:dict[str,bool] = node['data']['input']
+
+            # verify that only supported dimensions are selected
             for dim, selected in dim_map.items():
-                if selected and dim not in ['time', 'lat', 'lon']:
-                    raise Exception(f'Unsupported dimension `{dim}` selected for group by node. Only supported dimensions are `time`, `lat`, `lon`')
+                if selected and dim not in ['time', 'lat', 'lon', 'country']:
+                    raise Exception(f'Unsupported dimension `{dim}` selected for group by node. Only supported dimensions are `time`, `lat`, `lon`, and `country`.')
+
+            #rename country to admin0 if present
+            if 'country' in dim_map:
+                dim_map['admin0'] = dim_map['country']
+                del dim_map['country']
+
             dims = [dim for dim,present in dim_map.items() if present]
             pipe.sum_reduce(node['id'], parent, dims=dims)
         ################################################################################
