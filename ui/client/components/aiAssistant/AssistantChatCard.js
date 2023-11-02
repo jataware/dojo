@@ -40,7 +40,42 @@ const useStyles = makeStyles()((theme) => ({
     border: '1px solid #d7d7d7',
     marginTop: '0.5rem',
   },
+  dialogHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    margin: `0 ${theme.spacing(2)}`,
+    alignItems: 'center',
+  },
 }));
+
+const DocumentViewerDialog = ({
+  documentDetails, open, handleClose
+}) => {
+  const { classes } = useStyles();
+  return (
+    <Dialog open={open} onClose={handleClose} maxWidth="lg">
+      <div className={classes.dialogHeader}>
+        <Typography variant="h6">Document Viewer</Typography>
+        <IconButton
+          onClick={handleClose}
+          aria-label="close"
+        >
+          <CloseIcon />
+        </IconButton>
+      </div>
+      {documentDetails && (
+        <div style={{ height: '800px', width: '1200px', overflow: 'hidden' }}>
+          <embed
+            src={`/api/dojo/documents/${documentDetails?.id}/file`}
+            type="application/pdf"
+            alt="pdf"
+            style={{ height: '100%', width: '1200px' }}
+          />
+        </div>
+      )}
+    </Dialog>
+  );
+};
 
 const AnswerText = ({ text, details }) => {
   const embeddedNumber = /(\[\d+\])/;
@@ -84,7 +119,7 @@ const AssistantChatCard = ({
   };
 
   const handlePDFClick = async (pdf) => {
-    setDialogContent(pdf.id);
+    setDialogContent(pdf);
     setOpen(true);
   };
 
@@ -135,7 +170,7 @@ const AssistantChatCard = ({
                       </div>
                       <div className={classes.paragraphDetails}>
                         {/* TODO: concat name, show full name in tooltip */}
-                        <span>Filename: {documents[para.root_name]?.title || 'No Name'}</span>
+                        <span>Title: {documents[para.root_name]?.title || 'No Title'}</span>
                         <Divider orientation="vertical" flexItem />
                         <span>Paragraph # in file: {para.paragraph_idx}</span>
                         <Divider orientation="vertical" flexItem />
@@ -154,34 +189,11 @@ const AssistantChatCard = ({
           </Collapse>
         </div>
       )}
-      <Dialog open={open} onClose={handleClose} maxWidth="lg">
-        <AppBar sx={{ position: 'relative', backgroundColor: 'grey.500' }}>
-          <Toolbar
-            variant="dense"
-            sx={{ display: 'flex', justifyContent: 'space-between', margin: [0, 1] }}
-          >
-            <Typography variant="h6" component="span">View PDF</Typography>
-            <IconButton
-              edge="end"
-              color="inherit"
-              onClick={handleClose}
-              aria-label="close"
-            >
-              <CloseIcon />
-            </IconButton>
-          </Toolbar>
-        </AppBar>
-        <div style={{ height: '800px', width: '700px', }}>
-          <embed
-            src={`/api/dojo/documents/${dialogContent}/file`}
-            type="application/pdf"
-            alt="pdf"
-            height="700"
-            width="700"
-          />
-
-        </div>
-      </Dialog>
+      <DocumentViewerDialog
+        documentDetails={dialogContent}
+        open={open}
+        handleClose={handleClose}
+      />
     </Paper>
   );
 };
