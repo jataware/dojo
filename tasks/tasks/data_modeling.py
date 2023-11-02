@@ -168,21 +168,22 @@ def get_data(features:list[LoadNode]):
             dataset = dataset.rename({lon_annotation['name']: 'lon'})
 
         # ensure the time dimension is of type cftime.DatetimeNoLeap
-        if isinstance(dataset['time'].values[0], str):
-            # time_annotation['time_format'] # e.g. '%Y-%m-%d %H:%M:%S'
-            times = [pd.to_datetime(t, format=time_annotation['time_format']) for t in dataset['time'].values]
-            times = [DatetimeNoLeap(t.year, t.month, t.day, t.hour, t.minute, t.second) for t in times]
-            dataset['time'] = times
-        elif isinstance(dataset['time'].values[0], DatetimeNoLeap):
-            pass
-        elif isinstance(dataset['time'].values[0], np.datetime64):
-            def to_cftime(t: np.datetime64) -> DatetimeNoLeap:
-                dt = pd.to_datetime(t)
-                return DatetimeNoLeap(dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second)
-            times = [to_cftime(t) for t in dataset['time'].values]
-            dataset['time'] = times
-        else:
-            raise Exception('unhandled time type', type(dataset['time'].values[0]))
+        if 'time' in dataset.coords:
+            if isinstance(dataset['time'].values[0], str):
+                # time_annotation['time_format'] # e.g. '%Y-%m-%d %H:%M:%S'
+                times = [pd.to_datetime(t, format=time_annotation['time_format']) for t in dataset['time'].values]
+                times = [DatetimeNoLeap(t.year, t.month, t.day, t.hour, t.minute, t.second) for t in times]
+                dataset['time'] = times
+            elif isinstance(dataset['time'].values[0], DatetimeNoLeap):
+                pass
+            elif isinstance(dataset['time'].values[0], np.datetime64):
+                def to_cftime(t: np.datetime64) -> DatetimeNoLeap:
+                    dt = pd.to_datetime(t)
+                    return DatetimeNoLeap(dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second)
+                times = [to_cftime(t) for t in dataset['time'].values]
+                dataset['time'] = times
+            else:
+                raise Exception('unhandled time type', type(dataset['time'].values[0]))
 
 
         # store dataset in map
