@@ -95,8 +95,13 @@ const AIAssistant = () => {
 
         // go through the unique filenames and fetch the document data
         const documentFetches = Object.keys(filenamesToDocs).map(async (filename) => {
+          try {
           const docFetchResp = await axios.get(`api/dojo/documents/by-didx-name?name=${filename}`);
-          return { filename, data: docFetchResp.data };
+            return { filename, data: docFetchResp.data };
+          } catch (e) {
+            console.log('error fetching document, skipping', e);
+            return {filename: null, data: {}};
+          }
         });
 
         // wait for all the document fetches to complete
