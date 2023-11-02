@@ -84,7 +84,7 @@ const AIAssistant = () => {
         // TODO: Use this for local development, causemos-analyst for production
         // const queryResp = await axios.get(`http://localhost:8001/mock-message?query=${searchPhrase}`);
         const queryResp = await axios.get(
-          `https://causemos-analyst.dojo-modeling.com/ai-docs/message?query=${searchPhrase}`
+          `/api/ai-docs/mock-message?query=${searchPhrase}`
         );
         queryDetails.response = queryResp.data;
 

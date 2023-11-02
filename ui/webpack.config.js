@@ -85,6 +85,12 @@ module.exports = {
         secure: false,
         changeOrigin: true,
       },
+      '/api/ai-docs': {
+        target: 'http://localhost:8001',
+        pathRewrite: { '^/api/ai-docs': '' },
+        secure: false,
+        changeOrigin: true,
+      },
     }
   },
     plugins: [
