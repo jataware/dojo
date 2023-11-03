@@ -16,7 +16,7 @@ const ChatCard = ({
       <Typography
         variant="body1"
         component="div"
-        sx={{ whiteSpace: 'pre-wrap' }}
+        sx={{ whiteSpace: 'pre-wrap', width: '100%' }}
       >
         {text}
       </Typography>
