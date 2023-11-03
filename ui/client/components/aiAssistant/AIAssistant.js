@@ -17,6 +17,7 @@ import SendIcon from '@mui/icons-material/Send';
 import { makeStyles } from 'tss-react/mui';
 
 import { ThemeContext } from '../ThemeContextProvider';
+
 import AIAssistantResponse from './AIAssistantResponse';
 import ChatCard from './ChatCard';
 
@@ -86,13 +87,13 @@ const AIAssistant = () => {
   const performSearch = async (query, queryKey) => {
     try {
       // TODO: Use this for local development, causemos-analyst for production
-      // const queryResp = await axios.get(`http://localhost:8001/mock-message?query=${query}`);
+      const queryResp = await axios.get(`http://localhost:8001/mock-message?query=${query}`);
 
-      const mock = ''; //'mock-';
+      // const mock = ''; //'mock-';
 
-      const queryResp = await axios.get(
-        `/api/ai-docs/${mock}message?query=${searchPhrase}`
-      );
+      // const queryResp = await axios.get(
+      //   `/api/ai-docs/${mock}message?query=${searchPhrase}`
+      // );
       const response = {};
       response.response = queryResp.data;
 

@@ -159,25 +159,31 @@ def get_data(features:list[LoadNode]):
         lon_annotation, = filter(lambda a: a['geo_type'] == 'longitude', geo_annotations)
 
         # load the netcdf and convert coordinate names to time, lat, lon
-        dataset = xr.open_dataset(file_path)
-        dataset = dataset.rename({time_annotation['name']: 'time', lat_annotation['name']: 'lat', lon_annotation['name']: 'lon'})
+        dataset: xr.Dataset = xr.open_dataset(file_path)
+        if time_annotation['name'] in dataset.coords:
+            dataset = dataset.rename({time_annotation['name']: 'time'})
+        if lat_annotation['name'] in dataset.coords:
+            dataset = dataset.rename({lat_annotation['name']: 'lat'})
+        if lon_annotation['name'] in dataset.coords:
+            dataset = dataset.rename({lon_annotation['name']: 'lon'})
 
         # ensure the time dimension is of type cftime.DatetimeNoLeap
-        if isinstance(dataset['time'].values[0], str):
-            # time_annotation['time_format'] # e.g. '%Y-%m-%d %H:%M:%S'
-            times = [pd.to_datetime(t, format=time_annotation['time_format']) for t in dataset['time'].values]
-            times = [DatetimeNoLeap(t.year, t.month, t.day, t.hour, t.minute, t.second) for t in times]
-            dataset['time'] = times
-        elif isinstance(dataset['time'].values[0], DatetimeNoLeap):
-            pass
-        elif isinstance(dataset['time'].values[0], np.datetime64):
-            def to_cftime(t: np.datetime64) -> DatetimeNoLeap:
-                dt = pd.to_datetime(t)
-                return DatetimeNoLeap(dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second)
-            times = [to_cftime(t) for t in dataset['time'].values]
-            dataset['time'] = times
-        else:
-            raise Exception('unhandled time type', type(dataset['time'].values[0]))
+        if 'time' in dataset.coords:
+            if isinstance(dataset['time'].values[0], str):
+                # time_annotation['time_format'] # e.g. '%Y-%m-%d %H:%M:%S'
+                times = [pd.to_datetime(t, format=time_annotation['time_format']) for t in dataset['time'].values]
+                times = [DatetimeNoLeap(t.year, t.month, t.day, t.hour, t.minute, t.second) for t in times]
+                dataset['time'] = times
+            elif isinstance(dataset['time'].values[0], DatetimeNoLeap):
+                pass
+            elif isinstance(dataset['time'].values[0], np.datetime64):
+                def to_cftime(t: np.datetime64) -> DatetimeNoLeap:
+                    dt = pd.to_datetime(t)
+                    return DatetimeNoLeap(dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second)
+                times = [to_cftime(t) for t in dataset['time'].values]
+                dataset['time'] = times
+            else:
+                raise Exception('unhandled time type', type(dataset['time'].values[0]))
 
 
         # store dataset in map
@@ -344,9 +350,17 @@ def unhandled_run_flowcast_job(context:FlowcastContext) -> dict:
         elif node['type'] == 'sum': #rename to sum_reduce
             parent, = get_node_parents(node['id'], graph, num_expected=1)
             dim_map:dict[str,bool] = node['data']['input']
+
+            # verify that only supported dimensions are selected
             for dim, selected in dim_map.items():
-                if selected and dim not in ['time', 'lat', 'lon']:
-                    raise Exception(f'Unsupported dimension `{dim}` selected for group by node. Only supported dimensions are `time`, `lat`, `lon`')
+                if selected and dim not in ['time', 'lat', 'lon', 'country']:
+                    raise Exception(f'Unsupported dimension `{dim}` selected for group by node. Only supported dimensions are `time`, `lat`, `lon`, and `country`.')
+
+            #rename country to admin0 if present
+            if 'country' in dim_map:
+                dim_map['admin0'] = dim_map['country']
+                del dim_map['country']
+
             dims = [dim for dim,present in dim_map.items() if present]
             pipe.sum_reduce(node['id'], parent, dims=dims)
         ################################################################################
