@@ -4,14 +4,18 @@ import axios from 'axios';
 
 import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
+import CircularProgress from '@mui/material/CircularProgress';
 import Container from '@mui/material/Container';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
+import AccountBoxIcon from '@mui/icons-material/AccountBox';
+import InfoIcon from '@mui/icons-material/Info';
 import SendIcon from '@mui/icons-material/Send';
 import { makeStyles } from 'tss-react/mui';
 
 import { ThemeContext } from '../ThemeContextProvider';
-import AssistantChatCard from './AssistantChatCard';
+import AIAssistantResponse from './AIAssistantResponse';
+import ChatCard from './ChatCard';
 
 const useStyles = makeStyles()((theme) => ({
   header: {
@@ -31,13 +35,6 @@ const useStyles = makeStyles()((theme) => ({
     justifyContent: 'center',
     borderTop: `1px solid ${theme.palette.grey[500]}`
   },
-  paper: {
-    padding: `${theme.spacing(2)} ${theme.spacing(4)}`,
-    margin: `${theme.spacing(2)} ${theme.spacing(4)}`,
-    display: 'flex',
-    alignItems: 'center',
-    gap: theme.spacing(3),
-  },
   root: {
     paddingBottom: '200px',
     paddingTop: '50px',
@@ -56,6 +53,7 @@ const AIAssistant = () => {
   // rename from search to question?
   const [previousSearches, setPreviousSearches] = useState([]);
   const [searchPhrase, setSearchPhrase] = useState('');
+  const [responseLoading, setResponseLoading] = useState(false);
 
   const { setFixedNavBar } = useContext(ThemeContext);
 
@@ -78,6 +76,7 @@ const AIAssistant = () => {
 
   const handleSearch = async () => {
     if (searchPhrase.length) {
+      setResponseLoading(true);
       // store all details for this query in this object: question, response, and documents
       const queryDetails = { question: searchPhrase };
       try {
@@ -99,11 +98,11 @@ const AIAssistant = () => {
         // go through the unique filenames and fetch the document data
         const documentFetches = Object.keys(filenamesToDocs).map(async (filename) => {
           try {
-          const docFetchResp = await axios.get(`/api/dojo/documents/by-didx-name?name=${filename}`);
+            const docFetchResp = await axios.get(`/api/dojo/documents/by-didx-name?name=${filename}`);
             return { filename, data: docFetchResp.data };
           } catch (e) {
             console.log('error fetching document, skipping', e);
-            return {filename: null, data: {}};
+            return { filename: null, data: {} };
           }
         });
 
@@ -118,8 +117,10 @@ const AIAssistant = () => {
 
         setPreviousSearches((oldPairs) => ([...oldPairs, queryDetails]));
         setSearchPhrase('');
+        setResponseLoading(false);
       } catch (error) {
         console.error(error);
+        setResponseLoading(false);
         // Handle errors
       }
     }
@@ -145,15 +146,29 @@ const AIAssistant = () => {
       {previousSearches.map((search, i) => (
         // eslint-disable-next-line react/no-array-index-key
         <React.Fragment key={i}>
-          <AssistantChatCard text={search.question} />
-          <AssistantChatCard
+          <ChatCard
+            icon={<AccountBoxIcon color="primary" fontSize="large" />}
+            text={search.question}
+          />
+          <AIAssistantResponse
             text={search.response.answer}
             details={search.response.candidate_paragraphs}
             documents={search.documents}
-            response
           />
         </React.Fragment>
       ))}
+      {responseLoading && (
+        <ChatCard
+          icon={<CircularProgress size="35px" />}
+          text="Loading Response..."
+        />
+      )}
+      {!previousSearches.length && !responseLoading && (
+        <ChatCard
+          icon={<InfoIcon color="primary" fontSize="large" />}
+          text="Start querying documents with a question in the search box below"
+        />
+      )}
       <div className={classes.inputBackdrop}>
         <TextField
           value={searchPhrase}

@@ -1,27 +1,21 @@
 import React, { useState } from 'react';
 
-import AppBar from '@mui/material/AppBar';
-import Toolbar from '@mui/material/Toolbar';
 import IconButton from '@mui/material/IconButton';
 import CloseIcon from '@mui/icons-material/Close';
 import Button from '@mui/material/Button';
 import Collapse from '@mui/material/Collapse';
 import Dialog from '@mui/material/Dialog';
 import Divider from '@mui/material/Divider';
-import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import Tooltip from '@mui/material/Tooltip';
 import ComputerIcon from '@mui/icons-material/Computer';
-import AccountBoxIcon from '@mui/icons-material/AccountBox';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import IndeterminateCheckBoxIcon from '@mui/icons-material/IndeterminateCheckBox';
 import { makeStyles } from 'tss-react/mui';
 
+import ChatCard from './ChatCard';
+
 const useStyles = makeStyles()((theme) => ({
-  paper: {
-    padding: `${theme.spacing(2)} ${theme.spacing(4)}`,
-    margin: `${theme.spacing(2)} ${theme.spacing(4)}`,
-  },
   mainContent: {
     display: 'flex',
     alignItems: 'center',
@@ -105,8 +99,8 @@ const AnswerText = ({ text, details }) => {
   );
 };
 
-const AssistantChatCard = ({
-  text, details, documents, response = false
+const AIAssistantResponse = ({
+  text, details, documents
 }) => {
   const [showDetails, setShowDetails] = useState(false);
   const [dialogContent, setDialogContent] = useState(null);
@@ -124,23 +118,12 @@ const AssistantChatCard = ({
   };
 
   return (
-    <Paper
-      variant="outlined"
-      className={classes.paper}
-      sx={{ backgroundColor: response ? 'grey.100' : 'white', }}
-    >
-      <div className={classes.mainContent}>
-        {response ? <ComputerIcon fontSize="large" />
-          : <AccountBoxIcon color="primary" fontSize="large" />}
-        <Typography
-          variant="body1"
-          component="div"
-          sx={{ whiteSpace: 'pre-wrap' }}
-        >
-          <AnswerText text={text} details={details} />
-        </Typography>
-      </div>
-      {response && (
+    <>
+      <ChatCard
+        backgroundColor="grey.100"
+        icon={<ComputerIcon fontSize="large" />}
+        text={<AnswerText text={text} details={details} />}
+      >
         <div className={classes.showDetailsWrapper}>
           <Button
             variant="text"
@@ -170,7 +153,7 @@ const AssistantChatCard = ({
                       </div>
                       <div className={classes.paragraphDetails}>
                         {/* TODO: concat name, show full name in tooltip */}
-                        <span>Title: {documents[para.root_name]?.title || 'No Title'}</span>
+                        <span>Document Title: {documents[para.root_name]?.title || 'No Title'}</span>
                         <Divider orientation="vertical" flexItem />
                         <span>Paragraph # in file: {para.paragraph_idx}</span>
                         <Divider orientation="vertical" flexItem />
@@ -188,14 +171,14 @@ const AssistantChatCard = ({
             </div>
           </Collapse>
         </div>
-      )}
+      </ChatCard>
       <DocumentViewerDialog
         documentDetails={dialogContent}
         open={open}
         handleClose={handleClose}
       />
-    </Paper>
+    </>
   );
 };
 
-export default AssistantChatCard;
+export default AIAssistantResponse;
