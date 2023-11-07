@@ -99,6 +99,18 @@ const AnswerText = ({ text, details }) => {
   );
 };
 
+const Title = ({ title }) => {
+  if (!title) return 'No Title';
+
+  if (title.length <= 16) return title;
+
+  return (
+    <Tooltip title={title}>
+      {`${title.substring(0, 16)} [...]`}
+    </Tooltip>
+  );
+};
+
 const AIAssistantResponse = ({
   text, details, documents
 }) => {
@@ -152,8 +164,9 @@ const AIAssistantResponse = ({
                         {para.paragraph}
                       </div>
                       <div className={classes.paragraphDetails}>
-                        {/* TODO: concat name, show full name in tooltip */}
-                        <span>Document Title: {documents[para.root_name]?.title || 'No Title'}</span>
+                        <span>
+                          Document Title: <Title title={documents[para.root_name]?.title} />
+                        </span>
                         <Divider orientation="vertical" flexItem />
                         <span>Paragraph # in file: {para.paragraph_idx}</span>
                         <Divider orientation="vertical" flexItem />
