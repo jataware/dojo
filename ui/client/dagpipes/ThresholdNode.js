@@ -4,10 +4,11 @@ import {
 } from 'reactflow';
 import TextField from '@mui/material/TextField';
 
-import { threshold_ops, topHandle, bottomHandle } from './constants';
-import NodeTitles from './nodeLabels';
 import NodeBase from './NodeBase';
 import ModelerSelect from './ModelerSelect';
+import {
+  threshold_ops, topHandle, bottomHandle, NodeTitles
+} from './constants';
 
 const options = threshold_ops.map((i) => ({ value: i, label: i }));
 
