@@ -106,7 +106,7 @@ const Title = ({ title }) => {
 
   return (
     <Tooltip title={title}>
-      {`${title.substring(0, 16)} [...]`}
+      <span>{`${title.substring(0, 16)} [...]`}</span>
     </Tooltip>
   );
 };
