@@ -81,66 +81,109 @@ const AIAssistant = () => {
     window.scroll({ top: document.body.scrollHeight, behavior: 'smooth' });
   }, [previousQueries]);
 
+  React.useEffect(() => {
+    console.log('this is responses', responses)
+  }, [responses])
+
   // disable if no content, incl. if just whitespace, or while we're getting a response
   const disableSubmit = !searchPhrase.trim().length || anyResponseLoading;
 
   const performSearch = async (query, queryKey) => {
-    try {
+    // try {
       // TODO: Use this for local development, causemos-analyst for production
-      const queryResp = await axios.get(`http://localhost:8001/mock-message?query=${query}`);
+      // const queryResp = await axios.get(`http://localhost:8001/mock-message?query=${query}`);
 
-      // const mock = ''; //'mock-';
+      const mock = ''; //'mock-';
 
       // const queryResp = await axios.get(
       //   `/api/ai-docs/${mock}message?query=${searchPhrase}`
       // );
       const response = {};
-      response.response = queryResp.data;
+      // response.response = queryResp.data;
 
-      // create an object with just the unique filenames as keys
-      const filenamesToDocs = queryResp.data.candidate_paragraphs.reduce((obj, curr) => (
-        { ...obj, [curr.root_name]: null }
-      ), {});
 
-      // go through the unique filenames and fetch the document data
-      const documentFetches = Object.keys(filenamesToDocs).map(async (filename) => {
-        try {
-          const docFetchResp = await axios.get(`/api/dojo/documents/by-didx-name?name=${filename}`);
-          return { filename, data: docFetchResp.data };
-        } catch (e) {
-          console.log('error fetching document, skipping', e);
-          return { filename: null, data: {} };
-        }
+      const URL = `/api/ai-docs/mock-chat?query=${searchPhrase}`;
+
+      const source = new EventSource(URL);
+
+      // paragraph "custom event" string data parseable as json
+      let paragraphs;
+      source.addEventListener('end-of-stream', () => {
+        console.log('ARE WE GETTING IN HERE????')
+        source.close();
+      });
+      source.addEventListener('custom-event', (event) => {
+        console.log('ARE WE GETTING INTO custom-event????', event)
+        paragraphs = JSON.parse(event.data);
+
+        console.log(paragraphs);
       });
 
-      // wait for all the document fetches to complete
-      const documentResults = await Promise.all(documentFetches);
-      // and map them to the filenames
-      documentResults.forEach(({ filename, data }) => {
-        filenamesToDocs[filename] = data;
-      });
 
-      response.documents = filenamesToDocs;
+      // gpt4 stream data (text; like chatgpt)
 
+    source.onmessage = (e) => {
       setResponses((oldResponses) => ({
         ...oldResponses,
         [queryKey]: {
-          data: response,
-          status: 'success',
+          data: {
+            response: oldResponses[queryKey].data?.response ? oldResponses[queryKey].data.response + e.data : e.data,
+          }
         }
       }));
-    } catch (error) {
-      console.error(error);
-      setResponses((oldResponses) => ({
-        ...oldResponses,
-        [queryKey]: {
-          data: null,
-          status: 'error',
-        }
-      }));
-    } finally {
-      setAnyResponseLoading(false);
+      console.log('this is the onmessage response:', e.data);
+    };
+
+    source.error = (e) => {
+      console.error('EventSource failed:', e);
     }
+
+
+
+      // // create an object with just the unique filenames as keys
+      // const filenamesToDocs = paragraphs.reduce((obj, curr) => (
+      //   { ...obj, [curr.root_name]: null }
+      // ), {});
+
+      // // go through the unique filenames and fetch the document data
+      // const documentFetches = Object.keys(filenamesToDocs).map(async (filename) => {
+      //   try {
+      //     const docFetchResp = await axios.get(`/api/dojo/documents/by-didx-name?name=${filename}`);
+      //     return { filename, data: docFetchResp.data };
+      //   } catch (e) {
+      //     console.log('error fetching document, skipping', e);
+      //     return { filename: null, data: {} };
+      //   }
+      // });
+
+      // // wait for all the document fetches to complete
+      // const documentResults = await Promise.all(documentFetches);
+      // // and map them to the filenames
+      // documentResults.forEach(({ filename, data }) => {
+      //   filenamesToDocs[filename] = data;
+      // });
+
+      // response.documents = filenamesToDocs;
+
+    //   setResponses((oldResponses) => ({
+    //     ...oldResponses,
+    //     [queryKey]: {
+    //       data: response,
+    //       status: 'success',
+    //     }
+    //   }));
+    // } catch (error) {
+    //   console.error(error);
+    //   setResponses((oldResponses) => ({
+    //     ...oldResponses,
+    //     [queryKey]: {
+    //       data: null,
+    //       status: 'error',
+    //     }
+    //   }));
+    // } finally {
+    //   setAnyResponseLoading(false);
+    // }
   };
 
   const handleSearch = async () => {
