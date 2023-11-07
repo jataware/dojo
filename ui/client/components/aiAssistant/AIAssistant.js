@@ -181,7 +181,6 @@ const AIAssistant = () => {
       </Typography>
       {Object.entries(previousQueries).map(([queryKey, query]) => (
         <React.Fragment key={queryKey}>
-          {console.log('this is query', query, queryKey)}
           <ChatCard
             icon={<AccountBoxIcon color="primary" fontSize="large" />}
             text={query}
