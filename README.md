@@ -1,4 +1,4 @@
-# Dojo integrated development environment
+# Dojo Integrated Development Environment
 
 ## Setup
 
@@ -53,3 +53,14 @@ When `make up` command is run, the Ubuntu image is pulled and loaded in to the i
 If you need a different base image loaded, you can load it with this command: `docker-compose exec docker docker pull jataware/dojo-publish:{base_image_tag_name}`
 
 Since the Docker service has a persistent volume, you should not need to rerun the command unless changes have been made to the image.
+
+# Deployment
+
+## Recommended System Requirements
+
+Due to newer features such, as semantic search, we recommended:
+
+- 6-8 CPU Cores
+- 32GB RAM (memory)
+
+This matches, and has been tested on, an `t3.2xlarge` instance on `AWS`.
