@@ -6,7 +6,7 @@ import Button from '@mui/material/Button';
 
 import { makeStyles } from 'tss-react/mui';
 
-import NodeTitles from './nodeLabels';
+import { NodeTitles } from './constants';
 
 const useStyles = makeStyles()((theme) => ({
   sidebar: {
@@ -64,7 +64,7 @@ export default () => {
         name="filter_by_country"
         onDragStart={onDragStart}
       />
-      <DragButton label={NodeTitles.SUM} name="sum" onDragStart={onDragStart} />
+      <DragButton label={NodeTitles.REDUCE_BY} name="sum" onDragStart={onDragStart} />
       <DragButton label={NodeTitles.SAVE} name="save" onDragStart={onDragStart} green />
     </div>
   );
