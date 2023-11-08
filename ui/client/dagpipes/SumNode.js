@@ -9,10 +9,10 @@ import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
 import Typography from '@mui/material/Typography';
 
-import { dimensions, topHandle, bottomHandle } from './constants';
-
 import NodeBase from './NodeBase';
-import NodeTitles from './nodeLabels';
+import {
+  dimensions, topHandle, bottomHandle, NodeTitles
+} from './constants';
 
 function DimensionCheckboxes({
   input, handleId, nodeId, onChange
@@ -26,7 +26,7 @@ function DimensionCheckboxes({
         style={topHandle}
       />
       <Typography variant="caption">
-        {NodeTitles.SUM_DIMENSION}
+        {NodeTitles.REDUCE_DIMENSION}
       </Typography>
 
       <FormGroup sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
@@ -67,7 +67,7 @@ function DimensionCheckboxes({
 }
 
 const CustomNode = ({ id, data }) => (
-  <NodeBase title={NodeTitles.SUM}>
+  <NodeBase title={NodeTitles.REDUCE_BY}>
     <DimensionCheckboxes
       nodeId={id}
       onChange={data.onChange}

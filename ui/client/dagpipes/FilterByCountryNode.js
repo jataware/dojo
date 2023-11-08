@@ -6,9 +6,10 @@ import {
 import Autocomplete from '@mui/material/Autocomplete';
 import TextField from '@mui/material/TextField';
 
-import NodeTitles from './nodeLabels';
 import NodeBase from './NodeBase';
-import { topHandle, bottomHandle, countries } from './constants';
+import {
+  topHandle, bottomHandle, countries, NodeTitles
+} from './constants';
 
 /**
  *

@@ -6,8 +6,7 @@ import {
 import TextField from '@mui/material/TextField';
 
 import NodeBase from './NodeBase';
-import NodeTitles from './nodeLabels';
-import { topHandle } from './constants';
+import { topHandle, NodeTitles } from './constants';
 
 /**
  *

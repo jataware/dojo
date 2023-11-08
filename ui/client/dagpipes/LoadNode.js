@@ -10,7 +10,6 @@ import FormGroup from '@mui/material/FormGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
 
-import NodeTitles from './nodeLabels';
 import NodeBase from './NodeBase';
 import ModelerSelect from './ModelerSelect';
 import {
@@ -19,7 +18,9 @@ import {
   addSelectedFeature,
   removeSelectedFeature,
 } from './dagSlice';
-import { bottomHandle, aggregation_functions } from './constants';
+import {
+  bottomHandle, aggregation_functions, NodeTitles
+} from './constants';
 
 const aggList = aggregation_functions.map((res) => ({ value: res, label: res }));
 
