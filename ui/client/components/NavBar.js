@@ -83,20 +83,20 @@ const NavBar = () => {
         >
           Documents
         </Button>
-        {/* <Button
+        <Button
           component={Link}
           to="/data-modeling"
           color="grey"
         >
-          Data Modeler
-        </Button>*/}
-        {/* <Button
+          Data Modeling
+        </Button>
+        <Button
           component={Link}
           to="/ai-assistant"
           color="grey"
         >
           AI Assistant
-        </Button>*/}
+        </Button>
         <span className={classes.spacer} />
         <Button
           href="https://www.dojo-modeling.com"
