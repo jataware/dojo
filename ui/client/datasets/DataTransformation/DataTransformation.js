@@ -548,16 +548,6 @@ const DataTransformation = ({
       return true;
     }
 
-    if (!mapResolutionError && !savedMapResolution) {
-      // disable if we are requiring a map resolution to be chosen and it hasn't been
-      return true;
-    }
-
-    if (!timeResolutionError && !savedTimeResolution) {
-      // disable if we are requiring a time resolution to be set and it hasn't been
-      return true;
-    }
-
     if (!gadmResolutionError && !savedGADMOverrides) {
       return true;
     }
@@ -794,7 +784,6 @@ const DataTransformation = ({
           onClick={() => handleDrawerOpen('regridMap')}
           loading={mapResolutionLoading}
           error={mapResolutionError}
-          required={!mapResolutionError}
         />
         <TransformationButton
           isComplete={!!savedDrawings.length}
@@ -811,7 +800,6 @@ const DataTransformation = ({
           onClick={() => handleDrawerOpen('scaleTime')}
           loading={timeResolutionLoading}
           error={timeResolutionError}
-          required={!timeResolutionError}
         />
         <TransformationButton
           isComplete={!!savedTimeBounds}
