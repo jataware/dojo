@@ -58,9 +58,9 @@ Since the Docker service has a persistent volume, you should not need to rerun t
 
 ## Recommended System Requirements
 
-Due to newer features such, as semantic search, we recommended:
+Due to newer features, such as semantic search, we recommended:
 
 - 6-8 CPU Cores
 - 32GB RAM (memory)
 
-This matches, and has been tested on, an `t3.2xlarge` instance on `AWS`.
+This matches, and has been tested on, a `t3.2xlarge` instance on `AWS`.
