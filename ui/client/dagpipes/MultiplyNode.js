@@ -4,8 +4,7 @@ import {
 } from 'reactflow';
 
 import NodeBase from './NodeBase';
-import NodeTitles from './nodeLabels';
-import { topHandle, bottomHandle } from './constants';
+import { topHandle, bottomHandle, NodeTitles } from './constants';
 
 function CustomNode() {
   const leftHandle = { left: '51px', ...topHandle };
