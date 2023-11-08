@@ -212,8 +212,6 @@ const DataTransformation = ({
 
   // Handles the next step process after the transformations are complete in <RunTransformation>
   useEffect(() => {
-    // There is always at least one required transformation
-    // time scaling happens even if the user hasn't annotated a date column
     if (allTransformationsComplete) {
       if (jobsConfig.length) {
         // This lets us know that we need to show the spinner when the restore_raw_file job
@@ -654,7 +652,10 @@ const DataTransformation = ({
   };
 
   const processGadmOverrides = () => {
-    transformationsRef.current.overrides = { gadm: savedGADMOverrides };
+    // only add GADM overrides to the transformationsRef if they are present
+    if (!isEmpty(savedGADMOverrides)) {
+      transformationsRef.current.overrides = { gadm: savedGADMOverrides };
+    }
   };
 
   const handleNextStep = () => {
@@ -682,6 +683,11 @@ const DataTransformation = ({
     setJobsConfig(transformations);
     // The actual jump to next step happens in the useEffect at the top of this function
     // after the jobs have completed in RunTransformation
+
+    // if there are no transformations, toggle this to trigger our 'handleNext' useEffect at top
+    if (!transformations.length) {
+      setAllTransformationsComplete(true);
+    }
   };
 
   const drawerInner = () => {
@@ -835,7 +841,7 @@ const DataTransformation = ({
         handleClose={closePrompt}
       />
 
-      {jobsConfig && !transformationProcessingError && (
+      {Boolean(jobsConfig?.length) && !transformationProcessingError && (
         <RunTransformations
           jobsConfig={jobsConfig}
           setAllTransformationsComplete={setAllTransformationsComplete}
