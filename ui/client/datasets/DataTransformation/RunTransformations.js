@@ -11,21 +11,21 @@ import useOrderedElwoodJobs from './useOrderedElwoodJobs';
 const useStyles = makeStyles()((theme) => ({
   backdrop: {
     zIndex: theme.zIndex.drawer + 1000,
-    color: theme.palette.grey[700],
     display: 'flex',
     alignItems: 'flex-end',
     padding: theme.spacing(20),
   },
   progress: {
-    color: theme.palette.grey[300],
-    marginRight: theme.spacing(4),
+    color: theme.palette.grey[100],
   },
   text: {
-    color: theme.palette.grey[300],
+    color: theme.palette.grey[100],
   },
   innerWrapper: {
     display: 'flex',
+    flexDirection: 'column',
     alignItems: 'center',
+    gap: theme.spacing(3),
   },
 }));
 
@@ -40,7 +40,7 @@ const RunTransformations = ({
   setAllTransformationsComplete,
   setTransformationProcessingError,
 }) => {
-  const classes = useStyles();
+  const { classes } = useStyles();
   const { error, allJobsCompleted } = useOrderedElwoodJobs(jobsConfig);
 
   useEffect(() => {
