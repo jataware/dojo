@@ -89,7 +89,7 @@ const AnswerText = ({ text, details }) => {
           return (
             // eslint-disable-next-line react/no-array-index-key
             <Tooltip key={i} arrow title={details[number]?.paragraph}>
-              <span style={{ cursor: 'pointer' }}>{part}</span>
+              <span style={{ cursor: 'default' }}>{part}</span>
             </Tooltip>
           );
         }
@@ -102,11 +102,22 @@ const AnswerText = ({ text, details }) => {
 const Title = ({ title }) => {
   if (!title) return 'No Title';
 
-  if (title.length <= 16) return title;
+  if (title.length <= 26) return title;
+
+  const truncateAtWord = (str, maxLength) => {
+    // Try to find the index of the next space after maxLength
+    const nextSpaceIndex = str.indexOf(' ', maxLength);
+
+    // If there's no next space, truncate at maxLength
+    if (nextSpaceIndex === -1) return str.substring(0, maxLength);
+
+    // Else truncate at the next space
+    return str.substring(0, nextSpaceIndex);
+  };
 
   return (
     <Tooltip title={title}>
-      <span>{`${title.substring(0, 16)} [...]`}</span>
+      <span style={{ cursor: 'default' }}>{`${truncateAtWord(title, 26)} [...]`}</span>
     </Tooltip>
   );
 };
@@ -165,7 +176,7 @@ const AIAssistantResponse = ({
                       </div>
                       <div className={classes.paragraphDetails}>
                         <span>
-                          Document Title: <Title title={documents[para.root_name]?.title} />
+                          Title: <Title title={documents[para.root_name]?.title} />
                         </span>
                         <Divider orientation="vertical" flexItem />
                         <span>Paragraph # in file: {para.paragraph_idx}</span>
