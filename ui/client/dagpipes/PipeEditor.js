@@ -7,7 +7,6 @@ import axios from 'axios';
 import ReactFlow, {
   addEdge,
   ReactFlowProvider,
-  MiniMap,
   Controls,
   Background,
   useNodesState,
@@ -154,7 +153,6 @@ const PipeEditor = () => {
   }, [nodes, setSelectedNode]);
 
   const [reactFlowInstance, setReactFlowInstance] = useState(null);
-  const [miniMapHeight, setMiniMapHeight] = useState(120);
 
   const onInit = (rfInstance) => {
     console.log('Flow loaded:', rfInstance);
@@ -338,14 +336,6 @@ const PipeEditor = () => {
     }).catch((error) => console.log('There was an error creating the data modeling:', error));
   };
 
-  const onMiniMapClick = () => {
-    if (miniMapHeight === 120) {
-      setMiniMapHeight(20);
-    } else {
-      setMiniMapHeight(120);
-    }
-  };
-
   return (
     <div className={classes.innerWrapper}>
       <div
@@ -367,12 +357,6 @@ const PipeEditor = () => {
           onDrop={onDrop}
           onDragOver={onDragOver}
         >
-          <MiniMap
-            style={{ height: miniMapHeight }}
-            zoomable
-            pannable
-            onClick={onMiniMapClick}
-          />
           <Controls />
           <Background
             color="#aaa"
