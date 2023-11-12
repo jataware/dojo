@@ -14,6 +14,7 @@ import ReactFlow, {
 } from 'reactflow';
 
 import Button from '@mui/material/Button';
+import Tooltip from '@mui/material/Tooltip';
 
 import { makeStyles } from 'tss-react/mui';
 
@@ -336,6 +337,23 @@ const PipeEditor = () => {
     }).catch((error) => console.log('There was an error creating the data modeling:', error));
   };
 
+  const processDisabled = !geoResolutionColumn || !timeResolutionColumn || !nodes.length;
+  let disabledProcessTooltip = 'Please select ';
+
+  if (!geoResolutionColumn && !timeResolutionColumn) {
+    // both geo and time are missing
+    disabledProcessTooltip += 'both geo and time resolutions in Load Nodes or sidebar';
+  } else if (!geoResolutionColumn) {
+    // only geo is missing
+    disabledProcessTooltip += 'geo resolution in Load Nodes or sidebar';
+  } else if (!timeResolutionColumn) {
+    // only time is missing
+    disabledProcessTooltip += 'time resolution in Load Nodes or sidebar';
+  } else if (!nodes.length) {
+    // if both resolutions are chosen but no nodes
+    disabledProcessTooltip = 'Please ensure nodes are added to the graph';
+  }
+
   return (
     <div className={classes.innerWrapper}>
       <div
@@ -387,16 +405,20 @@ const PipeEditor = () => {
         <DragBar />
         <div className={classes.lowerSidebar}>
           <ModelerResolution />
-          <Button
-            variant="contained"
-            color="primary"
-            fullWidth
-            disabled={!geoResolutionColumn || !timeResolutionColumn || !nodes.length}
-            onClick={onProcessClick}
-            sx={{ marginTop: 2 }}
-          >
-            Process
-          </Button>
+          <Tooltip title={processDisabled ? disabledProcessTooltip : ''}>
+            <span>
+              <Button
+                variant="contained"
+                color="primary"
+                fullWidth
+                disabled={processDisabled}
+                onClick={onProcessClick}
+                sx={{ marginTop: 2 }}
+              >
+                Process
+              </Button>
+            </span>
+          </Tooltip>
         </div>
       </div>
     </div>
