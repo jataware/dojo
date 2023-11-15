@@ -1,5 +1,6 @@
 import React from 'react';
 
+import Link from '@mui/material/Link';
 import Typography from '@mui/material/Typography';
 import { makeStyles } from 'tss-react/mui';
 
@@ -30,9 +31,9 @@ const Footer = () => {
         <span>
           {nodeCount} node{nodeCount === 1 ? '' : 's'}. {unsavedChanges && (<span>Unsaved Changes.</span>)}
         </span>
-        <span>
+        <Link href="https://www.dojo-modeling.com/data-modeling.html" target="_blank">
           Data Modeling
-        </span>
+        </Link>
       </Typography>
     </footer>
   );
