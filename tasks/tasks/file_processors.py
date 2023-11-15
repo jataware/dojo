@@ -122,6 +122,7 @@ def file_conversion(context, filename=None):
     file_metadata = context["annotations"]["metadata"]["files"][filename]
 
     raw_path = os.path.join(DATASET_STORAGE_BASE_URL, uuid, filename)
+    # Downloads raw (csv, xlsx, nc, tif) file from S3 to memory:
     raw_file = get_rawfile(raw_path)
 
     with tempfile.TemporaryDirectory() as tmpdirname:

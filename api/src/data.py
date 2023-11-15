@@ -91,7 +91,8 @@ def get_rq_job_results(job_id: str):
     """Fetch a job's results from RQ.
 
     Args:
-        job_id (str): The id of the job being run in RQ. Comes from the job/enqueue/{job_string} endpoint.
+        job_id (str): The id of the job being run in RQ.
+                      Comes from the job/enqueue/{job_string} endpoint.
 
     Returns:
         Response:
@@ -123,21 +124,72 @@ def empty_queue():
             headers={"msg": f"deleted: {deleted}"},
             content=f"Queue deleted, {deleted} items removed",
         )
+    # TODO print or handle specific Error
     except:
         return Response(
             status_code=status.HTTP_400_BAD_REQUEST,
-            content=f"Queue could not be deleted.",
+            content="Queue could not be deleted.",
         )
 
 
 @router.get("/job/available_job_strings")
 def available_job_strings():
-    # STUB, SHOULD NOT BE HARD CODED.
-    # TODO - get this from the rq worker dynamically?
+
     job_string_dict = {
-        "Geotime Classify Job": "geotime_processors.geotime_classify",
-        "Elwood Job": "elwood_processors.run_elwood",
-        "Anomaly Detection": "tasks.anomaly_detection",
+
+        "Geotime Classify": "geotime_processors.geotime_classify",
+        "Elwood": "elwood_processors.run_elwood",
+
+        "Convert & Save Dataset Raw File as CSV":
+            "file_processors.file_conversion",
+
+        # NOTE Unused:
+        # "Anomaly Detection": "tasks.anomaly_detection",
+
+        # Dataset Transform GET/FETCH Jobs:
+        "Dataset Transform - Fetch Geo Boundary Box":
+            "transformation_processos.get_boundary_box",
+
+        "Dataset Transform - Fetch Temporal Extent":
+            "transformation_processos.get_temporal_extent",
+
+        "Dataset Transform - Fetch Unique Dates":
+            "transformation_processos.get_unique_dates",
+
+        # Dataset Transform PERFORM transform:
+        "Dataset Transform - Clip Geo": "transformation_processos.clip_geo",
+        "Dataset Transform - Regrid Geo": "transformation_processos.regrid_geo",
+
+        "Dataset Transform - Clip Time": "transformation_processos.clip_time",
+        "Dataset Transform - Scale Time": "transformation_processos.scale_time",
+
+        "Dataset Transform - Restore to Original File":
+            "transformation_processos.restore_raw_file",
+
+        # Finishes a dataset registration, given metadata/annotations
+        #   and files exist. Used for Composite Dataset Register API.
+        "Finish Dataset Registration":
+            "dataset_register_processors.finish_dataset_registration",
+
+        "Index PCA Analysis":
+            "causemos_processors.generate_index_model_weights",
+
+        # Dataset Resolution
+        "Dataset Resolution - Calculate Temporal":
+            "resolution_processors.calculate_temporal_resolution",
+
+        "Dataset Resolution - Calculate Geographical":
+            "resolution_processors.calculate_geographical_resolution",
+
+        # Extract and Embed
+        "Process-Embed Dataset Features":
+            "embeddings_processors.calculate_store_embeddings",
+
+        "Extract and Embed Document Paragraphs":
+            "paragraph_embeddings_processors.calculate_store_embeddings",
+
+        # NOTE: Only supports country fields [for now].
+        "Detect GADM Country Alternatives": "gadm_processors.resolution_alternatives"
     }
     return job_string_dict
 
