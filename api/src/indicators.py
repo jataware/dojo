@@ -423,8 +423,6 @@ def publish_indicator(indicator_id: str):
 
         # Notify Causemos that an indicator was created
         plugin_action("before_publish", data=indicator, type="indicator")
-        # TODO: Move notify_causemos only to causemos plugin
-        # notify_causemos(data, type="indicator")
         plugin_action("publish", data=indicator, type="indicator")
         plugin_action("post_publish", data=indicator, type="indicator")
     except Exception as e:
@@ -899,15 +897,20 @@ async def full_dataset_register(
     finally:
         logger.info(f"Completed the following dataset register tasks: {completed}")
 
-    # NOTE Why was the job id deleted from here?
-    # del job_status["id"]
+    job_id_for_api = job_status['id'].replace("_", "/", 1)
+    del job_status["id"]
 
     return {
         **indicator_body,
         "job": {
             **job_status,
-            "GET_job_status_url": f"{api_url}/job/{job_status['id']}",
-            "details": "Your dataset is being processed. Initial metadata has been uploaded, but additional processing time may be required for larger files. Use the indicator endpoint using the new dataset ID provided, and verify that the <published> property is set to <true>, which will indicate processing completion."
+            "status_url": f"{api_url}/job/{job_id_for_api}",
+            "details": (
+                "Your dataset is being processed. Initial metadata has been "
+                "uploaded, but additional processing may be required. If "
+                "`job.result` is empty, check `status_url` response or "
+                "verify that the new indicator `published` property is true."
+            )
         }
     }
 

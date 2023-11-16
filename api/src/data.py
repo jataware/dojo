@@ -4,8 +4,7 @@ import time
 import os
 from typing import Any, Dict, Optional
 from pydantic import BaseModel
-from enum import Enum
-
+from datetime import datetime
 import pandas as pd
 
 from fastapi import APIRouter, Response, File, UploadFile, status
@@ -204,29 +203,34 @@ def cancel_job(job_id):
 
 class FetchJobStatusResponseModel(BaseModel):
     id: str
-    created_at: str
-    enqueued_at: Optional[str]
-    started_at: Optional[str]
+    created_at: datetime
+    enqueued_at: Optional[datetime]
+    started_at: Optional[datetime]
     status: RunStatusSchema
     job_error: Optional[str]
     result: Optional[dict]
 
 
-@router.get("/job/{uuid}/{job_string}", response_model=FetchJobStatusResponseModel)
+@router.get(
+    "/job/{uuid}/{job_string}",
+    response_model=FetchJobStatusResponseModel
+)
 def job_status(uuid: str, job_string: str):
     """
     If a job exists, returns the full job data.
     """
     job_id = f"{uuid}_{job_string}"
 
-    logging.info("trying to fetch job now")
     job = q.fetch_job(job_id)
 
     # It is None, since no job exists
     if not job:
         return Response(
             status_code=status.HTTP_404_NOT_FOUND,
-            content=f"No job found for uuid = {uuid}/{job_string}",
+            content=(
+                f"No job data found for uuid = {uuid}/{job_string}.\n"
+                "This job may have existed, but cache expired."
+            ),
         )
 
     response = {
