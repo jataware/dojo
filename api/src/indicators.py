@@ -802,6 +802,7 @@ async def full_dataset_register(
     """
     completed = []
     api_url = extract_protocol_host_port(str(request.url))
+    indicator_id = None
 
     try:
         # Step 1: Create or Update indicator

@@ -2,10 +2,7 @@ import logging
 
 import uvicorn
 from elasticsearch import Elasticsearch
-from fastapi import FastAPI, Request, status
-
-from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi import FastAPI
 
 from src import (
     terminal,
