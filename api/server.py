@@ -33,9 +33,14 @@ api.include_router(data.router, tags=["Data"])
 api.include_router(data_modelings.router, tags=["Data Modelings"])
 
 
-
 def setup_elasticsearch_indexes():
-    # Config should match keyword args on https://elasticsearch-py.readthedocs.io/en/v8.3.2/api.html#elasticsearch.client.IndicesClient.create
+    """
+    Creates any indexes not present on the connected elasticsearch database.
+    Won't deeply merge or overwrite existing index/properties- only creates
+    missing indeces.
+    Config should match keyword args on:
+    https://elasticsearch-py.readthedocs.io/en/v8.3.2/api.html#elasticsearch.client.IndicesClient.create
+    """
     indices = {
         "accessories": {},
         "annotations": {

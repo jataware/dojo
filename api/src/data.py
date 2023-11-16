@@ -3,8 +3,8 @@ import logging
 import time
 import os
 from typing import Any, Dict, Optional
-
-
+from pydantic import BaseModel
+from datetime import datetime
 import pandas as pd
 
 from fastapi import APIRouter, Response, File, UploadFile, status
@@ -16,6 +16,7 @@ import boto3
 
 from src.utils import get_rawfile, put_rawfile
 from src.settings import settings
+from validation.RunSchema import RunStatusSchema
 
 logging.basicConfig()
 logging.getLogger().setLevel(logging.DEBUG)
@@ -85,13 +86,14 @@ async def clear_rq_job_cache(uuid: str):
         )
 
 
-
 @router.post("/job/fetch/{job_id}")
+@router.get("/job/fetch/{job_id}")
 def get_rq_job_results(job_id: str):
     """Fetch a job's results from RQ.
 
     Args:
-        job_id (str): The id of the job being run in RQ. Comes from the job/enqueue/{job_string} endpoint.
+        job_id (str): The id of the job being run in RQ.
+                      Comes from the job/enqueue/{job_string} endpoint.
 
     Returns:
         Response:
@@ -123,21 +125,71 @@ def empty_queue():
             headers={"msg": f"deleted: {deleted}"},
             content=f"Queue deleted, {deleted} items removed",
         )
+    # TODO print or handle specific Error
     except:
         return Response(
             status_code=status.HTTP_400_BAD_REQUEST,
-            content=f"Queue could not be deleted.",
+            content="Queue could not be deleted.",
         )
 
 
 @router.get("/job/available_job_strings")
 def available_job_strings():
-    # STUB, SHOULD NOT BE HARD CODED.
-    # TODO - get this from the rq worker dynamically?
     job_string_dict = {
-        "Geotime Classify Job": "geotime_processors.geotime_classify",
-        "Elwood Job": "elwood_processors.run_elwood",
-        "Anomaly Detection": "tasks.anomaly_detection",
+
+        "Geotime Classify": "geotime_processors.geotime_classify",
+        "Elwood": "elwood_processors.run_elwood",
+
+        "Convert & Save Dataset Raw File as CSV":
+            "file_processors.file_conversion",
+
+        # NOTE Unused:
+        # "Anomaly Detection": "tasks.anomaly_detection",
+
+        # Dataset Transform GET/FETCH Jobs:
+        "Dataset Transform - Fetch Geo Boundary Box":
+            "transformation_processos.get_boundary_box",
+
+        "Dataset Transform - Fetch Temporal Extent":
+            "transformation_processos.get_temporal_extent",
+
+        "Dataset Transform - Fetch Unique Dates":
+            "transformation_processos.get_unique_dates",
+
+        # Dataset Transform PERFORM transform:
+        "Dataset Transform - Clip Geo": "transformation_processos.clip_geo",
+        "Dataset Transform - Regrid Geo": "transformation_processos.regrid_geo",
+
+        "Dataset Transform - Clip Time": "transformation_processos.clip_time",
+        "Dataset Transform - Scale Time": "transformation_processos.scale_time",
+
+        "Dataset Transform - Restore to Original File":
+            "transformation_processos.restore_raw_file",
+
+        # Finishes a dataset registration, given metadata/annotations
+        #   and files exist. Used for Composite Dataset Register API.
+        "Finish Dataset Registration":
+            "dataset_register_processors.finish_dataset_registration",
+
+        "Index PCA Analysis":
+            "causemos_processors.generate_index_model_weights",
+
+        # Dataset Resolution
+        "Dataset Resolution - Calculate Temporal":
+            "resolution_processors.calculate_temporal_resolution",
+
+        "Dataset Resolution - Calculate Geographical":
+            "resolution_processors.calculate_geographical_resolution",
+
+        # Extract and Embed
+        "Process-Embed Dataset Features":
+            "embeddings_processors.calculate_store_embeddings",
+
+        "Extract and Embed Document Paragraphs":
+            "paragraph_embeddings_processors.calculate_store_embeddings",
+
+        # NOTE: Only supports country fields [for now].
+        "Detect GADM Country Alternatives": "gadm_processors.resolution_alternatives"
     }
     return job_string_dict
 
@@ -149,9 +201,70 @@ def cancel_job(job_id):
     return job.get_status()
 
 
+class FetchJobStatusResponseModel(BaseModel):
+    id: str
+    created_at: datetime
+    enqueued_at: Optional[datetime]
+    started_at: Optional[datetime]
+    status: RunStatusSchema
+    job_error: Optional[str]
+    result: Optional[dict]
+
+
+@router.get(
+    "/job/{uuid}/{job_string}",
+    response_model=FetchJobStatusResponseModel
+)
+def job_status(uuid: str, job_string: str):
+    """
+    If a job exists, returns the full job data.
+    """
+    job_id = f"{uuid}_{job_string}"
+
+    job = q.fetch_job(job_id)
+
+    # It is None, since no job exists
+    if not job:
+        return Response(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content=(
+                f"No job data found for uuid = {uuid}/{job_string}.\n"
+                "This job may have existed, but cache expired."
+            ),
+        )
+
+    response = {
+        "id": job_id,
+        "created_at": job.created_at,
+        "enqueued_at": job.enqueued_at,
+        "started_at": job.started_at,
+        "status": job.get_status(),
+        "job_error": job.exc_info,
+        "result": job.result,
+    }
+    return response
+
+
+# TODO Use instead of Optional Dict|None (which doesn't generate swagger)
+class JobCreateOptions(BaseModel):
+    force_restart: Optional[bool]
+    synchronous: Optional[bool]
+    preview: Optional[int]
+    timeout: Optional[int]
+    context: Optional[dict]
+
+
 # Last to not interfere with other routes
 @router.post("/job/{uuid}/{job_string}")
 def job(uuid: str, job_string: str, options: Optional[Dict[Any, Any]] = None):
+    """
+    \nCreates a new job.
+    \n`uuid` can and should match the ID of the entity being
+    worked on.
+    \nFor example, to work with an indicator/dataset, set `uuid` to the dataset
+    uuid.
+    \nAvailable `job_string` can be retrieved from `/job/available_job_strings`
+    """
     if options is None:
         options = {}
 

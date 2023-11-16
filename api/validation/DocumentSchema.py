@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import List, Optional, Any, Dict
+from typing import List, Optional
 from pydantic import BaseModel, Extra, Field
 
 
@@ -45,6 +45,7 @@ class Paragraph(BaseModel):
     page_no: Optional[int]
     length: Optional[int]
 
+
 class ParagraphBaseListResponse(BaseModel):
     hits: int = Field(
         ...,
@@ -60,22 +61,28 @@ class ParagraphBaseListResponse(BaseModel):
         description= "Used to navigate to the next page of feature results. Will return null when there are no pages left. Similar to cursor-based pagination."
     )
 
+
 class ParagraphListResponse(ParagraphBaseListResponse):
     results: List[Paragraph]
 
+
 class DocumentTextResponse(ParagraphBaseListResponse):
-  paragraphs: List[Paragraph]
+    paragraphs: List[Paragraph]
+
 
 class MetadataOpts(BaseModel):
     match_score: float
+
 
 class Highlight(BaseModel):
     text: str
     highlight: bool
 
+
 class SearchParagraph(Paragraph):
     metadata: MetadataOpts
     highlights: Optional[List[Highlight]]
+
 
 class ParagraphSearchResponse(ParagraphListResponse):
     max_score: int

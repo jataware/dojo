@@ -72,4 +72,7 @@ def finish_dataset_registration(context, filename=None, **kwargs):
     publish_url = f"{DOJO_URL}/indicators/{uuid}/publish"
     publish_response = requests.put(publish_url)
 
+    if update_response.ok and publish_response.ok:
+        updated_dataset["published"] = True
+
     return updated_dataset

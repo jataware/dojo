@@ -97,7 +97,10 @@ class RunLogsSchema(BaseModel):
         title="tasks",
     )
 
+
 class RunStatusSchema(Enum):
     success = "success"
     running = "running"
-    failed = "failed"     
+    failed = "failed"
+    queued = "queued"
+    finished = "finished"
