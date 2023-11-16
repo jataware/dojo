@@ -3,7 +3,8 @@ import logging
 import time
 import os
 from typing import Any, Dict, Optional
-
+from pydantic import BaseModel
+from enum import Enum
 
 import pandas as pd
 
@@ -16,6 +17,7 @@ import boto3
 
 from src.utils import get_rawfile, put_rawfile
 from src.settings import settings
+from validation.RunSchema import RunStatusSchema
 
 logging.basicConfig()
 logging.getLogger().setLevel(logging.DEBUG)
@@ -85,8 +87,8 @@ async def clear_rq_job_cache(uuid: str):
         )
 
 
-
 @router.post("/job/fetch/{job_id}")
+@router.get("/job/fetch/{job_id}")
 def get_rq_job_results(job_id: str):
     """Fetch a job's results from RQ.
 
@@ -134,7 +136,6 @@ def empty_queue():
 
 @router.get("/job/available_job_strings")
 def available_job_strings():
-
     job_string_dict = {
 
         "Geotime Classify": "geotime_processors.geotime_classify",
@@ -201,9 +202,65 @@ def cancel_job(job_id):
     return job.get_status()
 
 
+class FetchJobStatusResponseModel(BaseModel):
+    id: str
+    created_at: str
+    enqueued_at: Optional[str]
+    started_at: Optional[str]
+    status: RunStatusSchema
+    job_error: Optional[str]
+    result: Optional[dict]
+
+
+@router.get("/job/{uuid}/{job_string}", response_model=FetchJobStatusResponseModel)
+def job_status(uuid: str, job_string: str):
+    """
+    If a job exists, returns the full job data.
+    """
+    job_id = f"{uuid}_{job_string}"
+
+    logging.info("trying to fetch job now")
+    job = q.fetch_job(job_id)
+
+    # It is None, since no job exists
+    if not job:
+        return Response(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content=f"No job found for uuid = {uuid}/{job_string}",
+        )
+
+    response = {
+        "id": job_id,
+        "created_at": job.created_at,
+        "enqueued_at": job.enqueued_at,
+        "started_at": job.started_at,
+        "status": job.get_status(),
+        "job_error": job.exc_info,
+        "result": job.result,
+    }
+    return response
+
+
+# TODO Use instead of Optional Dict|None (which doesn't generate swagger)
+class JobCreateOptions(BaseModel):
+    force_restart: Optional[bool]
+    synchronous: Optional[bool]
+    preview: Optional[int]
+    timeout: Optional[int]
+    context: Optional[dict]
+
+
 # Last to not interfere with other routes
 @router.post("/job/{uuid}/{job_string}")
 def job(uuid: str, job_string: str, options: Optional[Dict[Any, Any]] = None):
+    """
+    \nCreates a new job.
+    \n`uuid` can and should match the ID of the entity being
+    worked on.
+    \nFor example, to work with an indicator/dataset, set `uuid` to the dataset
+    uuid.
+    \nAvailable `job_string` can be retrieved from `/job/available_job_strings`
+    """
     if options is None:
         options = {}
 

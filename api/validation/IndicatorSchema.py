@@ -3,7 +3,7 @@
 #   timestamp: 2021-06-25T21:09:05+00:00
 
 from __future__ import annotations
-from doctest import Example
+# from doctest import Example
 
 from enum import Enum
 from typing import List, Optional, Any, Dict
@@ -42,21 +42,6 @@ class Type1(Enum):
 class PreviewType(Enum):
     raw = "raw"
     processed = "processed"
-
-
-# class Alias(BaseModel):
-#     name: Optional[str] = Field(
-#         ...,
-#         description="The alias original value",
-#         examples=["transform"],
-#         title="Original Alias Name",
-#     )
-#     to_name: Optional[str]=Field(
-#         ...,
-#         description="The alias final value",
-#         examples=["transform"],
-#         title="Final Alias Name",
-#     )
 
 
 class Maintainer(BaseModel):

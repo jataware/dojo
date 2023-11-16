@@ -2,7 +2,10 @@ import logging
 
 import uvicorn
 from elasticsearch import Elasticsearch
-from fastapi import FastAPI
+from fastapi import FastAPI, Request, status
+
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 
 from src import (
     terminal,
@@ -33,9 +36,14 @@ api.include_router(data.router, tags=["Data"])
 api.include_router(data_modelings.router, tags=["Data Modelings"])
 
 
-
 def setup_elasticsearch_indexes():
-    # Config should match keyword args on https://elasticsearch-py.readthedocs.io/en/v8.3.2/api.html#elasticsearch.client.IndicesClient.create
+    """
+    Creates any indexes not present on the connected elasticsearch database.
+    Won't deeply merge or overwrite existing index/properties- only creates
+    missing indeces.
+    Config should match keyword args on:
+    https://elasticsearch-py.readthedocs.io/en/v8.3.2/api.html#elasticsearch.client.IndicesClient.create
+    """
     indices = {
         "accessories": {},
         "annotations": {

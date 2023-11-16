@@ -378,7 +378,7 @@ def search_indicators(
 @router.get("/indicators/register")
 def full_dataset_register_help(request: Request):
     """
-    Help for dataset registration endpoint.
+    Help for composite dataset registration endpoint.
     """
     api_url = extract_protocol_host_port(str(request.url))
 
@@ -759,7 +759,7 @@ def get_file_extension(filename):
 
 def augment_errors(errors, indicator_id=None, host="http://localhost:8000"):
     """
-    Helper Error Fn for full_dataset_register
+    Helper Error Fn for composite full_dataset_register
     """
     errors["doc"] = {
         "dictionary_template_url": f"{host}/indicators/annotations/file-template"
@@ -899,12 +899,14 @@ async def full_dataset_register(
     finally:
         logger.info(f"Completed the following dataset register tasks: {completed}")
 
-    del job_status["id"]
+    # NOTE Why was the job id deleted from here?
+    # del job_status["id"]
 
     return {
         **indicator_body,
         "job": {
             **job_status,
+            "GET_job_status_url": f"{api_url}/job/{job_status['id']}",
             "details": "Your dataset is being processed. Initial metadata has been uploaded, but additional processing time may be required for larger files. Use the indicator endpoint using the new dataset ID provided, and verify that the <published> property is set to <true>, which will indicate processing completion."
         }
     }
