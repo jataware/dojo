@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 from os.path import join as path_join
 
+
 def get_project_root() -> Path:
     return Path(__file__).parent
 

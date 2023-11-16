@@ -9,6 +9,7 @@ HOST = "localhost"
 PORT = "8000"
 BASE = f"{PROTOCOL}://{HOST}:{PORT}"
 
+# NOTE Replace ID with your Dataset/Indicator ID
 JOB_P = "76fe7e85-1e32-4c7c-b757-e198f1a9278b/file_processors.file_conversion"
 
 JOB_ID = JOB_P.replace("/", "_")
@@ -17,6 +18,7 @@ print(f"\nExpected job id: {JOB_ID}")
 
 # My pretty-print shortcut
 mp = pp.pprint
+
 
 def main():
     print(f"\nCreating hardcoded job JOB_P: {JOB_P}")
@@ -37,17 +39,12 @@ def main():
     id = json.get("id")
 
     print(f"\n===========\nJob id:\n{id}")
-    # NOTE 2b ensure composite dataset register (CDR) returns job ID?!
 
     # 3 fetch job result
-
-    # result
     # 3a POST
     post_fetch = requests.post(f"{BASE}/job/fetch/{JOB_ID}")
-
     print("\npost_fetch RESULT res:")
     mp(post_fetch.json())
-
     # 3b GET
     get_fetch = requests.get(f"{BASE}/job/fetch/{JOB_ID}")
     print("\nget_fetch RESULT res:")
@@ -60,17 +57,5 @@ def main():
     mp(fetched.json())
 
 
-# print(f"name of namefile: {__name__}")
-
 if __name__ == "__main__":
     main()
-
-"""
-
-TODO:
-- [X] Run this file
-- [] Try geotiff registration from api-first endpoint, after trying from UI
-- check the api endpoints called (from UI) on file_conversion, elwood process,
-   data transforms, resolution processors - I suspect there may be something off
-- [] Add job status endpoint to composite data-register
-"""
