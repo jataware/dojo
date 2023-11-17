@@ -11,8 +11,19 @@ import Select from '@mui/material/Select';
 import TextField from '@mui/material/TextField';
 
 import { setGeoResolutionColumn, setTimeResolutionColumn } from './dagSlice';
+import { InlineDocIconLink } from './NodeBase';
 
 const timeOptions = ['daily', 'weekly', 'monthly', 'yearly', 'decadal'];
+
+const LabelWithDocsIcon = ({ type }) => (
+  <div>
+    Manual {type} Resolution
+    <InlineDocIconLink
+      title="Manual Resolution"
+      link="data-modeling.html#manual-resolution"
+    />
+  </div>
+);
 
 const ModelerResolution = () => {
   const [manualGeo, setManualGeo] = useState('');
@@ -63,10 +74,12 @@ const ModelerResolution = () => {
   return (
     <div>
       <FormControl fullWidth>
-        <InputLabel id="time-resolution-label" shrink>Manual Time Resolution</InputLabel>
+        <InputLabel id="time-resolution-label" shrink>
+          <LabelWithDocsIcon type="Time" />
+        </InputLabel>
         <Select
           notched
-          label="Manual Time Resolution"
+          label={<LabelWithDocsIcon type="Time" />}
           labelId="time-resolution-label"
           value={manualTime}
           disabled={timeResolutionDisabled}
@@ -85,7 +98,7 @@ const ModelerResolution = () => {
         </Select>
       </FormControl>
       <TextField
-        label="Manual Geo Resolution"
+        label={<LabelWithDocsIcon type="Geo" />}
         value={manualGeo}
         disabled={geoResolutionDisabled}
         onChange={handleGeoChange}

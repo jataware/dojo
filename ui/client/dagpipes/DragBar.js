@@ -3,6 +3,7 @@ import React from 'react';
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
+import Tooltip from '@mui/material/Tooltip';
 
 import { makeStyles } from 'tss-react/mui';
 
@@ -27,23 +28,30 @@ const useStyles = makeStyles()((theme) => ({
 const DragButton = ({
   label, name, onDragStart, green
 }) => (
-  <Button
-    color={green ? 'success' : 'primary'}
-    variant="outlined"
-    startIcon={<DragIndicatorIcon sx={{ cursor: 'grab' }} />}
-    disableRipple
-    onDragStart={(event) => onDragStart(event, name)}
-    draggable
-    sx={{
-      '& .MuiButton-startIcon': {
-        marginRight: 0,
-      },
-    }}
+  <Tooltip
+    title={`Drag and drop the ${label} Node to learn more`}
+    // long delay so it only shows up when a user is pausing
+    enterDelay={1200}
+    enterNextDelay={1200}
   >
-    <Typography variant="caption" sx={{ cursor: 'grab' }}>
-      &nbsp;{label}
-    </Typography>
-  </Button>
+    <Button
+      color={green ? 'success' : 'primary'}
+      variant="outlined"
+      startIcon={<DragIndicatorIcon sx={{ cursor: 'grab' }} />}
+      disableRipple
+      onDragStart={(event) => onDragStart(event, name)}
+      draggable
+      sx={{
+        '& .MuiButton-startIcon': {
+          marginRight: 0,
+        },
+      }}
+    >
+      <Typography variant="caption" sx={{ cursor: 'grab' }}>
+        &nbsp;{label}
+      </Typography>
+    </Button>
+  </Tooltip>
 );
 
 export default () => {

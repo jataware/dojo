@@ -10,7 +10,7 @@ import FormGroup from '@mui/material/FormGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
 
-import NodeBase from './NodeBase';
+import NodeBase, { InlineDocIconLink } from './NodeBase';
 import ModelerSelect from './ModelerSelect';
 import {
   setGeoResolutionColumn,
@@ -23,6 +23,13 @@ import {
 } from './constants';
 
 const aggList = aggregation_functions.map((res) => ({ value: res, label: res }));
+
+const AggregationLabel = ({ text }) => (
+  <div>
+    {text}
+    <InlineDocIconLink link="aggregation-methods.html" title="aggregation function" />
+  </div>
+);
 
 function SelectFeature({ input, nodeId, onChange }) {
   const {
@@ -130,7 +137,7 @@ function SelectFeature({ input, nodeId, onChange }) {
       <div style={{ marginBottom: '16px' }}>
         <ModelerSelect
           value={input.geo_aggregation_function}
-          label="Geo Aggregation Function"
+          label={<AggregationLabel text="Geo Aggregation Function" />}
           onChange={(event) => onChange(nodeId, event)}
           options={aggList}
           name="geo_aggregation_function"
@@ -138,7 +145,7 @@ function SelectFeature({ input, nodeId, onChange }) {
       </div>
       <ModelerSelect
         value={input.time_aggregation_function}
-        label="Time Aggregation Function"
+        label={<AggregationLabel text="Time Aggregation Function" />}
         onChange={(event) => onChange(nodeId, event)}
         options={aggList}
         name="time_aggregation_function"

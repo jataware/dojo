@@ -1,5 +1,7 @@
 import React from 'react';
 
+import Link from '@mui/material/Link';
+import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import { makeStyles } from 'tss-react/mui';
 
@@ -30,9 +32,15 @@ const Footer = () => {
         <span>
           {nodeCount} node{nodeCount === 1 ? '' : 's'}. {unsavedChanges && (<span>Unsaved Changes.</span>)}
         </span>
-        <span>
-          Data Modeling
-        </span>
+        <Tooltip title="View Data Modeling documentation (opens new tab)">
+          <Link
+            href="https://www.dojo-modeling.com/data-modeling.html"
+            target="_blank"
+            rel="noopener"
+          >
+            Data Modeling
+          </Link>
+        </Tooltip>
       </Typography>
     </footer>
   );
