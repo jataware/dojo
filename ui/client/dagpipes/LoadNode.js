@@ -9,11 +9,8 @@ import {
 import FormGroup from '@mui/material/FormGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
-import Link from '@mui/material/Link';
-import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
-import Tooltip from '@mui/material/Tooltip';
 
-import NodeBase from './NodeBase';
+import NodeBase, { InlineDocIconLink } from './NodeBase';
 import ModelerSelect from './ModelerSelect';
 import {
   setGeoResolutionColumn,
@@ -28,20 +25,9 @@ import {
 const aggList = aggregation_functions.map((res) => ({ value: res, label: res }));
 
 const AggregationLabel = ({ text }) => (
-  <div style={{ display: 'flex', gap: '8px' }}>
+  <div>
     {text}
-    <Tooltip arrow title="See function definitions (opens new tab)">
-      <Link
-        href="https://www.dojo-modeling.com/aggregation-methods.html"
-        target="_blank"
-        color="inherit"
-        sx={{ display: 'flex', alignItems: 'center' }}
-      >
-        <HelpOutlineIcon
-          sx={{ cursor: 'pointer', '&:hover': { color: 'primary.light' } }}
-        />
-      </Link>
-    </Tooltip>
+    <InlineDocIconLink link="aggregation-methods.html" title="aggregation function" />
   </div>
 );
 
