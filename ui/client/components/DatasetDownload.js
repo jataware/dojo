@@ -4,12 +4,15 @@ import Button from '@mui/material/Button';
 import CloseIcon from '@mui/icons-material/Close';
 import IconButton from '@mui/material/IconButton';
 import Typography from '@mui/material/Typography';
-
 import BasicAlert from './BasicAlert';
 
+/**
+ * NOTE This seems to not be in use (see filename; DatasetDownload.)
+ **/
 function CSVDownload({ resource, index = 'indicators', className }) {
   const [openDownload, setDownload] = useState(false);
   const name = `${resource.id}.csv`;
+
   return (
     <>
 

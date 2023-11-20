@@ -17,7 +17,7 @@ import pandas as pd
 from elasticsearch import Elasticsearch
 from fastapi import APIRouter, File, HTTPException, Query, Response, UploadFile, status, Request
 from fastapi.logger import logger
-from fastapi.responses import FileResponse
+from fastapi.responses import FileResponse, StreamingResponse
 from openpyxl.styles import Font
 from openpyxl.workbook import Workbook
 from openpyxl.worksheet.datavalidation import DataValidation
@@ -35,6 +35,7 @@ from src.utils import (
     add_date_to_dataset, get_rawfile, list_files,
     put_rawfile, format_hybrid_results
 )
+from pydantic import BaseModel
 from validation import DojoSchema, IndicatorSchema, MetadataSchema
 
 router = APIRouter()
@@ -373,9 +374,16 @@ def search_indicators(
         return indicator_data
 
 
+class CompositeDatasetHelpResponse(BaseModel):
+    message: str = "Use the following URIs to download metadata and dictionary templates."
+    metadata_template_url: str = "/indicators/register/template"
+    dictionary_template_url: str = "/indicators/annotations/file-template"
+    docs: str = "https://www.dojo-modeling.com/data-registration.html"
+
+
 # Comes before the /indicators/{indicator_id} endpoint so that the `register`
 # path here isn't captured by {indicator_id}
-@router.get("/indicators/register")
+@router.get("/indicators/register", response_model=CompositeDatasetHelpResponse)
 def full_dataset_register_help(request: Request):
     """
     Help for composite dataset registration endpoint.
@@ -388,6 +396,58 @@ def full_dataset_register_help(request: Request):
         "dictionary_template_url": f"{api_url}/indicators/annotations/file-template",
         "docs": "https://www.dojo-modeling.com/data-registration.html"
     }
+
+
+@router.get("/indicators/{indicator_id}/download")
+def download_raw_file(indicator_id: str):
+    """
+    Downloads Raw/Original dataset file, opposite of /indicators/{uuid}/upload.
+    """
+    annotations = get_annotations(indicator_id)
+    files: dict = annotations.get("metadata", {}).get("files", {})
+    original_raw_file = None
+    file_keys = list(files.keys())
+
+    if bool(file_keys):
+        # first file, ignore dataset appends for now
+        original_raw_file = file_keys[0]
+
+    if not original_raw_file:
+        # There is also data on original file on indicator if needed
+        return Response(
+            status_code=status.HTTP_404_NOT_FOUND,
+            content="File does not exist",
+        )
+
+    file_extension = os.path.splitext(original_raw_file)[1]
+
+    rawfile_path = os.path.join(
+        settings.DATASET_STORAGE_BASE_URL, indicator_id, original_raw_file
+    )
+
+    uploaded_filename = files[original_raw_file].get("filename", "raw_data")
+
+    ext_mapping = {
+        ".xls": "application/vnd.ms-excel",
+        ".xlsx": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        ".nc": "application/x-netcdf",
+        ".nc4": "application/x-netcdf",
+        ".csv": "text/csv",
+        ".tif": "image/tiff",
+    }
+    media_type = ext_mapping.get(file_extension, "text")
+
+    # logger.debug(f"\n======\nrawfile_path := {rawfile_path}")
+    # logger.debug(f"\n======\nmedia_type := {media_type}")
+
+    headers = {
+        "Content-Disposition": f"attachment; filename={uploaded_filename}"
+    }
+    return StreamingResponse(
+        get_rawfile(rawfile_path),
+        media_type=media_type,
+        headers=headers
+    )
 
 
 @router.get(
@@ -924,7 +984,7 @@ def download_metadata_template_file():
     """
     file_name = "dataset_register_metadata_template.json"
     headers = {
-        "Content-Disposition": f"attachment; filename=dataset_metadata_template.json"
+        "Content-Disposition": "attachment; filename=dataset_metadata_template.json"
     }
     return FileResponse(file_name, headers=headers)
 
