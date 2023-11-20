@@ -10,6 +10,7 @@ import IconButton from '@mui/material/IconButton';
 import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
 import Typography from '@mui/material/Typography';
+import useMediaQuery from '@mui/material/useMediaQuery';
 
 import { useTheme } from '@mui/material/styles';
 
@@ -18,15 +19,12 @@ import { makeStyles } from 'tss-react/mui';
 import BasicAlert from './BasicAlert';
 
 const useStyles = makeStyles()((theme) => ({
-  root: {
-    height: '114px',
-  },
+  root: { },
   leftIndent: {
-    marginLeft: theme.spacing(3),
+    marginLeft: theme.spacing(2),
   },
   radioGroup: {
     flexDirection: 'row',
-    gap: theme.spacing(2),
   },
 }));
 
@@ -34,13 +32,25 @@ function CSVDownload({ resource, index = 'indicators' }) {
   const [openDownload, setDownload] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
   const [csvChoice, setCsvChoice] = useState('wide');
-  const name = `${resource.id}.csv`;
 
   const theme = useTheme();
   const { classes } = useStyles();
 
+  const isDesktop = useMediaQuery('(min-width:800px)'); 
+
   const handleChange = (event) => {
     setCsvChoice(event.target.value);
+  };
+
+  const isRawChoice =  index === 'indicators' && csvChoice === 'raw';
+
+  const downloadURI = isRawChoice ?
+    `/api/dojo/indicators/${resource.id}/download` :
+    `/api/dojo/dojo/download/csv/${index}/${resource.id}?wide_format=${csvChoice === 'wide'}`;
+
+  const conditionalCSVProps = isRawChoice ? {} : {
+    download: `${resource.id}_${csvChoice}.csv`,
+    type: 'text/csv'
   };
 
   return (
@@ -50,12 +60,18 @@ function CSVDownload({ resource, index = 'indicators' }) {
         color="primary"
         endIcon={formOpen ? <ArrowDropDownIcon /> : <ArrowRightIcon />}
         onClick={() => setFormOpen(!formOpen)}
-        style={{ border: 'none' }}
+        style={{ border: 'none', textAlign: 'left' }}
       >
-        Download CSV
+        <span>
+          Download 
+        </span>
+        {isDesktop && <span>&nbsp;Files</span>}
       </Button>
 
-      <Collapse in={formOpen} timeout={theme.transitions.duration.shortest}>
+      <Collapse 
+        in={formOpen}
+        timeout={theme.transitions.duration.shortest}
+        >
         <div className={classes.leftIndent}>
           <form>
             <RadioGroup
@@ -65,8 +81,9 @@ function CSVDownload({ resource, index = 'indicators' }) {
               onChange={handleChange}
               className={classes.radioGroup}
             >
-              <FormControlLabel value="wide" control={<Radio />} label="Wide" />
-              <FormControlLabel value="long" control={<Radio />} label="Long" />
+              <FormControlLabel value="wide" control={<Radio />} label="Wide CSV" />
+              <FormControlLabel value="long" control={<Radio />} label="Long CSV" />
+              <FormControlLabel value="raw" control={<Radio />} label="Raw Data" />
             </RadioGroup>
 
             <Typography variant="body2">
@@ -74,12 +91,11 @@ function CSVDownload({ resource, index = 'indicators' }) {
                 variant="contained"
                 disableElevation
                 color="primary"
-                href={`/api/dojo/dojo/download/csv/${index}/${resource.id}?wide_format=${csvChoice === 'wide'}`}
-                download={name}
-                type="text/csv"
+                href={downloadURI}
+                style={{marginTop: '0.25rem'}}
                 onClick={() => setDownload(true)}
-                disabled={openDownload ? true : undefined}
-                className={classes.leftIndent}
+                disabled={openDownload ? true : false}
+                {...conditionalCSVProps}
               >
                 Download
               </Button>

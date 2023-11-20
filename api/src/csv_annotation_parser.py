@@ -132,6 +132,7 @@ mappings = {
 def dict_val_lower(my_dict, key):
     my_dict[key] = (my_dict.get(key, "") or "").lower()
 
+
 class RequiredField(BaseModel):
     class Config:
         extra = Extra.allow
@@ -223,7 +224,6 @@ def format_annotations(dict_csv):
     )
     del formatted["groups"]
     return formatted
-
 
 
 if __name__ == "__main__":
