@@ -10,6 +10,7 @@ import IconButton from '@mui/material/IconButton';
 import Radio from '@mui/material/Radio';
 import RadioGroup from '@mui/material/RadioGroup';
 import Typography from '@mui/material/Typography';
+import useMediaQuery from '@mui/material/useMediaQuery';
 
 import { useTheme } from '@mui/material/styles';
 
@@ -18,9 +19,7 @@ import { makeStyles } from 'tss-react/mui';
 import BasicAlert from './BasicAlert';
 
 const useStyles = makeStyles()((theme) => ({
-  root: {
-    height: '114px',
-  },
+  root: { },
   leftIndent: {
     marginLeft: theme.spacing(2),
   },
@@ -36,6 +35,8 @@ function CSVDownload({ resource, index = 'indicators' }) {
 
   const theme = useTheme();
   const { classes } = useStyles();
+
+  const isDesktop = useMediaQuery('(min-width:800px)'); 
 
   const handleChange = (event) => {
     setCsvChoice(event.target.value);
@@ -59,9 +60,12 @@ function CSVDownload({ resource, index = 'indicators' }) {
         color="primary"
         endIcon={formOpen ? <ArrowDropDownIcon /> : <ArrowRightIcon />}
         onClick={() => setFormOpen(!formOpen)}
-        style={{ border: 'none' }}
+        style={{ border: 'none', textAlign: 'left' }}
       >
-        Download Files
+        <span>
+          Download 
+        </span>
+        {isDesktop && <span>&nbsp;Files</span>}
       </Button>
 
       <Collapse 
@@ -88,9 +92,9 @@ function CSVDownload({ resource, index = 'indicators' }) {
                 disableElevation
                 color="primary"
                 href={downloadURI}
+                style={{marginTop: '0.25rem'}}
                 onClick={() => setDownload(true)}
                 disabled={openDownload ? true : false}
-                className={classes.leftIndent}
                 {...conditionalCSVProps}
               >
                 Download
