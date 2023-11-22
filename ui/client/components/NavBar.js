@@ -7,7 +7,10 @@ import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import Toolbar from '@mui/material/Toolbar';
 import Tooltip from '@mui/material/Tooltip';
-import { lighten } from '@mui/material/styles';
+import GitHubIcon from '@mui/icons-material/GitHub';
+// TODO: maybe use this instead of Library icon for docs link?
+// import AutoStoriesIcon from '@mui/icons-material/AutoStories';
+import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
 
 import { makeStyles } from 'tss-react/mui';
 
@@ -15,7 +18,8 @@ import { ThemeContext } from './ThemeContextProvider';
 
 const useStyles = makeStyles()((theme) => ({
   appBarRoot: {
-    backgroundColor: lighten(theme.palette.primary.light, 0.6),
+    backgroundColor: '#06B8EF',
+    backgroundImage: 'linear-gradient(to right, #06B8EF, #A11BDA)',
   },
   toolbar: {
     padding: `0 ${theme.spacing(5)}`,
@@ -40,7 +44,7 @@ const NavBar = () => {
   }
 
   return (
-    <AppBar position={fixedNavBar ? 'fixed' : 'static'} classes={{ root: classes.appBarRoot }}>
+    <AppBar position={fixedNavBar ? 'fixed' : 'static'} elevation={0} classes={{ root: classes.appBarRoot }}>
       <Toolbar variant="dense" disableGutters className={classes.toolbar}>
         <Tooltip title="Dojo home" arrow>
           <IconButton
@@ -98,20 +102,26 @@ const NavBar = () => {
           AI Assistant
         </Button>
         <span className={classes.spacer} />
-        <Button
-          href="https://www.dojo-modeling.com"
-          target="_blank"
-          color="grey"
-        >
-          Documentation
-        </Button>
-        <Button
-          href="https://github.com/jataware/dojo"
-          target="_blank"
-          color="grey"
-        >
-          GitHub
-        </Button>
+        <Tooltip title="View Dojo Docs (opens new tab)" arrow>
+          <IconButton
+            href="https://www.dojo-modeling.com"
+            target="_blank"
+            rel="noopener"
+            sx={{ color: 'white' }}
+          >
+            <LibraryBooksIcon />
+          </IconButton>
+        </Tooltip>
+        <Tooltip title="View Dojo on Github (opens new tab)" arrow>
+          <IconButton
+            href="https://github.com/jataware/dojo"
+            target="_blank"
+            rel="noopener"
+            sx={{ color: 'white' }}
+          >
+            <GitHubIcon />
+          </IconButton>
+        </Tooltip>
       </Toolbar>
     </AppBar>
   );
