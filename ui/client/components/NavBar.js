@@ -6,10 +6,11 @@ import AppBar from '@mui/material/AppBar';
 import IconButton from '@mui/material/IconButton';
 import Toolbar from '@mui/material/Toolbar';
 import Tooltip from '@mui/material/Tooltip';
+import ClickAwayListener from '@mui/material/ClickAwayListener';
 import GitHubIcon from '@mui/icons-material/GitHub';
 // TODO: maybe use this instead of Library icon for docs link?
-// import AutoStoriesIcon from '@mui/icons-material/AutoStories';
-import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
+import AutoStoriesIcon from '@mui/icons-material/AutoStories';
+// import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
 import MenuIcon from '@mui/icons-material/Menu';
 
 import { makeStyles } from 'tss-react/mui';
@@ -51,62 +52,67 @@ const NavBar = () => {
   };
 
   const handleDrawerClose = () => {
-    setOpen(false);
+    if (open) setOpen(false);
   };
 
   return (
-    <>
-      <AppBar
-        open={open}
-        position={fixedNavBar ? 'fixed' : 'static'}
-        elevation={0}
-        classes={{ root: classes.appBarRoot }}
-        sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}
-      >
-        <Toolbar variant="dense" disableGutters className={classes.toolbar}>
-          <IconButton
-            onClick={handleToggleDrawer}
-          >
-            <MenuIcon />
-          </IconButton>
-          <Tooltip title="Dojo home" arrow>
+    // handles closing the sidebar drawer when clicking anywhere but the drawer or appbar
+    <ClickAwayListener onClickAway={handleDrawerClose}>
+      <div>
+        <AppBar
+          open={open}
+          position={fixedNavBar ? 'fixed' : 'relative'}
+          elevation={0}
+          classes={{ root: classes.appBarRoot }}
+          sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}
+        >
+          <Toolbar variant="dense" disableGutters className={classes.toolbar}>
             <IconButton
-              component={Link}
-              to="/"
-              size="small"
+              onClick={handleToggleDrawer}
             >
-              <img
-                src="/assets/Dojo_Logo_black.svg"
-                alt="Dojo Logo"
-                className={classes.dojoIcon}
-              />
+              <MenuIcon />
             </IconButton>
-          </Tooltip>
-          <span className={classes.spacer} />
-          <Tooltip title="View Dojo Docs (opens new tab)" arrow>
-            <IconButton
-              href="https://www.dojo-modeling.com"
-              target="_blank"
-              rel="noopener"
-              sx={{ color: 'white' }}
-            >
-              <LibraryBooksIcon />
-            </IconButton>
-          </Tooltip>
-          <Tooltip title="View Dojo on Github (opens new tab)" arrow>
-            <IconButton
-              href="https://github.com/jataware/dojo"
-              target="_blank"
-              rel="noopener"
-              sx={{ color: 'white' }}
-            >
-              <GitHubIcon />
-            </IconButton>
-          </Tooltip>
-        </Toolbar>
-      </AppBar>
-      <Sidebar open={open} onRouteClick={handleDrawerClose} />
-    </>
+            <Tooltip title="Dojo home" arrow>
+              <IconButton
+                component={Link}
+                to="/"
+                size="small"
+              >
+                <img
+                  src="/assets/Dojo_Logo_black.svg"
+                  alt="Dojo Logo"
+                  className={classes.dojoIcon}
+                />
+              </IconButton>
+            </Tooltip>
+            <span className={classes.spacer} />
+            <Tooltip title="View Dojo Docs (opens new tab)" arrow>
+              <IconButton
+                href="https://www.dojo-modeling.com"
+                target="_blank"
+                rel="noopener"
+                sx={{ color: 'white' }}
+              >
+                <AutoStoriesIcon />
+              </IconButton>
+            </Tooltip>
+            <Tooltip title="View Dojo on Github (opens new tab)" arrow>
+              <IconButton
+                href="https://github.com/jataware/dojo"
+                target="_blank"
+                rel="noopener"
+                sx={{ color: 'white' }}
+              >
+                <GitHubIcon />
+              </IconButton>
+            </Tooltip>
+          </Toolbar>
+        </AppBar>
+        <Sidebar open={open} onRouteClick={handleDrawerClose} />
+        {/*TODO: add toolbar, remove 56px padding from all containers/top level page components*/}
+        {/*<Toolbar />*/}
+      </div>
+    </ClickAwayListener>
   );
 };
 
