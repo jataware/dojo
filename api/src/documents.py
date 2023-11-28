@@ -3,9 +3,7 @@ from __future__ import annotations
 import time
 import re
 import uuid
-from datetime import datetime
-from typing import Any, Dict, Generator, List, Optional
-from urllib.parse import urlparse
+from typing import List, Optional
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import RequestError, NotFoundError
 from fastapi import (
@@ -15,10 +13,10 @@ from fastapi import (
     status,
     UploadFile,
     File,
-    Request,
+    # Request,
     Query,
 )
-from fastapi.responses import FileResponse
+# from fastapi.responses import FileResponse
 from fastapi.logger import logger
 
 import os
@@ -32,12 +30,8 @@ from src.urls import clean_and_decode_str
 
 from rq import Queue
 from redis import Redis
-from rq.exceptions import NoSuchJobError
-from rq import job
-
 from src.embedder_engine import embedder
 from src.semantic_highlighter import highlighter
-
 from pydantic import BaseModel
 
 
@@ -687,7 +681,7 @@ def get_document_uploaded_file(document_id: str):
 
     try:
         return Response(content=file.read(), media_type="application/pdf", headers=headers)
-    except FileNotFoundError as e:
+    except FileNotFoundError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
 

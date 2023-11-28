@@ -32,5 +32,5 @@ class __Embedder__:
 
         return [e for e in embeddings]  # convert to list
 
-embedder = __Embedder__()
 
+embedder = __Embedder__()
