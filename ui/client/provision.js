@@ -290,7 +290,7 @@ const Provision = () => {
                 <Typography variant="body2">
                   Once the model has been run, you&apos;ll use the&nbsp;
                   <Link
-                    href="https://www.dojo-modeling.com/cheatsheet.html#dojo-terminal-commands"
+                    href="https://www.dojo-modeling.com/details/cheatsheet.html#dojo-terminal-commands"
                     target="_blank"
                     rel="noopener"
                     underline="hover"
@@ -310,7 +310,7 @@ const Provision = () => {
               <Typography variant="body2" gutterBottom>
                 See&nbsp;
                 <Link
-                  href="https://www.dojo-modeling.com/docker.html"
+                  href="https://www.dojo-modeling.com/details/docker.html"
                   target="_blank"
                   rel="noopener"
                   underline="hover"
