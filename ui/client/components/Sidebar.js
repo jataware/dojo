@@ -63,6 +63,12 @@ const Sidebar = ({ open, onRouteClick }) => (
     variant="persistent"
     anchor="left"
     open={open}
+    // PaperProps={{
+    //   variant: 'outlined',
+    //   sx: { borderRight: '2px solid black' },
+
+    // }}
+
   >
     {/* Empty toolbar to create space for the actual toolbar */}
     <Toolbar />

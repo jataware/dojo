@@ -9,7 +9,8 @@ import Tooltip from '@mui/material/Tooltip';
 import ClickAwayListener from '@mui/material/ClickAwayListener';
 import GitHubIcon from '@mui/icons-material/GitHub';
 // TODO: maybe use this instead of Library icon for docs link?
-import AutoStoriesIcon from '@mui/icons-material/AutoStories';
+// import AutoStoriesIcon from '@mui/icons-material/AutoStories';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
 // import LibraryBooksIcon from '@mui/icons-material/LibraryBooks';
 import MenuIcon from '@mui/icons-material/Menu';
 
@@ -61,7 +62,7 @@ const NavBar = () => {
       <div>
         <AppBar
           open={open}
-          position={fixedNavBar ? 'fixed' : 'relative'}
+          position="fixed"//{fixedNavBar ? 'fixed' : 'relative'}
           elevation={0}
           classes={{ root: classes.appBarRoot }}
           sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}
@@ -93,7 +94,7 @@ const NavBar = () => {
                 rel="noopener"
                 sx={{ color: 'white' }}
               >
-                <AutoStoriesIcon />
+                <MenuBookIcon />
               </IconButton>
             </Tooltip>
             <Tooltip title="View Dojo on Github (opens new tab)" arrow>
@@ -109,8 +110,8 @@ const NavBar = () => {
           </Toolbar>
         </AppBar>
         <Sidebar open={open} onRouteClick={handleDrawerClose} />
-        {/*TODO: add toolbar, remove 56px padding from all containers/top level page components*/}
-        {/*<Toolbar />*/}
+        {/*TODO: remove 56px padding from all containers/top level page components*/}
+        <Toolbar variant="dense" />
       </div>
     </ClickAwayListener>
   );
