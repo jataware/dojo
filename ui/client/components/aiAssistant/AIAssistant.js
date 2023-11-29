@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import axios from 'axios';
 
@@ -15,8 +15,6 @@ import AccountBoxIcon from '@mui/icons-material/AccountBox';
 import InfoIcon from '@mui/icons-material/Info';
 import SendIcon from '@mui/icons-material/Send';
 import { makeStyles } from 'tss-react/mui';
-
-import { ThemeContext } from '../ThemeContextProvider';
 
 import AIAssistantResponse from './AIAssistantResponse';
 import ChatCard from './ChatCard';
@@ -65,15 +63,9 @@ const AIAssistant = () => {
   const [searchPhrase, setSearchPhrase] = useState('');
   const [anyResponseLoading, setAnyResponseLoading] = useState(false);
 
-  const { setFixedNavBar } = useContext(ThemeContext);
-
   useEffect(() => {
     document.title = 'AI Assistant';
-    // Make the navbar position: fixed
-    setFixedNavBar(true);
-    // and set it back to its default (static) when this effect cleans up
-    return () => setFixedNavBar(false);
-  }, [setFixedNavBar]);
+  }, []);
 
   useEffect(() => {
     // scroll to the bottom anytime we get a new search in

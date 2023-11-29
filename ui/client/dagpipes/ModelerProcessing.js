@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useContext, useEffect } from 'react';
 
 import axios from 'axios';
 
@@ -9,6 +9,7 @@ import Typography from '@mui/material/Typography';
 import CircularProgress from '@mui/material/CircularProgress';
 
 import { setCompletedDatasetIds, nextModelerStep } from './dagSlice';
+import { ThemeContext } from '../components/ThemeContextProvider';
 
 // TODO: need to ensure it has some way to cancel job if the component unmounts
 const repeatFetch = async ({ jobId, onSuccess }) => {
@@ -41,6 +42,15 @@ const repeatFetch = async ({ jobId, onSuccess }) => {
 const ModelerProcessing = () => {
   const { flowcastJobId } = useSelector((state) => state.dag);
   const dispatch = useDispatch();
+
+  const { setShowNavBar } = useContext(ThemeContext);
+
+  useEffect(() => {
+    // hide the navbar when the component mounts
+    setShowNavBar(false);
+    // when the component unmounts, toggle the navbar back
+    return () => setShowNavBar(true);
+  }, [setShowNavBar]);
 
   useEffect(() => {
     const onSuccess = (resp) => {

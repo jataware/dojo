@@ -1,4 +1,4 @@
-import React, { useContext, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 
 import { Link } from 'react-router-dom';
 
@@ -80,13 +80,14 @@ const useStyles = makeStyles()((theme) => ({
 const NavBar = ({ children }) => {
   const { classes } = useStyles();
   // TODO: hide navbar on second page of datamodeling
-  const { showNavBar, fixedNavBar } = useContext(ThemeContext);
+  const { showNavBar } = useContext(ThemeContext);
   const [open, setOpen] = useState(true);
   const theme = useTheme();
 
-  if (!showNavBar) {
-    return null;
-  }
+  useEffect(() => {
+    if (!showNavBar) setOpen(false);
+    if (showNavBar) setOpen(true);
+  }, [showNavBar]);
 
   const handleToggleDrawer = () => {
     setOpen(!open);
@@ -104,7 +105,7 @@ const NavBar = ({ children }) => {
           position="fixed"
           elevation={0}
           classes={{ root: classes.appBarRoot }}
-          sx={{ zIndex: theme.zIndex.drawer + 1 }}
+          sx={{ zIndex: theme.zIndex.drawer + 1, display: showNavBar ? 'flex' : 'none' }}
         >
           <Toolbar variant="dense" disableGutters className={classes.toolbar}>
             <Collapse
@@ -112,7 +113,7 @@ const NavBar = ({ children }) => {
               orientation="horizontal"
               timeout={theme.transitions.duration.enteringScreen}
             >
-              <Tooltip title="Open navigation panel">
+              <Tooltip arrow title="Open navigation panel">
                 <IconButton
                   onClick={handleToggleDrawer}
                 >
@@ -159,7 +160,7 @@ const NavBar = ({ children }) => {
         <Sidebar open={open} handleDrawerClose={handleDrawerClose} />
         <Main open={open}>
           {/*TODO: remove 56px padding from all containers/top level page components*/}
-          <Toolbar variant="dense" />
+          <Toolbar variant="dense" sx={{ display: showNavBar ? 'flex' : 'none' }} />
           {children}
         </Main>
       </div>

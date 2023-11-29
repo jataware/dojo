@@ -71,13 +71,13 @@ const Sidebar = ({ open, handleDrawerClose }) => (
       variant="dense"
       sx={{ display: 'flex', justifyContent: 'flex-end' }}
     >
-      <Tooltip title="Close navigation panel">
+      <Tooltip arrow title="Close navigation panel">
         <IconButton>
           <ChevronLeftIcon onClick={handleDrawerClose} />
         </IconButton>
       </Tooltip>
     </Toolbar>
-    <Divider />
+    <Divider sx={{ paddingTop: '1px' }} />
     <List sx={{ width: '100%' }}>
       {routes.map((route, i) => (
         <>

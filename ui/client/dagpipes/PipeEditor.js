@@ -1,5 +1,5 @@
 import React, {
-  useCallback, useRef, useState
+  useCallback, useRef, useState, useEffect, useContext,
 } from 'react';
 
 import axios from 'axios';
@@ -41,6 +41,7 @@ import SumNode from './SumNode';
 import Footer from './Footer';
 import ModelerResolution from './ModelerResolution';
 import DragBar from './DragBar';
+import { ThemeContext } from '../components/ThemeContextProvider';
 
 import './overview.css';
 
@@ -143,6 +144,15 @@ const PipeEditor = () => {
   // const { setViewport } = useReactFlow();
 
   const dispatch = useDispatch();
+
+  const { setShowNavBar } = useContext(ThemeContext);
+
+  useEffect(() => {
+    // hide the navbar when the component mounts
+    setShowNavBar(false);
+    // when the component unmounts, toggle the navbar back
+    return () => setShowNavBar(true);
+  }, [setShowNavBar]);
 
   const setSelectedNode = useCallback((node) => {
     dispatch(selectNode({ id: node.id, type: node.type }));
