@@ -30,10 +30,13 @@ from src.urls import clean_and_decode_str
 
 from rq import Queue
 from redis import Redis
-from src.embedder_engine import embedder
-from src.semantic_highlighter import highlighter
+# from src.embedder_engine import embedder
 from pydantic import BaseModel
+from openai.embeddings_utils import get_embeddings
+from src.semantic_highlighter import highlighter
 
+
+PARAGRAPHS_INDEX = "paragraphs"
 
 router = APIRouter()
 
@@ -77,7 +80,7 @@ def list_paragraphs(scroll_id: Optional[str]=None, size: int = 10):
     }
 
     if not scroll_id:
-        results = es.search(index="document_paragraphs",
+        results = es.search(index=PARAGRAPHS_INDEX,
                             body=q,
                             scroll="2m",
                             size=size)
@@ -132,6 +135,8 @@ def semantic_search_paragraphs(query: str,
     """
     Uses query to perform a Semantic Search on paragraphs; where LLM embeddings
     are used to compare a text query to items stored.
+
+    TODO: Re-add highlights with newer embedding engine?
     """
 
     clean_query = clean_and_decode_str(query)
@@ -139,11 +144,16 @@ def semantic_search_paragraphs(query: str,
     if scroll_id:
         results = es.scroll(scroll_id=scroll_id, scroll="2m")
     else:
+        # NOTE These next two lines may not be relevant anymore with new embedder- CHECK!
         # Retrieve first item in output, since it accepts an array and returns
         # an array, and we provided only one item (query)
-        query_embedding = embedder.embed([clean_query])[0]
 
-        MIN_TEXT_LENGTH_THRESHOLD = 100
+        # TODO embed with newer engine
+
+        # query_embedding = embedder.embed([clean_query])[0]
+        query_embedding = get_embeddings([clean_query], engine="text-embedding-ada-002")[0]
+
+        MIN_TEXT_LENGTH_THRESHOLD = 50
 
         p_query = {
             "query": {
@@ -181,7 +191,7 @@ def semantic_search_paragraphs(query: str,
             }
         }
 
-        results = es.search(index="document_paragraphs",
+        results = es.search(index=PARAGRAPHS_INDEX,
                             body=p_query,
                             scroll="2m",
                             size=size)
@@ -227,7 +237,7 @@ def get_paragraph(paragraph_id: str):
     """
     """
     try:
-        p = es.get_source(index="document_paragraphs",
+        p = es.get_source(index=PARAGRAPHS_INDEX,
                           id=paragraph_id,
                           _source_excludes=["embeddings"])
     except Exception as e:
@@ -479,7 +489,7 @@ def get_document_text(document_id: str,
             }
             # Get all the paragraphs for the document, ordered by indexed order
             #  (should follow paragraph order).
-            paragraphs = es.search(index="document_paragraphs", body=q, size=size, scroll="2m")
+            paragraphs = es.search(index=PARAGRAPHS_INDEX, body=q, size=size, scroll="2m")
         except Exception as e:
             logger.exception(e)
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
