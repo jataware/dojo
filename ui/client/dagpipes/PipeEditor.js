@@ -105,7 +105,8 @@ const useStyles = makeStyles()((theme) => ({
   },
   fullWrapper: {
     position: 'absolute',
-    top: '50px',
+    // this puts us below the height of our toolbar by a few px, as we use the dense variant
+    top: theme.mixins.toolbar.minHeight,
     bottom: '0',
     left: '0',
     right: '0',
@@ -145,14 +146,14 @@ const PipeEditor = () => {
 
   const dispatch = useDispatch();
 
-  const { setShowNavBar } = useContext(ThemeContext);
+  const { setShowSideBar } = useContext(ThemeContext);
 
   useEffect(() => {
-    // hide the navbar when the component mounts
-    setShowNavBar(false);
-    // when the component unmounts, toggle the navbar back
-    return () => setShowNavBar(true);
-  }, [setShowNavBar]);
+    // hide the Sidebar when the component mounts
+    setShowSideBar(false);
+    // when the component unmounts, toggle the Sidebar back
+    return () => setShowSideBar(true);
+  }, [setShowSideBar]);
 
   const setSelectedNode = useCallback((node) => {
     dispatch(selectNode({ id: node.id, type: node.type }));

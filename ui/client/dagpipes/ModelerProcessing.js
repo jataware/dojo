@@ -43,14 +43,14 @@ const ModelerProcessing = () => {
   const { flowcastJobId } = useSelector((state) => state.dag);
   const dispatch = useDispatch();
 
-  const { setShowNavBar } = useContext(ThemeContext);
+  const { setShowSideBar } = useContext(ThemeContext);
 
   useEffect(() => {
-    // hide the navbar when the component mounts
-    setShowNavBar(false);
-    // when the component unmounts, toggle the navbar back
-    return () => setShowNavBar(true);
-  }, [setShowNavBar]);
+    // hide the Sidebar when the component mounts
+    setShowSideBar(false);
+    // when the component unmounts, toggle the Sidebar back
+    return () => setShowSideBar(true);
+  }, [setShowSideBar]);
 
   useEffect(() => {
     const onSuccess = (resp) => {
