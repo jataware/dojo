@@ -79,15 +79,16 @@ const useStyles = makeStyles()((theme) => ({
 
 const NavBar = ({ children }) => {
   const { classes } = useStyles();
-  const { showNavBar } = useContext(ThemeContext);
+  const { showNavBar, showSideBar } = useContext(ThemeContext);
   const [open, setOpen] = useState(true);
   const theme = useTheme();
 
   useEffect(() => {
-    // close the sidebar when the context changes and we want to hide the navbar
-    if (!showNavBar) setOpen(false);
-    if (showNavBar) setOpen(true);
-  }, [showNavBar]);
+    // close the sidebar when we hide the navbar or just close the sidebar
+    if (!showNavBar || !showSideBar) setOpen(false);
+    // open the sidebar when nothing is closing it
+    if (showNavBar && showSideBar) setOpen(true);
+  }, [showNavBar, showSideBar]);
 
   const handleToggleDrawer = () => {
     setOpen(!open);
