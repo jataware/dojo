@@ -74,10 +74,11 @@ const ModelerProcessing = () => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        height: '70%',
+        height: '100%',
         flexDirection: 'column',
         gap: 2,
-        color: 'grey.700'
+        color: 'grey.700',
+        marginTop: 18,
       }}
     >
       <Typography variant="h4">Processing...</Typography>

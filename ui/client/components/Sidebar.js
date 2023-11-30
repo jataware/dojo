@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Fragment } from 'react';
 
 import { Link } from 'react-router-dom';
 
@@ -72,18 +72,17 @@ const Sidebar = ({ open, handleDrawerClose }) => (
       sx={{ display: 'flex', justifyContent: 'flex-end' }}
     >
       <Tooltip arrow title="Close navigation panel">
-        <IconButton>
-          <ChevronLeftIcon onClick={handleDrawerClose} />
+        <IconButton onClick={handleDrawerClose}>
+          <ChevronLeftIcon />
         </IconButton>
       </Tooltip>
     </Toolbar>
     <Divider sx={{ paddingTop: '1px' }} />
     <List sx={{ width: '100%' }}>
       {routes.map((route, i) => (
-        <>
+        <Fragment key={route.path}>
           <ListItem disablePadding>
             <ListItemButton
-              key={route.path}
               component={Link}
               to={route.path}
             >
@@ -94,10 +93,9 @@ const Sidebar = ({ open, handleDrawerClose }) => (
           { route.children && (
             <List>
               {route.children.map((childRoute) => (
-                <ListItem disablePadding>
+                <ListItem key={childRoute.path} disablePadding>
                   <ListItemButton
                     sx={{ paddingLeft: 4 }}
-                    key={childRoute.path}
                     component={Link}
                     to={childRoute.path}
                   >
@@ -108,7 +106,7 @@ const Sidebar = ({ open, handleDrawerClose }) => (
             </List>
           )}
           {i !== routes.length - 1 && <Divider />}
-        </>
+        </Fragment>
       ))}
     </List>
   </Drawer>

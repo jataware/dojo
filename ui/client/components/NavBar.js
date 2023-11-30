@@ -79,12 +79,12 @@ const useStyles = makeStyles()((theme) => ({
 
 const NavBar = ({ children }) => {
   const { classes } = useStyles();
-  // TODO: hide navbar on second page of datamodeling
   const { showNavBar } = useContext(ThemeContext);
   const [open, setOpen] = useState(true);
   const theme = useTheme();
 
   useEffect(() => {
+    // close the sidebar when the context changes and we want to hide the navbar
     if (!showNavBar) setOpen(false);
     if (showNavBar) setOpen(true);
   }, [showNavBar]);
