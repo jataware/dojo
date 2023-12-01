@@ -1,9 +1,9 @@
 import React from 'react';
 import SvgIcon from '@mui/material/SvgIcon';
 
-export default function DojoIcon({ fontSize, color }) {
+export default function DojoIcon({ color, ...props }) {
   return (
-    <SvgIcon fontSize={fontSize} htmlColor={color}>
+    <SvgIcon htmlColor={color} {...props}>
       <svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1920 1920">
         <path fill="currentColor" d="M741.72,1566c0,53.13-30.26,77.83-85.26,77.83H405.65V1150.21H656.46c52.51,0,85.26,21.63,85.26,78.45Zm-127.26-35.23V1263.89H532.92v266.85Z" />
         <path fill="currentColor" d="M1127.1,1566c0,55-28.42,77.83-84.65,77.83H876.27c-53.12,0-84.63-21.61-84.63-77.83V1228.66c0-52.5,28.42-78.45,84.63-78.45h166.18c53.74,0,84.65,22.23,84.65,78.45Zm-127.26-35.23V1263.89H918.9v266.85Z" />

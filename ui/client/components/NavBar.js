@@ -68,11 +68,6 @@ const useStyles = makeStyles()((theme) => ({
     padding: `0 ${theme.spacing(5)}`,
     gap: theme.spacing(3),
   },
-  dojoIcon: {
-    height: '40px',
-    width: '40px',
-    marginRight: theme.spacing(1),
-  },
   spacer: {
     flexGrow: 1,
   },
@@ -118,6 +113,7 @@ const NavBar = ({ children }) => {
               <BlackTooltip disableInteractive title="Open navigation panel">
                 <ContrastIconButton
                   onClick={handleToggleDrawer}
+                  sx={{ color: 'black' }}
                 >
                   <MenuIcon />
                 </ContrastIconButton>
@@ -129,7 +125,7 @@ const NavBar = ({ children }) => {
                 to="/"
                 sx={{ color: 'black' }}
               >
-                <DojoIcon className={classes.dojoIcon} fontSize="large" color="inherit" />
+                <DojoIcon color="inherit" sx={{ height: '30px', width: '30px' }} />
               </ContrastIconButton>
             </BlackTooltip>
             <span className={classes.spacer} />
@@ -161,7 +157,6 @@ const NavBar = ({ children }) => {
         </AppBar>
         <Sidebar open={open} handleDrawerClose={handleDrawerClose} />
         <Main open={open}>
-          {/*TODO: remove 56px padding from all containers/top level page components*/}
           <Toolbar variant="dense" sx={{ display: showNavBar ? 'flex' : 'none' }} />
           {children}
         </Main>
