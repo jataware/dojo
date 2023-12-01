@@ -5,7 +5,6 @@ import { Link } from 'react-router-dom';
 import MuiAppBar from '@mui/material/AppBar';
 import IconButton from '@mui/material/IconButton';
 import Toolbar from '@mui/material/Toolbar';
-import Tooltip from '@mui/material/Tooltip';
 import Collapse from '@mui/material/Collapse';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
@@ -16,7 +15,10 @@ import { makeStyles } from 'tss-react/mui';
 
 import { ThemeContext } from './ThemeContextProvider';
 
+import { BlackTooltip } from './uiComponents/BlackTooltip';
+import { ContrastIconButton } from './uiComponents/ContrastButton';
 import Sidebar from './Sidebar';
+// import DojoIcon from './uiComponents/DojoIcon';
 
 const drawerWidth = 240;
 
@@ -114,15 +116,15 @@ const NavBar = ({ children }) => {
               orientation="horizontal"
               timeout={theme.transitions.duration.enteringScreen}
             >
-              <Tooltip arrow title="Open navigation panel">
-                <IconButton
+              <BlackTooltip title="Open navigation panel">
+                <ContrastIconButton
                   onClick={handleToggleDrawer}
                 >
                   <MenuIcon />
-                </IconButton>
-              </Tooltip>
+                </ContrastIconButton>
+              </BlackTooltip>
             </Collapse>
-            <Tooltip title="Dojo home" arrow>
+            <BlackTooltip title="Dojo home">
               <IconButton
                 component={Link}
                 to="/"
@@ -133,29 +135,34 @@ const NavBar = ({ children }) => {
                   alt="Dojo Logo"
                   className={classes.dojoIcon}
                 />
+                {/*<DojoIcon className={classes.dojoIcon} color="primary"/>*/}
               </IconButton>
-            </Tooltip>
+            </BlackTooltip>
             <span className={classes.spacer} />
-            <Tooltip title="View Dojo Docs (opens new tab)" arrow>
-              <IconButton
+            <BlackTooltip title="View Dojo Docs (opens new tab)">
+              <ContrastIconButton
                 href="https://www.dojo-modeling.com"
                 target="_blank"
                 rel="noopener"
-                sx={{ color: 'white' }}
+                sx={{
+                  color: 'white',
+                }}
               >
                 <MenuBookIcon />
-              </IconButton>
-            </Tooltip>
-            <Tooltip title="View Dojo on Github (opens new tab)" arrow>
-              <IconButton
+              </ContrastIconButton>
+            </BlackTooltip>
+            <BlackTooltip title="View Dojo on Github (opens new tab)">
+              <ContrastIconButton
                 href="https://github.com/jataware/dojo"
                 target="_blank"
                 rel="noopener"
-                sx={{ color: 'white' }}
+                sx={{
+                  color: 'white',
+                }}
               >
                 <GitHubIcon />
-              </IconButton>
-            </Tooltip>
+              </ContrastIconButton>
+            </BlackTooltip>
           </Toolbar>
         </AppBar>
         <Sidebar open={open} handleDrawerClose={handleDrawerClose} />

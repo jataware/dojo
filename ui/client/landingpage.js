@@ -3,9 +3,7 @@ import React, { useEffect } from 'react';
 import { Link as RouterLink } from 'react-router-dom';
 
 import Box from '@mui/material/Box';
-import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
-import CssBaseline from '@mui/material/CssBaseline';
 import Typography from '@mui/material/Typography';
 
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
@@ -17,19 +15,21 @@ import MenuBookIcon from '@mui/icons-material/MenuBook';
 
 import { makeStyles } from 'tss-react/mui';
 
+import { ContrastButton } from './components/uiComponents/ContrastButton';
+
 const useStyles = makeStyles()((theme) => ({
+  allContentWrapper: {
+    height: 'calc(100vh - 48px)',
+    display: 'flex',
+    flexDirection: 'column',
+  },
   topContentWrapper: {
     display: 'flex',
     justifyContent: 'center',
     backgroundColor: '#06B8EF',
     backgroundImage: 'linear-gradient(to right, #06B8EF, #A11BDA)',
     color: 'white',
-    [theme.breakpoints.up('lg')]: {
-      padding: theme.spacing(4),
-    },
-    [theme.breakpoints.down('xl')]: {
-      padding: `${theme.spacing(3)} ${theme.spacing(4)} ${theme.spacing(1)}`,
-    },
+    padding: `${theme.spacing(4)} 0`,
   },
   topHeaderTitle: {
     fontSize: '5rem',
@@ -58,6 +58,7 @@ const useStyles = makeStyles()((theme) => ({
     },
   },
   bottomContentContainer: {
+    // TODO: check this on a bigger screen - may not look good at the very bottom
     display: 'flex',
     alignItems: 'flex-end',
     flexGrow: 1,
@@ -75,11 +76,6 @@ const useStyles = makeStyles()((theme) => ({
     gap: theme.spacing(4),
     flexWrap: 'wrap',
   },
-  link: {
-    display: 'block',
-    color: 'black',
-    textDecoration: 'underline',
-  },
   linkCta: {
     display: 'flex',
     alignItems: 'center',
@@ -92,10 +88,6 @@ const useStyles = makeStyles()((theme) => ({
     color: 'black',
     backgroundColor: 'white',
     minWidth: '230px',
-    '&:hover': {
-      backgroundColor: 'black',//'#C71585'
-      color: 'white',
-    },
   },
   bigIcon: {
     fontSize: '3rem',
@@ -110,10 +102,9 @@ const LandingPage = () => {
   }, []);
 
   return (
-    <Box sx={{ height: 'calc(100vh - 48px)', display: 'flex', flexDirection: 'column' }}>
-      <CssBaseline />
+    <Box className={classes.allContentWrapper}>
       <div className={classes.topContentWrapper}>
-        <Container maxWidth="lg">
+        <Container maxWidth="xl">
 
           {/* Always line break before 'and datasets' because it scans better */}
           <Typography variant="h1" className={classes.topHeaderTitle}>
@@ -128,7 +119,7 @@ const LandingPage = () => {
               Get started <ArrowForwardIcon fontSize="large" />
             </Typography>
             <div className={classes.links}>
-              <Button
+              <ContrastButton
                 component={RouterLink}
                 color="inherit"
                 data-test="landingPageModelForm"
@@ -140,9 +131,9 @@ const LandingPage = () => {
                 className={classes.button}
               >
                 Models
-              </Button>
+              </ContrastButton>
 
-              <Button
+              <ContrastButton
                 component={RouterLink}
                 variant="contained"
                 color="inherit"
@@ -153,8 +144,8 @@ const LandingPage = () => {
                 className={classes.button}
               >
                 Datasets
-              </Button>
-              <Button
+              </ContrastButton>
+              <ContrastButton
                 component={RouterLink}
                 variant="contained"
                 color="inherit"
@@ -165,12 +156,12 @@ const LandingPage = () => {
                 className={classes.button}
               >
                 Documents
-              </Button>
+              </ContrastButton>
             </div>
           </div>
         </Container>
       </div>
-      <Container maxWidth="lg" className={classes.bottomContentContainer}>
+      <Container maxWidth="xl" className={classes.bottomContentContainer}>
         <div className={classes.linksWrapper}>
           {/* specific top margin to center this on the existing model text */}
           <Typography
@@ -181,9 +172,9 @@ const LandingPage = () => {
             Or learn more <ArrowForwardIcon fontSize="large" />
           </Typography>
           <div className={classes.links}>
-            <Button
+            <ContrastButton
               startIcon={<MenuBookIcon />}
-              sx={{ color: 'black', textDecoration: 'underline' }}
+              sx={{ textDecoration: 'underline' }}
               href="https://www.dojo-modeling.com"
               target="_blank"
               rel="noopener"
@@ -191,11 +182,11 @@ const LandingPage = () => {
               className={classes.button}
             >
               Read the docs
-            </Button>
+            </ContrastButton>
 
-            <Button
+            <ContrastButton
               startIcon={<GitHubIcon />}
-              sx={{ color: 'black', textDecoration: 'underline' }}
+              sx={{ textDecoration: 'underline' }}
               href="https://www.dojo-modeling.com"
               target="_blank"
               rel="noopener"
@@ -203,7 +194,7 @@ const LandingPage = () => {
               className={classes.button}
             >
               Browse Dojo on GitHub
-            </Button>
+            </ContrastButton>
           </div>
         </div>
       </Container>

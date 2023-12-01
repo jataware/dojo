@@ -5,18 +5,18 @@ import { Link } from 'react-router-dom';
 import Drawer from '@mui/material/Drawer';
 import ListItem from '@mui/material/ListItem';
 import ListItemButton from '@mui/material/ListItemButton';
-import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
 import List from '@mui/material/List';
-import IconButton from '@mui/material/IconButton';
 import Divider from '@mui/material/Divider';
 import Toolbar from '@mui/material/Toolbar';
-import Tooltip from '@mui/material/Tooltip';
 import ArticleIcon from '@mui/icons-material/Article';
 import AssessmentIcon from '@mui/icons-material/Assessment';
 import ComputerIcon from '@mui/icons-material/Computer';
 import HomeIcon from '@mui/icons-material/Home';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
+
+import { BlackTooltip } from './uiComponents/BlackTooltip';
+import { ContrastIconButton, ContrastListItemButton } from './uiComponents/ContrastButton';
 
 const routes = [
   {
@@ -71,47 +71,37 @@ const Sidebar = ({ open, handleDrawerClose }) => (
       variant="dense"
       sx={{ display: 'flex', justifyContent: 'flex-end' }}
     >
-      <Tooltip arrow title="Close navigation panel">
-        <IconButton onClick={handleDrawerClose} sx={{ color: 'black' }}>
+      <BlackTooltip arrow title="Close navigation panel">
+        <ContrastIconButton onClick={handleDrawerClose} sx={{ color: 'black' }}>
           <ChevronLeftIcon />
-        </IconButton>
-      </Tooltip>
+        </ContrastIconButton>
+      </BlackTooltip>
     </Toolbar>
     <Divider sx={{ paddingTop: '1px' }} />
     <List sx={{ width: '100%' }}>
       {routes.map((route, i) => (
         <Fragment key={route.path}>
           <ListItem disablePadding>
-            <ListItemButton
+            <ContrastListItemButton
               component={Link}
               to={route.path}
-              sx={{
-                '&:hover': {
-                  backgroundColor: 'black',
-                  color: 'white',
-                }
-              }}
             >
               {route.icon({ color: 'inherit', sx: { marginRight: '30px' } })}
               <ListItemText>{route.title}</ListItemText>
-            </ListItemButton>
+            </ContrastListItemButton>
           </ListItem>
           <List>
             {route.children?.map((childRoute) => (
               <ListItem key={childRoute.path} disablePadding>
-                <ListItemButton
+                <ContrastListItemButton
                   sx={{
                     paddingLeft: 4,
-                    '&:hover': {
-                      backgroundColor: 'black',
-                      color: 'white',
-                    }
                   }}
                   component={Link}
                   to={childRoute.path}
                 >
                   {childRoute.title}
-                </ListItemButton>
+                </ContrastListItemButton>
               </ListItem>
             ))}
           </List>
