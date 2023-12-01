@@ -22,12 +22,12 @@ const routes = [
   {
     title: 'Dojo Home',
     path: '/',
-    icon: <HomeIcon />,
+    icon: (props) => <HomeIcon {...props} />,
   },
   {
     title: 'Datasets',
     path: '/datasets',
-    icon: <AssessmentIcon />,
+    icon: (props) => <AssessmentIcon {...props} />,
     children: [
       { title: 'Register a Dataset', path: '/datasets/register' },
       { title: 'Data Modeling', path: '/data-modeling' },
@@ -36,7 +36,7 @@ const routes = [
   {
     title: 'Models',
     path: '/models',
-    icon: <ComputerIcon />,
+    icon: (props) => <ComputerIcon {...props} />,
     children: [
       { title: 'Register a Model', path: '/model' },
       { title: 'Model Runs', path: '/runs' },
@@ -45,7 +45,7 @@ const routes = [
   {
     title: 'Documents',
     path: '/documents',
-    icon: <ArticleIcon />,
+    icon: (props) => <ArticleIcon {...props} />,
     children: [
       { title: 'Upload Documents', path: '/documents/upload' },
       { title: 'Documents AI Assistant', path: '/ai-assistant' },
@@ -72,7 +72,7 @@ const Sidebar = ({ open, handleDrawerClose }) => (
       sx={{ display: 'flex', justifyContent: 'flex-end' }}
     >
       <Tooltip arrow title="Close navigation panel">
-        <IconButton onClick={handleDrawerClose}>
+        <IconButton onClick={handleDrawerClose} sx={{ color: 'black' }}>
           <ChevronLeftIcon />
         </IconButton>
       </Tooltip>
@@ -85,26 +85,36 @@ const Sidebar = ({ open, handleDrawerClose }) => (
             <ListItemButton
               component={Link}
               to={route.path}
+              sx={{
+                '&:hover': {
+                  backgroundColor: 'black',
+                  color: 'white',
+                }
+              }}
             >
-              <ListItemIcon>{route.icon}</ListItemIcon>
+              {route.icon({ color: 'inherit', sx: { marginRight: '30px' } })}
               <ListItemText>{route.title}</ListItemText>
             </ListItemButton>
           </ListItem>
-          { route.children && (
-            <List>
-              {route.children.map((childRoute) => (
-                <ListItem key={childRoute.path} disablePadding>
-                  <ListItemButton
-                    sx={{ paddingLeft: 4 }}
-                    component={Link}
-                    to={childRoute.path}
-                  >
-                    {childRoute.title}
-                  </ListItemButton>
-                </ListItem>
-              ))}
-            </List>
-          )}
+          <List>
+            {route.children?.map((childRoute) => (
+              <ListItem key={childRoute.path} disablePadding>
+                <ListItemButton
+                  sx={{
+                    paddingLeft: 4,
+                    '&:hover': {
+                      backgroundColor: 'black',
+                      color: 'white',
+                    }
+                  }}
+                  component={Link}
+                  to={childRoute.path}
+                >
+                  {childRoute.title}
+                </ListItemButton>
+              </ListItem>
+            ))}
+          </List>
           {i !== routes.length - 1 && <Divider />}
         </Fragment>
       ))}
