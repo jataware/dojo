@@ -3,7 +3,6 @@ import React, { useContext, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import MuiAppBar from '@mui/material/AppBar';
-import IconButton from '@mui/material/IconButton';
 import Toolbar from '@mui/material/Toolbar';
 import Collapse from '@mui/material/Collapse';
 import GitHubIcon from '@mui/icons-material/GitHub';
@@ -18,7 +17,7 @@ import { ThemeContext } from './ThemeContextProvider';
 import { BlackTooltip } from './uiComponents/BlackTooltip';
 import { ContrastIconButton } from './uiComponents/ContrastButton';
 import Sidebar from './Sidebar';
-// import DojoIcon from './uiComponents/DojoIcon';
+import DojoIcon from './uiComponents/DojoIcon';
 
 const drawerWidth = 240;
 
@@ -116,7 +115,7 @@ const NavBar = ({ children }) => {
               orientation="horizontal"
               timeout={theme.transitions.duration.enteringScreen}
             >
-              <BlackTooltip title="Open navigation panel">
+              <BlackTooltip disableInteractive title="Open navigation panel">
                 <ContrastIconButton
                   onClick={handleToggleDrawer}
                 >
@@ -124,22 +123,17 @@ const NavBar = ({ children }) => {
                 </ContrastIconButton>
               </BlackTooltip>
             </Collapse>
-            <BlackTooltip title="Dojo home">
-              <IconButton
+            <BlackTooltip disableInteractive title="Dojo home">
+              <ContrastIconButton
                 component={Link}
                 to="/"
-                size="small"
+                sx={{ color: 'black' }}
               >
-                <img
-                  src="/assets/Dojo_Logo_black.svg"
-                  alt="Dojo Logo"
-                  className={classes.dojoIcon}
-                />
-                {/*<DojoIcon className={classes.dojoIcon} color="primary"/>*/}
-              </IconButton>
+                <DojoIcon className={classes.dojoIcon} fontSize="large" color="inherit" />
+              </ContrastIconButton>
             </BlackTooltip>
             <span className={classes.spacer} />
-            <BlackTooltip title="View Dojo Docs (opens new tab)">
+            <BlackTooltip disableInteractive title="View Dojo Docs (opens new tab)">
               <ContrastIconButton
                 href="https://www.dojo-modeling.com"
                 target="_blank"
@@ -151,7 +145,7 @@ const NavBar = ({ children }) => {
                 <MenuBookIcon />
               </ContrastIconButton>
             </BlackTooltip>
-            <BlackTooltip title="View Dojo on Github (opens new tab)">
+            <BlackTooltip disableInteractive title="View Dojo on Github (opens new tab)">
               <ContrastIconButton
                 href="https://github.com/jataware/dojo"
                 target="_blank"

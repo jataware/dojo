@@ -71,7 +71,7 @@ const Sidebar = ({ open, handleDrawerClose }) => (
       variant="dense"
       sx={{ display: 'flex', justifyContent: 'flex-end' }}
     >
-      <BlackTooltip arrow title="Close navigation panel">
+      <BlackTooltip disableInteractive title="Close navigation panel">
         <ContrastIconButton onClick={handleDrawerClose} sx={{ color: 'black' }}>
           <ChevronLeftIcon />
         </ContrastIconButton>
