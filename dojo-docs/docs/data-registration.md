@@ -46,7 +46,7 @@ You can register a dataset by clicking the Register a Dataset link on the Dojo l
 
 This form captures metadata about your data. There is a demonstration below, as well as definitions for each field:
 
-![Data Registration](imgs/data_registration.png)
+![Data Registration](/img/data_registration.png)
 
 Model Overview Form Field Definitions:
 
@@ -77,7 +77,7 @@ Click the **Annotate** button at the top of each column to annotate it.
 
 <!-- Once you've annotated a column it will be highlighted in <span style="color:green">**green**</span>. -->
 
-![Pre-Annotation](imgs/pre-annotate.png)
+![Pre-Annotation](/img/pre-annotate.png)
 
 You will be asked for a `display name` and `description` for your dataset. Additionally you will be asked whether this column is either `Date`, `Geo`, or a `Feature`.
 
@@ -87,7 +87,7 @@ In the case of `Date` and `Geo` columns, they may be set to `primary`. It is imp
 
 In the below example, the user annotates the "Year" column.
 
-![Pre-Annotation](imgs/year.png)
+![Pre-Annotation](/img/year.png)
 
 For date columns, the format is automatically detected Date formats are defined using the [strftime](https://strftime.org/) reference. Please refer to it for questions about how to correct or update the date format for a column. Generally, our column analysis process can correctly assign a date format, but periodically the user must update or correct this with an appropriate formatter. For example `2020-02-01` would have the date format `%Y-%m-%d` but `Februrary 1, 2020` would be `%B %-d, %Y`.
 
@@ -97,7 +97,7 @@ For date columns, the format is automatically detected Date formats are defined 
 
 Some datasets have year, month and day split out into separate columns. In this case, the user may "build a date" by annotating any of the relevant fields and indicating that it is `part of a multi-column datetime object`.
 
-![Build a date](imgs/build-a-date.png)
+![Build a date](/img/build-a-date.png)
 
 The user can then select the relevant year, month and day columns as well as ensure they have correct date formatters.
 
@@ -107,7 +107,7 @@ Generally speaking, if a dataset has latitude and longitude in it we should anno
 
 However, latitude and longitude are not typically contained in the same column. So, we provide a mechanism for the user to associate a `latitude` with a `longitude` and vice versa. To do this, you indicate that the column `is part of a coordinate pair` and choose its partner from the dropdown.
 
-![Coordinate pair](imgs/coordinate-pair.png)
+![Coordinate pair](/img/coordinate-pair.png)
 
 ### Multi-part geographies
 
@@ -153,7 +153,7 @@ the *Preview* will display results similar to:
 
 Many datasets contain features that _qualify_ other features. For example, in a conflict/event dataset such as ACLED, you may have a category for the type of event. The primary feature associated with the event may be number of fatalities, while the category "qualifies" the number of fatalities.
 
-![Qualifiers](imgs/qualifiers.png)
+![Qualifiers](/img/qualifiers.png)
 
 To set `Event Type` as a _qualifier_ for `fatalities` the user should check the box indicating that `this field qualifies another`. The user should then select the relevant columns that the current feature qualifies. One field may qualify many features; in this case select all relevant features that the field of interest qualifies.
 
@@ -163,7 +163,7 @@ To set `Event Type` as a _qualifier_ for `fatalities` the user should check the 
 
 The "Add Alias" feature allows you to replace specific cell values within your selected column. This tool enhances `Feature` data - data that is not `Geo` or `Date` - to help provide more consistent representation after the dataset has been processed.
 
-![Add Alias](imgs/dataset-add-alias.png)
+![Add Alias](/img/dataset-add-alias.png)
 
 First, click the blue 'Add Alias' button. Then you'll see the Current and New value fields. Both fields are required to save the alias, or you'll have to remove the partially completed alias before you can save your annotation.
 
@@ -188,17 +188,17 @@ The feature annotation component includes a statistics tab. When expanded, this 
 
 These statistics are intended to provide the user the ability to perform quality checks of the data they are annotating.
 
-![Stats](imgs/stats.png)
+![Stats](/img/stats.png)
 
 ## Manual Data Transformations
 
 Before we process your dataset, you can pare down your data with our manual Data Transformations step. Some large datasets may take a long time in the processing step, so if some of the information contained is not relevant (e.g. the dataset covers 1990-2020, and you are only concerned with 2000-2020), you can use our transformation tools to do a few select adjustments to speed up the process. You can choose to do as many or as few of these as you'd like.
 
-![Transform data](imgs/transform-data.png)
+![Transform data](/img/transform-data.png)
 
 For each transformation, after you've made your selections, you'll be able to preview what effect your changes will have on the dataset with the Preview panel under the tool. Make your changes and the **Preview** button should become enabled (except in the case of Temporal Coverage, where you'll need to click 'Crop Coverage' before the Preview button will work).
 
-![Transformation preview](imgs/transformation-preview.png)
+![Transformation preview](/img/transformation-preview.png)
 
 None of the changes in the transformation panels will take effect until you click **NEXT** at the bottom of the page.
 
@@ -251,7 +251,7 @@ We then transform the dataset into a ready-to-use format. This process may take 
 
 After the dataset has been transformed a preview will be shown in the ready-to-use format. If the dataset is large, a random sample of 100 rows is taken to allow the user to spot check accuracy. All `features` are "stacked" on top of each other. Qualifiers are added as additional columns to the right.
 
-![Preview](imgs/preview.png)
+![Preview](/img/preview.png)
 
 During this step, we attempt to automatically normalize all place names to the [GADM standard](https://gadm.org/). If your dataset contained columns for things like country, admin 1, ISO codes, etc we perform entity resolution behind-the-scenes to ensure that the place name spelling matches GADM. This ensures consistent place naming for downstream data consumers.
 

@@ -4,11 +4,15 @@ title: Home
 has_toc: true
 ---
 
-<a href="https://github.com/dojo-modeling/dojo">
-    <img src="imgs/Dojo_Logo_profile.png" width="200px"/> 
-</a>
+import React from 'react';
+import DojoLogo from '@site/static//img/Dojo_Logo_profile.png';
 
-Dojo ([https://github.com/dojo-modeling](https://github.com/dojo-modeling)) is a suite of software tools that enables domain experts to do three things:
+<div style={{ display: 'flex', justifyContent: 'center' }}>
+  <img src={DojoLogo}  width="300px" height="300px" />
+</div>
+
+
+Dojo ([https://github.com/jataware/dojo](https://github.com/jataware/dojo)) is a suite of software tools that enables domain experts to do three things:
 
 ##### Register and Execute Models
 
@@ -22,7 +26,7 @@ Dojo provides a mechanism for analysts and domain experts to register and transf
 
 Dojo also includes a document uploader and explorer, which is a means to manage an organization’s knowledge and leverage it inside index model analysis workflows. Users can upload PDFs that are relevant to their analysis in order to surface them as evidence during the creation of an index model. Dojo offers a semantic search capability over these documents which unlocks the ability to discover information across thousands of PDF documents with ease.
 
-![Landing Page](imgs/landing-page.png)
+![Landing Page](/img/landing-page.png)
 
 ## Contents
 
@@ -36,11 +40,7 @@ Dojo also includes a document uploader and explorer, which is a means to manage 
 
 The model registration workflow is designed to provide domain modelers with a friendly and familiar environment from which to install, setup, and execute their model. Throughout this process, the modeler is queried for key information about model metadata and how to parameterize the model. The modeler also annotates model outputs so that they can be automatically transformed into a ready-to-use and well understood format each time the model is executed. The final step of the model registration workflow is the publication of a working "black box" model Docker container to Dockerhub. These containers can run the model with a set of explicit directives; however the Dojo modeling engine is naive to the inner workings of the model container. 
 
-<p align="center">
-    <img src="imgs/containerization_environment_medium.png" width="100%" title="Dojo Containerization Environment"/> 
-    <br/>
-    <i>Dojo Containerization Environment</i>
-</p>
+![Dojo Containerization Environment](/img/containerization_environment_medium.png)
 
 ## Data Registration
 
@@ -50,11 +50,7 @@ Through this process, Dojo captures metadata about the dataset's provenance as w
 
 Normalizing data and model outputs to a consistent Geotemporal format facilitates rapid inter-model comparison and visualization via platforms such as [Uncharted Software's](https://uncharted.software/) Causemos tool.
 
-<p align="center">
-    <img src="imgs/causemos_viz.png" width="400" title="Causemos Modeling Platform"/> 
-    <br/>
-    <i>Uncharted's Causemos Platform</i>
-</p>
+![Uncharted's Causemos Platform](/img/causemos_viz.png)
 
 ## Model Execution
 

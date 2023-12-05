@@ -6,7 +6,7 @@ parent: Data Modeling
 
 # Aggregation Methods for Data Modeling
 
-![Aggregation Functions](../imgs/data-modeling-aggregation-functions.png)
+![Aggregation Functions](/img/data-modeling-aggregation-functions.png)
 
 In the Data Modeling [Load Nodes](../data-modeling#load-node), regridding methods need to be selected if the data is going to be geographically and/or temporally regridded. This is the list of options available in both the Geo and Time Aggregation dropdowns:
 

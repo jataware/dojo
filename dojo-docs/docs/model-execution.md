@@ -15,7 +15,7 @@ To start a run, navigate to the summary page for the model and select the **Crea
 A form pre-populated with the default parameters will pop up. After you have made the desired modifications
 to the parameters, the model run can be submitted with the button on the bottom left.
 
-![Create Run](imgs/model-run-form.png)
+![Create Run](/img/model-run-form.png)
 
 ## CLI Components
 This library enables users to execute domain models locally.
@@ -315,7 +315,7 @@ Runs the selected model used the specified model parameters.
 - `--config` : name of configuation file; defaults to *.config*
 - `--params` : model parameters in JSON format
 - `--paramsfile` : name of file of model parameters in JSON format; defaults to *params_template.json*.
-- `--outputdir` : folder specified for model output files; defaults to  */runs/{model}/{version}/{datetime}* e.g. */dojo-cli/runs/CHIRTSmax-Monthly/17bf37e3-3785-43be-a2a3-fec6add03376/20210403110420*
+<!-- - `--outputdir` : folder specified for model output files; defaults to  */runs/{model}/{version}/{datetime}* e.g. */dojo-cli/runs/CHIRTSmax-Monthly/17bf37e3-3785-43be-a2a3-fec6add03376/20210403110420* -->
 - `--version` : version of the model if `--model` is not passed
 - `--attached` : True or False, defaults to True. 
   - If `attached`=`True` or is not passed, the cli will wait for the model to run in the container and then remove the container. 

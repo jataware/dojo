@@ -43,7 +43,7 @@ To get started, visit [https://dojo-modeling.com](https://dojo-modeling.com/). P
 
 To begin the process, Dojo captures metadata about each model and its maintainer. It's important to be as thorough as possible to ensure that the end-user can understand at a high-level what each model does, how it does it, and what it produces.
 
-![Model Registration](imgs/registration-1-model-overview.png)
+![Model Registration](/img/registration-1-model-overview.png)
 
 Key definitions:
 
@@ -54,7 +54,7 @@ Key definitions:
 
 The next page captures general metadata about the model and its maintainer. There is a short demo below, as well as definitions for each field:
 
-![Model Specifics](imgs/registration-2-model-details.png)
+![Model Specifics](/img/registration-2-model-details.png)
 
 Key definitions:
 
@@ -71,7 +71,7 @@ Next, modelers provide optional information about the model's geographic coverag
 
 Steps to add a geographic coverage by name:
 
-![Add Region by Name](imgs/registration-3.1-model-region-name.png)
+![Add Region by Name](/img/registration-3.1-model-region-name.png)
 
 1. Click on `ADD REGIONS BY NAME`
 2. In the search box, enter a place name, country, or any admin-level 1 through 3.
@@ -79,8 +79,8 @@ Steps to add a geographic coverage by name:
 4. Your selection will appear in the search box: **click on `ADD REGION`** to add it to the `Selected Regions`.
 5. Repeat the process to add any other geographic areas.
 
-![Add Region by Bounding Box](imgs/registration-3.3-model-region-coords-search.png)
-![Mapped Region by Bounding Box](imgs/registration-3.4-model-region-coords-added.png)
+![Add Region by Bounding Box](/img/registration-3.3-model-region-coords-search.png)
+![Mapped Region by Bounding Box](/img/registration-3.4-model-region-coords-added.png)
 
 Steps to add a geographic coverage by building a bounding box:
 
@@ -102,11 +102,11 @@ Once you have added your geographic areas, click `SUBMIT MODEL` to move the next
 
 To launch the model execution environment, you will need to select a base image from the available drop-down menu. You may also provide the ID of an existing Debian (Ubuntu) based Docker image on Dockerhub to use as your starting point.
 
-![Select Worker](imgs/provision-select.png)
+![Select Worker](/img/provision-select.png)
 
 After you've selected an image image, clicking `LAUNCH` will bring you to the `provisioning` page, where you'll wait to be redirected to the terminal once your Docker image has been loaded.
 
-![Provisioning](imgs/provisioning.png)
+![Provisioning](/img/provisioning.png)
 
 ### Building your model
 
@@ -121,14 +121,14 @@ You will build your model image inside the model execution environment (a Docker
 ### Dojo Commands:
 Along with the Linux terminal commands you'll be able to execute in the virtual terminal as you configure your model, Dojo has a number of custom commands to help you register your model. You can type `dojo` at any time while in the terminal to bring up the helper text in the terminal, or view the [command cheatsheet](details/cheatsheet).
 
-![Dojo Command](imgs/dojo-command.png)
+![Dojo Command](/img/dojo-command.png)
 
 ### Configuration File Annotation
 If your model uses configuration files to set parameters or tunable knobs, you will need to annotate them in order to expose these parameters to Dojo end-users. Once the configuration file parameter templater tool is launched, you can annotate each parameter and provide metadata.
 
 With Dojo, you can annotate any plain text/ascii configuration file, including `.txt`, `.yaml`, `.json`, `.xml`, etc. 
 
-![Parameter Templater Tool](imgs/templater-highlight.png)
+![Parameter Templater Tool](/img/templater-highlight.png)
 
 To launch the parameter templater tool, run (replace `<path_to_config_file.json>` with the appropriate file path and name):
 
@@ -149,15 +149,15 @@ To launch the parameter templater tool, run (replace `<path_to_config_file.json>
  - `Save`: Select save when complete. You can also select cancel should you no longer want to annotate the parameter and your updates will not be saved.
  - `Delete Parameter`: If you are editing a previously saved parameter, there will also be an option to delete the parameter. This option will not appear unless the parameter has already been saved to the config template.
 
-![Templater Editor Open](imgs/templater-annotation-panel.png)
+![Templater Editor Open](/img/templater-annotation-panel.png)
 
  You can also edit or move existing annotated parameters by hovering your mouse over the highlight and clicking on one of the two buttons.
 
-![Templater Tooltip](imgs/templater-tooltip.png)
+![Templater Tooltip](/img/templater-tooltip.png)
 
 Once you have parameters saved to your configuration file, you can view a list of all of your current parameters by clicking the `View All Parameters` button.
 
- ![View All Parameters](imgs/templater-all-parameters.png)
+ ![View All Parameters](/img/templater-all-parameters.png)
 
 Repeat the above process for every applicable parameter value in your configuration file. Once complete, select save in the upper right-hand corner; this will save your annotated configuration file in Dojo. You may annotate multiple configuration files.
 
@@ -166,15 +166,15 @@ Repeat the above process for every applicable parameter value in your configurat
 ### Directive Annotation
 On the right-hand side of the terminal there is a section labeled 'Shell History' where your commands will appear as you enter them. Most entries will have a button to their right reading `MARK AS DIRECTIVE`. Click the button next to the appropriate model run command to launch an annotation window. Annotating the directive allows you to expose and describe parameters to the end-user.
 
-![Directive Select](imgs/terminal-selecting-directive.png)
+![Directive Select](/img/terminal-selecting-directive.png)
 
 The same process applies to directive annotations as applied to [configuration annotation](#configuration-file-annotation).
 
-![Directive With Parameter](imgs/directive-with-parameter.png)
+![Directive With Parameter](/img/directive-with-parameter.png)
 
 Repeat the annotation process for every applicable parameter value in your model execution directive. Once complete, select save in the upper right-hand corner; this will save your annotated directive in Dojo. It will then appear in the Model Execution Directive panel on the right side of the terminal and the left of the model summary page.
 
-![Terminal with Directive](imgs/terminal-with-directive.png)
+![Terminal with Directive](/img/terminal-with-directive.png)
 
 > Note: your model can have only one directive. If running your model is a multi-step process, you must combine those steps into a single executable script or command.
 
@@ -194,7 +194,7 @@ For a detailed description on how to do this, please go to [Data Registration](.
 ### Editing or Deleting Existing Dojo Files
 Under the Shell History panel on the right hand side of the terminal, you'll find all your Dojo file metadata listed under three tabs (Configs, Outputs, and Accessories). If you want to edit (note: edit not available for Accessories) or delete any of these entries, you can click the pencil or trash icons on the relevant file card. You can also do this on the Summary page, which comes after you've clicked the 'Save and Continue' button at the bottom of this page.
 
-![Terminal Edit File](imgs/terminal-edit-file.png)
+![Terminal Edit File](/img/terminal-edit-file.png)
 
 ### Completing the Registration
 When you have completed the above steps, you are ready to publish your model image to DockerHub. This image will be used downstream from the model registration process and allow end-users to change exposed parameters, run the updated model, and then inspect and conduct analyses with the results.
@@ -209,7 +209,7 @@ As a recap, before publishing your image, you should have:
 6. Annotated the model output file(s) to define the metadata, geocode, and transform your output to a Geotemporal dataset.
 7. Defined the location / directory of your output file(s). This is required in order to mount your model output and complete the geocoding and geotemporal transform of the results.
 
-![Terminal Complete](imgs/terminal-complete.png)
+![Terminal Complete](/img/terminal-complete.png)
 
 If you have done all the above, you are ready to review your image for publication. Select `SAVE AND CONTINUE`.
 
@@ -223,15 +223,15 @@ This will take you to the Model Summary page, where you can review the model met
 
 When you arrive on the Summary page, there will be an upload bar. This is your model's changes being saved to Dockerhub. Please do not close the browser while the upload is in progress. However, **you must publish your model** to complete the registration process.
 
-![Summary Uploading](imgs/summary-uploading.png)
+![Summary Uploading](/img/summary-uploading.png)
 
 Once the upload is complete and you have reviewed your model, **click the blue PUBLISH button** in the lower right to publish your model. This will open a dialog where you will have an opportunity to add a commit message. Any time you make changes to your model in Dojo, you will need to publish it as a a new version, so commit messages can be helpful to keep track of the changes from version to version.
 
-![Publish Dialog](imgs/publish-dialog.png)
+![Publish Dialog](/img/publish-dialog.png)
 
 After successfully publishing, you will see a link to view your model on Causemos, and your model run on Dojo will be terminated. If you want to make any further changes, you will need to make a new version and publish it again.
 
-![Publish Confirmed](imgs/publish-confirmed.png)
+![Publish Confirmed](/img/publish-confirmed.png)
 
 You can also view your model on [Dockerhub](https://hub.docker.com/repository/docker/jataware/dojo-publish). You may need to expand the tags section.
 
