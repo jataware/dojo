@@ -69,13 +69,13 @@ Once you have uploaded your dataset, Dojo analyzes it to determine whether your 
 
 ## Annotating your dataset
 
-<!-- Next, you will be shown a sample of your dataset. Columns highlighted in <span style="color:blue">**blue**</span> represent those which had a detected time or location feature. -->
+Next, you will be shown a sample of your dataset. Columns highlighted in <span style={{ color: "rgb(51, 114, 136)" }}>**blue**</span> represent those which had a detected time or location feature.
 
 Click the **Annotate** button at the top of each column to annotate it.
 
 > Note: you should only annotate columns that you wish to retain in the final, transformed dataset.
 
-<!-- Once you've annotated a column it will be highlighted in <span style="color:green">**green**</span>. -->
+Once you've annotated a column it will be highlighted in <span style={{ color: "rgb(102, 187, 106)" }}>**green**</span>.
 
 ![Pre-Annotation](/img/pre-annotate.png)
 
