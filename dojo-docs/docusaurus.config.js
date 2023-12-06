@@ -22,6 +22,8 @@ const config = {
   // If you aren't using GitHub pages, you don't need these.
   organizationName: 'jataware', // Usually your GitHub org/user name.
   projectName: 'dojo', // Usually your repo name.
+  // use a separate branch to control when exactly we deploy the docs
+  deploymentBranch: 'gh-pages',
 
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
