@@ -31,7 +31,7 @@ const sidebars = {
       {
         type: 'doc',
         id: 'index',
-        label: 'Home',
+        label: 'Intro to Dojo',
       },
       {
         type: 'category',
