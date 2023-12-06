@@ -5,30 +5,7 @@ has_children: true
 has_toc: true
 ---
 
-<!-- <style>
-  .iframe-container {
-		text-align:center;
-  		width:100%;
-  }
-</style> -->
-
 # Model Registration
-
-## Contents
-
-- [Overview](#overview)
-- [Model Metadata and Provenance](#model-metadata-and-provenance)
-- [Containerization and Execution](#containerization-and-execution)
-  - [Building your model](#building-your-model)
-  - [Dojo Commands](#dojo-commands)
-  - [Configuration File Annotation](#configuration-file-annotation)
-  - [Directive Annotation](#directive-annotation)
-  - [Editing or Deleting Files](#editing-or-deleting-existing-dojo-files)
-  - [Output File Annotation](#output-file-annotation)
-  - [Completing the Registration](#completing-the-registration)
-  - [Summary Page and Publishing](#summary-page-and-publishing)
-- [Video Walkthrough](#video-walkthrough)
-
 
 ## Overview
 There are two main activities associated with registering a model to Dojo:

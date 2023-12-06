@@ -5,7 +5,7 @@ parent: Model Registration
 ---
 
 # Uploading Large Files
-<!-- Some models may require uploading large files into the containerization environment. To do this, we provide access to Amazon Web Service's Simple Cloud Storage (AWS S3). Accessing the Dojo S3 is easy, but it does require an AWS access key and secret key. Please reach out to <dojo@jataware.com> to request access.  -->
+Some models may require uploading large files into the containerization environment. To do this, we provide access to Amazon Web Service's Simple Cloud Storage (AWS S3). Accessing the Dojo S3 is easy, but it does require an AWS access key and secret key. Please reach out to dojo@jataware.com to request access.
 
 There are numerous ways to upload files to S3. We will describe below the two most common methods:
 
@@ -27,14 +27,19 @@ Now, to upload a file you can run:
 aws s3 cp my_large_file.csv s3://dojo-modeling-data/
 ```
 
-<!-- If you have created an AWS profile locally you may append ` --profile=dojo-modeling` to the above command. Once you've received confirmation that the file is uploaded, it will be available **to the public** at <https://dojo-modeling-data.s3.amazonaws.com/my_large_file.csv>.  -->
-
-> **WARNING**: all files uploaded to the `dojo-modeling-data` S3 bucket are public by default.
+If you have created an AWS profile locally you may append ` --profile=dojo-modeling` to the above command. Once you've received confirmation that the file is uploaded, it will be available **to the public** at:
+```
+https://dojo-modeling-data.s3.amazonaws.com/my_large_file.csv
+```
+:::warning
+All files uploaded to the `dojo-modeling-data` S3 bucket are public by default.
+:::
 
 
 ## Uploading files with `boto3`
 
 If you are a Python user, you may wish to upload large files using Python's `boto3` library. First install it with `pip3 install boto3`. Then, in a Python terminal run:
+
 
 ```
 import boto3
@@ -48,7 +53,7 @@ s3_client = boto3.client(
 s3_client.upload_file('my_large_file.csv','dojo-modeling-data','my_large_file.csv')
 ```
 
-<!-- You should now be able to download the file from <https://dojo-modeling-data.s3.amazonaws.com/my_large_file.csv>. -->
+You should now be able to download the file from `https://dojo-modeling-data.s3.amazonaws.com/my_large_file.csv`.
 
 
 ## Downloading your large file

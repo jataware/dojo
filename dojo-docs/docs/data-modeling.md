@@ -7,20 +7,6 @@ has_toc: true
 
 # Data Modeling
 
-## Contents
-
-- [Selecting NetCDFs](#selecting-netCDFs)
-- [Building a Graph](#building-a-graph)
-- [Nodes](#nodes)
-  - [Load Node](#load-node)
-  - [Threshold Node](#threshold-node)
-  - [Join Node](#join-node)
-  - [Filter By Country Node](#filter-by-country-node)
-  - [Reduce By Node](#reduce-by-node)
-  - [Save Node](#save-node)
-- [Manual Resolution](#manual-resolution)
-- [Processing](#processing)
-
 ## Introduction
 
 With Dojo's Data Modeling tool, users can combine NetCDF datasets together through a simple visual programming interface to create new and insightful derived datasets.
@@ -112,7 +98,9 @@ With this node, you can filter the data coming out of your selected features by 
 
 This node can be used to aggregate a dataset across one or more dimensions. The input dataset will be `sum-reduced` along the dimensions specified by the checkboxes. For example, say you have monthly population data gridded to `0.1x0.1` lat/lon, and you would like to produce a single population curve over time. Using the Reduce By Node, selecting `lat` and `lon` will sum up all of the values for each time slice in the input dataset, and produce a new dataset that is just a single aggregated curve over time.
 
-> Note: at present, Reduce By Nodes are hardcoded with the options `lat`, `lon`, `time`, and `country`, regardless of what dimensions your data has. Take care to only select dimensions that already exist on your dataset.
+:::tip
+At present, Reduce By Nodes are hardcoded with the options `lat`, `lon`, `time`, and `country`, regardless of what dimensions your data has. Take care to only select dimensions that already exist on your dataset.
+:::
 
 ### Save Node
 ![Save Node](/img/data-modeling-save-node.png)
@@ -126,9 +114,13 @@ The final step in a graph is adding a Save Node. The Save Node has input text fi
 
 Below the list of nodes on the right side of the screen, you'll find two inputs where you can manually set your Geo and/or Time Resolution. You can use these instead of selecting one of your `Load Node` features to be Geo/Time Resolution if you want to set the resolution by hand. If you set it here, you won't be able to select any of the same type of resolution elsewhere until you clear it.
 
-> Note: Selecting both a Geo and a Temporal Resolution is required before you can [process](#processing) your graph. These can be set manually in the sidebar, in the Load Nodes, or one of each.
+:::tip
+Selecting both a Geo and a Temporal Resolution is required before you can [process](#processing) your graph. These can be set manually in the sidebar, in the Load Nodes, or one of each.
+:::
 
 ## Processing
 Once you're done setting up your graph, click the `PROCESS` button to start running the backend process. When it's complete, you'll see a list of the datasets that the process output. 
 
-> Note: It is important to make sure you have at least one Load Node with a feature selected. Also ensure that all the nodes in your graph are connected before hitting process.
+:::tip
+It is important to make sure you have at least one Load Node with a feature selected. Also ensure that all the nodes in your graph are connected before hitting process.
+:::

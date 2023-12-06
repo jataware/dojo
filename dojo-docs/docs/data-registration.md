@@ -5,29 +5,7 @@ has_children: true
 has_toc: true
 ---
 
-<!-- <style>
-  .iframe-container {
-		text-align:center;
-  		width:100%;
-  }
-</style> -->
-
 # Data Registration
-
-## Contents
-
-- [Data Registration](#data-registration)
-  - [Contents](#contents)
-  - [Getting started](#getting-started)
-    - [Metadata capture](#metadata-capture)
-  - [Geo and time inference](#geo-and-time-inference)
-  - [Annotating your dataset](#annotating-your-dataset)
-    - [Date formatting](#date-formatting)
-    - [Build a date](#build-a-date)
-    - [Coordinate pairs](#coordinate-pairs)
-    - [Multi-part geographies](#multi-part-geographies)
-    - [Qualifiers](#qualifiers)
-  - [Transforming the dataset](#transforming-the-dataset)
 
 ## Getting started
 
@@ -40,7 +18,9 @@ The data registration workflow currently supports 4 data types:
 
 You can register a dataset by clicking the Register a Dataset link on the Dojo landing page or above the list of all existing datasets. Please reach out to [dojo@jataware.com](mailto:dojo@jataware.com) for credentials or help with the application. From there you will be asked for basic metadata about your dataset.
 
-> Please provide as much information as possible throughout the data registration process to ensure that sufficient information is available to end-users of your dataset.
+:::note
+Please provide as much information as possible throughout the data registration process to ensure that sufficient information is available to end-users of your dataset.
+:::
 
 ### Metadata capture
 
@@ -73,7 +53,9 @@ Next, you will be shown a sample of your dataset. Columns highlighted in <span s
 
 Click the **Annotate** button at the top of each column to annotate it.
 
-> Note: you should only annotate columns that you wish to retain in the final, transformed dataset.
+:::tip
+You should only annotate columns that you wish to retain in the final, transformed dataset.
+:::
 
 Once you've annotated a column it will be highlighted in <span style={{ color: "rgb(102, 187, 106)" }}>**green**</span>.
 
@@ -91,7 +73,7 @@ In the below example, the user annotates the "Year" column.
 
 For date columns, the format is automatically detected Date formats are defined using the [strftime](https://strftime.org/) reference. Please refer to it for questions about how to correct or update the date format for a column. Generally, our column analysis process can correctly assign a date format, but periodically the user must update or correct this with an appropriate formatter. For example `2020-02-01` would have the date format `%Y-%m-%d` but `Februrary 1, 2020` would be `%B %-d, %Y`.
 
-<!-- If the date formatter is incorrect the column preview will turn <span style="color:red">**red**</span> until the user has corrected it. -->
+If the date formatter is incorrect the column preview will turn <span style={{ color: "#d32f2f" }}>**red**</span> until the user has corrected it.
 
 ### Build a date
 
@@ -157,7 +139,9 @@ Many datasets contain features that _qualify_ other features. For example, in a 
 
 To set `Event Type` as a _qualifier_ for `fatalities` the user should check the box indicating that `this field qualifies another`. The user should then select the relevant columns that the current feature qualifies. One field may qualify many features; in this case select all relevant features that the field of interest qualifies.
 
-> Note: you should only _qualify_ other features, not `Geo` or `Date` information since those are inherently dataset qualifiers. This avoids "qualifying a qualifier."
+:::tip
+You should only _qualify_ other features, not `Geo` or `Date` information since those are inherently dataset qualifiers. This avoids "qualifying a qualifier."
+:::
 
 ### Add Alias
 

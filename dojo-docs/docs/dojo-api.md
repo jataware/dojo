@@ -8,18 +8,6 @@ has_toc: true
 
 This document outlines how to interact with the Dojo API to fetch models, execute models, and fetch model runs.
 
-
-## Contents
-
-- [The Dojo API](#the-dojo-api)
-  - [Contents](#contents)
-  - [Model Discovery](#model-discovery)
-  - [Model Execution](#model-execution)
-  - [Retrieving Model Runs](#retrieving-model-runs)
-  - [Debugging Model Runs](#debugging-model-runs)
-  - [Searching for Model Runs](#searching-for-model-runs)
-  - [Working with Model Results](#working-with-model-results)
-
 ## Model Discovery
 
 You can search Dojo for models using the `GET /models`. For example, to find models related to `crops` you would send:
