@@ -166,7 +166,7 @@ To launch the output file annotation tool, run (replace `<path_to_output_file.cs
 dojo annotate <path_to_output_file.csv>
 ```
 
-For a detailed description on how to do this, please go to [Data Registration](./data-registration.md). Some of the form elements differ slightly from the data registration workflow, but the annotation process remains the same.
+For a detailed description on how to do this, please go to [Data Registration](./data-registration.mdx). Some of the form elements differ slightly from the data registration workflow, but the annotation process remains the same.
 
 ### Editing or Deleting Existing Dojo Files
 Under the Shell History panel on the right hand side of the terminal, you'll find all your Dojo file metadata listed under three tabs (Configs, Outputs, and Accessories). If you want to edit (note: edit not available for Accessories) or delete any of these entries, you can click the pencil or trash icons on the relevant file card. You can also do this on the Summary page, which comes after you've clicked the 'Save and Continue' button at the bottom of this page.
