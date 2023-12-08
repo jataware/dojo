@@ -34,7 +34,7 @@ The fixed columns are `[timestamp, country, admin1, admin2, admin3, lat, lng, fe
 
 Converting indicator datasets and model output is **THE GOAL** of the Dojo data pipeline. The above example is meant to illuminate in more detail the **target** format, but model output and indicator datasets are not expected to start in this format. 
 
-This example is available in [gzipped parquet here](../data/geotemporal_example_format.parquet.gzip).
+This example is available in [gzipped parquet here](/data/geotemporal_example_format.parquet.gzip).
 
 ### Date ranges
 

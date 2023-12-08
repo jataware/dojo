@@ -47,9 +47,9 @@ Dojo-cli can be installed via `pip`:
 pip install dojo-cli
 ```
 
-## Demo script
-
-A text file demonstrating the commands for dojo-cli installation and use is located at [/docs/demo_script.txt](/docs/demo_script.txt).
+<!-- ## Demo script
+TODO: did this ever exist? I can't find it in any old commits - ag
+A text file demonstrating the commands for dojo-cli installation and use is located at [/docs/demo_script.txt](/docs/demo_script.txt). -->
 
 ## Running models attached vs. detached
 
