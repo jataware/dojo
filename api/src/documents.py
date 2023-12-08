@@ -622,12 +622,12 @@ def enqueue_document_paragraphs_processing(document_id, s3_url):
         "s3_url": s3_url
     }
 
-    job = q.enqueue_call(
+    q.enqueue_call(
         func=job_string, args=[context], kwargs={}, job_id=job_id
     )
 
 
-# TODO should we only allow 1 file per document id? replace? cancel/error?
+# NOTE TODO should we only allow 1 file per document id? replace? cancel/error?
 @router.post("/documents/{document_id}/upload")
 def upload_file(
     document_id: str,

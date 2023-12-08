@@ -2,66 +2,125 @@ from base_annotation import BaseProcessor
 from elasticsearch import Elasticsearch
 import os
 import time
-from pypdf import PdfReader
-import ocrmypdf
-from typing import List, Tuple
+from typing import List
 import numpy as np
 from utils import get_rawfile
-from embedder_engine import embedder
-
+from abc import ABC, abstractmethod
+import tiktoken
+import re
+import subprocess
+from pathlib import Path
+from openai.embeddings_utils import get_embeddings
 from settings import settings
 
 es_url = settings.ELASTICSEARCH_URL
 es = Elasticsearch(es_url)
 
 
-def extract_text(path: str) -> List[Tuple[str, int]]:
-    work_path = 'tmp.pdf'
-    ocrmypdf.ocr(path, work_path, language='eng', progress_bar=False, redo_ocr=True, sidecar='tmp.txt')
-    reader = PdfReader(work_path)
-    pages = [page.extract_text() for page in reader.pages]
+PARAGRAPHS_INDEX = "paragraphs"
 
-    # create a map from the line number to the page number
-    num_lines = np.array([len(page.splitlines()) for page in pages] + [float(9999999)]) # lines on each page
-    cumulative_line_counts = np.cumsum(num_lines) # line number to page number
-    line_to_page = lambda line_num: np.argmax(cumulative_line_counts >= line_num)
 
-    text = '\n'.join(pages)
+class Embedder(ABC):
+    """abstract class for embedding a list of paragraphs into a matrix"""
+    @abstractmethod
+    def embed_paragraphs(self, paragraphs: List[str]) -> np.ndarray: ...
 
-    # Combine any adjacent lines with more than 5 words (hacky way to combine paragraphs)
-    lines = text.splitlines()
-    paragraphs = []
-    paragraph = []
-    for line_number, line in enumerate(lines):
-        page_number = line_to_page(line_number)
-        line = line.strip()
-        if 5 < len(line.split()): # < 50: # if the line has more than 5 words, but less than 100, it's probably a line of a larger paragraph
-            paragraph.append((line, page_number))
+
+class Extractor(ABC):
+    """abstract class for extracting text from a pdf file and splitting into paragraphs"""
+    @abstractmethod
+    def extract_pdf_text(self, path: Path) -> str: ...
+
+    @abstractmethod
+    def convert_to_paragraphs(self, text: str) -> List[str]: ...
+
+
+class AdaEmbedder(Embedder):
+    def __init__(self):
+        self.max_tokens = 8192
+        self.num_feature = 1536
+        self.tokenizer = tiktoken.encoding_for_model("text-embedding-ada-002")
+
+    def embed_paragraphs(self, paragraphs: List[str]) -> np.ndarray:
+        """embed a list of paragraphs into a list of vectors. Output size is (num_paragraphs, num_features)"""
+
+        # before embedding, truncate any paragraphs that are too many tokens
+        truncated_paragraphs = [self.tokenizer.decode(self.tokenizer.encode(p)[:self.max_tokens]) for p in paragraphs]
+
+        if len(truncated_paragraphs) == 0:
+            paragraph_embeddings = np.zeros((0, self.num_feature))
         else:
-            paragraph = [p for p in paragraph if p[0]] # filter out empty strings
-            paragraph_txt = ' '.join([p[0] for p in paragraph])
-            paragraph_pages = {p[1] for p in paragraph}
-            if paragraph_txt:
-                paragraphs.append((paragraph_txt, paragraph_pages))
-            if line:
-                paragraphs.append((line, {page_number}))
-            paragraph = []
+            paragraph_embeddings = np.array(get_embeddings(truncated_paragraphs, engine="text-embedding-ada-002"))
 
-    if paragraph:
-        paragraph_txt = ' '.join([p[0] for p in paragraph])
-        paragraph_pages = {p[1] for p in paragraph}
-        if paragraph_txt:
-            paragraphs.append((paragraph_txt, paragraph_pages))
+        return paragraph_embeddings
 
 
-    # Take the smallest page number from the pages that the paragraph is on
-    paragraphs = [(paragraph, min(pages)) for paragraph, pages in paragraphs]
+class NougatExtractor(Extractor):
+    def __init__(self, batch_size: int = 4, min_words: int = 25):
+        """
+        Extract text from a pdf file using nougat-ocr.
 
-    return paragraphs
+        Args:
+            batch_size (int, optional): batch size for nougat-ocr. Defaults to 4.
+            min_words (int, optional): minimum number of words for a paragraph to be included in the output. Defaults to 25.
+        """
+        self.batch_size = batch_size
+        self.min_words = min_words
+
+    def extract_pdf_text(self, path: Path, log = None) -> str:
+        """
+        extract text from a pdf file using nougat-ocr
+
+        Args:
+            path (Path): path to the pdf file
+            log (_FILE, optional): file object to write stdout and stderr to. Defaults to None (i.e. output to stdout/stderr).
+        """
+        assert path.exists(), f"file {path} does not exist"
+        assert path.suffix == '.pdf', f"file {path} is not a pdf"
+        result = subprocess.run(['nougat', str(path), '-o', str(path.parent), '-b', str(self.batch_size)], stdout=log, stderr=log)
+        assert result.returncode == 0, f"error extracting text from {path}"
+        text = path.with_suffix('.mmd').read_text()
+        path.with_suffix('.mmd').unlink()
+        return text
+
+    def convert_to_paragraphs(self, text: str) -> List[str]:
+        """break a string into paragraphs, filtering out ones that should not be used for semantic search"""
+        paragraph_filter = lambda p: not NougatExtractor.is_too_short(p, self.min_words) and not NougatExtractor.is_citation(p)
+        paragraphs = list(filter(paragraph_filter, text.split('\n\n')))
+        return paragraphs
+
+    @staticmethod
+    def is_too_short(paragraph: str, min_words: int) -> bool:
+        """paragraph filter for checking if a paragraph is too short (by word count)"""
+        return len(paragraph.split()) < min_words
+
+    @staticmethod
+    def is_citation(paragraph: str) -> bool:
+        """paragraph filter for checking if a paragraph is a citation section"""
+        patterns = [
+            r"\*.*\(\d{4}\).*:.*\.",
+            r"\*\s\[[^\]]+\d{4}\].*\.",
+            r"\*\s\[[^\]]*\][^(\d{4})]*\d{4}.*",
+            r"\*\s.*\d{4}.*\.\s(?:http|www)\S+",
+            r"\*.*\d{4}\.\s[_\*]?[A-Za-z0-9][^\*]*?[_\*]?\.\s.*?\.",
+        ]
+        pattern = f'({")|(".join(patterns)})'
+        lines = paragraph.split('\n')
+
+        # count the number of lines that match the pattern
+        num_matches = sum([1 for line in lines if re.match(pattern, line)])
+
+        return num_matches > len(lines)/2
 
 
 def current_milli_time():
     return round(time.time() * 1000)
+
+
+BATCH_SIZE = 2
+extractor = NougatExtractor(batch_size=BATCH_SIZE)
+embedder = AdaEmbedder()
+
 
 class ParagraphProcessor(BaseProcessor):
     @staticmethod
@@ -73,8 +132,8 @@ class ParagraphProcessor(BaseProcessor):
         # 1. Download pdf from S3
         raw_file = get_rawfile(path=s3_url)
 
-        # 2 save file to disk... TODO: check if we can use the pdf lib with raw binary file instead
-        location = f"/documents"
+        # 2 save file to disk
+        location = "/documents"
         if not os.path.exists(location):
             os.makedirs(location)
 
@@ -82,24 +141,26 @@ class ParagraphProcessor(BaseProcessor):
 
         with open(new_file_path, "wb") as output_file:
             output_file.write(raw_file.read())
+            output_file.close()
 
         # 2. Extract text for pdf using local path from download above
-        paragraphs = extract_text(new_file_path)
+        text = extractor.extract_pdf_text(Path(new_file_path))
+        paragraphs = extractor.convert_to_paragraphs(text)
+
+        embeddings = embedder.embed_paragraphs(paragraphs)
 
         # 3. For each paragraph, calculate embeddings and index text + embedding
-        i = 0
-        for text, p_no in paragraphs:
+        for p_no, text in enumerate(paragraphs):
             p_body = {
                 "text": text,
-                "embeddings": embedder.embed([text])[0],
+                "embeddings": embeddings[p_no],
                 "document_id": document_id,
                 "length": len(text),
-                "index": i,
-                "page_no": p_no + 1 # indexes at 0, pdf pages make more sense starting from 1
+                "index": p_no,
+                "page_no": p_no + 1  # indexes at 0, pdf pages make more sense starting from 1
             }
 
-            es.index(index="document_paragraphs", body=p_body, id=f"{document_id}-{i}")
-            i += 1
+            es.index(index=PARAGRAPHS_INDEX, body=p_body, id=f"{document_id}-{p_no}")
 
         # 4. Updated processed_at time on document
         es.update(index="documents", body={

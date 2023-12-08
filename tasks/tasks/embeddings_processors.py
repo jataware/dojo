@@ -1,7 +1,7 @@
 import logging
 from base_annotation import BaseProcessor
 from elasticsearch import Elasticsearch
-import os
+# import os
 from settings import settings
 from embedder_engine import embedder
 

@@ -176,3 +176,7 @@ api/upload-semantic-search/data/*
 api/upload-semantic-search/weights/*
 
 .testmondata
+
+documents/*.npy
+documents/*.pdf
+documents/*.mmd
