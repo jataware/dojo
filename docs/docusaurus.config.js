@@ -24,6 +24,7 @@ const config = {
   projectName: 'dojo', // Usually your repo name.
   // use a separate branch to control when exactly we deploy the docs
   deploymentBranch: 'gh-pages',
+  trailingSlash: false,
 
   onBrokenLinks: 'throw',
   onBrokenMarkdownLinks: 'warn',
