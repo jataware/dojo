@@ -27,7 +27,7 @@ const aggList = aggregation_functions.map((res) => ({ value: res, label: res }))
 const AggregationLabel = ({ text }) => (
   <div>
     {text}
-    <InlineDocIconLink link="/details/aggregation-methods.html" title="aggregation function" />
+    <InlineDocIconLink link="/data-modeling/aggregation-methods.html" title="aggregation function" />
   </div>
 );
 
