@@ -27,11 +27,9 @@ These steps are described below in more detail.
 
 First, you must define the parameters or tunable knobs relied on by your model within your Excel workbook. Assume you have an Excel workbook with a sheet called `Parameters`:
 
-<p align="center">
-    <img src="../imgs/excel.png" width="75%" title="parameter"/>
-    <br/>
-    <i>Parameters in Excel Workbook</i>
-</p>
+import CenteredImage from '@site/src/components/CenteredImage';
+
+<CenteredImage file="excel.png" width="700px" title="Parameters in Excel Workbook" />
 
 The parameter for `Rainfall` is in `C5`, the one for `Temperature` is in `C6`, and the one for `Fertilizer` is in `C7`. You should create a file called `params.json` which would contain the following:
 
