@@ -279,6 +279,9 @@ const Provision = () => {
               <li>
                 <Typography variant="body2">
                   Once the model has been run, you&apos;ll use the&nbsp;
+                  {/*
+                    TODO-NEW-DOCS: change /details to /data-modeling when we switch to new docs
+                  */}
                   <Link
                     href="https://www.dojo-modeling.com/details/cheatsheet.html#dojo-terminal-commands"
                     target="_blank"
@@ -299,6 +302,9 @@ const Provision = () => {
 
               <Typography variant="body2" gutterBottom>
                 See&nbsp;
+                {/*
+                  TODO-NEW-DOCS: change /details to /data-modeling when we switch to new docs
+                */}
                 <Link
                   href="https://www.dojo-modeling.com/details/docker.html"
                   target="_blank"
