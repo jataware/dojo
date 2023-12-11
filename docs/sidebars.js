@@ -29,32 +29,32 @@ const sidebars = {
         items: [
           {
             type: 'doc',
-            id: 'details/cheatsheet',
+            id: 'model-registration/cheatsheet',
             label: 'Cheatsheet',
           },
           {
             type: 'doc',
-            id: 'details/excel',
+            id: 'model-registration/excel',
             label: 'Excel Models',
           },
           {
             type: 'doc',
-            id: 'details/jupyter',
+            id: 'model-registration/jupyter',
             label: 'Jupyter Notebooks',
           },
           {
             type: 'doc',
-            id: 'details/matlab',
+            id: 'model-registration/matlab',
             label: 'MATLAB Models',
           },
           {
             type: 'doc',
-            id: 'details/docker',
+            id: 'model-registration/docker',
             label: 'Prebuilt Containers',
           },
           {
             type: 'doc',
-            id: 'details/large-files',
+            id: 'model-registration/large-files',
             label: 'Uploading Large Files',
           },
         ],
@@ -69,12 +69,12 @@ const sidebars = {
         items: [
           {
             type: 'doc',
-            id: 'details/geotemporal-format',
+            id: 'data-registration/geotemporal-format',
             label: 'Geotemporal Format',
           },
           {
             type: 'doc',
-            id: 'details/data-format',
+            id: 'data-registration/data-format',
             label: 'Preparing Data for Dojo',
           },
         ],
@@ -89,7 +89,7 @@ const sidebars = {
         items: [
           {
             type: 'doc',
-            id: 'details/aggregation-methods',
+            id: 'data-modeling/aggregation-methods',
             label: 'Aggregation Methods',
           },
         ],
@@ -115,7 +115,7 @@ const sidebars = {
         items: [
           {
             type: 'doc',
-            id: 'details/dojo-cli',
+            id: 'model-execution/dojo-cli',
             label: 'Dojo CLI Commands',
           },
         ],
