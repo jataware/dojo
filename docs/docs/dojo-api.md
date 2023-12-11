@@ -99,7 +99,7 @@ The population model serves as an ancillary tool to distribute, disaggregate yea
 
 ## Working with Model Results
 
-Model results are stored in the [Geotemporal format](details/geotemporal-format). They can be interacted with conveniently using Python's Pandas library, or any other library used to process parquet.
+Model results are stored in the [Geotemporal format](data-registration/geotemporal-format). They can be interacted with conveniently using Python's Pandas library, or any other library used to process parquet.
 
 For example:
 
