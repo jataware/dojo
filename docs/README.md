@@ -15,6 +15,7 @@ $ npm run start
 ```
 
 This command starts a local development server at `localhost:3001` and opens up a browser window. Most changes are reflected live without having to restart the server.
+The root of the app is at `localhost:3001/dojo/`
 
 ### Build
 
