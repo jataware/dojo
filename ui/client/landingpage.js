@@ -32,15 +32,15 @@ const useStyles = makeStyles()((theme) => ({
     padding: `${theme.spacing(4)} 0`,
   },
   topHeaderTitle: {
-    fontSize: '5rem',
+    fontSize: '7rem',
     fontWeight: '450',
     maxWidth: '900px',
-    [theme.breakpoints.up('lg')]: {
-      marginBottom: theme.spacing(6),
-    },
-    [theme.breakpoints.down('xl')]: {
-      marginBottom: theme.spacing(3),
-    },
+    // [theme.breakpoints.up('lg')]: {
+    //   marginBottom: theme.spacing(6),
+    // },
+    // [theme.breakpoints.down('xl')]: {
+    //   marginBottom: theme.spacing(3),
+    // },
   },
   topHeaderSubtitle: {
     maxWidth: '70%',
@@ -105,15 +105,25 @@ const LandingPage = () => {
     <Box className={classes.allContentWrapper}>
       <div className={classes.topContentWrapper}>
         <Container maxWidth="xl">
-
-          {/* Always line break before 'and datasets' because it scans better */}
           <Typography variant="h1" className={classes.topHeaderTitle}>
-            Dojo helps researchers share their models <br />and datasets
+            Dojo
+          </Typography>
+          <Typography variant="h6" sx={{ marginBottom: 3 }}><i>noun</i> &nbsp;/dō′jō/</Typography>
+          <Typography variant="h3" sx={{ marginBottom: 6 }}>
+            an open source platform for model, data<br /> and knowledge analysis & management
           </Typography>
           <Typography variant="h6" className={classes.topHeaderSubtitle}>
             Create containerized, shareable models for reproducible research with easy-to-consume
-            outputs. Register and transform datasets for use in downstream modeling workflows.
+            outputs. Register and transform datasets for Dojo&apos;s no-code data modeling tool
+            and other downstream uses.
+            Retrieve domain-specific knowledge using Dojo&apos;s state of the art AI Assistant.
           </Typography>
+          {/*
+            Don't love: 'as well as other downstream uses', lack of word 'document' in AI Assistant sentence
+            would like to add: highlight models, datasets, documents, so it's clear how they link to the buttons
+            IPA pronunciation
+            /ˈdoʊ.dʒoʊ/
+          */}
           <div className={classes.linksWrapper}>
             <Typography variant="h4" align="center" className={classes.linkCta}>
               Get started <ArrowForwardIcon fontSize="large" />
