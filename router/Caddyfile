@@ -34,10 +34,10 @@
     }
 
     redir /api/dojo /api/dojo/
+    redir /openapi.json /api/dojo/openapi.json
     handle_path /api/dojo/* {
         reverse_proxy {$DOJO_HOST}:80
     }
-
 
     redir /api/ai-docs /api/ai-docs/
     handle_path /api/ai-docs/* {
@@ -59,5 +59,4 @@
     handle_errors {
         import errors-common
     }
-
 }
