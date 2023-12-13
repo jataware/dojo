@@ -193,6 +193,8 @@ services:
       - ${PWD}/data:/data
     networks:
       dojo-stack: {}
+    # profiles:
+      # - dev
   rqworker:
     env_file:
       - envfile
@@ -218,7 +220,38 @@ services:
       - dojo-stack
     ports:
       - 8012:8012
+    # profiles:
+      # - dev
+  router:
+    image: caddy
+    hostname: router.dojo-stack
+    networks:
+      - dojo-stack
+    container_name: dojo-router
+    ports:
+      - 80:80
+    configs:
+      - source: router_Caddyfile
+        target: /etc/caddy/Caddyfile
+    env_file:
+      - envfile
+    logging:
+      driver: json-file
+      options:
+        max-size: 100m
+        max-file: "5"
+    volumes:
+    - type: bind
+      source: ${PWD}/ui/dist
+      target: /usr/share/caddy
+    extra_hosts:
+    - host.docker.internal:host-gateway
+    profiles:
+      - prodv2
 
+configs:
+  router_Caddyfile:
+    file: ./router/Caddyfile
 networks:
   dojo-stack:
     driver: bridge
