@@ -6,6 +6,8 @@ import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
+import Breadcrumbs from '@mui/material/Breadcrumbs';
+import Link from '@mui/material/Link';
 
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import AssessmentIcon from '@mui/icons-material/Assessment';
@@ -52,6 +54,11 @@ const useStyles = makeStyles()((theme) => ({
     width: '300px',
     display: 'flex',
     justifyContent: 'space-between',
+    backgroundColor: '#c71585',
+    color: 'white',
+    '&:hover': {
+      backgroundColor: '#a91271',
+    },
   },
   action: {
     display: 'grid',
@@ -92,6 +99,10 @@ const ActionHighlight = ({
   );
 };
 
+const ColorText = ({ children }) => (
+  <b style={{ color: '#c71585' }}>{children}</b>
+);
+
 const DatasetsLandingPage = () => {
   const { classes } = useStyles();
 
@@ -103,6 +114,10 @@ const DatasetsLandingPage = () => {
     <Box className={classes.allContentWrapper}>
       <div className={classes.topContentWrapper}>
         <Container maxWidth="xl">
+          <Breadcrumbs sx={{ color: 'white' }}>
+            <Link color="inherit" component={RouterLink} underline="none" to="/">Home</Link>
+            <Typography><b>Datasets Intro</b></Typography>
+          </Breadcrumbs>
           <Typography variant="h1" className={classes.topHeaderTitle}>
             Datasets
           </Typography>
@@ -116,7 +131,7 @@ const DatasetsLandingPage = () => {
       <Container maxWidth="xl" className={classes.bottomContentContainer}>
         <div className={classes.actions}>
           <ActionHighlight
-            title={<><b>register</b> a new dataset</>}
+            title={<><ColorText>register</ColorText> a new dataset</>}
             text="
               Dojo leverages AI to infer data types, including date format and geographic information to streamline the data annotation process.
               The outcome is a well-defined dataset in a ready to use, geocoded and normalized form.
@@ -126,7 +141,7 @@ const DatasetsLandingPage = () => {
             linkIcon={<KeyboardIcon />}
           />
           <ActionHighlight
-            title={<>use the <b>data modeling</b> tool</>}
+            title={<>use the <ColorText>data modeling</ColorText> tool</>}
             text="
               Dojo leverages AI to infer data types, including date format and geographic information to streamline the data annotation process.
               The outcome is a well-defined dataset in a ready to use, geocoded and normalized form.
@@ -136,7 +151,7 @@ const DatasetsLandingPage = () => {
             linkIcon={<AssessmentIcon />}
           />
           <ActionHighlight
-            title={<><b>view</b> existing datasets</>}
+            title={<><ColorText>view</ColorText> existing datasets</>}
             text="
               Dojo leverages AI to infer data types, including date format and geographic information to streamline the data annotation process.
               The outcome is a well-defined dataset in a ready to use, geocoded and normalized form.
