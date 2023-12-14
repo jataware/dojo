@@ -147,7 +147,7 @@ const LandingPage = () => {
                 component={RouterLink}
                 variant="contained"
                 color="inherit"
-                to="/datasets"
+                to="/datasets/intro"
                 disableElevation
                 size="large"
                 endIcon={<AssessmentIcon />}
