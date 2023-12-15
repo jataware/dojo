@@ -6,13 +6,12 @@ import Box from '@mui/material/Box';
 import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
 import Button from '@mui/material/Button';
+import IconButton from '@mui/material/IconButton';
 import Breadcrumbs from '@mui/material/Breadcrumbs';
 import Link from '@mui/material/Link';
 
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-import AssessmentIcon from '@mui/icons-material/Assessment';
-import KeyboardIcon from '@mui/icons-material/Keyboard';
-import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
+import HorizontalRuleIcon from '@mui/icons-material/HorizontalRule';
 
 import { makeStyles } from 'tss-react/mui';
 
@@ -50,19 +49,19 @@ const useStyles = makeStyles()((theme) => ({
     padding: theme.spacing(4),
   },
   button: {
-    height: '60px',
-    width: '300px',
+    // height: '60px',
+    width: '100px',
     display: 'flex',
     justifyContent: 'space-between',
-    backgroundColor: '#c71585',
+    backgroundColor: theme.palette.secondary.main,
     color: 'white',
     '&:hover': {
-      backgroundColor: '#a91271',
+      backgroundColor: theme.palette.secondary.dark,
     },
   },
   action: {
     display: 'grid',
-    gridTemplateColumns: '0.75fr 50px 2fr 50px 1fr',
+    gridTemplateColumns: '1fr 50px 2fr 50px 0.5fr',
     columnGap: theme.spacing(2),
     alignItems: 'center',
     width: '100%',
@@ -80,90 +79,69 @@ const ActionHighlight = ({
   return (
     <div className={classes.action}>
       <Typography variant="h5">{title}</Typography>
-      <ArrowForwardIcon fontSize="large" />
+      <HorizontalRuleIcon sx={{ alignSelf: 'center' }} fontSize="large" />
       <Typography variant="subtitle1">
         {text}
       </Typography>
-      <ArrowForwardIcon fontSize="large" />
+      <HorizontalRuleIcon sx={{ alignSelf: 'center' }} fontSize="large" />
       <Button
         component={RouterLink}
         to={link}
         variant="contained"
         disableElevation
-        endIcon={linkIcon}
         className={classes.button}
       >
-        {linkTitle}
+        Go
+        <ArrowForwardIcon fontSize="large" />
       </Button>
     </div>
   );
 };
 
-const ColorText = ({ children }) => (
-  <b style={{ color: '#c71585' }}>{children}</b>
+export const ColorText = ({ children }) => (
+  <Typography variant="h4" component="span" sx={{ color: 'secondary.main', fontWeight: 'bold' }}>{children}</Typography>
 );
 
-const DatasetsLandingPage = () => {
+const GenericIntroPage = ({ title, subtitle, actions }) => {
   const { classes } = useStyles();
 
   useEffect(() => {
-    document.title = 'Datasets';
-  }, []);
+    document.title = title;
+  }, [title]);
 
   return (
     <Box className={classes.allContentWrapper}>
       <div className={classes.topContentWrapper}>
-        <Container maxWidth="xl">
+        <Container maxWidth="lg">
           <Breadcrumbs sx={{ color: 'white' }}>
             <Link color="inherit" component={RouterLink} underline="none" to="/">Home</Link>
-            <Typography><b>Datasets Intro</b></Typography>
+            <Typography><b>{title}</b></Typography>
           </Breadcrumbs>
           <Typography variant="h1" className={classes.topHeaderTitle}>
-            Datasets
+            {title}
           </Typography>
           <Typography variant="h6" className={classes.topHeaderSubtitle}>
-            Dojo leverages AI to infer data types, including date format and geographic information to streamline the data annotation process.
-            The outcome is a well-defined dataset in a ready to use, geocoded and normalized form.
+            {subtitle}
           </Typography>
 
         </Container>
       </div>
-      <Container maxWidth="xl" className={classes.bottomContentContainer}>
+      <Container maxWidth="lg" className={classes.bottomContentContainer}>
         <div className={classes.actions}>
-          <ActionHighlight
-            title={<><ColorText>register</ColorText> a new dataset</>}
-            text="
-              Dojo leverages AI to infer data types, including date format and geographic information to streamline the data annotation process.
-              The outcome is a well-defined dataset in a ready to use, geocoded and normalized form.
-            "
-            linkTitle="Register"
-            link="/datasets/register"
-            linkIcon={<KeyboardIcon />}
-          />
-          <ActionHighlight
-            title={<>use the <ColorText>data modeling</ColorText> tool</>}
-            text="
-              Dojo leverages AI to infer data types, including date format and geographic information to streamline the data annotation process.
-              The outcome is a well-defined dataset in a ready to use, geocoded and normalized form.
-            "
-            linkTitle="Data Modeling"
-            link="/data-modeling"
-            linkIcon={<AssessmentIcon />}
-          />
-          <ActionHighlight
-            title={<><ColorText>view</ColorText> existing datasets</>}
-            text="
-              Dojo leverages AI to infer data types, including date format and geographic information to streamline the data annotation process.
-              The outcome is a well-defined dataset in a ready to use, geocoded and normalized form.
-            "
-            linkTitle="View Datasets"
-            link="/datasets"
-            linkIcon={<FormatListBulletedIcon />}
-          />
+          {actions.map((action) => (
+            <ActionHighlight
+              key={action.link}
+              title={action.title}
+              text={action.text}
+              linkTitle={action.linkTitle}
+              link={action.link}
+              linkIcon={action.linkIcon}
+            />
+          ))}
         </div>
       </Container>
     </Box>
   );
 };
 
-export default DatasetsLandingPage;
+export default GenericIntroPage;

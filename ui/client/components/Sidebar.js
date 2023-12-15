@@ -4,7 +4,6 @@ import { Link } from 'react-router-dom';
 
 import Drawer from '@mui/material/Drawer';
 import ListItem from '@mui/material/ListItem';
-import ListItemButton from '@mui/material/ListItemButton';
 import ListItemText from '@mui/material/ListItemText';
 import List from '@mui/material/List';
 import Divider from '@mui/material/Divider';
@@ -26,29 +25,32 @@ const routes = [
   },
   {
     title: 'Datasets',
-    path: '/datasets',
+    path: '/datasets/intro',
     icon: (props) => <AssessmentIcon {...props} />,
     children: [
       { title: 'Register a Dataset', path: '/datasets/register' },
       { title: 'Data Modeling', path: '/data-modeling' },
+      { title: 'View Datasets', path: '/datasets' },
     ],
   },
   {
     title: 'Models',
-    path: '/models',
+    path: '/models/intro',
     icon: (props) => <ComputerIcon {...props} />,
     children: [
       { title: 'Register a Model', path: '/model' },
+      { title: 'View Models', path: '/models' },
       { title: 'Model Runs', path: '/runs' },
     ],
   },
   {
     title: 'Documents',
-    path: '/documents',
+    path: '/documents/intro',
     icon: (props) => <ArticleIcon {...props} />,
     children: [
       { title: 'Upload Documents', path: '/documents/upload' },
       { title: 'Documents AI Assistant', path: '/ai-assistant' },
+      { title: 'Search Documents', path: '/documents' },
     ]
   },
 ];
