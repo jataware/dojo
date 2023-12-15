@@ -104,7 +104,7 @@ const LandingPage = () => {
   return (
     <Box className={classes.allContentWrapper}>
       <div className={classes.topContentWrapper}>
-        <Container maxWidth="xl">
+        <Container maxWidth="lg">
           <Typography variant="h1" className={classes.topHeaderTitle}>
             Dojo
           </Typography>
@@ -133,7 +133,7 @@ const LandingPage = () => {
                 component={RouterLink}
                 color="inherit"
                 data-test="landingPageModelForm"
-                to="/models"
+                to="/models/intro"
                 variant="contained"
                 disableElevation
                 size="large"
@@ -159,7 +159,7 @@ const LandingPage = () => {
                 component={RouterLink}
                 variant="contained"
                 color="inherit"
-                to="/documents"
+                to="/documents/intro"
                 disableElevation
                 size="large"
                 endIcon={<ArticleIcon />}
@@ -171,7 +171,7 @@ const LandingPage = () => {
           </div>
         </Container>
       </div>
-      <Container maxWidth="xl" className={classes.bottomContentContainer}>
+      <Container maxWidth="lg" className={classes.bottomContentContainer}>
         <div className={classes.linksWrapper}>
           {/* specific top margin to center this on the existing model text */}
           <Typography

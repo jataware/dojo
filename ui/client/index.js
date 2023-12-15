@@ -39,7 +39,9 @@ import DatasetRegistrationStepper from './datasets/RegistrationStepper';
 import DatasetPreview from './datasets/Preview';
 import DatasetAnnotate from './datasets/Annotate';
 import DagpipesApp from './dagpipes/DagpipesApp';
-import DatasetsLandingPage from './datasets/DatasetsLandingPage';
+import DatasetsIntroPage from './datasets/DatasetsIntroPage';
+import ModelsIntroPage from './models/ModelsIntroPage';
+import DocumentsIntroPage from './documents/DocumentsIntroPage';
 
 export default function Main() {
   return (
@@ -49,10 +51,12 @@ export default function Main() {
           <Route component={LandingPage} exact path="/" />
           <Route component={Model} exact path="/model" />
           <Route component={ViewModels} exact path="/models" />
+          <Route component={ModelsIntroPage} exact path="/models/intro" />
           <Route component={ViewDatasets} exact path="/datasets" />
           <Route component={ViewDocuments} exact path="/documents" />
+          <Route component={DocumentsIntroPage} exact path="/documents/intro" />
           <Route component={UploadDocument} exact path="/documents/upload" />
-          <Route component={DatasetsLandingPage} exact path="/datasets/intro" />
+          <Route component={DatasetsIntroPage} exact path="/datasets/intro" />
           <Route component={DatasetAnnotate} exact path="/datasets/annotate" />
           <Route component={DatasetPreview} exact path="/datasets/preview" />
           <Route component={DatasetRegistrationStepper} path="/datasets/:flowslug/:step?/:datasetId?" />

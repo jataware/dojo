@@ -113,7 +113,7 @@ const NavBar = ({ children }) => {
               <BlackTooltip disableInteractive title="Open navigation panel">
                 <ContrastIconButton
                   onClick={handleToggleDrawer}
-                  sx={{ color: 'black' }}
+                  sx={{ color: 'white' }}
                 >
                   <MenuIcon />
                 </ContrastIconButton>
@@ -123,7 +123,7 @@ const NavBar = ({ children }) => {
               <ContrastIconButton
                 component={Link}
                 to="/"
-                sx={{ color: 'black' }}
+                sx={{ color: 'white' }}
               >
                 <DojoIcon color="inherit" sx={{ height: '30px', width: '30px' }} />
               </ContrastIconButton>
