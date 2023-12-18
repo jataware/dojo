@@ -10,7 +10,8 @@ import FormGroup from '@mui/material/FormGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
 
-import NodeBase, { InlineDocIconLink } from './NodeBase';
+import InlineDocLink from '../components/uiComponents/InlineDocLink';
+import NodeBase from './NodeBase';
 import ModelerSelect from './ModelerSelect';
 import {
   setGeoResolutionColumn,
@@ -28,7 +29,7 @@ const AggregationLabel = ({ text }) => (
   <div>
     {text}
     {/* TODO-NEW-DOCS: change /details to /data-modeling when we switch to new docs */}
-    <InlineDocIconLink link="/details/aggregation-methods.html" title="aggregation function" />
+    <InlineDocLink link="/details/aggregation-methods.html" title="aggregation function" />
   </div>
 );
 

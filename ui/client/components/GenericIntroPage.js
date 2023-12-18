@@ -15,6 +15,8 @@ import HorizontalRuleIcon from '@mui/icons-material/HorizontalRule';
 
 import { makeStyles } from 'tss-react/mui';
 
+import InlineDocLink from './uiComponents/InlineDocLink';
+
 const useStyles = makeStyles()((theme) => ({
   allContentWrapper: {
     height: 'calc(100vh - 48px)',
@@ -69,7 +71,7 @@ const useStyles = makeStyles()((theme) => ({
 }));
 
 const ActionHighlight = ({
-  title, text, linkTitle, link
+  title, text, linkTitle, link, docsLink
 }) => {
   const { classes } = useStyles();
 
@@ -79,6 +81,7 @@ const ActionHighlight = ({
       <HorizontalRuleIcon fontSize="large" />
       <Typography variant="subtitle1">
         {text}
+        {docsLink && <InlineDocLink title={linkTitle} link={docsLink} color="secondary" />}
       </Typography>
       <HorizontalRuleIcon fontSize="large" />
       <Button
@@ -90,7 +93,6 @@ const ActionHighlight = ({
         endIcon={<ArrowForwardIcon fontSize="large" />}
       >
         {linkTitle}
-
       </Button>
     </div>
   );
@@ -134,6 +136,7 @@ const GenericIntroPage = ({ title, subtitle, actions }) => {
               linkTitle={action.linkTitle}
               link={action.link}
               linkIcon={action.linkIcon}
+              docsLink={action.docsLink}
             />
           ))}
         </div>

@@ -11,14 +11,14 @@ import Select from '@mui/material/Select';
 import TextField from '@mui/material/TextField';
 
 import { setGeoResolutionColumn, setTimeResolutionColumn } from './dagSlice';
-import { InlineDocIconLink } from './NodeBase';
+import InlineDocLink from '../components/uiComponents/InlineDocLink';
 
 const timeOptions = ['daily', 'weekly', 'monthly', 'yearly', 'decadal'];
 
 const LabelWithDocsIcon = ({ type }) => (
   <div>
     Manual {type} Resolution
-    <InlineDocIconLink
+    <InlineDocLink
       title="Manual Resolution"
       link="data-modeling.html#manual-resolution"
     />
