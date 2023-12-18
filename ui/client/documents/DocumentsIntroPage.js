@@ -1,9 +1,5 @@
 import React from 'react';
 
-import AssessmentIcon from '@mui/icons-material/Assessment';
-import KeyboardIcon from '@mui/icons-material/Keyboard';
-import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
-import RunCircleIcon from '@mui/icons-material/RunCircle';
 import UploadFileIcon from '@mui/icons-material/UploadFile';
 import ArticleIcon from '@mui/icons-material/Article';
 import SmartToyIcon from '@mui/icons-material/SmartToy';
@@ -12,10 +8,12 @@ import GenericIntroPage, { ColorText } from '../components/GenericIntroPage';
 
 const actions = [
   {
-    title: <><ColorText>upload</ColorText> new documents</>,
+    title: <><ColorText>Upload</ColorText> new documents</>,
     text: `
-      Dojo leverages AI to infer data types, including date format and geographic information to streamline the data annotation process.
-      The outcome is a well-defined dataset in a ready to use, geocoded and normalized form.
+      The Document Uploader allows you to upload PDFs to Dojo and annotate their metadata with a simple drag and drop interface.
+      Uploaded documents will be searchable with the Document Explorer once they have been processed.
+      Documents will also be added to the body of knowledge available to the AI Assistant, allowing
+      for plain language question-and-answer style queries.
     `,
     linkTitle: 'Upload',
     link: '/documents/upload',
@@ -24,10 +22,11 @@ const actions = [
   {
     title: <>Ask plain language questions with the <ColorText>AI Assistant</ColorText></>,
     text: `
-      Dojo leverages AI to infer data types, including date format and geographic information to streamline the data annotation process.
-      The outcome is a well-defined dataset in a ready to use, geocoded and normalized form.
+      With the AI Assistant, you can ask complex, domain-specific questions in simple, non-technical ways.
+      The assistant will search through the available documents to provide a well reasoned, in-depth answer
+      with citations guiding you to the relevant paragraphs.
     `,
-    linkTitle: 'AI Assistant',
+    linkTitle: 'Ask',
     link: '/ai-assistant',
     linkIcon: <SmartToyIcon />,
 
@@ -35,10 +34,10 @@ const actions = [
   {
     title: <>Query documents with <ColorText>semantic search</ColorText></>,
     text: `
-      Dojo leverages AI to infer data types, including date format and geographic information to streamline the data annotation process.
-      The outcome is a well-defined dataset in a ready to use, geocoded and normalized form.
+      Using context-aware search capabilities, Dojo's Document Explorer lets you directly query uploaded PDFs.
+      You can use keyword or phrase searches to find relevant information within the available documents.
     `,
-    linkTitle: 'Search Documents',
+    linkTitle: 'Search',
     link: '/documents',
     linkIcon: <ArticleIcon />,
   },
