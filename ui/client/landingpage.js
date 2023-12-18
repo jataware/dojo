@@ -35,12 +35,6 @@ const useStyles = makeStyles()((theme) => ({
     fontSize: '7rem',
     fontWeight: '450',
     maxWidth: '900px',
-    // [theme.breakpoints.up('lg')]: {
-    //   marginBottom: theme.spacing(6),
-    // },
-    // [theme.breakpoints.down('xl')]: {
-    //   marginBottom: theme.spacing(3),
-    // },
   },
   topHeaderSubtitle: {
     maxWidth: '70%',
@@ -58,7 +52,6 @@ const useStyles = makeStyles()((theme) => ({
     },
   },
   bottomContentContainer: {
-    // TODO: check this on a bigger screen - may not look good at the very bottom
     display: 'flex',
     alignItems: 'flex-end',
     flexGrow: 1,
@@ -118,12 +111,6 @@ const LandingPage = () => {
             and other downstream uses.
             Retrieve domain-specific knowledge using Dojo&apos;s state of the art AI Assistant.
           </Typography>
-          {/*
-            Don't love: 'as well as other downstream uses', lack of word 'document' in AI Assistant sentence
-            would like to add: highlight models, datasets, documents, so it's clear how they link to the buttons
-            IPA pronunciation
-            /ˈdoʊ.dʒoʊ/
-          */}
           <div className={classes.linksWrapper}>
             <Typography variant="h4" align="center" className={classes.linkCta}>
               Get started <ArrowForwardIcon fontSize="large" />
