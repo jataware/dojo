@@ -1,43 +1,42 @@
 import React from 'react';
 
-import AssessmentIcon from '@mui/icons-material/Assessment';
-import KeyboardIcon from '@mui/icons-material/Keyboard';
-import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
-import RunCircleIcon from '@mui/icons-material/RunCircle';
-
 import GenericIntroPage, { ColorText } from '../components/GenericIntroPage';
 
 const actions = [
   {
     title: <><ColorText>Register</ColorText> a new model</>,
     text: `
-      Dojo leverages AI to infer data types, including date format and geographic information to streamline the data annotation process.
-      The outcome is a well-defined dataset in a ready to use, geocoded and normalized form.
+      Model registration involves providing detailed information about your model, including its purpose, capabilities, and technical specifications.
+      This is done through a two step process: first, entering metadata about the model and maintainer;
+      second, using the terminal emulator to build the image of your model that will be registered into the system.
+      This will be uploaded to Dockerhub when the registration process is complete.
     `,
     linkTitle: 'Register',
     link: '/model',
-    linkIcon: <KeyboardIcon />,
   },
   {
     title: <>View <ColorText>existing models</ColorText></>,
     text: `
-      Dojo leverages AI to infer data types, including date format and geographic information to streamline the data annotation process.
-      The outcome is a well-defined dataset in a ready to use, geocoded and normalized form.
+      This feature allows you to browse and search through the registered models in Dojo.
+      Once you've selected a model, you can relaunch it in the terminal emulator, make changes,
+      and save a new version of it to Dockerhub. You can also kick off a Model Run
+      from a selected model's summary page.
     `,
     linkTitle: 'Models',
     link: '/models',
-    linkIcon: <FormatListBulletedIcon />,
 
   },
   {
     title: <>View <ColorText>model runs</ColorText></>,
     text: `
-      Dojo leverages AI to infer data types, including date format and geographic information to streamline the data annotation process.
-      The outcome is a well-defined dataset in a ready to use, geocoded and normalized form.
+      View a list of all previous model runs.
     `,
+    /* View Runs in Dojo provides a comprehensive overview of all model executions.
+    This feature tracks the performance and outcomes of each run, offering insights into model efficiency and effectiveness.
+    It's a vital tool for understanding model behavior and refining modeling strategies.
+    */
     linkTitle: 'Runs',
     link: '/runs',
-    linkIcon: <RunCircleIcon />,
   },
 ];
 

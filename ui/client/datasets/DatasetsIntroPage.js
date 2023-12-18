@@ -1,48 +1,49 @@
 import React from 'react';
 
-import AssessmentIcon from '@mui/icons-material/Assessment';
-import KeyboardIcon from '@mui/icons-material/Keyboard';
-import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
-
 import GenericIntroPage, { ColorText } from '../components/GenericIntroPage';
 
 const actions = [
   {
     title: <><ColorText>Register</ColorText> a new dataset</>,
     text: `
-      Dojo leverages AI to infer data types, including date format and geographic information to streamline the data annotation process.
-      The outcome is a well-defined dataset in a ready to use, geocoded and normalized form.
+      Registering a dataset involves uploading a valid dataset file, filling out metadata for it,
+      and, once Dojo's systems have inferred data types such as date format and geographic information,
+      annotating key columns. You will then have the opportunity to transform your data
+      to reduce and normalize it into a well-defined, and ready to use format.
     `,
     linkTitle: 'Register',
     link: '/datasets/register',
-    linkIcon: <KeyboardIcon />,
   },
   {
     title: <>Use the <ColorText>data modeling</ColorText> tool</>,
     text: `
-      Dojo leverages AI to infer data types, including date format and geographic information to streamline the data annotation process.
-      The outcome is a well-defined dataset in a ready to use, geocoded and normalized form.
+      With the data modeling tool, you can combine NetCDF datasets together through a simple visual
+      programming interface to create new and insightful derived datasets. Relatively complex data
+      operations and transformations can be performed on a variety of different kinds of data,
+      no programming skills required.
     `,
     linkTitle: 'Modeling',
     link: '/data-modeling',
-    linkIcon: <AssessmentIcon />,
   },
   {
     title: <>View existing <ColorText>datasets</ColorText></>,
     text: `
-      Dojo leverages AI to infer data types, including date format and geographic information to streamline the data annotation process.
-      The outcome is a well-defined dataset in a ready to use, geocoded and normalized form.
+      Browse and search the list of all registered datasets in Dojo. From a dataset's summary page,
+      you can download its files, find a link to view it in the downstream visualization
+      workflow app Causemos, or edit the registered dataset.
+
     `,
     linkTitle: 'Datasets',
     link: '/datasets',
-    linkIcon: <FormatListBulletedIcon />,
 
   }
 ];
 
 const subtitle = `
-  Dojo leverages AI to infer data types, including date format and geographic information to streamline the data annotation process.
-  The outcome is a well-defined dataset in a ready to use, geocoded and normalized form.
+  Dojo offers a comprehensive solution for dataset management, combining dataset
+  registration with advanced data modeling capabilities. Users can seamlessly integrate,
+  view, and modify datasets, ensuring effective data organization and enhancing analytical
+  possibilities across various domains.
 `;
 
 const DatasetsIntroPage = () => (
