@@ -49,10 +49,7 @@ const useStyles = makeStyles()((theme) => ({
     padding: theme.spacing(4),
   },
   button: {
-    // height: '60px',
-    width: '100px',
-    display: 'flex',
-    justifyContent: 'space-between',
+    width: '120px',
     backgroundColor: theme.palette.secondary.main,
     color: 'white',
     '&:hover': {
@@ -72,27 +69,28 @@ const useStyles = makeStyles()((theme) => ({
 }));
 
 const ActionHighlight = ({
-  title, text, linkTitle, link, linkIcon
+  title, text, linkTitle, link
 }) => {
   const { classes } = useStyles();
 
   return (
     <div className={classes.action}>
       <Typography variant="h5">{title}</Typography>
-      <HorizontalRuleIcon sx={{ alignSelf: 'center' }} fontSize="large" />
+      <HorizontalRuleIcon fontSize="large" />
       <Typography variant="subtitle1">
         {text}
       </Typography>
-      <HorizontalRuleIcon sx={{ alignSelf: 'center' }} fontSize="large" />
+      <HorizontalRuleIcon fontSize="large" />
       <Button
         component={RouterLink}
         to={link}
         variant="contained"
         disableElevation
         className={classes.button}
+        endIcon={<ArrowForwardIcon fontSize="large" />}
       >
-        Go
-        <ArrowForwardIcon fontSize="large" />
+        {linkTitle}
+
       </Button>
     </div>
   );

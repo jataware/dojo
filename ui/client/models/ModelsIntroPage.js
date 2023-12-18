@@ -9,33 +9,33 @@ import GenericIntroPage, { ColorText } from '../components/GenericIntroPage';
 
 const actions = [
   {
-    title: <><ColorText>register</ColorText> a new model</>,
+    title: <><ColorText>Register</ColorText> a new model</>,
     text: `
       Dojo leverages AI to infer data types, including date format and geographic information to streamline the data annotation process.
       The outcome is a well-defined dataset in a ready to use, geocoded and normalized form.
     `,
-    linkTitle: 'Register a Model',
+    linkTitle: 'Register',
     link: '/model',
     linkIcon: <KeyboardIcon />,
   },
   {
-    title: <>view <ColorText>existing models</ColorText></>,
+    title: <>View <ColorText>existing models</ColorText></>,
     text: `
       Dojo leverages AI to infer data types, including date format and geographic information to streamline the data annotation process.
       The outcome is a well-defined dataset in a ready to use, geocoded and normalized form.
     `,
-    linkTitle: 'View Models',
+    linkTitle: 'Models',
     link: '/models',
     linkIcon: <FormatListBulletedIcon />,
 
   },
   {
-    title: <>view <ColorText>model runs</ColorText></>,
+    title: <>View <ColorText>model runs</ColorText></>,
     text: `
       Dojo leverages AI to infer data types, including date format and geographic information to streamline the data annotation process.
       The outcome is a well-defined dataset in a ready to use, geocoded and normalized form.
     `,
-    linkTitle: 'Model Runs',
+    linkTitle: 'Runs',
     link: '/runs',
     linkIcon: <RunCircleIcon />,
   },
