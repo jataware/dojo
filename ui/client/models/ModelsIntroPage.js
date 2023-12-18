@@ -13,6 +13,7 @@ const actions = [
     `,
     linkTitle: 'Register',
     link: '/model',
+    docsLink: 'model-registration',
   },
   {
     title: <>View <ColorText>existing models</ColorText></>,
@@ -37,6 +38,7 @@ const actions = [
     */
     linkTitle: 'Runs',
     link: '/runs',
+    docsLink: 'model-execution',
   },
 ];
 

@@ -13,6 +13,7 @@ const actions = [
     `,
     linkTitle: 'Upload',
     link: '/documents/upload',
+    docsLink: 'documents#document-uploader',
   },
   {
     title: <>Ask complex questions with the <ColorText>AI Assistant</ColorText></>,
@@ -23,7 +24,6 @@ const actions = [
     `,
     linkTitle: 'Ask',
     link: '/ai-assistant',
-
   },
   {
     title: <>Explore documents with <ColorText>semantic search</ColorText></>,
@@ -33,6 +33,7 @@ const actions = [
     `,
     linkTitle: 'Search',
     link: '/documents',
+    docsLink: 'documents#document-explorer',
   },
 ];
 

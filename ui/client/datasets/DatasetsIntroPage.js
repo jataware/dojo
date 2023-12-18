@@ -13,6 +13,7 @@ const actions = [
     `,
     linkTitle: 'Register',
     link: '/datasets/register',
+    docsLink: 'data-registration',
   },
   {
     title: <>Use the <ColorText>data modeling</ColorText> tool</>,
@@ -24,6 +25,7 @@ const actions = [
     `,
     linkTitle: 'Modeling',
     link: '/data-modeling',
+    docsLink: 'data-modeling',
   },
   {
     title: <>View existing <ColorText>datasets</ColorText></>,
