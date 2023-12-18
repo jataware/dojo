@@ -1,9 +1,5 @@
 import React from 'react';
 
-import UploadFileIcon from '@mui/icons-material/UploadFile';
-import ArticleIcon from '@mui/icons-material/Article';
-import SmartToyIcon from '@mui/icons-material/SmartToy';
-
 import GenericIntroPage, { ColorText } from '../components/GenericIntroPage';
 
 const actions = [
@@ -17,10 +13,9 @@ const actions = [
     `,
     linkTitle: 'Upload',
     link: '/documents/upload',
-    linkIcon: <UploadFileIcon />,
   },
   {
-    title: <>Ask plain language questions with the <ColorText>AI Assistant</ColorText></>,
+    title: <>Ask complex questions with the <ColorText>AI Assistant</ColorText></>,
     text: `
       With the AI Assistant, you can ask complex, domain-specific questions in simple, non-technical ways.
       The assistant will search through the available documents to provide a well reasoned, in-depth answer
@@ -28,23 +23,24 @@ const actions = [
     `,
     linkTitle: 'Ask',
     link: '/ai-assistant',
-    linkIcon: <SmartToyIcon />,
 
   },
   {
-    title: <>Query documents with <ColorText>semantic search</ColorText></>,
+    title: <>Explore documents with <ColorText>semantic search</ColorText></>,
     text: `
       Using context-aware search capabilities, Dojo's Document Explorer lets you directly query uploaded PDFs.
       You can use keyword or phrase searches to find relevant information within the available documents.
     `,
     linkTitle: 'Search',
     link: '/documents',
-    linkIcon: <ArticleIcon />,
   },
 ];
 
 const subtitle = `
-  Dojo includes a state of the art knowledge retrieval AI Assistant.
+  Dojo enhances document management with AI-assisted capabilities, offering a dynamic platform
+  for document upload, search, and analysis. It integrates advanced language models to empower
+  users with intuitive querying and deep insights, streamlining knowledge discovery and
+  supporting informed decision-making in complex domains.
 `;
 
 const DatasetsIntroPage = () => (
