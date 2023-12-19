@@ -1,6 +1,5 @@
 from base_annotation import BaseProcessor
 from elasticsearch import Elasticsearch
-# import os
 import time
 from typing import List
 import numpy as np
@@ -8,7 +7,6 @@ from utils import get_rawfile
 from abc import ABC, abstractmethod
 import tiktoken
 import re
-# from pathlib import Path
 from openai.embeddings_utils import get_embeddings
 from settings import settings
 
@@ -49,9 +47,12 @@ class AdaEmbedder(Embedder):
         return paragraph_embeddings
 
 
-def convert_to_paragraphs(self, text: str) -> List[str]:
+MIN_WORDS = 25
+
+
+def convert_to_paragraphs(text: str) -> List[str]:
     """break a string into paragraphs, filtering out ones that should not be used for semantic search"""
-    paragraph_filter = lambda p: not is_too_short(p, self.min_words) and not is_citation(p)
+    paragraph_filter = lambda p: not is_too_short(p, MIN_WORDS) and not is_citation(p)
     paragraphs = list(filter(paragraph_filter, text.split('\n\n')))
     return paragraphs
 
@@ -95,21 +96,15 @@ class ParagraphProcessor(BaseProcessor):
         results to elasticsearch
         """
         # 1. Download mmd from S3
-        logging.info(f"Getting file at key: {s3_key}")
-        raw_file = get_rawfile(path=s3_key)
-
-        # 2. Save file to disk, or tempfile
-        # location = "/documents"
-        # if not os.path.exists(location):
-        #     os.makedirs(location)
-        # new_file_path = os.path.join(location, f"{document_id}.mmd")
-        # with open(new_file_path, "wb") as output_file:
-            # output_file.write(raw_file.read())
-            # output_file.close()
+        mmd_s3_url = f"{settings.DOCUMENT_STORAGE_BASE_URL}{s3_key}"
+        logging.info(f"Getting file at key: {mmd_s3_url}")
+        raw_file = get_rawfile(path=mmd_s3_url)
 
         # 2. Extract text for pdf using local path from download above
         logging.info("Reading text and converting to paragraphs")
-        text = raw_file.read()  # Path(new_file_path).read_text()  # read from mmd Path(file).read_text? or usual open()
+
+        text = raw_file.read()
+        text = text.decode()
         paragraphs = convert_to_paragraphs(text)
 
         logging.info(f"Embedding all Ps. First p: {paragraphs[0]}")
@@ -148,7 +143,7 @@ def calculate_store_embeddings(context):
     document_id = context["document_id"]
     s3_key = context["s3_key"]
 
-    logging.info("=========\n\n=====\nCalculate store embeddings:")
+    logging.info("Calculate store embeddings:")
     logging.info(document_id)
     logging.info(s3_key)
 

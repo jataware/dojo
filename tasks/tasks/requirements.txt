@@ -20,5 +20,4 @@ rasterio<1.3
 urllib3<2
 flowcast>=0.2.6
 openai[embeddings]==0.27.10
-nougat-ocr==0.1.17
 tiktoken==0.5.1
