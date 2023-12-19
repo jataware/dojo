@@ -14,7 +14,8 @@ from src import (
     models,
     ui,
     runs,
-    data_modelings
+    data_modelings,
+    knowledge
 )
 from src.settings import settings
 
@@ -27,6 +28,7 @@ api.include_router(dojo.router, tags=["Dojo"])
 api.include_router(runs.router, tags=["Runs"])
 api.include_router(indicators.router, tags=["Indicators"])
 api.include_router(documents.router, tags=["Documents"])
+api.include_router(knowledge.router, tags=["Knowledge"])
 api.include_router(terminal.router, prefix="/terminal", tags=["Terminal"])
 api.include_router(ui.router, prefix="/ui", tags=["Dojo UI"])
 api.include_router(data.router, tags=["Data"])

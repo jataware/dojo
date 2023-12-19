@@ -9,7 +9,7 @@ BASEDIR = $(shell pwd)
 TERMINAL_DIR = terminal
 DOJO_API_DIR = api
 DOJO_DMC_DIR = dmc
-ELWOOD_DIR = elwood
+# ELWOOD_DIR = elwood
 UI_DIR = ui
 RQ_DIR = tasks
 WORKERS_DIR = workers
@@ -25,8 +25,8 @@ BUILD_DIRS = $(dir $(BUILD_FILES))
 .PHONY:update
 update:
 	git fetch; \
-	git submodule foreach git pull; \
-	git submodule foreach git status; \
+	# git submodule foreach git pull; \
+	# git submodule foreach git status; \
 	$(PYTHON) $(BASEDIR)/bin/update_envfile.py envfile.sample envfile;
 
 .PHONY:init
@@ -41,8 +41,8 @@ init:
 
 .PHONY:rebuild-all
 rebuild-all:
-	$(DOCKER_COMPOSE) build --no-cache; \
-	cd $(ELWOOD_DIR) && $(DOCKER) build . -t elwood:dev;
+	$(DOCKER_COMPOSE) build --no-cache;
+#	cd $(ELWOOD_DIR) && $(DOCKER) build . -t elwood:dev;
 
 envfile:
 ifeq ($(wildcard envfile),)
@@ -60,6 +60,8 @@ images:static
 		(cd $${dir} && bash .build); \
 	done
 
+# Make sure you know what toexpect when clearing everything!
+# TODO Describe these tasks and what they accomplish on developer docs
 .PHONY:clean
 clean:
 	echo "Clearing all transient data" && \

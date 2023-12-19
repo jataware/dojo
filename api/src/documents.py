@@ -13,14 +13,13 @@ from fastapi import (
     status,
     UploadFile,
     File,
-    # Request,
+    Request,
     Query,
 )
-# from fastapi.responses import FileResponse
 from fastapi.logger import logger
-
 import os
 import json
+import requests
 
 from validation import DocumentSchema
 from src.settings import settings
@@ -144,13 +143,8 @@ def semantic_search_paragraphs(query: str,
     if scroll_id:
         results = es.scroll(scroll_id=scroll_id, scroll="2m")
     else:
-        # NOTE These next two lines may not be relevant anymore with new embedder- CHECK!
         # Retrieve first item in output, since it accepts an array and returns
         # an array, and we provided only one item (query)
-
-        # TODO embed with newer engine
-
-        # query_embedding = embedder.embed([clean_query])[0]
         query_embedding = get_embeddings([clean_query], engine="text-embedding-ada-002")[0]
 
         MIN_TEXT_LENGTH_THRESHOLD = 50
@@ -609,28 +603,31 @@ def update_document(payload: DocumentSchema.CreateModel, document_id: str):
     )
 
 
-def enqueue_document_paragraphs_processing(document_id, s3_url):
+def enqueue_document_paragraphs_processing(document_id, s3_url, api_host):
     """
     Adds document to queue to process by paragraph.
     Embedder creates and attaches LLM embeddings to its paragraphs
     """
     job_string = "paragraph_embeddings_processors.calculate_store_embeddings"
-    job_id = f"{document_id}_{job_string}"
+    # job_id = f"{document_id}_{job_string}"
 
-    context = {
-        "document_id": document_id,
-        "s3_url": s3_url
-    }
+    payload = json.dumps({
+        "s3_url": s3_url,
+        "callback_url": f"{api_host}/job/{document_id}/{job_string}"
+    })
 
-    q.enqueue_call(
-        func=job_string, args=[context], kwargs={}, job_id=job_id
-    )
+    response = requests.post(f"{settings.OCR_URL}/{document_id}", data=payload)
+    if response.status_code != 200:
+        return False
+
+    return True
 
 
 # NOTE TODO should we only allow 1 file per document id? replace? cancel/error?
 @router.post("/documents/{document_id}/upload")
 def upload_file(
     document_id: str,
+    request: Request,
     file: UploadFile = File(...),
 ):
     """
@@ -652,8 +649,11 @@ def upload_file(
 
     es.update(index="documents", body=body_updates, id=document_id)
 
-    # enqueue for rq worker to add paragraphs and embeddings to es
-    enqueue_document_paragraphs_processing(document_id, dest_path)
+    api_host = request.client.host
+    logger.info(f"Setting up document processing at host: {api_host}")
+    # enqueue for OCR and rq worker to add paragraphs and embeddings to es
+    # TODO Should we fail if queueing fails?
+    queue_success = enqueue_document_paragraphs_processing(document_id, dest_path, api_host)
 
     final_document = es.get_source(index="documents", id=document_id)
 
