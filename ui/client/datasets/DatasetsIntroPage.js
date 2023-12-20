@@ -30,7 +30,7 @@ const actions = [
   {
     title: <>View existing <ColorText>datasets</ColorText></>,
     text: `
-      Browse and search the list of all registered datasets in Dojo. You can search for datasets based on columns/feature names or the dataset's description.
+      Browse the list of all registered datasets in Dojo, or filter through them based on metadata or column/feature names.
       From a dataset's summary page, you can download its files, find a link to view it in the downstream visualization
       workflow app Causemos, or edit the registered dataset.
 
