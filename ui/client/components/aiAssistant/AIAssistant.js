@@ -92,7 +92,7 @@ const AIAssistant = () => {
       const mock = ''; // 'mock-';
 
       const queryResp = await axios.get(
-        `/api/ai-docs/${mock}message?query=${searchPhrase}`
+        `/api/dojo/knowledge/${mock}message?query=${searchPhrase}`
       );
       const response = {};
       response.response = queryResp.data;

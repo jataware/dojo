@@ -168,13 +168,13 @@ def load_file_as_json(file_path: str) -> dict:
 
 
 def get_project_root() -> Path:
-    return Path(__file__).parent
+    return Path(__file__).parent.parent
 
 
-MOCK_MESSAGE_PATH = path_join(get_project_root(), "mock_data", "message.json")
+MOCK_MESSAGE_PATH = path_join(get_project_root(), "mock-data", "message.json")
 
 
-@router.get("/chat")
+@router.get("/knowledge/chat")
 def chat(query: str):
 
     def data_streamer():
@@ -189,7 +189,7 @@ def chat(query: str):
     return EventSourceResponse(data_streamer(), media_type='text/event-stream')
 
 
-@router.get("/message")
+@router.get("/knowledge/message")
 def message(query: str):
     results, answer = librarian.ask(query, stream=False)
 
@@ -201,14 +201,14 @@ def message(query: str):
     return result_obj
 
 
-@router.get("/mock-message")
+@router.get("/knowledge/mock-message")
 def mock_message(query: str):
     logger.info("Quick mock message endpoint called.")
     result_dict = load_file_as_json(MOCK_MESSAGE_PATH)
     return result_dict
 
 
-@router.get("/mock-chat")
+@router.get("/knowledge/mock-chat")
 def mock_chat(query: Optional[str]):
     result_dict = load_file_as_json(MOCK_MESSAGE_PATH)
     answer = result_dict["answer"]
