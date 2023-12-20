@@ -6,7 +6,7 @@ const actions = [
   {
     title: <><ColorText>Upload</ColorText> new documents</>,
     text: `
-      The Document Uploader allows you to upload PDFs to Dojo and annotate their metadata with a simple drag and drop interface.
+      The Document Uploader allows you to upload files to Dojo and annotate their metadata with a simple drag and drop interface.
       Uploaded documents will be searchable with the Document Explorer once they have been processed.
       Documents will also be added to the body of knowledge available to the AI Assistant, allowing
       for plain language question-and-answer style queries.

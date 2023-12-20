@@ -30,14 +30,8 @@ const actions = [
   {
     title: <>View <ColorText>model runs</ColorText></>,
     text: `
-      View a list of all previous model runs.
+      View a list of all previous model runs. Retrieve model execution or simulation run results for further analysis.
     `,
-    /* OR some verison of:
-    View Runs in Dojo provides a comprehensive overview of all model executions.
-    This feature tracks the performance and outcomes of each run, offering insights
-    into model efficiency and effectiveness.
-    It's a vital tool for understanding model behavior and refining modeling strategies.
-    */
     linkTitle: 'Runs',
     link: '/runs',
     docsLink: 'model-execution',

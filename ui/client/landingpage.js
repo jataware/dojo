@@ -103,7 +103,7 @@ const LandingPage = () => {
           </Typography>
           <Typography variant="h6" sx={{ marginBottom: 3 }}><i>noun</i> &nbsp;/dō′jō/</Typography>
           <Typography variant="h3" sx={{ marginBottom: 6 }}>
-            an open source platform for model, data<br /> and knowledge analysis & management
+            a platform for model, data and<br /> knowledge analysis & management
           </Typography>
           <Typography variant="h6" className={classes.topHeaderSubtitle}>
             Create containerized, shareable models for reproducible research with easy-to-consume
