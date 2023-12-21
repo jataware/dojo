@@ -1,30 +1,9 @@
 import React from 'react';
 
 import Divider from '@mui/material/Divider';
-import Link from '@mui/material/Link';
-import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
-import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 
-export const InlineDocIconLink = ({ title, link }) => (
-  <Tooltip arrow title={`See ${title} documentation (opens new tab)`}>
-    <Link
-      href={`https://www.dojo-modeling.com/${link}`}
-      target="_blank"
-      rel="noopener"
-      color="inherit"
-    >
-      <HelpOutlineIcon
-        sx={{
-          cursor: 'pointer',
-          fontSize: '0.9rem',
-          marginLeft: '4px',
-          '&:hover': { color: 'primary.light' }
-        }}
-      />
-    </Link>
-  </Tooltip>
-);
+import InlineDocLink from '../components/uiComponents/InlineDocLink';
 
 const NodeBase = ({
   children, title, style
@@ -37,7 +16,7 @@ const NodeBase = ({
     <div style={style}>
       <Typography variant="subtitle2" sx={{ padding: 1 }}>
         {title}
-        <InlineDocIconLink link={parsedLink} title={`${title} Node`} />
+        <InlineDocLink link={parsedLink} title={`${title} Node`} />
       </Typography>
       {children && (
         <>

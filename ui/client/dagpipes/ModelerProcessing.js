@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React, { useContext, useEffect } from 'react';
 
 import axios from 'axios';
 
@@ -9,6 +9,7 @@ import Typography from '@mui/material/Typography';
 import CircularProgress from '@mui/material/CircularProgress';
 
 import { setCompletedDatasetIds, nextModelerStep } from './dagSlice';
+import { ThemeContext } from '../components/ThemeContextProvider';
 
 // TODO: need to ensure it has some way to cancel job if the component unmounts
 const repeatFetch = async ({ jobId, onSuccess }) => {
@@ -42,6 +43,15 @@ const ModelerProcessing = () => {
   const { flowcastJobId } = useSelector((state) => state.dag);
   const dispatch = useDispatch();
 
+  const { setShowSideBar } = useContext(ThemeContext);
+
+  useEffect(() => {
+    // hide the Sidebar when the component mounts
+    setShowSideBar(false);
+    // when the component unmounts, toggle the Sidebar back
+    return () => setShowSideBar(true);
+  }, [setShowSideBar]);
+
   useEffect(() => {
     const onSuccess = (resp) => {
       console.log('Successful!', resp);
@@ -64,10 +74,11 @@ const ModelerProcessing = () => {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        height: '70%',
+        height: '100%',
         flexDirection: 'column',
         gap: 2,
-        color: 'grey.700'
+        color: 'grey.700',
+        marginTop: 18,
       }}
     >
       <Typography variant="h4">Processing...</Typography>
