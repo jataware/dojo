@@ -1,9 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 
 import axios from 'axios';
 
 import isEmpty from 'lodash/isEmpty';
 
+import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
@@ -18,6 +19,9 @@ import { makeStyles } from 'tss-react/mui';
 
 import AIAssistantResponse from './AIAssistantResponse';
 import ChatCard from './ChatCard';
+import { ThemeContext } from '../ThemeContextProvider';
+import { drawerWidth } from '../Sidebar';
+import { pageSlideAnimation } from '../NavBar';
 
 const useStyles = makeStyles()((theme) => ({
   header: {
@@ -30,8 +34,6 @@ const useStyles = makeStyles()((theme) => ({
   inputBackdrop: {
     position: 'fixed',
     bottom: 0,
-    left: 0,
-    width: '100%',
     backgroundColor: 'white',
     display: 'flex',
     justifyContent: 'center',
@@ -48,7 +50,7 @@ const useStyles = makeStyles()((theme) => ({
   },
 }));
 /** TODO:
-* - show arrow down icon on screen when content to scroll to (like chatgpt)?
+* - show arrow down icon on screen when content to scroll to
 * - add expandable (?) panel to response cards with list of documents used
 *   - ids, link to view pdf?
 * - disable question input & search button while asking?
@@ -56,12 +58,12 @@ const useStyles = makeStyles()((theme) => ({
 **/
 const AIAssistant = () => {
   const { classes } = useStyles();
-  // TODO: this will eventually be loaded in?
-  // rename from search to question?
   const [previousQueries, setPreviousQueries] = useState({});
   const [responses, setResponses] = useState({});
   const [searchPhrase, setSearchPhrase] = useState('');
   const [anyResponseLoading, setAnyResponseLoading] = useState(false);
+
+  const { showSideBar } = useContext(ThemeContext);
 
   useEffect(() => {
     document.title = 'AI Assistant';
@@ -215,7 +217,19 @@ const AIAssistant = () => {
           text="Start querying documents with a question in the search box below"
         />
       )}
-      <div className={classes.inputBackdrop}>
+      <Box
+        className={classes.inputBackdrop}
+        sx={(theme) => ({
+          left: 0,
+          width: '100%',
+          // use the same transition animation as the sidebar, defined in NavBar.js
+          ...pageSlideAnimation(theme, ['left', 'width']),
+          ...(showSideBar && {
+            left: drawerWidth,
+            width: `calc(100% - ${drawerWidth}px)`,
+          }),
+        })}
+      >
         <TextField
           value={searchPhrase}
           onChange={(event) => setSearchPhrase(event.target.value)}
@@ -247,7 +261,7 @@ const AIAssistant = () => {
             )
           }}
         />
-      </div>
+      </Box>
     </Container>
   );
 };

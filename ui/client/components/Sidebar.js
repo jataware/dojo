@@ -17,6 +17,8 @@ import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import { BlackTooltip } from './uiComponents/BlackTooltip';
 import { ContrastIconButton, ContrastListItemButton } from './uiComponents/ContrastButton';
 
+export const drawerWidth = 240;
+
 const routes = [
   {
     title: 'Dojo Home',
@@ -58,10 +60,10 @@ const routes = [
 const Sidebar = ({ open, handleDrawerClose }) => (
   <Drawer
     sx={{
-      width: 240,
+      width: drawerWidth,
       flexShrink: 0,
       '& .MuiDrawer-paper': {
-        width: 240,
+        width: drawerWidth,
         boxSizing: 'border-box',
       },
     }}

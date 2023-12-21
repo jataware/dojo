@@ -16,25 +16,22 @@ import { ThemeContext } from './ThemeContextProvider';
 
 import { BlackTooltip } from './uiComponents/BlackTooltip';
 import { ContrastIconButton } from './uiComponents/ContrastButton';
-import Sidebar from './Sidebar';
+import Sidebar, { drawerWidth } from './Sidebar';
 import DojoIcon from './uiComponents/DojoIcon';
 
-const drawerWidth = 240;
+export const pageSlideAnimation = (theme, target) => ({
+  transition: theme.transitions.create(target, {
+    easing: theme.transitions.easing.easeOut,
+    duration: theme.transitions.duration.enteringScreen,
+  }),
+});
 
 const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })(
   ({ theme, open }) => ({
     flexGrow: 1,
-    // padding: theme.spacing(3),
-    transition: theme.transitions.create('margin', {
-      easing: theme.transitions.easing.sharp,
-      duration: theme.transitions.duration.leavingScreen,
-    }),
+    ...pageSlideAnimation(theme, 'margin'),
     marginLeft: `-${drawerWidth}px`,
     ...(open && {
-      transition: theme.transitions.create('margin', {
-        easing: theme.transitions.easing.easeOut,
-        duration: theme.transitions.duration.enteringScreen,
-      }),
       marginLeft: 0,
     }),
   }),
@@ -45,17 +42,10 @@ const AppBar = styled(MuiAppBar, {
 })(({ theme, open }) => ({
   backgroundColor: '#06B8EF',
   backgroundImage: 'linear-gradient(to right, #06B8EF, #A11BDA)',
-  transition: theme.transitions.create(['margin', 'width'], {
-    easing: theme.transitions.easing.sharp,
-    duration: theme.transitions.duration.leavingScreen,
-  }),
+  ...pageSlideAnimation(theme, ['margin', 'width']),
   ...(open && {
     width: `calc(100% - ${drawerWidth}px)`,
     marginLeft: `${drawerWidth}px`,
-    transition: theme.transitions.create(['margin', 'width'], {
-      easing: theme.transitions.easing.easeOut,
-      duration: theme.transitions.duration.enteringScreen,
-    }),
   }),
 }));
 
@@ -75,7 +65,7 @@ const useStyles = makeStyles()((theme) => ({
 
 const NavBar = ({ children }) => {
   const { classes } = useStyles();
-  const { showNavBar, showSideBar } = useContext(ThemeContext);
+  const { showNavBar, showSideBar, setShowSideBar } = useContext(ThemeContext);
   const [open, setOpen] = useState(true);
   const theme = useTheme();
 
@@ -87,11 +77,17 @@ const NavBar = ({ children }) => {
   }, [showNavBar, showSideBar]);
 
   const handleToggleDrawer = () => {
-    setOpen(!open);
+    // save the state so we don't end up with a race condition issue
+    const currentToggledVal = !open;
+    setOpen(currentToggledVal);
+    setShowSideBar(currentToggledVal);
   };
 
   const handleDrawerClose = () => {
-    if (open) setOpen(false);
+    if (open) {
+      setOpen(false);
+      setShowSideBar(false);
+    }
   };
 
   return (
