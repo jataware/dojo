@@ -29,7 +29,7 @@ import RunLogs from './runlogs';
 import RunSummary from './components/RunSummary';
 import Summary from './summary';
 import Terminal from './terminal';
-import theme from './theme';
+import createCustomTheme from './theme';
 import ViewDatasets from './components/ViewDatasets';
 import ViewDocuments from './documents';
 import UploadDocument from './documents/upload';
@@ -81,6 +81,9 @@ export default function Main() {
 const container = document.getElementById('app');
 
 const root = createRoot(container);
+
+// TODO: perhaps a different env variable name
+const theme = createCustomTheme(process.env.COMPANY_BRANDING);
 
 root.render(
   <StyledEngineProvider injectFirst>

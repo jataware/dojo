@@ -25,8 +25,8 @@ const useStyles = makeStyles()((theme) => ({
   topContentWrapper: {
     display: 'flex',
     justifyContent: 'center',
-    backgroundColor: '#06B8EF',
-    backgroundImage: 'linear-gradient(to right, #06B8EF, #A11BDA)',
+    backgroundColor: theme.custom.nav.color,
+    backgroundImage: theme.custom.nav.image,
     color: 'white',
     padding: `${theme.spacing(4)} 0`,
   },

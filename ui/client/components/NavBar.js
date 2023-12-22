@@ -40,8 +40,8 @@ const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })(
 const AppBar = styled(MuiAppBar, {
   shouldForwardProp: (prop) => prop !== 'open',
 })(({ theme, open }) => ({
-  backgroundColor: '#06B8EF',
-  backgroundImage: 'linear-gradient(to right, #06B8EF, #A11BDA)',
+  backgroundColor: theme.custom.nav.color,
+  backgroundImage: theme.custom.nav.image,
   ...pageSlideAnimation(theme, ['margin', 'width']),
   ...(open && {
     width: `calc(100% - ${drawerWidth}px)`,
@@ -51,8 +51,8 @@ const AppBar = styled(MuiAppBar, {
 
 const useStyles = makeStyles()((theme) => ({
   appBarRoot: {
-    backgroundColor: '#06B8EF',
-    backgroundImage: 'linear-gradient(to right, #06B8EF, #A11BDA)',
+    backgroundColor: theme.custom.nav.color,
+    backgroundImage: theme.custom.nav.image,
   },
   toolbar: {
     padding: `0 ${theme.spacing(5)}`,

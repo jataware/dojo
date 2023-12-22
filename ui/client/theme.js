@@ -1,3 +1,4 @@
+import { deepmerge } from '@mui/utils';
 import { createTheme, alpha } from '@mui/material/styles';
 import { grey } from '@mui/material/colors';
 
@@ -12,7 +13,7 @@ const theme = createTheme({
   }
 });
 
-export default createTheme(theme, {
+const baseTheme = createTheme(theme, {
   breakpoints: {
     values: {
       xl: 1920,
@@ -111,3 +112,40 @@ export default createTheme(theme, {
     }
   },
 });
+
+const dojoTheme = {
+  custom: {
+    nav: {
+      color: '#06B8EF',
+      image: 'linear-gradient(to right, #06B8EF, #A11BDA)',
+    },
+  },
+};
+
+const ifpriTheme = {
+  custom: {
+    nav: {
+      color: 'red',
+      image: ''//linear-gradient(to right, #06B8EF, #A11BDA)',
+    },
+  },
+};
+
+function createCustomTheme(brand) {
+  let themeVariant;
+
+  switch (brand) {
+    case 'dojo':
+      themeVariant = dojoTheme;
+      break;
+    case 'ifpri':
+      themeVariant = ifpriTheme;
+      break;
+    default:
+      themeVariant = {};
+  }
+
+  return createTheme(deepmerge(baseTheme, themeVariant));
+}
+
+export default createCustomTheme;
