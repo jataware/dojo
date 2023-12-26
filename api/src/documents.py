@@ -605,22 +605,44 @@ def update_document(payload: DocumentSchema.CreateModel, document_id: str):
 
 def enqueue_document_paragraphs_processing(document_id, s3_url, api_host):
     """
-    Adds document to queue to process by paragraph.
-    Embedder creates and attaches LLM embeddings to its paragraphs
+    Adds document to queue to process its paragraph.
+    Converts to PDF (if applicable), and kicks off text extractions and uploading
+    of text/metadata/embeddings.
     """
-    job_string = "paragraph_embeddings_processors.calculate_store_embeddings"
-    # job_id = f"{document_id}_{job_string}"
+    logger.info(f"Destination path: {s3_url}")
 
-    payload = json.dumps({
-        "s3_url": s3_url,
-        "callback_url": f"{api_host}/job/{document_id}/{job_string}"
-    })
+    if not s3_url.endswith(".pdf"):
+        # This job should eventually call the job that would have been called
+        # otherwise below (calculate_store_embeddings)
+        job_string = "document_conversion.to_pdf"
 
-    response = requests.post(f"{settings.OCR_URL}/{document_id}", data=payload)
-    if response.status_code != 200:
-        return False
+        match = re.search(r'[^/]*$', s3_url)
+        filename = match[0]
 
-    return True
+        context = {
+            "document_id": document_id,
+            "s3_url": s3_url,
+            "filename": filename
+        }
+        q.enqueue_call(
+            func=job_string,
+            args=[context],
+        )
+        return True
+    else:
+        # job string only used to set as callback 'url' for this request
+        job_string = "paragraph_embeddings_processors.calculate_store_embeddings"
+
+        payload = json.dumps({
+            "s3_url": s3_url,
+            "callback_url": f"{api_host}/job/{document_id}/{job_string}"
+        })
+
+        response = requests.post(f"{settings.OCR_URL}/{document_id}", data=payload)
+        if response.status_code != 200:
+            return False
+
+        return True
 
 
 # NOTE TODO should we only allow 1 file per document id? replace? cancel/error?
@@ -636,7 +658,10 @@ def upload_file(
     original_filename = file.filename
     _, ext = os.path.splitext(original_filename)
 
-    dest_path = os.path.join(settings.DOCUMENT_STORAGE_BASE_URL, f"{document_id}-{original_filename}")
+    dest_path = os.path.join(
+        settings.DOCUMENT_STORAGE_BASE_URL,
+        f"{document_id}-{original_filename}"
+    )
     put_rawfile(path=dest_path, fileobj=file.file)
 
     body_updates = {
@@ -651,9 +676,9 @@ def upload_file(
 
     api_host = request.client.host
     logger.info(f"Setting up document processing at host: {api_host}")
+
     # enqueue for OCR and rq worker to add paragraphs and embeddings to es
-    # TODO Should we fail if queueing fails?
-    queue_success = enqueue_document_paragraphs_processing(document_id, dest_path, api_host)
+    enqueue_document_paragraphs_processing(document_id, dest_path, api_host)
 
     final_document = es.get_source(index="documents", id=document_id)
 
@@ -663,7 +688,7 @@ def upload_file(
             "location": f"/api/documents/{document_id}",
             "content-type": "application/json",
         },
-        content=json.dumps({"id": document_id}|final_document),
+        content=json.dumps({"id": document_id} | final_document),
     )
 
 
@@ -693,6 +718,3 @@ def get_document_uploaded_file(document_id: str):
         return Response(content=file.read(), media_type="application/pdf", headers=headers)
     except FileNotFoundError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-
-
-
