@@ -50,6 +50,21 @@ const extensionMap = {
   },
   xlsx: {
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx']
+  },
+  'docx': {
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx']
+  },
+  'doc': {
+    'application/msword': ['.doc']
+  },
+  'odt': {
+    'application/vnd.oasis.opendocument.text': ['.odt']
+  },
+  'ppt': {
+    'application/vnd.ms-powerpoint': ['.ppt']
+  },
+  'pptx': {
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation': ['.pptx']
   }
 };
 
@@ -77,7 +92,7 @@ export const FileDropSelector = ({
   const onDropFilesRejected = (fileRejections) => {
     let errorMessage = 'There was an issue with your file upload: ';
 
-    if (fileRejections.length > 10 && acceptExtensions.includes('pdf')) {
+    if (fileRejections.length > 10) {
       errorMessage += 'The upload limit is 10 files. Please try again with fewer files.';
     } else if (fileRejections[0].errors) {
       errorMessage += fileRejections[0].errors.map((item) => item?.message).join('; ');

@@ -94,13 +94,13 @@ def get_image_tags(repo):
     url = (
         f"{settings.DOCKERHUB_URL}/namespaces/"
         f"{settings.DOCKERHUB_ORG}/repositories/"
-        f"{repo}/images?ordering=last_activity&page_size=100&currently_tagged=true"
+        f"{repo}/tags?page_size=100"
     )
 
     headers = {"Accept": "application/json", "Authorization": f"Bearer {auth_token}"}
 
     # Get list of image tag dicts.
-    image_tags = get_repo_image_details(url, headers, [])
+    image_tags = get_repo_image_details(url, headers, repo, [])
 
     model_images = [
         image_tag.get("display_name")
@@ -142,7 +142,7 @@ def get_image_tags(repo):
     return curated_tags
 
 
-def get_repo_image_details(url: str, headers: dict, image_tags) -> list:
+def get_repo_image_details(url: str, headers: dict, repo: str, image_tags) -> list:
     """
     Description
     -----------
@@ -168,57 +168,67 @@ def get_repo_image_details(url: str, headers: dict, image_tags) -> list:
     """
 
     try:
+        logger.info(url)
         response = requests.get(url, headers=headers)
         resp = response.json()
 
         """
         Example Response
         ----------------
+        {
+        "creator":13929046,
+        "id":506806479,
+        "images":[
             {
-            "count": 79,
-            "next": "https://hub.docker.com/v2/namespaces/jataware/repositories/dojo-publish/images?page=2&status=active",
-            "previous": null,
-            "results": [
-                {
-                    "namespace": "jataware",
-                    "repository": "dojo-publish",
-                    "digest": "sha256:81ae08c9a8093e0c0c10313b844aa70e1f5be6c582b1c1a41fc073a37df35528",
-                    "tags": [
-                        {
-                            "tag": "GoogleTrends-latest",
-                            "is_current": true
-                        }
-                    ],
-                    "last_pushed": "2021-07-15T01:16:32.454626Z",
-                    "last_pulled": "2021-07-21T14:58:42.765245Z",
-                    "status": "active"
-                },
+                "architecture":"amd64",
+                "features":"",
+                "variant":"None",
+                "digest":"sha256:8bb0ef38302b1aa6705ba15cfceb8b00ed3311edf1cdd86294b4e3f21f8887d4",
+                "os":"linux",
+                "os_features":"",
+                "os_version":"None",
+                "size":143808770,
+                "status":"inactive",
+                "last_pulled":"None",
+                "last_pushed":"2023-09-05T17:26:18.053159Z"
+            }
+        ],
+        "last_updated":"2023-09-05T17:26:18.159509Z",
+        "last_updater":13929046,
+        "last_updater_username":"automationjat",
+        "name":"20a9081d-af1c-4df7-a6ba-bb201359f2fe",
+        "repository":14874028,
+        "full_size":143808770,
+        "v2":true,
+        "tag_status":"inactive",
+        "tag_last_pulled":"None",
+        "tag_last_pushed":"2023-09-05T17:26:18.159509Z",
+        "media_type":"application/vnd.docker.container.image.v1+json",
+        "content_type":"image",
+        "digest":"sha256:8bb0ef38302b1aa6705ba15cfceb8b00ed3311edf1cdd86294b4e3f21f8887d4"
+        },
             ...
         """
         if "results" in resp:
             for result in resp["results"]:
-                if "tags" in result:
-                    tags = result["tags"][0]
-                    tag = tags["tag"]
-                    image = result["namespace"] + "/" + result["repository"] + ":" + tag
-                    display_name = tag.replace("-latest", "")
-                    updated_at = result["last_pushed"]
-
-                    image_tags.append(
-                        {
-                            "display_name": display_name,
-                            "image": image,
-                            "sort_order": 0,
-                            "updated_at": updated_at,
-                        }
-                    )
+                display_name = result.get('name')
+                updated_at = result.get('tag_last_pushed')
+                image = settings.DOCKERHUB_ORG + "/" + repo + ":" + display_name
+                image_tags.append(
+                    {
+                        "display_name": display_name,
+                        "image": image,
+                        "sort_order": 0,
+                        "updated_at": updated_at,
+                    }
+                )
 
         # Get the next page if there is a "next".
         if "next" in resp and resp["next"] is not None:
-            image_tags = get_repo_image_details(resp["next"], headers, image_tags)
+            image_tags = get_repo_image_details(resp["next"], headers, repo, image_tags)
 
         return image_tags
 
     except Exception as e:
-        logger.error(e.message, e.args)
+        logger.error(e)
         return ""

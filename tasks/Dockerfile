@@ -1,6 +1,8 @@
 FROM --platform=linux/amd64 python:3.8-bullseye
 
 RUN apt-get update &&\
+    apt-get reinstall -y gdal-bin=3.2.2+dfsg-2+deb11u2 \
+    libgdal-dev=3.2.2+dfsg-2+deb11u2 && \
     apt-get install -y wget unzip python3-rtree python3-all-dev 
 
 RUN apt install --no-install-recommends -y libreoffice-writer libreoffice-impress 

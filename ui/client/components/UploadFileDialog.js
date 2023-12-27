@@ -57,7 +57,8 @@ const UploadFileDialog = ({
         .catch((error) => {
           resolve(error);
           // eslint-disable-next-line no-alert
-          alert(`${error} - Please try to upload again. If this continues see dojo documentation on uploading large files using Dojo's Amazon S3 Bucket. https://www.dojo-modeling.com/large-files.html`);
+          // TODO-NEW-DOCS: change /details to  /model-registration when we switch to new docs
+          alert(`${error} - Please try to upload again. If this continues see dojo documentation on uploading large files using Dojo's Amazon S3 Bucket. https://www.dojo-modeling.com/details/large-files.html`);
         });
     } catch (error) {
       console.log(error);
@@ -139,8 +140,10 @@ const UploadFileDialog = ({
                         <span className={classes.warningText}>
                           File size over limit - (25mb).
                         </span>
+                        {/* eslint-disable-next-line max-len */}
+                        {/* TODO-NEW-DOCS: change /details to  /model-registration when we switch to new docs */}
                         <Button
-                          href=" https://www.dojo-modeling.com/large-files.html"
+                          href=" https://www.dojo-modeling.com/details/large-files.html"
                           target="_blank"
                           rel="noopener"
                           className={classes.buttons}

@@ -470,7 +470,7 @@ def get_document_text(document_id: str,
         try:
             q = {
                 "query": {
-                    "match": {"document_id": document_id}
+                    "match": {"document_id.keyword": document_id}
                 },
                 "sort": [
                     {
