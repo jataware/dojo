@@ -26,9 +26,9 @@ const useStyles = makeStyles()((theme) => ({
   topContentWrapper: {
     display: 'flex',
     justifyContent: 'center',
-    backgroundColor: theme.custom.nav.color,
+    backgroundColor: theme.custom.landing.backgroundColor,
     backgroundImage: theme.custom.nav.image,
-    color: 'white',
+    color: theme.custom.landing.color,
     padding: `${theme.spacing(4)} 0`,
   },
   topHeaderTitle: {

@@ -14,7 +14,7 @@ import { makeStyles } from 'tss-react/mui';
 
 import { ThemeContext } from './ThemeContextProvider';
 
-import { BlackTooltip } from './uiComponents/BlackTooltip';
+import { ThemedTooltip } from './uiComponents/ThemedTooltip';
 import { ContrastIconButton } from './uiComponents/ContrastButton';
 import Sidebar, { drawerWidth } from './Sidebar';
 import DojoIcon from './uiComponents/DojoIcon';
@@ -106,16 +106,16 @@ const NavBar = ({ children }) => {
               orientation="horizontal"
               timeout={theme.transitions.duration.enteringScreen}
             >
-              <BlackTooltip disableInteractive title="Open navigation panel">
+              <ThemedTooltip disableInteractive title="Open navigation panel">
                 <ContrastIconButton
                   onClick={handleToggleDrawer}
                   sx={{ color: 'white' }}
                 >
                   <MenuIcon />
                 </ContrastIconButton>
-              </BlackTooltip>
+              </ThemedTooltip>
             </Collapse>
-            <BlackTooltip disableInteractive title="Dojo home">
+            <ThemedTooltip disableInteractive title="Dojo home">
               <ContrastIconButton
                 component={Link}
                 to="/"
@@ -123,9 +123,9 @@ const NavBar = ({ children }) => {
               >
                 <DojoIcon color="inherit" sx={{ height: '30px', width: '30px' }} />
               </ContrastIconButton>
-            </BlackTooltip>
+            </ThemedTooltip>
             <span className={classes.spacer} />
-            <BlackTooltip disableInteractive title="View Dojo Docs (opens new tab)">
+            <ThemedTooltip disableInteractive title="View Dojo Docs (opens new tab)">
               <ContrastIconButton
                 href="https://www.dojo-modeling.com"
                 target="_blank"
@@ -136,8 +136,8 @@ const NavBar = ({ children }) => {
               >
                 <MenuBookIcon />
               </ContrastIconButton>
-            </BlackTooltip>
-            <BlackTooltip disableInteractive title="View Dojo on Github (opens new tab)">
+            </ThemedTooltip>
+            <ThemedTooltip disableInteractive title="View Dojo on Github (opens new tab)">
               <ContrastIconButton
                 href="https://github.com/jataware/dojo"
                 target="_blank"
@@ -148,7 +148,7 @@ const NavBar = ({ children }) => {
               >
                 <GitHubIcon />
               </ContrastIconButton>
-            </BlackTooltip>
+            </ThemedTooltip>
           </Toolbar>
         </AppBar>
         <Sidebar open={open} handleDrawerClose={handleDrawerClose} />

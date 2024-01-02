@@ -14,7 +14,7 @@ import ComputerIcon from '@mui/icons-material/Computer';
 import HomeIcon from '@mui/icons-material/Home';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 
-import { BlackTooltip } from './uiComponents/BlackTooltip';
+import { ThemedTooltip } from './uiComponents/ThemedTooltip';
 import { ContrastIconButton, ContrastListItemButton } from './uiComponents/ContrastButton';
 
 export const drawerWidth = 240;
@@ -75,11 +75,11 @@ const Sidebar = ({ open, handleDrawerClose }) => (
       variant="dense"
       sx={{ display: 'flex', justifyContent: 'flex-end' }}
     >
-      <BlackTooltip disableInteractive title="Close navigation panel">
+      <ThemedTooltip disableInteractive title="Close navigation panel">
         <ContrastIconButton onClick={handleDrawerClose} sx={{ color: 'black' }}>
           <ChevronLeftIcon />
         </ContrastIconButton>
-      </BlackTooltip>
+      </ThemedTooltip>
     </Toolbar>
     <Divider sx={{ paddingTop: '1px' }} />
     <List sx={{ width: '100%' }}>

@@ -25,9 +25,9 @@ const useStyles = makeStyles()((theme) => ({
   topContentWrapper: {
     display: 'flex',
     justifyContent: 'center',
-    backgroundColor: theme.custom.nav.color,
+    backgroundColor: theme.custom.landing.backgroundColor,
     backgroundImage: theme.custom.nav.image,
-    color: 'white',
+    color: theme.custom.landing.color,
     padding: `${theme.spacing(4)} 0`,
   },
   topHeaderTitle: {
@@ -112,7 +112,7 @@ const GenericIntroPage = ({ title, subtitle, actions }) => {
     <Box className={classes.allContentWrapper}>
       <div className={classes.topContentWrapper}>
         <Container maxWidth="lg">
-          <Breadcrumbs sx={{ color: 'white' }}>
+          <Breadcrumbs sx={{ color: 'custom.landing.color' }}>
             <Link color="inherit" component={RouterLink} underline="none" to="/">Home</Link>
             <Typography><b>{title}</b></Typography>
           </Breadcrumbs>

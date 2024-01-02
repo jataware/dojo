@@ -116,8 +116,16 @@ const baseTheme = createTheme(theme, {
 const dojoTheme = {
   custom: {
     nav: {
-      color: '#06B8EF',
+      backgroundColor: '#06B8EF',
       image: 'linear-gradient(to right, #06B8EF, #A11BDA)',
+    },
+    landing: {
+      backgroundColor: '#06B8EF',
+      color: 'white',
+    },
+    button: {
+      color: 'white',
+      backgroundColor: 'black',
     },
   },
 };
@@ -125,10 +133,27 @@ const dojoTheme = {
 const ifpriTheme = {
   custom: {
     nav: {
-      color: 'red',
-      image: ''//linear-gradient(to right, #06B8EF, #A11BDA)',
+      color: '#ffb300',
+      // ifpri green: '#62bb46'
+      // or darker: #429d46 (from ifpri library)
+    },
+    landing: {
+      backgroundColor: '#f5f4f0',
+      color: 'black',
+    },
+    button: {
+      color: 'white',
+      backgroundColor: '#429d46',
     },
   },
+  palette: {
+    secondary: {
+      main: '#429d46',
+      light: '#4cb451',
+      dark: '#2e6e31',
+      constrastText: '#fff',
+    }
+  }
 };
 
 function createCustomTheme(brand) {

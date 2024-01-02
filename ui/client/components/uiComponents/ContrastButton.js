@@ -5,8 +5,8 @@ import { styled } from '@mui/material/styles';
 
 const contrastHoverStyles = (theme) => ({
   '&:hover': {
-    backgroundColor: theme.palette.common.black,
-    color: theme.palette.common.white,
+    backgroundColor: theme.custom.button.backgroundColor,
+    color: theme.custom.button.color,
   },
 });
 
