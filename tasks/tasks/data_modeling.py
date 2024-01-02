@@ -8,17 +8,25 @@ from utils import get_rawfile
 import os
 import json
 import shutil
+from pathlib import Path
 import requests
 import xarray as xr
 import pandas as pd
 import numpy as np
-from cftime import DatetimeNoLeap
+from cftime import DatetimeNoLeap, DatetimeGregorian
 from flowcast.pipeline import Pipeline, Variable, Threshold, ThresholdType
 from flowcast.spacetime import Frequency, Resolution
 from flowcast.regrid import RegridType
 from collections import defaultdict, deque
 from typing import Callable, Union, List
 from pydantic import BaseModel, Field
+
+
+# ###### DEBUG ######
+# import pdb
+# from data_modeling_debug_helpers import plot_to_web
+# from matplotlib import pyplot as plt
+# plt.show = plot_to_web
 
 
 # import logging
@@ -114,6 +122,79 @@ def topological_sort(graph: Graph):
 
 
 
+def prepare_netcdf(file_path: Path, time_annotation, lat_annotation, lon_annotation) -> xr.Dataset:
+    # load the netcdf and convert coordinate names to time, lat, lon
+    dataset: xr.Dataset = xr.open_dataset(file_path)
+    if time_annotation['name'] in dataset.coords:
+        dataset = dataset.rename({time_annotation['name']: 'time'})
+    if lat_annotation['name'] in dataset.coords:
+        dataset = dataset.rename({lat_annotation['name']: 'lat'})
+    if lon_annotation['name'] in dataset.coords:
+        dataset = dataset.rename({lon_annotation['name']: 'lon'})
+
+    # ensure the time dimension is of type cftime.DatetimeNoLeap
+    if 'time' in dataset.coords:
+        if isinstance(dataset['time'].values[0], str):
+            # time_annotation['time_format'] # e.g. '%Y-%m-%d %H:%M:%S'
+            times = [pd.to_datetime(t, format=time_annotation['time_format']) for t in dataset['time'].values]
+            times = [DatetimeNoLeap(t.year, t.month, t.day, t.hour, t.minute, t.second) for t in times]
+            dataset['time'] = times
+        elif isinstance(dataset['time'].values[0], DatetimeNoLeap):
+            pass
+        elif isinstance(dataset['time'].values[0], np.datetime64):
+            def to_cftime(t: np.datetime64) -> DatetimeNoLeap:
+                dt = pd.to_datetime(t)
+                return DatetimeNoLeap(dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second)
+            times = [to_cftime(t) for t in dataset['time'].values]
+            dataset['time'] = times
+        else:
+            raise Exception('unhandled time type', type(dataset['time'].values[0]))
+        
+    return dataset
+
+def prepare_geotiff(file_path:Path, features_annotations) -> xr.Dataset:
+    
+    dataset: xr.Dataset = xr.open_dataset(file_path)
+    
+    
+    assert 'x' in dataset.coords and 'y' in dataset.coords, f'Expected x and y coordinates in geotiff, got {dataset.coords=}'
+    #TODO: handling different coordinate systems that are not lat/lon. E.g. UTM
+    dataset = dataset.rename({'x': 'lon'})
+    dataset = dataset.rename({'y': 'lat'})
+
+    if 'time' in dataset.coords:
+        #ensure time is converted to cftime.DatetimeNoLeap
+        if isinstance(dataset['time'].values[0], DatetimeGregorian):
+            times = [DatetimeNoLeap(t.year, t.month, t.day, t.hour, t.minute, t.second) for t in dataset['time'].values]
+            dataset['time'] = times
+        elif isinstance(dataset['time'].values[0], DatetimeNoLeap):
+            pass
+        else:
+            raise Exception('unhandled time type', type(dataset['time'].values[0]))
+
+    
+    if 'band' in dataset.coords:
+        assert 'band_data' in dataset.data_vars, f'Expected band_data variable in geotiff, got {dataset.data_vars=}'
+        assert len(features_annotations) == dataset['band'].shape[0], f'Expected {dataset["band"].shape[0]} feature annotations, got {len(features_annotations)}: {features_annotations=}'
+
+        # break each band into a separate feature
+        dataset = xr.Dataset({
+            feature_annotations['name']: dataset.isel(band=idx, drop=True)['band_data']
+            for idx, feature_annotations in enumerate(features_annotations)
+        })
+
+    else:
+        #convert main column name to the feature name
+        assert len(features_annotations) == 1, f'Expected 1 feature annotation, got {len(features_annotations)}: {features_annotations=}'
+        feature_annotation, = features_annotations
+        data_vars = [*dataset.data_vars]
+        assert len(data_vars) == 1, f'Expected 1 data variable, got {len(data_vars)}: {data_vars=}'
+        data_var, = data_vars
+        dataset = dataset.rename({data_var: feature_annotation['name']})
+    
+    return dataset
+
+
 def get_data(features:list[LoadNode]):
     """
     Given a list of data ids and feature names:
@@ -127,27 +208,32 @@ def get_data(features:list[LoadNode]):
     loaders:dict[str, Callable[[], Variable]] = {} #map from variable_name::dataset_id to dataloader for that variable
 
     # create temporary directory for storing netcdfs
-    tmpdir = './tmp_netcdf'
-    filename = 'raw_data.nc'
+    tmpdir = Path('./tmp_netcdf')
+    # filename = 'raw_data.nc'
     if not os.path.exists(tmpdir):
         os.mkdir(tmpdir)
 
     
     #collect all mentioned datasets and corresponding annotations
-    dataset_ids = set(feature['data_source'].split('::')[1] for feature in features)
+    dataset_ids: set[str] = set(feature['data_source'].split('::')[1] for feature in features)
     for dataset_id in dataset_ids:
-        # download netcdf from ES
-        rawfile_path = os.path.join(settings.DATASET_STORAGE_BASE_URL, dataset_id, filename)
-        file_path = os.path.join(tmpdir, f'{dataset_id}_{filename}')
-
-        raw_file_obj = get_rawfile(rawfile_path)
-        with open(file_path, "wb") as f:
-            f.write(raw_file_obj.read())
-        
         # grab annotation from endpoint
         metadata_path = os.path.join(settings.DOJO_URL, 'indicators', dataset_id, 'annotations')
         metadata = requests.get(metadata_path).json()
+        
+        # filedata = requests.get(os.path.join(settings.DOJO_URL, 'indicators', dataset_id, 'file_data')).json()
+        alldata = requests.get(os.path.join(settings.DOJO_URL, 'indicators', dataset_id)).json()
+        filedata = alldata['fileData']
+        raw_filename: str = filedata['raw']['rawFileName']
 
+        # download netcdf from ES
+        rawfile_url = os.path.join(settings.DATASET_STORAGE_BASE_URL, dataset_id, raw_filename)
+        file_path = tmpdir / f'{dataset_id}_{raw_filename}'
+
+        raw_file_obj = get_rawfile(rawfile_url)
+        with open(file_path, "wb") as f:
+            f.write(raw_file_obj.read())
+        
         # collect the time and geo annotations from the metadata
         annotations = metadata['annotations']
         geo_annotations: list = annotations['geo']
@@ -158,37 +244,16 @@ def get_data(features:list[LoadNode]):
         lat_annotation, = filter(lambda a: a['geo_type'] == 'latitude', geo_annotations)
         lon_annotation, = filter(lambda a: a['geo_type'] == 'longitude', geo_annotations)
 
-        # load the netcdf and convert coordinate names to time, lat, lon
-        dataset: xr.Dataset = xr.open_dataset(file_path)
-        if time_annotation['name'] in dataset.coords:
-            dataset = dataset.rename({time_annotation['name']: 'time'})
-        if lat_annotation['name'] in dataset.coords:
-            dataset = dataset.rename({lat_annotation['name']: 'lat'})
-        if lon_annotation['name'] in dataset.coords:
-            dataset = dataset.rename({lon_annotation['name']: 'lon'})
-
-        # ensure the time dimension is of type cftime.DatetimeNoLeap
-        if 'time' in dataset.coords:
-            if isinstance(dataset['time'].values[0], str):
-                # time_annotation['time_format'] # e.g. '%Y-%m-%d %H:%M:%S'
-                times = [pd.to_datetime(t, format=time_annotation['time_format']) for t in dataset['time'].values]
-                times = [DatetimeNoLeap(t.year, t.month, t.day, t.hour, t.minute, t.second) for t in times]
-                dataset['time'] = times
-            elif isinstance(dataset['time'].values[0], DatetimeNoLeap):
-                pass
-            elif isinstance(dataset['time'].values[0], np.datetime64):
-                def to_cftime(t: np.datetime64) -> DatetimeNoLeap:
-                    dt = pd.to_datetime(t)
-                    return DatetimeNoLeap(dt.year, dt.month, dt.day, dt.hour, dt.minute, dt.second)
-                times = [to_cftime(t) for t in dataset['time'].values]
-                dataset['time'] = times
-            else:
-                raise Exception('unhandled time type', type(dataset['time'].values[0]))
-
+        if raw_filename.endswith('.nc'):
+            dataset = prepare_netcdf(file_path, time_annotation, lat_annotation, lon_annotation)
+        elif raw_filename.endswith('.tif') or raw_filename.endswith('.tiff'):
+            features_annotations = annotations['feature']
+            dataset = prepare_geotiff(file_path, features_annotations)
+        else:
+            raise Exception(f'Unsupported file type: {raw_filename}')
 
         # store dataset in map
         datasets[dataset_id] = dataset
-
 
     #create loaders for each variable
     for feature in features:
@@ -197,7 +262,11 @@ def get_data(features:list[LoadNode]):
         data = datasets[dataset_id][variable_name]
         time_regrid_type = RegridType[feature['time_aggregation_function']]
         geo_regrid_type = RegridType[feature['geo_aggregation_function']]
-        loaders[data_source] = lambda: Variable(data, time_regrid_type, geo_regrid_type)
+        
+        # outer lambda is to make sure the inner lambda captures the values from the current iteration of the loop
+        # without, the lambda would lazily capture the value, and all of them would end up with the last value
+        loader = lambda data, time_regrid_type, geo_regrid_type: lambda: Variable(data, time_regrid_type, geo_regrid_type)
+        loaders[data_source] = loader(data, time_regrid_type, geo_regrid_type)
 
     # clean up downloaded netcdfs
     shutil.rmtree(tmpdir)
