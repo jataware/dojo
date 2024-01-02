@@ -67,7 +67,9 @@ Steps to add a geographic coverage by building a bounding box:
  - Corner 1: The latitude and longitude of the northwest corner of your bounding box.
  - Corner 2: The latitude and longitude of the southeast corner of your bounding box.
   
-    >Note : Western longitudes and Southern latitudes are negative
+:::tip
+Western longitudes and Southern latitudes are negative
+:::
   
 3. Select `ADD REGION TO MAP`
 
