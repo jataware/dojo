@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 
 import axios from 'axios';
 
@@ -19,6 +19,7 @@ import { useModel } from './components/SWRHooks';
 
 import BasicAlert from './components/BasicAlert';
 import LoadingOverlay from './components/LoadingOverlay';
+import { ThemeContext } from './components/ThemeContextProvider';
 
 const useStyles = makeStyles()((theme) => ({
   formControl: {
@@ -88,9 +89,18 @@ const Provision = () => {
     message: ''
   });
 
+  const { setShowSideBar } = useContext(ThemeContext);
+
   useEffect(() => {
     document.title = 'Provision - Dojo';
   }, []);
+
+  useEffect(() => {
+    // hide the Sidebar when the component mounts
+    setShowSideBar(false);
+    // when the component unmounts, toggle the Sidebar back
+    return () => setShowSideBar(true);
+  }, [setShowSideBar]);
 
   useEffect(() => {
     if (model) {
@@ -279,6 +289,9 @@ const Provision = () => {
               <li>
                 <Typography variant="body2">
                   Once the model has been run, you&apos;ll use the&nbsp;
+                  {/*
+                    TODO-NEW-DOCS: change /details to /data-modeling when we switch to new docs
+                  */}
                   <Link
                     href="https://www.dojo-modeling.com/details/cheatsheet.html#dojo-terminal-commands"
                     target="_blank"
@@ -299,6 +312,9 @@ const Provision = () => {
 
               <Typography variant="body2" gutterBottom>
                 See&nbsp;
+                {/*
+                  TODO-NEW-DOCS: change /details to /data-modeling when we switch to new docs
+                */}
                 <Link
                   href="https://www.dojo-modeling.com/details/docker.html"
                   target="_blank"

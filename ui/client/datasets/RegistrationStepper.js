@@ -18,6 +18,7 @@ import { DefaultErrorFallback } from '../components/DefaultErrorFallback';
 import Prompt from './PromptDialog';
 import flows from './Flows';
 import { FlowContext } from './FlowContext';
+import { ThemeContext } from '../components/ThemeContextProvider';
 
 const useStyles = makeStyles()(({ spacing, breakpoints }) => ({
   root: {
@@ -154,6 +155,15 @@ const InnerStepper = ({ match, updateLocation, ...props }) => {
 
   const [rawFileName, setRawFileName] = useState(null);
   const [uploadedFilesData, setUploadedFilesData] = useState({});
+
+  const { setShowSideBar } = useContext(ThemeContext);
+
+  useEffect(() => {
+    // hide the navbar when the component mounts
+    setShowSideBar(false);
+    // when the component unmounts, toggle the SideBar back
+    return () => setShowSideBar(true);
+  }, [setShowSideBar]);
 
   useEffect(() => {
     let stepNum = 0;

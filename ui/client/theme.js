@@ -20,6 +20,12 @@ export default createTheme(theme, {
   },
   palette: {
     // mode: 'dark',
+    secondary: {
+      main: '#8917b9',
+      dark: '#601082',
+      light: '#9e1ad5',
+      constrastText: '#fff',
+    },
     primary: {
       main: '#1976d2',
     },

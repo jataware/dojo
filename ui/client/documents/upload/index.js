@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import axios from 'axios';
 import isEmpty from 'lodash/isEmpty';
@@ -22,6 +22,7 @@ import { FileDropSelector } from './DropArea';
 import { SelectedFileList } from './FileList';
 import EditMetadata from './EditMetadata';
 import PDFViewer from './PDFViewer';
+import { ThemeContext } from '../../components/ThemeContextProvider';
 
 const PDF_ATTR_GETTERS = [
   'getTitle',
@@ -158,6 +159,15 @@ const UploadDocumentForm = () => {
   const selectedFile = files[selectedFileIndex] || {};
 
   const history = useHistory();
+
+  const { setShowSideBar } = useContext(ThemeContext);
+
+  useEffect(() => {
+    // hide the Sidebar when the component mounts
+    setShowSideBar(false);
+    // when the component unmounts, toggle the Sidebar back
+    return () => setShowSideBar(true);
+  }, [setShowSideBar]);
 
   const handleFileSelect = (acceptedFiles) => {
     setLoading(true);

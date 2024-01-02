@@ -1,4 +1,6 @@
-import React, { useCallback, useEffect, useState } from 'react';
+import React, {
+  useCallback, useContext, useEffect, useState
+} from 'react';
 
 import Button from '@mui/material/Button';
 import Step from '@mui/material/Step';
@@ -19,6 +21,7 @@ import ConfirmDialog from './ConfirmDialog';
 import { ModelDetail } from './ModelDetailForm';
 import { ModelOverview } from './ModelOverviewForm';
 import ModelRegionForm from './ModelRegionForm';
+import { ThemeContext } from './ThemeContextProvider';
 
 const useStyles = makeStyles()((theme) => ({
   root: {
@@ -153,6 +156,15 @@ export const HorizontalLinearStepper = ({ modelFamily }) => {
     // and if it isn't, return a deep cloned copy of our default model
     return parsedModel || cloneDeep(defaultModelState);
   });
+
+  const { setShowSideBar } = useContext(ThemeContext);
+
+  useEffect(() => {
+    // hide the Sidebar when the component mounts
+    setShowSideBar(false);
+    // when the component unmounts, toggle the Sidebar back
+    return () => setShowSideBar(true);
+  }, [setShowSideBar]);
 
   useEffect(() => {
     if (modelFamily) {

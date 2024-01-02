@@ -4,11 +4,11 @@ export const ThemeContext = createContext({});
 
 const ThemeContextProvider = ({ children }) => {
   const [showNavBar, setShowNavBar] = useState(true);
-  const [fixedNavBar, setFixedNavBar] = useState(false);
+  const [showSideBar, setShowSideBar] = useState(true);
 
   return (
     <ThemeContext.Provider value={{
-      showNavBar, setShowNavBar, fixedNavBar, setFixedNavBar
+      showNavBar, setShowNavBar, showSideBar, setShowSideBar,
     }}
     >
       {children}
