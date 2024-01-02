@@ -78,6 +78,25 @@ export default function Main() {
   );
 }
 
+const changeFavicon = (faviconFileName) => {
+  const link = document.querySelector("link[rel~='icon']");
+  if (link) {
+    // TODO: confirm that we don't need additional path for prod
+    link.href = `/assets/${faviconFileName}`;
+  } else {
+    const newLink = document.createElement('link');
+    newLink.rel = 'icon';
+    newLink.href = `/assets/${faviconFileName}`;
+    document.head.appendChild(newLink);
+  }
+};
+
+if (process.env.COMPANY_BRANDING === 'dojo') {
+  changeFavicon('favicon-dojo.ico');
+} else if (process.env.COMPANY_BRANDING === 'ifpri') {
+  changeFavicon('favicon-ifpri.ico');
+}
+
 const container = document.getElementById('app');
 
 const root = createRoot(container);

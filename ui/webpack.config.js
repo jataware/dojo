@@ -41,9 +41,13 @@ module.exports = {
                 sideEffects: true
             },
           {
-            test: /\.(png|jpg|gif|woff|woff2|eot|ttf|svg|mp4)$/,
+            test: /\.(png|jpg|gif|woff|woff2|eot|ttf|mp4)$/,
             loader: 'file-loader',
           },
+          {
+            test: /\.svg$/,
+            use: ['@svgr/webpack', 'file-loader'],
+          }
         ]
     },
 

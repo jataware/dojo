@@ -8,6 +8,7 @@ import Collapse from '@mui/material/Collapse';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import MenuIcon from '@mui/icons-material/Menu';
+import SvgIcon from '@mui/material/SvgIcon';
 import { styled, useTheme } from '@mui/material/styles';
 
 import { makeStyles } from 'tss-react/mui';
@@ -18,6 +19,8 @@ import { ThemedTooltip } from './uiComponents/ThemedTooltip';
 import { ContrastIconButton } from './uiComponents/ContrastButton';
 import Sidebar, { drawerWidth } from './Sidebar';
 import DojoIcon from './uiComponents/DojoIcon';
+import BrandSwap from './uiComponents/BrandSwap';
+import { ReactComponent as IfpriLogo } from '../assets/ifpri-logo.svg';
 
 export const pageSlideAnimation = (theme, target) => ({
   transition: theme.transitions.create(target, {
@@ -121,7 +124,18 @@ const NavBar = ({ children }) => {
                 to="/"
                 sx={{ color: 'white' }}
               >
-                <DojoIcon color="inherit" sx={{ height: '30px', width: '30px' }} />
+                <BrandSwap
+                  dojoComponent={(
+                    <DojoIcon color="inherit" sx={{ height: '30px', width: '30px' }} />
+                  )}
+                  ifpriComponent={(
+                    <SvgIcon
+                      component={IfpriLogo}
+                      inheritViewBox
+                      sx={{ height: '30px', width: '30px' }}
+                    />
+                  )}
+                />
               </ContrastIconButton>
             </ThemedTooltip>
             <span className={classes.spacer} />
