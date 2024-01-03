@@ -1,119 +1,163 @@
-import React, { useContext } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 
 import { Link } from 'react-router-dom';
 
-import AppBar from '@mui/material/AppBar';
-import Button from '@mui/material/Button';
-import IconButton from '@mui/material/IconButton';
+import MuiAppBar from '@mui/material/AppBar';
 import Toolbar from '@mui/material/Toolbar';
-import Tooltip from '@mui/material/Tooltip';
-import { lighten } from '@mui/material/styles';
+import Collapse from '@mui/material/Collapse';
+import GitHubIcon from '@mui/icons-material/GitHub';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
+import MenuIcon from '@mui/icons-material/Menu';
+import { styled, useTheme } from '@mui/material/styles';
 
 import { makeStyles } from 'tss-react/mui';
 
 import { ThemeContext } from './ThemeContextProvider';
 
+import { BlackTooltip } from './uiComponents/BlackTooltip';
+import { ContrastIconButton } from './uiComponents/ContrastButton';
+import Sidebar, { drawerWidth } from './Sidebar';
+import DojoIcon from './uiComponents/DojoIcon';
+
+export const pageSlideAnimation = (theme, target) => ({
+  transition: theme.transitions.create(target, {
+    easing: theme.transitions.easing.easeOut,
+    duration: theme.transitions.duration.enteringScreen,
+  }),
+});
+
+const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })(
+  ({ theme, open }) => ({
+    flexGrow: 1,
+    ...pageSlideAnimation(theme, 'margin'),
+    marginLeft: `-${drawerWidth}px`,
+    ...(open && {
+      marginLeft: 0,
+    }),
+  }),
+);
+
+const AppBar = styled(MuiAppBar, {
+  shouldForwardProp: (prop) => prop !== 'open',
+})(({ theme, open }) => ({
+  backgroundColor: '#06B8EF',
+  backgroundImage: 'linear-gradient(to right, #06B8EF, #A11BDA)',
+  ...pageSlideAnimation(theme, ['margin', 'width']),
+  ...(open && {
+    width: `calc(100% - ${drawerWidth}px)`,
+    marginLeft: `${drawerWidth}px`,
+  }),
+}));
+
 const useStyles = makeStyles()((theme) => ({
   appBarRoot: {
-    backgroundColor: lighten(theme.palette.primary.light, 0.6),
+    backgroundColor: '#06B8EF',
+    backgroundImage: 'linear-gradient(to right, #06B8EF, #A11BDA)',
   },
   toolbar: {
     padding: `0 ${theme.spacing(5)}`,
     gap: theme.spacing(3),
-  },
-  dojoIcon: {
-    height: '40px',
-    width: '40px',
-    marginRight: theme.spacing(1),
   },
   spacer: {
     flexGrow: 1,
   },
 }));
 
-const NavBar = () => {
+const NavBar = ({ children }) => {
   const { classes } = useStyles();
-  const { showNavBar, fixedNavBar } = useContext(ThemeContext);
+  const { showNavBar, showSideBar, setShowSideBar } = useContext(ThemeContext);
+  const [open, setOpen] = useState(true);
+  const theme = useTheme();
 
-  if (!showNavBar) {
-    return null;
-  }
+  useEffect(() => {
+    // close the sidebar when we hide the navbar or just close the sidebar
+    if (!showNavBar || !showSideBar) setOpen(false);
+    // open the sidebar when nothing is closing it
+    if (showNavBar && showSideBar) setOpen(true);
+  }, [showNavBar, showSideBar]);
+
+  const handleToggleDrawer = () => {
+    // save the state so we don't end up with a race condition issue
+    const currentToggledVal = !open;
+    setOpen(currentToggledVal);
+    setShowSideBar(currentToggledVal);
+  };
+
+  const handleDrawerClose = () => {
+    if (open) {
+      setOpen(false);
+      setShowSideBar(false);
+    }
+  };
 
   return (
-    <AppBar position={fixedNavBar ? 'fixed' : 'static'} classes={{ root: classes.appBarRoot }}>
-      <Toolbar variant="dense" disableGutters className={classes.toolbar}>
-        <Tooltip title="Dojo home" arrow>
-          <IconButton
-            component={Link}
-            to="/"
-            size="small"
-          >
-            <img
-              src="/assets/Dojo_Logo_black.svg"
-              alt="Dojo Logo"
-              className={classes.dojoIcon}
-            />
-          </IconButton>
-        </Tooltip>
-        <Button
-          component={Link}
-          to="/models"
-          color="grey"
+    <>
+      <div style={{ display: 'flex' }}>
+        <AppBar
+          open={open}
+          position="fixed"
+          elevation={0}
+          classes={{ root: classes.appBarRoot }}
+          sx={{ zIndex: theme.zIndex.drawer + 1, display: showNavBar ? 'flex' : 'none' }}
         >
-          Models
-        </Button>
-        <Button
-          component={Link}
-          to="/datasets"
-          color="grey"
-        >
-          Datasets
-        </Button>
-        <Button
-          component={Link}
-          to="/runs"
-          color="grey"
-        >
-          Model Runs
-        </Button>
-        <Button
-          component={Link}
-          to="/documents"
-          color="grey"
-        >
-          Documents
-        </Button>
-        <Button
-          component={Link}
-          to="/data-modeling"
-          color="grey"
-        >
-          Data Modeling
-        </Button>
-        <Button
-          component={Link}
-          to="/ai-assistant"
-          color="grey"
-        >
-          AI Assistant
-        </Button>
-        <span className={classes.spacer} />
-        <Button
-          href="https://www.dojo-modeling.com"
-          target="_blank"
-          color="grey"
-        >
-          Documentation
-        </Button>
-        <Button
-          href="https://github.com/jataware/dojo"
-          target="_blank"
-          color="grey"
-        >
-          GitHub
-        </Button>
-      </Toolbar>
-    </AppBar>
+          <Toolbar variant="dense" disableGutters className={classes.toolbar}>
+            <Collapse
+              in={!open}
+              orientation="horizontal"
+              timeout={theme.transitions.duration.enteringScreen}
+            >
+              <BlackTooltip disableInteractive title="Open navigation panel">
+                <ContrastIconButton
+                  onClick={handleToggleDrawer}
+                  sx={{ color: 'white' }}
+                >
+                  <MenuIcon />
+                </ContrastIconButton>
+              </BlackTooltip>
+            </Collapse>
+            <BlackTooltip disableInteractive title="Dojo home">
+              <ContrastIconButton
+                component={Link}
+                to="/"
+                sx={{ color: 'white' }}
+              >
+                <DojoIcon color="inherit" sx={{ height: '30px', width: '30px' }} />
+              </ContrastIconButton>
+            </BlackTooltip>
+            <span className={classes.spacer} />
+            <BlackTooltip disableInteractive title="View Dojo Docs (opens new tab)">
+              <ContrastIconButton
+                href="https://www.dojo-modeling.com"
+                target="_blank"
+                rel="noopener"
+                sx={{
+                  color: 'white',
+                }}
+              >
+                <MenuBookIcon />
+              </ContrastIconButton>
+            </BlackTooltip>
+            <BlackTooltip disableInteractive title="View Dojo on Github (opens new tab)">
+              <ContrastIconButton
+                href="https://github.com/jataware/dojo"
+                target="_blank"
+                rel="noopener"
+                sx={{
+                  color: 'white',
+                }}
+              >
+                <GitHubIcon />
+              </ContrastIconButton>
+            </BlackTooltip>
+          </Toolbar>
+        </AppBar>
+        <Sidebar open={open} handleDrawerClose={handleDrawerClose} />
+        <Main open={open}>
+          <Toolbar variant="dense" sx={{ display: showNavBar ? 'flex' : 'none' }} />
+          {children}
+        </Main>
+      </div>
+    </>
   );
 };
 

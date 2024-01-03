@@ -1,5 +1,5 @@
 import React, {
-  useCallback, useRef, useState
+  useCallback, useRef, useState, useEffect, useContext,
 } from 'react';
 
 import axios from 'axios';
@@ -13,6 +13,7 @@ import ReactFlow, {
   useEdgesState,
 } from 'reactflow';
 
+import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
 
@@ -41,6 +42,9 @@ import SumNode from './SumNode';
 import Footer from './Footer';
 import ModelerResolution from './ModelerResolution';
 import DragBar from './DragBar';
+import { ThemeContext } from '../components/ThemeContextProvider';
+import { drawerWidth } from '../components/Sidebar';
+import { pageSlideAnimation } from '../components/NavBar';
 
 import './overview.css';
 
@@ -104,9 +108,9 @@ const useStyles = makeStyles()((theme) => ({
   },
   fullWrapper: {
     position: 'absolute',
-    top: '50px',
+    // this puts us below the height of our toolbar by a few px, as we use the dense variant
+    top: theme.mixins.toolbar.minHeight,
     bottom: '0',
-    left: '0',
     right: '0',
     overflow: 'auto',
   },
@@ -143,6 +147,15 @@ const PipeEditor = () => {
   // const { setViewport } = useReactFlow();
 
   const dispatch = useDispatch();
+
+  const { setShowSideBar } = useContext(ThemeContext);
+
+  useEffect(() => {
+    // hide the Sidebar when the component mounts
+    setShowSideBar(false);
+    // when the component unmounts, toggle the Sidebar back
+    return () => setShowSideBar(true);
+  }, [setShowSideBar]);
 
   const setSelectedNode = useCallback((node) => {
     dispatch(selectNode({ id: node.id, type: node.type }));
@@ -427,13 +440,24 @@ const PipeEditor = () => {
 
 const PipeEditorWrapper = () => {
   const { classes } = useStyles();
+  const { showSideBar } = useContext(ThemeContext);
   return (
-    <div className={classes.fullWrapper}>
+    <Box
+      className={classes.fullWrapper}
+      sx={(theme) => ({
+        left: 0,
+        // use the same transition animation as the sidebar, defined in NavBar.js
+        ...pageSlideAnimation(theme, 'left'),
+        ...(showSideBar && {
+          left: drawerWidth,
+        }),
+      })}
+    >
       <ReactFlowProvider>
         <PipeEditor />
       </ReactFlowProvider>
       <Footer />
-    </div>
+    </Box>
   );
 };
 

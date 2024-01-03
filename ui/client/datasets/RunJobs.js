@@ -29,9 +29,6 @@ const useStyles = makeStyles()((theme) => ({
     justifyContent: 'center',
     alignItems: 'center',
     flexDirection: 'column',
-    '@media (min-height: 700px)': {
-      marginTop: '-15%'
-    }
   },
   failedIcon: {
     fontSize: '9rem',

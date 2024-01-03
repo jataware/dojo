@@ -81,7 +81,7 @@ If the date formatter is incorrect the column preview will turn <span style={{ c
 
 Some datasets have year, month and day split out into separate columns. In this case, the user may "build a date" by annotating any of the relevant fields and indicating that it is `part of a multi-column datetime object`.
 
-![Build a date](/img/build-a-date.png)
+<CenteredImage file="build-a-date.png" title="Build a Date" />
 
 The user can then select the relevant year, month and day columns as well as ensure they have correct date formatters.
 
@@ -91,7 +91,7 @@ Generally speaking, if a dataset has latitude and longitude in it we should anno
 
 However, latitude and longitude are not typically contained in the same column. So, we provide a mechanism for the user to associate a `latitude` with a `longitude` and vice versa. To do this, you indicate that the column `is part of a coordinate pair` and choose its partner from the dropdown.
 
-![Coordinate pair](/img/coordinate-pair.png)
+<CenteredImage file="coordinate-pair.png" title="Coordinate Pair" />
 
 ### Multi-part geographies
 
@@ -137,7 +137,7 @@ the *Preview* will display results similar to:
 
 Many datasets contain features that _qualify_ other features. For example, in a conflict/event dataset such as ACLED, you may have a category for the type of event. The primary feature associated with the event may be number of fatalities, while the category "qualifies" the number of fatalities.
 
-![Qualifiers](/img/qualifiers.png)
+<CenteredImage file="qualifiers.png" title="Qualifiers" />
 
 To set `Event Type` as a _qualifier_ for `fatalities` the user should check the box indicating that `this field qualifies another`. The user should then select the relevant columns that the current feature qualifies. One field may qualify many features; in this case select all relevant features that the field of interest qualifies.
 
