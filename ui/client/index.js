@@ -39,34 +39,41 @@ import DatasetRegistrationStepper from './datasets/RegistrationStepper';
 import DatasetPreview from './datasets/Preview';
 import DatasetAnnotate from './datasets/Annotate';
 import DagpipesApp from './dagpipes/DagpipesApp';
+import DatasetsIntroPage from './datasets/DatasetsIntroPage';
+import ModelsIntroPage from './models/ModelsIntroPage';
+import DocumentsIntroPage from './documents/DocumentsIntroPage';
 
 export default function Main() {
   return (
     <Router>
-      <NavBar />
-      <Switch>
-        <Route component={LandingPage} exact path="/" />
-        <Route component={Model} exact path="/model" />
-        <Route component={ViewModels} exact path="/models" />
-        <Route component={ViewDatasets} exact path="/datasets" />
-        <Route component={ViewDocuments} exact path="/documents" />
-        <Route component={UploadDocument} exact path="/documents/upload" />
-        <Route component={DatasetAnnotate} exact path="/datasets/annotate" />
-        <Route component={DatasetPreview} exact path="/datasets/preview" />
-        <Route component={DatasetRegistrationStepper} path="/datasets/:flowslug/:step?/:datasetId?" />
-        <Route component={Provision} exact path="/provision/:modelId" />
-        <Route component={Provisioning} exact path="/provisioning/:modelId" />
-        <Route component={Terminal} exact path="/term/:modelid" />
-        <Route component={Summary} exact path="/summary/:modelId" />
-        <Route component={DatasetSummary} exact path="/dataset_summary" />
-        <Route component={Admin} exact path="/admin" />
-        <Route component={ViewRuns} exact path="/runs" />
-        <Route component={RunSummary} exact path="/runs/:runid" />
-        <Route component={RunLogs} exact path="/runlogs/:runid" />
-        <Route component={DagpipesApp} exact path="/data-modeling" />
-        <Route component={AIAssistant} exact path="/ai-assistant" />
-        <Route path="/*" render={() => <h2>404 Not Found</h2>} />
-      </Switch>
+      <NavBar>
+        <Switch>
+          <Route component={LandingPage} exact path="/" />
+          <Route component={Model} exact path="/model" />
+          <Route component={ViewModels} exact path="/models" />
+          <Route component={ModelsIntroPage} exact path="/models/intro" />
+          <Route component={ViewDatasets} exact path="/datasets" />
+          <Route component={ViewDocuments} exact path="/documents" />
+          <Route component={DocumentsIntroPage} exact path="/documents/intro" />
+          <Route component={UploadDocument} exact path="/documents/upload" />
+          <Route component={DatasetsIntroPage} exact path="/datasets/intro" />
+          <Route component={DatasetAnnotate} exact path="/datasets/annotate" />
+          <Route component={DatasetPreview} exact path="/datasets/preview" />
+          <Route component={DatasetRegistrationStepper} path="/datasets/:flowslug/:step?/:datasetId?" />
+          <Route component={Provision} exact path="/provision/:modelId" />
+          <Route component={Provisioning} exact path="/provisioning/:modelId" />
+          <Route component={Terminal} exact path="/term/:modelid" />
+          <Route component={Summary} exact path="/summary/:modelId" />
+          <Route component={DatasetSummary} exact path="/dataset_summary" />
+          <Route component={Admin} exact path="/admin" />
+          <Route component={ViewRuns} exact path="/runs" />
+          <Route component={RunSummary} exact path="/runs/:runid" />
+          <Route component={RunLogs} exact path="/runlogs/:runid" />
+          <Route component={DagpipesApp} exact path="/data-modeling" />
+          <Route component={AIAssistant} exact path="/ai-assistant" />
+          <Route path="/*" render={() => <h2>404 Not Found</h2>} />
+        </Switch>
+      </NavBar>
     </Router>
   );
 }

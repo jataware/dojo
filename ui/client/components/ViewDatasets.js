@@ -240,7 +240,7 @@ function ViewDatasets() {
           All Datasets & Features
         </Typography>
 
-        <div style={{ display: 'flex', alignItems: 'center' }}>
+        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
           <Typography variant="h6">
             Browse By
           </Typography>
@@ -258,8 +258,6 @@ function ViewDatasets() {
             </ToggleButton>
           </ToggleButtonGroup>
         </div>
-
-        <br />
 
         <div className={classes.gridContainer}>
           {isModeDatasets ? (

@@ -85,11 +85,12 @@ const AnswerText = ({ text, details }) => {
             - in details section click to open document itself in sidebar or dialog or new tab
           */
           const number = match[0].slice(1, -1);
+          const displayReference = `[${Number(number) + 1}]`;
 
           return (
             // eslint-disable-next-line react/no-array-index-key
             <Tooltip key={i} arrow title={details[number]?.paragraph}>
-              <span style={{ cursor: 'default' }}>{part}</span>
+              <span style={{ cursor: 'default' }}>{displayReference}</span>
             </Tooltip>
           );
         }
@@ -168,7 +169,7 @@ const AIAssistantResponse = ({
                     component="div"
                   >
                     <div>
-                      [{i}]
+                      [{i + 1}]
                     </div>
                     <div>
                       <div>
