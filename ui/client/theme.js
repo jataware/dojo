@@ -134,7 +134,7 @@ const ifpriTheme = {
   custom: {
     nav: {
       color: '#ffb300',
-      // ifpri green: '#62bb46'
+      // ifpri logo green: '#62bb46'
       // or darker: #429d46 (from ifpri library)
     },
     landing: {
