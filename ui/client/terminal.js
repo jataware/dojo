@@ -30,6 +30,7 @@ import {
   useLock, useModel, useOutputFiles
 } from './components/SWRHooks';
 import RegistrationStepper from './datasets/RegistrationStepper';
+import usePageTitle from './components/uiComponents/usePageTitle';
 
 const useStyles = makeStyles()((theme) => ({
   pageRoot: {
@@ -304,9 +305,7 @@ const Terminal = () => {
   }
   const url = `${proto}//${window.location.host}/api/ws/${modelid}`;
 
-  useEffect(() => {
-    document.title = 'Terminal - Dojo';
-  }, []);
+  usePageTitle({ title: 'Terminal' });
 
   if (modelLoading || lockLoading) {
     return <LoadingOverlay text="Loading terminal" />;

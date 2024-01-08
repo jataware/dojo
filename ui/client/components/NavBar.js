@@ -19,7 +19,7 @@ import { ThemedTooltip } from './uiComponents/ThemedTooltip';
 import { ContrastIconButton } from './uiComponents/ContrastButton';
 import Sidebar, { drawerWidth } from './Sidebar';
 import DojoIcon from './uiComponents/DojoIcon';
-import BrandSwap from './uiComponents/BrandSwap';
+import { BrandSwap, getBrandName } from './uiComponents/Branding';
 import { ReactComponent as IfpriLogo } from '../assets/ifpri-logo.svg';
 
 export const pageSlideAnimation = (theme, target) => ({
@@ -71,6 +71,7 @@ const NavBar = ({ children }) => {
   const { showNavBar, showSideBar, setShowSideBar } = useContext(ThemeContext);
   const [open, setOpen] = useState(true);
   const theme = useTheme();
+  const brandName = getBrandName();
 
   useEffect(() => {
     // close the sidebar when we hide the navbar or just close the sidebar
@@ -118,17 +119,17 @@ const NavBar = ({ children }) => {
                 </ContrastIconButton>
               </ThemedTooltip>
             </Collapse>
-            <ThemedTooltip disableInteractive title="Dojo home">
+            <ThemedTooltip disableInteractive title={`${brandName} Home`}>
               <ContrastIconButton
                 component={Link}
                 to="/"
                 sx={{ color: 'white' }}
               >
                 <BrandSwap
-                  dojoComponent={(
+                  dojo={(
                     <DojoIcon color="inherit" sx={{ height: '30px', width: '30px' }} />
                   )}
-                  ifpriComponent={(
+                  ifpri={(
                     <SvgIcon
                       component={IfpriLogo}
                       inheritViewBox
@@ -139,7 +140,7 @@ const NavBar = ({ children }) => {
               </ContrastIconButton>
             </ThemedTooltip>
             <span className={classes.spacer} />
-            <ThemedTooltip disableInteractive title="View Dojo Docs (opens new tab)">
+            <ThemedTooltip disableInteractive title={`View ${brandName} Docs (opens new tab)`}>
               <ContrastIconButton
                 href="https://www.dojo-modeling.com"
                 target="_blank"
@@ -151,7 +152,7 @@ const NavBar = ({ children }) => {
                 <MenuBookIcon />
               </ContrastIconButton>
             </ThemedTooltip>
-            <ThemedTooltip disableInteractive title="View Dojo on Github (opens new tab)">
+            <ThemedTooltip disableInteractive title={`View ${brandName} on Github (opens new tab)`}>
               <ContrastIconButton
                 href="https://github.com/jataware/dojo"
                 target="_blank"

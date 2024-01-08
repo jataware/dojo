@@ -17,6 +17,7 @@ import { makeStyles } from 'tss-react/mui';
 import BasicAlert from './components/BasicAlert';
 import LoadingOverlay from './components/LoadingOverlay';
 import { useLocks, useNodes } from './components/SWRHooks';
+import usePageTitle from './components/uiComponents/usePageTitle';
 
 const useStyles = makeStyles()((theme) => ({
   buttonLink: {
@@ -42,6 +43,7 @@ const Admin = () => {
   const [nodeInfo, setNodeInfo] = useState([]);
   const [shutDownFailed, setShutDownFailed] = useState(false);
   const [alertMessage, setAlertMessage] = useState('');
+  usePageTitle({ title: 'Admin' });
 
   const {
     locks, locksLoading, locksError, mutateLocks
@@ -49,10 +51,6 @@ const Admin = () => {
   const {
     nodes, nodesLoading, nodesError, mutateNodes
   } = useNodes();
-
-  useEffect(() => {
-    document.title = 'Admin - Dojo';
-  }, []);
 
   useEffect(() => {
     const refreshNodeInfo = async () => {

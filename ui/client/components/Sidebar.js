@@ -21,7 +21,7 @@ export const drawerWidth = 240;
 
 const routes = [
   {
-    title: 'Dojo Home',
+    title: 'Home',
     path: '/',
     icon: (props) => <HomeIcon {...props} />,
   },

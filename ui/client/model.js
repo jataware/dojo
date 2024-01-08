@@ -7,6 +7,7 @@ import { makeStyles } from 'tss-react/mui';
 import { useLocation } from 'react-router-dom';
 
 import { HorizontalLinearStepper } from './components/ModelFormStepper';
+import usePageTitle from './components/uiComponents/usePageTitle';
 
 const useStyles = makeStyles()((theme) => ({
   paper: {
@@ -22,13 +23,10 @@ const useStyles = makeStyles()((theme) => ({
 
 export default function Model() {
   const { classes } = useStyles();
+  usePageTitle({ title: 'Model Registration' });
 
   const query = new URLSearchParams(useLocation().search);
   const modelFamily = query.get('family');
-
-  useEffect(() => {
-    document.title = 'Model Registration - Dojo';
-  }, []);
 
   return (
     <>

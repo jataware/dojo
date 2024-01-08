@@ -15,6 +15,7 @@ import HorizontalRuleIcon from '@mui/icons-material/HorizontalRule';
 import { makeStyles } from 'tss-react/mui';
 
 import InlineDocLink from './uiComponents/InlineDocLink';
+import usePageTitle from './uiComponents/usePageTitle';
 
 const useStyles = makeStyles()((theme) => ({
   allContentWrapper: {
@@ -104,9 +105,7 @@ export const ColorText = ({ children }) => (
 const GenericIntroPage = ({ title, subtitle, actions }) => {
   const { classes } = useStyles();
 
-  useEffect(() => {
-    document.title = title;
-  }, [title]);
+  usePageTitle({ title });
 
   return (
     <Box className={classes.allContentWrapper}>

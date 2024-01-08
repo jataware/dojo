@@ -14,6 +14,7 @@ import { DataGrid } from '@mui/x-data-grid';
 import { useNCDatasets } from '../components/SWRHooks';
 import ExpandableDataGridCell from '../components/ExpandableDataGridCell';
 import { setSavedDatasets, nextModelerStep } from './dagSlice';
+import usePageTitle from '../components/uiComponents/usePageTitle';
 
 const expandableCell = ({ value, colDef }) => (
   <ExpandableDataGridCell
@@ -65,9 +66,7 @@ const DagDatasetSelector = () => {
   const [selectedDatasets, setSelectedDatasets] = useState([]);
   const dispatch = useDispatch();
 
-  useEffect(() => {
-    document.title = 'Data Modeling';
-  }, []);
+  usePageTitle({ title: 'Data Modeling' });
 
   const handleNext = async () => {
     const annotations = selectedDatasets.map(async (datasetId) => {

@@ -20,6 +20,7 @@ import { useModel } from './components/SWRHooks';
 import BasicAlert from './components/BasicAlert';
 import LoadingOverlay from './components/LoadingOverlay';
 import { ThemeContext } from './components/ThemeContextProvider';
+import usePageTitle from './components/uiComponents/usePageTitle';
 
 const useStyles = makeStyles()((theme) => ({
   formControl: {
@@ -91,9 +92,7 @@ const Provision = () => {
 
   const { setShowSideBar } = useContext(ThemeContext);
 
-  useEffect(() => {
-    document.title = 'Provision - Dojo';
-  }, []);
+  usePageTitle({ title: 'Provision' });
 
   useEffect(() => {
     // hide the Sidebar when the component mounts

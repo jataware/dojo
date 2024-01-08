@@ -20,6 +20,7 @@ import { useHistory, Link } from 'react-router-dom';
 import ExpandableDataGridCell from './ExpandableDataGridCell';
 import LoadingOverlay from './LoadingOverlay';
 import Search from './SearchItems';
+import usePageTitle from './uiComponents/usePageTitle';
 
 const useStyles = makeStyles()((theme) => ({
   root: {
@@ -166,8 +167,9 @@ const ViewModels = ({
 
   useEffect(() => {
     fetchModels(includeStatuses, setModels, setModelsLoading, setModelsError);
-    document.title = 'View Models - Dojo';
   }, [includeStatuses]);
+
+  usePageTitle({ title: 'View Models' });
 
   useEffect(() => {
     setDisplayedModels(models);

@@ -25,6 +25,7 @@ import LoadingOverlay from './components/LoadingOverlay';
 import {
   useDataset
 } from './components/SWRHooks';
+import usePageTitle from './components/uiComponents/usePageTitle';
 
 const useStyles = makeStyles()((theme) => ({
   fabsWrapper: {
@@ -89,6 +90,8 @@ const DatasetSummary = () => {
   const [alertOpen, setAlertOpen] = useState(false);
   const [alertMessage, setAlertMessage] = useState({ message: '', severity: '' });
 
+  usePageTitle({ title: 'Dataset Summary' });
+
   const {
     dataset, datasetLoading, datasetError, mutateDataset
   } = useDataset(datasetId);
@@ -96,10 +99,6 @@ const DatasetSummary = () => {
   const { classes } = useStyles();
   const theme = useTheme();
   const mediumBreakpoint = useMediaQuery(theme.breakpoints.down('lg'));
-
-  useEffect(() => {
-    document.title = 'Dataset Summary - Dojo';
-  }, []);
 
   useEffect(() => {
     if (dataset?.deprecated) {

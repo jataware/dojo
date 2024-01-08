@@ -81,7 +81,6 @@ export default function Main() {
 const changeFavicon = (faviconFileName) => {
   const link = document.querySelector("link[rel~='icon']");
   if (link) {
-    // TODO: confirm that we don't need additional path for prod
     link.href = `/assets/${faviconFileName}`;
   } else {
     const newLink = document.createElement('link');

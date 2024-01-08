@@ -16,7 +16,8 @@ import MenuBookIcon from '@mui/icons-material/MenuBook';
 import { makeStyles } from 'tss-react/mui';
 
 import { ContrastButton } from './components/uiComponents/ContrastButton';
-import BrandSwap, { BrandName, useBranding } from './components/uiComponents/BrandSwap';
+import { BrandSwap, BrandName } from './components/uiComponents/Branding';
+import usePageTitle from './components/uiComponents/usePageTitle';
 
 const useStyles = makeStyles()((theme) => ({
   allContentWrapper: {
@@ -91,18 +92,14 @@ const useStyles = makeStyles()((theme) => ({
 const LandingPage = () => {
   const { classes } = useStyles();
 
-  useEffect(() => {
-    // TODO: handle capitalizing this properly - hook that returns title?
-    const title = process.env.COMPANY_BRANDING;
-    document.title = `Home - ${title}`;
-  }, []);
+  usePageTitle({ title: 'Home' });
 
   return (
     <Box className={classes.allContentWrapper}>
       <div className={classes.topContentWrapper}>
         <Container maxWidth="lg">
           <BrandSwap
-            dojoComponent={(
+            dojo={(
               <>
                 <Typography variant="h1" className={classes.topHeaderTitle}>
                   Dojo
@@ -110,7 +107,7 @@ const LandingPage = () => {
                 <Typography variant="h6" sx={{ marginBottom: 3 }}><i>noun</i> &nbsp;/dō′jō/</Typography>
               </>
             )}
-            ifpriComponent={(
+            ifpri={(
               <Box
                 sx={{
                   display: 'flex',
@@ -217,7 +214,7 @@ const LandingPage = () => {
               size="large"
               className={classes.button}
             >
-              Browse <BrandSwap dojoComponent="Dojo" ifpriComponent="the Repo" /> on GitHub
+              Browse <BrandSwap dojo="Dojo" ifpri="the Repo" /> on GitHub
             </ContrastButton>
           </div>
         </div>

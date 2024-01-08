@@ -13,8 +13,10 @@ import Typography from '@mui/material/Typography';
 import Prompt from './PromptDialog';
 import { Navigation } from '.';
 import { formatDateOnly, splitOnWildCard } from '../utils';
+import { getBrandName } from '../components/uiComponents/Branding';
 
 const rowsPerPageOptions = [25, 50, 100];
+const brandName = getBrandName();
 
 const useStyles = makeStyles()((theme) => ({
   tooltip: {
@@ -35,7 +37,7 @@ const HintTooltip = () => {
   return (
     <Tooltip
       classes={{ tooltip: classes.tooltip }}
-      title="This is a Preview of the normalized data. Review output and submit to Dojo."
+      title={`This is a Preview of the normalized data. Review output and submit to ${brandName}.`}
     >
       <IconButton size="large">
         <InfoIcon />
@@ -264,11 +266,11 @@ export default ({
       />
 
       <Navigation
-        label="Submit to Dojo"
+        label={`Submit to ${brandName}`}
         handleNext={() => nextHandlers[handleNextFunc]({
           datasetInfo,
           rawFileName,
-          handleError: () => setPromptMessage('Error submitting data to Dojo. Please contact the Dojo team.'),
+          handleError: () => setPromptMessage(`Error submitting data to ${brandName}. Please contact the ${brandName} team.`),
           handleNext,
           ...props
         })}

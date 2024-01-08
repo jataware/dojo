@@ -22,6 +22,7 @@ import ChatCard from './ChatCard';
 import { ThemeContext } from '../ThemeContextProvider';
 import { drawerWidth } from '../Sidebar';
 import { pageSlideAnimation } from '../NavBar';
+import usePageTitle from '../uiComponents/usePageTitle';
 
 const useStyles = makeStyles()((theme) => ({
   header: {
@@ -65,9 +66,7 @@ const AIAssistant = () => {
 
   const { showSideBar } = useContext(ThemeContext);
 
-  useEffect(() => {
-    document.title = 'AI Assistant';
-  }, []);
+  usePageTitle({ title: 'AI Assistant' });
 
   useEffect(() => {
     // scroll to the bottom anytime we get a new search in
