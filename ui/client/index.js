@@ -100,8 +100,7 @@ const container = document.getElementById('app');
 
 const root = createRoot(container);
 
-// TODO: perhaps a different env variable name
-const theme = createCustomTheme(process.env.COMPANY_BRANDING);
+const theme = createCustomTheme();
 
 root.render(
   <StyledEngineProvider injectFirst>

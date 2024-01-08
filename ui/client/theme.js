@@ -2,6 +2,8 @@ import { deepmerge } from '@mui/utils';
 import { createTheme, alpha } from '@mui/material/styles';
 import { grey } from '@mui/material/colors';
 
+import { BrandSwap } from './components/uiComponents/Branding';
+
 // This theme is created just to be passed into the theme below
 // seems like a weird way to do it but this is how MUI v5 theming works
 const theme = createTheme({
@@ -156,19 +158,8 @@ const ifpriTheme = {
   }
 };
 
-function createCustomTheme(brand) {
-  let themeVariant;
-
-  switch (brand) {
-    case 'dojo':
-      themeVariant = dojoTheme;
-      break;
-    case 'ifpri':
-      themeVariant = ifpriTheme;
-      break;
-    default:
-      themeVariant = {};
-  }
+function createCustomTheme() {
+  const themeVariant = BrandSwap({ dojo: dojoTheme, ifpri: ifpriTheme });
 
   return createTheme(deepmerge(baseTheme, themeVariant));
 }
