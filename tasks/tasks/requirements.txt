@@ -22,3 +22,5 @@ urllib3<2
 flowcast>=0.2.6
 openai[embeddings]==0.27.10
 tiktoken==0.5.1
+pypdf==3.3.0
+ocrmypdf==14.0.2

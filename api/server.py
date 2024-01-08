@@ -171,7 +171,7 @@ def setup_elasticsearch_indexes():
                 "properties": {
                     "embeddings": {
                         "type": "dense_vector",
-                        "dims": 768
+                        "dims": 1536
                     }
                 }
             }
@@ -220,7 +220,7 @@ def setup_elasticsearch_indexes():
                 "properties": {
                     "embeddings": {
                         "type": "dense_vector",
-                        "dims": 768
+                        "dims": 1536
                     },
                     "document_id": {
                         "type": "keyword",

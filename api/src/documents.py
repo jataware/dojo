@@ -135,7 +135,7 @@ def semantic_search_paragraphs(query: str,
     Uses query to perform a Semantic Search on paragraphs; where LLM embeddings
     are used to compare a text query to items stored.
 
-    TODO: Re-add highlights with newer embedding engine?
+    Switch highlights to online engine, to remove all local GPU-heavy deps
     """
 
     clean_query = clean_and_decode_str(query)
@@ -608,17 +608,34 @@ def enqueue_document_paragraphs_processing(document_id, s3_url, api_host):
     Adds document to queue to process by paragraph.
     Embedder creates and attaches LLM embeddings to its paragraphs
     """
-    job_string = "paragraph_embeddings_processors.calculate_store_embeddings"
-    # job_id = f"{document_id}_{job_string}"
 
-    payload = json.dumps({
-        "s3_url": s3_url,
-        "callback_url": f"{api_host}/job/{document_id}/{job_string}"
-    })
+    # Use external OCR pipeline
+    # Currently used for an enhanced, GPU-powered, OCR engine with
+    #  better output quality
+    if settings.OCR_URL:
+        job_string = "paragraph_embeddings_processors.calculate_store_embeddings"
+        payload = json.dumps({
+            "s3_url": s3_url,
+            "callback_url": f"{api_host}/job/{document_id}/{job_string}"
+        })
 
-    response = requests.post(f"{settings.OCR_URL}/{document_id}", data=payload)
-    if response.status_code != 200:
-        return False
+        response = requests.post(f"{settings.OCR_URL}/{document_id}", data=payload)
+        if response.status_code != 200:
+            return False
+
+    # Else process all documents from local worker (local OCR)
+    else:
+        job_string = "paragraph_embeddings_processors.full_document_process"
+        job_id = f"{document_id}_{job_string}"
+        context = {
+            "document_id": document_id,
+            "s3_url": s3_url
+        }
+
+        # TODO log/use job result/status
+        job = q.enqueue_call(
+            func=job_string, args=[context], kwargs={}, job_id=job_id
+        )
 
     return True
 
