@@ -13,9 +13,9 @@ from settings import settings
 from pypdf import PdfReader
 import ocrmypdf
 
-import logging
-logging.basicConfig()
-logging.getLogger().setLevel(logging.DEBUG)
+# import logging
+# logging.basicConfig()
+# logging.getLogger().setLevel(logging.INFO)
 
 es_url = settings.ELASTICSEARCH_URL
 es = Elasticsearch(es_url)
@@ -100,20 +100,20 @@ class ParagraphProcessor(BaseProcessor):
         """
         # 1. Download mmd from S3
         mmd_s3_url = f"{settings.DOCUMENT_STORAGE_BASE_URL}{s3_key}"
-        logging.info(f"Getting file at key: {mmd_s3_url}")
+        # logging.debug(f"Getting file at key: {mmd_s3_url}")
         raw_file = get_rawfile(path=mmd_s3_url)
 
         # 2. Extract text for pdf using local path from download above
-        logging.info("Reading text and converting to paragraphs")
+        # logging.debug("Reading text and converting to paragraphs")
 
         text = raw_file.read()
         text = text.decode()
         paragraphs = convert_to_paragraphs(text)
 
-        logging.info(f"Embedding all Ps. First p: {paragraphs[0]}")
+        # logging.debug(f"Embedding all Ps. First p: {paragraphs[0]}")
         embeddings = embedder.embed_paragraphs(paragraphs)
 
-        logging.info("Uploading to es.")
+        # logging.debug("Uploading to es.")
         # 3. For each paragraph, calculate embeddings and index text + embedding
         for p_no, text in enumerate(paragraphs):
             p_body = {
@@ -122,9 +122,10 @@ class ParagraphProcessor(BaseProcessor):
                 "document_id": document_id,
                 "length": len(text),
                 "index": p_no,
-                "page_no": p_no + 1  # indexes at 0, pdf pages make more sense starting from 1
+                "page_no": None  # does external extractor provide page_no?
             }
 
+            # TODO bulk prepare and bulk upload to speed up processing
             es.index(index=PARAGRAPHS_INDEX, body=p_body, id=f"{document_id}-{p_no}")
 
         # 4. Updated processed_at time on document
@@ -146,9 +147,9 @@ def calculate_store_embeddings(context):
     document_id = context["document_id"]
     s3_key = context["s3_key"]
 
-    logging.info("Calculate store embeddings:")
-    logging.info(document_id)
-    logging.info(s3_key)
+    # logging.debug("Calculate store embeddings:")
+    # logging.debug(document_id)
+    # logging.debug(s3_key)
 
     processor = ParagraphProcessor()
     result = processor.run(document_id, s3_key)
@@ -204,7 +205,7 @@ def extract_text(path: str) -> List[Tuple[str, int]]:
     return paragraphs
 
 
-def  full_document_process(context):
+def full_document_process(context):
     document_id = context["document_id"]
     s3_url = context["s3_url"]
 
@@ -233,13 +234,14 @@ def  full_document_process(context):
     for text, p_no in paragraphs:
         p_body = {
             "text": text,
-            "embeddings": embedder.embed([text])[0],
+            "embeddings": embedder.embed_paragraphs([text])[0],
             "document_id": document_id,
             "length": len(text),
             "index": i,
             "page_no": p_no + 1 # indexes at 0, pdf pages make more sense starting from 1
         }
 
+        # TODO bulk prepare and bulk upload to speed up processing
         es.index(index=PARAGRAPHS_INDEX, body=p_body, id=f"{document_id}-{i}")
         i += 1
 
