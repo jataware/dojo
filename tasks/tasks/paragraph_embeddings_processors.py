@@ -21,7 +21,7 @@ es_url = settings.ELASTICSEARCH_URL
 es = Elasticsearch(es_url)
 
 
-PARAGRAPHS_INDEX = "paragraphs"
+PARAGRAPHS_INDEX = "document_paragraphs"
 
 
 class Embedder(ABC):
