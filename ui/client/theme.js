@@ -43,6 +43,12 @@ export default createTheme(theme, {
       default: '#fff'
     },
   },
+  mixins: {
+    toolbar: {
+      // we only use the dense toolbar height
+      minHeight: 48,
+    },
+  },
   body: {
     backgroundColor: '#fff'
   },

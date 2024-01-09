@@ -8,22 +8,28 @@ import IconButton from '@mui/material/IconButton';
 
 import ConfirmDialog from './ConfirmDialog';
 
-const useStyles = makeStyles()((theme) => ({
-  root: {
-    width: '30%',
+const useStyles = makeStyles()((theme) => {
+  const baseRoot = {
     minWidth: '20rem',
-    padding: theme.spacing(3)
-  },
-  wideRoot: {
-    width: '40%',
-    minWidth: '20rem',
-    padding: theme.spacing(3)
-  },
-  drawerControls: {
-    display: 'flex',
-    justifyContent: 'flex-end'
-  },
-}));
+    padding: `${theme.mixins.toolbar.minHeight}px ${theme.spacing(3)} ${theme.spacing(3)} ${theme.spacing(3)}`,
+    marginTop: theme.spacing(1),
+  };
+
+  return {
+    root: {
+      width: '30%',
+      ...baseRoot,
+    },
+    wideRoot: {
+      width: '40%',
+      ...baseRoot,
+    },
+    drawerControls: {
+      display: 'flex',
+      justifyContent: 'flex-end'
+    },
+  };
+});
 
 export default ({
   anchorPosition,
