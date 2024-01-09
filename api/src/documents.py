@@ -35,7 +35,7 @@ from openai.embeddings_utils import get_embeddings
 from src.semantic_highlighter import highlighter
 
 
-PARAGRAPHS_INDEX = "paragraphs"
+PARAGRAPHS_INDEX = "document_paragraphs"
 
 router = APIRouter()
 

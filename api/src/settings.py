@@ -31,7 +31,7 @@ class Settings(BaseSettings):
 
     CONFIG_STORAGE_BASE: str = "s3://dojo/configs/"
 
-    OCR_URL = "http://192.168.1.253:8082/extract"
+    OCR_URL: str = ""
 
     UVICORN_RELOAD: bool = False
 

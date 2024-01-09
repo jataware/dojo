@@ -40,7 +40,7 @@ from validation.KnowledgeSchema import (
 )
 
 
-PARAGRAPHS_INDEX = "paragraphs"
+PARAGRAPHS_INDEX = "document_paragraphs"
 
 router = APIRouter()
 
