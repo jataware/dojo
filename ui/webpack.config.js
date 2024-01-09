@@ -102,7 +102,6 @@ module.exports = {
         //new ESLintPlugin(),
         new HtmlWebpackPlugin({
             template: 'client/index.html',
-            favicon: 'client/favicon.ico',
         }),
         new MiniCssExtractPlugin({
             filename: "[contenthash].css",}),
