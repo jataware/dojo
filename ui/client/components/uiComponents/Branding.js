@@ -8,7 +8,8 @@ export const BrandSwap = ({ dojo, ifpri }) => {
     case 'ifpri':
       return ifpri;
     default:
-      return null;
+      // default to dojo if no env variable
+      return dojo;
   }
 };
 

@@ -90,10 +90,11 @@ const changeFavicon = (faviconFileName) => {
   }
 };
 
-if (process.env.COMPANY_BRANDING === 'dojo') {
-  changeFavicon('favicon-dojo.ico');
-} else if (process.env.COMPANY_BRANDING === 'ifpri') {
+if (process.env.COMPANY_BRANDING === 'ifpri') {
   changeFavicon('favicon-ifpri.ico');
+} else if (process.env.COMPANY_BRANDING === 'dojo' || !process.env.COMPANY_BRANDING) {
+  // fallback to Dojo
+  changeFavicon('favicon-dojo.ico');
 }
 
 const container = document.getElementById('app');
