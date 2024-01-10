@@ -31,6 +31,8 @@ class Settings(BaseSettings):
 
     CONFIG_STORAGE_BASE: str = "s3://dojo/configs/"
 
+    OCR_URL: str = ""
+
     UVICORN_RELOAD: bool = False
 
     UAZ_URL: str = ""

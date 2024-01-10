@@ -160,7 +160,7 @@ const AIAssistantResponse = ({
           <Collapse in={showDetails}>
             <div className={classes.details}>
               {details.map((para, i) => (
-                <React.Fragment key={`${para.root_name}/${para.paragraph_idx}`}>
+                <React.Fragment key={`${para.document_id}/${para.paragraph_idx}`}>
                   <Typography
                     variant="body2"
                     sx={{
@@ -177,14 +177,14 @@ const AIAssistantResponse = ({
                       </div>
                       <div className={classes.paragraphDetails}>
                         <span>
-                          Title: <Title title={documents[para.root_name]?.title} />
+                          Title: <Title title={documents[para.document_id]?.title} />
                         </span>
                         <Divider orientation="vertical" flexItem />
                         <span>Paragraph # in file: {para.paragraph_idx}</span>
                         <Divider orientation="vertical" flexItem />
                         <Button
                           variant="text"
-                          onClick={() => handlePDFClick(documents[para.root_name])}
+                          onClick={() => handlePDFClick(documents[para.document_id])}
                         >
                           View PDF
                         </Button>
