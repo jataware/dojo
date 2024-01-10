@@ -1,6 +1,6 @@
 import React, { Fragment } from 'react';
 
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 import Drawer from '@mui/material/Drawer';
 import ListItem from '@mui/material/ListItem';
@@ -57,63 +57,71 @@ const routes = [
   },
 ];
 
-const Sidebar = ({ open, handleDrawerClose }) => (
-  <Drawer
-    sx={{
-      width: drawerWidth,
-      flexShrink: 0,
-      '& .MuiDrawer-paper': {
+const Sidebar = ({ open, handleDrawerClose }) => {
+  const location = useLocation();
+
+  return (
+    <Drawer
+      sx={{
         width: drawerWidth,
-        boxSizing: 'border-box',
-      },
-    }}
-    variant="persistent"
-    anchor="left"
-    open={open}
-  >
-    <Toolbar
-      variant="dense"
-      sx={{ display: 'flex', justifyContent: 'flex-end' }}
+        flexShrink: 0,
+        '& .MuiDrawer-paper': {
+          width: drawerWidth,
+          boxSizing: 'border-box',
+        },
+      }}
+      variant="persistent"
+      anchor="left"
+      open={open}
     >
-      <ThemedTooltip disableInteractive title="Close navigation panel">
-        <ContrastIconButton onClick={handleDrawerClose} sx={{ color: 'black' }}>
-          <ChevronLeftIcon />
-        </ContrastIconButton>
-      </ThemedTooltip>
-    </Toolbar>
-    <Divider sx={{ paddingTop: '1px' }} />
-    <List sx={{ width: '100%' }}>
-      {routes.map((route, i) => (
-        <Fragment key={route.path}>
-          <ListItem disablePadding>
-            <ContrastListItemButton
-              component={Link}
-              to={route.path}
-            >
-              {route.icon({ color: 'inherit', sx: { marginRight: '30px' } })}
-              <ListItemText>{route.title}</ListItemText>
-            </ContrastListItemButton>
-          </ListItem>
-          <List>
-            {route.children?.map((childRoute) => (
-              <ListItem key={childRoute.path} disablePadding>
-                <ContrastListItemButton
-                  sx={{
-                    paddingLeft: 4,
-                  }}
-                  component={Link}
-                  to={childRoute.path}
-                >
-                  {childRoute.title}
-                </ContrastListItemButton>
-              </ListItem>
-            ))}
-          </List>
-          {i !== routes.length - 1 && <Divider />}
-        </Fragment>
-      ))}
-    </List>
-  </Drawer>
-);
+      <Toolbar
+        variant="dense"
+        sx={{ display: 'flex', justifyContent: 'flex-end' }}
+      >
+        <ThemedTooltip disableInteractive title="Close navigation panel">
+          <ContrastIconButton onClick={handleDrawerClose} sx={{ color: 'black' }}>
+            <ChevronLeftIcon />
+          </ContrastIconButton>
+        </ThemedTooltip>
+      </Toolbar>
+      <Divider sx={{ paddingTop: '1px' }} />
+      <List sx={{ width: '100%' }}>
+        {routes.map((route, i) => (
+          <Fragment key={route.path}>
+            <ListItem disablePadding>
+              <ContrastListItemButton
+                component={Link}
+                to={route.path}
+                sx={{
+                  backgroundColor: location.pathname === route.path ? 'grey.200' : '',
+                }}
+              >
+                {route.icon({ color: 'inherit', sx: { marginRight: '30px' } })}
+                <ListItemText>{route.title}</ListItemText>
+              </ContrastListItemButton>
+            </ListItem>
+            <List>
+              {route.children?.map((childRoute) => (
+                <ListItem key={childRoute.path} disablePadding>
+                  <ContrastListItemButton
+                    sx={{
+                      paddingLeft: 4,
+                      backgroundColor: location.pathname === childRoute.path ? 'grey.200' : '',
+                    }}
+                    component={Link}
+                    to={childRoute.path}
+                  >
+                    {childRoute.title}
+                  </ContrastListItemButton>
+                </ListItem>
+              ))}
+            </List>
+            {i !== routes.length - 1 && <Divider />}
+          </Fragment>
+        ))}
+      </List>
+    </Drawer>
+  )
+};
 
 export default Sidebar;
