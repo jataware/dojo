@@ -240,10 +240,10 @@ def get_paragraph(paragraph_id: str):
 
     return {**p, "id": paragraph_id}
 
+
 # NOTE Dart Paper metadata may contain PascalCase attributes. We strive to use
 # snake_case both in DB and API. Converting functions follow. No harm  if
 # already as snake_case.
-
 def camel_to_snake(str):
     """Receives a lowercase, snake_case, camelCase, or PascalCase input string
     and returns it as snake_case. In the case of snake_case input, no
@@ -505,30 +505,6 @@ def get_document_text(document_id: str,
     }
 
 
-@router.get("/documents/by-didx-name", include_in_schema=False)
-def get_document_by_didx_name(name: str):
-    """
-    Temporary endpoint that returns document id/data from DIDX filename.
-    Would have gone to bottom of file, but needs to overwrite
-    /documents/{id} below.
-    """
-    es_body = {
-        "query": {
-            "match": {
-                "filename.keyword": f"DIDX-documents/{name}.pdf"
-            }
-        },
-        "_source": ["title", "processed_at", "filename", "source_url", "description"]
-    }
-
-    try:
-        result = es.search(index="documents", body=es_body)
-        hits = result["hits"]["hits"]
-        return format_document(hits[0])
-    except (NotFoundError, IndexError):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-
-
 @router.get(
     "/documents/{document_id}", response_model=DocumentSchema.Model
 )
@@ -632,8 +608,7 @@ def enqueue_document_paragraphs_processing(document_id, s3_url, api_host):
             "s3_url": s3_url
         }
 
-        # TODO log/use job result/status
-        job = q.enqueue_call(
+        q.enqueue_call(
             func=job_string, args=[context], kwargs={}, job_id=job_id
         )
 
@@ -710,6 +685,3 @@ def get_document_uploaded_file(document_id: str):
         return Response(content=file.read(), media_type="application/pdf", headers=headers)
     except FileNotFoundError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-
-
-
