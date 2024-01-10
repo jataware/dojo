@@ -36,17 +36,17 @@ function CSVDownload({ resource, index = 'indicators' }) {
   const theme = useTheme();
   const { classes } = useStyles();
 
-  const isDesktop = useMediaQuery('(min-width:800px)'); 
+  const isDesktop = useMediaQuery('(min-width:800px)');
 
   const handleChange = (event) => {
     setCsvChoice(event.target.value);
   };
 
-  const isRawChoice =  index === 'indicators' && csvChoice === 'raw';
+  const isRawChoice = index === 'indicators' && csvChoice === 'raw';
 
-  const downloadURI = isRawChoice ?
-    `/api/dojo/indicators/${resource.id}/download` :
-    `/api/dojo/dojo/download/csv/${index}/${resource.id}?wide_format=${csvChoice === 'wide'}`;
+  const downloadURI = isRawChoice
+    ? `/api/dojo/indicators/${resource.id}/download`
+    : `/api/dojo/dojo/download/csv/${index}/${resource.id}?wide_format=${csvChoice === 'wide'}`;
 
   const conditionalCSVProps = isRawChoice ? {} : {
     download: `${resource.id}_${csvChoice}.csv`,
@@ -63,15 +63,15 @@ function CSVDownload({ resource, index = 'indicators' }) {
         style={{ border: 'none', textAlign: 'left' }}
       >
         <span>
-          Download 
+          Download
         </span>
         {isDesktop && <span>&nbsp;Files</span>}
       </Button>
 
-      <Collapse 
+      <Collapse
         in={formOpen}
         timeout={theme.transitions.duration.shortest}
-        >
+      >
         <div className={classes.leftIndent}>
           <form>
             <RadioGroup
@@ -92,9 +92,9 @@ function CSVDownload({ resource, index = 'indicators' }) {
                 disableElevation
                 color="primary"
                 href={downloadURI}
-                style={{marginTop: '0.25rem'}}
+                style={{ marginTop: '0.25rem' }}
                 onClick={() => setDownload(true)}
-                disabled={openDownload ? true : false}
+                disabled={!!openDownload}
                 {...conditionalCSVProps}
               >
                 Download

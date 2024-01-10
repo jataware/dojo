@@ -41,9 +41,13 @@ module.exports = {
                 sideEffects: true
             },
           {
-            test: /\.(png|jpg|gif|woff|woff2|eot|ttf|svg|mp4)$/,
+            test: /\.(png|jpg|gif|woff|woff2|eot|ttf|mp4)$/,
             loader: 'file-loader',
           },
+          {
+            test: /\.svg$/,
+            use: ['@svgr/webpack', 'file-loader'],
+          }
         ]
     },
 
@@ -98,7 +102,6 @@ module.exports = {
         //new ESLintPlugin(),
         new HtmlWebpackPlugin({
             template: 'client/index.html',
-            favicon: 'client/favicon.ico',
         }),
         new MiniCssExtractPlugin({
             filename: "[contenthash].css",}),

@@ -2,14 +2,14 @@ import React from 'react';
 import Tooltip, { tooltipClasses } from '@mui/material/Tooltip';
 import { styled } from '@mui/material/styles';
 
-export const BlackTooltip = styled(({ className, ...props }) => (
+export const ThemedTooltip = styled(({ className, ...props }) => (
   <Tooltip arrow {...props} classes={{ popper: className }} />
 ))(({ theme }) => ({
   [`& .${tooltipClasses.arrow}`]: {
-    color: theme.palette.common.black,
+    color: theme.custom.button.backgroundColor,
   },
   [`& .${tooltipClasses.tooltip}`]: {
-    backgroundColor: theme.palette.common.black,
-    color: theme.palette.common.white,
+    backgroundColor: theme.custom.button.backgroundColor,
+    color: theme.custom.button.color,
   }
 }));

@@ -16,6 +16,7 @@ import { useHistory, useParams } from 'react-router-dom';
 
 import LoadingOverlay from './components/LoadingOverlay';
 import { ThemeContext } from './components/ThemeContextProvider';
+import usePageTitle from './components/uiComponents/usePageTitle';
 
 const useStyles = makeStyles()((theme) => ({
   backdrop: {
@@ -113,9 +114,7 @@ const Provisioning = () => {
       });
   }, [modelId]);
 
-  useEffect(() => {
-    document.title = 'Provisioning - Dojo';
-  }, []);
+  usePageTitle({ title: 'Provisioning' });
 
   useEffect(() => {
     // fetch provision state when the page first loads

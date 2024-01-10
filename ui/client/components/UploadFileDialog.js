@@ -16,6 +16,8 @@ import axios from 'axios';
 
 import { Input } from '@mui/material';
 
+import { getBrandName } from './uiComponents/Branding';
+
 const useStyles = makeStyles()(() => ({
   buttons: {
     backgroundColor: '#b5d3f0',
@@ -37,6 +39,7 @@ const UploadFileDialog = ({
   const [fileSizeOverLimit, setfileSizeOverLimit] = useState(false);
   const [filesOverMaxLength, setFilesOverMaxLength] = useState(false);
   const [isClosing, setClosing] = useState(false);
+  const brandName = getBrandName();
 
   const FILES_MAX_LENGTH = 5;
   const MAX_FILE_UPLOAD_SIZE = 25 * 1000 * 1000;
@@ -57,8 +60,12 @@ const UploadFileDialog = ({
         .catch((error) => {
           resolve(error);
           // eslint-disable-next-line no-alert
-          // TODO-NEW-DOCS: change /details to  /model-registration when we switch to new docs
-          alert(`${error} - Please try to upload again. If this continues see dojo documentation on uploading large files using Dojo's Amazon S3 Bucket. https://www.dojo-modeling.com/details/large-files.html`);
+          alert(`
+            ${error} - Please try to upload again. If this continues
+            see ${brandName} documentation on uploading large files using
+            ${brandName}'s Amazon S3 Bucket.
+            https://www.dojo-modeling.com/model-registration/large-files.html
+          `);
         });
     } catch (error) {
       console.log(error);

@@ -1,12 +1,15 @@
 import React from 'react';
 
 import GenericIntroPage, { ColorText } from '../components/GenericIntroPage';
+import { getBrandName } from '../components/uiComponents/Branding';
+
+const brandName = getBrandName();
 
 const actions = [
   {
     title: <><ColorText>Upload</ColorText> new documents</>,
     text: `
-      The Document Uploader allows you to upload files to Dojo and annotate their metadata with a simple drag and drop interface.
+      The Document Uploader allows you to upload files to ${brandName} and annotate their metadata with a simple drag and drop interface.
       Uploaded documents will be searchable with the Document Explorer once they have been processed.
       Documents will also be added to the body of knowledge available to the AI Assistant, allowing
       for plain language question-and-answer style queries.
@@ -28,7 +31,7 @@ const actions = [
   {
     title: <>Explore documents with <ColorText>semantic search</ColorText></>,
     text: `
-      Using context-aware search capabilities, Dojo's Document Explorer lets you directly query uploaded PDFs.
+      Using context-aware search capabilities, ${brandName}'s Document Explorer lets you directly query uploaded PDFs.
       You can use keyword or phrase searches to find relevant information within the available documents.
     `,
     linkTitle: 'Search',
@@ -38,7 +41,7 @@ const actions = [
 ];
 
 const subtitle = `
-  Dojo enhances document management with AI-assisted capabilities, offering a dynamic platform
+  ${brandName} enhances document management with AI-assisted capabilities, offering a dynamic platform
   for document upload, search, and analysis. It integrates advanced language models to empower
   users with intuitive querying and deep insights, streamlining knowledge discovery and
   supporting informed decision-making in complex domains.

@@ -8,16 +8,19 @@ import Collapse from '@mui/material/Collapse';
 import GitHubIcon from '@mui/icons-material/GitHub';
 import MenuBookIcon from '@mui/icons-material/MenuBook';
 import MenuIcon from '@mui/icons-material/Menu';
+import SvgIcon from '@mui/material/SvgIcon';
 import { styled, useTheme } from '@mui/material/styles';
 
 import { makeStyles } from 'tss-react/mui';
 
 import { ThemeContext } from './ThemeContextProvider';
 
-import { BlackTooltip } from './uiComponents/BlackTooltip';
+import { ThemedTooltip } from './uiComponents/ThemedTooltip';
 import { ContrastIconButton } from './uiComponents/ContrastButton';
 import Sidebar, { drawerWidth } from './Sidebar';
 import DojoIcon from './uiComponents/DojoIcon';
+import { BrandSwap, getBrandName } from './uiComponents/Branding';
+import { ReactComponent as IfpriLogo } from '../assets/ifpri-logo.svg';
 
 export const pageSlideAnimation = (theme, target) => ({
   transition: theme.transitions.create(target, {
@@ -40,8 +43,8 @@ const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })(
 const AppBar = styled(MuiAppBar, {
   shouldForwardProp: (prop) => prop !== 'open',
 })(({ theme, open }) => ({
-  backgroundColor: '#06B8EF',
-  backgroundImage: 'linear-gradient(to right, #06B8EF, #A11BDA)',
+  backgroundColor: theme.custom.nav.color,
+  backgroundImage: theme.custom.nav.image,
   ...pageSlideAnimation(theme, ['margin', 'width']),
   ...(open && {
     width: `calc(100% - ${drawerWidth}px)`,
@@ -51,8 +54,8 @@ const AppBar = styled(MuiAppBar, {
 
 const useStyles = makeStyles()((theme) => ({
   appBarRoot: {
-    backgroundColor: '#06B8EF',
-    backgroundImage: 'linear-gradient(to right, #06B8EF, #A11BDA)',
+    backgroundColor: theme.custom.nav.color,
+    backgroundImage: theme.custom.nav.image,
   },
   toolbar: {
     padding: `0 ${theme.spacing(5)}`,
@@ -68,6 +71,7 @@ const NavBar = ({ children }) => {
   const { showNavBar, showSideBar, setShowSideBar } = useContext(ThemeContext);
   const [open, setOpen] = useState(true);
   const theme = useTheme();
+  const brandName = getBrandName();
 
   useEffect(() => {
     // close the sidebar when we hide the navbar or just close the sidebar
@@ -106,26 +110,37 @@ const NavBar = ({ children }) => {
               orientation="horizontal"
               timeout={theme.transitions.duration.enteringScreen}
             >
-              <BlackTooltip disableInteractive title="Open navigation panel">
+              <ThemedTooltip disableInteractive title="Open navigation panel">
                 <ContrastIconButton
                   onClick={handleToggleDrawer}
                   sx={{ color: 'white' }}
                 >
                   <MenuIcon />
                 </ContrastIconButton>
-              </BlackTooltip>
+              </ThemedTooltip>
             </Collapse>
-            <BlackTooltip disableInteractive title="Dojo home">
+            <ThemedTooltip disableInteractive title={`${brandName} Home`}>
               <ContrastIconButton
                 component={Link}
                 to="/"
                 sx={{ color: 'white' }}
               >
-                <DojoIcon color="inherit" sx={{ height: '30px', width: '30px' }} />
+                <BrandSwap
+                  dojo={(
+                    <DojoIcon color="inherit" sx={{ height: '30px', width: '30px' }} />
+                  )}
+                  ifpri={(
+                    <SvgIcon
+                      component={IfpriLogo}
+                      inheritViewBox
+                      sx={{ height: '30px', width: '30px' }}
+                    />
+                  )}
+                />
               </ContrastIconButton>
-            </BlackTooltip>
+            </ThemedTooltip>
             <span className={classes.spacer} />
-            <BlackTooltip disableInteractive title="View Dojo Docs (opens new tab)">
+            <ThemedTooltip disableInteractive title={`View ${brandName} Docs (opens new tab)`}>
               <ContrastIconButton
                 href="https://www.dojo-modeling.com"
                 target="_blank"
@@ -136,8 +151,8 @@ const NavBar = ({ children }) => {
               >
                 <MenuBookIcon />
               </ContrastIconButton>
-            </BlackTooltip>
-            <BlackTooltip disableInteractive title="View Dojo on Github (opens new tab)">
+            </ThemedTooltip>
+            <ThemedTooltip disableInteractive title={`View ${brandName} on Github (opens new tab)`}>
               <ContrastIconButton
                 href="https://github.com/jataware/dojo"
                 target="_blank"
@@ -148,7 +163,7 @@ const NavBar = ({ children }) => {
               >
                 <GitHubIcon />
               </ContrastIconButton>
-            </BlackTooltip>
+            </ThemedTooltip>
           </Toolbar>
         </AppBar>
         <Sidebar open={open} handleDrawerClose={handleDrawerClose} />

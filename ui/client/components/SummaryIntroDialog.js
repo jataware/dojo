@@ -23,6 +23,8 @@ import { useTheme } from '@mui/material/styles';
 
 import { makeStyles, withStyles } from 'tss-react/mui';
 
+import { BrandName } from './uiComponents/Branding';
+
 const useStyles = makeStyles()((theme) => ({
   versionButtonWrapper: {
     marginTop: theme.spacing(2),
@@ -180,7 +182,7 @@ const SummaryIntroDialog = ({
                 </Typography>
                 <Typography gutterBottom>
                   If you choose not to make a new version, you can run your model in Docker
-                  outside Dojo in a terminal (where Docker is running) using the following:
+                  outside <BrandName /> in a terminal (where Docker is running) using the following:
                 </Typography>
                 <Typography gutterBottom className={classes.codeText}>
                   docker pull {model?.image || '<image_name>'}
@@ -190,7 +192,7 @@ const SummaryIntroDialog = ({
                 <Typography>
                   This will drop you into a shell session where you may interact with your model
                   locally to ensure it was correctly configured. If you find any issues,
-                  please create a new model version in Dojo.
+                  please create a new model version in <BrandName />.
                 </Typography>
               </DialogContentText>
               <DialogActions className={classes.versionButtonWrapper}>

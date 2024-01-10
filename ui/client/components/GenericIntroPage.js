@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 
 import { Link as RouterLink } from 'react-router-dom';
 
@@ -15,6 +15,7 @@ import HorizontalRuleIcon from '@mui/icons-material/HorizontalRule';
 import { makeStyles } from 'tss-react/mui';
 
 import InlineDocLink from './uiComponents/InlineDocLink';
+import usePageTitle from './uiComponents/usePageTitle';
 
 const useStyles = makeStyles()((theme) => ({
   allContentWrapper: {
@@ -25,9 +26,9 @@ const useStyles = makeStyles()((theme) => ({
   topContentWrapper: {
     display: 'flex',
     justifyContent: 'center',
-    backgroundColor: '#06B8EF',
-    backgroundImage: 'linear-gradient(to right, #06B8EF, #A11BDA)',
-    color: 'white',
+    backgroundColor: theme.custom.landing.backgroundColor,
+    backgroundImage: theme.custom.nav.image,
+    color: theme.custom.landing.color,
     padding: `${theme.spacing(4)} 0`,
   },
   topHeaderTitle: {
@@ -104,15 +105,13 @@ export const ColorText = ({ children }) => (
 const GenericIntroPage = ({ title, subtitle, actions }) => {
   const { classes } = useStyles();
 
-  useEffect(() => {
-    document.title = title;
-  }, [title]);
+  usePageTitle({ title });
 
   return (
     <Box className={classes.allContentWrapper}>
       <div className={classes.topContentWrapper}>
         <Container maxWidth="lg">
-          <Breadcrumbs sx={{ color: 'white' }}>
+          <Breadcrumbs sx={{ color: 'custom.landing.color' }}>
             <Link color="inherit" component={RouterLink} underline="none" to="/">Home</Link>
             <Typography><b>{title}</b></Typography>
           </Breadcrumbs>

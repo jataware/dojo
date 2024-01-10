@@ -1,5 +1,5 @@
 /* eslint-disable sort-imports */
-import React, { useEffect } from 'react';
+import React from 'react';
 import { Link, useParams } from 'react-router-dom';
 
 import capitalize from 'lodash/capitalize';
@@ -21,6 +21,7 @@ import { useRun } from './SWRHooks';
 import { ExternalLink, InternalTab } from './Links';
 import LoadingOverlay from './LoadingOverlay';
 import { parseDatetimeString, formatDatetime } from '../utils';
+import usePageTitle from './uiComponents/usePageTitle';
 
 // ------------------------ Parent Styles --------------------------------------
 
@@ -181,9 +182,7 @@ const RunSummary = ({ classes }) => {
     mutateRun();
   };
 
-  useEffect(() => {
-    document.title = `Dojo - Run ${runid}`;
-  }, [runid]);
+  usePageTitle({ title: `Run ${runid}` });
 
   if (fetchErrors) {
     return (

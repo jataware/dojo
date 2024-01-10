@@ -1,6 +1,9 @@
 import React from 'react';
 
 import GenericIntroPage, { ColorText } from '../components/GenericIntroPage';
+import { getBrandName } from '../components/uiComponents/Branding';
+
+const brandName = getBrandName();
 
 const actions = [
   {
@@ -18,7 +21,7 @@ const actions = [
   {
     title: <>View <ColorText>existing models</ColorText></>,
     text: `
-      This feature allows you to browse and search through the registered models in Dojo.
+      This feature allows you to browse and search through the registered models in ${brandName}.
       Once you've selected a model, you can relaunch it in the terminal emulator, make changes,
       and save a new version of it to Dockerhub. You can also kick off a Model Run
       from a selected model's summary page.
@@ -39,8 +42,8 @@ const actions = [
 ];
 
 const subtitle = `
-  Dojo allows modelers to seamlessly register their models via a highly instrumented terminal emulator.
-  Dojo stores models as reusable Docker containers with consistent, well specified application programming interfaces (APIs).
+  ${brandName} allows modelers to seamlessly register their models via a highly instrumented terminal emulator.
+  ${brandName} stores models as reusable Docker containers with consistent, well specified application programming interfaces (APIs).
   This allows them to be leveraged by non-modelers or analysts for simulation and what-if analysis.
 `;
 

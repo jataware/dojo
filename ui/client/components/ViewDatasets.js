@@ -17,6 +17,7 @@ import ExpandableDataGridCell from './ExpandableDataGridCell';
 import LoadingOverlay from './LoadingOverlay';
 import SearchDatasets from './SearchDatasets';
 import ViewFeatures from './ViewFeatures';
+import usePageTitle from './uiComponents/usePageTitle';
 
 const useStyles = makeStyles()((theme) => ({
   root: {
@@ -182,8 +183,9 @@ function ViewDatasets() {
   useEffect(() => {
     // only do this once when the page loads
     getDatasets(setDatasets, setDatasetsError, setDatasetsLoading);
-    document.title = 'View Datasets - Dojo';
   }, []);
+
+  usePageTitle({ title: 'View Datasets' });
 
   useEffect(() => {
     // when we load our datasets

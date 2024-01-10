@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useState } from 'react';
 
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
@@ -13,6 +13,7 @@ import { useParams } from 'react-router-dom';
 import {
   useRunLogs
 } from './components/SWRHooks';
+import usePageTitle from './components/uiComponents/usePageTitle';
 
 const useStyles = makeStyles()(() => ({
   title: {
@@ -88,9 +89,7 @@ const RunLogs = () => {
   } = useRunLogs(runid);
   const { classes } = useStyles();
 
-  useEffect(() => {
-    document.title = 'Run Logs - Dojo';
-  }, []);
+  usePageTitle({ title: 'Run Logs' });
 
   return (
     <Container>

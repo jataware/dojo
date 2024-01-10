@@ -11,6 +11,7 @@ import {
 } from './context';
 
 import { useLock, useModel } from './components/SWRHooks';
+import usePageTitle from './components/uiComponents/usePageTitle';
 
 function useQuery() {
   return new URLSearchParams(useLocation().search);
@@ -40,9 +41,7 @@ const Summary = () => {
   // confirm existence of a lock with the backend
   const { lock } = useLock(modelId);
 
-  useEffect(() => {
-    document.title = 'Model Summary - Dojo';
-  }, []);
+  usePageTitle({ title: 'Model Summary' });
 
   useEffect(() => {
     // if we have a container locked (a terminal session running)

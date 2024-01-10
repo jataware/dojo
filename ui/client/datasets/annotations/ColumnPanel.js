@@ -23,6 +23,7 @@ import { CATEGORIES, LATLON_MAPPINGS } from './constants';
 import { ColumnAnnotation } from './ColumnAnnotation';
 import { cleanUnusedFields, verifyConditionalRequiredFields, verifyQualifierPrimaryRules } from './annotationRules';
 import Stats from './Stats';
+import { BrandName } from '../../components/uiComponents/Branding';
 
 const useStyles = makeStyles()(({
   palette, spacing, breakpoints, mixins
@@ -475,7 +476,7 @@ export default ({
                           style={{ display: 'flex', alignItems: 'center' }}
                         >
                           <InfoRoundedIcon style={{ marginRight: '0.5rem', color: '#51abf1b3' }} />
-                          Defaults include inferred values from Dojo analysis.
+                          Defaults include inferred values from <BrandName /> analysis.
                         </Typography>
                       )}
 
