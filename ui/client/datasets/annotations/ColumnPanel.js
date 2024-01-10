@@ -24,7 +24,9 @@ import { ColumnAnnotation } from './ColumnAnnotation';
 import { cleanUnusedFields, verifyConditionalRequiredFields, verifyQualifierPrimaryRules } from './annotationRules';
 import Stats from './Stats';
 
-const useStyles = makeStyles()(({ palette, spacing, breakpoints }) => ({
+const useStyles = makeStyles()(({
+  palette, spacing, breakpoints, mixins
+}) => ({
   root: {
     width: '40%',
     minWidth: '25rem',
@@ -58,9 +60,11 @@ const useStyles = makeStyles()(({ palette, spacing, breakpoints }) => ({
   },
   editPanel: {
     padding: '2rem',
-    paddingTop: '0.5rem',
+    // bump the top of the drawer below the toolbar
+    paddingTop: mixins.toolbar.minHeight,
     background: palette.common.white,
-    flex: 1
+    flex: 1,
+    marginTop: spacing(1),
   },
   tabsPanel: {
     borderRight: '1px solid gray', // TODO tweak subtle border color

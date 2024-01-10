@@ -3,9 +3,7 @@ from __future__ import annotations
 import time
 import re
 import uuid
-from datetime import datetime
-from typing import Any, Dict, Generator, List, Optional
-from urllib.parse import urlparse
+from typing import List, Optional
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import RequestError, NotFoundError
 from fastapi import (
@@ -18,11 +16,10 @@ from fastapi import (
     Request,
     Query,
 )
-from fastapi.responses import FileResponse
 from fastapi.logger import logger
-
 import os
 import json
+import requests
 
 from validation import DocumentSchema
 from src.settings import settings
@@ -32,14 +29,13 @@ from src.urls import clean_and_decode_str
 
 from rq import Queue
 from redis import Redis
-from rq.exceptions import NoSuchJobError
-from rq import job
-
-from src.embedder_engine import embedder
+# from src.embedder_engine import embedder
+from pydantic import BaseModel
+from openai.embeddings_utils import get_embeddings
 from src.semantic_highlighter import highlighter
 
-from pydantic import BaseModel
 
+PARAGRAPHS_INDEX = "document_paragraphs"
 
 router = APIRouter()
 
@@ -83,7 +79,7 @@ def list_paragraphs(scroll_id: Optional[str]=None, size: int = 10):
     }
 
     if not scroll_id:
-        results = es.search(index="document_paragraphs",
+        results = es.search(index=PARAGRAPHS_INDEX,
                             body=q,
                             scroll="2m",
                             size=size)
@@ -138,6 +134,8 @@ def semantic_search_paragraphs(query: str,
     """
     Uses query to perform a Semantic Search on paragraphs; where LLM embeddings
     are used to compare a text query to items stored.
+
+    Switch highlights to online engine, to remove all local GPU-heavy deps
     """
 
     clean_query = clean_and_decode_str(query)
@@ -147,9 +145,9 @@ def semantic_search_paragraphs(query: str,
     else:
         # Retrieve first item in output, since it accepts an array and returns
         # an array, and we provided only one item (query)
-        query_embedding = embedder.embed([clean_query])[0]
+        query_embedding = get_embeddings([clean_query], engine="text-embedding-ada-002")[0]
 
-        MIN_TEXT_LENGTH_THRESHOLD = 100
+        MIN_TEXT_LENGTH_THRESHOLD = 50
 
         p_query = {
             "query": {
@@ -187,7 +185,7 @@ def semantic_search_paragraphs(query: str,
             }
         }
 
-        results = es.search(index="document_paragraphs",
+        results = es.search(index=PARAGRAPHS_INDEX,
                             body=p_query,
                             scroll="2m",
                             size=size)
@@ -233,7 +231,7 @@ def get_paragraph(paragraph_id: str):
     """
     """
     try:
-        p = es.get_source(index="document_paragraphs",
+        p = es.get_source(index=PARAGRAPHS_INDEX,
                           id=paragraph_id,
                           _source_excludes=["embeddings"])
     except Exception as e:
@@ -242,10 +240,10 @@ def get_paragraph(paragraph_id: str):
 
     return {**p, "id": paragraph_id}
 
+
 # NOTE Dart Paper metadata may contain PascalCase attributes. We strive to use
 # snake_case both in DB and API. Converting functions follow. No harm  if
 # already as snake_case.
-
 def camel_to_snake(str):
     """Receives a lowercase, snake_case, camelCase, or PascalCase input string
     and returns it as snake_case. In the case of snake_case input, no
@@ -485,7 +483,7 @@ def get_document_text(document_id: str,
             }
             # Get all the paragraphs for the document, ordered by indexed order
             #  (should follow paragraph order).
-            paragraphs = es.search(index="document_paragraphs", body=q, size=size, scroll="2m")
+            paragraphs = es.search(index=PARAGRAPHS_INDEX, body=q, size=size, scroll="2m")
         except Exception as e:
             logger.exception(e)
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
@@ -505,30 +503,6 @@ def get_document_text(document_id: str,
         "scroll_id": scroll_id,
         "paragraphs": [{**i["_source"], "id": i["_id"]} for i in paragraphs["hits"]["hits"]]
     }
-
-
-@router.get("/documents/by-didx-name", include_in_schema=False)
-def get_document_by_didx_name(name: str):
-    """
-    Temporary endpoint that returns document id/data from DIDX filename.
-    Would have gone to bottom of file, but needs to overwrite
-    /documents/{id} below.
-    """
-    es_body = {
-        "query": {
-            "match": {
-                "filename.keyword": f"DIDX-documents/{name}.pdf"
-            }
-        },
-        "_source": ["title", "processed_at", "filename", "source_url", "description"]
-    }
-
-    try:
-        result = es.search(index="documents", body=es_body)
-        hits = result["hits"]["hits"]
-        return format_document(hits[0])
-    except (NotFoundError, IndexError):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
 
 
 @router.get(
@@ -605,28 +579,47 @@ def update_document(payload: DocumentSchema.CreateModel, document_id: str):
     )
 
 
-def enqueue_document_paragraphs_processing(document_id, s3_url):
+def enqueue_document_paragraphs_processing(document_id, s3_url, api_host):
     """
     Adds document to queue to process by paragraph.
     Embedder creates and attaches LLM embeddings to its paragraphs
     """
-    job_string = "paragraph_embeddings_processors.calculate_store_embeddings"
-    job_id = f"{document_id}_{job_string}"
 
-    context = {
-        "document_id": document_id,
-        "s3_url": s3_url
-    }
+    # Use external OCR pipeline
+    # Currently used for an enhanced, GPU-powered, OCR engine with
+    #  better output quality
+    if settings.OCR_URL:
+        job_string = "paragraph_embeddings_processors.calculate_store_embeddings"
+        payload = json.dumps({
+            "s3_url": s3_url,
+            "callback_url": f"{api_host}/job/{document_id}/{job_string}"
+        })
 
-    job = q.enqueue_call(
-        func=job_string, args=[context], kwargs={}, job_id=job_id
-    )
+        response = requests.post(f"{settings.OCR_URL}/{document_id}", data=payload)
+        if response.status_code != 200:
+            return False
+
+    # Else process all documents from local worker (local OCR)
+    else:
+        job_string = "paragraph_embeddings_processors.full_document_process"
+        job_id = f"{document_id}_{job_string}"
+        context = {
+            "document_id": document_id,
+            "s3_url": s3_url
+        }
+
+        q.enqueue_call(
+            func=job_string, args=[context], kwargs={}, job_id=job_id
+        )
+
+    return True
 
 
-# TODO should we only allow 1 file per document id? replace? cancel/error?
+# NOTE TODO should we only allow 1 file per document id? replace? cancel/error?
 @router.post("/documents/{document_id}/upload")
 def upload_file(
     document_id: str,
+    request: Request,
     file: UploadFile = File(...),
 ):
     """
@@ -648,8 +641,11 @@ def upload_file(
 
     es.update(index="documents", body=body_updates, id=document_id)
 
-    # enqueue for rq worker to add paragraphs and embeddings to es
-    enqueue_document_paragraphs_processing(document_id, dest_path)
+    api_host = request.client.host
+    logger.info(f"Setting up document processing at host: {api_host}")
+    # enqueue for OCR and rq worker to add paragraphs and embeddings to es
+    # TODO Should we fail if queueing fails?
+    queue_success = enqueue_document_paragraphs_processing(document_id, dest_path, api_host)
 
     final_document = es.get_source(index="documents", id=document_id)
 
@@ -687,8 +683,5 @@ def get_document_uploaded_file(document_id: str):
 
     try:
         return Response(content=file.read(), media_type="application/pdf", headers=headers)
-    except FileNotFoundError as e:
+    except FileNotFoundError:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND)
-
-
-

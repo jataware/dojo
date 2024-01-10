@@ -86,35 +86,36 @@ const AIAssistant = () => {
       const mock = ''; // 'mock-';
 
       const queryResp = await axios.get(
-        `/api/ai-docs/${mock}message?query=${searchPhrase}`
+        `/api/dojo/knowledge/${mock}message?query=${searchPhrase}`
       );
       const response = {};
       response.response = queryResp.data;
 
       // create an object with just the unique filenames as keys
-      const filenamesToDocs = queryResp.data.candidate_paragraphs.reduce((obj, curr) => (
-        { ...obj, [curr.root_name]: null }
+      const document_ids = queryResp.data.candidate_paragraphs.reduce((obj, curr) => (
+        { ...obj, [curr.document_id]: null }
       ), {});
 
-      // go through the unique filenames and fetch the document data
-      const documentFetches = Object.keys(filenamesToDocs).map(async (filename) => {
+      // go through the unique document_ids and fetch the document data
+      const documentFetches = Object.keys(document_ids).map(async (document_id) => {
         try {
-          const docFetchResp = await axios.get(`/api/dojo/documents/by-didx-name?name=${filename}`);
-          return { filename, data: docFetchResp.data };
+          const docFetchResp = await axios.get(`/api/dojo/documents/${document_id}`);
+          return { document_id, data: docFetchResp.data };
         } catch (e) {
           console.log('error fetching document, skipping', e);
-          return { filename: null, data: {} };
+          return { document_id: null, data: {} };
         }
       });
 
       // wait for all the document fetches to complete
       const documentResults = await Promise.all(documentFetches);
+
       // and map them to the filenames
-      documentResults.forEach(({ filename, data }) => {
-        filenamesToDocs[filename] = data;
+      documentResults.forEach(({ document_id, data }) => {
+        document_ids[document_id] = data;
       });
 
-      response.documents = filenamesToDocs;
+      response.documents = document_ids;
 
       setResponses((oldResponses) => ({
         ...oldResponses,

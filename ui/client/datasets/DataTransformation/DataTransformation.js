@@ -534,24 +534,25 @@ const DataTransformation = ({
     setDrawerName(name);
   };
 
-  const disableNext = () => {
-    if (
-      mapResolutionLoading
-      || mapBoundsLoading
-      || timeResolutionLoading
-      || timeBoundsLoading
-      || gadmResolutionLoading
-    ) {
-      // disable if any of the transformations are loading
-      return true;
-    }
+  // TODO: remove this when we've confirmed we want it gone for good
+  // const disableNext = () => {
+  //   if (
+  //     mapResolutionLoading
+  //     || mapBoundsLoading
+  //     || timeResolutionLoading
+  //     || timeBoundsLoading
+  //     || gadmResolutionLoading
+  //   ) {
+  //     // disable if any of the transformations are loading
+  //     return true;
+  //   }
 
-    if (!gadmResolutionError && !savedGADMOverrides) {
-      return true;
-    }
+  //   if (!gadmResolutionError && !savedGADMOverrides) {
+  //     return true;
+  //   }
 
-    return false;
-  };
+  //   return false;
+  // };
 
   const processClipTime = () => {
     let config;
@@ -820,7 +821,7 @@ const DataTransformation = ({
         label="Next"
         handleNext={handleNextStep}
         handleBack={handleBack}
-        disableNext={disableNext()}
+        // disableNext={disableNext()}
       />
 
       <Drawer

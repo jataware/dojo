@@ -4,7 +4,6 @@ RUN apt-get update &&\
     apt-get reinstall -y gdal-bin=3.2.2+dfsg-2+deb11u2 \
     libgdal-dev=3.2.2+dfsg-2+deb11u2 && \
     apt install -y wget unzip python3-rtree python3-all-dev tesseract-ocr ghostscript
-
 RUN wget https://jataware-world-modelers.s3.amazonaws.com/gadm/gadm36_2.feather.zip
 RUN wget https://jataware-world-modelers.s3.amazonaws.com/gadm/gadm36_3.feather.zip
 RUN mkdir ~/elwood_data && \

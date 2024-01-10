@@ -22,12 +22,15 @@ const useStyles = makeStyles()((theme) => ({
   },
   root: {
     padding: `${theme.spacing(6)} ${theme.spacing(4)} ${theme.spacing(2)} ${theme.spacing(4)}`,
-    display: 'flex',
-    flexDirection: 'column',
+    // account for the dataset stepper and the dojo top nav
+    height: 'calc(100vh - 300px)',
   },
   header: {
     marginBottom: theme.spacing(5),
-  }
+  },
+  gridWrapper: {
+    height: '100%',
+  },
 }));
 
 const HintTooltip = () => {
@@ -252,16 +255,18 @@ export default ({
         <HintTooltip />
       </Typography>
 
-      <DataGrid
-        loading={isLoading}
-        disableSelectionOnClick
-        getRowId={(row) => row.__id}
-        columns={columns}
-        pageSize={pageSize}
-        onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
-        rowsPerPageOptions={rowsPerPageOptions}
-        rows={previewData}
-      />
+      <div className={classes.gridWrapper}>
+        <DataGrid
+          loading={isLoading}
+          disableSelectionOnClick
+          getRowId={(row) => row.__id}
+          columns={columns}
+          pageSize={pageSize}
+          onPageSizeChange={(newPageSize) => setPageSize(newPageSize)}
+          rowsPerPageOptions={rowsPerPageOptions}
+          rows={previewData}
+        />
+      </div>
 
       <Navigation
         label="Submit to Dojo"
