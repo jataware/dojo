@@ -50,6 +50,21 @@ const extensionMap = {
   },
   xlsx: {
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx']
+  },
+  'docx': {
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx']
+  },
+  'doc': {
+    'application/msword': ['.doc']
+  },
+  'odt': {
+    'application/vnd.oasis.opendocument.text': ['.odt']
+  },
+  'ppt': {
+    'application/vnd.ms-powerpoint': ['.ppt']
+  },
+  'pptx': {
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation': ['.pptx']
   }
 };
 
@@ -69,6 +84,7 @@ export const FileDropSelector = ({
   CTA,
   multiple = true,
   disableSelector,
+  maxFiles = 10
 }) => {
   const { classes, cx } = useStyles();
   const [alertVisible, setAlertVisible] = useState(false);
@@ -77,8 +93,8 @@ export const FileDropSelector = ({
   const onDropFilesRejected = (fileRejections) => {
     let errorMessage = 'There was an issue with your file upload: ';
 
-    if (fileRejections.length > 10 && acceptExtensions.includes('pdf')) {
-      errorMessage += 'The upload limit is 10 files. Please try again with fewer files.';
+    if (fileRejections.length > maxFiles) {
+      errorMessage += `The upload limit is ${maxFiles} files. Please try again with fewer files.`;
     } else if (fileRejections[0].errors) {
       errorMessage += fileRejections[0].errors.map((item) => item?.message).join('; ');
     } else {
@@ -95,7 +111,7 @@ export const FileDropSelector = ({
     multiple,
     onDropRejected: onDropFilesRejected,
     accept: formatExtensionForDropZone(acceptExtensions),
-    maxFiles: 10,
+    maxFiles,
     disabled: disableSelector,
   });
 
@@ -136,7 +152,7 @@ export const FileDropSelector = ({
       );
     }
 
-    return CTA || `Drag ${acceptExtensions.map((i) => `${i.toUpperCase()}s`).join(',')} here. Click to select up to ten files.`;
+    return CTA || 'Drag files here. Click to select up to ten files.';
   };
 
   return (
