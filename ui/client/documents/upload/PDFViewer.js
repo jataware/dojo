@@ -5,24 +5,33 @@ import Typography from '@mui/material/Typography';
 /**
  *
  **/
-export default ({ file }) => (
-  <Paper
-    elevation={0}
-    sx={{ padding: '1rem', height: '100%' }}
-  >
-    <Typography
-      variant="h6"
-      gutterBottom
+export default ({ file }) => {
+
+  return (
+    <Paper
+      elevation={0}
+      sx={{ padding: '1rem', height: '100%' }}
     >
-      {file.name}
-    </Typography>
+      <Typography
+        variant="h6"
+        gutterBottom
+      >
+        {file.name}
+      </Typography>
 
-    <embed
-      src={file.blobUrl}
-      type="application/pdf"
-      height="95%"
-      width="100%"
-    />
+      {file.type === 'application/pdf' ? (
+        <embed
+          src={file.blobUrl}
+          type="application/pdf"
+          height="95%"
+          width="100%"
+        />
+      ) : (
+        <Typography variant="body2" color="textSecondary">
+          Cannot preview non-PDF files.
+        </Typography>
+      )}
 
-  </Paper>
-);
+    </Paper>
+  );
+}

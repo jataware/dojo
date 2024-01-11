@@ -10,6 +10,7 @@ class Settings(BaseSettings):
 
     CSV_FILE_NAME: str = "raw_data.csv"
     DOJO_URL: str
+    OCR_URL: str
 
     TERMINAL_ENDPOINT: str
 
