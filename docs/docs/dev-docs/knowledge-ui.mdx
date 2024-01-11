@@ -1,0 +1,23 @@
+
+# Knowledge AI
+
+Dojo has support to upload, manage, search, and analyze document contents using
+a large language model (LLM). This is similar to an AI chat agent integrated with documents that have been uploaded and analyzed by the Dojo system.
+
+Knowledge AI consists of:
+- The Dojo UI interface (similar to chatgpt)
+- Dojo API endpoints, which use an LLM to stream or message (sync) a response that summarizes a query by the User
+- Elasticsearch, which contains the extracted text (paragraphs) from documents uploaded to the system, as well as the text embeddings
+
+# Flow
+
+1. User types a query into the Dojo UI under `/ai-assistant`. Example:
+
+> What is the impact of climate change to subsistence farming on African countries?
+
+2. UI sends the request to the Dojo API.
+3. The Dojo API embeds the input text/query, and performs a semantic search, using the elastic search embeddings
+4. From the search results, the Dojo API Knowledge engine sends a prompt to the chat agent, which includes instructions on what to do and the relevant search results.
+5. The Dojo API streams or sends (sync) the response to the Dojo UI.
+
+The response will contain both the synthetized answer, as well as the semantic search hits for the paragraph text, the document title and ID and a URL to open the document (PDF) on a Dojo UI modal.

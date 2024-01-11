@@ -125,6 +125,56 @@ const sidebars = {
         id: 'FAQ',
         label: 'Frequently Asked Questions',
       },
+      {
+        type: 'category',
+        label: 'Developer Documentation',
+        link: {
+          type: 'doc',
+          id: 'dev-docs',
+        },
+        items: [
+          {
+            type: 'doc',
+            id: 'dev-docs/common-problems',
+            label: 'Common Problems',
+          },
+          {
+            type: 'doc',
+            id: 'dev-docs/stack-overview',
+            label: 'Stack Overview',
+          },
+          {
+            type: 'doc',
+            id: 'dev-docs/developer-workflow',
+            label: 'Developer Workflow',
+          },
+          {
+            type: 'doc',
+            id: 'dev-docs/document-upload-architecture',
+            label: 'Document Upload Architecture',
+          },
+          {
+            type: 'doc',
+            id: 'dev-docs/knowledge-ui',
+            label: 'Knowledge UI',
+          },
+          {
+            type: 'doc',
+            id: 'dev-docs/production-deployment',
+            label: 'Production Deployment',
+          },
+          {
+            type: 'doc',
+            id: 'dev-docs/environment-setup',
+            label: 'Environment Setup',
+          },
+          {
+            type: 'doc',
+            id: 'dev-docs/make-and-docker-integration',
+            label: 'Make and Docker Integration',
+          },
+        ],
+      },
     ],
 
 

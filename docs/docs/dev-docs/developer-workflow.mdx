@@ -1,0 +1,46 @@
+# Developer Workflow
+
+Or, A Day on The Life of Dojo Developer
+
+#### If computer restarted
+
+```
+cd ~/code/dojo
+make up
+```
+
+#### Follow Important Service Logs
+
+From terminal:
+
+##### List services
+`docker ps`
+
+Important when services failing (ensure all services are present / started correctly)
+
+##### Dojo API Logs
+`docker logs -f dojo-api`
+
+##### RQ Worker Logs
+`docker logs --tail 100  -f dojo-rq-worker`
+
+#### Inspecting Elasticsearch state and contents
+
+By default, one of the docker containers started in the stack is the `Kibana` developer tool.
+It'll connect to the running elasticsearch service on the default port, and allow users to inspect indexes, their document count, and use a developer notebook which issues REST requests to elasticsearch.
+The "notebook" is actually Kibana's "Dev Tools" section
+
+... image goes here ...
+
+which allows developers to get and search documents, filter and aggregate, inspect, modify, delete, create, etc.
+
+TODOs:
+1. Link to Kibana and Elasticsearch documentation for current version
+2. Share images or videos of the experience
+3. Create Troubleshooting-Common-Problems.md article.
+
+#### Troubleshooting Common Problems
+See [[Troubleshooting Common Problems]] wiki article.
+
+### Deploying to Production (!!)
+See [[Production Deployment]] for requirements and steps.
