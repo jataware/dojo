@@ -1,5 +1,8 @@
+import { deepmerge } from '@mui/utils';
 import { createTheme, alpha } from '@mui/material/styles';
 import { grey } from '@mui/material/colors';
+
+import { BrandSwap } from './components/uiComponents/Branding';
 
 // This theme is created just to be passed into the theme below
 // seems like a weird way to do it but this is how MUI v5 theming works
@@ -12,7 +15,7 @@ const theme = createTheme({
   }
 });
 
-export default createTheme(theme, {
+const baseTheme = createTheme(theme, {
   breakpoints: {
     values: {
       xl: 1920,
@@ -117,3 +120,54 @@ export default createTheme(theme, {
     }
   },
 });
+
+const dojoTheme = {
+  custom: {
+    nav: {
+      backgroundColor: '#06B8EF',
+      image: 'linear-gradient(to right, #06B8EF, #A11BDA)',
+    },
+    landing: {
+      backgroundColor: '#06B8EF',
+      color: 'white',
+    },
+    button: {
+      color: 'white',
+      backgroundColor: 'black',
+    },
+  },
+};
+
+const ifpriTheme = {
+  custom: {
+    nav: {
+      color: '#ffb300',
+      // ifpri logo green: '#62bb46'
+      // or darker: #429d46 (from ifpri library)
+    },
+    landing: {
+      backgroundColor: '#f5f4f0',
+      color: 'black',
+    },
+    button: {
+      color: 'white',
+      backgroundColor: '#429d46',
+    },
+  },
+  palette: {
+    secondary: {
+      main: '#429d46',
+      light: '#4cb451',
+      dark: '#2e6e31',
+      constrastText: '#fff',
+    }
+  }
+};
+
+function createCustomTheme() {
+  const themeVariant = BrandSwap({ dojo: dojoTheme, ifpri: ifpriTheme });
+
+  return createTheme(deepmerge(baseTheme, themeVariant));
+}
+
+export default createCustomTheme;

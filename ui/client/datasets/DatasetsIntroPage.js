@@ -1,13 +1,15 @@
 import React from 'react';
 
 import GenericIntroPage, { ColorText } from '../components/GenericIntroPage';
+import { getBrandName } from '../components/uiComponents/Branding';
 
+const brandName = getBrandName();
 const actions = [
   {
     title: <><ColorText>Register</ColorText> a new dataset</>,
     text: `
       Registering a dataset involves uploading a valid dataset file, filling out metadata for it,
-      and, once Dojo's systems have inferred data types such as date format and geographic information,
+      and, once ${brandName}'s systems have inferred data types such as date format and geographic information,
       annotating key columns. You will then have the opportunity to transform your data
       to reduce and normalize it into a well-defined, and ready to use format.
     `,
@@ -30,7 +32,7 @@ const actions = [
   {
     title: <>View existing <ColorText>datasets</ColorText></>,
     text: `
-      Browse the list of all registered datasets in Dojo, or filter through them based on metadata or column/feature names.
+      Browse the list of all registered datasets in ${brandName}, or filter through them based on metadata or column/feature names.
       From a dataset's summary page, you can download its files, find a link to view it in the downstream visualization
       workflow app Causemos, or edit the registered dataset.
 
@@ -42,12 +44,11 @@ const actions = [
 ];
 
 const subtitle = `
-  Dojo offers a comprehensive solution for dataset management, combining dataset
+  ${brandName} offers a comprehensive solution for dataset management, combining dataset
   registration with advanced data modeling capabilities. Users can seamlessly integrate,
   view, and modify datasets, ensuring effective data organization and enhancing analytical
   possibilities across various domains.
 `;
-
 const DatasetsIntroPage = () => (
   <GenericIntroPage title="Datasets" subtitle={subtitle} actions={actions} />
 );

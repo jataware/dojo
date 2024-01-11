@@ -50,9 +50,12 @@
   --docusaurus-highlighted-code-line-bg: rgba(0, 0, 0, 0.3);
 }*/
 
+/* these are not guaranteed to be stable class names */
 .navbar {
   background-color:#06B8EF;
   background-image:linear-gradient(to right, rgba(6, 184, 239, 1), rgba(161, 27, 218, 1));
+}
+.navbar__items {
   a, button {
     color: white;
     &:hover {

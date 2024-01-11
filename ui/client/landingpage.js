@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react';
+import React from 'react';
 
 import { Link as RouterLink } from 'react-router-dom';
 
@@ -16,6 +16,8 @@ import MenuBookIcon from '@mui/icons-material/MenuBook';
 import { makeStyles } from 'tss-react/mui';
 
 import { ContrastButton } from './components/uiComponents/ContrastButton';
+import { BrandSwap, BrandName } from './components/uiComponents/Branding';
+import usePageTitle from './components/uiComponents/usePageTitle';
 
 const useStyles = makeStyles()((theme) => ({
   allContentWrapper: {
@@ -26,9 +28,9 @@ const useStyles = makeStyles()((theme) => ({
   topContentWrapper: {
     display: 'flex',
     justifyContent: 'center',
-    backgroundColor: '#06B8EF',
-    backgroundImage: 'linear-gradient(to right, #06B8EF, #A11BDA)',
-    color: 'white',
+    backgroundColor: theme.custom.landing.backgroundColor,
+    backgroundImage: theme.custom.nav.image,
+    color: theme.custom.landing.color,
     padding: `${theme.spacing(4)} 0`,
   },
   topHeaderTitle: {
@@ -90,26 +92,48 @@ const useStyles = makeStyles()((theme) => ({
 const LandingPage = () => {
   const { classes } = useStyles();
 
-  useEffect(() => {
-    document.title = 'Home - Dojo';
-  }, []);
+  usePageTitle({ title: 'Home' });
 
   return (
     <Box className={classes.allContentWrapper}>
       <div className={classes.topContentWrapper}>
         <Container maxWidth="lg">
-          <Typography variant="h1" className={classes.topHeaderTitle}>
-            Dojo
-          </Typography>
-          <Typography variant="h6" sx={{ marginBottom: 3 }}><i>noun</i> &nbsp;/dō′jō/</Typography>
+          <BrandSwap
+            dojo={(
+              <>
+                <Typography variant="h1" className={classes.topHeaderTitle}>
+                  Dojo
+                </Typography>
+                <Typography variant="h6" sx={{ marginBottom: 3 }}><i>noun</i> &nbsp;/dō′jō/</Typography>
+              </>
+            )}
+            ifpri={(
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  marginBottom: '3rem',
+                  gap: '1rem',
+                  width: '800px'
+                }}
+              >
+                <img src="/assets/ifpri-logo-green.png" width="290" />
+                <Typography variant="h3" sx={{ fontSize: '5rem', fontWeight: '450' }}>
+                  IFPRI Data Hub
+                </Typography>
+              </Box>
+            )}
+          />
           <Typography variant="h3" sx={{ marginBottom: 6 }}>
             a platform for model, data and<br /> knowledge analysis & management
           </Typography>
           <Typography variant="h6" className={classes.topHeaderSubtitle}>
             Create containerized, shareable models for reproducible research with easy-to-consume
-            outputs. Register and transform datasets for Dojo&apos;s no-code data modeling tool
-            and other downstream uses.
-            Retrieve domain-specific knowledge using Dojo&apos;s state of the art AI Assistant.
+            outputs. Register and transform datasets for <BrandName />&apos;s
+            no-code data modeling tool and other downstream uses.
+            Retrieve domain-specific knowledge using&nbsp;
+            <BrandName />&apos;s state of the art AI Assistant.
           </Typography>
           <div className={classes.linksWrapper}>
             <Typography variant="h4" align="center" className={classes.linkCta}>
@@ -190,7 +214,7 @@ const LandingPage = () => {
               size="large"
               className={classes.button}
             >
-              Browse Dojo on GitHub
+              Browse <BrandSwap dojo="Dojo" ifpri="the Repo" /> on GitHub
             </ContrastButton>
           </div>
         </div>

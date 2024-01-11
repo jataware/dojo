@@ -70,7 +70,6 @@ module.exports = {
   plugins: [
     new HtmlWebpackPlugin({
       template: 'client/index.html',
-      favicon: 'client/favicon.ico',
     }),
     new MiniCssExtractPlugin({
       filename: "[contenthash].css",}),

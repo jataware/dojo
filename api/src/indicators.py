@@ -309,8 +309,8 @@ def get_nc_file_indicators(size=10000):
                 "must": [
                     {"bool": {
                         "should": [
-                            {"regexp": {"fileData.raw.url": ".*\\.nc"}},
-                            {"regexp": {"fileData.raw.rawFileName": ".*\\.nc"}},
+                            {"regexp": {"fileData.raw.url": ".*\\.(nc|tif|tiff)"}},
+                            {"regexp": {"fileData.raw.rawFileName": ".*\\.(nc|tif|tiff)"}},
                         ],
                         "minimum_should_match": 1,
                     }},

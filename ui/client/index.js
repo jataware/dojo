@@ -29,7 +29,7 @@ import RunLogs from './runlogs';
 import RunSummary from './components/RunSummary';
 import Summary from './summary';
 import Terminal from './terminal';
-import theme from './theme';
+import createCustomTheme from './theme';
 import ViewDatasets from './components/ViewDatasets';
 import ViewDocuments from './documents';
 import UploadDocument from './documents/upload';
@@ -78,9 +78,30 @@ export default function Main() {
   );
 }
 
+const changeFavicon = (faviconFileName) => {
+  const link = document.querySelector("link[rel~='icon']");
+  if (link) {
+    link.href = `/assets/${faviconFileName}`;
+  } else {
+    const newLink = document.createElement('link');
+    newLink.rel = 'icon';
+    newLink.href = `/assets/${faviconFileName}`;
+    document.head.appendChild(newLink);
+  }
+};
+
+if (process.env.COMPANY_BRANDING === 'ifpri') {
+  changeFavicon('favicon-ifpri.ico');
+} else if (process.env.COMPANY_BRANDING === 'dojo' || !process.env.COMPANY_BRANDING) {
+  // fallback to Dojo
+  changeFavicon('favicon-dojo.ico');
+}
+
 const container = document.getElementById('app');
 
 const root = createRoot(container);
+
+const theme = createCustomTheme();
 
 root.render(
   <StyledEngineProvider injectFirst>

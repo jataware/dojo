@@ -15,6 +15,7 @@ import LoadingOverlay from './LoadingOverlay';
 import Search from './SearchItems';
 import { formatDatetime, parseDatetimeString } from '../utils';
 import { Status } from './RunSummary';
+import usePageTitle from './uiComponents/usePageTitle';
 
 const styles = (theme) => ({
   root: {
@@ -170,9 +171,10 @@ const ViewRuns = ({
   const [search, setSearch] = useState(null);
   const [pageSize, setPageSize] = React.useState(rowsPerPage);
 
+  usePageTitle({ title: 'View Model Runs' });
+
   useEffect(() => {
     getRuns(setRuns, setFetchErrors, setAreRunsLoading, modelId);
-    document.title = 'View Model Runs - Dojo';
   }, [modelId]);
 
   if (areRunsLoading && !modelId) {

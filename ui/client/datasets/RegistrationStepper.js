@@ -19,6 +19,7 @@ import Prompt from './PromptDialog';
 import flows from './Flows';
 import { FlowContext } from './FlowContext';
 import { ThemeContext } from '../components/ThemeContextProvider';
+import usePageTitle from '../components/uiComponents/usePageTitle';
 
 const useStyles = makeStyles()(({ spacing, breakpoints }) => ({
   root: {
@@ -187,9 +188,9 @@ const InnerStepper = ({ match, updateLocation, ...props }) => {
   const [error, setError] = useState(null);
   const [displayError, setDisplayError] = useState(false);
 
-  useEffect(() => {
-    document.title = 'Dataset Registration - Dojo';
+  usePageTitle({ title: 'Dataset Registration' });
 
+  useEffect(() => {
     let rawFileNameToUse = getRawFileNameFromLocation(location);
 
     if (rawFileNameToUse) {

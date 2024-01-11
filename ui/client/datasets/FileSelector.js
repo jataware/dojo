@@ -15,6 +15,7 @@ import isFunction from 'lodash/isFunction';
 import { makeStyles } from 'tss-react/mui';
 
 import { matchFileNameExtension } from '../utils';
+import { getBrandName } from '../components/uiComponents/Branding';
 
 const useStyles = makeStyles()((theme) => ({
   root: {
@@ -359,6 +360,7 @@ export const FileSelector = ((allProps) => {
   } = allProps;
 
   const { classes } = useStyles();
+  const brandName = getBrandName();
 
   const [message, setMessage] = useState(null);
 
@@ -435,7 +437,7 @@ export const FileSelector = ((allProps) => {
         : setFileMetadata({ ...fileMetadata, ...metadata });
     }
 
-    setMessage(`File ${file.name} is not a type that Dojo is able to process.`);
+    setMessage(`File ${file.name} is not a type that ${brandName} is able to process.`);
     setFileMetadata({});
 
     return null;

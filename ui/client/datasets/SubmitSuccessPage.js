@@ -8,6 +8,7 @@ import Container from '@mui/material/Container';
 import Paper from '@mui/material/Paper';
 import Typography from '@mui/material/Typography';
 import CloudDoneIcon from '@mui/icons-material/CloudDone';
+import { BrandName } from '../components/uiComponents/Branding';
 
 const useStyles = makeStyles()((theme) => ({
   root: {
@@ -87,7 +88,7 @@ export default ({ datasetInfo }) => {
               component={Link}
             >
 
-              View in Dojo
+              View in <BrandName />
             </Button>
           </div>
 
