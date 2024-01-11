@@ -1,0 +1,19 @@
+# Stack Overview
+
+## Diagram of stack
+
+![DojoStack](/img/dev-docs-stack-overview.png)
+
+[Excalidraw file](/img/DojoStack.excalidraw)
+
+The dojo stack is made up of multiple services that work together to provide full functionality.
+
+## Primary Stack Services
+
+* **API** - FastAPI service that handles the majority of the data storage, and CRUD endpoints. Python-based server.
+* **ElasticSearch** - Primary datastore for the the project
+* **Redis** - Used as queuing back-end for RQ which is performs data-manipulation jobs in the background, also used to cache lock and connection data for the Terminal service
+* **Terminal** - (Formerly Clouseau/Claudine) Provides a SSH-like connection to the interior of a docker container that is configured to run a model. This is done by actually running the model, then annotating the parameters, configurations, outputs, and accessory (media) files.
+* **UI** - Web Application where users can perform most operations. Alternatively can use the API only
+* **RQ Worker** - Redis Queue Worker that takes queued tasks from redis and performs certain async operations, then stores the result for the UI or API to consume (async)
+* **Airflow** - Runs Models from container after having registered a given model.

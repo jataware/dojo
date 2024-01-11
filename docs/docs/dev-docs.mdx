@@ -1,0 +1,40 @@
+# Developer Docs
+
+This wiki is a _developer guide_ for working with the Dojo Stack.
+
+As of 2023, the base developer setup consists of using a Makefile to generate
+the \[complex\] docker-compose file and handle docker containers state (start, stop).
+
+To that end and to get started, the following dependencies are required on the system:
+
+- Unix system with `make` to run the Makefile commands
+- docker
+- docker compose plugin, usually bundled with docker.
+
+## Developer QuickStart
+
+The README describes three simple steps to get started without customization:
+
+1. Clone repository
+2. Run `make init`
+3. run `make up`
+
+That is it!
+
+## First URLs to visit
+
+The Dojo Web User Interface (Dojo UI):
+`http://localhost:8080`
+
+The Dojo API spec / swagger UI:
+`http://localhost:8000`
+
+## Where To Go From Here
+
+### Stack Diagram and Services Overview
+See [Stack Overview](./dev-docs/stack-overview).
+
+### Customizing Setup
+After trying the running app (especially the web UI), you may want to customize the
+configuration. See [Environment Setup](./dev-docs/environment-setup).
+

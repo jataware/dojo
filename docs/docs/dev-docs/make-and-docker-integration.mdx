@@ -1,0 +1,26 @@
+
+# Make and Docker Integration
+
+Developers familiar with Docker and docker-compose might be surprised to find that the `docker-compose.yaml` file at the root of the repo is programmatically generated and updated
+by the `make` build tasks.
+
+Each service contains its own docker-compose.yaml details:
+- ui/docker-compose.yaml
+- api/docker-compose.yaml
+- dmc/docker-compose.yaml
+- tasks/docker-compose.yaml
+- workers/docker-compose.yaml
+- testmos/docker-compose.yaml
+- terminal/docker-compose.yaml
+
+Additionally, an overrides file contains any changes modified for local development or production:
+`docker-compose.build-override.yaml`
+
+The `make` task `docker-compose.yaml` stitches together the `envfile` and the above `*/docker-compose*` files into the final docker-compose.yaml file.
+
+The docker-compose file is regenerated under certain conditions, which can be understood by examining the `Makefile`. Alternatively, you can manually run `make docker-compose.yaml` to regenerate it by hand. Docker-compose regeneration is usually only relevant in specific situations, such as when:
+* Modifying the envfile values
+* Modifying */docker-compose* files as part of a service while developing a new feature
+* Customizing environment values for production deployment, or in other specific scenarios
+
+
