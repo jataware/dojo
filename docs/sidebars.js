@@ -135,18 +135,23 @@ const sidebars = {
         items: [
           {
             type: 'doc',
-            id: 'dev-docs/common-problems',
-            label: 'Common Problems',
-          },
-          {
-            type: 'doc',
             id: 'dev-docs/stack-overview',
             label: 'Stack Overview',
           },
           {
             type: 'doc',
+            id: 'dev-docs/environment-setup',
+            label: 'Environment Setup',
+          },
+          {
+            type: 'doc',
             id: 'dev-docs/developer-workflow',
             label: 'Developer Workflow',
+          },
+          {
+            type: 'doc',
+            id: 'dev-docs/make-and-docker-integration',
+            label: 'Make and Docker Integration',
           },
           {
             type: 'doc',
@@ -165,13 +170,8 @@ const sidebars = {
           },
           {
             type: 'doc',
-            id: 'dev-docs/environment-setup',
-            label: 'Environment Setup',
-          },
-          {
-            type: 'doc',
-            id: 'dev-docs/make-and-docker-integration',
-            label: 'Make and Docker Integration',
+            id: 'dev-docs/common-problems',
+            label: 'Common Problems',
           },
         ],
       },

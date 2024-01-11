@@ -1,5 +1,5 @@
-
-# Sequence Diagram with NOS_OCR
+# Document Upload Architecture 
+## Sequence Diagram with NOS_OCR
 
 ![Document Upload Sequence Flow](/img/dev-docs-document-upload-pipeline.png)
 
@@ -12,7 +12,7 @@ Relevant Services:
 - Elasticsearch
 - AWS S3
 
-# UI Details
+## UI Details
 
 Documents can be uploaded by users through a drag-and-drop (or click and browse to file) interface on the Dojo UI.
 The UI route for the Document Explorer Upload functionality is under `/documents/upload`.
@@ -25,14 +25,14 @@ Upon adding the files, filling in the input forms with relevant metadata, and pr
 The Dojo API will then format and create an elasticsearch document. Once the Dojo UI receives an OK (and the new Document ID) from the API, it will then upload the document to the API using the new ID to associate the file with the metadata.
 After the Dojo UI receives an OK from the upload endpoint, it will automatically redirect to the Document Explorer Listings page (UI url `/documents`).
 
-IMPLEMENT ME: The UX outlined above can be improved by adding a confirm/success dialog that explains to the user that the Documents will still not be visible in the system, as they are processing in the background.
-Processing takes some time, so we'd rather not wait or display a progress dialog; but a notice of what to expect before being redirected to the Document Explorer listings would be a great improvement.
+{/*IMPLEMENT ME: The UX outlined above can be improved by adding a confirm/success dialog that explains to the user that the Documents will still not be visible in the system, as they are processing in the background.
+Processing takes some time, so we'd rather not wait or display a progress dialog; but a notice of what to expect before being redirected to the Document Explorer listings would be a great improvement.*/}
 
-# API Details
+## API Details
 On the API side- once the Dojo API receives the upload request, it will first upload it to S3, then make a request to an external (to Dojo) service- NOS_OCR.
 NOS_OCR stands for Nougat-Ocr-Service_OCR. Once the request to `NOS_OCR/extract/<document_id>` is acknowledged, the Dojo UI returns a success response to the client (Dojo UI).
 
-# NOS_OCR Text Extractor Details
+## NOS_OCR Text Extractor Details
 The NOS_OCR project has both a thing HTTP server with one endpoint (`/extract`) and a Redis-Queue (RQ), similar to the Dojo stack.
 
 Sample request to NOS_OCR:
