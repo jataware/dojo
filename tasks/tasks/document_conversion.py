@@ -1,7 +1,4 @@
-# import time pipeline
-# from typing import List
 from urllib.parse import urlparse
-# import numpy as np
 import re
 from settings import settings
 from utils import get_rawfile, put_rawfile
@@ -9,7 +6,6 @@ from utils import get_rawfile, put_rawfile
 import os
 import boto3
 import json
-# import botocore.exceptions  # TODO handle s3 upload/download exceptions
 from pathlib import Path
 from os.path import join as path_join
 import requests
@@ -85,8 +81,7 @@ def to_pdf(context):
 
     download_fileobj(file_handle, cache_file_path)
 
-    result = subprocess.run(
-        # OR "soffice" if libreoffice is not found
+    subprocess.run(
         ["libreoffice", "--headless", "--convert-to", "pdf", cache_file_path, "--outdir", CACHE_FOLDER]
     )
 
