@@ -270,16 +270,6 @@ function ViewDatasets() {
                   datasets={displayedDatasets}
                 />
                 <Button
-                  component={Link}
-                  size="large"
-                  variant="outlined"
-                  color="primary"
-                  disableElevation
-                  to="/datasets/register"
-                >
-                  Register a New Dataset
-                </Button>
-                <Button
                   color="primary"
                   disableElevation
                   variant="outlined"

@@ -323,16 +323,6 @@ const ViewModels = ({
             items={displayedModels}
           />
           <Button
-            component={Link}
-            size="large"
-            variant="outlined"
-            color="primary"
-            disableElevation
-            to="/model"
-          >
-            Register a New Model
-          </Button>
-          <Button
             color="primary"
             disableElevation
             variant="outlined"
