@@ -15,7 +15,7 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 
 import { makeStyles } from 'tss-react/mui';
 
-import { useHistory, Link } from 'react-router-dom';
+import { useHistory } from 'react-router-dom';
 
 import ExpandableDataGridCell from './ExpandableDataGridCell';
 import LoadingOverlay from './LoadingOverlay';

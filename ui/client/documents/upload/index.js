@@ -190,11 +190,10 @@ const UploadDocumentForm = () => {
           })
           .then((pdf) => getFormattedPDFMetadata(pdf));
       })
-      .catch((readPDFerror) => {
+      .catch(() => {
         setAcceptedFilesParsed((current) => current + 1);
         return defaultValues;
-      })
-    );
+      }));
 
     Promise.all(pdfData)
       .then((allPdfData) => {
