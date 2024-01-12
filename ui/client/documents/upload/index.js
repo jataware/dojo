@@ -303,7 +303,7 @@ const UploadDocumentForm = () => {
         </Alert>
 
         <FileDropSelector
-          acceptExtensions={['pdf', 'doc', 'docx', 'odt', 'ppt', 'pptx']}
+          acceptExtensions={['pdf', 'doc', 'docx', 'odt', 'ppt', 'pptx', 'odp']}
           onFileSelect={handleFileSelect}
           disableSelector={files.length >= 10}
           maxFiles={10}
