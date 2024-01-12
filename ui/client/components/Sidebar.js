@@ -121,7 +121,7 @@ const Sidebar = ({ open, handleDrawerClose }) => {
         ))}
       </List>
     </Drawer>
-  )
+  );
 };
 
 export default Sidebar;
