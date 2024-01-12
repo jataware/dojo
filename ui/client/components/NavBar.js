@@ -140,7 +140,7 @@ const NavBar = ({ children }) => {
               </ContrastIconButton>
             </ThemedTooltip>
             <span className={classes.spacer} />
-            <ThemedTooltip disableInteractive title={`View ${brandName} Docs (opens new tab)`}>
+            <ThemedTooltip disableInteractive title="View Docs (opens new tab)">
               <ContrastIconButton
                 href="https://www.dojo-modeling.com"
                 target="_blank"

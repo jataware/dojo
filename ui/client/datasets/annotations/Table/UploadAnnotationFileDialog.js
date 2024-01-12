@@ -34,6 +34,7 @@ export default ({
           acceptExtensions={['csv', 'xlsx']}
           CTA="Drop or Select a csv, xlsx"
           multiple={false}
+          maxFiles={1}
         />
         {loading && (
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center' }}>

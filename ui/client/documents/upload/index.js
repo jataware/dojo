@@ -175,6 +175,7 @@ const UploadDocumentForm = () => {
 
     const byteData = {};
 
+    // At this point we accept other files than PDF
     const pdfData = acceptedFiles.map((pdfFile) => readFile(pdfFile)
       .then((bytes) => {
         // Some side-effects on a map fn...
@@ -188,7 +189,12 @@ const UploadDocumentForm = () => {
             return pdf;
           })
           .then((pdf) => getFormattedPDFMetadata(pdf));
-      }));
+      })
+      .catch((readPDFerror) => {
+        setAcceptedFilesParsed((current) => current + 1);
+        return defaultValues;
+      })
+    );
 
     Promise.all(pdfData)
       .then((allPdfData) => {
@@ -297,8 +303,10 @@ const UploadDocumentForm = () => {
         </Alert>
 
         <FileDropSelector
+          acceptExtensions={['pdf', 'doc', 'docx', 'odt', 'ppt', 'pptx']}
           onFileSelect={handleFileSelect}
           disableSelector={files.length >= 10}
+          maxFiles={10}
         />
 
         {loading && (

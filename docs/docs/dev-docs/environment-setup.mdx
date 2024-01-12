@@ -1,0 +1,29 @@
+# Environment Setup
+
+This page details how to configure the [dojo-stack environment file](https://github.com/jataware/dojo-stack/blob/main/envfile.sample)
+
+Initially, upon first clone of the code, running `make init` will create an `envfile` file from `envfile.sample`.
+
+Common variables to modify:
+
+```
+AWS_ACCESS_KEY_ID=
+AWS_SECRET_ACCESS_KEY=
+BUCKET=
+DMC_BUCKET=
+DOCKERHUB_AUTH=
+DOCKERHUB_USER=
+STORAGE_HOST=
+CONFIG_STORAGE_BASE=s3://dojo/configs/
+DATASET_STORAGE_BASE_URL=s3://datasets/
+DOCUMENT_STORAGE_BASE_URL=s3://documents/
+```
+
+```python
+# TODO Proper Overview on what values to use for development vs production
+```
+
+When working exclusively within Docker and changing values in the `envfile`, a simple `make restart` from the project directory will:
+1) Re-generate a docker-compose file with all the services and latest updated values from the `envfile`
+2) Restart all currently running services to use these settings
+3) Start any services that were stopped before the restart command

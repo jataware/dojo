@@ -1,0 +1,104 @@
+# Common Problems
+
+## ElasticSearch Host Out of Disk Space 
+
+Ocassionally, and especially during development on a dev machine, you may run
+into a problem where elasticsearch blocks any additional writes due to low
+disk space.
+
+ ### This is mostly related to several factors:
+- Stack runs on docker. Re-building the project multiple times will leave old
+images and cache lying around, which use up many GBs of data as time goes by.
+- The default elasticsearch settings (in es version 7.11) are set a bit tight-
+possibly trying to set a sensible default to a akin to a production setup.
+
+### Error you'll see from the Dojo API or RQWorker logs
+
+```
+{"error":{"root_cause":[{"type":"cluster_block_exception","reason":"index [indicators] blocked by: [TOO_MANY_REQUESTS/12/disk usage exceeded flood-stage watermark, index has read-only-allow-delete block];"}],"type":"cluster_block_exception","reason":"index [indicators] blocked by: [TOO_MANY_REQUESTS/12/disk usage exceeded flood-stage watermark, index has read-only-allow-delete block];"},"status":429}
+```
+
+### Fixes
+
+In order to change the default disk usage %, run this query (using curl or kibana dev tools):
+
+```
+PUT _cluster/settings
+{
+  "transient": {
+    "cluster.routing.allocation.disk.watermark.low": "100gb",
+    "cluster.routing.allocation.disk.watermark.high": "50gb",
+    "cluster.routing.allocation.disk.watermark.flood_stage": "3gb",
+    "cluster.info.update.interval": "1m"
+  }
+}
+```
+
+In order to remove the flood-stage read-allow-delete block, run:
+
+```
+PUT /_all/_settings
+{
+  "index.blocks.read_only_allow_delete": null
+}
+```
+
+Check your disk usage (df -H), if it has less than 3GB available, the flood stage read-only block will kick in again. Clear some disk usage, by either removing old docker containers:
+
+```
+docker container prune
+```
+
+Or/and then removing old images:
+
+```docker image prune -a```
+
+And re-run the above _settings query. Also check `docker volume ls` to ensure there isn’t too much cruft (at minimum you may have 8 items, but worse case the volume listing may contain many more items.
+
+If you wish to really remove all of the docker disk usage lying around, except
+for Dojo's stack and resources, run:
+
+```
+  docker system prune -a
+```
+
+This will prompt you to confirm that anything that's related to containers that aren't running will be _DELETED_.
+
+
+## With Kibana
+
+Tip- the above queries can be run with curl (change the formatting for it). Alternatively, open the kibana dev tools (started by default by our docker-compose setup):
+
+`http://localhost:5601/app/dev_tools#/console`
+
+Then on the left-side editing pane paste the above queries and run them. Queries are run by placing the cursor within a request body (within the PUT/text) and clicking the play arrow on the editor-like menu.
+
+## Viewing Docker Disk Usage
+
+To view disk usage states, you may run:
+
+
+```
+docker system df
+```
+
+It will display how much is `RECLAIMABLE`.
+
+Or, to get a full docker info summary
+
+```
+docker system info
+```
+
+which will provide overall system information, including a count of images/containers which might hint on high usage on old unused data.
+THat count usage looks like:
+
+```
+Server:
+ Containers: 20
+  Running: 17
+  Paused: 0
+  Stopped: 3
+ Images: 31
+```
+Feel free to grep a label from above to quickly find the stat you need.

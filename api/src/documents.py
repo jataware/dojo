@@ -582,37 +582,56 @@ def update_document(payload: DocumentSchema.CreateModel, document_id: str):
 def enqueue_document_paragraphs_processing(document_id, s3_url, api_host):
     """
     Adds document to queue to process by paragraph.
-    Embedder creates and attaches LLM embeddings to its paragraphs
+    Embedder creates and attaches LLM embeddings to its paragraphs.
     """
 
-    # Use external OCR pipeline
-    # Currently used for an enhanced, GPU-powered, OCR engine with
-    #  better output quality
-    if settings.OCR_URL:
-        job_string = "paragraph_embeddings_processors.calculate_store_embeddings"
-        payload = json.dumps({
-            "s3_url": s3_url,
-            "callback_url": f"{api_host}/job/{document_id}/{job_string}"
-        })
+    if not s3_url.endswith(".pdf"):
+        # This job should eventually call the job that would have been called
+        # otherwise below (calculate_store_embeddings)
+        job_string = "document_conversion.to_pdf"
 
-        response = requests.post(f"{settings.OCR_URL}/{document_id}", data=payload)
-        if response.status_code != 200:
-            return False
+        match = re.search(r'[^/]*$', s3_url)
+        filename = match[0]
 
-    # Else process all documents from local worker (local OCR)
-    else:
-        job_string = "paragraph_embeddings_processors.full_document_process"
-        job_id = f"{document_id}_{job_string}"
         context = {
             "document_id": document_id,
-            "s3_url": s3_url
+            "s3_url": s3_url,
+            "filename": filename
         }
-
         q.enqueue_call(
-            func=job_string, args=[context], kwargs={}, job_id=job_id
+            func=job_string,
+            args=[context],
         )
+        return True
+    else:
+        # Use external OCR pipeline
+        # Currently used for an enhanced, GPU-powered, OCR engine with
+        #  better output quality
+        if settings.OCR_URL:
+            job_string = "paragraph_embeddings_processors.calculate_store_embeddings"
+            payload = json.dumps({
+                "s3_url": s3_url,
+                "callback_url": f"{api_host}/job/{document_id}/{job_string}"
+            })
 
-    return True
+            response = requests.post(f"{settings.OCR_URL}/{document_id}", data=payload)
+            if response.status_code != 200:
+                return False
+
+        # Else process all documents from local worker (local OCR)
+        else:
+            job_string = "paragraph_embeddings_processors.full_document_process"
+            job_id = f"{document_id}_{job_string}"
+            context = {
+                "document_id": document_id,
+                "s3_url": s3_url
+            }
+
+            q.enqueue_call(
+                func=job_string, args=[context], kwargs={}, job_id=job_id
+            )
+
+        return True
 
 
 # NOTE TODO should we only allow 1 file per document id? replace? cancel/error?
