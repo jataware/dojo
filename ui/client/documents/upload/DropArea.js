@@ -60,6 +60,9 @@ const extensionMap = {
   'odt': {
     'application/vnd.oasis.opendocument.text': ['.odt']
   },
+  'odp': {
+    'application/vnd.oasis.opendocument.presentation': ['.odp']
+  },
   'ppt': {
     'application/vnd.ms-powerpoint': ['.ppt']
   },
