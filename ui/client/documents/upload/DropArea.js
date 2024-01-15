@@ -51,19 +51,22 @@ const extensionMap = {
   xlsx: {
     'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx']
   },
-  'docx': {
+  docx: {
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document': ['.docx']
   },
-  'doc': {
+  doc: {
     'application/msword': ['.doc']
   },
-  'odt': {
+  odt: {
     'application/vnd.oasis.opendocument.text': ['.odt']
   },
-  'ppt': {
+  odp: {
+    'application/vnd.oasis.opendocument.presentation': ['.odp']
+  },
+  ppt: {
     'application/vnd.ms-powerpoint': ['.ppt']
   },
-  'pptx': {
+  pptx: {
     'application/vnd.openxmlformats-officedocument.presentationml.presentation': ['.pptx']
   }
 };

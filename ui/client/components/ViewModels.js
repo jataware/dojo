@@ -15,7 +15,7 @@ import useMediaQuery from '@mui/material/useMediaQuery';
 
 import { makeStyles } from 'tss-react/mui';
 
-import { useHistory, Link } from 'react-router-dom';
+import { useHistory } from 'react-router-dom';
 
 import ExpandableDataGridCell from './ExpandableDataGridCell';
 import LoadingOverlay from './LoadingOverlay';
@@ -322,16 +322,6 @@ const ViewModels = ({
             setSearch={setSearchedModels}
             items={displayedModels}
           />
-          <Button
-            component={Link}
-            size="large"
-            variant="outlined"
-            color="primary"
-            disableElevation
-            to="/model"
-          >
-            Register a New Model
-          </Button>
           <Button
             color="primary"
             disableElevation

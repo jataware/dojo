@@ -190,11 +190,10 @@ const UploadDocumentForm = () => {
           })
           .then((pdf) => getFormattedPDFMetadata(pdf));
       })
-      .catch((readPDFerror) => {
+      .catch(() => {
         setAcceptedFilesParsed((current) => current + 1);
         return defaultValues;
-      })
-    );
+      }));
 
     Promise.all(pdfData)
       .then((allPdfData) => {
@@ -303,7 +302,7 @@ const UploadDocumentForm = () => {
         </Alert>
 
         <FileDropSelector
-          acceptExtensions={['pdf', 'doc', 'docx', 'odt', 'ppt', 'pptx']}
+          acceptExtensions={['pdf', 'doc', 'docx', 'odt', 'ppt', 'pptx', 'odp']}
           onFileSelect={handleFileSelect}
           disableSelector={files.length >= 10}
           maxFiles={10}

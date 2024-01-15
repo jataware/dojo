@@ -16,10 +16,12 @@ from fastapi import (
     # Query,
 )
 
+from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from fastapi.logger import logger
 import os
 import json
+# from enum import Enum
 
 # from validation import DocumentSchema
 from src.settings import settings
@@ -29,7 +31,7 @@ from redis import Redis
 from src.embedder_engine import embedder
 
 from sse_starlette.sse import EventSourceResponse
-from src.openai_gpt import GPT4Synthesizer, GPT4CausalRecommender
+from src.openai_gpt import GPT4Synthesizer, GPT4CausalRecommender, Role, Message, Agent
 from pydantic import BaseModel
 from pathlib import Path
 from os.path import join as path_join
@@ -155,10 +157,63 @@ class Librarian:
         return results, answer
 
 
+def strip_quotes(s: str) -> str:
+    """strip quotes wrapping a string, if any"""
+    while len(s) > 1 and s[0] == s[-1] and s[0] in ['"', "'", '`']:
+        s = s[1:-1]
+    return s
+
+
+class DataBase(ABC):
+    @abstractmethod
+    def query(self, query: str, max_results: int = 10) -> list[Result]: ...
+
+
+class SmarterLibrarian:
+    def __init__(self, db: DataBase, synth: GPT4Synthesizer, agent):
+        self.db = db
+        self.synth = synth
+        self.agent = agent
+        self.messages: list[Message] = []
+
+    def ask(self, query, stream: bool = False, max_results: int = 10):
+        if len(self.messages) == 0:
+            system_query = f'Please convert the following question to a contextless search query for a database search: "{query}"'
+        else:
+            system_query = f'Based on any relevant context from the conversation, please convert the following question to a contextless search query for a database search: "{query}"'
+        context_free_query = self.agent.multishot_sync([*self.messages, Message(role=Role.system, content=system_query)])
+        context_free_query = strip_quotes(context_free_query)
+
+        # semantic search over the database
+        results = self.db.query(context_free_query, max_results=max_results)
+
+        # synthesizer answer from the semantic search results
+        answer = self.synth.ask(query, [r.paragraph for r in results], stream=stream, chat_history=self.messages)
+
+        self.messages.append(Message(role=Role.user, content=query))
+        if type(answer) == str:
+            self.messages.append(Message(role=Role.assistant, content=answer))
+
+            return results, answer
+
+        # generator wrapper so that we can save the answer to the chat history when it is done streaming
+        def gen_wrapper():
+            res = []
+            for token in answer:
+                res.append(token)
+                yield token
+
+            answer_message = Message(role=Role.assistant, content=''.join(res))
+            self.messages.append(answer_message)
+
+        return results, gen_wrapper()
+
+
 db = ElasticSearchDB(embedder)
-agent = GPT4Synthesizer('gpt-4-1106-preview')
+synth = GPT4Synthesizer('gpt-4-1106-preview')
+agent = Agent(model='gpt-4-1106-preview')
 causal_agent = GPT4CausalRecommender('gpt-4-1106-preview')
-librarian = Librarian(db, agent)
+librarian = SmarterLibrarian(db, synth, agent)
 
 
 def load_file_as_json(file_path: str) -> dict:

@@ -1,6 +1,4 @@
 import os
-# import numpy as np
-# import tiktoken
 import openai
 from typing import Generator, Literal, Optional
 from enum import Enum
@@ -29,23 +27,29 @@ class Agent:
         self.model = model
 
     def oneshot_sync(self, prompt: str, query: str) -> str:
+        return self.multishot_sync([
+            Message(role=Role.system, content=prompt),
+            Message(role=Role.user, content=query)
+        ])
+
+    def oneshot_streaming(self, prompt: str, query: str) -> Generator[str, None, None]:
+        return self.multishot_streaming([
+            Message(role=Role.system, content=prompt),
+            Message(role=Role.user, content=query)
+        ])
+
+    def multishot_sync(self, messages: list[Message]) -> str:
         completion = openai.ChatCompletion.create(
             model=self.model,
-            messages=[
-                Message(role=Role.system, content=prompt),
-                Message(role=Role.user, content=query)
-            ],
+            messages=messages,
         )
         result = completion['choices'][0]['message']['content']
         return result
 
-    def oneshot_streaming(self, prompt:str, query:str) -> Generator[str, None, None]:
+    def multishot_streaming(self, messages: list[Message]) -> Generator[str, None, None]:
         gen = openai.ChatCompletion.create(
             model=self.model,
-            messages=[
-                Message(role=Role.system, content=prompt),
-                Message(role=Role.user, content=query)
-            ],
+            messages=messages,
             stream=True
         )
         for chunk in gen:
@@ -64,21 +68,34 @@ def set_openai_key(api_key: Optional[str] = None):
     openai.api_key = api_key
 
 
-class GPT4Synthesizer:
+class GPT4Synthesizer():
     def __init__(self, model: Literal['gpt-4', 'gpt-4-1106-preview']):
         self.agent = Agent(model=model)
 
-    def ask(self, query:str, paragraphs:list[str], stream:bool=False):
+    def ask(self, query: str, paragraphs: list[str], stream: bool=False, chat_history: list[Message]=[]):
         """answer a query with an LLM given a list of paragraphs"""
 
-        # use gpt-4-turbo to answer the question based on the results
+        # NOT NECESSARY WITH GPT-4-turbo
+        # #truncate any results that are too long
+        # for i, paragraph in enumerate(paragraphs):
+        #     if len(paragraph) > 10000:
+        #         paragraphs[i] = f'{paragraph[:10000]}...\n<rest of text truncated>'
+
+        # use gpt-4 to answer the question based on the results
         context = "\n\n".join([f"[{i}]: {paragraph}" for i, paragraph in enumerate(paragraphs)])
         prompt="You are a librarian. Users will ask you questions, and you should answer based on relevant snippets of the documents available. Your library database will automatically provide you with possibly relevant snippets. Please cite phrases/sentences in your answer with the number(s) of the relevant snippet(s) (e.g. [5], or [6][7][13])"
         query=f'user query:"{query}"\n\nrelevant document snippets:\n{context}\n\nyour answer: '
+
+        messages = [
+            Message(role=Role.system, content=prompt),
+            *chat_history,
+            Message(role=Role.user, content=query)
+        ]
+
         if stream:
-            answer = self.agent.oneshot_streaming(prompt, query)
+            answer = self.agent.multishot_streaming(messages)
         else:
-            answer = self.agent.oneshot_sync(prompt, query)
+            answer = self.agent.multishot_sync(messages)
 
         return answer
 
