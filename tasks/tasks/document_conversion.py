@@ -10,12 +10,17 @@ from pathlib import Path
 from os.path import join as path_join
 import requests
 import subprocess
+from elasticsearch import Elasticsearch
 
 from paragraph_embeddings_processors import full_document_process
 
 import logging
 logging.basicConfig()
 logging.getLogger().setLevel(logging.INFO)
+
+
+es_url = settings.ELASTICSEARCH_URL
+es = Elasticsearch(es_url)
 
 
 def get_project_root() -> Path:
@@ -42,8 +47,7 @@ def get_bucket_name(url):
 CACHE_FOLDER = path_join(get_project_root(), "document_cache")
 if not os.path.exists(CACHE_FOLDER):
     os.makedirs(CACHE_FOLDER)
-BUCKET = get_bucket_name(settings.DOCUMENT_STORAGE_BASE_URL)
-API_HOST = settings.DOJO_URL  # TODO This needs to be a remote API IP/hostname
+# API_HOST = settings.DOJO_URL  # TODO This needs to be a remote API IP/hostname
 
 
 def download_fileobj(fileobj, filename):
@@ -93,7 +97,7 @@ def to_pdf(context):
     with open(pdf_path, "rb") as pdf_file_obj:
         put_rawfile(pdf_s3_url, pdf_file_obj)
 
-    # TODO Add hostname in settings for OCR_URL workflow
+    # TODO Add and use api external hostname in settings for OCR_URL workflow
     api_host = "http://HOST:8080/api/dojo"
     if settings.OCR_URL:
         logging.info("Using OCR_URL")
@@ -115,4 +119,12 @@ def to_pdf(context):
 
         full_document_process(context)
 
-        return True
+    # Replace original non-PDF document S3 url to PDF file:
+    es.update(index="documents", body={
+        "doc": {
+            "source_url": pdf_s3_url,
+            "filename": new_filename.replace(f"{document_id}-", "")
+        }
+    }, id=document_id)
+
+    return True
