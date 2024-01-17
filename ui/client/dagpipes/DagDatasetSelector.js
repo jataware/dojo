@@ -9,7 +9,7 @@ import format from 'date-fns/format';
 import Button from '@mui/material/Button';
 import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
-import { DataGrid } from '@mui/x-data-grid';
+import { DataGrid, GridToolbarFilterButton, GridToolbarContainer } from '@mui/x-data-grid';
 
 import { useNCDatasets } from '../components/SWRHooks';
 import ExpandableDataGridCell from '../components/ExpandableDataGridCell';
@@ -24,12 +24,17 @@ const expandableCell = ({ value, colDef }) => (
 );
 
 const columns = [
-  { field: 'name', headerName: 'Name', width: 130 },
+  {
+    field: 'name',
+    headerName: 'Name',
+    renderCell: expandableCell,
+    width: 288,
+  },
   {
     field: 'id',
     headerName: 'ID',
     renderCell: expandableCell,
-    width: 288,
+    width: 130,
   },
   {
     field: 'created_at',
@@ -45,6 +50,7 @@ const columns = [
     description: 'This column has a value getter and is not sortable.',
     sortable: false,
     valueGetter: (params) => params.row?.maintainer.name,
+    renderCell: expandableCell,
     width: 160,
   },
   {
@@ -57,9 +63,16 @@ const columns = [
     field: 'fileData.raw.url',
     headerName: 'File Name',
     valueGetter: (params) => params.row?.fileData.raw.url,
+    renderCell: expandableCell,
     minWidth: 200,
   },
 ];
+
+const CustomToolbar = () => (
+  <GridToolbarContainer>
+    <GridToolbarFilterButton />
+  </GridToolbarContainer>
+);
 
 const DagDatasetSelector = () => {
   const { datasets, datasetsLoading, datasetsError } = useNCDatasets();
@@ -121,6 +134,8 @@ const DagDatasetSelector = () => {
         columns={columns}
         rows={datasets}
         onSelectionModelChange={handleRowSelection}
+        components={{ Toolbar: CustomToolbar }}
+        disableColumnMenu
       />
       <Button onClick={handleNext} sx={{ marginY: 1 }} disabled={!selectedDatasets.length}>
         Use these datasets
