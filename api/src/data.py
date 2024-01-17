@@ -9,14 +9,13 @@ import pandas as pd
 
 from fastapi import APIRouter, Response, File, UploadFile, status
 from rq import Queue
-from rq.job import Job
+from rq.job import Job, JobStatus
 from redis import Redis
 from rq.exceptions import NoSuchJobError
 import boto3
 
 from src.utils import get_rawfile, put_rawfile
 from src.settings import settings
-from validation.RunSchema import RunStatusSchema
 
 logging.basicConfig()
 logging.getLogger().setLevel(logging.DEBUG)
@@ -201,19 +200,19 @@ def cancel_job(job_id):
     return job.get_status()
 
 
-class FetchJobStatusResponseModel(BaseModel):
+class GetJobStatusResponseModel(BaseModel):
     id: str
     created_at: datetime
     enqueued_at: Optional[datetime]
     started_at: Optional[datetime]
-    status: RunStatusSchema
+    status: JobStatus
     job_error: Optional[str]
     result: Optional[dict]
 
 
 @router.get(
     "/job/{uuid}/{job_string}",
-    response_model=FetchJobStatusResponseModel
+    response_model=GetJobStatusResponseModel
 )
 def job_status(uuid: str, job_string: str):
     """
