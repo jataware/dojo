@@ -2,7 +2,10 @@ import logging
 
 import uvicorn
 from elasticsearch import Elasticsearch
-from fastapi import FastAPI
+from fastapi import FastAPI, exceptions
+from fastapi.responses import JSONResponse
+from pydantic import ValidationError
+import json
 
 from src import (
     terminal,
@@ -267,6 +270,14 @@ def print_debug_routes() -> None:
         f"{method:7} {path:{max_len}} {name}" for method, path, name in routes
     )
     logger.debug(f"Route Table:\n{route_table}")
+
+
+@api.exception_handler(exceptions.RequestValidationError)
+@api.exception_handler(ValidationError)
+async def validation_exception_handler(request, exc):
+    logger.info(f"Request or Response validation failed!: {exc}")
+    exc_json = json.loads(exc.json())
+    return JSONResponse({"detail": exc_json}, status_code=422)
 
 
 @api.on_event("startup")

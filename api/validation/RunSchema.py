@@ -102,5 +102,3 @@ class RunStatusSchema(Enum):
     success = "success"
     running = "running"
     failed = "failed"
-    queued = "queued"
-    finished = "finished"
