@@ -45,12 +45,17 @@ const repeatFetch = async ({ jobId, onSuccess, onFailure }) => {
 };
 
 const ErrorCard = () => (
-  <Card>
+  <Card sx={{ maxWidth: 475 }}>
     <CardContent>
-      <Typography variant="h6">There was a problem processing your graph</Typography>
+      <Typography variant="h6" gutterBottom>Processing Error</Typography>
+      <Typography variant="subtitle1" gutterBottom>There was a problem processing your graph.</Typography>
+      <Typography variant="subtitle1" color="text.secondary">
+        Unfortunately, at this time we are unable to reconstruct the graph.
+        Please refresh the page or click the button to go back to the dataset selection screen.
+      </Typography>
     </CardContent>
     <CardActions>
-      <Button>Go Back</Button>
+      <Button onClick={() => window.location.reload()}>Back to Dataset Selection</Button>
     </CardActions>
   </Card>
 );
