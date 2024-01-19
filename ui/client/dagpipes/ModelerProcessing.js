@@ -12,6 +12,8 @@ import Container from '@mui/material/Container';
 import Typography from '@mui/material/Typography';
 import CircularProgress from '@mui/material/CircularProgress';
 
+import ArrowBackIcon from '@mui/icons-material/ArrowBack';
+
 import { setCompletedDatasetIds, nextModelerStep } from './dagSlice';
 import { ThemeContext } from '../components/ThemeContextProvider';
 
@@ -51,11 +53,20 @@ const ErrorCard = () => (
       <Typography variant="subtitle1" gutterBottom>There was a problem processing your graph.</Typography>
       <Typography variant="subtitle1" color="text.secondary">
         Unfortunately, at this time we are unable to reconstruct the graph.
-        Please refresh the page or click the button to go back to the dataset selection screen.
+        Please refresh the page or click the button below
+        to go back to the dataset selection screen.
       </Typography>
     </CardContent>
     <CardActions>
-      <Button onClick={() => window.location.reload()}>Back to Dataset Selection</Button>
+      <Button
+        onClick={() => window.location.reload()}
+        variant="contained"
+        disableElevation
+        sx={{ margin: 1 }}
+        startIcon={<ArrowBackIcon />}
+      >
+        Back to Dataset Selection
+      </Button>
     </CardActions>
   </Card>
 );
@@ -76,13 +87,13 @@ const ModelerProcessing = () => {
 
   useEffect(() => {
     const onSuccess = (resp) => {
-      console.log('Successful!', resp);
-      if (resp.hasOwnProperty('error')) {
-        setShowError(true);
-      } else if (resp.results) {
+      console.log('Job complete. Results:', resp);
+      if (resp.results) {
         const derivedDatasets = resp.results.map((dataset) => dataset.id);
         dispatch(setCompletedDatasetIds(derivedDatasets));
         dispatch(nextModelerStep());
+      } else {
+        setShowError(true);
       }
     };
 
