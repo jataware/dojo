@@ -15,6 +15,7 @@ import { useNCDatasets } from '../components/SWRHooks';
 import ExpandableDataGridCell from '../components/ExpandableDataGridCell';
 import { setSavedDatasets, nextModelerStep } from './dagSlice';
 import usePageTitle from '../components/uiComponents/usePageTitle';
+import LoadingOverlay from '../components/LoadingOverlay';
 
 const expandableCell = ({ value, colDef }) => (
   <ExpandableDataGridCell
@@ -112,11 +113,11 @@ const DagDatasetSelector = () => {
   };
 
   if (datasetsLoading) {
-    return <h3>Loading...</h3>;
+    return <LoadingOverlay text="Loading Datasets..." />;
   }
 
   if (datasetsError) {
-    return <h3>Error</h3>;
+    return <LoadingOverlay error text="There was an error loading datasets. Please refresh the page to try again." />;
   }
 
   return (
