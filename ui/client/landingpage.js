@@ -18,6 +18,7 @@ import { makeStyles } from 'tss-react/mui';
 import { ContrastButton } from './components/uiComponents/ContrastButton';
 import { BrandSwap, BrandName } from './components/uiComponents/Branding';
 import usePageTitle from './components/uiComponents/usePageTitle';
+import { ExternalLink } from './components/Links';
 
 const useStyles = makeStyles()((theme) => ({
   allContentWrapper: {
@@ -39,7 +40,6 @@ const useStyles = makeStyles()((theme) => ({
     maxWidth: '900px',
   },
   topHeaderSubtitle: {
-    maxWidth: '70%',
     [theme.breakpoints.up('lg')]: {
       marginBottom: theme.spacing(6),
     },
@@ -55,8 +55,9 @@ const useStyles = makeStyles()((theme) => ({
   },
   bottomContentContainer: {
     display: 'flex',
-    alignItems: 'flex-end',
-    flexGrow: 1,
+    flexDirection: 'column',
+    justifyContent: 'flex-end',
+    height: '100%',
     padding: theme.spacing(4),
   },
   linksWrapper: {
@@ -87,12 +88,18 @@ const useStyles = makeStyles()((theme) => ({
   bigIcon: {
     fontSize: '3rem',
   },
+  cgiarMainImage: {
+    margin: `0 auto ${theme.spacing(4)}`,
+    display: 'block',
+    borderRadius: theme.shape.borderRadius,
+    border: `1px solid ${theme.palette.grey[300]}`
+  },
 }));
 
 const LandingPage = () => {
   const { classes } = useStyles();
 
-  usePageTitle({ title: 'Home' });
+  usePageTitle({ title: 'Dojo Home' });
 
   return (
     <Box className={classes.allContentWrapper}>
@@ -105,36 +112,53 @@ const LandingPage = () => {
                   Dojo
                 </Typography>
                 <Typography variant="h6" sx={{ marginBottom: 3 }}><i>noun</i> &nbsp;/dō′jō/</Typography>
+                <Typography variant="h3" sx={{ marginBottom: 6 }}>
+                  a platform for model, data and<br /> knowledge analysis & management
+                </Typography>
+                <Typography variant="h6" sx={{ maxWidth: '70%' }} className={classes.topHeaderSubtitle}>
+                  Create containerized, shareable models for reproducible research with
+                  easy-to-consume outputs. Register and transform datasets
+                  for <BrandName />&apos;s no-code data modeling tool and other downstream uses.
+                  Retrieve domain-specific knowledge using&nbsp;
+                  <BrandName />&apos;s state of the art AI Assistant.
+                </Typography>
               </>
             )}
-            ifpri={(
-              <Box
-                sx={{
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  marginBottom: '3rem',
-                  gap: '1rem',
-                  width: '800px'
-                }}
-              >
-                <img src="/assets/ifpri-logo-green.png" width="290" />
-                <Typography variant="h3" sx={{ fontSize: '5rem', fontWeight: '450' }}>
-                  IFPRI Data Hub
+            cgiar={(
+              <>
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    marginBottom: '3rem',
+                    gap: '1rem',
+                  }}
+                >
+                  <ExternalLink href="https://on.cgiar.org/digital">
+                    <img src="/assets/CGIAR-digital-innovation.png" width="320" />
+                  </ExternalLink>
+                  <Typography variant="h2" sx={{ fontSize: '4rem' }}>
+                    DIGITAL <b>DOJO</b>
+                  </Typography>
+                </Box>
+                <Typography variant="h4" sx={{ marginBottom: 6 }}>
+                  A suite of datasets and modeling tools that facilitate analysis of food, land,
+                  and water systems to inform policy and investment decisions
                 </Typography>
-              </Box>
+                <img src="/assets/CGIAR-digital-twin.png" width="720" className={classes.cgiarMainImage} />
+                <Typography variant="h6" className={classes.topHeaderSubtitle}>
+                  CGIAR’s Digital Dojo enables users to test what-if scenarios and facilitates
+                  informed policy and investment decisions across food, land, and water systems.
+                  <br /><br />
+                  Register and transform datasets for CGIAR’s no-code data analysis tools.
+                  Share containerized models for reproducible data analytics research with
+                  easy-to-consume analysis outputs.
+                  Retrieve domain-specific knowledge using the state-of-the-art AI Assistant.
+                </Typography>
+              </>
             )}
           />
-          <Typography variant="h3" sx={{ marginBottom: 6 }}>
-            a platform for model, data and<br /> knowledge analysis & management
-          </Typography>
-          <Typography variant="h6" className={classes.topHeaderSubtitle}>
-            Create containerized, shareable models for reproducible research with easy-to-consume
-            outputs. Register and transform datasets for <BrandName />&apos;s
-            no-code data modeling tool and other downstream uses.
-            Retrieve domain-specific knowledge using&nbsp;
-            <BrandName />&apos;s state of the art AI Assistant.
-          </Typography>
           <div className={classes.linksWrapper}>
             <Typography variant="h4" align="center" className={classes.linkCta}>
               Get started <ArrowForwardIcon fontSize="large" />
@@ -214,10 +238,19 @@ const LandingPage = () => {
               size="large"
               className={classes.button}
             >
-              Browse <BrandSwap dojo="Dojo" ifpri="the Repo" /> on GitHub
+              Browse <BrandSwap dojo="Dojo" cgiar="the Repo" /> on GitHub
             </ContrastButton>
           </div>
         </div>
+        <BrandSwap
+          cgiar={(
+            <Typography variant="body2">
+              The CGIAR Digital Dojo is powered by DOJO, an open-source data and model-sharing
+              platform by <ExternalLink href="https://jataware.com/">Jataware</ExternalLink> for
+              the <ExternalLink href="https://worldmodelers.com/">World Modelers</ExternalLink> program.
+            </Typography>
+          )}
+        />
       </Container>
     </Box>
   );

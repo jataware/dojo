@@ -138,12 +138,11 @@ const dojoTheme = {
   },
 };
 
-const ifpriTheme = {
+const cgiarTheme = {
   custom: {
     nav: {
-      color: '#ffb300',
-      // ifpri logo green: '#62bb46'
-      // or darker: #429d46 (from ifpri library)
+      // this color was given to us by CGIAR, other colors are based off of it
+      color: '#668be4',
     },
     landing: {
       backgroundColor: '#f5f4f0',
@@ -151,21 +150,21 @@ const ifpriTheme = {
     },
     button: {
       color: 'white',
-      backgroundColor: '#429d46',
+      backgroundColor: '#3f3cdb',
     },
   },
   palette: {
     secondary: {
-      main: '#429d46',
-      light: '#4cb451',
-      dark: '#2e6e31',
+      main: '#9166E3',
+      light: '#af90eb',
+      dark: '#733cdb',
       constrastText: '#fff',
     }
   }
 };
 
 function createCustomTheme() {
-  const themeVariant = BrandSwap({ dojo: dojoTheme, ifpri: ifpriTheme });
+  const themeVariant = BrandSwap({ dojo: dojoTheme, cgiar: cgiarTheme });
 
   return createTheme(deepmerge(baseTheme, themeVariant));
 }
