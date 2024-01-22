@@ -92,7 +92,7 @@ const useStyles = makeStyles()((theme) => ({
     margin: `0 auto ${theme.spacing(4)}`,
     display: 'block',
     borderRadius: theme.shape.borderRadius,
-    border: `1px solid ${theme.custom.nav.color}`
+    border: `1px solid ${theme.palette.grey[300]}`
   },
 }));
 
