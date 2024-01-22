@@ -90,8 +90,8 @@ const changeFavicon = (faviconFileName) => {
   }
 };
 
-if (process.env.COMPANY_BRANDING === 'ifpri') {
-  changeFavicon('favicon-ifpri.ico');
+if (process.env.COMPANY_BRANDING === 'cgiar') {
+  changeFavicon('cgiar-logo-no-text.png');
 } else if (process.env.COMPANY_BRANDING === 'dojo' || !process.env.COMPANY_BRANDING) {
   // fallback to Dojo
   changeFavicon('favicon-dojo.ico');

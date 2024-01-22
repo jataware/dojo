@@ -660,11 +660,13 @@ def upload_file(
 
     es.update(index="documents", body=body_updates, id=document_id)
 
+    # TODO This api_host is internal/wrong- it should be the external hostname
+    #      FIXME when we go back to using external service with OCR_URL
     api_host = request.client.host
     logger.info(f"Setting up document processing at host: {api_host}")
     # enqueue for OCR and rq worker to add paragraphs and embeddings to es
     # TODO Should we fail if queueing fails?
-    queue_success = enqueue_document_paragraphs_processing(document_id, dest_path, api_host)
+    enqueue_document_paragraphs_processing(document_id, dest_path, api_host)
 
     final_document = es.get_source(index="documents", id=document_id)
 

@@ -17,15 +17,34 @@ const ExpandableDataGridCell = React.memo((props) => {
   const wrapper = React.useRef(null);
   const cellDiv = React.useRef(null);
   const cellValue = React.useRef(null);
+  const textMeasureRef = React.useRef(null);
   const [anchorEl, setAnchorEl] = React.useState(null);
   const [showFullCell, setShowFullCell] = React.useState(false);
   const [showPopper, setShowPopper] = React.useState(false);
+  const [popperWidth, setPopperWidth] = React.useState(width);
 
   const handleMouseEnter = () => {
     const isCurrentlyOverflown = isOverflown(cellValue.current);
     setShowPopper(isCurrentlyOverflown);
     setAnchorEl(cellDiv.current);
     setShowFullCell(true);
+
+    // Split value into words and find the longest one
+    const words = value.split(' ');
+    const longestWord = words.reduce((word1, word2) => (
+      word1.length > word2.length ? word1 : word2
+    ), '');
+
+    // Measure the width of the longest word
+    textMeasureRef.current.textContent = longestWord;
+    const measuredWidth = textMeasureRef.current.offsetWidth;
+
+    if (measuredWidth > width) {
+      const requiredWidth = measuredWidth + 16; // 16px for padding
+      setPopperWidth(requiredWidth);
+    } else {
+      setPopperWidth(width); // Use default width
+    }
   };
 
   const handleMouseLeave = () => {
@@ -81,11 +100,27 @@ const ExpandableDataGridCell = React.memo((props) => {
       >
         {value}
       </Box>
+      {/*
+        Hidden span for measuring text width,
+        positioned offscreen so it doesn't interfere with layout
+      */}
+      <span
+        ref={textMeasureRef}
+        style={{
+          position: 'absolute',
+          top: '-9999px',
+          left: '-9999px',
+          visibility: 'none',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        {value}
+      </span>
       {showPopper && (
         <Popper
           open={showFullCell && anchorEl !== null}
           anchorEl={anchorEl}
-          style={{ width, marginLeft: -17 }}
+          style={{ width: popperWidth, marginLeft: -17 }}
         >
           <Paper
             elevation={1}
