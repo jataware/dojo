@@ -19,8 +19,8 @@ import { ThemedTooltip } from './uiComponents/ThemedTooltip';
 import { ContrastIconButton } from './uiComponents/ContrastButton';
 import Sidebar, { drawerWidth } from './Sidebar';
 import DojoIcon from './uiComponents/DojoIcon';
-import { BrandSwap, getBrandName } from './uiComponents/Branding';
-import { ReactComponent as IfpriLogo } from '../assets/ifpri-logo.svg';
+import { BrandSwap } from './uiComponents/Branding';
+import { ReactComponent as CGIARLogo } from '../assets/cgiar-logo.svg';
 
 export const pageSlideAnimation = (theme, target) => ({
   transition: theme.transitions.create(target, {
@@ -71,7 +71,6 @@ const NavBar = ({ children }) => {
   const { showNavBar, showSideBar, setShowSideBar } = useContext(ThemeContext);
   const [open, setOpen] = useState(true);
   const theme = useTheme();
-  const brandName = getBrandName();
 
   useEffect(() => {
     // close the sidebar when we hide the navbar or just close the sidebar
@@ -119,7 +118,7 @@ const NavBar = ({ children }) => {
                 </ContrastIconButton>
               </ThemedTooltip>
             </Collapse>
-            <ThemedTooltip disableInteractive title={`${brandName} Home`}>
+            <ThemedTooltip disableInteractive title="Home">
               <ContrastIconButton
                 component={Link}
                 to="/"
@@ -129,10 +128,11 @@ const NavBar = ({ children }) => {
                   dojo={(
                     <DojoIcon color="inherit" sx={{ height: '30px', width: '30px' }} />
                   )}
-                  ifpri={(
+                  cgiar={(
                     <SvgIcon
-                      component={IfpriLogo}
+                      component={CGIARLogo}
                       inheritViewBox
+                      color="inherit"
                       sx={{ height: '30px', width: '30px' }}
                     />
                   )}
@@ -152,7 +152,7 @@ const NavBar = ({ children }) => {
                 <MenuBookIcon />
               </ContrastIconButton>
             </ThemedTooltip>
-            <ThemedTooltip disableInteractive title={`View ${brandName} on Github (opens new tab)`}>
+            <ThemedTooltip disableInteractive title="View on Github (opens new tab)">
               <ContrastIconButton
                 href="https://github.com/jataware/dojo"
                 target="_blank"
