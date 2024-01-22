@@ -147,7 +147,7 @@ const LandingPage = () => {
                   and water systems to inform policy and investment decisions
                 </Typography>
                 <img src="/assets/CGIAR-digital-twin.png" width="720" className={classes.cgiarMainImage} />
-                <Typography variant="h6" className={classes.topHeaderSubtitle}>
+                <Typography variant="h6" sx={{ fontWeight: 350 }} className={classes.topHeaderSubtitle}>
                   CGIAR’s Digital Dojo enables users to test what-if scenarios and facilitates
                   informed policy and investment decisions across food, land, and water systems.
                   <br /><br />
