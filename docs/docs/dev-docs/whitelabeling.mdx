@@ -1,0 +1,72 @@
+# Whitelabeling
+
+The Dojo app can be whitelabeled (rebranded) with custom text, styles, and components through a set of utility tools in the `ui` React app. This process currently involves light front end coding, though once it is configured for a specific organization, making changes to the copy or styles is easy and fast. 
+
+## The COMPANY_BRANDING Env Variable
+
+### In the envfile
+The specific whitelabel organization we want to switch to is represented by the `COMPANY_BRANDING` environment variable in the Dojo `envfile`. If this env variable is not present in your envfile, the React app will default to the Jataware Dojo branding (as if `COMPANY_BRANDING=dojo`). If you want to add a new whitelabel variant, you need to start by giving this a new value, for example: `COMPANY_BRANDING=acme`.
+
+### In the React App
+
+The React app interacts with the `COMPANY_BRANDING` env variable in two primary places: 
+1. In the `/components/uiComponents/Branding.js` file, where several small utility functions are defined. We use these to help switch out the whitelabeled content throughout the app. All the other interactions with the branding, including the global theme, are based on these functions. 
+2. In the root `index.js` file, where we switch out the favicons. This is a one-off just used in this one file. 
+
+:::tip
+If you add a new `COMPANY_BRANDING` value, you must update the references in these two files to include your new value. If you don't, you'll fallback to Dojo branding instead of getting your new `acme` branding. 
+:::
+
+## Updating the React App
+
+### Swapping Out Content
+
+Swapping out content, whether it's text, images, or entire React components, can be achieved with the `BrandSwap` utility from the `Branding.js` file mentioned above. This is simply a wrapper around a Javascript `switch` statement, and as such it can be used inline within JSX or as a non-JSX function, as discussed in the Custom Theme section below. The `landingpage.js` file has extensive examples of the `BrandSwap` component being used. 
+```
+<BrandSwap 
+  dojo={<div>The Dojo Version</div>} 
+  acme={<div><h1>Acme</h1><br /><span>a subtitle</span></div>} 
+/>
+```
+
+Changing something that is already wrapped in a whitelabel helper component is quite easy, as it just involves adding another prop with your content to the `BrandSwap` component (eg `<BrandSwap dojo={...} acme={...} jataware={...} />`). It's slightly more involved to whitelabel something that isn't currently set up to change with the changing environment variable, as you need pass the existing content as a prop to `BrandSwap`, ensure nothing has been broken by doing so, and add your content as another prop. 
+
+There are another two very small utility functions in this file that make it easy to swap the organization name: `BrandName` and `getBrandName`. `BrandName` is intended to be used inline in JSX, and `getBrandName` is meant to be used anywhere outside of JSX. Both of these simply return the organization name, properly formatted for display. Set this up when you configure `BrandSwap`. 
+
+### Adding a Custom Theme
+
+Custom themes are set up in the root `theme.js` file. We create a default custom theme that exists for all variants of the app, and then each whitelabeled variant has its own named theme. The current variant is selected (using `BrandSwap`) and merged with the default custom theme, which is then applied to the app in `index.js`. 
+
+You can create custom theme properties that you can then access anywhere under `theme.yourCustomTheme.etc`. We have namespaced all of our custom theme properties under `custom` to not mix them with the MUI theme and keep it clear. Feel free to use this `custom` namespace or create your own. Note that some of the current styling on the landing page is configured to work with this `custom` namespace. 
+
+:::tip
+If you want to override any of our global custom themes or any of the MUI themes, you can use the same key name as an existing one to overwrite it. 
+The example below overwrites MUI's `theme.palette.secondary` object.
+:::
+
+```
+const dojoTheme = {
+  custom: {
+    nav: {
+      backgroundColor: '#06B8EF',
+      image: 'linear-gradient(to right, #06B8EF, #A11BDA)',
+    },
+    landing: {
+      backgroundColor: '#06B8EF',
+      color: 'white',
+    },
+    button: {
+      color: 'white',
+      backgroundColor: 'black',
+    },
+  },
+  palette: {
+    secondary: {
+      main: '#9166E3',
+      light: '#af90eb',
+      dark: '#733cdb',
+      constrastText: '#fff',
+    }
+  }
+};
+```
