@@ -173,6 +173,11 @@ const sidebars = {
             id: 'dev-docs/common-problems',
             label: 'Common Problems',
           },
+          {
+            type: 'doc',
+            id: 'dev-docs/whitelabeling',
+            label: 'Whitelabeling',
+          },
         ],
       },
     ],
