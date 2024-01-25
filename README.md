@@ -1,5 +1,7 @@
 # Dojo Integrated Development Environment
 
+For more comprehensive developer documentation, you can find the Dojo Developer Docs [here](https://www.dojo-modeling.com/dev-docs).
+
 ## Setup
 
 1. Clone repo: `main` is used as the stage/development branch. All work and Pull Requests are based against it.
