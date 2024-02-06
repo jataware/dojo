@@ -1,4 +1,4 @@
-import React, { useContext, useEffect, useState } from 'react';
+import React, { useContext, useEffect, useRef, useState } from 'react';
 
 import axios from 'axios';
 
@@ -63,6 +63,8 @@ const AIAssistant = () => {
   const [responses, setResponses] = useState({});
   const [searchPhrase, setSearchPhrase] = useState('');
   const [anyResponseLoading, setAnyResponseLoading] = useState(false);
+  const [streamingResponse, setStreamingResponse] = useState(null);
+  const streamingResponseRef = useRef('');
 
   const { showSideBar } = useContext(ThemeContext);
 
@@ -74,27 +76,55 @@ const AIAssistant = () => {
     window.scroll({ top: document.body.scrollHeight, behavior: 'smooth' });
   }, [previousQueries]);
 
+  useEffect(() => {
+    // use this ref to keep track of the streamingResponse so that we can update
+    // the responses object when we close the SSE connection on 'stream-complete'
+    streamingResponseRef.current = streamingResponse;
+  }, [streamingResponse]);
+
   // disable if no content, incl. if just whitespace, or while we're getting a response
   const disableSubmit = !searchPhrase.trim().length || anyResponseLoading;
 
   const performSearch = async (query, queryKey) => {
-    try {
-      // TODO: Use this for local development, causemos-analyst for production
-      // const queryResp = await axios.get(`http://localhost:8001/mock-message?query=${query}`);
+    // try {
+    // TODO: Use this for local development, causemos-analyst for production
+    // const queryResp = await axios.get(`http://localhost:8001/mock-message?query=${query}`);
+    const knowledgeEndpoint = process.env.NODE_ENV === 'production' ? 'chat' : 'mock-chat';
 
-      const mock = ''; // 'mock-';
+    // const queryResp = await axios.get(
+    //   `/api/dojo/knowledge/message?query=${searchPhrase}`
+    // );
+    // const queryResp = await axios.get(
+    //   `/api/dojo/knowledge/${knowledgeEndpoint}?query=${searchPhrase}`
+    // );
+    const assistantConnection = new EventSource(
+      `/api/dojo/knowledge/${knowledgeEndpoint}?query=${searchPhrase}`
+    );
 
-      const queryResp = await axios.get(
-        `/api/dojo/knowledge/${mock}message?query=${searchPhrase}`
-      );
-      const response = {};
-      response.response = queryResp.data;
+    assistantConnection.addEventListener('stream-answer', (event) => {
+      console.log('this is the chat-stream event', event.data);
+
+      const createAnswerString = (prevResp) => {
+        if (prevResp && prevResp.answer) {
+          // eslint-disable-next-line prefer-template
+          return prevResp.answer + ' ' + event.data;
+        }
+        return event.data;
+      };
+
+      setStreamingResponse((prevResp) => ({
+        ...prevResp, answer: createAnswerString(prevResp),
+      }));
+    });
+
+    assistantConnection.addEventListener('stream-paragraphs', async (event) => {
+      // console.log('this is stream-paragraphs', event.data)
+      const paragraphs = JSON.parse(event.data);
 
       // create an object with just the unique filenames as keys
-      const document_ids = queryResp.data.candidate_paragraphs.reduce((obj, curr) => (
+      const document_ids = paragraphs.reduce((obj, curr) => (
         { ...obj, [curr.document_id]: null }
       ), {});
-
       // go through the unique document_ids and fetch the document data
       const documentFetches = Object.keys(document_ids).map(async (document_id) => {
         try {
@@ -114,28 +144,50 @@ const AIAssistant = () => {
         document_ids[document_id] = data;
       });
 
-      response.documents = document_ids;
+      // add documents and paragraphs to the streamingResponse
+      setStreamingResponse((prevResp) => ({ ...prevResp, documents: document_ids, paragraphs }));
+    });
 
-      setResponses((oldResponses) => ({
-        ...oldResponses,
-        [queryKey]: {
-          data: response,
-          status: 'success',
-        }
+    assistantConnection.addEventListener('stream-complete', (event) => {
+      console.log('this is the stream complete event', event);
+      const currentStreamingResponse = streamingResponseRef.current;
+      console.log('this is currentStreamingResponse', currentStreamingResponse)
+      setResponses((prevResp) => ({
+        ...prevResp, [queryKey]: { data: currentStreamingResponse, status: 'success' }
       }));
-    } catch (error) {
-      console.error(error);
-      setResponses((oldResponses) => ({
-        ...oldResponses,
-        [queryKey]: {
-          data: null,
-          status: 'error',
-        }
-      }));
-    } finally {
+      setStreamingResponse(null);
       setAnyResponseLoading(false);
-    }
+      assistantConnection.close();
+    });
+
+    assistantConnection.onerror = (event) => {
+      // handle error or closed connection
+      if (assistantConnection.readyState === EventSource.CLOSED) {
+        console.log('Connection was closed');
+      } else {
+        console.error('An error occurred:', event);
+      }
+    };
+
+
+
+    // } catch (error) {
+    //   console.error(error);
+    //   setResponses((oldResponses) => ({
+    //     ...oldResponses,
+    //     [queryKey]: {
+    //       data: null,
+    //       status: 'error',
+    //     }
+    //   }));
+    // } finally {
+    //   setAnyResponseLoading(false);
+    // }
   };
+
+  useEffect(() => {
+    console.log('this is responses', responses)
+  }, [responses])
 
   const handleSearch = async () => {
     if (searchPhrase.length) {
@@ -167,7 +219,7 @@ const AIAssistant = () => {
       event.preventDefault();
     }
   };
-
+  // return null;
   return (
     <Container maxWidth="md" className={classes.root}>
       <Typography variant="h4" align="center" className={classes.header}>
@@ -179,10 +231,13 @@ const AIAssistant = () => {
             icon={<AccountBoxIcon color="primary" fontSize="large" />}
             text={query}
           />
+          {streamingResponse?.answer && (
+            <AIAssistantResponse text={streamingResponse.answer} />
+          )}
           {responses[queryKey]?.status === 'success' && (
             <AIAssistantResponse
-              text={responses[queryKey].data.response.answer}
-              details={responses[queryKey].data.response.candidate_paragraphs}
+              text={responses[queryKey].data.answer}
+              details={responses[queryKey].data.paragraphs}
               documents={responses[queryKey].data.documents}
             />
           )}
@@ -203,12 +258,12 @@ const AIAssistant = () => {
               )}
             />
           )}
-          {responses[queryKey]?.status === 'loading' && (
+{/*          {responses[queryKey]?.status === 'loading' && (
             <ChatCard
               icon={<CircularProgress size="35px" />}
               text="Loading Response..."
             />
-          )}
+          )}*/}
         </React.Fragment>
       ))}
       {isEmpty(previousQueries) && !anyResponseLoading && (

@@ -30,7 +30,7 @@ from rq import Queue
 from redis import Redis
 from src.embedder_engine import embedder
 
-from sse_starlette.sse import EventSourceResponse
+from sse_starlette.sse import EventSourceResponse, ServerSentEvent
 from src.openai_gpt import GPT4Synthesizer, GPT4CausalRecommender, Role, Message, Agent
 from pydantic import BaseModel
 from pathlib import Path
@@ -228,22 +228,6 @@ def get_project_root() -> Path:
 
 MOCK_MESSAGE_PATH = path_join(get_project_root(), "mock-data", "message.json")
 
-
-@router.get("/knowledge/chat")
-def chat(query: str):
-
-    def data_streamer():
-        results, answer_gen = librarian.ask(query, stream=True)
-        metadata = {
-            'candidate_paragraphs': [r.to_dict() for r in results]
-        }
-        json_payload = json.dumps(metadata)
-        yield f'event: custom-event\ndata: {json_payload}\n\n'
-        yield from answer_gen
-
-    return EventSourceResponse(data_streamer(), media_type='text/event-stream')
-
-
 @router.get("/knowledge/message")
 def message(query: str):
     results, answer = librarian.ask(query, stream=False)
@@ -255,13 +239,25 @@ def message(query: str):
 
     return result_obj
 
-
 @router.get("/knowledge/mock-message")
 def mock_message(query: str):
     logger.info("Quick mock message endpoint called.")
     result_dict = load_file_as_json(MOCK_MESSAGE_PATH)
     return result_dict
 
+@router.get("/knowledge/chat")
+def chat(query: str):
+
+    def data_streamer():
+        results, answer_gen = librarian.ask(query, stream=True)
+        metadata = {
+            'candidate_paragraphs': [r.to_dict() for r in results]
+        }
+        json_payload = json.dumps(metadata)
+        yield f'data: {json_payload}\n\n'
+        yield from answer_gen
+
+    return EventSourceResponse(data_streamer(), media_type='text/event-stream')
 
 @router.get("/knowledge/mock-chat")
 def mock_chat(query: Optional[str]):
@@ -271,12 +267,14 @@ def mock_chat(query: Optional[str]):
 
     def data_streamer():
         json_payload = json.dumps(metadata)
-        yield f'event: custom-event\ndata: {json_payload}\n\n'
+        yield ServerSentEvent(data=json_payload, event='stream-paragraphs')
         time.sleep(1)
 
         for token in answer.split():
-            yield token
+            yield ServerSentEvent(data=token, event='stream-answer')
             time.sleep(0.3)
+
+        yield ServerSentEvent(data="Stream Complete", event='stream-complete')
 
     return EventSourceResponse(data_streamer(), media_type='text/event-stream')
 

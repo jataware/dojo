@@ -74,7 +74,7 @@ const DocumentViewerDialog = ({
 const AnswerText = ({ text, details }) => {
   const embeddedNumber = /(\[\d+\])/;
   const parts = text.split(embeddedNumber);
-
+console.log('this is text', text)
   return (
     <div>
       {parts.map((part, i) => {
@@ -148,54 +148,56 @@ const AIAssistantResponse = ({
         icon={<ComputerIcon fontSize="large" />}
         text={<AnswerText text={text} details={details} />}
       >
-        <div className={classes.showDetailsWrapper}>
-          <Button
-            variant="text"
-            onClick={() => setShowDetails(!showDetails)}
-            startIcon={showDetails ? <IndeterminateCheckBoxIcon /> : <AddBoxIcon />}
-            sx={{ display: 'flex', margin: '0 auto' }}
-          >
-            Show Details
-          </Button>
-          <Collapse in={showDetails}>
-            <div className={classes.details}>
-              {details.map((para, i) => (
-                <React.Fragment key={`${para.document_id}/${para.paragraph_idx}`}>
-                  <Typography
-                    variant="body2"
-                    sx={{
-                      display: 'contents',
-                    }}
-                    component="div"
-                  >
-                    <div>
-                      [{i + 1}]
-                    </div>
-                    <div>
+        {details && (
+          <div className={classes.showDetailsWrapper}>
+            <Button
+              variant="text"
+              onClick={() => setShowDetails(!showDetails)}
+              startIcon={showDetails ? <IndeterminateCheckBoxIcon /> : <AddBoxIcon />}
+              sx={{ display: 'flex', margin: '0 auto' }}
+            >
+              Show Details
+            </Button>
+            <Collapse in={showDetails}>
+              <div className={classes.details}>
+                {details.map((para, i) => (
+                  <React.Fragment key={`${para.document_id}/${para.paragraph_idx}`}>
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        display: 'contents',
+                      }}
+                      component="div"
+                    >
                       <div>
-                        {para.paragraph}
+                        [{i + 1}]
                       </div>
-                      <div className={classes.paragraphDetails}>
-                        <span>
-                          Title: <Title title={documents[para.document_id]?.title} />
-                        </span>
-                        <Divider orientation="vertical" flexItem />
-                        <span>Paragraph # in file: {para.paragraph_idx}</span>
-                        <Divider orientation="vertical" flexItem />
-                        <Button
-                          variant="text"
-                          onClick={() => handlePDFClick(documents[para.document_id])}
-                        >
-                          View PDF
-                        </Button>
+                      <div>
+                        <div>
+                          {para.paragraph}
+                        </div>
+                        <div className={classes.paragraphDetails}>
+                          <span>
+                            Title: <Title title={documents[para.document_id]?.title} />
+                          </span>
+                          <Divider orientation="vertical" flexItem />
+                          <span>Paragraph # in file: {para.paragraph_idx}</span>
+                          <Divider orientation="vertical" flexItem />
+                          <Button
+                            variant="text"
+                            onClick={() => handlePDFClick(documents[para.document_id])}
+                          >
+                            View PDF
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                  </Typography>
-                </React.Fragment>
-              ))}
-            </div>
-          </Collapse>
-        </div>
+                    </Typography>
+                  </React.Fragment>
+                ))}
+              </div>
+            </Collapse>
+          </div>
+        )}
       </ChatCard>
       <DocumentViewerDialog
         documentDetails={dialogContent}
