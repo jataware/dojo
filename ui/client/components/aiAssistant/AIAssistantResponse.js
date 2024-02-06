@@ -127,7 +127,7 @@ const Title = ({ title }) => {
 };
 
 const AIAssistantResponse = ({
-  text, details, documents, streaming
+  text, details, documents
 }) => {
   const [showDetails, setShowDetails] = useState(false);
   const [dialogContent, setDialogContent] = useState(null);

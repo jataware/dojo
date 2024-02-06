@@ -57,6 +57,16 @@ const useStyles = makeStyles()((theme) => ({
   },
 }));
 
+const isScrolledToBottom = () => {
+  const totalPageHeight = document.body.scrollHeight;
+  const scrollPoint = window.scrollY + window.innerHeight;
+  return scrollPoint >= totalPageHeight - 170;
+};
+
+const scrollToBottom = () => {
+  window.scroll({ top: document.body.scrollHeight, behavior: 'smooth' });
+};
+
 const AIAssistant = () => {
   const { classes } = useStyles();
   const [previousQueries, setPreviousQueries] = useState({});
@@ -70,12 +80,12 @@ const AIAssistant = () => {
 
   usePageTitle({ title: 'AI Assistant' });
 
-  // useEffect(() => {
-  //   // scroll to the bottom anytime we get a new search in
-  //   window.scroll({ top: document.body.scrollHeight, behavior: 'smooth' });
-  // }, [streamingResponse]);
-
   useEffect(() => {
+    // scroll to bottom if we're already there when streamingResponse updates
+    // but don't force user down if we aren't
+    if (isScrolledToBottom()) {
+      scrollToBottom();
+    }
     // use this ref to keep track of the streamingResponse so that we can update
     // the responses object when we close the SSE connection on 'stream-complete'
     streamingResponseRef.current = streamingResponse;
@@ -83,6 +93,12 @@ const AIAssistant = () => {
 
   // disable if no content, incl. if just whitespace, or while we're getting a response
   const disableSubmit = !searchPhrase.trim().length || anyResponseLoading;
+
+  const cleanupStreamingResp = () => {
+    setStreamingResponse(null);
+    setAnyResponseLoading(false);
+    streamingResponseRef.current = null;
+  };
 
   const performSearch = async (query, queryKey) => {
     const knowledgeEndpoint = process.env.NODE_ENV === 'production' ? 'chat' : 'mock-chat';
@@ -141,8 +157,7 @@ const AIAssistant = () => {
       setResponses((prevResps) => ({
         ...prevResps, [queryKey]: { data: currentStreamingResponse, status: 'success' }
       }));
-      setStreamingResponse(null);
-      setAnyResponseLoading(false);
+      cleanupStreamingResp();
       assistantConnection.close();
     });
 
@@ -159,7 +174,7 @@ const AIAssistant = () => {
           ...prevResps, [queryKey]: { data: null, status: 'error' }
         }));
       }
-      setAnyResponseLoading(false);
+      cleanupStreamingResp();
     };
   };
 
@@ -179,6 +194,7 @@ const AIAssistant = () => {
       }));
       setAnyResponseLoading(true);
       await performSearch(searchPhrase, queryKey);
+      scrollToBottom();
     }
   };
 
@@ -295,7 +311,7 @@ const AIAssistant = () => {
           color="primary"
           sx={{ position: 'fixed', bottom: 104, right: 40 }}
           elevation={0}
-          onClick={() => window.scroll({ top: document.body.scrollHeight, behavior: 'smooth' })}
+          onClick={() => scrollToBottom()}
         >
           <ArrowDownwardIcon />
         </Fab>
