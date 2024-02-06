@@ -272,7 +272,7 @@ def mock_chat(query: Optional[str]):
 
         for token in answer.split():
             yield ServerSentEvent(data=token, event='stream-answer')
-            time.sleep(0.3)
+            time.sleep(0.1)
 
         yield ServerSentEvent(data="Stream Complete", event='stream-complete')
 

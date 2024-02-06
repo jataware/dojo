@@ -1,16 +1,19 @@
 import React, { useState } from 'react';
 
 import IconButton from '@mui/material/IconButton';
-import CloseIcon from '@mui/icons-material/Close';
 import Button from '@mui/material/Button';
 import Collapse from '@mui/material/Collapse';
 import Dialog from '@mui/material/Dialog';
 import Divider from '@mui/material/Divider';
 import Typography from '@mui/material/Typography';
 import Tooltip from '@mui/material/Tooltip';
-import ComputerIcon from '@mui/icons-material/Computer';
+import CircularProgress from '@mui/material/CircularProgress';
+
 import AddBoxIcon from '@mui/icons-material/AddBox';
+import CloseIcon from '@mui/icons-material/Close';
+import ComputerIcon from '@mui/icons-material/Computer';
 import IndeterminateCheckBoxIcon from '@mui/icons-material/IndeterminateCheckBox';
+
 import { makeStyles } from 'tss-react/mui';
 
 import ChatCard from './ChatCard';
@@ -74,7 +77,7 @@ const DocumentViewerDialog = ({
 const AnswerText = ({ text, details }) => {
   const embeddedNumber = /(\[\d+\])/;
   const parts = text.split(embeddedNumber);
-console.log('this is text', text)
+
   return (
     <div>
       {parts.map((part, i) => {
@@ -124,7 +127,7 @@ const Title = ({ title }) => {
 };
 
 const AIAssistantResponse = ({
-  text, details, documents
+  text, details, documents, streaming
 }) => {
   const [showDetails, setShowDetails] = useState(false);
   const [dialogContent, setDialogContent] = useState(null);
@@ -148,7 +151,7 @@ const AIAssistantResponse = ({
         icon={<ComputerIcon fontSize="large" />}
         text={<AnswerText text={text} details={details} />}
       >
-        {details && (
+        {(details && documents) ? (
           <div className={classes.showDetailsWrapper}>
             <Button
               variant="text"
@@ -161,7 +164,8 @@ const AIAssistantResponse = ({
             <Collapse in={showDetails}>
               <div className={classes.details}>
                 {details.map((para, i) => (
-                  <React.Fragment key={`${para.document_id}/${para.paragraph_idx}`}>
+                  // eslint-disable-next-line react/no-array-index-key
+                  <React.Fragment key={`${para.document_id}/${i}`}>
                     <Typography
                       variant="body2"
                       sx={{
@@ -197,6 +201,15 @@ const AIAssistantResponse = ({
               </div>
             </Collapse>
           </div>
+        ) : (
+          <Button
+            variant="text"
+            disabled
+            startIcon={<CircularProgress size={16} color="inherit" />}
+            sx={{ display: 'flex', margin: '16px auto 0' }}
+          >
+            Details Loading
+          </Button>
         )}
       </ChatCard>
       <DocumentViewerDialog

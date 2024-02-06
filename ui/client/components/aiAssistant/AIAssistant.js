@@ -1,4 +1,6 @@
-import React, { useContext, useEffect, useRef, useState } from 'react';
+import React, {
+  useContext, useEffect, useRef, useState
+} from 'react';
 
 import axios from 'axios';
 
@@ -8,13 +10,17 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
-import CircularProgress from '@mui/material/CircularProgress';
 import Container from '@mui/material/Container';
+import Fab from '@mui/material/Fab';
 import TextField from '@mui/material/TextField';
+import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import AccountBoxIcon from '@mui/icons-material/AccountBox';
+
+import ArrowDownwardIcon from '@mui/icons-material/ArrowDownward';
 import InfoIcon from '@mui/icons-material/Info';
 import SendIcon from '@mui/icons-material/Send';
+
 import { makeStyles } from 'tss-react/mui';
 
 import AIAssistantResponse from './AIAssistantResponse';
@@ -50,13 +56,7 @@ const useStyles = makeStyles()((theme) => ({
     alignItems: 'center',
   },
 }));
-/** TODO:
-* - show arrow down icon on screen when content to scroll to
-* - add expandable (?) panel to response cards with list of documents used
-*   - ids, link to view pdf?
-* - disable question input & search button while asking?
-*   - don't delete question until we get response
-**/
+
 const AIAssistant = () => {
   const { classes } = useStyles();
   const [previousQueries, setPreviousQueries] = useState({});
@@ -70,11 +70,10 @@ const AIAssistant = () => {
 
   usePageTitle({ title: 'AI Assistant' });
 
-  useEffect(() => {
-    // scroll to the bottom anytime we get a new search in
-    // TODO: when we have real responses come back, scroll to the bottom of those instead
-    window.scroll({ top: document.body.scrollHeight, behavior: 'smooth' });
-  }, [previousQueries]);
+  // useEffect(() => {
+  //   // scroll to the bottom anytime we get a new search in
+  //   window.scroll({ top: document.body.scrollHeight, behavior: 'smooth' });
+  // }, [streamingResponse]);
 
   useEffect(() => {
     // use this ref to keep track of the streamingResponse so that we can update
@@ -86,24 +85,13 @@ const AIAssistant = () => {
   const disableSubmit = !searchPhrase.trim().length || anyResponseLoading;
 
   const performSearch = async (query, queryKey) => {
-    // try {
-    // TODO: Use this for local development, causemos-analyst for production
-    // const queryResp = await axios.get(`http://localhost:8001/mock-message?query=${query}`);
     const knowledgeEndpoint = process.env.NODE_ENV === 'production' ? 'chat' : 'mock-chat';
 
-    // const queryResp = await axios.get(
-    //   `/api/dojo/knowledge/message?query=${searchPhrase}`
-    // );
-    // const queryResp = await axios.get(
-    //   `/api/dojo/knowledge/${knowledgeEndpoint}?query=${searchPhrase}`
-    // );
     const assistantConnection = new EventSource(
       `/api/dojo/knowledge/${knowledgeEndpoint}?query=${searchPhrase}`
     );
 
     assistantConnection.addEventListener('stream-answer', (event) => {
-      console.log('this is the chat-stream event', event.data);
-
       const createAnswerString = (prevResp) => {
         if (prevResp && prevResp.answer) {
           // eslint-disable-next-line prefer-template
@@ -118,7 +106,6 @@ const AIAssistant = () => {
     });
 
     assistantConnection.addEventListener('stream-paragraphs', async (event) => {
-      // console.log('this is stream-paragraphs', event.data)
       const paragraphs = JSON.parse(event.data);
 
       // create an object with just the unique filenames as keys
@@ -148,46 +135,33 @@ const AIAssistant = () => {
       setStreamingResponse((prevResp) => ({ ...prevResp, documents: document_ids, paragraphs }));
     });
 
-    assistantConnection.addEventListener('stream-complete', (event) => {
-      console.log('this is the stream complete event', event);
+    assistantConnection.addEventListener('stream-complete', () => {
       const currentStreamingResponse = streamingResponseRef.current;
-      console.log('this is currentStreamingResponse', currentStreamingResponse)
-      setResponses((prevResp) => ({
-        ...prevResp, [queryKey]: { data: currentStreamingResponse, status: 'success' }
+
+      setResponses((prevResps) => ({
+        ...prevResps, [queryKey]: { data: currentStreamingResponse, status: 'success' }
       }));
       setStreamingResponse(null);
       setAnyResponseLoading(false);
       assistantConnection.close();
     });
 
-    assistantConnection.onerror = (event) => {
+    assistantConnection.onerror = () => {
       // handle error or closed connection
       if (assistantConnection.readyState === EventSource.CLOSED) {
-        console.log('Connection was closed');
+        console.log('The connection was closed.');
+        setResponses((prevResps) => ({
+          ...prevResps, [queryKey]: { data: null, status: 'error' }
+        }));
       } else {
-        console.error('An error occurred:', event);
+        console.log('There was an error.');
+        setResponses((prevResps) => ({
+          ...prevResps, [queryKey]: { data: null, status: 'error' }
+        }));
       }
+      setAnyResponseLoading(false);
     };
-
-
-
-    // } catch (error) {
-    //   console.error(error);
-    //   setResponses((oldResponses) => ({
-    //     ...oldResponses,
-    //     [queryKey]: {
-    //       data: null,
-    //       status: 'error',
-    //     }
-    //   }));
-    // } finally {
-    //   setAnyResponseLoading(false);
-    // }
   };
-
-  useEffect(() => {
-    console.log('this is responses', responses)
-  }, [responses])
 
   const handleSearch = async () => {
     if (searchPhrase.length) {
@@ -219,7 +193,7 @@ const AIAssistant = () => {
       event.preventDefault();
     }
   };
-  // return null;
+
   return (
     <Container maxWidth="md" className={classes.root}>
       <Typography variant="h4" align="center" className={classes.header}>
@@ -231,9 +205,6 @@ const AIAssistant = () => {
             icon={<AccountBoxIcon color="primary" fontSize="large" />}
             text={query}
           />
-          {streamingResponse?.answer && (
-            <AIAssistantResponse text={streamingResponse.answer} />
-          )}
           {responses[queryKey]?.status === 'success' && (
             <AIAssistantResponse
               text={responses[queryKey].data.answer}
@@ -258,18 +229,19 @@ const AIAssistant = () => {
               )}
             />
           )}
-{/*          {responses[queryKey]?.status === 'loading' && (
-            <ChatCard
-              icon={<CircularProgress size="35px" />}
-              text="Loading Response..."
-            />
-          )}*/}
         </React.Fragment>
       ))}
       {isEmpty(previousQueries) && !anyResponseLoading && (
         <ChatCard
           icon={<InfoIcon color="primary" fontSize="large" />}
           text="Start querying documents with a question in the search box below"
+        />
+      )}
+      {streamingResponse?.answer && (
+        <AIAssistantResponse
+          text={streamingResponse.answer}
+          details={streamingResponse.paragraphs}
+          documents={streamingResponse.documents}
         />
       )}
       <Box
@@ -317,6 +289,17 @@ const AIAssistant = () => {
           }}
         />
       </Box>
+      <Tooltip title="Scroll to bottom" arrow>
+        <Fab
+          size="small"
+          color="primary"
+          sx={{ position: 'fixed', bottom: 104, right: 40 }}
+          elevation={0}
+          onClick={() => window.scroll({ top: document.body.scrollHeight, behavior: 'smooth' })}
+        >
+          <ArrowDownwardIcon />
+        </Fab>
+      </Tooltip>
     </Container>
   );
 };
