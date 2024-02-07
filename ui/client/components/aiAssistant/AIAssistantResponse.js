@@ -12,6 +12,7 @@ import CircularProgress from '@mui/material/CircularProgress';
 import AddBoxIcon from '@mui/icons-material/AddBox';
 import CloseIcon from '@mui/icons-material/Close';
 import ComputerIcon from '@mui/icons-material/Computer';
+import DoNotDisturbIcon from '@mui/icons-material/DoNotDisturb';
 import IndeterminateCheckBoxIcon from '@mui/icons-material/IndeterminateCheckBox';
 
 import { makeStyles } from 'tss-react/mui';
@@ -144,6 +145,46 @@ const AIAssistantResponse = ({
     setOpen(true);
   };
 
+  const buttonContent = () => {
+    console.log('this is documents', documents, 'and details', details)
+    if (!details && !documents) {
+      return (
+        <Button
+          variant="text"
+          disabled
+          startIcon={<CircularProgress size={16} color="inherit" />}
+          sx={{ display: 'flex', margin: '16px auto 0' }}
+        >
+          Details Loading
+        </Button>
+      );
+    }
+    if (Array.isArray(details) && details.length === 0) {
+      return (
+        <Button
+          variant="text"
+          disabled
+          startIcon={<DoNotDisturbIcon />}
+          sx={{ display: 'flex', margin: '16px auto 0' }}
+        >
+          No Details Found
+        </Button>
+      );
+    }
+    if (details && documents) {
+      return (
+        <Button
+          variant="text"
+          onClick={() => setShowDetails(!showDetails)}
+          startIcon={showDetails ? <IndeterminateCheckBoxIcon /> : <AddBoxIcon />}
+          sx={{ display: 'flex', margin: '16px auto 0' }}
+        >
+          Show Details
+        </Button>
+      );
+    }
+  };
+
   return (
     <>
       <ChatCard
@@ -151,16 +192,9 @@ const AIAssistantResponse = ({
         icon={<ComputerIcon fontSize="large" />}
         text={<AnswerText text={text} details={details} />}
       >
-        {(details && documents) ? (
-          <div className={classes.showDetailsWrapper}>
-            <Button
-              variant="text"
-              onClick={() => setShowDetails(!showDetails)}
-              startIcon={showDetails ? <IndeterminateCheckBoxIcon /> : <AddBoxIcon />}
-              sx={{ display: 'flex', margin: '0 auto' }}
-            >
-              Show Details
-            </Button>
+        <div className={classes.showDetailsWrapper}>
+          {buttonContent()}
+          {(details && documents) && (
             <Collapse in={showDetails}>
               <div className={classes.details}>
                 {details.map((para, i) => (
@@ -200,17 +234,8 @@ const AIAssistantResponse = ({
                 ))}
               </div>
             </Collapse>
-          </div>
-        ) : (
-          <Button
-            variant="text"
-            disabled
-            startIcon={<CircularProgress size={16} color="inherit" />}
-            sx={{ display: 'flex', margin: '16px auto 0' }}
-          >
-            Details Loading
-          </Button>
-        )}
+          )}
+        </div>
       </ChatCard>
       <DocumentViewerDialog
         documentDetails={dialogContent}

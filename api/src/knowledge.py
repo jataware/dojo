@@ -254,8 +254,11 @@ def chat(query: str):
             'candidate_paragraphs': [r.to_dict() for r in results]
         }
         json_payload = json.dumps(metadata)
-        yield f'data: {json_payload}\n\n'
-        yield from answer_gen
+        yield ServerSentEvent(data=json_payload, event='stream-paragraphs')
+        for answer_chunk in answer_gen:
+            yield ServerSentEvent(data=answer_chunk, event='stream-answer')
+
+        yield ServerSentEvent(data="Stream Complete", event='stream-complete')
 
     return EventSourceResponse(data_streamer(), media_type='text/event-stream')
 

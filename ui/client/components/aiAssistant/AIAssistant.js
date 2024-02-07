@@ -74,7 +74,6 @@ const AIAssistant = () => {
   const [searchPhrase, setSearchPhrase] = useState('');
   const [anyResponseLoading, setAnyResponseLoading] = useState(false);
   const [streamingResponse, setStreamingResponse] = useState(null);
-  const streamingResponseRef = useRef('');
 
   const { showSideBar } = useContext(ThemeContext);
 
@@ -86,9 +85,6 @@ const AIAssistant = () => {
     if (isScrolledToBottom()) {
       scrollToBottom();
     }
-    // use this ref to keep track of the streamingResponse so that we can update
-    // the responses object when we close the SSE connection on 'stream-complete'
-    streamingResponseRef.current = streamingResponse;
   }, [streamingResponse]);
 
   // disable if no content, incl. if just whitespace, or while we're getting a response
@@ -97,10 +93,23 @@ const AIAssistant = () => {
   const cleanupStreamingResp = () => {
     setStreamingResponse(null);
     setAnyResponseLoading(false);
-    streamingResponseRef.current = null;
   };
 
   const performSearch = async (query, queryKey) => {
+    // local state for accessing streamingResponse within the stream-complete event handler
+    // this is more immediate and up to date than a ref, and allows us to set the final response
+    // off the streaming response once the stream is finished
+    let latestStreamingResponse = null;
+
+    const updateStreamingResponse = (updateFunction) => {
+      setStreamingResponse((prevResp) => {
+        const updatedResp = updateFunction(prevResp);
+        // keep track of the latest state in a local variable so it is always current
+        latestStreamingResponse = updatedResp;
+        return updatedResp;
+      });
+    };
+
     const knowledgeEndpoint = process.env.NODE_ENV === 'production' ? 'chat' : 'mock-chat';
 
     const assistantConnection = new EventSource(
@@ -108,54 +117,59 @@ const AIAssistant = () => {
     );
 
     assistantConnection.addEventListener('stream-answer', (event) => {
-      const createAnswerString = (prevResp) => {
-        if (prevResp && prevResp.answer) {
-          // eslint-disable-next-line prefer-template
-          return prevResp.answer + ' ' + event.data;
-        }
-        return event.data;
-      };
-
-      setStreamingResponse((prevResp) => ({
-        ...prevResp, answer: createAnswerString(prevResp),
+      updateStreamingResponse((prevResp) => ({
+        ...prevResp,
+        answer: (prevResp.answer || '') + event.data,
       }));
     });
 
     assistantConnection.addEventListener('stream-paragraphs', async (event) => {
-      const paragraphs = JSON.parse(event.data);
+      const respData = JSON.parse(event.data);
+      console.log('this is stream-paragraphs event', event)
+      console.log('this is the parsed data', respData.candidate_paragraphs)
 
-      // create an object with just the unique filenames as keys
-      const document_ids = paragraphs.reduce((obj, curr) => (
-        { ...obj, [curr.document_id]: null }
-      ), {});
-      // go through the unique document_ids and fetch the document data
-      const documentFetches = Object.keys(document_ids).map(async (document_id) => {
-        try {
-          const docFetchResp = await axios.get(`/api/dojo/documents/${document_id}`);
-          return { document_id, data: docFetchResp.data };
-        } catch (e) {
-          console.log('error fetching document, skipping', e);
-          return { document_id: null, data: {} };
+      if (Array.isArray(respData.candidate_paragraphs)) {
+        const paragraphs = respData.candidate_paragraphs;
+        const document_ids = {};
+
+        // only do the following if we have paragraphs
+        if (paragraphs.length) {
+          // create an object with just the unique filenames as keys
+          paragraphs?.reduce((obj, curr) => (
+            { ...obj, [curr.document_id]: null }
+          ), document_ids);
+          // go through the unique document_ids and fetch the document data
+          const documentFetches = Object.keys(document_ids).map(async (document_id) => {
+            try {
+              const docFetchResp = await axios.get(`/api/dojo/documents/${document_id}`);
+              return { document_id, data: docFetchResp.data };
+            } catch (e) {
+              console.log('error fetching document, skipping', e);
+              return { document_id: null, data: {} };
+            }
+          });
+
+          // wait for all the document fetches to complete
+          const documentResults = await Promise.all(documentFetches);
+
+          // and map them to the filenames
+          documentResults.forEach(({ document_id, data }) => {
+            document_ids[document_id] = data;
+          });
         }
-      });
 
-      // wait for all the document fetches to complete
-      const documentResults = await Promise.all(documentFetches);
-
-      // and map them to the filenames
-      documentResults.forEach(({ document_id, data }) => {
-        document_ids[document_id] = data;
-      });
-
-      // add documents and paragraphs to the streamingResponse
-      setStreamingResponse((prevResp) => ({ ...prevResp, documents: document_ids, paragraphs }));
+        // add documents and paragraphs to the streamingResponse, even if blank
+        updateStreamingResponse((prevResp) => ({
+          ...prevResp, documents: document_ids, paragraphs
+        }));
+      }
     });
 
     assistantConnection.addEventListener('stream-complete', () => {
-      const currentStreamingResponse = streamingResponseRef.current;
-
+      // TODO: if paragraphs/documents aren't present, set with an empty array/object here
       setResponses((prevResps) => ({
-        ...prevResps, [queryKey]: { data: currentStreamingResponse, status: 'success' }
+        ...prevResps,
+        [queryKey]: { data: latestStreamingResponse, status: 'success' }
       }));
       cleanupStreamingResp();
       assistantConnection.close();
