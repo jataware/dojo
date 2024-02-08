@@ -136,7 +136,6 @@ const AIAssistant = () => {
     );
 
     assistantConnection.addEventListener('stream-answer', (event) => {
-      console.log('stream-aswer', event.data)
       updateStreamingResponse((prevResp) => ({
         ...prevResp,
         answer: (prevResp.answer || '') + event.data,
@@ -185,7 +184,6 @@ const AIAssistant = () => {
 
     assistantConnection.addEventListener('stream-complete', () => {
       // TODO: if paragraphs/documents aren't present, set with an empty array/object here
-      console.log('latestStreamingResponse', latestStreamingResponse)
       setResponses((prevResps) => ({
         ...prevResps,
         [queryKey]: { data: latestStreamingResponse, status: 'success' }

@@ -257,7 +257,7 @@ def chat(query: str):
         yield ServerSentEvent(data=json_payload, event='stream-paragraphs')
         for answer_chunk in answer_gen:
             yield ServerSentEvent(data=answer_chunk, event='stream-answer')
-
+        time.sleep(0.5) # delay to ensure the client has enough time to process before ending the stream
         yield ServerSentEvent(data="Stream Complete", event='stream-complete')
 
     return EventSourceResponse(data_streamer(), media_type='text/event-stream')
@@ -276,7 +276,7 @@ def mock_chat(query: Optional[str]):
         for token in answer.split():
             yield ServerSentEvent(data=token, event='stream-answer')
             time.sleep(0.01)
-
+        time.sleep(0.5) # delay to ensure the client has enough time to process before ending the stream
         yield ServerSentEvent(data="Stream Complete", event='stream-complete')
 
     return EventSourceResponse(data_streamer(), media_type='text/event-stream')
