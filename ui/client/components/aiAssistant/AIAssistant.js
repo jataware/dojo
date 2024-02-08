@@ -1,5 +1,5 @@
 import React, {
-  useContext, useEffect, useRef, useState
+  useContext, useEffect, useState
 } from 'react';
 
 import axios from 'axios';
@@ -59,7 +59,7 @@ const useStyles = makeStyles()((theme) => ({
 const isScrolledToBottom = () => {
   const totalPageHeight = document.body.scrollHeight;
   const scrollPoint = window.scrollY + window.innerHeight;
-  return scrollPoint >= totalPageHeight// - 170;
+  return scrollPoint >= totalPageHeight
 };
 
 const scrollToBottom = () => {
@@ -146,17 +146,19 @@ const AIAssistant = () => {
       const respData = JSON.parse(event.data);
 
       if (Array.isArray(respData.candidate_paragraphs)) {
+        // create these here so that we can save empty versions if necessary
         const paragraphs = respData.candidate_paragraphs;
-        const document_ids = {};
+        let documents = {};
 
         // only do the following if we have paragraphs
         if (paragraphs.length) {
           // create an object with just the unique filenames as keys
-          paragraphs?.reduce((obj, curr) => (
+          documents = paragraphs?.reduce((obj, curr) => (
             { ...obj, [curr.document_id]: null }
-          ), document_ids);
-          // go through the unique document_ids and fetch the document data
-          const documentFetches = Object.keys(document_ids).map(async (document_id) => {
+          ), {});
+
+          // go through the unique documents and fetch the document data
+          const documentFetches = Object.keys(documents).map(async (document_id) => {
             try {
               const docFetchResp = await axios.get(`/api/dojo/documents/${document_id}`);
               return { document_id, data: docFetchResp.data };
@@ -171,13 +173,14 @@ const AIAssistant = () => {
 
           // and map them to the filenames
           documentResults.forEach(({ document_id, data }) => {
-            document_ids[document_id] = data;
+            documents[document_id] = data;
           });
         }
 
-        // add documents and paragraphs to the streamingResponse, even if blank
+        // add documents and paragraphs to the streamingResponse, even if empty
+        // empty para/docs allow for a 'no details' state
         updateStreamingResponse((prevResp) => ({
-          ...prevResp, documents: document_ids, paragraphs
+          ...prevResp, documents, paragraphs
         }));
       }
     });

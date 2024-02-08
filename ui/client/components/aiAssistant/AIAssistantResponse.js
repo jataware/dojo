@@ -146,7 +146,6 @@ const AIAssistantResponse = ({
   };
 
   const buttonContent = () => {
-    console.log('this is documents', documents, 'and details', details)
     if (!details && !documents) {
       return (
         <Button
