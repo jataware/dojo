@@ -266,7 +266,7 @@ def chat(query: str):
 def mock_chat(query: Optional[str]):
     result_dict = load_file_as_json(MOCK_MESSAGE_PATH)
     answer = result_dict["answer"]
-    metadata = result_dict["candidate_paragraphs"]
+    metadata = { 'candidate_paragraphs': result_dict["candidate_paragraphs"] }
 
     def data_streamer():
         json_payload = json.dumps(metadata)
@@ -274,8 +274,8 @@ def mock_chat(query: Optional[str]):
         time.sleep(1)
 
         for token in answer.split():
-            yield ServerSentEvent(data=token, event='stream-answer')
-            time.sleep(0.01)
+            yield ServerSentEvent(data=" " + token, event='stream-answer')
+            time.sleep(0.05)
         time.sleep(0.5) # delay to ensure the client has enough time to process before ending the stream
         yield ServerSentEvent(data="Stream Complete", event='stream-complete')
 

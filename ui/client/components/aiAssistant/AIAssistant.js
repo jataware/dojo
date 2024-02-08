@@ -56,10 +56,10 @@ const useStyles = makeStyles()((theme) => ({
   },
 }));
 
-const isScrolledToBottom = () => {
+const isScrolledToBottom = (buffer = 0) => {
   const totalPageHeight = document.body.scrollHeight;
   const scrollPoint = window.scrollY + window.innerHeight;
-  return scrollPoint >= totalPageHeight
+  return scrollPoint >= totalPageHeight - buffer;
 };
 
 const scrollToBottom = () => {
@@ -90,7 +90,7 @@ const AIAssistant = () => {
 
   useEffect(() => {
     const onScroll = () => {
-      if (isScrolledToBottom()) {
+      if (isScrolledToBottom(70)) {
         setShowScrollToBottom(false);
       } else {
         setShowScrollToBottom(true);
@@ -129,7 +129,7 @@ const AIAssistant = () => {
       });
     };
 
-    const knowledgeEndpoint = 'chat'//process.env.NODE_ENV === 'production' ? 'chat' : 'mock-chat';
+    const knowledgeEndpoint = process.env.NODE_ENV === 'production' ? 'chat' : 'mock-chat';
 
     const assistantConnection = new EventSource(
       `/api/dojo/knowledge/${knowledgeEndpoint}?query=${searchPhrase}`
@@ -138,13 +138,12 @@ const AIAssistant = () => {
     assistantConnection.addEventListener('stream-answer', (event) => {
       updateStreamingResponse((prevResp) => ({
         ...prevResp,
-        answer: (prevResp.answer || '') + event.data,
+        answer: (prevResp?.answer || '') + event.data,
       }));
     });
 
     assistantConnection.addEventListener('stream-paragraphs', async (event) => {
       const respData = JSON.parse(event.data);
-
       if (Array.isArray(respData.candidate_paragraphs)) {
         // create these here so that we can save empty versions if necessary
         const paragraphs = respData.candidate_paragraphs;
@@ -156,7 +155,6 @@ const AIAssistant = () => {
           documents = paragraphs?.reduce((obj, curr) => (
             { ...obj, [curr.document_id]: null }
           ), {});
-
           // go through the unique documents and fetch the document data
           const documentFetches = Object.keys(documents).map(async (document_id) => {
             try {

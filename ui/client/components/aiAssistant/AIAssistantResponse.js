@@ -84,16 +84,16 @@ const AnswerText = ({ text, details }) => {
       {parts.map((part, i) => {
         const match = part.match(embeddedNumber);
         if (match) {
-          /* TODO: match these to the correct reference - what is this reference?
-            - also on click (expand and) scroll to the paragraph in the details section
-            - in details section click to open document itself in sidebar or dialog or new tab
-          */
           const number = match[0].slice(1, -1);
           const displayReference = `[${Number(number) + 1}]`;
 
           return (
-            // eslint-disable-next-line react/no-array-index-key
-            <Tooltip key={i} arrow title={details[number]?.paragraph}>
+            <Tooltip
+              // eslint-disable-next-line react/no-array-index-key
+              key={i}
+              arrow
+              title={details ? details[number]?.paragraph : 'Paragraph details loading...'}
+            >
               <span style={{ cursor: 'default' }}>{displayReference}</span>
             </Tooltip>
           );
