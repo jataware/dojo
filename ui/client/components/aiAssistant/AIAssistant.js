@@ -89,7 +89,9 @@ const AIAssistant = () => {
   }, [streamingResponse, wasAtBottom]);
 
   useEffect(() => {
+    // this handles displaying the down arrow scroll to bottom button
     const onScroll = () => {
+      // don't show within 70px of the bottom of the screen (so it doesn't flicker with stream)
       if (isScrolledToBottom(70)) {
         setShowScrollToBottom(false);
       } else {
@@ -108,9 +110,8 @@ const AIAssistant = () => {
   };
 
   const performSearch = async (query, queryKey) => {
-    // local state for accessing streamingResponse within the stream-complete event handler
-    // this is more immediate and up to date than a ref, and allows us to set the final response
-    // off the streaming response once the stream is finished
+    // local variable for accessing streamingResponse within the stream-complete event handler
+    // this allows us to set the final response off the streaming response when stream is finished
     let latestStreamingResponse = null;
 
     const updateStreamingResponse = (updateFunction) => {
@@ -135,6 +136,7 @@ const AIAssistant = () => {
       `/api/dojo/knowledge/${knowledgeEndpoint}?query=${searchPhrase}`
     );
 
+    // the main text
     assistantConnection.addEventListener('stream-answer', (event) => {
       updateStreamingResponse((prevResp) => ({
         ...prevResp,
@@ -142,6 +144,7 @@ const AIAssistant = () => {
       }));
     });
 
+    // the paragraphs (details) and documents
     assistantConnection.addEventListener('stream-paragraphs', async (event) => {
       const respData = JSON.parse(event.data);
       if (Array.isArray(respData.candidate_paragraphs)) {
@@ -183,6 +186,8 @@ const AIAssistant = () => {
       }
     });
 
+    // the event that closes it. We use this to load the streamingResponse state
+    // into the responses array so that we can reopen the text field for more questions
     assistantConnection.addEventListener('stream-complete', () => {
       const parsedStreamingResponse = {
         data: {
