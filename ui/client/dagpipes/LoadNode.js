@@ -28,8 +28,7 @@ const aggList = aggregation_functions.map((res) => ({ value: res, label: res }))
 const AggregationLabel = ({ text }) => (
   <div>
     {text}
-    {/* TODO-NEW-DOCS: change /details to /data-modeling when we switch to new docs */}
-    <InlineDocLink link="/details/aggregation-methods.html" title="aggregation function" />
+    <InlineDocLink link="data-modeling/aggregation-methods.html" title="aggregation function" />
   </div>
 );
 

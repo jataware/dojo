@@ -147,10 +147,8 @@ const UploadFileDialog = ({
                         <span className={classes.warningText}>
                           File size over limit - (25mb).
                         </span>
-                        {/* eslint-disable-next-line max-len */}
-                        {/* TODO-NEW-DOCS: change /details to  /model-registration when we switch to new docs */}
                         <Button
-                          href=" https://www.dojo-modeling.com/details/large-files.html"
+                          href=" https://www.dojo-modeling.com/model-registration/large-files.html"
                           target="_blank"
                           rel="noopener"
                           className={classes.buttons}

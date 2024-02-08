@@ -83,6 +83,7 @@ const initialNodeTypeValues = {
     type: threshold_ops[0]
   },
   filter_by_country: [],
+  multiply: 'multiply',
 };
 
 const genNodeId = () => `n_${window.crypto.randomUUID()}`;
