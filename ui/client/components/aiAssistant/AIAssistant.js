@@ -13,7 +13,6 @@ import InputAdornment from '@mui/material/InputAdornment';
 import Container from '@mui/material/Container';
 import Fab from '@mui/material/Fab';
 import TextField from '@mui/material/TextField';
-import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import AccountBoxIcon from '@mui/icons-material/AccountBox';
 
@@ -60,7 +59,7 @@ const useStyles = makeStyles()((theme) => ({
 const isScrolledToBottom = () => {
   const totalPageHeight = document.body.scrollHeight;
   const scrollPoint = window.scrollY + window.innerHeight;
-  return scrollPoint >= totalPageHeight - 170;
+  return scrollPoint >= totalPageHeight// - 170;
 };
 
 const scrollToBottom = () => {
@@ -74,18 +73,31 @@ const AIAssistant = () => {
   const [searchPhrase, setSearchPhrase] = useState('');
   const [anyResponseLoading, setAnyResponseLoading] = useState(false);
   const [streamingResponse, setStreamingResponse] = useState(null);
+  const [showScrollToBottom, setShowScrollToBottom] = useState(isScrolledToBottom());
+
+  const [wasAtBottom, setWasAtBottom] = useState(true);
 
   const { showSideBar } = useContext(ThemeContext);
 
   usePageTitle({ title: 'AI Assistant' });
 
   useEffect(() => {
-    // scroll to bottom if we're already there when streamingResponse updates
-    // but don't force user down if we aren't
-    if (isScrolledToBottom()) {
+    // scroll back to bottom if previously there
+    if (wasAtBottom) {
       scrollToBottom();
     }
-  }, [streamingResponse]);
+  }, [streamingResponse, wasAtBottom]);
+
+  useEffect(() => {
+    const onScroll = () => {
+      if (isScrolledToBottom()) {
+        setShowScrollToBottom(false);
+      } else {
+        setShowScrollToBottom(true);
+      }
+    };
+    window.addEventListener('scroll', onScroll);
+  }, []);
 
   // disable if no content, incl. if just whitespace, or while we're getting a response
   const disableSubmit = !searchPhrase.trim().length || anyResponseLoading;
@@ -102,6 +114,13 @@ const AIAssistant = () => {
     let latestStreamingResponse = null;
 
     const updateStreamingResponse = (updateFunction) => {
+      if (isScrolledToBottom()) {
+        // jump to the bottom when the new card is added
+        setWasAtBottom(true);
+      } else {
+        // but don't force the user there if they aren't already scrolled there
+        setWasAtBottom(false);
+      }
       setStreamingResponse((prevResp) => {
         const updatedResp = updateFunction(prevResp);
         // keep track of the latest state in a local variable so it is always current
@@ -110,13 +129,14 @@ const AIAssistant = () => {
       });
     };
 
-    const knowledgeEndpoint = process.env.NODE_ENV === 'production' ? 'chat' : 'mock-chat';
+    const knowledgeEndpoint = 'chat'//process.env.NODE_ENV === 'production' ? 'chat' : 'mock-chat';
 
     const assistantConnection = new EventSource(
       `/api/dojo/knowledge/${knowledgeEndpoint}?query=${searchPhrase}`
     );
 
     assistantConnection.addEventListener('stream-answer', (event) => {
+      console.log('stream-aswer', event.data)
       updateStreamingResponse((prevResp) => ({
         ...prevResp,
         answer: (prevResp.answer || '') + event.data,
@@ -125,8 +145,6 @@ const AIAssistant = () => {
 
     assistantConnection.addEventListener('stream-paragraphs', async (event) => {
       const respData = JSON.parse(event.data);
-      console.log('this is stream-paragraphs event', event)
-      console.log('this is the parsed data', respData.candidate_paragraphs)
 
       if (Array.isArray(respData.candidate_paragraphs)) {
         const paragraphs = respData.candidate_paragraphs;
@@ -167,6 +185,7 @@ const AIAssistant = () => {
 
     assistantConnection.addEventListener('stream-complete', () => {
       // TODO: if paragraphs/documents aren't present, set with an empty array/object here
+      console.log('latestStreamingResponse', latestStreamingResponse)
       setResponses((prevResps) => ({
         ...prevResps,
         [queryKey]: { data: latestStreamingResponse, status: 'success' }
@@ -319,7 +338,7 @@ const AIAssistant = () => {
           }}
         />
       </Box>
-      <Tooltip title="Scroll to bottom" arrow>
+      {showScrollToBottom && (
         <Fab
           size="small"
           color="primary"
@@ -329,7 +348,7 @@ const AIAssistant = () => {
         >
           <ArrowDownwardIcon />
         </Fab>
-      </Tooltip>
+      )}
     </Container>
   );
 };
