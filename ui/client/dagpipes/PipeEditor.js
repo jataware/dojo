@@ -71,13 +71,16 @@ const initialNodeTypeValues = {
     name: '',
     description: '',
   },
-  sum: (() => {
-    const acc = {};
-    dimensions.forEach((label) => {
-      acc[label] = false;
-    });
-    return acc;
-  })(),
+  sum: {
+    dimension: (() => {
+      const acc = {};
+      dimensions.forEach((label) => {
+        acc[label] = false;
+      });
+      return acc;
+    })(),
+    aggregation: 'sum',
+  },
   threshold: {
     value: '',
     type: threshold_ops[0]
@@ -191,10 +194,21 @@ const PipeEditor = () => {
       let input;
 
       if (node.type === 'sum') {
-        input = {
-          ...node.data.input,
-          [event.target.name]: event.target.checked
-        };
+        if (event.target.type === 'select-one') {
+          input = {
+            ...node.data.input,
+            [event.target.name]: event.target.value
+          };
+        } else {
+          // otherwise handle the checkbox
+          input = {
+            ...node.data.input,
+            dimension: {
+              ...node.data.input.dimension,
+              [event.target.name]: event.target.checked
+            }
+          };
+        }
       } else if (node.type === 'threshold') {
         const property_changed = event.target.type === 'number' ? 'value' : 'type';
 
