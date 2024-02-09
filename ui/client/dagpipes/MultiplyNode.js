@@ -3,10 +3,12 @@ import {
   Handle, Position
 } from 'reactflow';
 
+import ModelerSelect from './ModelerSelect';
+
 import NodeBase from './NodeBase';
 import { topHandle, bottomHandle, NodeTitles } from './constants';
 
-function CustomNode() {
+function CustomNode({ id, data }) {
   const leftHandle = { left: '51px', ...topHandle };
   const rightHandle = { left: '128px', ...topHandle };
   return (
@@ -25,6 +27,21 @@ function CustomNode() {
           position={Position.Top}
           style={rightHandle}
         />
+        <div style={{ margin: '16px' }}>
+          <ModelerSelect
+            value={data.input}
+            label="Operation"
+            onChange={(event) => data.onChange(id, event)}
+            options={[
+              { label: 'Add', value: 'add' },
+              { label: 'Subtract', value: 'subtract' },
+              { label: 'Multiply', value: 'multiply' },
+              { label: 'Divide', value: 'divide' },
+              { label: 'Power', value: 'power' },
+            ]}
+            name="join"
+          />
+        </div>
         <Handle
           type="source"
           position={Position.Bottom}
