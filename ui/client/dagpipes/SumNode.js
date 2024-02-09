@@ -10,6 +10,7 @@ import Checkbox from '@mui/material/Checkbox';
 import Typography from '@mui/material/Typography';
 
 import NodeBase from './NodeBase';
+import ModelerSelect from './ModelerSelect';
 import {
   dimensions, topHandle, bottomHandle, NodeTitles
 } from './constants';
@@ -56,6 +57,23 @@ function DimensionCheckboxes({
           />
         ))}
       </FormGroup>
+      <div style={{ marginTop: '16px' }}>
+        <ModelerSelect
+          value={input.aggregation}
+          label="Aggregation"
+          onChange={(event) => onChange(nodeId, event)}
+          options={[
+            { label: 'Sum', value: 'sum' },
+            { label: 'Mean', value: 'mean' },
+            { label: 'Median', value: 'median' },
+            { label: 'Max', value: 'max' },
+            { label: 'Min', value: 'min' },
+            { label: 'Standard Deviation', value: 'standard_deviation' },
+            { label: 'Mode', value: 'mode' },
+          ]}
+          name="aggregation"
+        />
+      </div>
       <Handle
         type="source"
         position={Position.Bottom}
