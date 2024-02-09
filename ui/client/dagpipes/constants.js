@@ -43,5 +43,6 @@ export const NodeTitles = {
   SAVE: 'Save',
   MULTIPLY: 'Join', // change example: 'Join'
   FILTER_BY_COUNTRY: 'Filter By Country', // was Country Split
-  THRESHOLD: 'Threshold'
+  THRESHOLD: 'Threshold',
+  SCALAR_OPERATION: 'Scalar Operation',
 };

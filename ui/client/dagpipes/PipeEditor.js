@@ -39,6 +39,7 @@ import MultiplyNode from './MultiplyNode';
 import ThresholdNode from './ThresholdNode';
 import FilterByCountryNode from './FilterByCountryNode';
 import SumNode from './SumNode';
+import ScalarOperationNode from './ScalarOperationNode';
 import Footer from './Footer';
 import ModelerResolution from './ModelerResolution';
 import DragBar from './DragBar';
@@ -59,6 +60,7 @@ const nodeTypes = {
   threshold: ThresholdNode,
   filter_by_country: FilterByCountryNode,
   sum: SumNode,
+  scalar_operation: ScalarOperationNode,
 };
 
 // set up the labels/initial values for the sum/reduce_by checkboxes
@@ -90,6 +92,11 @@ const initialNodeTypeValues = {
   },
   filter_by_country: [],
   multiply: 'multiply',
+  scalar_operation: {
+    operation: 'add',
+    value: 0,
+    scalar_position: '',
+  },
 };
 
 const genNodeId = () => `n_${window.crypto.randomUUID()}`;
@@ -203,7 +210,7 @@ const PipeEditor = () => {
           ...node.data.input,
           [event.target.name]: event.target[event_type]
         };
-      } else if (node.type === 'threshold') {
+      } else if (node.type === 'threshold' || node.type === 'scalar_operation') {
         const property_changed = event.target.type === 'number' ? 'value' : 'type';
 
         input = {
