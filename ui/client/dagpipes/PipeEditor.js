@@ -61,6 +61,15 @@ const nodeTypes = {
   sum: SumNode,
 };
 
+// set up the labels/initial values for the sum/reduce_by checkboxes
+const sumCheckboxes = dimensions.reduce((checkboxes, label) => {
+  // eslint-disable-next-line no-param-reassign
+  checkboxes[label] = false;
+  return checkboxes;
+}, {});
+
+// This sets up the inputs for each node. Any new input has to be added here
+// in order for it to be recognized by react flow
 const initialNodeTypeValues = {
   load: {
     data_source: '',
@@ -72,13 +81,7 @@ const initialNodeTypeValues = {
     description: '',
   },
   sum: {
-    dimension: (() => {
-      const acc = {};
-      dimensions.forEach((label) => {
-        acc[label] = false;
-      });
-      return acc;
-    })(),
+    ...sumCheckboxes,
     aggregation: 'sum',
   },
   threshold: {
@@ -185,6 +188,7 @@ const PipeEditor = () => {
     event.dataTransfer.dropEffect = 'move';
   }, []);
 
+  // This controls how the data from a node's inputs makes it into react flow
   const onNodeChange = useCallback((currNodeId, event) => {
     setNodes((nds) => nds.map((node) => {
       if (node.id !== currNodeId) {
@@ -194,21 +198,11 @@ const PipeEditor = () => {
       let input;
 
       if (node.type === 'sum') {
-        if (event.target.type === 'select-one') {
-          input = {
-            ...node.data.input,
-            [event.target.name]: event.target.value
-          };
-        } else {
-          // otherwise handle the checkbox
-          input = {
-            ...node.data.input,
-            dimension: {
-              ...node.data.input.dimension,
-              [event.target.name]: event.target.checked
-            }
-          };
-        }
+        const event_type = event.target.type === 'select-one' ? 'value' : 'checked';
+        input = {
+          ...node.data.input,
+          [event.target.name]: event.target[event_type]
+        };
       } else if (node.type === 'threshold') {
         const property_changed = event.target.type === 'number' ? 'value' : 'type';
 

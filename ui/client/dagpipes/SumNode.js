@@ -44,7 +44,7 @@ function DimensionCheckboxes({
                 onChange={onChange.bind(this, nodeId)}
                 name={label}
                 disableRipple
-                checked={input.dimension[label]}
+                checked={input[label]}
                 sx={{
                   color: pink[800],
                   '&.Mui-checked': {
@@ -57,7 +57,7 @@ function DimensionCheckboxes({
           />
         ))}
       </FormGroup>
-      <div style={{ margin: '16px' }}>
+      <div style={{ marginTop: '16px' }}>
         <ModelerSelect
           value={input.aggregation}
           label="Aggregation"
