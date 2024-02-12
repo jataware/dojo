@@ -23,6 +23,7 @@
 .react-flow__node-sum,
 .react-flow__node-load,
 .react-flow__node-save,
+.react-flow__node-threshold,
 .react-flow__node-scalar_operation {
   width: 16rem;
 }

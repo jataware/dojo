@@ -15,12 +15,27 @@ import ModelerSelect from './ModelerSelect';
 import NodeBase from './NodeBase';
 import { topHandle, bottomHandle, NodeTitles } from './constants';
 
+const scalarPositionRadios = {
+  divide: [
+    { value: 'denominator', label: 'Denominator' }, { value: 'numerator', label: 'Numerator' }
+  ],
+  power: [
+    { value: 'exponent', label: 'Exponent' }, { value: 'base', label: 'Base' }
+  ]
+};
+
 function CustomNode({ id, data, handleId }) {
-  const [showPosition, setShowPosition] = useState(false);
+  const [selectedOperation, setSelectedOperation] = useState('');
+
+  const validNumber = (value) => (
+    (typeof value === 'string' ? value.trim() !== '' : true) && Number.isFinite(Number(value))
+  );
 
   const handleOperationChange = (event) => {
     if (event.target.value === 'divide' || event.target.value === 'power') {
-      setShowPosition(true);
+      setSelectedOperation(event.target.value);
+    } else {
+      setSelectedOperation('');
     }
     data.onChange(id, event);
   };
@@ -48,37 +63,40 @@ function CustomNode({ id, data, handleId }) {
           name="operation"
         />
       </div>
-      {showPosition && (
+      {selectedOperation && (
         <FormControl sx={{ marginX: 2 }}>
-          <FormLabel>Scalar Position</FormLabel>
+          <FormLabel sx={{ fontSize: 'caption.fontSize' }}>Scalar Position</FormLabel>
           <RadioGroup
             row
-            defaultValue="denominator"
-            name="scalar_position"
+            name={`scalar_position_${selectedOperation}`}
+            value={data.input[`scalar_position_${selectedOperation}`]}
+            onChange={(event) => data.onChange(id, event)}
           >
-            <FormControlLabel
-              value="numerator"
-              slotProps={{ typography: { variant: 'caption' } }}
-              control={<Radio size="small" />}
-              label="Numerator"
-            />
-            <FormControlLabel
-              value="denominator"
-              slotProps={{ typography: { variant: 'caption' } }}
-              control={<Radio size="small" />}
-              label="Denominator"
-            />
+            {scalarPositionRadios[selectedOperation].map((sp) => (
+              <FormControlLabel
+                key={sp.value}
+                value={sp.value}
+                slotProps={{ typography: { variant: 'caption' } }}
+                control={<Radio size="small" />}
+                label={sp.label}
+              />
+            ))}
           </RadioGroup>
         </FormControl>
       )}
       <div style={{ margin: '16px' }}>
         <TextField
-          type="number"
+          error={!validNumber(data.input.value)}
           className="nodrag"
           label="Value"
           value={data.input.value}
           placeholder="1"
+          required
+          name="value"
           onChange={data.onChange.bind(this, id)}
+          helperText={
+            !validNumber(data.input.value) && 'Value must be a valid number and cannot be empty.'
+        }
           InputLabelProps={{
             shrink: true,
           }}

@@ -95,7 +95,8 @@ const initialNodeTypeValues = {
   scalar_operation: {
     operation: 'add',
     value: 0,
-    scalar_position: '',
+    scalar_position_divide: 'denominator',
+    scalar_position_power: 'exponent',
   },
 };
 
@@ -206,25 +207,17 @@ const PipeEditor = () => {
 
       if (node.type === 'sum') {
         const event_type = event.target.type === 'select-one' ? 'value' : 'checked';
+
         input = {
           ...node.data.input,
           [event.target.name]: event.target[event_type]
         };
-      } else if (node.type === 'threshold') {
-        const property_changed = event.target.type === 'number' ? 'value' : 'type';
-
-        input = {
-          ...node.data.input,
-          [property_changed]: event.target.value
-        };
-      } else if (node.type === 'scalar_operation') {
-        const property_changed = event.target.type === 'number' ? 'value' : 'operation';
-
-        input = {
-          ...node.data.input,
-          [property_changed]: event.target.value
-        };
-      } else if (node.type === 'load' || node.type === 'save') {
+      } else if (
+        node.type === 'load'
+        || node.type === 'save'
+        || node.type === 'scalar_operation'
+        || node.type === 'threshold'
+      ) {
         input = {
           ...node.data.input,
           [event.target.name]: event.target.value
