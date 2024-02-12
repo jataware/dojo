@@ -210,8 +210,15 @@ const PipeEditor = () => {
           ...node.data.input,
           [event.target.name]: event.target[event_type]
         };
-      } else if (node.type === 'threshold' || node.type === 'scalar_operation') {
+      } else if (node.type === 'threshold') {
         const property_changed = event.target.type === 'number' ? 'value' : 'type';
+
+        input = {
+          ...node.data.input,
+          [property_changed]: event.target.value
+        };
+      } else if (node.type === 'scalar_operation') {
+        const property_changed = event.target.type === 'number' ? 'value' : 'operation';
 
         input = {
           ...node.data.input,

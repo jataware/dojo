@@ -1,8 +1,13 @@
-import React, { memo } from 'react';
+import React, { memo, useState } from 'react';
 import {
   Handle, Position
 } from 'reactflow';
 
+import Radio from '@mui/material/Radio';
+import RadioGroup from '@mui/material/RadioGroup';
+import FormControlLabel from '@mui/material/FormControlLabel';
+import FormControl from '@mui/material/FormControl';
+import FormLabel from '@mui/material/FormLabel';
 import TextField from '@mui/material/TextField';
 
 import ModelerSelect from './ModelerSelect';
@@ -11,6 +16,15 @@ import NodeBase from './NodeBase';
 import { topHandle, bottomHandle, NodeTitles } from './constants';
 
 function CustomNode({ id, data, handleId }) {
+  const [showPosition, setShowPosition] = useState(false);
+
+  const handleOperationChange = (event) => {
+    if (event.target.value === 'divide' || event.target.value === 'power') {
+      setShowPosition(true);
+    }
+    data.onChange(id, event);
+  };
+
   return (
     <div>
       <NodeBase title={NodeTitles.SCALAR_OPERATION} />
@@ -24,7 +38,7 @@ function CustomNode({ id, data, handleId }) {
         <ModelerSelect
           value={data.input.operation}
           label="Operation"
-          onChange={(event) => data.onChange(id, event)}
+          onChange={handleOperationChange}
           options={[
             { label: 'Add', value: 'add' },
             { label: 'Multiply', value: 'multiply' },
@@ -34,6 +48,29 @@ function CustomNode({ id, data, handleId }) {
           name="operation"
         />
       </div>
+      {showPosition && (
+        <FormControl sx={{ marginX: 2 }}>
+          <FormLabel>Scalar Position</FormLabel>
+          <RadioGroup
+            row
+            defaultValue="denominator"
+            name="scalar_position"
+          >
+            <FormControlLabel
+              value="numerator"
+              slotProps={{ typography: { variant: 'caption' } }}
+              control={<Radio size="small" />}
+              label="Numerator"
+            />
+            <FormControlLabel
+              value="denominator"
+              slotProps={{ typography: { variant: 'caption' } }}
+              control={<Radio size="small" />}
+              label="Denominator"
+            />
+          </RadioGroup>
+        </FormControl>
+      )}
       <div style={{ margin: '16px' }}>
         <TextField
           type="number"
