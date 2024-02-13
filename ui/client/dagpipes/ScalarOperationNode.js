@@ -90,7 +90,7 @@ function CustomNode({ id, data, handleId }) {
           className="nodrag"
           label="Value"
           value={data.input.value}
-          placeholder="1"
+          placeholder="0"
           required
           name="value"
           onChange={data.onChange.bind(this, id)}

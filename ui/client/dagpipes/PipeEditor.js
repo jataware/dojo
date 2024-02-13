@@ -94,7 +94,7 @@ const initialNodeTypeValues = {
   multiply: 'multiply',
   scalar_operation: {
     operation: 'add',
-    value: 0,
+    value: '0',
     scalar_position_divide: 'denominator',
     scalar_position_power: 'exponent',
   },
