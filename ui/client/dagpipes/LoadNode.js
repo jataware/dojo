@@ -94,6 +94,7 @@ function SelectFeature({ input, nodeId, onChange }) {
         label="Data Source"
         onChange={handleSelectChange}
         name="data_source"
+        emptyOption
       >
         {Object.keys(savedDatasets).map((datasetId) => (
           <optgroup key={datasetId} label={savedDatasets[datasetId].name}>
@@ -142,6 +143,7 @@ function SelectFeature({ input, nodeId, onChange }) {
           onChange={(event) => onChange(nodeId, event)}
           options={aggList}
           name="geo_aggregation_function"
+          emptyOption
         />
       </div>
       <ModelerSelect
@@ -150,6 +152,7 @@ function SelectFeature({ input, nodeId, onChange }) {
         onChange={(event) => onChange(nodeId, event)}
         options={aggList}
         name="time_aggregation_function"
+        emptyOption
       />
       <Handle
         type="source"
