@@ -1,4 +1,4 @@
-import React, { memo } from 'react';
+import React, { memo, useEffect, useState } from 'react';
 import {
   Handle, Position
 } from 'reactflow';
@@ -10,10 +10,32 @@ import ModelerSelect from '../ModelerSelect';
 import NodeBase from './NodeBase';
 import { topHandle, bottomHandle, NodeTitles } from '../constants';
 
+// Custom debounced effect hook
+function useDebouncedEffect(effect, delay) {
+  useEffect(() => {
+    const handler = setTimeout(() => effect(), delay);
+
+    return () => clearTimeout(handler);
+  }, [effect, delay]);
+}
+
 function CustomNode({ id, data, handleId }) {
-  // const validNumber = (value) => (
-  //   (typeof value === 'string' ? value.trim() !== '' : true) && Number.isFinite(Number(value))
-  // );
+  const [validIndexInput, setValidIndexInput] = useState(true);
+
+  const validateIndex = (input) => {
+    // remove all whitespace
+    const strippedInput = input.replace(/\s+/g, '');
+    // matches: single integer or slice, or a comma separated list of integers and/or slices
+    const regex = /^(-?\d+|(-?\d+:-?\d+))(,(-?\d+|(-?\d+:-?\d+)))*(,)?$/;
+    if (regex.test(strippedInput) || !strippedInput.length) {
+      setValidIndexInput(true);
+    } else {
+      setValidIndexInput(false);
+    }
+  };
+
+  // Use the custom debounced effect hook
+  useDebouncedEffect(() => validateIndex(data.input.index), 1000);
 
   const handleOperationChange = (event) => {
     data.onChange(id, event);
@@ -44,17 +66,16 @@ function CustomNode({ id, data, handleId }) {
       </div>
       <div style={{ margin: '16px' }}>
         <TextField
-          // error={!validNumber(data.input.index)}
+          error={!validIndexInput}
           className="nodrag"
           label="Index"
           value={data.input.index}
-          placeholder="0"
-          required
           name="index"
           onChange={data.onChange.bind(this, id)}
-          // helperText={
-          //   !validNumber(data.input.index) && 'Value must be a valid number and cannot be empty.'
-          // }
+          helperText={
+            !validIndexInput
+            && 'Input must be an integer, a pair of colon-separated integers (1:5), or a list of integers and/or pairs separated by commas'
+          }
           InputLabelProps={{
             shrink: true,
           }}
