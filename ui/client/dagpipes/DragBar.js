@@ -73,6 +73,7 @@ export default () => {
         onDragStart={onDragStart}
       />
       <DragButton label={NodeTitles.REDUCE_BY} name="sum" onDragStart={onDragStart} />
+      <DragButton label={NodeTitles.SCALAR_OPERATION} name="scalar_operation" onDragStart={onDragStart} />
       <DragButton label={NodeTitles.SAVE} name="save" onDragStart={onDragStart} green />
     </div>
   );

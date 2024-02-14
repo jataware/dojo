@@ -3,7 +3,7 @@ import React from 'react';
 import TextField from '@mui/material/TextField';
 
 const ModelerSelect = ({
-  value, label, onChange, options, children, name
+  value, label, onChange, options, children, name, emptyOption
 }) => (
   <TextField
     InputLabelProps={{
@@ -23,7 +23,7 @@ const ModelerSelect = ({
     sx={{ backgroundColor: 'grey.50' }}
   >
     {/* eslint-disable-next-line jsx-a11y/control-has-associated-label */}
-    <option value="" />
+    {emptyOption && <option value="" />}
     {children
       || options.map((option) => (
         <option

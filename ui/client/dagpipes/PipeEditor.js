@@ -39,6 +39,7 @@ import MultiplyNode from './MultiplyNode';
 import ThresholdNode from './ThresholdNode';
 import FilterByCountryNode from './FilterByCountryNode';
 import SumNode from './SumNode';
+import ScalarOperationNode from './ScalarOperationNode';
 import Footer from './Footer';
 import ModelerResolution from './ModelerResolution';
 import DragBar from './DragBar';
@@ -59,6 +60,7 @@ const nodeTypes = {
   threshold: ThresholdNode,
   filter_by_country: FilterByCountryNode,
   sum: SumNode,
+  scalar_operation: ScalarOperationNode,
 };
 
 // set up the labels/initial values for the sum/reduce_by checkboxes
@@ -90,6 +92,12 @@ const initialNodeTypeValues = {
   },
   filter_by_country: [],
   multiply: 'multiply',
+  scalar_operation: {
+    operation: 'add',
+    value: '0',
+    scalar_position_divide: 'denominator',
+    scalar_position_power: 'exponent',
+  },
 };
 
 const genNodeId = () => `n_${window.crypto.randomUUID()}`;
@@ -199,18 +207,17 @@ const PipeEditor = () => {
 
       if (node.type === 'sum') {
         const event_type = event.target.type === 'select-one' ? 'value' : 'checked';
+
         input = {
           ...node.data.input,
           [event.target.name]: event.target[event_type]
         };
-      } else if (node.type === 'threshold') {
-        const property_changed = event.target.type === 'number' ? 'value' : 'type';
-
-        input = {
-          ...node.data.input,
-          [property_changed]: event.target.value
-        };
-      } else if (node.type === 'load' || node.type === 'save') {
+      } else if (
+        node.type === 'load'
+        || node.type === 'save'
+        || node.type === 'scalar_operation'
+        || node.type === 'threshold'
+      ) {
         input = {
           ...node.data.input,
           [event.target.name]: event.target.value

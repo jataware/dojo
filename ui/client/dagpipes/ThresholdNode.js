@@ -28,6 +28,7 @@ function Select({
         type="number"
         className="nodrag"
         label="Value"
+        name="value"
         value={input.value}
         placeholder="1"
         onChange={onChange.bind(this, nodeId)}
