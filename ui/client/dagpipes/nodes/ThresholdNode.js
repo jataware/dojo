@@ -5,10 +5,10 @@ import {
 import TextField from '@mui/material/TextField';
 
 import NodeBase from './NodeBase';
-import ModelerSelect from './ModelerSelect';
+import ModelerSelect from '../ModelerSelect';
 import {
   threshold_ops, topHandle, bottomHandle, NodeTitles
-} from './constants';
+} from '../constants';
 
 const options = threshold_ops.map((i) => ({ value: i, label: i }));
 

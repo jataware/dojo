@@ -9,7 +9,7 @@ import TextField from '@mui/material/TextField';
 import NodeBase from './NodeBase';
 import {
   topHandle, bottomHandle, countries, NodeTitles
-} from './constants';
+} from '../constants';
 
 /**
  *

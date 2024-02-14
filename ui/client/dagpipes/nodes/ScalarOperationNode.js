@@ -10,10 +10,10 @@ import FormControl from '@mui/material/FormControl';
 import FormLabel from '@mui/material/FormLabel';
 import TextField from '@mui/material/TextField';
 
-import ModelerSelect from './ModelerSelect';
+import ModelerSelect from '../ModelerSelect';
 
 import NodeBase from './NodeBase';
-import { topHandle, bottomHandle, NodeTitles } from './constants';
+import { topHandle, bottomHandle, NodeTitles } from '../constants';
 
 const scalarPositionRadios = {
   divide: [

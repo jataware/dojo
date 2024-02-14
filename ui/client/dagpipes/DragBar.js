@@ -26,7 +26,7 @@ const useStyles = makeStyles()((theme) => ({
 }));
 
 const DragButton = ({
-  label, name, onDragStart, green
+  label, name, onDragStart, green, smallText
 }) => (
   <Tooltip
     title={`Drag and drop the ${label} Node to learn more`}
@@ -47,7 +47,7 @@ const DragButton = ({
         },
       }}
     >
-      <Typography variant="caption" sx={{ cursor: 'grab' }}>
+      <Typography variant="caption" sx={{ cursor: 'grab', fontSize: smallText ? '0.6rem' : 'caption.fontSize' }}>
         &nbsp;{label}
       </Typography>
     </Button>
@@ -74,6 +74,7 @@ export default () => {
       />
       <DragButton label={NodeTitles.REDUCE_BY} name="sum" onDragStart={onDragStart} />
       <DragButton label={NodeTitles.SCALAR_OPERATION} name="scalar_operation" onDragStart={onDragStart} />
+      <DragButton label={NodeTitles.MASK_DISTANCE} name="mask_distance" onDragStart={onDragStart} smallText />
       <DragButton label={NodeTitles.SAVE} name="save" onDragStart={onDragStart} green />
     </div>
   );

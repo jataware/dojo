@@ -10,18 +10,18 @@ import FormGroup from '@mui/material/FormGroup';
 import FormControlLabel from '@mui/material/FormControlLabel';
 import Checkbox from '@mui/material/Checkbox';
 
-import InlineDocLink from '../components/uiComponents/InlineDocLink';
+import InlineDocLink from '../../components/uiComponents/InlineDocLink';
 import NodeBase from './NodeBase';
-import ModelerSelect from './ModelerSelect';
+import ModelerSelect from '../ModelerSelect';
 import {
   setGeoResolutionColumn,
   setTimeResolutionColumn,
   addSelectedFeature,
   removeSelectedFeature,
-} from './dagSlice';
+} from '../dagSlice';
 import {
   bottomHandle, aggregation_functions, NodeTitles
-} from './constants';
+} from '../constants';
 
 const aggList = aggregation_functions.map((res) => ({ value: res, label: res }));
 
