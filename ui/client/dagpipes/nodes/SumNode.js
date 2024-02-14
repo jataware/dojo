@@ -10,10 +10,10 @@ import Checkbox from '@mui/material/Checkbox';
 import Typography from '@mui/material/Typography';
 
 import NodeBase from './NodeBase';
-import ModelerSelect from './ModelerSelect';
+import ModelerSelect from '../ModelerSelect';
 import {
   dimensions, topHandle, bottomHandle, NodeTitles
-} from './constants';
+} from '../constants';
 
 function DimensionCheckboxes({
   input, handleId, nodeId, onChange

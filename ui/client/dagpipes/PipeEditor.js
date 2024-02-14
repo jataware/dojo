@@ -33,13 +33,14 @@ import {
   setFlowcastJobId,
 } from './dagSlice';
 
-import LoadNode from './LoadNode';
-import SaveNode from './SaveNode';
-import MultiplyNode from './MultiplyNode';
-import ThresholdNode from './ThresholdNode';
-import FilterByCountryNode from './FilterByCountryNode';
-import SumNode from './SumNode';
-import ScalarOperationNode from './ScalarOperationNode';
+import LoadNode from './nodes/LoadNode';
+import SaveNode from './nodes/SaveNode';
+import MultiplyNode from './nodes/MultiplyNode';
+import ThresholdNode from './nodes/ThresholdNode';
+import FilterByCountryNode from './nodes/FilterByCountryNode';
+import SumNode from './nodes/SumNode';
+import MaskToDistanceFieldNode from './nodes/MaskToDistanceFieldNode';
+import ScalarOperationNode from './nodes/ScalarOperationNode';
 import Footer from './Footer';
 import ModelerResolution from './ModelerResolution';
 import DragBar from './DragBar';
@@ -61,6 +62,7 @@ const nodeTypes = {
   filter_by_country: FilterByCountryNode,
   sum: SumNode,
   scalar_operation: ScalarOperationNode,
+  mask_to_distance_field: MaskToDistanceFieldNode,
 };
 
 // set up the labels/initial values for the sum/reduce_by checkboxes

@@ -3,7 +3,7 @@ import React from 'react';
 import Divider from '@mui/material/Divider';
 import Typography from '@mui/material/Typography';
 
-import InlineDocLink from '../components/uiComponents/InlineDocLink';
+import InlineDocLink from '../../components/uiComponents/InlineDocLink';
 
 const NodeBase = ({
   children, title, style

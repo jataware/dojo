@@ -3,10 +3,10 @@ import {
   Handle, Position
 } from 'reactflow';
 
-import ModelerSelect from './ModelerSelect';
+import ModelerSelect from '../ModelerSelect';
 
 import NodeBase from './NodeBase';
-import { topHandle, bottomHandle, NodeTitles } from './constants';
+import { topHandle, bottomHandle, NodeTitles } from '../constants';
 
 function CustomNode({ id, data }) {
   const leftHandle = { left: '51px', ...topHandle };
