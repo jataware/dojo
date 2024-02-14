@@ -41,6 +41,7 @@ import FilterByCountryNode from './nodes/FilterByCountryNode';
 import SumNode from './nodes/SumNode';
 import MaskToDistanceFieldNode from './nodes/MaskToDistanceFieldNode';
 import ScalarOperationNode from './nodes/ScalarOperationNode';
+import SelectSliceNode from './nodes/SelectSliceNode';
 import Footer from './Footer';
 import ModelerResolution from './ModelerResolution';
 import DragBar from './DragBar';
@@ -63,6 +64,7 @@ const nodeTypes = {
   sum: SumNode,
   scalar_operation: ScalarOperationNode,
   mask_to_distance_field: MaskToDistanceFieldNode,
+  select_slice: SelectSliceNode,
 };
 
 // set up the labels/initial values for the sum/reduce_by checkboxes
@@ -99,6 +101,10 @@ const initialNodeTypeValues = {
     value: '0',
     scalar_position_divide: 'denominator',
     scalar_position_power: 'exponent',
+  },
+  select_slice: {
+    dimension: '',
+    index: '',
   },
 };
 
@@ -219,6 +225,7 @@ const PipeEditor = () => {
         || node.type === 'save'
         || node.type === 'scalar_operation'
         || node.type === 'threshold'
+        || node.type === 'select_slice'
       ) {
         input = {
           ...node.data.input,

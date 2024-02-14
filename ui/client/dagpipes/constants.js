@@ -46,4 +46,5 @@ export const NodeTitles = {
   THRESHOLD: 'Threshold',
   SCALAR_OPERATION: 'Scalar Operation',
   MASK_TO_DISTANCE_FIELD: 'Mask to Distance Field',
+  SELECT_SLICE: 'Select Slice',
 };

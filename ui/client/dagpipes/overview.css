@@ -6,7 +6,8 @@
 .react-flow__node-save, .react-flow__node-load,
 .react-flow__node-sum, .react-flow__node-multiply,
 .react-flow__node-filter_by_country, .react-flow__node-threshold,
-.react-flow__node-scalar_operation, .react-flow__node-mask_to_distance_field
+.react-flow__node-scalar_operation, .react-flow__node-mask_to_distance_field,
+.react-flow__node-select_slice
 {
   font-size: 10px;
   width: 180px;
@@ -24,6 +25,7 @@
 .react-flow__node-load,
 .react-flow__node-save,
 .react-flow__node-threshold,
+.react-flow__node-select_slice,
 .react-flow__node-scalar_operation,
 .react-flow__node-mask_to_distance_field {
   width: 16rem;
