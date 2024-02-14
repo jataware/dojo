@@ -45,5 +45,5 @@ export const NodeTitles = {
   FILTER_BY_COUNTRY: 'Filter By Country', // was Country Split
   THRESHOLD: 'Threshold',
   SCALAR_OPERATION: 'Scalar Operation',
-  MASK_DISTANCE: 'Mask to Distance Field',
+  MASK_TO_DISTANCE_FIELD: 'Mask to Distance Field',
 };

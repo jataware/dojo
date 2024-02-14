@@ -39,7 +39,7 @@ import MultiplyNode from './nodes/MultiplyNode';
 import ThresholdNode from './nodes/ThresholdNode';
 import FilterByCountryNode from './nodes/FilterByCountryNode';
 import SumNode from './nodes/SumNode';
-import MaskDistanceNode from './nodes/MaskDistanceNode';
+import MaskToDistanceFieldNode from './nodes/MaskToDistanceFieldNode';
 import ScalarOperationNode from './nodes/ScalarOperationNode';
 import Footer from './Footer';
 import ModelerResolution from './ModelerResolution';
@@ -62,7 +62,7 @@ const nodeTypes = {
   filter_by_country: FilterByCountryNode,
   sum: SumNode,
   scalar_operation: ScalarOperationNode,
-  mask_distance: MaskDistanceNode,
+  mask_to_distance_field: MaskToDistanceFieldNode,
 };
 
 // set up the labels/initial values for the sum/reduce_by checkboxes

@@ -9,7 +9,7 @@ import { topHandle, bottomHandle, NodeTitles } from '../constants';
 function CustomNode() {
   return (
     <div>
-      <NodeBase title={NodeTitles.MASK_DISTANCE} />
+      <NodeBase title={NodeTitles.MASK_TO_DISTANCE_FIELD} />
       <Handle
         type="target"
         position={Position.Top}
