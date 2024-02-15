@@ -5,7 +5,10 @@ import {
 
 import capitalize from 'lodash/capitalize';
 
+import IconButton from '@mui/material/IconButton';
+import Divider from '@mui/material/Divider';
 import TextField from '@mui/material/TextField';
+import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
 
 import ModelerSelect from '../ModelerSelect';
 
@@ -31,6 +34,7 @@ const Form = ({
 }) => {
   const [validIndexInput, setValidIndexInput] = useState(true);
 
+  // TODO: Update regex to handle slices with just one side (eg :1, -12:)
   const validateIndex = (indexInput) => {
     // remove all whitespace
     const strippedInput = indexInput.replace(/\s+/g, '');
@@ -44,7 +48,7 @@ const Form = ({
   };
 
   // Use the custom debounced effect hook
-  useDebouncedEffect(() => validateIndex(input[nodeIndex].index), 1000);
+  useDebouncedEffect(() => validateIndex(input[nodeIndex]?.index), 1000);
 
   const handleFieldChange = (event) => {
     onChange(id, event, nodeIndex);
@@ -54,7 +58,7 @@ const Form = ({
     <>
       <div style={{ margin: '16px' }}>
         <ModelerSelect
-          value={input[nodeIndex].operation}
+          value={input[nodeIndex]?.operation}
           label="Dimension"
           onChange={handleFieldChange}
           options={dimensionsWithLabels}
@@ -67,7 +71,7 @@ const Form = ({
           error={!validIndexInput}
           className="nodrag"
           label="Index"
-          value={input[nodeIndex].index}
+          value={input[nodeIndex]?.index}
           name="index"
           onChange={handleFieldChange}
           helperText={
@@ -85,6 +89,11 @@ const Form = ({
 };
 
 function CustomNode({ id, data, handleId }) {
+  const handleAddForm = () => {
+    // the current length of data.input.length (the forms) will match the index of the next entry
+    data.onChange(id, 'newSelectSlice', data.input.length);
+  };
+
   return (
     <div>
       <NodeBase title={NodeTitles.SELECT_SLICE} />
@@ -94,7 +103,15 @@ function CustomNode({ id, data, handleId }) {
         id={handleId}
         style={topHandle}
       />
-      <Form onChange={data.onChange} id={id} input={data.input} nodeIndex={0} />
+      {data.input.map((_, index) => (
+        // eslint-disable-next-line react/no-array-index-key
+        <React.Fragment key={index}>
+          <Divider />
+          <Form onChange={data.onChange} id={id} input={data.input} nodeIndex={index} />
+        </React.Fragment>
+      ))}
+      {/* TODO: style button */}
+      <IconButton onClick={handleAddForm}><AddCircleOutlineIcon /></IconButton>
       <Handle
         type="source"
         position={Position.Bottom}

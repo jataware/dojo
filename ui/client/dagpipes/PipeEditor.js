@@ -214,11 +214,21 @@ const PipeEditor = () => {
       let input;
       if (node.type === 'select_slice') {
         // handle multiple generated forms within the same node
-        input = [...node.data.input]; // Create a shallow copy of the input array
-        input[index] = {
-          ...input[index],
-          [event.target.name]: event.target.value,
-        };
+        input = [...node.data.input]; // shallow copy the existing array
+
+        if (event === 'newSelectSlice') {
+          // a special manually generated 'event' just to create initial values for a new form
+          // no values to update yet
+          input[index] = {
+            dimension: '',
+            index: '',
+          };
+        } else {
+          input[index] = {
+            ...input[index],
+            [event.target.name]: event.target.value,
+          };
+        }
       } else if (node.type === 'sum') {
         const event_type = event.target.type === 'select-one' ? 'value' : 'checked';
 
