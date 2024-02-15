@@ -102,10 +102,10 @@ const initialNodeTypeValues = {
     scalar_position_divide: 'denominator',
     scalar_position_power: 'exponent',
   },
-  select_slice: {
+  select_slice: [{
     dimension: '',
     index: '',
-  },
+  }],
 };
 
 const genNodeId = () => `n_${window.crypto.randomUUID()}`;
@@ -205,15 +205,21 @@ const PipeEditor = () => {
   }, []);
 
   // This controls how the data from a node's inputs makes it into react flow
-  const onNodeChange = useCallback((currNodeId, event) => {
+  const onNodeChange = useCallback((currNodeId, event, index) => {
     setNodes((nds) => nds.map((node) => {
       if (node.id !== currNodeId) {
         return node;
       }
 
       let input;
-
-      if (node.type === 'sum') {
+      if (node.type === 'select_slice') {
+        // handle multiple generated forms within the same node
+        input = [...node.data.input]; // Create a shallow copy of the input array
+        input[index] = {
+          ...input[index],
+          [event.target.name]: event.target.value,
+        };
+      } else if (node.type === 'sum') {
         const event_type = event.target.type === 'select-one' ? 'value' : 'checked';
 
         input = {
@@ -225,7 +231,6 @@ const PipeEditor = () => {
         || node.type === 'save'
         || node.type === 'scalar_operation'
         || node.type === 'threshold'
-        || node.type === 'select_slice'
       ) {
         input = {
           ...node.data.input,
