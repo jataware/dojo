@@ -35,12 +35,18 @@ const Form = ({
 }) => {
   const [validIndexInput, setValidIndexInput] = useState(true);
 
-  // TODO: Update regex to handle slices with just one side (eg :1, -12:)
   const validateIndex = (indexInput) => {
     // remove all whitespace
     const strippedInput = indexInput.replace(/\s+/g, '');
-    // matches: single integer or slice, or a comma separated list of integers and/or slices
-    const regex = /^(-?\d+|(-?\d+:-?\d+))(,(-?\d+|(-?\d+:-?\d+)))*(,)?$/;
+
+    // matches an integer with an optional negative
+    const integerPattern = '-?\\d+';
+    // matches any of the following slice patterns: :1, 1:, 1:1
+    const slicePattern = `(:${integerPattern}|${integerPattern}:|${integerPattern}:${integerPattern})`;
+    // can be integers and/or slices separated by commas
+    const regexPattern = `^(${integerPattern}|${slicePattern})(,(${integerPattern}|${slicePattern}))*(,)?$`;
+
+    const regex = new RegExp(regexPattern);
     if (regex.test(strippedInput) || !strippedInput.length) {
       setValidIndexInput(true);
     } else {
