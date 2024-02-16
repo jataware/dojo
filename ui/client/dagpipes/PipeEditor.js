@@ -103,6 +103,8 @@ const initialNodeTypeValues = {
     scalar_position_power: 'exponent',
   },
   select_slice: [{
+    // create a key just for frontend use
+    key: crypto.randomUUID(),
     dimension: '',
     index: '',
   }],
@@ -216,13 +218,17 @@ const PipeEditor = () => {
         // handle multiple generated forms within the same node
         input = [...node.data.input]; // shallow copy the existing array
 
-        if (event === 'newSelectSlice') {
-          // a special manually generated 'event' just to create initial values for a new form
-          // no values to update yet
+        if (event === 'addSelectSlice') {
+          // a special manually generated 'event' to create empty initial values for a new form
+          // include a 'key' value for our React mapping so we can delete & reorder safely
           input[index] = {
+            key: crypto.randomUUID(),
             dimension: '',
             index: '',
           };
+        } else if (event === 'removeSelectSlice') {
+          // remove the item at specified index
+          input = input.toSpliced(index, 1);
         } else {
           input[index] = {
             ...input[index],

@@ -9,6 +9,7 @@ import IconButton from '@mui/material/IconButton';
 import Divider from '@mui/material/Divider';
 import TextField from '@mui/material/TextField';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
+import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
 
 import ModelerSelect from '../ModelerSelect';
 
@@ -91,7 +92,11 @@ const Form = ({
 function CustomNode({ id, data, handleId }) {
   const handleAddForm = () => {
     // the current length of data.input.length (the forms) will match the index of the next entry
-    data.onChange(id, 'newSelectSlice', data.input.length);
+    data.onChange(id, 'addSelectSlice', data.input.length);
+  };
+
+  const handleRemoveForm = (index) => {
+    data.onChange(id, 'removeSelectSlice', index);
   };
 
   return (
@@ -103,11 +108,13 @@ function CustomNode({ id, data, handleId }) {
         id={handleId}
         style={topHandle}
       />
-      {data.input.map((_, index) => (
-        // eslint-disable-next-line react/no-array-index-key
-        <React.Fragment key={index}>
+      {data.input.map((item, index) => (
+        <React.Fragment key={item.key}>
           <Divider />
           <Form onChange={data.onChange} id={id} input={data.input} nodeIndex={index} />
+          <IconButton onClick={() => handleRemoveForm(index)}>
+            <RemoveCircleOutlineIcon />
+          </IconButton>
         </React.Fragment>
       ))}
       {/* TODO: style button */}
