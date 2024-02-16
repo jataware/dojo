@@ -84,7 +84,7 @@ const Form = ({
           onChange={handleFieldChange}
           helperText={
             !validIndexInput
-            && 'Input must be an integer, a pair of colon-separated integers (1:5), or a list of integers and/or pairs separated by commas'
+            && 'Input must be an integer, a colon-separated range (e.g. 1:5, :5 or 5:) or a comma-separated list of integers and ranges.'
           }
           InputLabelProps={{
             shrink: true,
