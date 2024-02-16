@@ -74,6 +74,14 @@ const sumCheckboxes = dimensions.reduce((checkboxes, label) => {
   return checkboxes;
 }, {});
 
+// the default initial values for a new Select Slice form, which can be user created
+const createDefaultSelectSlice = () => ({
+  // include a 'key' value for our React mapping so we can delete & reorder safely
+  key: crypto.randomUUID(),
+  dimension: '',
+  index: '',
+});
+
 // This sets up the inputs for each node. Any new input has to be added here
 // in order for it to be recognized by react flow
 const initialNodeTypeValues = {
@@ -102,12 +110,7 @@ const initialNodeTypeValues = {
     scalar_position_divide: 'denominator',
     scalar_position_power: 'exponent',
   },
-  select_slice: [{
-    // create a key just for frontend use
-    key: crypto.randomUUID(),
-    dimension: '',
-    index: '',
-  }],
+  select_slice: [createDefaultSelectSlice()],
 };
 
 const genNodeId = () => `n_${window.crypto.randomUUID()}`;
@@ -220,12 +223,7 @@ const PipeEditor = () => {
 
         if (event === 'addSelectSlice') {
           // a special manually generated 'event' to create empty initial values for a new form
-          // include a 'key' value for our React mapping so we can delete & reorder safely
-          input[index] = {
-            key: crypto.randomUUID(),
-            dimension: '',
-            index: '',
-          };
+          input[index] = createDefaultSelectSlice();
         } else if (event === 'removeSelectSlice') {
           // remove the item at specified index
           input = input.toSpliced(index, 1);
