@@ -122,6 +122,7 @@ function CustomNode({ id, data, handleId }) {
           <div
             style={{
               display: 'flex',
+              // if it is the final item, space-between so the add button is on the left
               justifyContent: index === data.input.length - 1 ? 'space-between' : 'flex-end',
               margin: '0 8px 8px',
             }}
@@ -140,6 +141,7 @@ function CustomNode({ id, data, handleId }) {
             >
               <span>
                 <IconButton
+                  // disable the Remove button if there is only a single item
                   disabled={data.input.length === 1}
                   color="error"
                   onClick={() => handleRemoveForm(index)}
