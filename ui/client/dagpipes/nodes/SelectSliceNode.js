@@ -8,8 +8,9 @@ import capitalize from 'lodash/capitalize';
 import IconButton from '@mui/material/IconButton';
 import Divider from '@mui/material/Divider';
 import TextField from '@mui/material/TextField';
+import Tooltip from '@mui/material/Tooltip';
 import AddCircleOutlineIcon from '@mui/icons-material/AddCircleOutline';
-import RemoveCircleOutlineIcon from '@mui/icons-material/RemoveCircleOutline';
+import RemoveIcon from '@mui/icons-material/Remove';
 
 import ModelerSelect from '../ModelerSelect';
 
@@ -73,7 +74,7 @@ const Form = ({
           emptyOption
         />
       </div>
-      <div style={{ margin: '16px' }}>
+      <div style={{ margin: '16px 16px 0' }}>
         <TextField
           error={!validIndexInput}
           className="nodrag"
@@ -118,13 +119,39 @@ function CustomNode({ id, data, handleId }) {
         <React.Fragment key={item.key}>
           <Divider />
           <Form onChange={data.onChange} id={id} input={data.input} nodeIndex={index} />
-          <IconButton onClick={() => handleRemoveForm(index)}>
-            <RemoveCircleOutlineIcon />
-          </IconButton>
+          <div
+            style={{
+              display: 'flex',
+              justifyContent: index === data.input.length - 1 ? 'space-between' : 'flex-end',
+              margin: '0 8px 8px',
+            }}
+          >
+            {/* only show the add button if this is the final item */}
+            {index === data.input.length - 1 && (
+              <Tooltip arrow title="Add another slice">
+                <IconButton color="primary" onClick={handleAddForm}>
+                  <AddCircleOutlineIcon />
+                </IconButton>
+              </Tooltip>
+            )}
+            <Tooltip
+              arrow
+              title={`Remove slice ${data.input.length === 1 ? '(disabled)' : ''}`}
+            >
+              <span>
+                <IconButton
+                  disabled={data.input.length === 1}
+                  color="error"
+                  onClick={() => handleRemoveForm(index)}
+                  sx={{ }}
+                >
+                  <RemoveIcon />
+                </IconButton>
+              </span>
+            </Tooltip>
+          </div>
         </React.Fragment>
       ))}
-      {/* TODO: style button */}
-      <IconButton onClick={handleAddForm}><AddCircleOutlineIcon /></IconButton>
       <Handle
         type="source"
         position={Position.Bottom}
