@@ -74,6 +74,7 @@ export default () => {
       />
       <DragButton label={NodeTitles.REDUCE_BY} name="sum" onDragStart={onDragStart} />
       <DragButton label={NodeTitles.SCALAR_OPERATION} name="scalar_operation" onDragStart={onDragStart} />
+      <DragButton label={NodeTitles.SELECT_SLICE} name="select_slice" onDragStart={onDragStart} />
       <DragButton
         label={NodeTitles.MASK_TO_DISTANCE_FIELD}
         name="mask_to_distance_field"

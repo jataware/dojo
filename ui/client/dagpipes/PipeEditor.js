@@ -41,6 +41,7 @@ import FilterByCountryNode from './nodes/FilterByCountryNode';
 import SumNode from './nodes/SumNode';
 import MaskToDistanceFieldNode from './nodes/MaskToDistanceFieldNode';
 import ScalarOperationNode from './nodes/ScalarOperationNode';
+import SelectSliceNode from './nodes/SelectSliceNode';
 import Footer from './Footer';
 import ModelerResolution from './ModelerResolution';
 import DragBar from './DragBar';
@@ -63,6 +64,7 @@ const nodeTypes = {
   sum: SumNode,
   scalar_operation: ScalarOperationNode,
   mask_to_distance_field: MaskToDistanceFieldNode,
+  select_slice: SelectSliceNode,
 };
 
 // set up the labels/initial values for the sum/reduce_by checkboxes
@@ -71,6 +73,14 @@ const sumCheckboxes = dimensions.reduce((checkboxes, label) => {
   checkboxes[label] = false;
   return checkboxes;
 }, {});
+
+// the default initial values for a new Select Slice form, which can be user created
+const createDefaultSelectSlice = () => ({
+  // include a 'key' value for our React mapping so we can delete & reorder safely
+  key: crypto.randomUUID(),
+  dimension: '',
+  index: '',
+});
 
 // This sets up the inputs for each node. Any new input has to be added here
 // in order for it to be recognized by react flow
@@ -100,6 +110,7 @@ const initialNodeTypeValues = {
     scalar_position_divide: 'denominator',
     scalar_position_power: 'exponent',
   },
+  select_slice: [createDefaultSelectSlice()],
 };
 
 const genNodeId = () => `n_${window.crypto.randomUUID()}`;
@@ -199,15 +210,30 @@ const PipeEditor = () => {
   }, []);
 
   // This controls how the data from a node's inputs makes it into react flow
-  const onNodeChange = useCallback((currNodeId, event) => {
+  const onNodeChange = useCallback((currNodeId, event, index) => {
     setNodes((nds) => nds.map((node) => {
       if (node.id !== currNodeId) {
         return node;
       }
 
       let input;
+      if (node.type === 'select_slice') {
+        // handle multiple generated forms within the same node
+        input = [...node.data.input]; // shallow copy the existing array
 
-      if (node.type === 'sum') {
+        if (event === 'addSelectSlice') {
+          // a special manually generated 'event' to create empty initial values for a new form
+          input[index] = createDefaultSelectSlice();
+        } else if (event === 'removeSelectSlice') {
+          // remove the item at specified index
+          input = input.toSpliced(index, 1);
+        } else {
+          input[index] = {
+            ...input[index],
+            [event.target.name]: event.target.value,
+          };
+        }
+      } else if (node.type === 'sum') {
         const event_type = event.target.type === 'select-one' ? 'value' : 'checked';
 
         input = {
