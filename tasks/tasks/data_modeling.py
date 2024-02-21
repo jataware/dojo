@@ -364,7 +364,6 @@ def run_flowcast_job(context:FlowcastContext) -> dict:
         }
 
 def unhandled_run_flowcast_job(context:FlowcastContext) -> dict:
-    
     graph = context['dag']
     topological_sort(graph)
 
@@ -411,13 +410,27 @@ def unhandled_run_flowcast_job(context:FlowcastContext) -> dict:
             parent, = get_node_parents(node['id'], graph, num_expected=1)
             pipe.threshold(node['id'], parent, Threshold(float(node['data']['input']['value']), ThresholdType[node['data']['input']['type']]))
             
-        elif node['type'] == 'multiply':
+        elif node['type'] == 'multiply': #TODO: rename this from "multiply" to "join"
             left, right = get_node_parents(node['id'], graph, num_expected=2)
-            pipe.multiply(node['id'], left, right)
+            op = node['data']['input']
+            if op == 'add':
+                pipe.add(node['id'], left, right)
+            elif op == 'subtract':
+                pipe.subtract(node['id'], left, right)
+            elif op == 'multiply':
+                pipe.multiply(node['id'], left, right)
+            elif op == 'divide':
+                pipe.divide(node['id'], left, right)
+            elif op == 'power':
+                pipe.power(node['id'], left, right)
+            else:
+                raise Exception(f'Unsupported operation `{op}` for join node. Only supported operations are `add`, `subtract`, `multiply`, `divide`, and `power`.')
                 
-        ################# TODO: needs some updates to expected payload #################
+
         elif node['type'] == 'sum': #rename to sum_reduce
             parent, = get_node_parents(node['id'], graph, num_expected=1)
+            aggregation = node['data']['input']['aggregation']
+            del node['data']['input']['aggregation']
             dim_map:dict[str,bool] = node['data']['input']
 
             # verify that only supported dimensions are selected
@@ -431,8 +444,23 @@ def unhandled_run_flowcast_job(context:FlowcastContext) -> dict:
                 del dim_map['country']
 
             dims = [dim for dim,present in dim_map.items() if present]
-            pipe.sum_reduce(node['id'], parent, dims=dims)
-        ################################################################################
+            if aggregation == 'sum':
+                pipe.sum_reduce(node['id'], parent, dims=dims)
+            elif aggregation == 'mean':
+                pipe.mean_reduce(node['id'], parent, dims=dims)
+            elif aggregation == 'median':
+                pipe.median_reduce(node['id'], parent, dims=dims)
+            elif aggregation == 'max':
+                pipe.max_reduce(node['id'], parent, dims=dims)
+            elif aggregation == 'min':
+                pipe.min_reduce(node['id'], parent, dims=dims)
+            elif aggregation == 'standard deviation':
+                pipe.std_reduce(node['id'], parent, dims=dims)
+            elif aggregation == 'mode':
+                pipe.mode_reduce(node['id'], parent, dims=dims)
+            else:
+                raise Exception(f'Unsupported aggregation `{aggregation}` for reduce_by node. Only supported aggregations are `sum`, `mean`, `median`, `max`, `min`, `standard deviation`, and `mode`.')
+
 
         elif node['type'] == 'save':
             parent, = get_node_parents(node['id'], graph, num_expected=1)
@@ -442,11 +470,74 @@ def unhandled_run_flowcast_job(context:FlowcastContext) -> dict:
             # keep track of save nodes
             saved_nodes.append((parent, outname))
 
+
         elif node['type'] == 'filter_by_country':
             parent, = get_node_parents(node['id'], graph, num_expected=1)
             countries = node['data']['input']
             pipe.reverse_geocode(node['id'], parent, places=countries, admin_level=0)
+
+
+        elif node['type'] == 'scalar_operation':
+            parent, = get_node_parents(node['id'], graph, num_expected=1)
+            op = node['data']['input']['operation']
+            value_str = node['data']['input']['value']
+            value = float(value_str)
+            try: # if value can be narrowed to int, do so
+                value = int(value_str)
+            except ValueError:
+                pass
             
+            if op == 'add':
+                pipe.scalar_add(node['id'], parent, value)
+            elif op == 'subtract':
+                pipe.scalar_subtract(node['id'], parent, value)
+            elif op == 'multiply':
+                pipe.scalar_multiply(node['id'], parent, value)
+            elif op == 'divide':
+                divide_position = node['data']['input']['scalar_position_divide']
+                assert divide_position in ['numerator', 'denominator'], f'Invalid divide position: {divide_position}'
+                pipe.scalar_divide(node['id'], parent, value, divide_position)
+            elif op == 'power':
+                power_position = node['data']['input']['scalar_position_power']
+                assert power_position in ['base', 'exponent'], f'Invalid power position: {power_position}'
+                pipe.scalar_power(node['id'], parent, value, power_position)
+            else:
+                raise Exception(f'Unsupported operation `{op}` for scalar_operation node. Only supported operations are `add`, `subtract`, `multiply`, `divide`, and `power`.')
+
+
+        elif node['type'] == 'mask_to_distance_field':
+            parent, = get_node_parents(node['id'], graph, num_expected=1)
+            pipe.mask_to_distance_field(node['id'], parent)
+
+
+        elif node['type'] == 'select_slice':
+            def to_int_or_slice(index_str:str) -> int|slice:
+                if ':' in index_str:
+                    start,stop = index_str.split(':')
+                    start = int(start.strip())
+                    stop = int(stop.strip())
+                    return slice(start, stop)
+                return int(index_str.strip())
+
+            def to_index(index_str:str) -> int|slice|list[int|slice]:
+                chunks = index_str.split(',')
+                if len(chunks) == 1:
+                    return to_int_or_slice(chunks[0])
+
+                index = []
+                for chunk in chunks:
+                    i = to_int_or_slice(chunk)
+                    if isinstance(i, int):
+                        index.append(i)
+                    else:
+                        index.extend(range(i.start, i.stop))
+
+                return np.array(index)
+
+            indexers = { chunk['dimension']: to_index(chunk['index']) for chunk in node['data']['input'] }
+            pipe.isel(node['id'], parent, indexers, drop=True)
+
+
         #TODO: handling other node types
         else:
             print(f'unhandled node: {node}', flush=True)
