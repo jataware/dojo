@@ -454,12 +454,12 @@ def unhandled_run_flowcast_job(context:FlowcastContext) -> dict:
                 pipe.max_reduce(node['id'], parent, dims=dims)
             elif aggregation == 'min':
                 pipe.min_reduce(node['id'], parent, dims=dims)
-            elif aggregation == 'standard deviation':
+            elif aggregation == 'standard_deviation':
                 pipe.std_reduce(node['id'], parent, dims=dims)
             elif aggregation == 'mode':
                 pipe.mode_reduce(node['id'], parent, dims=dims)
             else:
-                raise Exception(f'Unsupported aggregation `{aggregation}` for reduce_by node. Only supported aggregations are `sum`, `mean`, `median`, `max`, `min`, `standard deviation`, and `mode`.')
+                raise Exception(f'Unsupported aggregation `{aggregation}` for reduce_by node. Only supported aggregations are `sum`, `mean`, `median`, `max`, `min`, `standard_deviation`, and `mode`.')
 
 
         elif node['type'] == 'save':
@@ -507,6 +507,7 @@ def unhandled_run_flowcast_job(context:FlowcastContext) -> dict:
 
         elif node['type'] == 'mask_to_distance_field':
             parent, = get_node_parents(node['id'], graph, num_expected=1)
+            #TODO: need to set include_initial_points. probably have a UI adjustment? or set a default
             pipe.mask_to_distance_field(node['id'], parent)
 
 
