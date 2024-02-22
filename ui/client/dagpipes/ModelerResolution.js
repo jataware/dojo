@@ -111,7 +111,7 @@ const ModelerResolution = () => {
         helperText={
           error
             ? 'Please enter a valid number'
-            : 'Enter a single number for a square grid or two numbers separated by a comma for x,y coordinates'
+            : 'Enter one number for a square grid or two numbers (1,2) for x,y coords'
           }
       />
     </div>

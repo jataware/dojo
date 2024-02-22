@@ -135,7 +135,6 @@ const useStyles = makeStyles()((theme) => ({
     // slightly more spacing than the height of the footer accounts for retina displays
     // otherwise we get a persistent scrollbar on retina
     height: 'calc(100% - 40px)',
-    minHeight: '620px',
   },
   fullWrapper: {
     position: 'absolute',
@@ -161,7 +160,8 @@ const useStyles = makeStyles()((theme) => ({
     margin: `${theme.spacing(4)} ${theme.spacing(2)} ${theme.spacing(2)}`,
   },
   wholeSidebar: {
-    width: '255px',
+    width: '275px',
+    overflow: 'auto',
   },
 }));
 
