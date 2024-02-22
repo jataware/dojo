@@ -9,7 +9,6 @@ import { useSelector } from 'react-redux';
 
 const useStyles = makeStyles()((theme) => ({
   footer: {
-    gridArea: 'footer',
     borderTop: `1px solid ${theme.palette.grey[400]}`,
     height: '38px',
     backgroundColor: theme.palette.grey[200],
@@ -23,14 +22,14 @@ const useStyles = makeStyles()((theme) => ({
 }));
 
 const Footer = () => {
-  const { nodeCount, unsavedChanges } = useSelector((state) => state.dag);
+  const { nodeCount } = useSelector((state) => state.dag);
   const { classes } = useStyles();
 
   return (
-    <footer className={classes.footer}>
+    <div className={classes.footer}>
       <Typography variant="subtitle2" className={classes.text}>
         <span>
-          {nodeCount} node{nodeCount === 1 ? '' : 's'}. {unsavedChanges && (<span>Unsaved Changes.</span>)}
+          {nodeCount} node{nodeCount === 1 ? '' : 's'}
         </span>
         <Tooltip title="View Data Modeling documentation (opens new tab)">
           <Link
@@ -42,7 +41,7 @@ const Footer = () => {
           </Link>
         </Tooltip>
       </Typography>
-    </footer>
+    </div>
   );
 };
 

@@ -13,14 +13,14 @@ const useStyles = makeStyles()((theme) => ({
   sidebar: {
     display: 'flex',
     flexDirection: 'column',
-    gap: theme.spacing(2),
+    gap: theme.spacing(1.5),
     margin: theme.spacing(2),
     '& > button': {
       justifyContent: 'flex-start',
       gap: 0,
       padding: `${theme.spacing(1)} ${theme.spacing(2)}`,
       cursor: 'default',
-      maxWidth: '200px',
+      maxWidth: '208px',
     }
   },
 }));
@@ -73,7 +73,12 @@ export default () => {
         onDragStart={onDragStart}
       />
       <DragButton label={NodeTitles.REDUCE_BY} name="sum" onDragStart={onDragStart} />
-      <DragButton label={NodeTitles.SCALAR_OPERATION} name="scalar_operation" onDragStart={onDragStart} />
+      <DragButton
+        label={NodeTitles.SCALAR_OPERATION}
+        name="scalar_operation"
+        onDragStart={onDragStart}
+        smallText
+      />
       <DragButton label={NodeTitles.SELECT_SLICE} name="select_slice" onDragStart={onDragStart} />
       <DragButton
         label={NodeTitles.MASK_TO_DISTANCE_FIELD}
