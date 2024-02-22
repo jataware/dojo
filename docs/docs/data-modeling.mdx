@@ -88,7 +88,7 @@ Less commonly, depending on the particular data operations you are trying to do,
 
 ### Filter By Country Node
 
-<CenteredImage file="data-modeling-filter-by-country-node.png" title="Filer By Country Node" />
+<CenteredImage file="data-modeling-filter-by-country-node.png" title="Filter By Country Node" />
 
 With this node, you can filter the data coming out of your selected features by the countries you select in the dropdown. You can select multiple countries. The output dataset will be a copy of the input dataset, but with an extra `admin0` (i.e. country) dimension. Every country specified in the Filter By Country Node will be split into its own separate layer along the country dimension of the output. All other values not within the bounds of any of the specified countries will be set to `0`
 
@@ -102,6 +102,28 @@ This node can be used to aggregate a dataset across one or more dimensions. The 
 
 :::tip
 At present, Reduce By Nodes are hardcoded with the options `lat`, `lon`, `time`, and `country`, regardless of what dimensions your data has. Take care to only select dimensions that already exist on your dataset.
+:::
+
+### Scalar Operation
+
+<CenteredImage file="data-modeling-scalar-operation-node.png" width="250px" title="Scalar Operation Node" />
+
+:::note
+The documentation for this node is in progress...
+:::
+
+### Select Slice
+
+:::note
+The documentation for this node is in progress...
+:::
+
+### Mask to Distance Field
+<CenteredImage file="data-modeling-mask-to-distance-field-node.png" width="250px" title="Mask to Distance Field Node" />
+data-modeling-mask-to-distance-field-node.png
+
+:::note
+The documentation for this node is in progress...
 :::
 
 ### Save Node
