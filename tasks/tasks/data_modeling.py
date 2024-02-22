@@ -357,7 +357,10 @@ def run_flowcast_job(context:FlowcastContext) -> dict:
     try:
         return unhandled_run_flowcast_job(context)
     except Exception as e:
-        print(f'Error running flowcast job: {e}', flush=True)
+        # print exception with stack trace
+        import traceback
+        traceback.print_exc()
+        print(f'Flowcast job failed', flush=True)
         return {
             'message': 'error running flowcast job',
             'error': str(e)
@@ -408,7 +411,15 @@ def unhandled_run_flowcast_job(context:FlowcastContext) -> dict:
             
         elif node['type'] == 'threshold':
             parent, = get_node_parents(node['id'], graph, num_expected=1)
-            pipe.threshold(node['id'], parent, Threshold(float(node['data']['input']['value']), ThresholdType[node['data']['input']['type']]))
+            preserve_nan = node['data']['input']['preserve_nan']
+            value = node['data']['input']['value']
+            threshold_type = ThresholdType[node['data']['input']['type']]
+            if '%' in value:
+                raise NotImplementedError('Percentile thresholds are not yet supported')
+                value = float(value.strip('%')) / 100
+            else:
+                value = float(value)
+            pipe.threshold(node['id'], parent, Threshold(float(value), ThresholdType[threshold_type]), preserve_nan=preserve_nan)
             
         elif node['type'] == 'multiply': #TODO: rename this from "multiply" to "join"
             left, right = get_node_parents(node['id'], graph, num_expected=2)
@@ -507,8 +518,8 @@ def unhandled_run_flowcast_job(context:FlowcastContext) -> dict:
 
         elif node['type'] == 'mask_to_distance_field':
             parent, = get_node_parents(node['id'], graph, num_expected=1)
-            #TODO: need to set include_initial_points. probably have a UI adjustment? or set a default
-            pipe.mask_to_distance_field(node['id'], parent)
+            include_initial_points = node['data']['input']['include_initial_points']
+            pipe.mask_to_distance_field(node['id'], parent, include_initial_points=include_initial_points)
 
 
         elif node['type'] == 'select_slice':
@@ -520,7 +531,7 @@ def unhandled_run_flowcast_job(context:FlowcastContext) -> dict:
                     return slice(start, stop)
                 return int(index_str.strip())
 
-            def to_index(index_str:str) -> int|slice|list[int|slice]:
+            def to_index(index_str:str) -> int|slice|np.ndarray:
                 chunks = index_str.split(',')
                 if len(chunks) == 1:
                     return to_int_or_slice(chunks[0])
@@ -535,6 +546,7 @@ def unhandled_run_flowcast_job(context:FlowcastContext) -> dict:
 
                 return np.array(index)
 
+            parent, = get_node_parents(node['id'], graph, num_expected=1)
             indexers = { chunk['dimension']: to_index(chunk['index']) for chunk in node['data']['input'] }
             pipe.isel(node['id'], parent, indexers, drop=True)
 
