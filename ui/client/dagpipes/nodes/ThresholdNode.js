@@ -3,7 +3,8 @@ import {
   Handle, Position
 } from 'reactflow';
 import TextField from '@mui/material/TextField';
-
+import FormControlLabel from '@mui/material/FormControlLabel';
+import Checkbox from '@mui/material/Checkbox';
 import NodeBase from './NodeBase';
 import ModelerSelect from '../ModelerSelect';
 import {
@@ -45,7 +46,20 @@ function Select({
         options={options}
         name="type"
       />
-
+      <FormControlLabel
+        sx={{
+          margin: 1
+        }}
+        control={(
+          <Checkbox
+            onChange={(event) => onChange(nodeId, event)}
+            name="preserve_nan"
+            disableRipple
+            checked={input.preserve_nan}
+          />
+        )}
+        label="Preserve NaNs"
+      />
       <Handle
         type="source"
         position={Position.Bottom}
