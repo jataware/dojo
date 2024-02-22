@@ -28,7 +28,7 @@ function Select({
       <TextField
         type="number"
         className="nodrag"
-        label="Value"
+        label="Value or Percentile (%)"
         name="value"
         value={input.value}
         placeholder="1"
