@@ -111,6 +111,9 @@ const initialNodeTypeValues = {
     scalar_position_power: 'exponent',
   },
   select_slice: [createDefaultSelectSlice()],
+  mask_to_distance_field: {
+    include_initial_points: false,
+  },
 };
 
 const genNodeId = () => `n_${window.crypto.randomUUID()}`;
@@ -233,22 +236,22 @@ const PipeEditor = () => {
             [event.target.name]: event.target.value,
           };
         }
-      } else if (node.type === 'sum') {
-        const event_type = event.target.type === 'select-one' ? 'value' : 'checked';
-
-        input = {
-          ...node.data.input,
-          [event.target.name]: event.target[event_type]
-        };
       } else if (
         node.type === 'load'
         || node.type === 'save'
         || node.type === 'scalar_operation'
         || node.type === 'threshold'
+        || node.type === 'sum'
+        || node.type === 'mask_to_distance_field'
       ) {
+        // checkbox is the only input type (so far) that takes a different event.target than value
+        const event_type = (
+          event.target.type === 'checkbox'
+        ) ? 'checked' : 'value';
+
         input = {
           ...node.data.input,
-          [event.target.name]: event.target.value
+          [event.target.name]: event.target[event_type]
         };
       } else {
         input = event.target.value;
