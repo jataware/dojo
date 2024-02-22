@@ -41,7 +41,7 @@ function DimensionCheckboxes({
             }}
             control={(
               <Checkbox
-                onChange={onChange.bind(this, nodeId)}
+                onChange={(event) => onChange(nodeId, event)}
                 name={label}
                 disableRipple
                 checked={input[label]}

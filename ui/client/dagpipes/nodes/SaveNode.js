@@ -30,7 +30,7 @@ function FileSelect({
         InputLabelProps={{
           shrink: true,
         }}
-        onChange={onChange.bind(this, nodeId)}
+        onChange={(event) => onChange(nodeId, event)}
         sx={{ marginBottom: 2, backgroundColor: 'grey.50' }}
       />
       <TextField
@@ -41,7 +41,7 @@ function FileSelect({
         InputLabelProps={{
           shrink: true,
         }}
-        onChange={onChange.bind(this, nodeId)}
+        onChange={(event) => onChange(nodeId, event)}
         multiline
         minRows={3}
         sx={{ backgroundColor: 'grey.50' }}

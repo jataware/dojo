@@ -31,7 +31,7 @@ function Select({
         name="value"
         value={input.value}
         placeholder="1"
-        onChange={onChange.bind(this, nodeId)}
+        onChange={(event) => onChange(nodeId, event)}
         InputLabelProps={{
           shrink: true,
         }}

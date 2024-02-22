@@ -93,7 +93,7 @@ function CustomNode({ id, data, handleId }) {
           placeholder="0"
           required
           name="value"
-          onChange={data.onChange.bind(this, id)}
+          onChange={(event) => data.onChange(id, event)}
           helperText={
             !validNumber(data.input.value) && 'Value must be a valid number and cannot be empty.'
         }
