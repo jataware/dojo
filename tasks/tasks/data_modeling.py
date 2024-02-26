@@ -415,11 +415,12 @@ def unhandled_run_flowcast_job(context:FlowcastContext) -> dict:
             value = node['data']['input']['value']
             threshold_type = ThresholdType[node['data']['input']['type']]
             if '%' in value:
-                raise NotImplementedError('Percentile thresholds are not yet supported')
-                value = float(value.strip('%')) / 100
+                value = float(value.strip('%'))
+                is_percentile = True
             else:
                 value = float(value)
-            pipe.threshold(node['id'], parent, Threshold(value, threshold_type), preserve_nan=preserve_nan)
+                is_percentile = False
+            pipe.threshold(node['id'], parent, Threshold(value, threshold_type, is_percentile), preserve_nan=preserve_nan)
             
         elif node['type'] == 'multiply': #TODO: rename this from "multiply" to "join"
             left, right = get_node_parents(node['id'], graph, num_expected=2)
