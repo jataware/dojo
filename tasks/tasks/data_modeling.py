@@ -419,7 +419,7 @@ def unhandled_run_flowcast_job(context:FlowcastContext) -> dict:
                 value = float(value.strip('%')) / 100
             else:
                 value = float(value)
-            pipe.threshold(node['id'], parent, Threshold(float(value), ThresholdType[threshold_type]), preserve_nan=preserve_nan)
+            pipe.threshold(node['id'], parent, Threshold(value, threshold_type), preserve_nan=preserve_nan)
             
         elif node['type'] == 'multiply': #TODO: rename this from "multiply" to "join"
             left, right = get_node_parents(node['id'], graph, num_expected=2)
