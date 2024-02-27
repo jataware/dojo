@@ -14,6 +14,7 @@ import isFunction from 'lodash/isFunction';
 
 import { makeStyles } from 'tss-react/mui';
 
+import { FormAwareTextField } from './FormFields';
 import { matchFileNameExtension } from '../utils';
 import { getBrandName } from '../components/uiComponents/Branding';
 
@@ -52,7 +53,7 @@ const NullGeotiffTooltip = ({ ...props }) => (
 );
 
 export const ExtraInput = ({
-  fileMetadata, setFileMetadata
+  fileMetadata, setFileMetadata, formikControlled
 }) => {
   // TODO This metadata is set on user file select etc, not on loading a previously
   // uploaded file. We'll check if we can populate
@@ -77,6 +78,16 @@ export const ExtraInput = ({
     }
     setFileMetadata({ ...fileMetadata, geotiff_bands });
   };
+
+  // Don't include the onChange prop if we have the formikControlled prop
+  // or formik's onChange prop will get overwritten in FormikAwareTextField
+  const conditionalOnChange = (handler) => (
+    formikControlled ? {} : {
+      onChange: (event) => {
+        handler(event);
+      }
+    }
+  );
 
   if (fileMetadata.filetype === 'excel') {
     const label = 'Sheet selection';
@@ -257,36 +268,41 @@ export const ExtraInput = ({
           display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: '0.5em', rowGap: '0.5em', marginBottom: '1.1em'
         }}
         >
-          <TextField
+          <FormAwareTextField
             name="geotiff_Feature_Name"
             variant="outlined"
             label="Geotiff Feature Name"
-            onChange={(evt) => {
-              const { value } = evt.target;
-              setFileMetadata({ ...fileMetadata, geotiff_value: value });
-            }}
+            {...conditionalOnChange(
+              (event) => setFileMetadata({ ...fileMetadata, geotiff_value: event.target.value })
+            )}
+            required
           />
           <NullGeotiffTooltip>
-            <TextField
-              name="geotiff_Null_Val"
-              variant="outlined"
-              label="Geotiff Null Value"
-              helperText=""
-              onChange={(evt) => {
-                const { value } = evt.target;
-                setFileMetadata({ ...fileMetadata, geotiff_null_value: value });
-              }}
-            />
+            <span>
+              <FormAwareTextField
+                name="geotiff_Null_Val"
+                variant="outlined"
+                label="Geotiff Null Value"
+                {...conditionalOnChange(
+                  (event) => setFileMetadata({
+                    ...fileMetadata, geotiff_null_value: event.target.value
+                  })
+                )}
+                required
+              />
+            </span>
           </NullGeotiffTooltip>
-          <TextField
+          <FormAwareTextField
             name="geotiff_date_value"
             variant="outlined"
             label="Enter dataset date"
-            helperText="YYYY-MM-DD"
-            onChange={(evt) => {
-              const { value } = evt.target;
-              setFileMetadata({ ...fileMetadata, geotiff_date_value: value });
-            }}
+            placeholder="YYYY-MM-DD"
+            {...conditionalOnChange(
+              (event) => setFileMetadata({
+                ...fileMetadata, geotiff_date_value: event.target.value
+              })
+            )}
+            required
           />
         </div>
       );

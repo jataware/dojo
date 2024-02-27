@@ -137,7 +137,6 @@ function getUpdateRawFileName(uploadedRawFileNames) {
 const InnerStepper = ({ match, updateLocation, ...props }) => {
   const { flowslug, step, datasetId } = match?.params;
   const shouldUpdateLocation = updateLocation === undefined ? true : Boolean(updateLocation);
-
   const history = useHistory();
   const { classes } = useStyles();
   const location = useLocation();

@@ -30,7 +30,7 @@ const skipValidation = false;
  * Dataset Registration landing page (fileMetadata, file upload).
  * */
 
-const formSchema = yup.object({
+const baseSchema = yup.object({
   name: yup
     .string('Enter the Dataset name')
     .required('Please enter Dataset name.'),
@@ -40,11 +40,59 @@ const formSchema = yup.object({
     .required('Please enter a description.'),
 });
 
+const geotiffSchema = (fileMetadata) => {
+  let schema = {};
+
+  if (fileMetadata.geotiff_band_count > 1) {
+    // Validation for multiple bands
+    if (fileMetadata.geotiff_band_type === 'category') {
+      // category specific validation
+      schema = {
+        geotiff_value: yup.string().required('Enter dataset date.'),
+        geotiff_null_value: yup.string().required('Enter Geotiff Null Value.'),
+      };
+
+      for (let i = 0; i < fileMetadata.geotiff_band_count; i++) {
+        schema[`band_${i + 1}_name`] = yup.string().required(`Band ${i + 1} Name is required.`);
+      }
+    } else if (fileMetadata.geotiff_band_type === 'temporal') {
+      // temporal specific validation
+      schema = {
+        geotiff_feature_name: yup.string().required('Enter feature name.'),
+        geotiff_null_value: yup.string().required('Enter Geotiff Null Value.'),
+      };
+
+      for (let i = 0; i < fileMetadata.geotiff_band_count; i++) {
+        schema[`band_${i + 1}_date`] = yup.string().required(`Band ${i + 1} Date is required.`);
+      }
+    }
+  } else if (fileMetadata.geotiff_band_count === 1) {
+    // Validation for single band
+    schema = {
+      geotiff_Feature_Name: yup.string().required('Enter Geotiff Feature Name.'),
+      geotiff_Null_Val: yup.string().required('Enter Geotiff Null Value.'),
+      geotiff_date_value: yup.string().required('Enter dataset date.'),
+    };
+  }
+
+  return yup.object().shape(schema);
+};
+
+const getDynamicValidationSchema = (fileMetadata) => {
+  let schema = baseSchema;
+
+  if (fileMetadata.filetype === 'geotiff') {
+    schema = schema.concat(geotiffSchema(fileMetadata));
+  }
+
+  return schema;
+};
+
 /**
  * Uses already-defined validation schema to derive if a field is required
  * Used in this file by FormAwareTextField
  * */
-const checkRequired = (fieldName) => get(formSchema, `fields.${fieldName}.exclusiveTests.required`, false);
+const checkRequired = (fieldName) => get(baseSchema, `fields.${fieldName}.exclusiveTests.required`, false);
 
 /**
  *
@@ -105,6 +153,7 @@ const BaseData = ({
       formik={formik}
       fileMetadata={fileMetadata}
       setFileMetadata={setFileMetadata}
+      formikControlled
     />
   </Section>
 );
@@ -135,6 +184,7 @@ export default ({
     filename: null,
   });
   const [loading, setLoading] = useState(false);
+  const [validationSchema, setValidationSchema] = useState(baseSchema);
 
   const { classes } = useStyles();
 
@@ -189,6 +239,12 @@ export default ({
     loading
   ]);
 
+  useEffect(() => {
+    // Update form schema based on fileMetadata
+    const newValidationSchema = getDynamicValidationSchema(fileMetadata);
+    setValidationSchema(newValidationSchema);
+  }, [fileMetadata]);
+
   const defaultValues = {
     name: datasetInfo?.name || '',
     description: datasetInfo?.description || '',
@@ -215,7 +271,7 @@ export default ({
 
       <Formik
         initialValues={defaultValues}
-        validationSchema={!skipValidation && formSchema}
+        validationSchema={!skipValidation && validationSchema}
         enableReinitialize
         onSubmit={(values) => {
           setAnnotations({
@@ -280,6 +336,9 @@ export default ({
             <Navigation
               handleNext={formik.handleSubmit}
               handleBack={back}
+              // disable until the metadata is loaded, because we need to know if
+              // it requires more geotiff info
+              disabled={!fileMetadata.file_uuid}
             />
 
           </Form>

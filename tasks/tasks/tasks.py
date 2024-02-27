@@ -265,11 +265,18 @@ def model_output_analysis(context, model_id, fileurl, filepath):
             'excel_sheet': excel_file.sheet_names[0]
         }
     elif filepath.endswith('.tiff') or filepath.endswith('.tif'):
-        raster = rasterio.open(rasterio.io.MemoryFile(stream))
+        try:
+            with rasterio.open(rasterio.io.MemoryFile(stream)) as raster:
+                geotiff_band_count = raster.profile['count']
+        except Exception as e:
+            # Handle the exception
+            print(f"Error loading raster data: {e}")
+            geotiff_band_count = 0
+
         return {
             'file_uuid': file_uuid,
             'filetype': 'geotiff',
-            'geotiff_band_count': raster.profile['count'],
+            'geotiff_band_count': geotiff_band_count,
             'geotiff_band_type': "category",
             'geotiff_bands': {}
         }
