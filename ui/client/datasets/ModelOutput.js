@@ -40,50 +40,50 @@ const baseSchema = yup.object({
     .required('Please enter a description.'),
 });
 
-const geotiffSchema = (fileMetadata) => {
-  let schema = {};
+// const geotiffSchema = (fileMetadata) => {
+//   let schema = {};
 
-  if (fileMetadata.geotiff_band_count > 1) {
-    // Validation for multiple bands
-    if (fileMetadata.geotiff_band_type === 'category') {
-      // category specific validation
-      schema = {
-        geotiff_value: yup.string().required('Enter dataset date.'),
-        geotiff_null_value: yup.string().required('Enter Geotiff Null Value.'),
-      };
+//   if (fileMetadata.geotiff_band_count > 1) {
+//     // Validation for multiple bands
+//     if (fileMetadata.geotiff_band_type === 'category') {
+//       // category specific validation
+//       schema = {
+//         geotiff_value: yup.string().required('Enter dataset date.'),
+//         geotiff_null_value: yup.string().required('Enter Geotiff Null Value.'),
+//       };
 
-      for (let i = 0; i < fileMetadata.geotiff_band_count; i++) {
-        schema[`band_${i + 1}_name`] = yup.string().required(`Band ${i + 1} Name is required.`);
-      }
-    } else if (fileMetadata.geotiff_band_type === 'temporal') {
-      // temporal specific validation
-      schema = {
-        geotiff_feature_name: yup.string().required('Enter feature name.'),
-        geotiff_null_value: yup.string().required('Enter Geotiff Null Value.'),
-      };
+//       // for (let i = 0; i < fileMetadata.geotiff_band_count; i++) {
+//       //   schema[`band_${i + 1}_name`] = yup.string().required(`Band ${i + 1} Name is required.`);
+//       // }
+//     } else if (fileMetadata.geotiff_band_type === 'temporal') {
+//       // temporal specific validation
+//       schema = {
+//         geotiff_feature_name: yup.string().required('Enter feature name.'),
+//         geotiff_null_value: yup.string().required('Enter Geotiff Null Value.'),
+//       };
 
-      for (let i = 0; i < fileMetadata.geotiff_band_count; i++) {
-        schema[`band_${i + 1}_date`] = yup.string().required(`Band ${i + 1} Date is required.`);
-      }
-    }
-  } else if (fileMetadata.geotiff_band_count === 1) {
-    // Validation for single band
-    schema = {
-      geotiff_Feature_Name: yup.string().required('Enter Geotiff Feature Name.'),
-      geotiff_Null_Val: yup.string().required('Enter Geotiff Null Value.'),
-      geotiff_date_value: yup.string().required('Enter dataset date.'),
-    };
-  }
+//       // for (let i = 0; i < fileMetadata.geotiff_band_count; i++) {
+//       //   schema[`band_${i + 1}_date`] = yup.string().required(`Band ${i + 1} Date is required.`);
+//       // }
+//     }
+//   } else if (fileMetadata.geotiff_band_count === 1) {
+//     // Validation for single band
+//     schema = {
+//       geotiff_value: yup.string().required('Enter Geotiff Feature Name.'),
+//       geotiff_null_value: yup.string().required('Enter Geotiff Null Value.'),
+//       geotiff_date_value: yup.string().required('Enter dataset date.'),
+//     };
+//   }
 
-  return yup.object().shape(schema);
-};
+//   return yup.object().shape(schema);
+// };
 
 const getDynamicValidationSchema = (fileMetadata) => {
   let schema = baseSchema;
 
-  if (fileMetadata.filetype === 'geotiff') {
-    schema = schema.concat(geotiffSchema(fileMetadata));
-  }
+  // if (fileMetadata.filetype === 'geotiff') {
+  //   schema = schema.concat(geotiffSchema(fileMetadata));
+  // }
 
   return schema;
 };

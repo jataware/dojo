@@ -162,22 +162,28 @@ export const ExtraInput = ({
                   name="geotiff_value"
                   variant="outlined"
                   label="Enter dataset date"
-                  helperText="YYYY-MM-DD"
-                  onChange={(evt) => {
-                    const { value } = evt.target;
-                    setFileMetadata({ ...fileMetadata, geotiff_value: value });
-                  }}
+                  placeholder="YYYY-MM-DD"
+                  onChange={
+                    (event) => setFileMetadata({
+                      ...fileMetadata, geotiff_value: event.target.value
+                    })
+                  }
+                  required
                 />
                 <NullGeotiffTooltip>
-                  <TextField
-                    name="geotiff_Null_Val"
-                    variant="outlined"
-                    label="Geotiff Null Value"
-                    onChange={(evt) => {
-                      const { value } = evt.target;
-                      setFileMetadata({ ...fileMetadata, geotiff_null_value: value });
-                    }}
-                  />
+                  <span>
+                    <TextField
+                      name="geotiff_null_value"
+                      variant="outlined"
+                      label="Geotiff Null Value"
+                      onChange={
+                        (event) => setFileMetadata({
+                          ...fileMetadata, geotiff_null_value: event.target.value
+                        })
+                      }
+                      required
+                    />
+                  </span>
                 </NullGeotiffTooltip>
               </div>
 
@@ -268,40 +274,40 @@ export const ExtraInput = ({
           display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: '0.5em', rowGap: '0.5em', marginBottom: '1.1em'
         }}
         >
-          <FormAwareTextField
-            name="geotiff_Feature_Name"
+          <TextField
+            name="geotiff_value"
             variant="outlined"
             label="Geotiff Feature Name"
-            {...conditionalOnChange(
+            onChange={
               (event) => setFileMetadata({ ...fileMetadata, geotiff_value: event.target.value })
-            )}
+            }
             required
           />
           <NullGeotiffTooltip>
             <span>
-              <FormAwareTextField
-                name="geotiff_Null_Val"
+              <TextField
+                name="geotiff_null_value"
                 variant="outlined"
                 label="Geotiff Null Value"
-                {...conditionalOnChange(
+                onChange={
                   (event) => setFileMetadata({
                     ...fileMetadata, geotiff_null_value: event.target.value
                   })
-                )}
+                }
                 required
               />
             </span>
           </NullGeotiffTooltip>
-          <FormAwareTextField
+          <TextField
             name="geotiff_date_value"
             variant="outlined"
             label="Enter dataset date"
             placeholder="YYYY-MM-DD"
-            {...conditionalOnChange(
+            onChange={
               (event) => setFileMetadata({
                 ...fileMetadata, geotiff_date_value: event.target.value
               })
-            )}
+            }
             required
           />
         </div>
