@@ -14,7 +14,6 @@ import isFunction from 'lodash/isFunction';
 
 import { makeStyles } from 'tss-react/mui';
 
-import { FormAwareTextField } from './FormFields';
 import { matchFileNameExtension } from '../utils';
 import { getBrandName } from '../components/uiComponents/Branding';
 
@@ -37,8 +36,31 @@ const useStyles = makeStyles()((theme) => ({
     '& button': {
       marginTop: theme.spacing(0.5)
     }
-  }
+  },
+  geotiffInput: {
+    width: '100%',
+    borderRadius: 0,
+  },
 }));
+
+const GeotiffTextField = ({
+  name, label, placeholder, onChange, ...props
+}) => (
+  <TextField
+    name={name}
+    variant="outlined"
+    label={label}
+    placeholder={placeholder}
+    onChange={onChange}
+    required
+    fullWidth
+    InputProps={{
+      style: { borderRadius: 0 },
+    }}
+    InputLabelProps={{ shrink: true }}
+    {...props}
+  />
+);
 
 const NullGeotiffTooltip = ({ ...props }) => (
   <Tooltip
@@ -59,7 +81,6 @@ export const ExtraInput = ({
   // uploaded file. We'll check if we can populate
   // and display these prepopulated instead....
   // console.log('FileSelector.js - ExtraInput - fileMetadata:', fileMetadata);
-
   if (!fileMetadata.filetype) {
     return null;
   }
@@ -81,13 +102,13 @@ export const ExtraInput = ({
 
   // Don't include the onChange prop if we have the formikControlled prop
   // or formik's onChange prop will get overwritten in FormikAwareTextField
-  const conditionalOnChange = (handler) => (
-    formikControlled ? {} : {
-      onChange: (event) => {
-        handler(event);
-      }
-    }
-  );
+  // const conditionalOnChange = (handler) => (
+  //   formikControlled ? {} : {
+  //     onChange: (event) => {
+  //       handler(event);
+  //     }
+  //   }
+  // );
 
   if (fileMetadata.filetype === 'excel') {
     const label = 'Sheet selection';
@@ -142,10 +163,9 @@ export const ExtraInput = ({
               variant="outlined"
               margin="dense"
               value={fileMetadata.geotiff_band_type}
-              onChange={(evt) => {
-                const { value } = evt.target;
-                setFileMetadata({ ...fileMetadata, geotiff_band_type: value, geotiff_bands: {} });
-              }}
+              onChange={(event) => setFileMetadata({
+                ...fileMetadata, geotiff_band_type: event.target.value, geotiff_bands: {}
+              })}
             >
               <MenuItem value="category">category</MenuItem>
               <MenuItem value="temporal">temporal</MenuItem>
@@ -155,33 +175,29 @@ export const ExtraInput = ({
           {fileMetadata.geotiff_band_type === 'category' && (
             <>
               <div style={{
-                display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: '0.5em', rowGap: '0.5em',
+                display: 'grid',
+                gridTemplateColumns: '1fr 1fr',
+                columnGap: '0.5em',
+                rowGap: '0.5em',
+                marginBottom: '0.5em',
               }}
               >
-                <TextField
+                <GeotiffTextField
                   name="geotiff_value"
-                  variant="outlined"
-                  label="Enter dataset date"
+                  label="Dataset date"
                   placeholder="YYYY-MM-DD"
-                  onChange={
-                    (event) => setFileMetadata({
-                      ...fileMetadata, geotiff_value: event.target.value
-                    })
-                  }
-                  required
+                  onChange={(event) => setFileMetadata({
+                    ...fileMetadata, geotiff_value: event.target.value
+                  })}
                 />
                 <NullGeotiffTooltip>
                   <span>
-                    <TextField
+                    <GeotiffTextField
                       name="geotiff_null_value"
-                      variant="outlined"
                       label="Geotiff Null Value"
-                      onChange={
-                        (event) => setFileMetadata({
-                          ...fileMetadata, geotiff_null_value: event.target.value
-                        })
-                      }
-                      required
+                      onChange={(event) => setFileMetadata({
+                        ...fileMetadata, geotiff_null_value: event.target.value
+                      })}
                     />
                   </span>
                 </NullGeotiffTooltip>
@@ -200,10 +216,9 @@ export const ExtraInput = ({
                   .map((i) => {
                     const band_num = i + 1;
                     return (
-                      <TextField
+                      <GeotiffTextField
                         key={`band_${band_num}`}
                         name="bands"
-                        variant="outlined"
                         label={`Band ${band_num} Name`}
                         onChange={(evt) => setBand(evt, band_num)}
                       />
@@ -218,9 +233,8 @@ export const ExtraInput = ({
               display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: '0.5em', rowGap: '0.5em', marginBottom: '1.1em'
             }}
             >
-              <TextField
+              <GeotiffTextField
                 name="geotiff_feature_name"
-                variant="outlined"
                 label="Enter feature name"
                 onChange={(evt) => {
                   const { value } = evt.target;
@@ -228,14 +242,12 @@ export const ExtraInput = ({
                 }}
               />
               <NullGeotiffTooltip>
-                <TextField
+                <GeotiffTextField
                   name="geotiff_Null_Val"
-                  variant="outlined"
                   label="Geotiff Null Value"
-                  onChange={(evt) => {
-                    const { value } = evt.target;
-                    setFileMetadata({ ...fileMetadata, geotiff_null_value: value });
-                  }}
+                  onChange={(event) => setFileMetadata({
+                    ...fileMetadata, geotiff_null_value: event.target.value
+                  })}
                 />
               </NullGeotiffTooltip>
             </div>
@@ -252,11 +264,10 @@ export const ExtraInput = ({
               {Array.from(Array(fileMetadata.geotiff_band_count).keys()).map((i) => {
                 const band_num = i + 1;
                 return (
-                  <TextField
+                  <GeotiffTextField
                     key={`band_${band_num}`}
                     bandnum={band_num}
                     name="bands"
-                    variant="outlined"
                     label={`Band ${band_num} Date`}
                     onChange={(evt) => setBand(evt, band_num)}
                   />
@@ -274,33 +285,28 @@ export const ExtraInput = ({
           display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: '0.5em', rowGap: '0.5em', marginBottom: '1.1em'
         }}
         >
-          <TextField
+          <GeotiffTextField
             name="geotiff_value"
-            variant="outlined"
             label="Geotiff Feature Name"
             onChange={
               (event) => setFileMetadata({ ...fileMetadata, geotiff_value: event.target.value })
             }
-            required
           />
           <NullGeotiffTooltip>
             <span>
-              <TextField
+              <GeotiffTextField
                 name="geotiff_null_value"
-                variant="outlined"
                 label="Geotiff Null Value"
                 onChange={
                   (event) => setFileMetadata({
                     ...fileMetadata, geotiff_null_value: event.target.value
                   })
                 }
-                required
               />
             </span>
           </NullGeotiffTooltip>
-          <TextField
+          <GeotiffTextField
             name="geotiff_date_value"
-            variant="outlined"
             label="Enter dataset date"
             placeholder="YYYY-MM-DD"
             onChange={
@@ -308,7 +314,6 @@ export const ExtraInput = ({
                 ...fileMetadata, geotiff_date_value: event.target.value
               })
             }
-            required
           />
         </div>
       );

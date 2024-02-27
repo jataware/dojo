@@ -227,6 +227,10 @@ export default ({
           filepath: props?.file_path || '',
         });
       });
+    } else if (datasetInfo.id && !fileMetadata.file_uuid && annotations?.metadata?.file_uuid) {
+      // we've fetched the datasetInfo, but haven't set the file_uuid, so the user has hit 'back'
+      // so update the local fileMetadata
+      setFileMetadata({ ...annotations.metadata });
     }
   }, [
     datasetInfo,
@@ -236,7 +240,8 @@ export default ({
     props?.request_path,
     setAnnotations,
     setDatasetInfo,
-    loading
+    loading,
+    annotations,
   ]);
 
   useEffect(() => {
