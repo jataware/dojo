@@ -56,6 +56,7 @@ function CustomNode({ id, data, handleId }) {
           onChange={handleOperationChange}
           options={[
             { label: 'Add', value: 'add' },
+            { label: 'Subtract', value: 'subtract' },
             { label: 'Multiply', value: 'multiply' },
             { label: 'Divide', value: 'divide' },
             { label: 'Power', value: 'power' },

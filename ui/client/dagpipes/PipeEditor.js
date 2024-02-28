@@ -100,7 +100,8 @@ const initialNodeTypeValues = {
   },
   threshold: {
     value: '',
-    type: threshold_ops[0]
+    type: threshold_ops[0],
+    preserve_nan: false,
   },
   filter_by_country: [],
   multiply: 'multiply',
