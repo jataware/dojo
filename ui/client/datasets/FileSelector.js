@@ -5,6 +5,7 @@ import * as GeoTiff from 'geotiff';
 
 import get from 'lodash/get';
 import isFunction from 'lodash/isFunction';
+import isEmpty from 'lodash/isEmpty';
 
 import Autocomplete from '@mui/material/Autocomplete';
 import Button from '@mui/material/Button';
@@ -551,11 +552,14 @@ export const FileSelector = ((allProps) => {
           {message}
         </div>
       )}
-      <ExtraInput
-        formik={formik}
-        fileMetadata={fileMetadata}
-        setFileMetadata={setFileMetadata}
-      />
+      {/* only load ExtraInput after the file upload has started (in Register.js) */}
+      {!isEmpty(fileMetadata) && (
+        <ExtraInput
+          formik={formik}
+          fileMetadata={fileMetadata}
+          setFileMetadata={setFileMetadata}
+        />
+      )}
     </div>
   );
 });
