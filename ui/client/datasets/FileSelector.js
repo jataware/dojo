@@ -3,14 +3,18 @@ import { useField } from 'formik';
 import * as XLSX from 'xlsx/xlsx.mjs';
 import * as GeoTiff from 'geotiff';
 
+import get from 'lodash/get';
+import isFunction from 'lodash/isFunction';
+
 import Autocomplete from '@mui/material/Autocomplete';
 import Button from '@mui/material/Button';
+import Box from '@mui/material/Box';
+import CircularProgress from '@mui/material/CircularProgress';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import TextField from '@mui/material/TextField';
-import { Tooltip, Typography } from '@mui/material';
-import get from 'lodash/get';
-import isFunction from 'lodash/isFunction';
+import Typography from '@mui/material/Typography';
+import Tooltip from '@mui/material/Tooltip';
 
 import { makeStyles } from 'tss-react/mui';
 
@@ -86,7 +90,27 @@ export const ExtraInput = ({
   // and display these prepopulated instead....
   // console.log('FileSelector.js - ExtraInput - fileMetadata:', fileMetadata);
   const { classes } = useStyles();
+
   if (!fileMetadata.filetype) {
+    if (!fileMetadata.file_uuid) {
+      // the metadata hasn't loaded, so show a spinner until it loads
+      return (
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            color: 'grey.600',
+            marginTop: 1,
+          }}
+        >
+          <Typography variant="h6" gutterBottom>Loading File Type...</Typography>
+          <CircularProgress size={24} color="inherit" />
+        </Box>
+      );
+    }
+
+    // the metadata has loaded and we still don't have the filetype, so nothing to show
     return null;
   }
 
