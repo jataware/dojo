@@ -37,9 +37,13 @@ const useStyles = makeStyles()((theme) => ({
       marginTop: theme.spacing(0.5)
     }
   },
-  geotiffInput: {
-    width: '100%',
-    borderRadius: 0,
+  geotiffInputWrapper: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    columnGap: '0.5em',
+    rowGap: '1em',
+    marginTop: '1em',
+    marginBottom: '1em'
   },
 }));
 
@@ -75,12 +79,13 @@ const NullGeotiffTooltip = ({ ...props }) => (
 );
 
 export const ExtraInput = ({
-  fileMetadata, setFileMetadata, formikControlled
+  fileMetadata, setFileMetadata
 }) => {
   // TODO This metadata is set on user file select etc, not on loading a previously
   // uploaded file. We'll check if we can populate
   // and display these prepopulated instead....
   // console.log('FileSelector.js - ExtraInput - fileMetadata:', fileMetadata);
+  const { classes } = useStyles();
   if (!fileMetadata.filetype) {
     return null;
   }
@@ -99,6 +104,10 @@ export const ExtraInput = ({
     }
     setFileMetadata({ ...fileMetadata, geotiff_bands });
   };
+
+  // TODO: Include this in the formik form (or make a new form?) so it can have errors
+  // and be required etc - currently problematic for ModelOutput with how it saves to formik.values
+  // instead of metadata
 
   // Don't include the onChange prop if we have the formikControlled prop
   // or formik's onChange prop will get overwritten in FormikAwareTextField
@@ -174,14 +183,7 @@ export const ExtraInput = ({
 
           {fileMetadata.geotiff_band_type === 'category' && (
             <>
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: '1fr 1fr',
-                columnGap: '0.5em',
-                rowGap: '0.5em',
-                marginBottom: '0.5em',
-              }}
-              >
+              <div className={classes.geotiffInputWrapper}>
                 <GeotiffTextField
                   name="geotiff_value"
                   label="Dataset date"
@@ -203,14 +205,7 @@ export const ExtraInput = ({
                 </NullGeotiffTooltip>
               </div>
 
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  columnGap: '0.5em',
-                  rowGap: '0.5em',
-                }}
-              >
+              <div className={classes.geotiffInputWrapper}>
                 {/* generate numbered TextField input for each band in the geotiff for labeling */}
                 {Array.from(Array(fileMetadata.geotiff_band_count).keys())
                   .map((i) => {
@@ -229,17 +224,13 @@ export const ExtraInput = ({
           )}
           {fileMetadata.geotiff_band_type === 'temporal' && (
           <>
-            <div style={{
-              display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: '0.5em', rowGap: '0.5em', marginBottom: '1.1em'
-            }}
-            >
+            <div className={classes.geotiffInputWrapper}>
               <GeotiffTextField
                 name="geotiff_feature_name"
                 label="Enter feature name"
-                onChange={(evt) => {
-                  const { value } = evt.target;
-                  setFileMetadata({ ...fileMetadata, geotiff_value: value });
-                }}
+                onChange={(event) => setFileMetadata({
+                  ...fileMetadata, geotiff_value: event.target.value
+                })}
               />
               <NullGeotiffTooltip>
                 <GeotiffTextField
@@ -255,11 +246,7 @@ export const ExtraInput = ({
             <div>
               <Typography variant="caption">Suggested format: YYYY-MM-DD</Typography>
             </div>
-            <div
-              style={{
-                display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: '0.5em', rowGap: '0.5em'
-              }}
-            >
+            <div className={classes.geotiffInputWrapper}>
               {/* generate numbered TextField input for each band in the geotiff for labeling */}
               {Array.from(Array(fileMetadata.geotiff_band_count).keys()).map((i) => {
                 const band_num = i + 1;
@@ -281,10 +268,7 @@ export const ExtraInput = ({
     }
     if (fileMetadata.geotiff_band_count === 1) {
       return (
-        <div style={{
-          display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: '0.5em', rowGap: '0.5em', marginBottom: '1.1em'
-        }}
-        >
+        <div className={classes.geotiffInputWrapper}>
           <GeotiffTextField
             name="geotiff_value"
             label="Geotiff Feature Name"

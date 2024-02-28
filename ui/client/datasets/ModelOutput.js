@@ -40,6 +40,10 @@ const baseSchema = yup.object({
     .required('Please enter a description.'),
 });
 
+// TODO: this is for including the geotiff subform in the yup schema
+// this works, but the subform saves into formik.values instead of the metadata
+// we either need a new form & to pass up a value to disable next & etc
+// or to pull out the geotiff subform values & put them in metadata in formik.onsubmit
 // const geotiffSchema = (fileMetadata) => {
 //   let schema = {};
 
@@ -52,9 +56,9 @@ const baseSchema = yup.object({
 //         geotiff_null_value: yup.string().required('Enter Geotiff Null Value.'),
 //       };
 
-//       // for (let i = 0; i < fileMetadata.geotiff_band_count; i++) {
-//       //   schema[`band_${i + 1}_name`] = yup.string().required(`Band ${i + 1} Name is required.`);
-//       // }
+//       for (let i = 0; i < fileMetadata.geotiff_band_count; i++) {
+//         schema[`band_${i + 1}_name`] = yup.string().required(`Band ${i + 1} Name is required.`);
+//       }
 //     } else if (fileMetadata.geotiff_band_type === 'temporal') {
 //       // temporal specific validation
 //       schema = {
@@ -62,9 +66,9 @@ const baseSchema = yup.object({
 //         geotiff_null_value: yup.string().required('Enter Geotiff Null Value.'),
 //       };
 
-//       // for (let i = 0; i < fileMetadata.geotiff_band_count; i++) {
-//       //   schema[`band_${i + 1}_date`] = yup.string().required(`Band ${i + 1} Date is required.`);
-//       // }
+//       for (let i = 0; i < fileMetadata.geotiff_band_count; i++) {
+//       schema[`band_${i + 1}_date`] = yup.string().required(`Band ${i + 1} Date is required.`);
+//       }
 //     }
 //   } else if (fileMetadata.geotiff_band_count === 1) {
 //     // Validation for single band
@@ -78,7 +82,9 @@ const baseSchema = yup.object({
 //   return yup.object().shape(schema);
 // };
 
+// eslint-disable-next-line no-unused-vars
 const getDynamicValidationSchema = (fileMetadata) => {
+  // eslint-disable-next-line prefer-const
   let schema = baseSchema;
 
   // if (fileMetadata.filetype === 'geotiff') {
@@ -184,6 +190,8 @@ export default ({
     filename: null,
   });
   const [loading, setLoading] = useState(false);
+  // TODO: this is used for the geotiff subform - otherwise it could just be unchanging baseSchema
+  // eslint-disable-next-line no-unused-vars
   const [validationSchema, setValidationSchema] = useState(baseSchema);
 
   const { classes } = useStyles();
@@ -244,11 +252,12 @@ export default ({
     annotations,
   ]);
 
-  useEffect(() => {
-    // Update form schema based on fileMetadata
-    const newValidationSchema = getDynamicValidationSchema(fileMetadata);
-    setValidationSchema(newValidationSchema);
-  }, [fileMetadata]);
+  // TODO: this is used for the geotiff subform, which loads when the metadata comes in
+  // useEffect(() => {
+  //   // Update form schema based on fileMetadata
+  //   const newValidationSchema = getDynamicValidationSchema(fileMetadata);
+  //   setValidationSchema(newValidationSchema);
+  // }, [fileMetadata]);
 
   const defaultValues = {
     name: datasetInfo?.name || '',
