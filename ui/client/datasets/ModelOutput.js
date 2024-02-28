@@ -159,7 +159,8 @@ const BaseData = ({
       formik={formik}
       fileMetadata={fileMetadata}
       setFileMetadata={setFileMetadata}
-      formikControlled
+      // TODO: prop not yet in use to let this know to use formik for onChange
+      // formikControlled
     />
   </Section>
 );

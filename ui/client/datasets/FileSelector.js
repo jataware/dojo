@@ -220,7 +220,7 @@ export const ExtraInput = ({
                 <NullGeotiffTooltip>
                   <span>
                     <GeotiffTextField
-                      name="geotiff_null_value"
+                      name="geotiff_Null_Val"
                       label="Geotiff Null Value"
                       onChange={(event) => setFileMetadata({
                         ...fileMetadata, geotiff_null_value: event.target.value
@@ -295,7 +295,7 @@ export const ExtraInput = ({
       return (
         <div className={classes.geotiffInputWrapper}>
           <GeotiffTextField
-            name="geotiff_value"
+            name="geotiff_Feature_Name"
             label="Geotiff Feature Name"
             onChange={
               (event) => setFileMetadata({ ...fileMetadata, geotiff_value: event.target.value })
@@ -304,7 +304,7 @@ export const ExtraInput = ({
           <NullGeotiffTooltip>
             <span>
               <GeotiffTextField
-                name="geotiff_null_value"
+                name="geotiff_Null_Val"
                 label="Geotiff Null Value"
                 onChange={
                   (event) => setFileMetadata({
