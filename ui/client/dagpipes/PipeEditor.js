@@ -278,11 +278,9 @@ const PipeEditor = () => {
         return;
       }
 
-      const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
-      // subtracting the bounds is not required, but it positions the drag buttons better on drop
       const position = reactFlowInstance.screenToFlowPosition({
-        x: event.clientX - reactFlowBounds.left,
-        y: event.clientY - reactFlowBounds.top,
+        x: event.clientX,
+        y: event.clientY,
       });
 
       const newNode = genNode(type, position);
