@@ -3,14 +3,19 @@ import { useField } from 'formik';
 import * as XLSX from 'xlsx/xlsx.mjs';
 import * as GeoTiff from 'geotiff';
 
+import get from 'lodash/get';
+import isFunction from 'lodash/isFunction';
+import isEmpty from 'lodash/isEmpty';
+
 import Autocomplete from '@mui/material/Autocomplete';
 import Button from '@mui/material/Button';
+import Box from '@mui/material/Box';
+import CircularProgress from '@mui/material/CircularProgress';
 import MenuItem from '@mui/material/MenuItem';
 import Select from '@mui/material/Select';
 import TextField from '@mui/material/TextField';
-import { Tooltip, Typography } from '@mui/material';
-import get from 'lodash/get';
-import isFunction from 'lodash/isFunction';
+import Typography from '@mui/material/Typography';
+import Tooltip from '@mui/material/Tooltip';
 
 import { makeStyles } from 'tss-react/mui';
 
@@ -36,8 +41,35 @@ const useStyles = makeStyles()((theme) => ({
     '& button': {
       marginTop: theme.spacing(0.5)
     }
-  }
+  },
+  geotiffInputWrapper: {
+    display: 'grid',
+    gridTemplateColumns: '1fr 1fr',
+    columnGap: '0.5em',
+    rowGap: '1em',
+    marginTop: '1em',
+    marginBottom: '1em'
+  },
 }));
+
+const GeotiffTextField = ({
+  name, label, placeholder, onChange, ...props
+}) => (
+  <TextField
+    name={name}
+    variant="outlined"
+    label={label}
+    placeholder={placeholder}
+    onChange={onChange}
+    required
+    fullWidth
+    InputProps={{
+      style: { borderRadius: 0 },
+    }}
+    InputLabelProps={{ shrink: true }}
+    {...props}
+  />
+);
 
 const NullGeotiffTooltip = ({ ...props }) => (
   <Tooltip
@@ -58,8 +90,28 @@ export const ExtraInput = ({
   // uploaded file. We'll check if we can populate
   // and display these prepopulated instead....
   // console.log('FileSelector.js - ExtraInput - fileMetadata:', fileMetadata);
+  const { classes } = useStyles();
 
   if (!fileMetadata.filetype) {
+    if (!fileMetadata.file_uuid) {
+      // the metadata hasn't loaded, so show a spinner until it loads
+      return (
+        <Box
+          sx={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            color: 'grey.600',
+            marginTop: 1,
+          }}
+        >
+          <Typography variant="h6" gutterBottom>Loading File Type...</Typography>
+          <CircularProgress size={24} color="inherit" />
+        </Box>
+      );
+    }
+
+    // the metadata has loaded and we still don't have the filetype, so nothing to show
     return null;
   }
 
@@ -77,6 +129,20 @@ export const ExtraInput = ({
     }
     setFileMetadata({ ...fileMetadata, geotiff_bands });
   };
+
+  // TODO: Include this in the formik form (or make a new form?) so it can have errors
+  // and be required etc - currently problematic for ModelOutput with how it saves to formik.values
+  // instead of metadata
+
+  // Don't include the onChange prop if we have the formikControlled prop
+  // or formik's onChange prop will get overwritten in FormikAwareTextField
+  // const conditionalOnChange = (handler) => (
+  //   formikControlled ? {} : {
+  //     onChange: (event) => {
+  //       handler(event);
+  //     }
+  //   }
+  // );
 
   if (fileMetadata.filetype === 'excel') {
     const label = 'Sheet selection';
@@ -131,10 +197,9 @@ export const ExtraInput = ({
               variant="outlined"
               margin="dense"
               value={fileMetadata.geotiff_band_type}
-              onChange={(evt) => {
-                const { value } = evt.target;
-                setFileMetadata({ ...fileMetadata, geotiff_band_type: value, geotiff_bands: {} });
-              }}
+              onChange={(event) => setFileMetadata({
+                ...fileMetadata, geotiff_band_type: event.target.value, geotiff_bands: {}
+              })}
             >
               <MenuItem value="category">category</MenuItem>
               <MenuItem value="temporal">temporal</MenuItem>
@@ -143,50 +208,37 @@ export const ExtraInput = ({
 
           {fileMetadata.geotiff_band_type === 'category' && (
             <>
-              <div style={{
-                display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: '0.5em', rowGap: '0.5em',
-              }}
-              >
-                <TextField
+              <div className={classes.geotiffInputWrapper}>
+                <GeotiffTextField
                   name="geotiff_value"
-                  variant="outlined"
-                  label="Enter dataset date"
-                  helperText="YYYY-MM-DD"
-                  onChange={(evt) => {
-                    const { value } = evt.target;
-                    setFileMetadata({ ...fileMetadata, geotiff_value: value });
-                  }}
+                  label="Dataset date"
+                  placeholder="YYYY-MM-DD"
+                  onChange={(event) => setFileMetadata({
+                    ...fileMetadata, geotiff_value: event.target.value
+                  })}
                 />
                 <NullGeotiffTooltip>
-                  <TextField
-                    name="geotiff_Null_Val"
-                    variant="outlined"
-                    label="Geotiff Null Value"
-                    onChange={(evt) => {
-                      const { value } = evt.target;
-                      setFileMetadata({ ...fileMetadata, geotiff_null_value: value });
-                    }}
-                  />
+                  <span>
+                    <GeotiffTextField
+                      name="geotiff_Null_Val"
+                      label="Geotiff Null Value"
+                      onChange={(event) => setFileMetadata({
+                        ...fileMetadata, geotiff_null_value: event.target.value
+                      })}
+                    />
+                  </span>
                 </NullGeotiffTooltip>
               </div>
 
-              <div
-                style={{
-                  display: 'grid',
-                  gridTemplateColumns: '1fr 1fr',
-                  columnGap: '0.5em',
-                  rowGap: '0.5em',
-                }}
-              >
+              <div className={classes.geotiffInputWrapper}>
                 {/* generate numbered TextField input for each band in the geotiff for labeling */}
                 {Array.from(Array(fileMetadata.geotiff_band_count).keys())
                   .map((i) => {
                     const band_num = i + 1;
                     return (
-                      <TextField
+                      <GeotiffTextField
                         key={`band_${band_num}`}
                         name="bands"
-                        variant="outlined"
                         label={`Band ${band_num} Name`}
                         onChange={(evt) => setBand(evt, band_num)}
                       />
@@ -197,28 +249,21 @@ export const ExtraInput = ({
           )}
           {fileMetadata.geotiff_band_type === 'temporal' && (
           <>
-            <div style={{
-              display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: '0.5em', rowGap: '0.5em', marginBottom: '1.1em'
-            }}
-            >
-              <TextField
+            <div className={classes.geotiffInputWrapper}>
+              <GeotiffTextField
                 name="geotiff_feature_name"
-                variant="outlined"
                 label="Enter feature name"
-                onChange={(evt) => {
-                  const { value } = evt.target;
-                  setFileMetadata({ ...fileMetadata, geotiff_value: value });
-                }}
+                onChange={(event) => setFileMetadata({
+                  ...fileMetadata, geotiff_value: event.target.value
+                })}
               />
               <NullGeotiffTooltip>
-                <TextField
+                <GeotiffTextField
                   name="geotiff_Null_Val"
-                  variant="outlined"
                   label="Geotiff Null Value"
-                  onChange={(evt) => {
-                    const { value } = evt.target;
-                    setFileMetadata({ ...fileMetadata, geotiff_null_value: value });
-                  }}
+                  onChange={(event) => setFileMetadata({
+                    ...fileMetadata, geotiff_null_value: event.target.value
+                  })}
                 />
               </NullGeotiffTooltip>
             </div>
@@ -226,20 +271,15 @@ export const ExtraInput = ({
             <div>
               <Typography variant="caption">Suggested format: YYYY-MM-DD</Typography>
             </div>
-            <div
-              style={{
-                display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: '0.5em', rowGap: '0.5em'
-              }}
-            >
+            <div className={classes.geotiffInputWrapper}>
               {/* generate numbered TextField input for each band in the geotiff for labeling */}
               {Array.from(Array(fileMetadata.geotiff_band_count).keys()).map((i) => {
                 const band_num = i + 1;
                 return (
-                  <TextField
+                  <GeotiffTextField
                     key={`band_${band_num}`}
                     bandnum={band_num}
                     name="bands"
-                    variant="outlined"
                     label={`Band ${band_num} Date`}
                     onChange={(evt) => setBand(evt, band_num)}
                   />
@@ -253,40 +293,36 @@ export const ExtraInput = ({
     }
     if (fileMetadata.geotiff_band_count === 1) {
       return (
-        <div style={{
-          display: 'grid', gridTemplateColumns: '1fr 1fr', columnGap: '0.5em', rowGap: '0.5em', marginBottom: '1.1em'
-        }}
-        >
-          <TextField
+        <div className={classes.geotiffInputWrapper}>
+          <GeotiffTextField
             name="geotiff_Feature_Name"
-            variant="outlined"
             label="Geotiff Feature Name"
-            onChange={(evt) => {
-              const { value } = evt.target;
-              setFileMetadata({ ...fileMetadata, geotiff_value: value });
-            }}
+            onChange={
+              (event) => setFileMetadata({ ...fileMetadata, geotiff_value: event.target.value })
+            }
           />
           <NullGeotiffTooltip>
-            <TextField
-              name="geotiff_Null_Val"
-              variant="outlined"
-              label="Geotiff Null Value"
-              helperText=""
-              onChange={(evt) => {
-                const { value } = evt.target;
-                setFileMetadata({ ...fileMetadata, geotiff_null_value: value });
-              }}
-            />
+            <span>
+              <GeotiffTextField
+                name="geotiff_Null_Val"
+                label="Geotiff Null Value"
+                onChange={
+                  (event) => setFileMetadata({
+                    ...fileMetadata, geotiff_null_value: event.target.value
+                  })
+                }
+              />
+            </span>
           </NullGeotiffTooltip>
-          <TextField
+          <GeotiffTextField
             name="geotiff_date_value"
-            variant="outlined"
             label="Enter dataset date"
-            helperText="YYYY-MM-DD"
-            onChange={(evt) => {
-              const { value } = evt.target;
-              setFileMetadata({ ...fileMetadata, geotiff_date_value: value });
-            }}
+            placeholder="YYYY-MM-DD"
+            onChange={
+              (event) => setFileMetadata({
+                ...fileMetadata, geotiff_date_value: event.target.value
+              })
+            }
           />
         </div>
       );
@@ -516,11 +552,14 @@ export const FileSelector = ((allProps) => {
           {message}
         </div>
       )}
-      <ExtraInput
-        formik={formik}
-        fileMetadata={fileMetadata}
-        setFileMetadata={setFileMetadata}
-      />
+      {/* only load ExtraInput after the file upload has started (in Register.js) */}
+      {!isEmpty(fileMetadata) && (
+        <ExtraInput
+          formik={formik}
+          fileMetadata={fileMetadata}
+          setFileMetadata={setFileMetadata}
+        />
+      )}
     </div>
   );
 });
