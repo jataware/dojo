@@ -278,10 +278,9 @@ const PipeEditor = () => {
         return;
       }
 
-      const reactFlowBounds = reactFlowWrapper.current.getBoundingClientRect();
-      const position = reactFlowInstance.project({
-        x: event.clientX - reactFlowBounds.left,
-        y: event.clientY - reactFlowBounds.top,
+      const position = reactFlowInstance.screenToFlowPosition({
+        x: event.clientX,
+        y: event.clientY,
       });
 
       const newNode = genNode(type, position);
@@ -320,9 +319,12 @@ const PipeEditor = () => {
 
       // TODO: is this actually what the backend needs?
       // parse the edges and nodes into just what the backend cares about
-      forBackend.edges = forBackend.edges.map((e) => (
-        { source: e.source, target: e.target, id: e.id }
-      ));
+      forBackend.edges = forBackend.edges.map((e) => ({
+        source: e.source,
+        target: e.target,
+        id: e.id,
+        ...(e.targetHandle && { target_handle: e.targetHandle }),
+      }));
       forBackend.nodes = forBackend.nodes.map((e) => ({ type: e.type, data: e.data, id: e.id }));
       // TODO: actually send the contents
       console.log(JSON.stringify(forBackend, 2, null));
