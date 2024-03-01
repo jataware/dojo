@@ -48,6 +48,7 @@ import DragBar from './DragBar';
 import { ThemeContext } from '../components/ThemeContextProvider';
 import { drawerWidth } from '../components/Sidebar';
 import { pageSlideAnimation } from '../components/NavBar';
+import ModelerStats from './ModelerStats';
 
 import './overview.css';
 
@@ -482,6 +483,8 @@ const PipeEditor = () => {
               </Button>
             </span>
           </Tooltip>
+
+          <ModelerStats />
         </div>
       </div>
     </div>

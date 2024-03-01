@@ -188,7 +188,7 @@ const styles = (theme) => ({
 const Stats = ({
   classes, statistics = {}, histogramData, ...props
 }) => {
-  const { data = [], labels = [] } = histogramData;
+  const { data = [], labels = [] } = histogramData || {};
   const canvasRef = React.useRef(null);
   const chartRef = React.useRef();
   const hasData = !isEmpty(data) && !isEmpty(labels);
@@ -215,13 +215,13 @@ const Stats = ({
         chartRef.current = null;
       }
     };
+
     renderChart();
     return destroyChart;
   }, [data, hasData, labels]);
 
   return (
     <div>
-
       <Paper
         elevation={1}
         className={classes.chartContainer}
