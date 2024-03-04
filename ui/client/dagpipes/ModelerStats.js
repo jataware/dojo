@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 
 import axios from 'axios';
 
+import get from 'lodash/get';
 import isEmpty from 'lodash/isEmpty';
 
 import { useSelector } from 'react-redux';
@@ -14,7 +15,7 @@ import Stats from '../datasets/annotations/Stats';
 
 const ModelerStats = () => {
   const { savedDatasets } = useSelector((state) => state.dag);
-  // const [selectedForStats, setSelectedForStats] = useState('');
+  // this state is split into two to make it easier to
   const [selectedFeature, setSelectedFeature] = useState(null);
   const [selectedDataset, setSelectedDataset] = useState('');
   const [currentMetadata, setCurrentMetadata] = useState({});
@@ -39,9 +40,15 @@ const ModelerStats = () => {
     console.log('this is currentMetadata', currentMetadata)
   }, [currentMetadata, selectedFeature])
 
+  const statistics = get(currentMetadata, `column_statistics.${selectedFeature}` || {});
+  const histogramData = {
+    data: get(currentMetadata, `histograms.${selectedFeature}.values`),
+    labels: get(currentMetadata, `histograms.${selectedFeature}.bins`, {}),
+  };
+
   return (
     <div style={{ margin: '24px 0 24px' }}>
-      <FormControl fullWidth>
+      <FormControl fullWidth sx={{ marginBottom: 2 }}>
         <InputLabel
           id="view-stats-label"
           shrink
@@ -76,8 +83,8 @@ const ModelerStats = () => {
 
       {(!isEmpty(currentMetadata) && selectedFeature) && (
         <Stats
-          statistics={currentMetadata?.column_statistics[selectedFeature]}
-          histogramData={currentMetadata?.histograms[selectedFeature]}
+          statistics={statistics}
+          histogramData={histogramData}
         />
       )}
     </div>
