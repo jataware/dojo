@@ -21,6 +21,17 @@ const sidebars = {
       },
       {
         type: 'category',
+        label: 'Video How-tos',
+        items: [
+          {
+            type: 'doc',
+            id: 'video-howtos/data-modeling',
+            label: 'Data Modeling',
+          },
+        ],
+      },
+      {
+        type: 'category',
         label: 'Model Registration',
         link: {
           type: 'doc',
