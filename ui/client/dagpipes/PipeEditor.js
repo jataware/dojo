@@ -15,6 +15,7 @@ import ReactFlow, {
 
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import Collapse from '@mui/material/Collapse';
 import Tooltip from '@mui/material/Tooltip';
 
 import { makeStyles } from 'tss-react/mui';
@@ -163,6 +164,7 @@ const useStyles = makeStyles()((theme) => ({
   },
   wholeSidebar: {
     width: '275px',
+    minWidth: '275px',
     overflow: 'auto',
   },
 }));
@@ -170,6 +172,9 @@ const useStyles = makeStyles()((theme) => ({
 const PipeEditor = () => {
   const reactFlowWrapper = useRef(null);
   const { classes } = useStyles();
+
+  const [showStats, setShowStats] = useState(false);
+
   const {
     geoResolutionColumn, timeResolutionColumn
   } = useSelector((state) => state.dag);
@@ -418,6 +423,10 @@ const PipeEditor = () => {
     disabledProcessTooltip = 'Please ensure nodes are added to the graph';
   }
 
+  const handleStatsClick = () => {
+    setShowStats((prev) => !prev);
+  };
+
   return (
     <div className={classes.innerWrapper}>
       <div
@@ -465,16 +474,30 @@ const PipeEditor = () => {
           </ButtonGroup>
         </Panel>*/}
       </div>
+      {showStats && (
+        <ModelerStats />
+      )}
       <div className={classes.wholeSidebar}>
         <DragBar />
         <div className={classes.lowerSidebar}>
           <ModelerResolution />
+          <Button
+            variant="contained"
+            disableElevation
+            fullWidth
+            color="secondary"
+            sx={{ marginTop: 2 }}
+            onClick={handleStatsClick}
+          >
+            {showStats ? 'Hide' : 'View'} Statistics
+          </Button>
           <Tooltip title={processDisabled ? disabledProcessTooltip : ''}>
             <span>
               <Button
                 variant="contained"
                 color="primary"
                 fullWidth
+                disableElevation
                 disabled={processDisabled}
                 onClick={onProcessClick}
                 sx={{ marginTop: 2 }}
@@ -483,8 +506,6 @@ const PipeEditor = () => {
               </Button>
             </span>
           </Tooltip>
-
-          <ModelerStats />
         </div>
       </div>
     </div>

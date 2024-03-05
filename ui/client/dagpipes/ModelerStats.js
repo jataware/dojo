@@ -7,6 +7,7 @@ import isEmpty from 'lodash/isEmpty';
 
 import { useSelector } from 'react-redux';
 
+import Box from '@mui/material/Box';
 import InputLabel from '@mui/material/InputLabel';
 import FormControl from '@mui/material/FormControl';
 import Select from '@mui/material/Select';
@@ -46,8 +47,20 @@ const ModelerStats = () => {
     labels: get(currentMetadata, `histograms.${selectedFeature}.bins`, {}),
   };
 
+  // color matches input outline
+  const border = '1px solid #c4c4c4';
+  const width = '350px';
+
   return (
-    <div style={{ margin: '24px 0 24px' }}>
+    <Box
+      sx={{
+        padding: 2,
+        minWidth: width,
+        maxWidth: width,
+        borderLeft: border,
+        borderRight: border,
+      }}
+    >
       <FormControl fullWidth sx={{ marginBottom: 2 }}>
         <InputLabel
           id="view-stats-label"
@@ -85,9 +98,10 @@ const ModelerStats = () => {
         <Stats
           statistics={statistics}
           histogramData={histogramData}
+          dense
         />
       )}
-    </div>
+    </Box>
   );
 };
 

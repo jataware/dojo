@@ -162,20 +162,9 @@ function loadConfig(labels, datasets) {
 }
 
 const styles = (theme) => ({
-  cardContent: {
-    [theme.breakpoints.down('md')]: {
-      padding: theme.spacing(0.5)
-    }
-  },
   chartContainer: {
     background: theme.palette.common.white,
     padding: '1rem',
-  },
-  cardTextValue: {
-    fontWeight: '100',
-    [theme.breakpoints.down('sm')]: {
-      fontSize: '0.7rem'
-    }
   },
   colorHint: {
     color: theme.palette.secondary.main
@@ -186,7 +175,7 @@ const styles = (theme) => ({
  *
  * */
 const Stats = ({
-  classes, statistics = {}, histogramData, ...props
+  classes, statistics = {}, histogramData, dense, ...props
 }) => {
   const { data = [], labels = [] } = histogramData || {};
   const canvasRef = React.useRef(null);
@@ -223,7 +212,7 @@ const Stats = ({
   return (
     <div>
       <Paper
-        elevation={1}
+        variant="outlined"
         className={classes.chartContainer}
         style={{ display: hasData ? 'block' : 'none' }}
       >
@@ -264,19 +253,28 @@ const Stats = ({
               xs={6}
               key={`${statName}-${statistics[statName]}`}
             >
-              <Card>
-                <CardContent className={classes.cardContent}>
+              <Card
+                variant="outlined"
+                sx={{ '&:last-child div': { paddingBottom: dense ? 1 : 3 } }}
+              >
+                <CardContent
+                  sx={{
+                    padding: dense ? 1 : 2,
+                  }}
+                >
                   <Typography
                     gutterBottom
                     color="textSecondary"
+                    variant="overline"
                   >
                     {statName}
                   </Typography>
 
                   <Typography
-                    className={classes.cardTextValue}
-                    variant="h5"
-                    component="h5"
+                    sx={{
+                      fontWeight: dense ? 'typography.fontWeightRegular' : '100',
+                    }}
+                    variant={dense ? 'subtitle1' : 'h5'}
                   >
                     {formatStatNumber(statistics[statName], 4)}
                   </Typography>
