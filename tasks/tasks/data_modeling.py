@@ -84,9 +84,16 @@ class FlowcastContext(BaseModel):
 
 
 def get_node_parents(node_id: str, graph: Graph, num_expected:int=None) -> list[str]:
-    parents = [edge['source'] for edge in graph['edges'] if edge['target'] == node_id]
-    if num_expected is not None:
-        assert len(parents) == num_expected, f'Node {node_id} has incorrect number of parents: {parents}. Expected {num_expected}.'
+    parent_edges:list[dict] = [edge for edge in graph['edges'] if edge['target'] == node_id]
+
+    # verify that the number of parents is as expected
+    if num_expected is not None and num_expected != len(parent_edges):
+        raise Exception(f'Node {node_id} has incorrect number of parents: {len(parent_edges)}. Expected {num_expected}.')
+
+    #sort edges according to target_handle if it exists
+    parent_edges.sort(key=lambda edge: edge.get('target_handle', ''))
+    parents = [edge['source'] for edge in parent_edges]
+
     return parents
 
 
