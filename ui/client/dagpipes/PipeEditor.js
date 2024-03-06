@@ -15,7 +15,6 @@ import ReactFlow, {
 
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import Collapse from '@mui/material/Collapse';
 import Tooltip from '@mui/material/Tooltip';
 
 import { makeStyles } from 'tss-react/mui';
@@ -137,15 +136,21 @@ const useStyles = makeStyles()((theme) => ({
     display: 'flex',
     // slightly more spacing than the height of the footer accounts for retina displays
     // otherwise we get a persistent scrollbar on retina
-    height: 'calc(100% - 40px)',
+    height: '100%',
   },
   fullWrapper: {
     position: 'absolute',
     // this puts us below the height of our toolbar by a few px, as we use the dense variant
-    top: theme.mixins.toolbar.minHeight,
-    bottom: '0',
+    top: `${theme.mixins.toolbar.minHeight}px`,
+    height: `calc(100vh - ${theme.mixins.toolbar.minHeight}px)`,
     right: '0',
     overflow: 'auto',
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  pipeEditorWrapper: {
+    // always grow to push the footer down, never shrink
+    flex: '1 0 auto'
   },
   reactFlowStyleWrapper: {
     width: '100%',
@@ -165,7 +170,6 @@ const useStyles = makeStyles()((theme) => ({
   wholeSidebar: {
     width: '275px',
     minWidth: '275px',
-    overflow: 'auto',
   },
 }));
 
@@ -527,9 +531,11 @@ const PipeEditorWrapper = () => {
         }),
       })}
     >
-      <ReactFlowProvider>
-        <PipeEditor />
-      </ReactFlowProvider>
+      <div className={classes.pipeEditorWrapper}>
+        <ReactFlowProvider>
+          <PipeEditor />
+        </ReactFlowProvider>
+      </div>
       <Footer />
     </Box>
   );
