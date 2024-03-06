@@ -20,6 +20,7 @@ const initialState = {
   modelerStep: 0,
   flowcastJobId: null,
   completedDatasetIds: null,
+  fetchedMetadata: {},
 };
 export const dagSlice = createSlice({
   name: 'dag',
@@ -94,6 +95,10 @@ export const dagSlice = createSlice({
     setCompletedDatasetIds: (state, action) => {
       state.completedDatasetIds = action.payload;
     },
+    setFetchedMetadata: (state, action) => {
+      const { datasetId, metadata } = action.payload;
+      state.fetchedMetadata[datasetId] = metadata;
+    },
   },
 });
 
@@ -118,6 +123,7 @@ export const {
   removeSelectedFeature,
   setFlowcastJobId,
   setCompletedDatasetIds,
+  setFetchedMetadata,
 } = dagSlice.actions;
 
 export default dagSlice.reducer;

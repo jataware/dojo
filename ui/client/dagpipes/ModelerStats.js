@@ -5,18 +5,21 @@ import axios from 'axios';
 import get from 'lodash/get';
 import isEmpty from 'lodash/isEmpty';
 
-import { useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 
 import Box from '@mui/material/Box';
 import InputLabel from '@mui/material/InputLabel';
 import FormControl from '@mui/material/FormControl';
 import Select from '@mui/material/Select';
 
+import { setFetchedMetadata } from './dagSlice';
+
 import Stats from '../datasets/annotations/Stats';
 
 const ModelerStats = () => {
-  const { savedDatasets } = useSelector((state) => state.dag);
-  // this state is split into two to make it easier to
+  const { fetchedMetadata, savedDatasets } = useSelector((state) => state.dag);
+  const dispatch = useDispatch();
+  // this state is split into two to make it easier to use just selectedFeature
   const [selectedFeature, setSelectedFeature] = useState(null);
   const [selectedDataset, setSelectedDataset] = useState('');
   const [currentMetadata, setCurrentMetadata] = useState({});
@@ -25,21 +28,26 @@ const ModelerStats = () => {
     const [feature, datasetId] = event.target.value.split('::');
     setSelectedFeature(feature);
     setSelectedDataset(datasetId);
-    // TODO: load any fetched datasets into redux, by default look there first
-    axios.get(`/api/dojo/indicators/${datasetId}/annotations`)
-      .then((resp) => {
-        setCurrentMetadata(resp.data.metadata);
-      })
-      .catch((err) => {
-        // TODO: Show an error in the stats display
-        console.log('There was an error fetching the annotations', err);
-      });
-  };
 
-  React.useEffect(() => {
-    console.log('this is selectedFeature', selectedFeature)
-    console.log('this is currentMetadata', currentMetadata)
-  }, [currentMetadata, selectedFeature])
+    if (fetchedMetadata[datasetId]) {
+      // if we've already fetched this dataset from the server and stored it to redux
+      // don't fetch again, just get it from redux
+      setCurrentMetadata(fetchedMetadata[datasetId]);
+    } else {
+      // otherwise fetch it from the server
+      axios.get(`/api/dojo/indicators/${datasetId}/annotations`)
+        .then((resp) => {
+          // set it as the current metadata
+          setCurrentMetadata(resp.data.metadata);
+          // and add it to the redux store
+          dispatch(setFetchedMetadata({ datasetId, metadata: resp.data.metadata }));
+        })
+        .catch((err) => {
+          // TODO: Show an error in the stats display
+          console.log('There was an error fetching the annotations', err);
+        });
+    }
+  };
 
   const statistics = get(currentMetadata, `column_statistics.${selectedFeature}` || {});
   const histogramData = {
