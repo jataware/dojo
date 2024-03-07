@@ -185,16 +185,22 @@ export function verifyConditionalRequiredFields(annotation) {
   }
 
   if (annotation['geo.multi-column']) {
+    let multiAnnotationsFound = 0;
     [
       'geo.multi-column.admin0',
       'geo.multi-column.admin1',
       'geo.multi-column.admin2',
       'geo.multi-column.admin3',
     ].forEach((valName) => {
-      if (!annotation[valName]) {
-        errors[valName] = 'Required';
+      const memberAnnotation = annotation[valName];
+      if (memberAnnotation) {
+        multiAnnotationsFound++;
       }
     });
+
+    if (multiAnnotationsFound < 2) {
+      errors['geo.multi-column'] = 'Select at least two columns for a build-a-geo annotation.';
+    }
   }
 
   if (annotation.category === CATEGORIES.time) {

@@ -1025,6 +1025,11 @@ describe('formatAnnotationsOUT', () => {
 
     const output = formatAnnotationsOUT(input);
 
+    // NOTE This will work on the dataOUT logic, as the build-a-date with only
+    //      one column is the same as only annotating 1 primary geo column.
+    //      But! Elsewhere on the UI we ensure the user selects 2+ columns
+    //      when creating a build-a-geo annotation. They can always disable
+    //      the build-a-geo checkmark and annotate a single primary geo explicitly.
     expect(output.geo)
       .toEqual([
         {

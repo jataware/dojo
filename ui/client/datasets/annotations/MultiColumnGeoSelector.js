@@ -42,7 +42,6 @@ const MultiColumnGeoSelector = ({
               name="['geo.multi-column.admin0']"
               label="Country"
               disabled={disabled || (editingColumn.geo_type === GEO_ADMINS.admin0)}
-              required
               options={columnOptions}
             />
           </Grid>
@@ -52,7 +51,6 @@ const MultiColumnGeoSelector = ({
               name="['geo.multi-column.admin1']"
               label="State/Territory"
               disabled={disabled || (editingColumn.geo_type === GEO_ADMINS.admin1)}
-              required
               options={columnOptions}
             />
 
@@ -63,7 +61,6 @@ const MultiColumnGeoSelector = ({
               name="['geo.multi-column.admin2']"
               label="County/District"
               disabled={disabled || (editingColumn.geo_type === GEO_ADMINS.admin2)}
-              required
               options={columnOptions}
             />
 
@@ -74,7 +71,6 @@ const MultiColumnGeoSelector = ({
               name="['geo.multi-column.admin3']"
               label="Municipality/Town"
               disabled={disabled || (editingColumn.geo_type === GEO_ADMINS.admin3)}
-              required
               options={columnOptions}
             />
 
