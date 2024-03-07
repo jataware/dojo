@@ -162,18 +162,17 @@ describe('verifyConditionalRequiredFields', () => {
       geo_type: 'country',
       'geo.multi-column': true,
       primary: true,
-        'geo.multi-column.admin0': 'countryCol',
-        'geo.multi-column.admin1': 'admin1Field',
-        'geo.multi-column.admin1': 'admin2Item',
+      'geo.multi-column.admin0': 'countryCol',
+      'geo.multi-column.admin1': 'admin1Field',
+      'geo.multi-column.admin2': 'admin2Item',
     };
 
     const out = verifyConditionalRequiredFields(annotation);
 
-    expect(out).toEqual({})
+    expect(out).toEqual({});
   });
 
   test('selecting 1 field on a build-a-geo annotation yields errors, as this isnt multipart', () => {
-
     const annotation = {
       description: 'some description',
       category: 'geo',
@@ -184,13 +183,10 @@ describe('verifyConditionalRequiredFields', () => {
     };
 
     const out = verifyConditionalRequiredFields(annotation);
-    expect(out).toEqual({'geo.multi-column': 'Select at least two columns for a build-a-geo annotation.'});
-    
+    expect(out).toEqual({ 'geo.multi-column': 'Select at least two columns for a build-a-geo annotation.' });
   });
 
-
   test('selecting 1 field on a build-a-geo annotation, but removing the build-a-geo checkbox, yields no errors', () => {
-
     const annotation = {
       description: 'some description',
       category: 'geo',
@@ -202,9 +198,7 @@ describe('verifyConditionalRequiredFields', () => {
 
     const out = verifyConditionalRequiredFields(annotation);
     expect(out).toEqual({});
-    
   });
-
 });
 
 describe('knownFieldAnnotations', () => {

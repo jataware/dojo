@@ -185,7 +185,6 @@ export function verifyConditionalRequiredFields(annotation) {
   }
 
   if (annotation['geo.multi-column']) {
-
     let multiAnnotationsFound = 0;
     [
       'geo.multi-column.admin0',
@@ -197,11 +196,10 @@ export function verifyConditionalRequiredFields(annotation) {
       if (memberAnnotation) {
         multiAnnotationsFound++;
       }
-
     });
 
     if (multiAnnotationsFound < 2) {
-      errors['geo.multi-column'] = 'Select at least two columns for a build-a-geo annotation.'
+      errors['geo.multi-column'] = 'Select at least two columns for a build-a-geo annotation.';
     }
   }
 
