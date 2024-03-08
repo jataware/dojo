@@ -43,6 +43,7 @@ Adding multiple nodes and creating a network of connections between them defines
 
 <CenteredImage file="data-modeling-node-list.png" width="300px" title="Node List" />
 
+This is the current list of nodes available for building a data modeling graph.
 
 ### Load Node
 
@@ -72,7 +73,20 @@ Threshold Nodes are used to select specific portions of data where some conditio
 
 Take the example of a temperature dataset where you want to filter for values above a threshold temperature. A Threshold Node that takes temperature data as input and is set to `greater_than` with the value of your threshold creates a boolean mask that is true wherever the condition was met. This can then be used to filter the original data with a [Join Node](#join-node).
 
-Threshold values can be an integer or floating point number. The type of comparison operation (`=`, `≠`, `>`, `≥`, `<`, `≤`)  is specified with the dropdown menu.
+Threshold values can be an integer or floating point number, and may optionally end with a percent (%) symbol. Some examples:
+- `42`
+- `-5345`
+- `10%`
+- `0.0003`
+- `1.34e12`
+- `99.9%`
+- `1.63e-6%`
+
+The percent symbol indicates a percentile threshold. Percentile thresholds must be between 0 and 100, and will automatically calculate the correct data value to apply the threshold for the specified percentile. Otherwise, the threshold value is applied directly to the data.
+
+The type of comparison operation (`=`, `≠`, `>`, `≥`, `<`, `≤`)  is specified with the dropdown menu.
+
+The checkbox for `Preserve NaNs` indicates how the threshold should be applied to `NaN` values in the data. If checked, any `NaN` values in the original data will be carried forward unmodified by the threshold. If unchecked, `NaN` values will be converted to `False` in the threshold operation.
 
 
 ### Join Node
@@ -80,17 +94,33 @@ Threshold values can be an integer or floating point number. The type of compari
 <CenteredImage file="data-modeling-join-node.png" title="Join Node" />
 
 
-Join Nodes are used to combine multiple nodes in the graph into a single dataset. Join Nodes take as input two parent nodes and output the values of those input nodes combined together. Under the hood, a Join Node multiplies the input datasets together.
+Join Nodes are used to combine multiple nodes in the graph into a single dataset. Join Nodes take as input two parent nodes and output the values of those input nodes combined together. The particular operation used to combine the datasets is specified via the dropdown menu. The options are `Add`, `Subtract`, `Multiply`, `Divide`, and `Power`. The output of a Join Node is calculated as follows:
 
-The most common use case for Join Nodes is to filter data to where some condition is true. A dataset mask can be created with a [Threshold Node](#threshold-node), and then that mask can be "joined" with the data that you want to apply the mask to.
+```
+output = left_parent <operation> right_parent
+``` 
 
-Less commonly, depending on the particular data operations you are trying to do, it may make sense to use a Join Node to multiply two separate datasets together to get a new dataset out the other end. For example, if one dataset is gridded solar energy flux (watts/meter^2), and another dataset is solar panel area (meter^2) per each lat/lon point, you could multiply them together with a Join Node to get a new dataset that is the expected power production per each lat/lon grid point.
+:::note
+For the non-commutative operations `Subtract`, `Divide`, and `Power`, it is important to ensure the order of the parent nodes is correct.
+:::
+
+The most common use case for Join Nodes is to filter data to where some condition is true. A dataset mask can be created with a [Threshold Node](#threshold-node), and then that mask can be "joined" with the data that you want to apply the mask to using the multiply aggregation.
+
+Other join operations are used to combine datasets in other ways. For example say you have two datasets, one with population by country, and with with land area by country. You could use a Join Node with the `Divide` operation to get a new dataset that is population density by country. The particular operation you should use will depend on the data you're working with and the analysis you're trying to perform.
 
 ### Filter By Country Node
 
 <CenteredImage file="data-modeling-filter-by-country-node.png" title="Filter By Country Node" />
 
-With this node, you can filter the data coming out of your selected features by the countries you select in the dropdown. You can select multiple countries. The output dataset will be a copy of the input dataset, but with an extra `admin0` (i.e. country) dimension. Every country specified in the Filter By Country Node will be split into its own separate layer along the country dimension of the output. All other values not within the bounds of any of the specified countries will be set to `0`
+With this node, you can filter the data coming out of your selected features by the countries you select in the dropdown. You can select multiple countries. The output dataset will be a copy of the input dataset, but with an extra `admin0` (i.e. country) dimension. Every country specified in the Filter By Country Node will be split into its own separate layer along the country dimension of the output. All other values not within the bounds of any of the specified countries will be set to `0`.
+
+:::note
+Data input into this node must have `lat`, and `lon` dimensions, as these are used to determine which data points are within the bounds of the specified countries.
+:::
+
+:::note
+This node does not remove any existing dimensions, so the output will have `lat`, `lon`, and `admin0` dimensions, and optionally `time` if the input data had a time dimension.
+:::
 
 
 ### Reduce By Node
@@ -98,31 +128,82 @@ With this node, you can filter the data coming out of your selected features by 
 <CenteredImage file="data-modeling-reduce-by-node.png" title="Reduce By Node" />
 
 
-This node can be used to aggregate a dataset across one or more dimensions. The input dataset will be `sum-reduced` along the dimensions specified by the checkboxes. For example, say you have monthly population data gridded to `0.1x0.1` lat/lon, and you would like to produce a single population curve over time. Using the Reduce By Node, selecting `lat` and `lon` will sum up all of the values for each time slice in the input dataset, and produce a new dataset that is just a single aggregated curve over time.
+This node can be used to aggregate a dataset across one or more dimensions. The input dataset will be reduced along the dimensions specified by the checkboxes, according to the selected aggregation method. Aggregation methods include `Sum`, `Mean`, `Median`, `Min`, `Max`, `Standard Deviation`, and `Mode`.
+
+For example, say you have monthly population data gridded to `0.1x0.1` lat/lon, and you would like to produce a single population curve over time. Using the Reduce By Node, selecting `lat` and `lon` as the dimensions, and selecting `Sum` as the aggregation will sum up all of the values for each time slice in the input dataset, and produce a new dataset that is just a single aggregated curve over time.
 
 :::tip
-At present, Reduce By Nodes are hardcoded with the options `lat`, `lon`, `time`, and `country`, regardless of what dimensions your data has. Take care to only select dimensions that already exist on your dataset.
+At present, Reduce By Nodes are hardcoded with the options `lat`, `lon`, `time`, and `country`, regardless of what dimensions your data has. Take care to only select dimensions that actually exist on your dataset.
 :::
 
 ### Scalar Operation
 
 <CenteredImage file="data-modeling-scalar-operation-node.png" width="250px" title="Scalar Operation Node" />
 
-:::note
-The documentation for this node is in progress...
-:::
+Scalar operations provide a simple node for applying scalar operations to your data. The scalar value can be set in the input field, and the operation can be selected from the dropdown menu. The available operations are `Add`, `Subtract`, `Multiply`, `Divide`, and `Power`. For the simple operators (`Add`, `Subtract`, `Multiply`), the result is calculated as follows:
+
+```
+output = input <operation> scalar
+```
+
+For `Divide` and `Power`, you have a radio selector for specifying the position of the scalar in the operation. For `Divide`, you may select either `Numerator` or `Denominator`, giving the following results:
+
+```
+// Divide with scalar position set to 'numerator'
+output = scalar / input
+
+// Divide with scalar position set to 'denominator'
+output = input / scalar
+```
+
+For `Power`, you may select either `Base` or `Exponent`, giving the following results:
+
+```
+// Power with scalar position set to 'base'
+output = scalar ^ input
+
+// Power with scalar position set to 'exponent'
+output = input ^ scalar
+```
 
 ### Select Slice
 
+<CenteredImage file="data-modeling-select-slice-node.png" title="Select Slice Node" />
+
+Select slice is used to select a slice of data along one or more specified dimensions. The dimension dropdown is used to specify what dimension the slice should be selected from. The index field is used to specify the slice. A slice can be either:
+- a single integer
+- a range of integers separated by a colon `:`, e.g. `0:10`
+- a comma separated list of integers or ranges, e.g. `0, 2, 4:6, 8:10`
+
+For example, if you have a dataset with a `time` dimension, and you want to select only the first 10 time slices, you would use a Select Slice Node with `time` selected as the dimension, and `0:10` as the index.
+
+Lastly, you can use the `+`/`-` buttons to add additional or remove existing slices to the node.
+
 :::note
-The documentation for this node is in progress...
+if the index is a single integer, then that dimension will be removed from the output dataset. Otherwise, for ranges and more complicated slices, the dimension will be retained in the output dataset.
 :::
 
 ### Mask to Distance Field
 <CenteredImage file="data-modeling-mask-to-distance-field-node.png" width="250px" title="Mask to Distance Field Node" />
 
+The Mask to Distance Field Node is used to convert a binary mask into a distance field. The input mask is a boolean mask where `True` values represent the mask, and `False` values represent the background. The output distance field is a floating point field where each value represents the distance from the nearest `True` value in the mask. Additionally, any `NaN` values in the initial data will be carried forward as `NaN` in the output. The distance field is calculated using the Haversine distance formula over the surface of the Earth. 
+
 :::note
-The documentation for this node is in progress...
+Distances values in the result are in kilometers
+:::
+
+If `include initial points` is checked, then all the initial points in the mask will have a distance of `0`. If unchecked, then all initial points will have a distance of `NaN`.
+
+<CenteredImage file="data-modeling-mask-to-distance-field-example.png" width="750px" title="Mask to Distance Field Example" />
+
+In this example, the left image is a mask over Australia where `True` values represent locations of freshwater (e.g. lakes, rivers), and `False` values represent the background. Then the right image is the distance field calculated from the mask. Distances near the initial points are dark, and distances further away are brighter
+
+:::note
+Input to mask to distance field is expected to be a mask with `lat` and `lon` dimensions. Masks may either be boolean, or floating point limited to values `0`, `1`, or `NaN`. Either your input data must be in mask form, or you must use a [Threshold Node](#threshold-node) to create a mask before using this node.
+:::
+
+:::tip
+Mask to distance field will handle additional dimensions (i.e. `time`, `country`) by treating each slice as independent. However it is not recommended to used data with additional dimensions, as the calculation will be very slow.
 :::
 
 ### Save Node
