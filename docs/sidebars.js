@@ -28,6 +28,11 @@ const sidebars = {
             id: 'video-howtos/data-modeling',
             label: 'Data Modeling',
           },
+          {
+            type: 'doc',
+            id: 'video-howtos/model-registration',
+            label: 'Model Registration',
+          },          
         ],
       },
       {
