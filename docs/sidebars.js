@@ -32,7 +32,12 @@ const sidebars = {
             type: 'doc',
             id: 'video-howtos/model-registration',
             label: 'Model Registration',
-          },          
+          },
+          {
+            type: 'doc',
+            id: 'video-howtos/documents-knowledge',
+            label: 'Documents and Knowledge',
+          },                    
         ],
       },
       {
