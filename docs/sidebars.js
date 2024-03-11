@@ -25,14 +25,19 @@ const sidebars = {
         items: [
           {
             type: 'doc',
-            id: 'video-howtos/data-modeling',
-            label: 'Data Modeling',
-          },
-          {
-            type: 'doc',
             id: 'video-howtos/model-registration',
             label: 'Model Registration',
           },
+          {
+            type: 'doc',
+            id: 'video-howtos/data-registration',
+            label: 'Dataset Registration',
+          },
+          {
+            type: 'doc',
+            id: 'video-howtos/data-modeling',
+            label: 'Data Modeling',
+          },                
           {
             type: 'doc',
             id: 'video-howtos/documents-knowledge',
