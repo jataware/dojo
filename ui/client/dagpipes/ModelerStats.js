@@ -37,10 +37,24 @@ const ModelerStats = () => {
       // otherwise fetch it from the server
       axios.get(`/api/dojo/indicators/${datasetId}/annotations`)
         .then((resp) => {
+          // reduce the feature down to just { name: unit } for use in labeling
+          const featureUnits = resp.data.annotations.feature.reduce((acc, feat) => {
+            acc[feat.name] = feat.units;
+            return acc;
+          }, {});
+
+          // strip out everything we don't need to store in redux for stats
+          const {
+            files, geotime_classify, transformations, ...statsMetadata
+          } = resp.data.metadata;
+
+          // combine the units and our pared down metadata
+          const parsedMetadata = { featureUnits, ...statsMetadata };
+
           // set it as the current metadata
-          setCurrentMetadata(resp.data.metadata);
+          setCurrentMetadata(parsedMetadata);
           // and add it to the redux store
-          dispatch(setFetchedMetadata({ datasetId, metadata: resp.data.metadata }));
+          dispatch(setFetchedMetadata({ datasetId, metadata: parsedMetadata }));
         })
         .catch((err) => {
           // TODO: Show an error in the stats display
@@ -54,6 +68,8 @@ const ModelerStats = () => {
     data: get(currentMetadata, `histograms.${selectedFeature}.values`),
     labels: get(currentMetadata, `histograms.${selectedFeature}.bins`, {}),
   };
+
+  const currentUnits = get(currentMetadata, `featureUnits.${selectedFeature}`, {});
 
   // color matches input outline
   const border = '1px solid #c4c4c4';
@@ -104,6 +120,8 @@ const ModelerStats = () => {
 
       {(!isEmpty(currentMetadata) && selectedFeature) && (
         <Stats
+          // pass down name and units together
+          featureUnits={{ [selectedFeature]: currentUnits }}
           statistics={statistics}
           histogramData={histogramData}
           dense

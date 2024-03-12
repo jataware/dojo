@@ -164,7 +164,7 @@ function loadConfig(labels, datasets) {
 const styles = (theme) => ({
   chartContainer: {
     background: theme.palette.common.white,
-    padding: '1rem',
+    padding: '1rem 1rem 0.5rem',
   },
   colorHint: {
     color: theme.palette.secondary.main
@@ -172,10 +172,10 @@ const styles = (theme) => ({
 });
 
 /**
- *
+ * featureUnits: { featureName: unitName } - currently only passed from ModelerStats
  * */
 const Stats = ({
-  classes, statistics = {}, histogramData, dense, ...props
+  classes, statistics = {}, histogramData, dense, featureUnits, ...props
 }) => {
   const { data = [], labels = [] } = histogramData || {};
   const canvasRef = React.useRef(null);
@@ -209,6 +209,8 @@ const Stats = ({
     return destroyChart;
   }, [data, hasData, labels]);
 
+  const feature = !isEmpty(featureUnits) && Object.keys(featureUnits)[0];
+
   return (
     <div>
       <Paper
@@ -216,6 +218,7 @@ const Stats = ({
         className={classes.chartContainer}
         style={{ display: hasData ? 'block' : 'none' }}
       >
+        {feature && <Typography variant="subtitle1" align="center">{feature} distribution</Typography>}
         <canvas
           ref={canvasRef}
           // eslint-disable-next-line jsx-a11y/no-interactive-element-to-noninteractive-role
@@ -224,6 +227,7 @@ const Stats = ({
         >
           Loading...
         </canvas>
+        {feature && <Typography component="div" variant="caption" align="center">{`Units: ${featureUnits[feature]}`}</Typography>}
       </Paper>
 
       <br />
@@ -233,12 +237,14 @@ const Stats = ({
           <Typography paragraph variant="h6">
             No statistics available for this column
           </Typography>
-          <Typography variant="caption">
-            This may be a multi-part annotated column, which contains + in its name.
-            Multi-part columns don&apos;t show any statistics yet.
-            You may <span className={classes.colorHint}>clear</span> the
-            annotation in order to view individual column statistics.
-          </Typography>
+          {!dense && (
+            <Typography variant="caption">
+              This may be a multi-part annotated column, which contains + in its name.
+              Multi-part columns don&apos;t show any statistics yet.
+              You may <span className={classes.colorHint}>clear</span> the
+              annotation in order to view individual column statistics.
+            </Typography>
+          )}
         </>
       )}
 
