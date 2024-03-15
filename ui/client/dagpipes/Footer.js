@@ -13,6 +13,8 @@ const useStyles = makeStyles()((theme) => ({
     height: '38px',
     backgroundColor: theme.palette.grey[200],
     width: '100%',
+    // flexShrink here always keeps it below the modeler content
+    flexShrink: '0',
   },
   text: {
     padding: `${theme.spacing(1)} ${theme.spacing(2)}`,

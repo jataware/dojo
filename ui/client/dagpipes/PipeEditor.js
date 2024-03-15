@@ -48,6 +48,7 @@ import DragBar from './DragBar';
 import { ThemeContext } from '../components/ThemeContextProvider';
 import { drawerWidth } from '../components/Sidebar';
 import { pageSlideAnimation } from '../components/NavBar';
+import ModelerStats from './ModelerStats';
 
 import './overview.css';
 
@@ -135,15 +136,21 @@ const useStyles = makeStyles()((theme) => ({
     display: 'flex',
     // slightly more spacing than the height of the footer accounts for retina displays
     // otherwise we get a persistent scrollbar on retina
-    height: 'calc(100% - 40px)',
+    height: '100%',
   },
   fullWrapper: {
     position: 'absolute',
     // this puts us below the height of our toolbar by a few px, as we use the dense variant
-    top: theme.mixins.toolbar.minHeight,
-    bottom: '0',
+    top: `${theme.mixins.toolbar.minHeight}px`,
+    height: `calc(100vh - ${theme.mixins.toolbar.minHeight}px)`,
     right: '0',
     overflow: 'auto',
+    display: 'flex',
+    flexDirection: 'column',
+  },
+  pipeEditorWrapper: {
+    // always grow to push the footer down, never shrink
+    flex: '1 0 auto'
   },
   reactFlowStyleWrapper: {
     width: '100%',
@@ -162,13 +169,16 @@ const useStyles = makeStyles()((theme) => ({
   },
   wholeSidebar: {
     width: '275px',
-    overflow: 'auto',
+    minWidth: '275px',
   },
 }));
 
 const PipeEditor = () => {
   const reactFlowWrapper = useRef(null);
   const { classes } = useStyles();
+
+  const [showStats, setShowStats] = useState(false);
+
   const {
     geoResolutionColumn, timeResolutionColumn
   } = useSelector((state) => state.dag);
@@ -417,6 +427,10 @@ const PipeEditor = () => {
     disabledProcessTooltip = 'Please ensure nodes are added to the graph';
   }
 
+  const handleStatsClick = () => {
+    setShowStats((prev) => !prev);
+  };
+
   return (
     <div className={classes.innerWrapper}>
       <div
@@ -464,16 +478,30 @@ const PipeEditor = () => {
           </ButtonGroup>
         </Panel>*/}
       </div>
+      {showStats && (
+        <ModelerStats />
+      )}
       <div className={classes.wholeSidebar}>
         <DragBar />
         <div className={classes.lowerSidebar}>
           <ModelerResolution />
+          <Button
+            variant="contained"
+            disableElevation
+            fullWidth
+            color="secondary"
+            sx={{ marginTop: 2 }}
+            onClick={handleStatsClick}
+          >
+            {showStats ? 'Hide' : 'View'} Statistics
+          </Button>
           <Tooltip title={processDisabled ? disabledProcessTooltip : ''}>
             <span>
               <Button
                 variant="contained"
                 color="primary"
                 fullWidth
+                disableElevation
                 disabled={processDisabled}
                 onClick={onProcessClick}
                 sx={{ marginTop: 2 }}
@@ -503,9 +531,11 @@ const PipeEditorWrapper = () => {
         }),
       })}
     >
-      <ReactFlowProvider>
-        <PipeEditor />
-      </ReactFlowProvider>
+      <div className={classes.pipeEditorWrapper}>
+        <ReactFlowProvider>
+          <PipeEditor />
+        </ReactFlowProvider>
+      </div>
       <Footer />
     </Box>
   );

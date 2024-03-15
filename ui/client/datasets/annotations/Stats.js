@@ -162,20 +162,9 @@ function loadConfig(labels, datasets) {
 }
 
 const styles = (theme) => ({
-  cardContent: {
-    [theme.breakpoints.down('md')]: {
-      padding: theme.spacing(0.5)
-    }
-  },
   chartContainer: {
     background: theme.palette.common.white,
-    padding: '1rem',
-  },
-  cardTextValue: {
-    fontWeight: '100',
-    [theme.breakpoints.down('sm')]: {
-      fontSize: '0.7rem'
-    }
+    padding: '1rem 1rem 0.5rem',
   },
   colorHint: {
     color: theme.palette.secondary.main
@@ -183,12 +172,12 @@ const styles = (theme) => ({
 });
 
 /**
- *
+ * featureUnits: { featureName: unitName } - currently only passed from ModelerStats
  * */
 const Stats = ({
-  classes, statistics = {}, histogramData, ...props
+  classes, statistics = {}, histogramData, dense, featureUnits, ...props
 }) => {
-  const { data = [], labels = [] } = histogramData;
+  const { data = [], labels = [] } = histogramData || {};
   const canvasRef = React.useRef(null);
   const chartRef = React.useRef();
   const hasData = !isEmpty(data) && !isEmpty(labels);
@@ -215,18 +204,21 @@ const Stats = ({
         chartRef.current = null;
       }
     };
+
     renderChart();
     return destroyChart;
   }, [data, hasData, labels]);
 
+  const feature = !isEmpty(featureUnits) && Object.keys(featureUnits)[0];
+
   return (
     <div>
-
       <Paper
-        elevation={1}
+        variant="outlined"
         className={classes.chartContainer}
         style={{ display: hasData ? 'block' : 'none' }}
       >
+        {feature && <Typography variant="subtitle1" align="center">{feature} distribution</Typography>}
         <canvas
           ref={canvasRef}
           // eslint-disable-next-line jsx-a11y/no-interactive-element-to-noninteractive-role
@@ -235,6 +227,7 @@ const Stats = ({
         >
           Loading...
         </canvas>
+        {feature && <Typography component="div" variant="caption" align="center">{`Units: ${featureUnits[feature]}`}</Typography>}
       </Paper>
 
       <br />
@@ -244,12 +237,14 @@ const Stats = ({
           <Typography paragraph variant="h6">
             No statistics available for this column
           </Typography>
-          <Typography variant="caption">
-            This may be a multi-part annotated column, which contains + in its name.
-            Multi-part columns don&apos;t show any statistics yet.
-            You may <span className={classes.colorHint}>clear</span> the
-            annotation in order to view individual column statistics.
-          </Typography>
+          {!dense && (
+            <Typography variant="caption">
+              This may be a multi-part annotated column, which contains + in its name.
+              Multi-part columns don&apos;t show any statistics yet.
+              You may <span className={classes.colorHint}>clear</span> the
+              annotation in order to view individual column statistics.
+            </Typography>
+          )}
         </>
       )}
 
@@ -264,19 +259,28 @@ const Stats = ({
               xs={6}
               key={`${statName}-${statistics[statName]}`}
             >
-              <Card>
-                <CardContent className={classes.cardContent}>
+              <Card
+                variant="outlined"
+                sx={{ '&:last-child div': { paddingBottom: dense ? 1 : 3 } }}
+              >
+                <CardContent
+                  sx={{
+                    padding: dense ? 1 : 2,
+                  }}
+                >
                   <Typography
                     gutterBottom
                     color="textSecondary"
+                    variant="overline"
                   >
                     {statName}
                   </Typography>
 
                   <Typography
-                    className={classes.cardTextValue}
-                    variant="h5"
-                    component="h5"
+                    sx={{
+                      fontWeight: dense ? 'typography.fontWeightRegular' : '100',
+                    }}
+                    variant={dense ? 'subtitle1' : 'h5'}
                   >
                     {formatStatNumber(statistics[statName], 4)}
                   </Typography>

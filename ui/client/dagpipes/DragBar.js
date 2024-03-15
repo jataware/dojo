@@ -20,7 +20,6 @@ const useStyles = makeStyles()((theme) => ({
       gap: 0,
       padding: `${theme.spacing(1)} ${theme.spacing(2)}`,
       cursor: 'default',
-      maxWidth: '208px',
     }
   },
 }));
