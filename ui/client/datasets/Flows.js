@@ -62,6 +62,9 @@ const BasicRegistrationFlow = {
           {
             id: 'geotime_processors.geotime_classify',
           },
+          {
+            id: 'auto_annotations.generate_annotations',
+          },
         ]
       }
     },
