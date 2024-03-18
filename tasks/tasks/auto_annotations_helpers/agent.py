@@ -5,9 +5,10 @@ import openai
 from typing import Generator, Literal
 from enum import Enum
 import os
-
+from time import sleep
 
 import pdb
+import traceback
 
 
 class Role(str, Enum):
@@ -55,12 +56,29 @@ class Agent:
 
     def multishot_streaming(self, messages: list[Message]) -> Generator[str, None, None]:
         # client = OpenAI()
-        gen = openai.ChatCompletion.create( #client.chat.completions.create(
-            model=self.model,
-            messages=messages,
-            timeout=self.timeout,
-            stream=True
-        )
+
+        # retry making the request a few times
+        last_exception = None
+        for i in range(5):
+            try:
+                gen = openai.ChatCompletion.create(  # client.chat.completions.create(
+                    model=self.model,
+                    messages=messages,
+                    timeout=self.timeout,
+                    stream=True
+                )
+                break
+            except Exception as e:
+                last_exception = e
+                # traceback.print_exc()
+                # pdb.set_trace()
+                # pass
+                print(f'chat completion failed {i+1} times, retrying...')
+                sleep(0.5)
+        else:
+            assert last_exception is not None, "Internal error: last_exception should not be None"
+            raise last_exception  # if we didn't break out of the loop, raise the last exception
+
         for chunk in gen:
             try:
                 content = chunk.choices[0].delta.content
@@ -78,8 +96,6 @@ def set_openai_key(api_key: str | None = None):
         raise Exception(
             "No OpenAI API key given. Please set the OPENAI_API_KEY environment variable or pass the api_key argument to set_openai_key()")
     openai.api_key = api_key
-
-
 
 
 # class Agent:
@@ -127,4 +143,3 @@ def set_openai_key(api_key: str | None = None):
 #     if not api_key:
 #         raise Exception("No OpenAI API key given. Please set the OPENAI_API_KEY environment variable or pass the api_key argument to set_openai_key()")
 #     openai.api_key = api_key
-
