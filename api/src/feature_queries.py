@@ -1,4 +1,7 @@
-from src.embedder_engine import embedder
+from jatarag.embedder import AdaEmbedder
+
+embedder = AdaEmbedder()
+
 
 def keyword_query_v3(phrase):
     """
@@ -113,7 +116,7 @@ def keyword_query_v2(term):
 
 def semantic_search_query(term):
 
-    embedding = embedder.embed([term])[0]
+    embedding = embedder.embed_paragraphs([term])[0]
 
     query = {
         "query": {
@@ -137,7 +140,7 @@ def semantic_search_query(term):
 
 def hybrid_query_v1(term):
 
-    embedding = embedder.embed([term])[0]
+    embedding = embedder.embed_paragraphs([term])[0]
 
     features_query = keyword_query_v2(term)
 
@@ -200,7 +203,7 @@ def keyword_query_v1(term):
 
 def hybrid_query_v0(query):
 
-    embedding = embedder.embed([query])[0]
+    embedding = embedder.embed_paragraphs([query])[0]
 
     features_query = keyword_query_v1(query)
 
@@ -226,7 +229,7 @@ def hybrid_query_v2(term):
     after hybrid search feedback from MITRE.
     """
 
-    embedding = embedder.embed([term])[0]
+    embedding = embedder.embed_paragraphs([term])[0]
 
     features_query = keyword_query_v3(term)
 

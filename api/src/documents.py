@@ -29,9 +29,8 @@ from src.urls import clean_and_decode_str
 
 from rq import Queue
 from redis import Redis
-# from src.embedder_engine import embedder
 from pydantic import BaseModel
-from openai.embeddings_utils import get_embeddings
+from jatarag.embedder import AdaEmbedder
 from src.semantic_highlighter import highlighter
 
 
@@ -40,6 +39,7 @@ PARAGRAPHS_INDEX = "document_paragraphs"
 router = APIRouter()
 
 es = Elasticsearch([settings.ELASTICSEARCH_URL], port=settings.ELASTICSEARCH_PORT)
+embedder = AdaEmbedder()
 
 # REDIS CONNECTION AND QUEUE OBJECTS
 redis = Redis(
@@ -63,7 +63,7 @@ def formatHitWithId(hit):
 @router.get(
     "/paragraphs", response_model=DocumentSchema.ParagraphListResponse
 )
-def list_paragraphs(scroll_id: Optional[str]=None, size: int = 10):
+def list_paragraphs(scroll_id: Optional[str] = None, size: int = 10):
     """
     Returns listings of all stored paragraphs with no filters. Defaults
     pagination to 10 items per page (size).
@@ -97,7 +97,7 @@ def list_paragraphs(scroll_id: Optional[str]=None, size: int = 10):
         "hits": results["hits"]["total"]["value"],
         "items_in_page": totalDocsInPage,
         "scroll_id": scroll_id,
-        "results": [{"id": i["_id"]}|i["_source"] for i in results["hits"]["hits"]]
+        "results": [{"id": i["_id"]} | i["_source"] for i in results["hits"]["hits"]]
     }
 
 
@@ -105,8 +105,10 @@ class HighlightData(BaseModel):
     query: str
     matches: list[str]
 
+
 class HighlightResponseModel(BaseModel):
     highlights: List[List[DocumentSchema.Highlight]]
+
 
 @router.post(
     "/paragraphs/highlight", response_model=HighlightResponseModel
@@ -128,8 +130,8 @@ def semantic_highlight_paragraphs(payload: HighlightData):
     "/paragraphs/search", response_model=DocumentSchema.ParagraphSearchResponse
 )
 def semantic_search_paragraphs(query: str,
-                               scroll_id: Optional[str]=None,
-                               highlight: Optional[bool]=False,
+                               scroll_id: Optional[str] = None,
+                               highlight: Optional[bool] = False,
                                size: int = 10):
     """
     Uses query to perform a Semantic Search on paragraphs; where LLM embeddings
@@ -145,7 +147,7 @@ def semantic_search_paragraphs(query: str,
     else:
         # Retrieve first item in output, since it accepts an array and returns
         # an array, and we provided only one item (query)
-        query_embedding = get_embeddings([clean_query], engine="text-embedding-ada-002")[0]
+        query_embedding = embedder.embed_paragraphs([clean_query])[0]
 
         MIN_TEXT_LENGTH_THRESHOLD = 50
 
@@ -278,7 +280,7 @@ def format_document(doc):
     Receives elasticsearch response `document` input, merges with Default doc,
     ensures to snake_case, and formats with added id from es doc response.
     """
-    return DEFAULT_DOC|dict_keys_to_snake_case(formatHitWithId(doc))
+    return DEFAULT_DOC | dict_keys_to_snake_case(formatHitWithId(doc))
 
 
 @router.get(
@@ -388,7 +390,7 @@ def list_documents(
 )
 def search_documents(
         query: str,
-        scroll_id: Optional[str]=None,
+        scroll_id: Optional[str] = None,
         sort_by: Optional[str] = Query("creation_date", description="Field to sort by"),
         order: Optional[str] = Query("desc", description="Order to sort by"),
         size: int = 10,
@@ -545,7 +547,7 @@ def create_document(payload: DocumentSchema.CreateModel):
             "content-type": "application/json",
         },
         # Already contains default doc
-        content=json.dumps({'id' : document_id}|payload_dict)
+        content=json.dumps({'id': document_id} | payload_dict)
     )
 
 
@@ -566,7 +568,8 @@ def update_document(payload: DocumentSchema.CreateModel, document_id: str):
                 "location": f"/api/documents/{document_id}",
                 "content-type": "application/json",
             },
-            content=json.dumps({"error": f"Could not update Document with id={document_id}, invalid or unknown update attributes were provided"})
+            content=json.dumps(
+                {"error": f"Could not update Document with id={document_id}, invalid or unknown update attributes were provided"})
         )
 
     return Response(
@@ -676,7 +679,7 @@ def upload_file(
             "location": f"/api/documents/{document_id}",
             "content-type": "application/json",
         },
-        content=json.dumps({"id": document_id}|final_document),
+        content=json.dumps({"id": document_id} | final_document),
     )
 
 
