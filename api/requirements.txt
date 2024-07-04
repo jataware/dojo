@@ -45,4 +45,4 @@ anyio==4.1.0
 exceptiongroup==1.2.0
 idna==2.10
 sniffio==1.3.0
-jatarag==0.1.4
+jatarag==0.1.5
