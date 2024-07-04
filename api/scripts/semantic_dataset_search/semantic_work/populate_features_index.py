@@ -10,7 +10,7 @@ out of sync.
 from pathlib import Path
 import argparse
 
-from embedder_engine import get_embedder
+from jatarag.embedder import AdaEmbedder
 from elasticsearch import Elasticsearch
 
 parser = argparse.ArgumentParser("Parse indicators and upload features to elasticsearch.")
@@ -28,6 +28,7 @@ es = Elasticsearch(f"http://{args.es_host}")
 
 print(es.info())
 
+
 def calcOutputEmbeddings(output):
     """
     Embeddings are created from a subset of the output properties:
@@ -42,8 +43,8 @@ def calcOutputEmbeddings(output):
 
     # Accepts a list for flexibility, and returns corresponsing embeddings list
     # We only pass one input, so we retrieve the first and only output
-    embedder = get_embedder()
-    return embedder.embed([description])[0]
+    embedder = AdaEmbedder()
+    return embedder.embed_paragraphs([description])[0]
 
 
 def saveAllOutputEmbeddings(indicatorDictionary, indicator_id):
@@ -60,7 +61,7 @@ def saveAllOutputEmbeddings(indicatorDictionary, indicator_id):
                 "name": indicatorDictionary["name"]
             }
         }
-        feature_id = f"{indicator_id}-{output['name']}";
+        feature_id = f"{indicator_id}-{output['name']}"
         es.index(index="features", body=feature, id=feature_id)
 
 
@@ -84,7 +85,6 @@ def parse_indicators(hits, total_processed):
         total_processed += 1
 
     return total_processed
-
 
 
 def process_upload_indicators():
@@ -121,4 +121,3 @@ def process_upload_indicators():
 if __name__ == "__main__":
     process_upload_indicators()
     exit(0)
-

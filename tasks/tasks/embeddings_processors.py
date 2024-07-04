@@ -3,7 +3,8 @@ from base_annotation import BaseProcessor
 from elasticsearch import Elasticsearch
 # import os
 from settings import settings
-from embedder_engine import embedder
+from jatarag.embedder import AdaEmbedder
+embedder = AdaEmbedder()
 
 logging.basicConfig()
 logging.getLogger().setLevel(logging.DEBUG)
@@ -26,7 +27,7 @@ def calcOutputEmbeddings(output):
 
     # Embedder can embed list of strings. We only pass one,
     # so we retrieve the one entry on the output array
-    return embedder.embed([description])[0]
+    return embedder.embed_paragraphs([description])[0]
 
 
 def saveAllOutputEmbeddings(indicatorDictionary, indicator_id):
@@ -49,7 +50,7 @@ def saveAllOutputEmbeddings(indicatorDictionary, indicator_id):
             }
         }
 
-        feature_id = f"{indicator_id}-{output['name']}";
+        feature_id = f"{indicator_id}-{output['name']}"
 
         es.index(index="features", body=feature, id=feature_id)
 
@@ -67,6 +68,7 @@ class EmbeddingsProcessor(BaseProcessor):
 
         return result
 
+
 def calculate_store_embeddings(context):
     """
     Context should include a full_indicator indicator dictionary (see
@@ -78,8 +80,8 @@ def calculate_store_embeddings(context):
     indicator_id = context["indicator_id"]
     full_indicator = context["full_indicator"]
 
-    embedder = EmbeddingsProcessor()
-    result = embedder.run(indicator_data={"body": full_indicator, "id": indicator_id})
+    processor = EmbeddingsProcessor()
+    result = processor.run(indicator_data={"body": full_indicator, "id": indicator_id})
 
     logging.info(f"Job result for indicator {indicator_id}: {result}\n")
 
