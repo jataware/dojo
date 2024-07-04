@@ -20,7 +20,7 @@ h5py==2.10.0
 rasterio<1.3
 urllib3<2
 flowcast>=0.3.5
-openai[embeddings]==0.27.10
 tiktoken==0.5.1
 pypdf==3.3.0
 ocrmypdf==14.0.2
+jatarag==0.1.5
