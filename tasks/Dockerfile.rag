@@ -1,0 +1,18 @@
+FROM --platform=linux/amd64 python:3.8-bullseye
+
+RUN apt-get update &&\
+    apt-get reinstall -y gdal-bin=3.2.2+dfsg-2+deb11u2 \
+    libgdal-dev=3.2.2+dfsg-2+deb11u2 && \
+    apt install -y wget unzip python3-rtree python3-all-dev tesseract-ocr ghostscript
+
+RUN apt install --no-install-recommends -y libreoffice-writer libreoffice-impress    
+
+RUN pip install --upgrade pip
+
+COPY ./tasks/requirements.rag.txt /tasks/requirements.txt
+WORKDIR /tasks
+RUN pip install -r requirements.txt
+
+COPY ./tasks /tasks
+
+ENV PYTHONPATH "${PYTHONPATH}:/api"

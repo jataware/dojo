@@ -2,7 +2,7 @@ boto3==1.24.8
 elasticsearch==7.12.0
 cartwright==0.0.3
 h5netcdf==1.0.1
-numpy==1.22
+numpy==1.24
 netCDF4==1.5.3
 matplotlib==3.5.2
 GDAL==3.2.2
@@ -12,15 +12,15 @@ python-dateutil==2.8.2
 raster2xyz==0.1.3
 requests==2.28.1
 rq==1.11.0
-scipy==1.6.2
+# scipy==1.6.2
 # torchvision==0.16.1  # Imported in unused anomaly detection
-tqdm==4.64.0
+tqdm
 xarray==0.19.0
 h5py==2.10.0
 rasterio<1.3
 urllib3<2
 flowcast>=0.3.5
-tiktoken==0.5.1
-pypdf==3.3.0
+tiktoken
+pypdf
 ocrmypdf==14.0.2
-jatarag==0.1.5
+# jatarag==0.1.5
