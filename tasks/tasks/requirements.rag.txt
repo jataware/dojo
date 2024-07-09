@@ -1,7 +1,9 @@
 boto3==1.24.8
 pandas==1.5.3
 elasticsearch==7.12.0
-ocrmypdf==14.0.2
 jatarag==0.1.5
 urllib3<2
+pydantic-settings==2.3.4
+pikepdf==5.0.1
+ocrmypdf==14.0.2
 rq==1.11.0
