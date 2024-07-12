@@ -186,7 +186,7 @@ class ElasticSearchDB(Database):
     @staticmethod
     def format_paragraph_result(item) -> ParagraphResult:
         return ParagraphResult(
-            score=item["_score"],
+            score=max(min(item["_score"], 1.0), 0.0),  # clamp score between 0 and 1
             document_id=item["_source"]["document_id"],
             paragraph_idx=item["_source"]["index"],
             paragraph=item["_source"]["text"]
