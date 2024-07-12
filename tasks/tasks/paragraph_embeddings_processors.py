@@ -14,7 +14,6 @@ import ocrmypdf
 # import logging
 # logging.basicConfig()
 # logging.getLogger().setLevel(logging.INFO)
-
 es_url = settings.ELASTICSEARCH_URL
 es = Elasticsearch(es_url)
 
@@ -169,8 +168,7 @@ def full_document_process(context):
     paragraphs = extract_text(new_file_path)
 
     # 3. For each paragraph, calculate embeddings and index text + embedding
-    i = 0
-    for text, p_no in paragraphs:
+    for i, (text, p_no) in enumerate(paragraphs):
         p_body = {
             "text": text,
             "embeddings": embedder.embed_paragraphs([text])[0],
@@ -181,8 +179,8 @@ def full_document_process(context):
         }
 
         # TODO bulk prepare and bulk upload to speed up processing
+
         es.index(index=PARAGRAPHS_INDEX, body=p_body, id=f"{document_id}-{i}")
-        i += 1
 
     # 4. Updated processed_at time on document
     es.update(index="documents", body={

@@ -49,6 +49,7 @@ class ElasticSearchDB(Database):
         self.embedder = embedder
         self.es = Elasticsearch([settings.ELASTICSEARCH_URL], port=settings.ELASTICSEARCH_PORT)
         self.PARAGRAPHS_INDEX = "document_paragraphs"
+        self.DOCUMENTS_INDEX = "documents"
 
     def query_all_documents(self, query: str, max_results: int = 10) -> list[ParagraphResult]:
         """perform a search over all document paragraphs in the database for the given query"""
@@ -88,19 +89,99 @@ class ElasticSearchDB(Database):
 
     def query_single_document(self, document_id: str, query: str, max_results: int = 10) -> list[ParagraphResult]:
         """perform a search over a single document in the database for the given query"""
-        raise NotImplementedError
+        # embed the query
+        query_embedding = self.embedder.embed_paragraphs([query])[0]
+
+        # elasticsearch cosine similarity over the specified document
+        p_query = {
+            "query": {
+                "bool": {
+                    "must": [
+                        {"match": {"document_id": document_id}},
+                        {
+                            "script_score": {
+                                "query": {"match_all": {}},
+                                "script": {
+                                    "source": "Math.max(cosineSimilarity(params.query_vector, 'embeddings'), 0)",
+                                    "params": {
+                                        "query_vector": query_embedding
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            "_source": {
+                "excludes": ["embeddings"]
+            }
+        }
+        results = self.es.search(
+            index=self.PARAGRAPHS_INDEX,
+            body=p_query,
+            size=max_results
+        )
+        hits = results["hits"]["hits"]
+
+        # Convert the elastic search results to ParagraphResult objects
+        return [self.format_paragraph_result(r) for r in hits]
 
     def query_titles(self, query: str, max_results: int = 10) -> list[MetadataResult]:
         """perform a search over all document titles in the database for the given query"""
-        raise NotImplementedError
+        p_query = {
+            "query": {
+                "match": {
+                    "title": query
+                }
+            }
+        }
+        results = self.es.search(
+            index=self.DOCUMENTS_INDEX,
+            body=p_query,
+            size=max_results
+        )
+        hits = results["hits"]["hits"]
+
+        # Convert the elastic search results to MetadataResult objects
+        return [self.format_metadata_result(r) for r in hits]
 
     def query_authors(self, author: str, max_results: int = 10) -> list[MetadataResult]:
         """perform a search over all document authors in the database for the given query"""
-        raise NotImplementedError
+        p_query = {
+            "query": {
+                "match": {
+                    "author": author
+                }
+            }
+        }
+        results = self.es.search(
+            index=self.DOCUMENTS_INDEX,
+            body=p_query,
+            size=max_results
+        )
+        hits = results["hits"]["hits"]
+
+        # Convert the elastic search results to MetadataResult objects
+        return [self.format_metadata_result(r) for r in hits]
 
     def query_publishers(self, publisher: str, max_results: int = 10) -> list[MetadataResult]:
         """perform a search over all document publishers in the database for the given query"""
-        raise NotImplementedError
+        p_query = {
+            "query": {
+                "match": {
+                    "publisher": publisher
+                }
+            }
+        }
+        results = self.es.search(
+            index=self.DOCUMENTS_INDEX,
+            body=p_query,
+            size=max_results
+        )
+        hits = results["hits"]["hits"]
+
+        # Convert the elastic search results to MetadataResult objects
+        return [self.format_metadata_result(r) for r in hits]
 
     @staticmethod
     def format_paragraph_result(item) -> ParagraphResult:
@@ -111,9 +192,15 @@ class ElasticSearchDB(Database):
             paragraph=item["_source"]["text"]
         )
 
-    # TODO: need a format_metadata_result
-    # def format_metadata_result(item) -> MetadataResult:
-    #     return MetadataResult(...)
+    @staticmethod
+    def format_metadata_result(item) -> MetadataResult:
+        return MetadataResult(
+            document_id=item["_id"],
+            title=item["_source"].get("title", ""),
+            author=item["_source"].get("author", ""),
+            publisher=item["_source"].get("publisher", ""),
+            score=max(min(item["_score"], 1.0), 0.0)  # clamp score between 0 and 1
+        )
 
 
 router = APIRouter()
