@@ -13,6 +13,19 @@ services:
       - high
       - default
       - low
+  rqworker-rag:
+    build:
+      context: .
+      dockerfile: Dockerfile.rag
+    container_name: dojo-rq-worker-rag
+    networks:
+      - dojo
+    command:
+      - rq
+      - worker
+      - --url
+      - redis://${REDIS_HOST}:${REDIS_PORT}
+      - rag   
     # deploy:
     #   resources:
     #     reservations:

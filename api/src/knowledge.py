@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 import time
-from typing import Optional
+from typing import Optional, Literal
 from elasticsearch import Elasticsearch
 # from elasticsearch.exceptions import RequestError, NotFoundError
 from fastapi import (
@@ -16,8 +16,7 @@ from fastapi import (
     # Query,
 )
 
-from abc import ABC, abstractmethod
-from dataclasses import dataclass
+from dataclasses import asdict
 from fastapi.logger import logger
 import os
 import json
@@ -28,10 +27,13 @@ from src.settings import settings
 
 from rq import Queue
 from redis import Redis
-from src.embedder_engine import embedder
 
 from sse_starlette.sse import EventSourceResponse, ServerSentEvent
-from src.openai_gpt import GPT4Synthesizer, GPT4CausalRecommender, Role, Message, Agent
+from src.causal_recommender import CausalRecommender
+from jatarag.agent import OpenAIAgent
+from jatarag.librarian import synthesize_answer, MultihopRagAgent
+from jatarag.db import Database, ParagraphResult, MetadataResult
+from jatarag.embedder import Embedder, AdaEmbedder
 from pydantic import BaseModel
 from pathlib import Path
 from os.path import join as path_join
@@ -42,11 +44,167 @@ from validation.KnowledgeSchema import (
 )
 
 
-PARAGRAPHS_INDEX = "document_paragraphs"
+class ElasticSearchDB(Database):
+    def __init__(self, embedder: Embedder):
+        self.embedder = embedder
+        self.es = Elasticsearch([settings.ELASTICSEARCH_URL], port=settings.ELASTICSEARCH_PORT)
+        self.PARAGRAPHS_INDEX = "document_paragraphs"
+        self.DOCUMENTS_INDEX = "documents"
+
+    def query_all_documents(self, query: str, max_results: int = 10) -> list[ParagraphResult]:
+        """perform a search over all document paragraphs in the database for the given query"""
+        # embed the query
+        query_embedding = self.embedder.embed_paragraphs([query])[0]
+
+        # elasticsearch cosine similarity over all online documents
+        p_query = {
+            "query": {
+                "script_score": {
+                    "query": {"match_all": {}},
+                    "script": {
+                        # ES doesnt allow negative numbers. We can either:
+                        # - a) clamp at 0, and not allow negatives, or
+                        # - b) Add 1 to the result to compare score
+                        # We use option (a): it has better score % for top results
+                        "source": "Math.max(cosineSimilarity(params.query_vector, 'embeddings'), 0)",
+                        "params": {
+                            "query_vector": query_embedding
+                        }
+                    }
+                }
+            },
+            "_source": {
+                "excludes": ["embeddings"]
+            }
+        }
+        results = self.es.search(
+            index=self.PARAGRAPHS_INDEX,
+            body=p_query,
+            size=max_results
+        )
+        hits = results["hits"]["hits"]
+
+        # Convert the elastic search results to ParagraphResult objects
+        return [self.format_paragraph_result(r) for r in hits]
+
+    def query_single_document(self, document_id: str, query: str, max_results: int = 10) -> list[ParagraphResult]:
+        """perform a search over a single document in the database for the given query"""
+        # embed the query
+        query_embedding = self.embedder.embed_paragraphs([query])[0]
+
+        # elasticsearch cosine similarity over the specified document
+        p_query = {
+            "query": {
+                "bool": {
+                    "must": [
+                        {"match": {"document_id": document_id}},
+                        {
+                            "script_score": {
+                                "query": {"match_all": {}},
+                                "script": {
+                                    "source": "Math.max(cosineSimilarity(params.query_vector, 'embeddings'), 0)",
+                                    "params": {
+                                        "query_vector": query_embedding
+                                    }
+                                }
+                            }
+                        }
+                    ]
+                }
+            },
+            "_source": {
+                "excludes": ["embeddings"]
+            }
+        }
+        results = self.es.search(
+            index=self.PARAGRAPHS_INDEX,
+            body=p_query,
+            size=max_results
+        )
+        hits = results["hits"]["hits"]
+
+        # Convert the elastic search results to ParagraphResult objects
+        return [self.format_paragraph_result(r) for r in hits]
+
+    def query_titles(self, query: str, max_results: int = 10) -> list[MetadataResult]:
+        """perform a search over all document titles in the database for the given query"""
+        p_query = {
+            "query": {
+                "match": {
+                    "title": query
+                }
+            }
+        }
+        results = self.es.search(
+            index=self.DOCUMENTS_INDEX,
+            body=p_query,
+            size=max_results
+        )
+        hits = results["hits"]["hits"]
+
+        # Convert the elastic search results to MetadataResult objects
+        return [self.format_metadata_result(r) for r in hits]
+
+    def query_authors(self, author: str, max_results: int = 10) -> list[MetadataResult]:
+        """perform a search over all document authors in the database for the given query"""
+        p_query = {
+            "query": {
+                "match": {
+                    "author": author
+                }
+            }
+        }
+        results = self.es.search(
+            index=self.DOCUMENTS_INDEX,
+            body=p_query,
+            size=max_results
+        )
+        hits = results["hits"]["hits"]
+
+        # Convert the elastic search results to MetadataResult objects
+        return [self.format_metadata_result(r) for r in hits]
+
+    def query_publishers(self, publisher: str, max_results: int = 10) -> list[MetadataResult]:
+        """perform a search over all document publishers in the database for the given query"""
+        p_query = {
+            "query": {
+                "match": {
+                    "publisher": publisher
+                }
+            }
+        }
+        results = self.es.search(
+            index=self.DOCUMENTS_INDEX,
+            body=p_query,
+            size=max_results
+        )
+        hits = results["hits"]["hits"]
+
+        # Convert the elastic search results to MetadataResult objects
+        return [self.format_metadata_result(r) for r in hits]
+
+    @staticmethod
+    def format_paragraph_result(item) -> ParagraphResult:
+        return ParagraphResult(
+            score=max(min(item["_score"], 1.0), 0.0),  # clamp score between 0 and 1
+            document_id=item["_source"]["document_id"],
+            paragraph_idx=item["_source"]["index"],
+            paragraph=item["_source"]["text"]
+        )
+
+    @staticmethod
+    def format_metadata_result(item) -> MetadataResult:
+        return MetadataResult(
+            document_id=item["_id"],
+            title=item["_source"].get("title", ""),
+            author=item["_source"].get("author", ""),
+            publisher=item["_source"].get("publisher", ""),
+            score=max(min(item["_score"], 1.0), 0.0)  # clamp score between 0 and 1
+        )
+
 
 router = APIRouter()
 
-es = Elasticsearch([settings.ELASTICSEARCH_URL], port=settings.ELASTICSEARCH_PORT)
 
 # REDIS CONNECTION AND QUEUE OBJECTS
 redis = Redis(
@@ -56,164 +214,11 @@ redis = Redis(
 q = Queue(connection=redis, default_timeout=-1)
 
 
-@dataclass
-class Result:
-    score: float
-    document_id: str
-    paragraph_idx: int
-    paragraph: str
-
-    def to_dict(self) -> dict:
-        return {
-            'score': self.score,
-            'document_id': self.document_id,
-            'paragraph_idx': self.paragraph_idx,
-            'paragraph': self.paragraph
-        }
-
-
-def format_result(item):
-    return Result(
-        score=item["_score"],
-        document_id=item["_source"]["document_id"],
-        paragraph_idx=item["_source"]["index"],
-        paragraph=item["_source"]["text"]
-    )
-
-
-def query_elasticsearch(query_embedding, max_results):
-    p_query = {
-        "query": {
-            "script_score": {
-                "query": {"match_all": {}},
-                "script": {
-                    # ES doesnt allow negative numbers. We can either:
-                    # - a) clamp at 0, and not allow negatives, or
-                    # - b) Add 1 to the result to compare score
-                    # We use option (a): it has better score % for top results
-                    "source": "Math.max(cosineSimilarity(params.query_vector, 'embeddings'), 0)",
-                    "params": {
-                        "query_vector": query_embedding
-                    }
-                }
-            }
-        },
-        "_source": {
-            "excludes": ["embeddings"]
-        }
-    }
-
-    results = es.search(
-        index=PARAGRAPHS_INDEX,
-        body=p_query,
-        size=max_results
-    )
-    hits = results["hits"]["hits"]
-
-    return [format_result(r) for r in hits]
-
-
-class ElasticSearchDB():
-    def __init__(self, embedder):
-        # self.extractor = extractor
-        self.embedder = embedder
-
-    def query(self, query: str, max_results: int = 10) -> list[Result]:
-        # embed the query
-        embedding = embedder.embed([query])[0]
-
-        # elasticsearch cosine similarity over all online documents
-        results = query_elasticsearch(embedding, max_results)
-
-        # They're all formatted and instances of Result
-        return results
-
-
-class Librarian:
-    def __init__(self, db, agent):
-        self.db = db
-        self.agent = agent
-
-    def ask(self, query: str, stream: bool = False, max_results: int = 10):
-        # semantic search over the database
-        start = time.time()
-        results = self.db.query(query, max_results=max_results)
-        end = time.time()
-
-        logger.info(f"Search step took: {end - start} seconds.")
-        logger.debug(f"First result: {results[0]}")
-
-        start = time.time()
-        # synthesizer answer from the semantic search results
-        answer = self.agent.ask(
-            query,
-            [r.paragraph for r in results],
-            stream=stream
-        )
-        end = time.time()
-
-        logger.info(f"GPT Answer step took: {end - start} seconds.")
-
-        return results, answer
-
-
-def strip_quotes(s: str) -> str:
-    """strip quotes wrapping a string, if any"""
-    while len(s) > 1 and s[0] == s[-1] and s[0] in ['"', "'", '`']:
-        s = s[1:-1]
-    return s
-
-
-class DataBase(ABC):
-    @abstractmethod
-    def query(self, query: str, max_results: int = 10) -> list[Result]: ...
-
-
-class SmarterLibrarian:
-    def __init__(self, db: DataBase, synth: GPT4Synthesizer, agent):
-        self.db = db
-        self.synth = synth
-        self.agent = agent
-        self.messages: list[Message] = []
-
-    def ask(self, query, stream: bool = False, max_results: int = 10):
-        if len(self.messages) == 0:
-            system_query = f'Please convert the following question to a contextless search query for a database search: "{query}"'
-        else:
-            system_query = f'Based on any relevant context from the conversation, please convert the following question to a contextless search query for a database search: "{query}"'
-        context_free_query = self.agent.multishot_sync([*self.messages, Message(role=Role.system, content=system_query)])
-        context_free_query = strip_quotes(context_free_query)
-
-        # semantic search over the database
-        results = self.db.query(context_free_query, max_results=max_results)
-
-        # synthesizer answer from the semantic search results
-        answer = self.synth.ask(query, [r.paragraph for r in results], stream=stream, chat_history=self.messages)
-
-        self.messages.append(Message(role=Role.user, content=query))
-        if type(answer) == str:
-            self.messages.append(Message(role=Role.assistant, content=answer))
-
-            return results, answer
-
-        # generator wrapper so that we can save the answer to the chat history when it is done streaming
-        def gen_wrapper():
-            res = []
-            for token in answer:
-                res.append(token)
-                yield token
-
-            answer_message = Message(role=Role.assistant, content=''.join(res))
-            self.messages.append(answer_message)
-
-        return results, gen_wrapper()
-
-
+embedder = AdaEmbedder()
 db = ElasticSearchDB(embedder)
-synth = GPT4Synthesizer('gpt-4-1106-preview')
-agent = Agent(model='gpt-4-1106-preview')
-causal_agent = GPT4CausalRecommender('gpt-4-1106-preview')
-librarian = SmarterLibrarian(db, synth, agent)
+agent = OpenAIAgent(model='gpt-4o')
+causal_agent = CausalRecommender(agent)
+librarian = MultihopRagAgent(db, agent)
 
 
 def load_file_as_json(file_path: str) -> dict:
@@ -228,16 +233,18 @@ def get_project_root() -> Path:
 
 MOCK_MESSAGE_PATH = path_join(get_project_root(), "mock-data", "message.json")
 
+
 @router.get("/knowledge/message")
 def message(query: str):
     results, answer = librarian.ask(query, stream=False)
 
     result_obj = {
-        'candidate_paragraphs': [r.to_dict() for r in results],
+        'candidate_paragraphs': [asdict(r) for r in results],
         'answer': answer,
     }
 
     return result_obj
+
 
 @router.get("/knowledge/mock-message")
 def mock_message(query: str):
@@ -245,28 +252,30 @@ def mock_message(query: str):
     result_dict = load_file_as_json(MOCK_MESSAGE_PATH)
     return result_dict
 
+
 @router.get("/knowledge/chat")
 def chat(query: str):
 
     def data_streamer():
         results, answer_gen = librarian.ask(query, stream=True)
         metadata = {
-            'candidate_paragraphs': [r.to_dict() for r in results]
+            'candidate_paragraphs': [asdict(r) for r in results]
         }
         json_payload = json.dumps(metadata)
         yield ServerSentEvent(data=json_payload, event='stream-paragraphs')
         for answer_chunk in answer_gen:
             yield ServerSentEvent(data=answer_chunk, event='stream-answer')
-        time.sleep(0.5) # delay to ensure the client has enough time to process before ending the stream
+        time.sleep(0.5)  # delay to ensure the client has enough time to process before ending the stream
         yield ServerSentEvent(data="Stream Complete", event='stream-complete')
 
     return EventSourceResponse(data_streamer(), media_type='text/event-stream')
+
 
 @router.get("/knowledge/mock-chat")
 def mock_chat(query: Optional[str]):
     result_dict = load_file_as_json(MOCK_MESSAGE_PATH)
     answer = result_dict["answer"]
-    metadata = { 'candidate_paragraphs': result_dict["candidate_paragraphs"] }
+    metadata = {'candidate_paragraphs': result_dict["candidate_paragraphs"]}
 
     def data_streamer():
         json_payload = json.dumps(metadata)
@@ -276,7 +285,7 @@ def mock_chat(query: Optional[str]):
         for token in answer.split():
             yield ServerSentEvent(data=" " + token, event='stream-answer')
             time.sleep(0.05)
-        time.sleep(0.5) # delay to ensure the client has enough time to process before ending the stream
+        time.sleep(0.5)  # delay to ensure the client has enough time to process before ending the stream
         yield ServerSentEvent(data="Stream Complete", event='stream-complete')
 
     return EventSourceResponse(data_streamer(), media_type='text/event-stream')
@@ -287,7 +296,7 @@ class RequestBody(BaseModel):
     location: Optional[str] = None
 
 
-def format_documents(results: list[Result]):
+def format_documents(results: list[ParagraphResult]):
     return [
         {
             "text": r.paragraph,
@@ -297,7 +306,7 @@ def format_documents(results: list[Result]):
     ]
 
 
-def format_links(data, variant):
+def format_links(data, variant: Literal["causes", "effects"]):
     """
     Receives causes or effects data from our GPT CausalRecommender and
     formats to a backwards-compatible format with existing API endpoints.
@@ -319,7 +328,7 @@ def format_links(data, variant):
     return out
 
 
-def causal_helper(payload, variant):
+def causal_helper(payload: RequestBody, variant: Literal["causes", "effects"]):
     topic = payload.topic
 
     if payload.location:
@@ -327,7 +336,7 @@ def causal_helper(payload, variant):
 
     logger.info(f"Calculating {variant} for topic: {topic}")
 
-    results = db.query(topic)
+    results = db.query_all_documents(topic)
 
     paragraphs = [r.paragraph for r in results]
 
@@ -361,7 +370,7 @@ def causes_and_effects(payload: RequestBody):
 
     logger.info(f"Calculating causes,effects for topic: {topic}")
 
-    results = db.query(topic)
+    results = db.query_all_documents(topic)
     paragraphs = [r.paragraph for r in results]
 
     causes_error = None
