@@ -16,7 +16,7 @@ from settings import settings
 
 s3 = boto3.client(
     "s3",
-    endpoint_url=settings.STORAGE_HOST,
+    endpoint_url=settings.STORAGE_HOST if settings.STORAGE_HOST else None,
     aws_access_key_id=settings.AWS_ACCESS_KEY_ID,
     aws_secret_access_key=settings.AWS_SECRET_ACCESS_KEY,
     aws_session_token=None,
