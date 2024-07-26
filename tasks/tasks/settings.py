@@ -1,5 +1,5 @@
 from pydantic_settings import BaseSettings
-
+from typing import Optional
 
 class Settings(BaseSettings):
 
@@ -14,7 +14,7 @@ class Settings(BaseSettings):
 
     TERMINAL_ENDPOINT: str
 
-    STORAGE_HOST: str = None
+    STORAGE_HOST: Optional[str] = ""
     AWS_ACCESS_KEY_ID: str = ""
     AWS_SECRET_ACCESS_KEY: str = ""
 
