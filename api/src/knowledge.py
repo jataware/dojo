@@ -8,6 +8,7 @@ from elasticsearch import Elasticsearch
 from fastapi import (
     APIRouter,
     HTTPException,
+    Header,
     # Response,
     status,
     # UploadFile,
@@ -218,7 +219,6 @@ embedder = AdaEmbedder()
 db = ElasticSearchDB(embedder)
 agent = OpenAIAgent(model='gpt-4o')
 causal_agent = CausalRecommender(agent)
-librarian = MultihopRagAgent(db, agent)
 
 
 def load_file_as_json(file_path: str) -> dict:
@@ -254,7 +254,21 @@ def mock_message(query: str):
 
 
 @router.get("/knowledge/chat")
-def chat(query: str):
+def chat(query: str, chat_user_token: str):
+    if not chat_user_token:
+        raise HTTPException(status_code=400, detail="User token is required")
+    
+    # load messages if they exist for the user
+    messages_key = f"knowledge_messages:{chat_user_token}"
+    serialized_messages = redis.get(messages_key)
+    logger.info(f"retrieving messages for user {chat_user_token}: {serialized_messages}")
+    if serialized_messages is None:
+        messages = []
+    else:
+        messages = json.loads(serialized_messages)
+
+    # initialize librarian with messages (if present)
+    librarian = MultihopRagAgent(db, agent, messages=messages)
 
     def data_streamer():
         results, answer_gen = librarian.ask(query, stream=True)
@@ -266,9 +280,17 @@ def chat(query: str):
         for answer_chunk in answer_gen:
             yield ServerSentEvent(data=answer_chunk, event='stream-answer')
         time.sleep(0.5)  # delay to ensure the client has enough time to process before ending the stream
+        # Store librarian.messages to Redis after data_streamer is called
+        logger.info(librarian.messages)
+        serialized_messages = json.dumps(librarian.messages, default=str)
+        logger.info(f"storing messages for user {chat_user_token}: {serialized_messages}")
+        # store message history for 24 hours (86400 seconds)
+        redis.set(messages_key, serialized_messages, ex=86400)         
         yield ServerSentEvent(data="Stream Complete", event='stream-complete')
 
-    return EventSourceResponse(data_streamer(), media_type='text/event-stream')
+    response = EventSourceResponse(data_streamer(), media_type='text/event-stream')
+
+    return response
 
 
 @router.get("/knowledge/mock-chat")
