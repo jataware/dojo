@@ -46,4 +46,4 @@ idna==2.10
 sniffio==1.3.0
 httpcore==1.0.5
 httpx==0.27.0
-jatarag==0.1.5
+jatarag==0.1.8
