@@ -128,20 +128,36 @@ class ElasticSearchDB(Database):
         return [self.format_paragraph_result(r) for r in hits]
 
     def query_titles(self, query: str, max_results: int = 10) -> list[MetadataResult]:
-        """perform a search over all document titles in the database for the given query"""
+        """perform a search over all document titles in the database for the given query allowing for fuzzy matching and wildcards"""
         p_query = {
             "query": {
-                "match": {
-                    "title": query
+                "bool": {
+                    "should": [
+                        {
+                            "match": {
+                                "title": {
+                                    "query": query,
+                                    "fuzziness": "AUTO"
+                                }
+                            }
+                        },
+                        {
+                            "wildcard": {
+                                "title": f"*{query}*"
+                            }
+                        }
+                    ]
                 }
             }
         }
+        logger.info(f"querying titles with query: {query}")
         results = self.es.search(
             index=self.DOCUMENTS_INDEX,
             body=p_query,
             size=max_results
         )
         hits = results["hits"]["hits"]
+        logger.info(f"found {len(hits)} hits")
 
         # Convert the elastic search results to MetadataResult objects
         return [self.format_metadata_result(r) for r in hits]
@@ -261,7 +277,6 @@ def chat(query: str, chat_user_token: str):
     # load messages if they exist for the user
     messages_key = f"knowledge_messages:{chat_user_token}"
     serialized_messages = redis.get(messages_key)
-    logger.info(f"retrieving messages for user {chat_user_token}: {serialized_messages}")
     if serialized_messages is None:
         messages = []
     else:
@@ -283,7 +298,6 @@ def chat(query: str, chat_user_token: str):
         # Store librarian.messages to Redis after data_streamer is called
         logger.info(librarian.messages)
         serialized_messages = json.dumps(librarian.messages, default=str)
-        logger.info(f"storing messages for user {chat_user_token}: {serialized_messages}")
         # store message history for 24 hours (86400 seconds)
         redis.set(messages_key, serialized_messages, ex=86400)         
         yield ServerSentEvent(data="Stream Complete", event='stream-complete')
