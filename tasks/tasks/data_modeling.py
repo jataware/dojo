@@ -18,8 +18,9 @@ from flowcast.pipeline import Pipeline, Variable, Threshold, ThresholdType
 from flowcast.spacetime import Frequency, Resolution
 from flowcast.regrid import RegridType
 from collections import defaultdict, deque
-from typing import Callable, Union, List
-from pydantic import BaseModel, Field
+from typing import Callable, Literal, TypedDict, Union
+from typing_extensions import Annotated, NotRequired
+# from pydantic import BaseModel, Field
 
 
 # ###### DEBUG ######
@@ -39,52 +40,139 @@ es = Elasticsearch(es_url)
 
 
 
+# Type Specification for flowcast DAG payload. This is largely dictated by reactflow's native representations (hence it's a bit verbose)
+class NodePrototype(TypedDict):
+    id: Annotated[str, 'The unique id of the node in the graph']
 
-# Type Specification for flowcast DAG payload
-class LoadNode(BaseModel):
-    data_source: str = Field(..., description='The data source to load. Format: <feature_name>::<dataset_id>', example='d_flood::8987a98e-4128-4602-9f72-e3efa1b53668')
-    geo_aggregation_function: str = Field(..., description='The aggregation function to use for geo resolution. Options: conserve, min, max, mean, median, mode, interp_or_mean, nearest_or_mode', example='min')
-    time_aggregation_function: str = Field(..., description='The aggregation function to use for time resolution. Options: conserve, min, max, mean, median, mode, interp_or_mean, nearest_or_mode', example='median')
-
-class ThresholdNode(BaseModel):
-    value: str = Field(..., description='The threshold value', example='12')
-    type: str = Field(..., description='The threshold type. Options: greater_than, greater_than_or_equal, less_than, less_than_or_equal, equal, not_equal', example='greater_than')
-
-class NodeData(BaseModel):
-    label: str = Field(..., description='The label of node (just repeats the node type)', example='load')
-    input: Union[LoadNode,ThresholdNode,str,None] = Field(..., description='Any settings for the node. Shape depends on the node type', example={'data_source': 'd_flood::8987a98e-4128-4602-9f72-e3efa1b53668', 'geo_aggregation_function': 'min', 'time_aggregation_function': 'median'})
-            # SaveNode's input is just a string
-            # MultiplyNode doesn't have any input
-
-class Node(BaseModel):
-    type: str = Field(..., description='The type of node. Options: load, threshold, save, multiply', example='load')
-    data: NodeData = Field(..., description='The data of the node. Shape depends on the node type', example={'label': 'load', 'input': {'data_source': 'd_flood::8987a98e-4128-4602-9f72-e3efa1b53668', 'geo_aggregation_function': 'min', 'time_aggregation_function': 'median'}})
-    id: str = Field(..., description='The unique id of the node in the graph', example='n_90d60ae6-a0d1-4fb7-960e-640843bff138')
-
-class Edge(BaseModel):
-    source: str = Field(..., description='The id of the source node', example='n_90d60ae6-a0d1-4fb7-960e-640843bff138')
-    target: str = Field(..., description='The id of the target node', example='n_156a6819-b768-45ee-bceb-1e7c7c96bf03')
-    id: str = Field(..., description='The unique id of the edge in the graph', example='reactflow__edge-n_90d60ae6-a0d1-4fb7-960e-640843bff138-n_156a6819-b768-45ee-bceb-1e7c7c96bf03')
-
-class DagResolution(BaseModel):
-    geoResolutionColumn: str = Field(..., description='Either the name of a load node (<feature_name>::<dataset_id>) or a pair of lat/lon deltas, or a single value for a square grid delta', example='0.25,0.25')
-    timeResolutionColumn: str = Field(..., description='Either the name of a load node (<feature_name>::<dataset_id>) or a time frequency. Options: monthly, yearly, decadal', example='monthly')
-
-class Graph(BaseModel):
-    nodes: List[Node] = Field(..., description='The nodes in the graph')
-    edges: List[Edge] = Field(..., description='The edges in the graph')
-    resolution: DagResolution = Field(..., description='The targeted geo and temporal resolutions of the graph')
-
-class FlowcastContext(BaseModel):
-    dag: Graph = Field(..., description='The flowcast DAG to run')
+class LoadNodeInput(TypedDict):
+    data_source: Annotated[str, 'The data source to load. Format: <feature_name>::<dataset_id>. Example: d_flood::8987a98e-4128-4602-9f72-e3efa1b53668']
+    geo_aggregation_function: Annotated[Literal['conserve', 'min', 'max', 'mean', 'median', 'mode', 'interp_or_mean', 'nearest_or_mode'], 'The aggregation function to use for geo resolution. Example: min']
+    time_aggregation_function: Annotated[Literal['conserve', 'min', 'max', 'mean', 'median', 'mode', 'interp_or_mean', 'nearest_or_mode'], 'The aggregation function to use for time resolution. Example: median']
+class LoadNodeData(TypedDict):
+    label: Literal['load']
+    input: LoadNodeInput
+class LoadNode(NodePrototype):
+    type: Literal['load']
+    data: LoadNodeData
 
 
+class ThresholdNodeInput(TypedDict):
+    value: Annotated[str, 'The threshold value or percentile. Should be an integer or float string optionally followed by a percent sign. Example: 20.5%']
+    type: Annotated[Literal['greater_than', 'greater_than_or_equal', 'less_than', 'less_than_or_equal', 'equal', 'not_equal'], 'The threshold type. Example: greater_than']
+    preserve_nan: Annotated[bool, 'Whether to preserve NaN values in the output. Otherwise NaN is replaced with False. Example: true']
+class ThresholdNodeData(TypedDict):
+    label: Literal['threshold']
+    input: ThresholdNodeInput
+class ThresholdNode(NodePrototype):
+    type: Literal['threshold']
+    data: ThresholdNodeData
+
+
+class SaveNodeInput(TypedDict):
+    name: Annotated[str, 'The name of the output feature. Example: flood_alert']
+    description: Annotated[str, 'The description of the output feature. Example: A binary flood alert feature']
+class SaveNodeData(TypedDict):
+    label: Literal['save']
+    input: SaveNodeInput
+class SaveNode(NodePrototype):
+    type: Literal['save']
+    data: SaveNodeData
+
+
+class MultiplyNodeInput(TypedDict):
+    op: Annotated[Literal['add', 'subtract', 'multiply', 'divide', 'power'], 'The operation to perform. Example: add']
+class MultiplyNodeData(TypedDict):
+    label: Literal['multiply']
+    input: MultiplyNodeInput
+class MultiplyNode(NodePrototype):
+    type: Literal['multiply']
+    data: MultiplyNodeData
+
+
+class ReduceNodeInput(TypedDict):
+    aggregation: Annotated[Literal['sum', 'mean', 'median', 'max', 'min', 'standard_deviation', 'mode'], 'The aggregation function to use. Example: sum']
+    time: Annotated[bool, 'Whether to aggregate over the time dimension. Example: true']
+    lat: Annotated[bool, 'Whether to aggregate over the lat dimension. Example: true']
+    lon: Annotated[bool, 'Whether to aggregate over the lon dimension. Example: true']
+    country: Annotated[bool, 'Whether to aggregate over the country dimension. Example: true']
+class ReduceNodeData(TypedDict):
+    label: Literal['sum']
+    input: ReduceNodeInput
+class ReduceNode(NodePrototype):
+    type: Literal['sum']
+    data: ReduceNodeData
+
+
+class FilterByCountryNodeInput(TypedDict):
+    countries: Annotated[list[str], 'The list of countries to filter by. Example: ["USA", "Canada"]']
+class FilterByCountryNodeData(TypedDict):
+    label: Literal['filter_by_country']
+    input: FilterByCountryNodeInput
+class FilterByCountryNode(NodePrototype):
+    type: Literal['filter_by_country']
+    data: FilterByCountryNodeData
+
+
+class ScalarOperationNodeInput(TypedDict):
+    operation: Annotated[Literal['add', 'subtract', 'multiply', 'divide', 'power'], 'The operation to perform. Example: add']
+    value: Annotated[str, 'The value to use in the operation. Example: 5']
+    scalar_position_divide: Annotated[Literal['numerator', 'denominator'], 'The position of the scalar in the division operation. Example: numerator']
+    scalar_position_power: Annotated[Literal['base', 'exponent'], 'The position of the scalar in the power operation. Example: base']
+class ScalarOperationNodeData(TypedDict):
+    label: Literal['scalar_operation']
+    input: ScalarOperationNodeInput
+class ScalarOperationNode(NodePrototype):
+    type: Literal['scalar_operation']
+    data: ScalarOperationNodeData
+
+
+class MaskToDistanceFieldNodeInput(TypedDict):
+    include_initial_points: Annotated[bool, 'Whether to include the initial points in the distance field. Example: true']
+class MaskToDistanceFieldNodeData(TypedDict):
+    label: Literal['mask_to_distance_field']
+    input: MaskToDistanceFieldNodeInput
+class MaskToDistanceFieldNode(NodePrototype):
+    type: Literal['mask_to_distance_field']
+    data: MaskToDistanceFieldNodeData
+
+
+class SelectSliceNodeInput(TypedDict):
+    dimension: Annotated[str, 'The dimension to slice. Example: time']
+    index: Annotated[str, 'The index to slice. Example: 1:5'] #TODO: better explanation of supported slice notation (find the help explanation on the node)
+class SelectSliceNodeData(TypedDict):
+    label: Literal['select_slice']
+    input: SelectSliceNodeInput
+class SelectSliceNode(NodePrototype):
+    type: Literal['select_slice']
+    data: SelectSliceNodeData
+
+Node = Union[LoadNode, ThresholdNode, SaveNode, MultiplyNode, ReduceNode, FilterByCountryNode, ScalarOperationNode, MaskToDistanceFieldNode, SelectSliceNode]
+
+class Edge(TypedDict):
+    source: Annotated[str, 'The id of the source node. Example: n_90d60ae6-a0d1-4fb7-960e-640843bff138']
+    target: Annotated[str, 'The id of the target node. Example n_156a6819-b768-45ee-bceb-1e7c7c96bf03']
+    target_handle: NotRequired[Annotated[str, 'If present, specifies which input connection point on the given node the edge is attached to. Example: ']] #TODO: verify this is the correct explanation
+    id: Annotated[str, 'The unique id of the edge in the graph. Example: reactflow__edge-n_90d60ae6-a0d1-4fb7-960e-640843bff138-n_156a6819-b768-45ee-bceb-1e7c7c96bf03']
+
+class DagResolution(TypedDict):
+    geoResolutionColumn: Annotated[str, 'Either the name of a load node (<feature_name>::<dataset_id>) or a pair of lat/lon deltas, or a single value for a square grid delta. Example: 0.25,0.25']
+    timeResolutionColumn: Annotated[str | Literal['daily', 'weekly', 'monthly', 'yearly', 'decadal'], 'Either the name of a load node (<feature_name>::<dataset_id>) or a time frequency (i.e. valid member of the `flowcast.spacetime.Frequency` enum). Example: monthly']
+
+class Graph(TypedDict):
+    nodes: Annotated[list[Node], 'The nodes in the graph']
+    edges: Annotated[list[Edge], 'The edges in the graph']
+    resolution: Annotated[DagResolution, 'The targeted geo and temporal resolutions of the graph']
+
+class FlowcastContext(TypedDict):
+    dag: Annotated[Graph, 'The flowcast DAG to run']
 
 
 
 
-def get_node_parents(node_id: str, graph: Graph, num_expected:int=None) -> list[str]:
-    parent_edges:list[dict] = [edge for edge in graph['edges'] if edge['target'] == node_id]
+
+
+def get_node_parents(node_id: str, graph: Graph, num_expected:int|None=None) -> list[str]:
+    parent_edges:list[Edge] = [edge for edge in graph['edges'] if edge['target'] == node_id]
 
     # verify that the number of parents is as expected
     if num_expected is not None and num_expected != len(parent_edges):
@@ -101,8 +189,8 @@ def topological_sort(graph: Graph):
     nodes = {node['id']: node for node in graph['nodes']}
     edges = [(edge['source'], edge['target']) for edge in graph['edges']]
     
-    in_degree = defaultdict(int)
-
+    # compute the in-degree of each node
+    in_degree: dict[str, int] = defaultdict(int)
     for _, target in edges:
         in_degree[target] += 1
 
@@ -202,7 +290,7 @@ def prepare_geotiff(file_path:Path, features_annotations) -> xr.Dataset:
     return dataset
 
 
-def get_data(features:list[LoadNode]):
+def get_data(features:list[LoadNodeInput]):
     """
     Given a list of data ids and feature names:
     - download the netcdf files and headers/annotations from elasticsearch
@@ -362,7 +450,8 @@ def post_data_to_dojo(data: xr.Dataset, name: str, dataset_description:str, feat
 
 def run_flowcast_job(context:FlowcastContext) -> dict:
     try:
-        return unhandled_run_flowcast_job(context)
+        pipe, loaders, saved_nodes = create_pipeline(context)
+        return execute_pipeline(pipe, loaders, saved_nodes)
     except Exception as e:
         # print exception with stack trace
         import traceback
@@ -374,7 +463,28 @@ def run_flowcast_job(context:FlowcastContext) -> dict:
             'error': f'{e}\n{traceback_str}'
         }
 
-def unhandled_run_flowcast_job(context:FlowcastContext) -> dict:
+
+def validate_flowcast_job(context:FlowcastContext) -> dict:
+    try:
+        create_pipeline(context)
+        return {
+            'message': 'successfully validated flowcast job'
+        }
+    except Exception as e:
+        # print exception with stack trace
+        import traceback
+        traceback_str = traceback.format_exc()
+        print(f'Flowcast job validation failed', flush=True)
+        print(traceback_str, flush=True)
+        return {
+            'message': 'error validating flowcast job',
+            'error': f'{e}\n{traceback_str}'
+        }
+
+
+def create_pipeline(context:FlowcastContext) -> tuple[Pipeline, dict[str, Callable[[], Variable]], list[tuple[str, SaveNodeInput]]]:
+    """Create a flowcast pipeline for the given graph from the frontend"""
+
     graph = context['dag']
     topological_sort(graph)
 
@@ -409,7 +519,7 @@ def unhandled_run_flowcast_job(context:FlowcastContext) -> dict:
 
 
     # keep track of save nodes which need to be fed back into dojo (TODO)
-    saved_nodes: list[tuple[str, str]] = [] #list[(node_id, name)]
+    saved_nodes: list[tuple[str, SaveNodeInput]] = [] #list[(node_id, name/description)]
 
     # insert each step into the pipeline
     for node in graph['nodes']:
@@ -420,13 +530,13 @@ def unhandled_run_flowcast_job(context:FlowcastContext) -> dict:
         elif node['type'] == 'threshold':
             parent, = get_node_parents(node['id'], graph, num_expected=1)
             preserve_nan = node['data']['input']['preserve_nan']
-            value = node['data']['input']['value']
+            value_str = node['data']['input']['value']
             threshold_type = ThresholdType[node['data']['input']['type']]
-            if '%' in value:
-                value = float(value.strip('%'))
+            if '%' in value_str:
+                value = float(value_str.strip('%'))
                 is_percentile = True
             else:
-                value = float(value)
+                value = float(value_str)
                 is_percentile = False
             pipe.threshold(node['id'], parent, Threshold(value, threshold_type, is_percentile), preserve_nan=preserve_nan)
             
@@ -450,8 +560,7 @@ def unhandled_run_flowcast_job(context:FlowcastContext) -> dict:
         elif node['type'] == 'sum': #rename to sum_reduce
             parent, = get_node_parents(node['id'], graph, num_expected=1)
             aggregation = node['data']['input']['aggregation']
-            del node['data']['input']['aggregation']
-            dim_map:dict[str,bool] = node['data']['input']
+            dim_map:dict[str,bool] = {k:v for k,v in node['data']['input'].items() if isinstance(v, bool)}
 
             # verify that only supported dimensions are selected
             for dim, selected in dim_map.items():
@@ -534,10 +643,8 @@ def unhandled_run_flowcast_job(context:FlowcastContext) -> dict:
         elif node['type'] == 'select_slice':
             def to_int_or_slice(index_str:str) -> int|slice:
                 if ':' in index_str:
-                    start,stop = index_str.split(':')
-                    start = int(start.strip())
-                    stop = int(stop.strip())
-                    return slice(start, stop)
+                    start, stop = index_str.split(':')
+                    return slice(int(start.strip()), int(stop.strip()))
                 return int(index_str.strip())
 
             def to_index(index_str:str) -> int|slice|np.ndarray:
@@ -566,6 +673,12 @@ def unhandled_run_flowcast_job(context:FlowcastContext) -> dict:
             raise NotImplementedError(f'Parsing of node type {node["type"]} not implemented.')
 
 
+    return pipe, loaders, saved_nodes
+
+
+def execute_pipeline(pipe:Pipeline, loaders:dict[str, Callable[[], Variable]], saved_nodes: list[tuple[str, SaveNodeInput]]) -> dict:
+    """Execute the flowcast pipeline and return the results"""
+
     # run the pipeline
     pipe.execute()
 
@@ -587,7 +700,7 @@ def unhandled_run_flowcast_job(context:FlowcastContext) -> dict:
     # result object
     result = {
         'message': 'successfully ran flowcast job',
-        'output-files': [name for _,name in saved_nodes],
+        'output-files': [name for _, name in saved_nodes],
         'results': results
     }
 
