@@ -513,11 +513,12 @@ def run_partial_flowcast_job(context:PreviewFlowcastContext) -> dict:
         partial_graph = filter_target_node(context['dag'], node_id)
         pipe, loaders, saved_nodes = create_pipeline({'dag': partial_graph})
         execute_pipeline(pipe, loaders, saved_nodes)
-        # return the value of the target node
-        target_value = pipe.get_value(node_id).data
+
+        # return the result state of all nodes in the partial graph
+        results = { node['id']: pipe.get_value(node['id']).data for node in partial_graph['nodes'] }
         return {
             'message': 'successfully ran partial flowcast job',
-            'target_value': target_value
+            'results': results
         }
     except Exception as e:
         # print exception with stack trace
