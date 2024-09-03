@@ -20,6 +20,7 @@ from flowcast.regrid import RegridType
 from collections import defaultdict, deque
 from typing import Callable, Literal, TypedDict, Union
 from typing_extensions import Annotated, NotRequired
+import traceback
 # from pydantic import BaseModel, Field
 
 
@@ -215,6 +216,31 @@ def topological_sort(graph: Graph):
     # update the graph with the sorted nodes
     graph['nodes'] = result
 
+
+
+def filter_target_node(graph: Graph, target_node_id: str) -> Graph:
+    """Given some target node in the graph, remove all nodes that are not ancestors of the target"""
+    nodes = {node['id']: node for node in graph['nodes']}
+    edges = [(edge['source'], edge['target']) for edge in graph['edges']]
+
+    # perform BFS/DFS starting from the target moving backwards
+    queue = deque([target_node_id])
+    seen = set()
+    while queue:
+        current = queue.pop()
+        seen.add(current)
+        parents = [src for src, tgt in edges if tgt == current]
+        queue.extend(parents)
+
+    # filter out nodes that are not ancestors of the target
+    nodes = {node_id: node for node_id, node in nodes.items() if node_id in seen}
+    edges = [edge for edge in edges if edge[0] in seen and edge[1] in seen]
+
+    return {
+        'nodes': list(nodes.values()),
+        'edges': [{'source': src, 'target': tgt} for src, tgt in edges],
+        'resolution': graph['resolution']
+    }
 
 
 def prepare_netcdf(file_path: Path, time_annotation, lat_annotation, lon_annotation) -> xr.Dataset:
@@ -448,21 +474,6 @@ def post_data_to_dojo(data: xr.Dataset, name: str, dataset_description:str, feat
     
     return response.json()
 
-def run_flowcast_job(context:FlowcastContext) -> dict:
-    try:
-        pipe, loaders, saved_nodes = create_pipeline(context)
-        return execute_pipeline(pipe, loaders, saved_nodes)
-    except Exception as e:
-        # print exception with stack trace
-        import traceback
-        traceback_str = traceback.format_exc()
-        print(f'Flowcast job failed', flush=True)
-        print(traceback_str, flush=True)
-        return {
-            'message': 'error running flowcast job',
-            'error': f'{e}\n{traceback_str}'
-        }
-
 
 def validate_flowcast_job(context:FlowcastContext) -> dict:
     try:
@@ -472,12 +483,49 @@ def validate_flowcast_job(context:FlowcastContext) -> dict:
         }
     except Exception as e:
         # print exception with stack trace
-        import traceback
         traceback_str = traceback.format_exc()
         print(f'Flowcast job validation failed', flush=True)
         print(traceback_str, flush=True)
         return {
             'message': 'error validating flowcast job',
+            'error': f'{e}\n{traceback_str}'
+        }
+
+
+def run_flowcast_job(context:FlowcastContext) -> dict:
+    try:
+        pipe, loaders, saved_nodes = create_pipeline(context)
+        return execute_pipeline(pipe, loaders, saved_nodes)
+    except Exception as e:
+        # print exception with stack trace
+        traceback_str = traceback.format_exc()
+        print(f'Flowcast job failed', flush=True)
+        print(traceback_str, flush=True)
+        return {
+            'message': 'error running flowcast job',
+            'error': f'{e}\n{traceback_str}'
+        }
+
+
+def run_partial_flowcast_job(context:PreviewFlowcastContext) -> dict:
+    try:
+        node_id = context['node_id']
+        partial_graph = filter_target_node(context['dag'], node_id)
+        pipe, loaders, saved_nodes = create_pipeline({'dag': partial_graph})
+        execute_pipeline(pipe, loaders, saved_nodes)
+        # return the value of the target node
+        target_value = pipe.get_value(node_id).data
+        return {
+            'message': 'successfully ran partial flowcast job',
+            'target_value': target_value
+        }
+    except Exception as e:
+        # print exception with stack trace
+        traceback_str = traceback.format_exc()
+        print(f'Partial flowcast job failed', flush=True)
+        print(traceback_str, flush=True)
+        return {
+            'message': 'error running partial flowcast job',
             'error': f'{e}\n{traceback_str}'
         }
 
