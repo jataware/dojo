@@ -44,6 +44,7 @@ es = Elasticsearch(es_url)
 class NodePrototype(TypedDict):
     id: Annotated[str, 'The unique id of the node in the graph']
 
+
 class LoadNodeInput(TypedDict):
     data_source: Annotated[str, 'The data source to load. Format: <feature_name>::<dataset_id>. Example: d_flood::8987a98e-4128-4602-9f72-e3efa1b53668']
     geo_aggregation_function: Annotated[Literal['conserve', 'min', 'max', 'mean', 'median', 'mode', 'interp_or_mean', 'nearest_or_mode'], 'The aggregation function to use for geo resolution. Example: min']
@@ -79,11 +80,9 @@ class SaveNode(NodePrototype):
     data: SaveNodeData
 
 
-class MultiplyNodeInput(TypedDict):
-    op: Annotated[Literal['add', 'subtract', 'multiply', 'divide', 'power'], 'The operation to perform. Example: add']
 class MultiplyNodeData(TypedDict):
     label: Literal['multiply']
-    input: MultiplyNodeInput
+    input: Annotated[Literal['add', 'subtract', 'multiply', 'divide', 'power'], 'The operation to perform. Example: add']
 class MultiplyNode(NodePrototype):
     type: Literal['multiply']
     data: MultiplyNodeData
@@ -103,11 +102,9 @@ class ReduceNode(NodePrototype):
     data: ReduceNodeData
 
 
-class FilterByCountryNodeInput(TypedDict):
-    countries: Annotated[list[str], 'The list of countries to filter by. Example: ["USA", "Canada"]']
 class FilterByCountryNodeData(TypedDict):
     label: Literal['filter_by_country']
-    input: FilterByCountryNodeInput
+    input: Annotated[list[str], 'The list of countries to filter by. Example: ["USA", "Canada"]']
 class FilterByCountryNode(NodePrototype):
     type: Literal['filter_by_country']
     data: FilterByCountryNodeData
@@ -137,11 +134,11 @@ class MaskToDistanceFieldNode(NodePrototype):
 
 
 class SelectSliceNodeInput(TypedDict):
-    dimension: Annotated[str, 'The dimension to slice. Example: time']
+    dimension: Annotated[Literal['lat', 'lon', 'time', 'country'], 'The dimension to slice. Example: time']
     index: Annotated[str, 'The index to slice. Example: 1:5'] #TODO: better explanation of supported slice notation (find the help explanation on the node)
 class SelectSliceNodeData(TypedDict):
     label: Literal['select_slice']
-    input: SelectSliceNodeInput
+    input: Annotated[list[SelectSliceNodeInput], 'The list of slices to select. Example: [{"dimension": "time", "index": "1:5"}]']
 class SelectSliceNode(NodePrototype):
     type: Literal['select_slice']
     data: SelectSliceNodeData
@@ -167,6 +164,9 @@ class FlowcastContext(TypedDict):
     dag: Annotated[Graph, 'The flowcast DAG to run']
 
 
+class PreviewFlowcastContext(TypedDict):
+    dag: Annotated[Graph, 'The flowcast DAG to preview']
+    node_id: Annotated[str, 'The id of the node to preview']
 
 
 
@@ -643,8 +643,11 @@ def create_pipeline(context:FlowcastContext) -> tuple[Pipeline, dict[str, Callab
         elif node['type'] == 'select_slice':
             def to_int_or_slice(index_str:str) -> int|slice:
                 if ':' in index_str:
-                    start, stop = index_str.split(':')
-                    return slice(int(start.strip()), int(stop.strip()))
+                    _start, _stop = index_str.split(':')
+                    _start, _stop = _start.strip(), _stop.strip()
+                    start = int(_start) if _start else None
+                    stop = int(_stop) if _stop else None
+                    return slice(start, stop)
                 return int(index_str.strip())
 
             def to_index(index_str:str) -> int|slice|np.ndarray:
