@@ -20,9 +20,11 @@ def symmetric_log(data: xr.DataArray) -> xr.DataArray:
 def get_px_size() -> float:
     return 1/plt.rcParams['figure.dpi']  # pixel in inches
 
+class ProjType:
+    mollweide = ccrs.Mollweide(central_longitude=1) # there's a bug when central_longitude is smaller than 1
+    robinson = ccrs.Robinson()
 
-
-def generate_preview(data: xr.DataArray, resolution=256, cmap='viridis', projection:ccrs.Projection=ccrs.Robinson()) -> dict:
+def generate_preview(data: xr.DataArray, resolution=256, cmap='viridis', projection:ccrs.Projection=ProjType.robinson) -> dict:
     """Generate a preview of the data for the frontend"""
     log_data = symmetric_log(data)
 
