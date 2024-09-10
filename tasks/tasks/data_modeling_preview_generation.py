@@ -21,7 +21,8 @@ def get_px_size() -> float:
     return 1/plt.rcParams['figure.dpi']  # pixel in inches
 
 
-def generate_preview(data: xr.DataArray, resolution=256, cmap='viridis') -> dict:
+
+def generate_preview(data: xr.DataArray, resolution=256, cmap='viridis', projection:ccrs.Projection=ccrs.Robinson()) -> dict:
     """Generate a preview of the data for the frontend"""
     log_data = symmetric_log(data)
 
@@ -32,6 +33,10 @@ def generate_preview(data: xr.DataArray, resolution=256, cmap='viridis') -> dict
 
     if coords_set == {}:
         fn = generate_time_preview
+    elif coords_set == {'lat'}:
+        fn = generate_lat_preview
+    elif coords_set == {'lon'}:
+        fn = generate_lon_preview
     elif coords_set == {'lat', 'lon'}:
         fn = generate_lat_lon_preview
     elif coords_set == {'admin0'}:
@@ -40,10 +45,8 @@ def generate_preview(data: xr.DataArray, resolution=256, cmap='viridis') -> dict
         fn = generate_country_lat_lon_preview
 
     # TODO: other cases
-    # elif coords_set == {'lat', 'country'}: ...
-    # elif coords_set == {'lon', 'country'}: ...
-    # elif coords_set == {'lat'}: ...
-    # elif coords_set == {'lon'}: ...
+    # elif coords_set == {'lat', 'admin0'}: ...
+    # elif coords_set == {'lon', 'admin0'}: ...
 
     else:
         # raise ValueError(f'Unhandled data dimensions: {data.dims}')
@@ -51,11 +54,11 @@ def generate_preview(data: xr.DataArray, resolution=256, cmap='viridis') -> dict
         fn = generate_random_image
 
     if len(coords_set) == 0 or not contains_time:
-        previews = [fn(data, resolution, cmap)]
-        log_previews = [fn(log_data, resolution, cmap)]
+        previews = [fn(data, resolution, cmap, projection)]
+        log_previews = [fn(log_data, resolution, cmap, projection)]
     else:
-        previews = generate_sliced_time_preview(fn, data, resolution, cmap)
-        log_previews = generate_sliced_time_preview(fn, log_data, resolution, cmap)
+        previews = generate_sliced_time_preview(fn, data, resolution, cmap, projection)
+        log_previews = generate_sliced_time_preview(fn, log_data, resolution, cmap, projection)
 
     preview = {
         'shape': data.shape,
@@ -69,10 +72,10 @@ def generate_preview(data: xr.DataArray, resolution=256, cmap='viridis') -> dict
 
 
 class PreviewGenerator(Protocol):
-    def __call__(self, data: xr.DataArray, resolution: int, cmap) -> str: ...
+    def __call__(self, data: xr.DataArray, resolution: int, cmap: str, projection: ccrs.Projection) -> str: ...
 
 
-def generate_sliced_time_preview(slice_preview_fn: PreviewGenerator, data: xr.DataArray, resolution: int, cmap, max_images=5):
+def generate_sliced_time_preview(slice_preview_fn: PreviewGenerator, data: xr.DataArray, resolution: int, cmap: str, projection: ccrs.Projection, max_images=5):
     """
     Generate a set of base64 image previews of the given data array sliced along time dimension
 
@@ -87,13 +90,13 @@ def generate_sliced_time_preview(slice_preview_fn: PreviewGenerator, data: xr.Da
     indices = np.unique(indices)  # remove duplicates
 
     frames = [
-        slice_preview_fn(data.isel(time=i), resolution, cmap)
+        slice_preview_fn(data.isel(time=i), resolution, cmap, projection)
         for i in indices
     ]
     return frames
 
 
-def generate_lat_lon_preview(data: xr.DataArray, resolution: int, cmap) -> str:
+def generate_lat_lon_preview(data: xr.DataArray, resolution: int, cmap: str, projection: ccrs.Projection) -> str:
     """Generate a base64 image preview of the given data array containing only lat and lon dimensions"""
     aspect_ratio = data.sizes['lon'] / data.sizes['lat']
     px = 1/plt.rcParams['figure.dpi']  # pixel in inches
@@ -117,7 +120,7 @@ def generate_lat_lon_preview(data: xr.DataArray, resolution: int, cmap) -> str:
     return preview
 
 
-def generate_time_preview(data: xr.DataArray, resolution: int, cmap) -> str:
+def generate_time_preview(data: xr.DataArray, resolution: int, cmap: str, projection: ccrs.Projection) -> str:
     """just use the built-in xarray plot method"""
     fig, ax = plt.subplots(figsize=(resolution, resolution))
     ax.axis('off')
@@ -138,7 +141,7 @@ def gadm_admin0_to_iso3(admin0: str) -> str:
         raise ValueError(f'Could not find ISO 3166-1 alpha-3 code for {admin0}') from None
 
 
-def try_or_none(fn, *args, message: str = None, **kwargs):
+def try_or_none(fn, *args, message: str|None = None, **kwargs):
     try:
         return fn(*args, **kwargs)
     except Exception as e:
@@ -146,16 +149,21 @@ def try_or_none(fn, *args, message: str = None, **kwargs):
         return None
 
 
-def generate_country_preview(data: xr.DataArray, resolution: int, cmap) -> str:
+def generate_country_preview(data: xr.DataArray, resolution: int, cmap: str, projection: ccrs.Projection) -> str:
+    
+    # convert the data to a dictionary mapping from iso3 names to data values
     iso3_names = [try_or_none(gadm_admin0_to_iso3, name, message='skipping for preview')
                   for name in data['admin0'].values]
     assert len(data.values) == len(iso3_names), f'{len(data.values)=} != {len(iso3_names)=}'
     country_data = dict(filter(lambda x: x[0] is not None, zip(iso3_names, data.values)))
 
+    colormap_fn = cm.get_cmap(cmap)
+
+
     # Create a figure with a Mollweide projection
     px = get_px_size()
     fig = plt.figure(figsize=(2*resolution*px, resolution*px))
-    ax = plt.axes(projection=ccrs.Mollweide(central_longitude=1))
+    ax = plt.axes(projection=projection)
 
     # Set global extent and add coastlines
     ax.set_global()
@@ -177,7 +185,7 @@ def generate_country_preview(data: xr.DataArray, resolution: int, cmap) -> str:
             ax.add_geometries(
                 [country['geometry']],
                 crs=ccrs.PlateCarree(),
-                facecolor=cm.viridis(country['data_value'] / max(country_data.values())),
+                facecolor=colormap_fn(country['data_value'] / max(country_data.values())),
                 edgecolor='black'
             )
     # plt.show(); pdb.set_trace(); ...; return
@@ -188,10 +196,10 @@ def generate_country_preview(data: xr.DataArray, resolution: int, cmap) -> str:
     return preview
 
 
-def generate_country_lat_lon_preview(data: xr.DataArray, resolution: int, cmap) -> str:
+def generate_country_lat_lon_preview(data: xr.DataArray, resolution: int, cmap, projection: ccrs.Projection) -> str:
     px = get_px_size()
     fig = plt.figure(figsize=(2*resolution*px, resolution*px))
-    ax = plt.axes(projection=ccrs.Mollweide(central_longitude=1))
+    ax = plt.axes(projection=projection)
 
     # Set global extent and add coastlines
     ax.set_global()
@@ -228,7 +236,29 @@ def generate_country_lat_lon_preview(data: xr.DataArray, resolution: int, cmap) 
     return preview
 
 
-def generate_random_image(data, resolution: int, cmap) -> str:
+def generate_lat_preview(data: xr.DataArray, resolution:int, cmap: str, projection: ccrs.Projection) -> str:
+    # Define a range of longitudes to replicate the data
+    lon = np.linspace(-180, 180, data.coords['lat'].size)
+
+    # Replicate the data along the longitude dimension to create zonal bands
+    data = data.expand_dims(lon=lon, axis=-1)
+    data = data.expand_dims(admin0=['Earth'])
+
+    return generate_country_lat_lon_preview(data, resolution, cmap, projection)
+
+def generate_lon_preview(data: xr.DataArray, resolution:int, cmap: str, projection: ccrs.Projection) -> str:
+    # Define a range of latitudes to replicate the data
+    lat = np.linspace(-90, 90, data.coords['lon'].size)
+
+    # Replicate the data along the longitude dimension to create zonal bands
+    data = data.expand_dims(lat=lat, axis=0)
+    data = data.expand_dims(admin0=['Earth'])
+
+    return generate_country_lat_lon_preview(data, resolution, cmap, projection)
+
+
+
+def generate_random_image(data, resolution: int, cmap: str, projection: ccrs.Projection) -> str:
     px = 1/plt.rcParams['figure.dpi']  # pixel in inches
     fig, ax = plt.subplots(figsize=(resolution*px, resolution*px))
     ax.axis('off')
