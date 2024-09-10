@@ -20,6 +20,7 @@ from flowcast.regrid import RegridType
 from collections import defaultdict, deque
 from typing import Callable, Literal, TypedDict, Union
 from typing_extensions import Annotated, NotRequired
+from data_modeling_preview_generation import generate_preview
 import traceback
 # from pydantic import BaseModel, Field
 
@@ -515,7 +516,12 @@ def run_partial_flowcast_job(context:PreviewFlowcastContext) -> dict:
         execute_pipeline(pipe, loaders, saved_nodes)
 
         # return the result state of all nodes in the partial graph
-        results = { node['id']: pipe.get_value(node['id']).data for node in partial_graph['nodes'] }
+        results = { }
+        for node in partial_graph['nodes']:
+            id = node['id']
+            data = pipe.get_value(id).data
+            results[id] = generate_preview(data)
+
         return {
             'message': 'successfully ran partial flowcast job',
             'results': results
