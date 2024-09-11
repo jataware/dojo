@@ -121,7 +121,7 @@ def generate_preview(data: xr.DataArray, resolution=512, cmap='viridis', project
     else:
         # raise ValueError(f'Unhandled data dimensions: {data.dims}')
         print(f'Unhandled data dimensions: {data.dims}, coords_set={coords_set}')
-        fn = make_sliced_dual(generate_random_image)
+        fn = make_sliced_dual(generate_missing_image)
 
     # generate the previews and log previews
     previews, log_previews = fn(data, resolution, cmap, projection)
@@ -319,16 +319,15 @@ def execute_pipeline_op(data: xr.DataArray, op: Callable[[Pipeline], None]) -> x
     return data
 
 
-def generate_random_image(data, resolution: int, cmap: str, projection: ccrs.Projection) -> png64:
+def generate_missing_image(data, resolution: int, cmap: str, projection: ccrs.Projection) -> png64:
     px = 1/plt.rcParams['figure.dpi']  # pixel in inches
     fig, ax = plt.subplots(figsize=(resolution*px, resolution*px))
     ax.axis('off')
     ax.imshow(np.random.random((resolution, resolution)), cmap=cmap)
-    buf = BytesIO()
-    plt.savefig(buf, format='png', bbox_inches='tight', pad_inches=0)
-    plt.close(fig)
-    randimg = base64.b64encode(buf.getvalue()).decode('utf-8')
-    return randimg
+    ax.text(resolution/2, resolution/2, 'NO PREVIEW\nAVAILABLE', color='white', fontsize=36, ha='center', va='center')
+
+    img = save_fig_to_base64()
+    return img
 
 
 def plot_png64(img: png64):
