@@ -246,17 +246,7 @@ def generate_country_lat_lon_preview(data: xr.DataArray, resolution: int, cmap, 
     mesh = ax.pcolormesh(lon, lat, data, transform=ccrs.PlateCarree(), cmap=cmap, shading='auto')
 
     # Add country borders
-    ax.add_feature(cfeature.BORDERS, linestyle=':', edgecolor='black')
-
-    # Optionally, if you have a geopandas DataFrame of countries, plot it:
-    shapefile = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))
-
-    # Ensure countries are plotted in the correct projection
-    for _, country in shapefile.iterrows():
-        ax.add_geometries(
-            [country['geometry']], crs=ccrs.PlateCarree(),
-            facecolor='none', edgecolor='black', lw=0.8
-        )
+    ax.add_feature(cfeature.BORDERS, edgecolor='black', lw=0.8)
 
     # save and return the preview
     preview = save_fig_to_base64()
