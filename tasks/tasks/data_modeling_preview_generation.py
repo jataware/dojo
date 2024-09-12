@@ -8,10 +8,9 @@ import base64
 from io import BytesIO
 from cartopy import crs as ccrs
 from cartopy import feature as cfeature
-import geopandas as gpd
 import pandas as pd
 import matplotlib.cm as cm
-import pycountry
+from flowcast.gadm import get_admin0_shapes
 
 # TODO: this is a bit hacky. in the future, want to import the underlying methods used in the pipeline rather than having to run a whole pipeline
 from flowcast.pipeline import Pipeline, Variable
@@ -156,29 +155,9 @@ def generate_time_preview(data: xr.DataArray, resolution: int, cmap: str, projec
     return preview
 
 
-def gadm_admin0_to_iso3(admin0: str) -> str:
-    """Convert a GADM admin0 name to an ISO 3166-1 alpha-3 country code"""
-    try:
-        return pycountry.countries.lookup(admin0).alpha_3
-    except:
-        raise ValueError(f'Could not find ISO 3166-1 alpha-3 code for "{admin0}"') from None
-
-
-def try_or_none(fn, *args, message: str | None = None, **kwargs):
-    try:
-        return fn(*args, **kwargs)
-    except Exception as e:
-        print(f'Error: {e}. {message or ""}')
-        return None
 
 
 def generate_country_preview(data: xr.DataArray, resolution: int, cmap: str, projection: ccrs.Projection) -> png64:
-
-    # convert the data to a dictionary mapping from iso3 names to data values
-    iso3_names = [try_or_none(gadm_admin0_to_iso3, name, message='skipping for preview')
-                  for name in data['admin0'].values]
-    assert len(data.values) == len(iso3_names), f'{len(data.values)=} != {len(iso3_names)=}'
-    country_data = dict(filter(lambda x: x[0] is not None, zip(iso3_names, data.values)))
 
     colormap_fn = cm.get_cmap(cmap)
 
@@ -194,12 +173,11 @@ def generate_country_preview(data: xr.DataArray, resolution: int, cmap: str, pro
     # Add country borders
     ax.add_feature(cfeature.BORDERS, linestyle=':', alpha=0.7)
 
-    # Load Natural Earth shapefile of countries and filter so it only contains the countries we have data for
-    shapefile = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))
-    shapefile = shapefile[shapefile['iso_a3'].isin(country_data.keys())]
-
-    # Add data to the shapefile
-    shapefile['data_value'] = shapefile['iso_a3'].map(country_data)
+    # load the flowcast gadm0 shapefile and add a column for the data values
+    shapefile = get_admin0_shapes()
+    country_data = {name: value for name, value in zip(data['admin0'].values, data.values)}
+    shapefile = shapefile[shapefile['NAME_0'].isin(country_data.keys())].copy()
+    shapefile['data_value'] = shapefile['NAME_0'].map(country_data)
 
     # Plot each country with a color depending on its value in the data
     for _, country in shapefile.iterrows():
@@ -210,6 +188,19 @@ def generate_country_preview(data: xr.DataArray, resolution: int, cmap: str, pro
                 facecolor=colormap_fn(country['data_value'] / max(country_data.values())),
                 edgecolor='black'
             )
+
+    # Calculate bounds of all included geometries
+    lon_min, lat_min, lon_max, lat_max = shapefile['geometry'].total_bounds
+    lat_fraction = (lat_max - lat_min) / 180
+    lon_fraction = (lon_max - lon_min) / 360
+
+    # crop the image to the bounds of the included geometries
+    threshold = 0.65
+    if lat_fraction < threshold or lon_fraction < threshold:
+        lat_bounds = [lat_min, lat_max] if lat_fraction < threshold else [-90, 90]
+        lon_bounds = [lon_min, lon_max] if lon_fraction < threshold else [-180, 180]
+        ax.set_extent(lon_bounds + lat_bounds, crs=ccrs.PlateCarree())
+
     preview = save_fig_to_base64()
     return preview
 
