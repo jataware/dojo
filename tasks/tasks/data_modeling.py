@@ -20,7 +20,7 @@ from flowcast.regrid import RegridType
 from collections import defaultdict, deque
 from typing import Callable, Literal, TypedDict, Union
 from typing_extensions import Annotated, NotRequired
-from data_modeling_preview_generation import generate_preview
+from data_modeling_preview_generation import generate_preview, PreviewData
 import traceback
 # from pydantic import BaseModel, Field
 
@@ -168,7 +168,7 @@ class FlowcastContext(TypedDict):
 
 class PreviewFlowcastContext(TypedDict):
     dag: Annotated[Graph, 'The flowcast DAG to preview']
-    node_id: Annotated[str, 'The id of the node to preview']
+    node_id: Annotated[str|None, 'The id of the node to preview. If None, then preview the entire graph']
 
 
 
@@ -402,7 +402,7 @@ dtype_kind_map = {
     'f': 'float',
 }
 
-def post_data_to_dojo(data: xr.Dataset, name: str, dataset_description:str, feature_description:str):
+def post_data_to_dojo(data: xr.DataArray, name: str, dataset_description:str, feature_description:str):
     print(f'######### Saving to dojo:\n{name}\n{dataset_description}\n{feature_description}\n{data}\n#########')
     #create indicator
     metadata = {
@@ -475,6 +475,7 @@ def post_data_to_dojo(data: xr.Dataset, name: str, dataset_description:str, feat
     
     return response.json()
 
+##################### RQ Jobs to call from the front end #####################
 
 def validate_flowcast_job(context:FlowcastContext) -> dict:
     try:
@@ -510,13 +511,16 @@ def run_flowcast_job(context:FlowcastContext) -> dict:
 
 def run_partial_flowcast_job(context:PreviewFlowcastContext) -> dict:
     try:
+        # trim graph for specific node if specified 
         node_id = context['node_id']
-        partial_graph = filter_target_node(context['dag'], node_id)
+        partial_graph = filter_target_node(context['dag'], node_id) if node_id is not None else context['dag']
+
+        # run the pipeline
         pipe, loaders, saved_nodes = create_pipeline({'dag': partial_graph})
         execute_pipeline(pipe, loaders, saved_nodes)
 
-        # return the result state of all nodes in the partial graph
-        results = { }
+        # generate a preview for all nodes in the partial graph
+        results: dict[str, PreviewData] = { }
         for node in partial_graph['nodes']:
             id = node['id']
             data = pipe.get_value(id).data
@@ -535,6 +539,9 @@ def run_partial_flowcast_job(context:PreviewFlowcastContext) -> dict:
             'message': 'error running partial flowcast job',
             'error': f'{e}\n{traceback_str}'
         }
+
+
+################################################################################
 
 
 def create_pipeline(context:FlowcastContext) -> tuple[Pipeline, dict[str, Callable[[], Variable]], list[tuple[str, SaveNodeInput]]]:
