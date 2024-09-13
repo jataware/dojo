@@ -366,11 +366,12 @@ def run_flowcast_job(context:FlowcastContext) -> dict:
     except Exception as e:
         # print exception with stack trace
         import traceback
-        traceback.print_exc()
+        traceback_str = traceback.format_exc()
         print(f'Flowcast job failed', flush=True)
+        print(traceback_str, flush=True)
         return {
             'message': 'error running flowcast job',
-            'error': str(e)
+            'error': f'{e}\n{traceback_str}'
         }
 
 def unhandled_run_flowcast_job(context:FlowcastContext) -> dict:
