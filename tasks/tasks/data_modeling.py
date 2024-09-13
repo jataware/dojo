@@ -488,10 +488,11 @@ def validate_flowcast_job(context:FlowcastContext) -> dict:
         traceback_str = traceback.format_exc()
         print(f'Flowcast job validation failed', flush=True)
         print(traceback_str, flush=True)
-        return {
-            'message': 'error validating flowcast job',
-            'error': f'{e}\n{traceback_str}'
-        }
+        # return {
+        #     'message': 'error validating flowcast job',
+        #     'error': f'{e}\n{traceback_str}'
+        # }
+        raise e
 
 
 def run_flowcast_job(context:FlowcastContext) -> dict:

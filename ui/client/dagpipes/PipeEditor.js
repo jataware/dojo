@@ -16,6 +16,10 @@ import ReactFlow, {
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import ErrorIcon from '@mui/icons-material/Error';
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/material/Alert';
 
 import { makeStyles } from 'tss-react/mui';
 
@@ -178,6 +182,10 @@ const PipeEditor = () => {
   const { classes } = useStyles();
 
   const [showStats, setShowStats] = useState(false);
+  const [validationLoading, setValidationLoading] = useState(false);
+  const [validationSuccess, setValidationSuccess] = useState(false);
+  const [validationError, setValidationError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');
 
   const {
     geoResolutionColumn, timeResolutionColumn
@@ -384,6 +392,48 @@ const PipeEditor = () => {
     });
   }, [dispatch, geoResolutionColumn, timeResolutionColumn]);
 
+  const handleValidateClick = async () => {
+    try {
+      console.log("Validating data model");
+      const flowValue = onSave();
+      const UUID = crypto.randomUUID();
+      setValidationLoading(true);
+      setValidationSuccess(false);
+      setValidationError(false);      
+      const response = await axios.post(
+        `/api/dojo/job/${UUID}/data_modeling.validate_flowcast_job`,
+        { context: { dag: flowValue } },
+        { headers: { 'Content-Type': 'application/json' } }
+      );
+      const jobId = response.data.id;
+      // Poll for job status
+      const intervalId = setInterval(async () => {
+        const statusResponse = await axios.get(`/api/dojo/job/${UUID}/data_modeling.validate_flowcast_job`);
+        const jobStatus = statusResponse.data.status;
+        if (jobStatus === 'finished') {
+          clearInterval(intervalId);
+          setValidationLoading(false); 
+          setValidationSuccess(true);
+          setTimeout(() => setValidationSuccess(false), 5000);
+          console.log('Job finished successfully', statusResponse.data.result.message);
+        } else if (jobStatus === 'failed') {
+          clearInterval(intervalId);
+          setValidationLoading(false); 
+          setValidationError(true);
+          setErrorMessage(statusResponse.data.job_error);
+          setTimeout(() => setValidationError(false), 7000);
+          console.error('Job failed', statusResponse.data.job_error);
+        }
+      }, 2000); // Poll every 2 seconds
+    } catch (error) {
+      setValidationLoading(false);
+      setValidationError(true);
+      setErrorMessage(error.message);
+      setTimeout(() => setValidationError(false), 7000); // Remove error icon after 5 seconds
+      console.error('Error triggering validation job:', error);
+    }
+  };
+
   // TODO: don't let this happen/disable button if there are no nodes
   const onProcessClick = () => {
     // TODO: spinner while waiting for response?
@@ -495,6 +545,25 @@ const PipeEditor = () => {
           >
             {showStats ? 'Hide' : 'View'} Statistics
           </Button>
+          <Button
+            variant="contained"
+            disableElevation
+            fullWidth
+            color="secondary"
+            sx={{ marginTop: 2 }}
+            onClick={handleValidateClick}
+            disabled={validationLoading}
+          >
+            {validationLoading ? (
+              <div className="spinner"></div>
+            ) : validationSuccess ? (
+              <CheckCircleIcon style={{ color: 'white' }} />
+            ) : validationError ? (
+              <ErrorIcon style={{ color: 'red' }} />
+            ) : (
+              'Validate Data Model'
+            )}
+          </Button>       
           <Tooltip title={processDisabled ? disabledProcessTooltip : ''}>
             <span>
               <Button
@@ -512,6 +581,11 @@ const PipeEditor = () => {
           </Tooltip>
         </div>
       </div>
+      <Snackbar open={validationError} autoHideDuration={5000} onClose={() => setValidationError(false)}>
+        <Alert onClose={() => setValidationError(false)} severity="error" sx={{ width: '100%' }}>
+          {errorMessage}
+        </Alert>
+      </Snackbar>      
     </div>
   );
 };
