@@ -9,8 +9,12 @@ from io import BytesIO
 from cartopy import crs as ccrs
 from cartopy import feature as cfeature
 import pandas as pd
+import geopandas as gpd
 import matplotlib.cm as cm
 from flowcast.gadm import get_admin0_shapes
+from flowcast.spacetime import determine_tight_lon_bounds
+from shapely import MultiPolygon, Polygon
+
 
 # TODO: this is a bit hacky. in the future, want to import the underlying methods used in the pipeline rather than having to run a whole pipeline
 from flowcast.pipeline import Pipeline, Variable
@@ -70,7 +74,8 @@ def make_sliced(fn: DualPreviewGenerator, max_images: int = 5) -> SlicedDualPrev
         # handle when time is not present in the data by returning a list of one
         contains_time = 'time' in data.dims and len(data['time'].shape) > 0 and len(data['time']) > 1
         if not contains_time or len(data.dims) <= 1:
-            return tuple([img] for img in fn(data, resolution, cmap, projection))
+            img, log_img = fn(data, resolution, cmap, projection)
+            return ([img], [log_img])
 
         # generate a sequence of images by slicing along the time dimension
         indices = np.unique(np.linspace(0, len(data['time']) - 1, max_images, dtype=int))
@@ -125,7 +130,7 @@ def generate_preview(data: xr.DataArray, resolution=512, cmap='viridis', project
     # generate the previews and log previews
     previews, log_previews = fn(data, resolution, cmap, projection)
 
-    preview = {
+    preview: PreviewData = {
         'shape': data.shape,
         'dtype': str(data.dtype),
         'dims': list(data.dims),
@@ -155,57 +160,61 @@ def generate_time_preview(data: xr.DataArray, resolution: int, cmap: str, projec
     return preview
 
 
-# TODO: this is naive. e.g. if we're looking at just new zealand, which crosses from +180 to -180, it will show the whole world
-#       instead we should have an approach that figures out the actual smallest bounds of the data
-def get_latlon_bounds(
-    lat_min: float,
-    lat_max: float,
-    lon_min: float,
-    lon_max: float,
-    threshold=0.65
-) -> tuple[tuple[float, float], tuple[float, float], float]:
+def get_best_view(lats: np.ndarray, lons: np.ndarray, projection: ccrs.Projection, threshold=0.65) -> tuple[tuple[float, float], tuple[float, float], ccrs.Projection, float]:
     """
-    Calculate the bounds of the view based on the given lat/lon bounds
+    Determine the best view of the data on a globe given the latitude and longitude bounds.
 
     Args:
-    - lat_min: The minimum latitude value
-    - lat_max: The maximum latitude value
-    - lon_min: The minimum longitude value
-    - lon_max: The maximum longitude value
-    - threshold (optional): The threshold for determining if the view should be global. Defaults to 0.65
+    - lats: A numpy array of all latitudes for the data (may be unsorted)
+    - lons: A numpy array of all longitudes for the data (may be unsorted)
+    - projection: The projection to use for the plot
+    - threshold: A % threshold to determine when view should snap to global bounds. If view fraction taken up by the data on some axis is more than this, then min/max bounds will be used
 
     Returns:
-    - A tuple of the latitude bounds, longitude bounds, and central longitude
+    - A tuple of (lat_bounds, lon_bounds, projection, aspect_ratio)
     """
 
+    # determine latitude bounds (easy)
+    lat_min, lat_max = lats.min(), lats.max()
     lat_fraction = (lat_max - lat_min) / 180
-    lon_fraction = (lon_max - lon_min) / 360
     lat_bounds = (lat_min, lat_max) if lat_fraction < threshold else (-90, 90)
+
+    # determine longitude bounds (not easy 😂)
+    lon_min, lon_max = determine_tight_lon_bounds(lons)
+    lon_center = (lon_min + lon_max) / 2
+    lon_fraction = (lon_max - lon_min) / 360
     lon_bounds = (lon_min, lon_max) if lon_fraction < threshold else (-180, 180)
+    central_longitude = lon_center if lon_fraction < threshold else 0
 
-    if lon_min < lon_max:
-        central_longitude = (lon_min + lon_max) / 2
-    else:
-        central_longitude = (lon_min + lon_max + 360) / 2
-    return lat_bounds, lon_bounds, central_longitude
+    # adjust projection
+    projection = type(projection)(central_longitude=central_longitude)
+
+    # calculate aspect ratio
+    aspect = np.abs((lon_bounds[1] - lon_bounds[0]) / (lat_bounds[1] - lat_bounds[0]))
+
+    return lat_bounds, lon_bounds, projection, aspect
 
 
-def update_projection_central_longitude(projection: ccrs.Projection, central_longitude: float) -> ccrs.Projection:
-    """
-    Update the central longitude of the given projection if it's not already set
+def get_shapefile_coords(shape: gpd.GeoDataFrame) -> tuple[np.ndarray, np.ndarray]:
+    """Get the coordinates of the geometries in the GeoDataFrame"""
+    lat_seqs = []
+    lon_seqs = []
+    for geom in shape.geometry:
+        if geom.is_empty:
+            continue
+        if isinstance(geom, MultiPolygon):
+            for polygon in geom.geoms:
+                lats, lons = polygon.exterior.xy
+                lat_seqs.append(lats)
+                lon_seqs.append(lons)
+        elif isinstance(geom, Polygon):
+            lats, lons = geom.exterior.xy
+            lat_seqs.append(lats)
+            lon_seqs.append(lons)
+        else:
+            print(f'ERROR: cannot determine coordinates of unsupported geometry type: {type(geom)}. Skipping.')
 
-    Args:
-    - projection: The projection to update
-    - central_longitude: The central longitude to set
-
-    Returns:
-    - The updated projection
-    """
-
-    if isinstance(projection, (ccrs.Robinson, ccrs.Mollweide)):
-        return type(projection)(central_longitude=central_longitude)
-
-    raise ValueError(f'Unsupported projection type: {type(projection)}')
+    return np.concatenate(lon_seqs), np.concatenate(lat_seqs)
 
 
 def generate_country_preview(data: xr.DataArray, resolution: int, cmap: str, projection: ccrs.Projection) -> png64:
@@ -216,16 +225,12 @@ def generate_country_preview(data: xr.DataArray, resolution: int, cmap: str, pro
     shapefile = shapefile[shapefile['NAME_0'].isin(country_data.keys())].copy()
     shapefile['data_value'] = shapefile['NAME_0'].map(country_data)
 
-    # Calculate bounds of all included geometries
-    lon_min, lat_min, lon_max, lat_max = shapefile['geometry'].total_bounds
-    lat_bounds, lon_bounds, central_longitude = get_latlon_bounds(lat_min, lat_max, lon_min, lon_max)
-
-    # update the projection with the central longitude if it's not already set
-    projection = update_projection_central_longitude(projection, central_longitude)
+    # Calculate best view bounds of all included geometries
+    lats, lons = get_shapefile_coords(shapefile)
+    lat_bounds, lon_bounds, projection, aspect = get_best_view(lats, lons, projection)
 
     # Create a figure with the given resolution and projection
     px = get_px_size()
-    aspect = (lon_max - lon_min) / (lat_max - lat_min)
     fig = plt.figure(figsize=(aspect*resolution*px, resolution*px))
     ax = plt.axes(projection=projection)
 
@@ -255,21 +260,16 @@ def generate_country_preview(data: xr.DataArray, resolution: int, cmap: str, pro
 def generate_country_lat_lon_preview(data: xr.DataArray, resolution: int, cmap, projection: ccrs.Projection) -> png64:
 
     # get lat/lon/data as numpy arrays
-    lat = data['lat'].data
-    lon = data['lon'].data
+    lats = data['lat'].data
+    lons = data['lon'].data
     # sum data along admin0 dimension to get rid of the extra dimension
     data = data.sum(dim='admin0', skipna=True, min_count=1).values
 
     # determine the lat/lon extents of the data
-    lat_min, lat_max, lon_min, lon_max = lat.min(), lat.max(), lon.min(), lon.max()
-    lat_bounds, lon_bounds, central_longitude = get_latlon_bounds(lat_min, lat_max, lon_min, lon_max)
-
-    # update the projection with the central longitude if it's not already set
-    projection = update_projection_central_longitude(projection, central_longitude)
+    lat_bounds, lon_bounds, projection, aspect = get_best_view(lats, lons, projection)
 
     # Create a figure with the given resolution and projection
     px = get_px_size()
-    aspect = (lon_max - lon_min) / (lat_max - lat_min)
     fig = plt.figure(figsize=(aspect*resolution*px, resolution*px))
     ax = plt.axes(projection=projection)
 
@@ -278,7 +278,7 @@ def generate_country_lat_lon_preview(data: xr.DataArray, resolution: int, cmap, 
     ax.coastlines()
 
     # Plot gridded data using pcolormesh, transformed to the map's projection
-    mesh = ax.pcolormesh(lon, lat, data, transform=ccrs.PlateCarree(), cmap=cmap, shading='auto')
+    mesh = ax.pcolormesh(lons, lats, data, transform=ccrs.PlateCarree(), cmap=cmap, shading='auto')
 
     # Add country borders and crop to the computed bounds
     ax.add_feature(cfeature.BORDERS, edgecolor='black', lw=0.8)
