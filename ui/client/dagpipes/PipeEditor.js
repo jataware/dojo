@@ -161,20 +161,41 @@ const useStyles = makeStyles()((theme) => ({
     minHeight: '400px',
     minWidth: '400px',
   },
-  opaqueButton: {
-    backgroundColor: 'white',
-    color: 'black',
-    '&:hover': {
-      backgroundColor: theme.palette.grey[100],
+    opaqueButton: {
+      backgroundColor: 'white',
+      color: 'black',
+      '&:hover': {
+        backgroundColor: theme.palette.grey[100],
+      },
     },
-  },
-  lowerSidebar: {
-    margin: `${theme.spacing(4)} ${theme.spacing(2)} ${theme.spacing(2)}`,
-  },
-  wholeSidebar: {
-    width: '275px',
-    minWidth: '275px',
-  },
+    lowerSidebar: {
+      margin: `${theme.spacing(4)} ${theme.spacing(2)} ${theme.spacing(2)}`,
+    },
+    wholeSidebar: {
+      width: '275px',
+      minWidth: '275px',
+    },
+    validateButton: {
+      backgroundColor: 'grey',
+      color: 'white',
+      '&:hover': {
+        backgroundColor: 'grey',
+      },
+    },
+    validateButtonSuccess: {
+      backgroundColor: 'green',
+      color: 'white',
+      '&:hover': {
+        backgroundColor: 'green',
+      },
+    },
+    validateButtonError: {
+      backgroundColor: 'red',
+      color: 'white',
+      '&:hover': {
+        backgroundColor: 'red',
+      },
+    },
 }));
 
 const PipeEditor = () => {
@@ -397,9 +418,9 @@ const PipeEditor = () => {
       console.log("Validating data model");
       const flowValue = onSave();
       const UUID = crypto.randomUUID();
-      setValidationLoading(true);
+      setValidationLoading(true); // Set loading state to true
       setValidationSuccess(false);
-      setValidationError(false);      
+      setValidationError(false);
       const response = await axios.post(
         `/api/dojo/job/${UUID}/data_modeling.validate_flowcast_job`,
         { context: { dag: flowValue } },
@@ -412,24 +433,24 @@ const PipeEditor = () => {
         const jobStatus = statusResponse.data.status;
         if (jobStatus === 'finished') {
           clearInterval(intervalId);
-          setValidationLoading(false); 
+          setValidationLoading(false); // Set loading state to false
           setValidationSuccess(true);
-          setTimeout(() => setValidationSuccess(false), 5000);
+          setTimeout(() => setValidationSuccess(false), 10000); // Remove success icon after 10 seconds
           console.log('Job finished successfully', statusResponse.data.result.message);
         } else if (jobStatus === 'failed') {
           clearInterval(intervalId);
-          setValidationLoading(false); 
+          setValidationLoading(false); // Set loading state to false
           setValidationError(true);
           setErrorMessage(statusResponse.data.job_error);
-          setTimeout(() => setValidationError(false), 7000);
+          setTimeout(() => setValidationError(false), 10000); // Remove error icon after 10 seconds
           console.error('Job failed', statusResponse.data.job_error);
         }
       }, 2000); // Poll every 2 seconds
     } catch (error) {
-      setValidationLoading(false);
+      setValidationLoading(false); // Set loading state to false
       setValidationError(true);
       setErrorMessage(error.message);
-      setTimeout(() => setValidationError(false), 7000); // Remove error icon after 5 seconds
+      setTimeout(() => setValidationError(false), 10000); // Remove error icon after 10 seconds
       console.error('Error triggering validation job:', error);
     }
   };
@@ -549,7 +570,15 @@ const PipeEditor = () => {
             variant="contained"
             disableElevation
             fullWidth
-            color="secondary"
+            className={
+              validationLoading
+                ? classes.validateButton
+                : validationSuccess
+                ? classes.validateButtonSuccess
+                : validationError
+                ? classes.validateButtonError
+                : classes.validateButton
+            }
             sx={{ marginTop: 2 }}
             onClick={handleValidateClick}
             disabled={validationLoading}
@@ -559,11 +588,11 @@ const PipeEditor = () => {
             ) : validationSuccess ? (
               <CheckCircleIcon style={{ color: 'white' }} />
             ) : validationError ? (
-              <ErrorIcon style={{ color: 'red' }} />
+              <ErrorIcon style={{ color: 'white' }} />
             ) : (
               'Validate Data Model'
             )}
-          </Button>       
+          </Button>     
           <Tooltip title={processDisabled ? disabledProcessTooltip : ''}>
             <span>
               <Button
