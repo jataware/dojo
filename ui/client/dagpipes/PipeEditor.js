@@ -196,6 +196,27 @@ const useStyles = makeStyles()((theme) => ({
         backgroundColor: 'red',
       },
     },
+    generatePreviewsButton: {
+      backgroundColor: 'grey',
+      color: 'white',
+      '&:hover': {
+        backgroundColor: 'grey',
+      },
+    },
+    generatePreviewsButtonSuccess: {
+      backgroundColor: 'green',
+      color: 'white',
+      '&:hover': {
+        backgroundColor: 'green',
+      },
+    },
+    generatePreviewsButtonError: {
+      backgroundColor: 'red',
+      color: 'white',
+      '&:hover': {
+        backgroundColor: 'red',
+      },
+    },    
 }));
 
 const PipeEditor = () => {
@@ -206,7 +227,10 @@ const PipeEditor = () => {
   const [validationLoading, setValidationLoading] = useState(false);
   const [validationSuccess, setValidationSuccess] = useState(false);
   const [validationError, setValidationError] = useState(false);
-  const [errorMessage, setErrorMessage] = useState('');
+  const [errorMessage, setErrorMessage] = useState('');  
+  const [previewsLoading, setPreviewsLoading] = useState(false);
+  const [previewsSuccess, setPreviewsSuccess] = useState(false);
+  const [previewsError, setPreviewsError] = useState(false);
 
   const {
     geoResolutionColumn, timeResolutionColumn
@@ -455,6 +479,48 @@ const PipeEditor = () => {
     }
   };
 
+  const handleGeneratePreviewsClick = async () => {
+    try {
+      console.log("Generating previews...");
+      const flowValue = onSave();
+      const UUID = crypto.randomUUID();
+      setPreviewsLoading(true); // Set loading state to true
+      setPreviewsSuccess(false);
+      setPreviewsError(false);
+      const response = await axios.post(
+        `/api/dojo/job/${UUID}/data_modeling.run_partial_flowcast_job`,
+        { context: { dag: flowValue , node_id: null }},
+        { headers: { 'Content-Type': 'application/json' } }
+      );
+      const jobId = response.data.id;
+      // Poll for job status
+      const intervalId = setInterval(async () => {
+        const statusResponse = await axios.get(`/api/dojo/job/${UUID}/data_modeling.run_partial_flowcast_job`);
+        const jobStatus = statusResponse.data.status;
+        if (jobStatus === 'finished') {
+          clearInterval(intervalId);
+          setPreviewsLoading(false); // Set loading state to false
+          setPreviewsSuccess(true);
+          setTimeout(() => setPreviewsSuccess(false), 10000); // Remove success icon after 10 seconds
+          console.log('Job finished successfully', statusResponse.data.result.message);
+        } else if (jobStatus === 'failed') {
+          clearInterval(intervalId);
+          setPreviewsLoading(false); // Set loading state to false
+          setPreviewsError(true);
+          setErrorMessage(statusResponse.data.job_error);
+          setTimeout(() => setPreviewsError(false), 10000); // Remove error icon after 10 seconds
+          console.error('Job failed', statusResponse.data.job_error);
+        }
+      }, 2000); // Poll every 2 seconds
+    } catch (error) {
+      setPreviewsLoading(false); // Set loading state to false
+      setPreviewsError(true);
+      setErrorMessage(error.message);
+      setTimeout(() => setPreviewsError(false), 10000); // Remove error icon after 10 seconds
+      console.error('Error triggering preview generation job:', error);
+    }
+  };
+
   // TODO: don't let this happen/disable button if there are no nodes
   const onProcessClick = () => {
     // TODO: spinner while waiting for response?
@@ -593,6 +659,33 @@ const PipeEditor = () => {
               'Validate Data Model'
             )}
           </Button>     
+          <Button
+            variant="contained"
+            disableElevation
+            fullWidth
+            className={
+              previewsLoading
+                ? classes.generatePreviewsButton
+                : previewsSuccess
+                ? classes.generatePreviewsButtonSuccess
+                : previewsError
+                ? classes.generatePreviewsButtonError
+                : classes.generatePreviewsButton
+            }
+            sx={{ marginTop: 2 }}
+            onClick={handleGeneratePreviewsClick}
+            disabled={previewsLoading}
+          >
+            {previewsLoading ? (
+              <div className="spinner"></div>
+            ) : previewsSuccess ? (
+              <CheckCircleIcon style={{ color: 'white' }} />
+            ) : previewsError ? (
+              <ErrorIcon style={{ color: 'white' }} />
+            ) : (
+              'Generate Previews'
+            )}
+          </Button>   
           <Tooltip title={processDisabled ? disabledProcessTooltip : ''}>
             <span>
               <Button
