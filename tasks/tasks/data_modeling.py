@@ -509,8 +509,47 @@ def run_flowcast_job(context:FlowcastContext) -> dict:
             'error': f'{e}\n{traceback_str}'
         }
 
-
+# import pdb
+# MIINIMAL CARTOPY ERROR EXAMPLE
 def run_partial_flowcast_job(context:PreviewFlowcastContext) -> dict:
+    from data_modeling_preview_generation import plot_png64, save_fig_to_base64
+    from data_modeling_debug_helpers import plot_to_web
+    from matplotlib import pyplot as plt
+    from cartopy import crs as ccrs
+    from cartopy import feature as cfeature
+    from flowcast.gadm import get_admin0_shapes, setup_gadm
+
+    # super minimal plot with cartopy example
+    setup_gadm()
+    shapefile = get_admin0_shapes()
+    usa = shapefile[shapefile['NAME_0'] == 'United States']
+    fig, ax = plt.subplots(figsize=(10, 7), subplot_kw={'projection': ccrs.Robinson()})
+    ax.coastlines()
+    ax.add_feature(cfeature.BORDERS, linestyle=':', edgecolor='black')
+    ax.add_geometries(usa.geometry, ccrs.PlateCarree(), facecolor='blue', edgecolor='black')
+    # ax.set_extent([-130, -60, 20, 55], crs=ccrs.PlateCarree())
+
+    # Display the plot
+    img = save_fig_to_base64()
+    # plot_png64(img)
+    # plot_to_web()
+    return {'message': 'test finishes', 'result': {'some_node_id': {'preview': [img]}}}
+
+
+# MINIMAL WORKING EXAMPLE
+def __WORKING_run_partial_flowcast_job(context:PreviewFlowcastContext) -> dict:
+    from data_modeling_preview_generation import generate_missing_image, plot_png64, save_fig_to_base64
+    from data_modeling_debug_helpers import plot_to_web
+
+    preview = generate_missing_image(None, 512, 'viridis', None)
+    plot_png64(preview)
+    plot_to_web()
+    return {'message': 'success', 'result': {'some_node_id': {'preview': [preview]}}}
+
+
+
+
+def __ORIGINAL_run_partial_flowcast_job(context:PreviewFlowcastContext) -> dict:
     try:
         # trim graph for specific node if specified 
         node_id = context['node_id']
