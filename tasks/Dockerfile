@@ -7,9 +7,11 @@ RUN apt-get update &&\
 
 RUN apt install --no-install-recommends -y libreoffice-writer libreoffice-impress    
 
+RUN wget https://jataware-world-modelers.s3.amazonaws.com/gadm/gadm36_0.feather.zip
 RUN wget https://jataware-world-modelers.s3.amazonaws.com/gadm/gadm36_2.feather.zip
 RUN wget https://jataware-world-modelers.s3.amazonaws.com/gadm/gadm36_3.feather.zip
 RUN mkdir ~/elwood_data && \
+    unzip gadm36_0.feather.zip -d ~/elwood_data/ && \
     unzip gadm36_2.feather.zip -d ~/elwood_data/ && \
     unzip gadm36_3.feather.zip -d ~/elwood_data/ && \
     rm gadm36_?.feather.zip
