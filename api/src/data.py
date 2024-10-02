@@ -29,6 +29,14 @@ redis = Redis(
     os.environ.get("REDIS_PORT", "6379"),
 )
 q = Queue(connection=redis, default_timeout=-1)
+# Create queues
+default_queue = q
+datamodeling_queue = Queue('datamodeling', connection=Redis())
+
+def get_queue(queue_name):
+    if queue_name == 'datamodeling':
+        return datamodeling_queue
+    return default_queue
 
 # S3 OBJECT
 s3 = boto3.resource("s3")
@@ -214,7 +222,7 @@ class GetJobStatusResponseModel(BaseModel):
     "/job/{uuid}/{job_string}",
     response_model=GetJobStatusResponseModel
 )
-def job_status(uuid: str, job_string: str):
+def job_status(uuid: str, job_string: str, queue_name: str = "default"):
     """
     If a job exists, returns the full job data.
     """
@@ -272,11 +280,16 @@ def job(uuid: str, job_string: str, options: Optional[Dict[Any, Any]] = None):
     timeout = options.pop("timeout", 60)
     preview = options.get("preview_run", False)
     recheck_delay = 0.5
+    if "data_modeling" in job_string:
+        queue_name = "datamodeling"
+    else:
+        queue_name = "default"
+    q_ = get_queue(queue_name)
 
     job_id = f"{uuid}_{job_string}"
     if preview:
         job_id = job_id + "_preview"
-    job = q.fetch_job(job_id)
+    job = q_.fetch_job(job_id)
 
     context = options.pop("context", None)
     if job and force_restart:
@@ -289,7 +302,7 @@ def job(uuid: str, job_string: str, options: Optional[Dict[Any, Any]] = None):
         except Exception as e:
             logging.error(e)
 
-        job = q.enqueue_call(
+        job = q_.enqueue_call(
             func=job_string, args=[context], kwargs=options, job_id=job_id
         )
         if synchronous:
