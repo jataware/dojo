@@ -4,7 +4,7 @@ RUN apt-get update && apt-get install -y software-properties-common && \
     apt-get update && \
     apt-get install -y make g++ gdal-bin=3.4.1+dfsg-1build4 libgdal-dev=3.4.1+dfsg-1build4 && \
     apt-get -y install libhdf5-dev libhdf5-serial-dev hdf5-tools && \
-    apt install -y wget unzip python3-rtree python3-all-dev tesseract-ocr ghostscript libffi-dev
+    apt install -y wget unzip python3-rtree python3-all-dev tesseract-ocr ghostscript libffi-dev libbz2-dev
     # apt install -y python3-pip
 
 # Download and install Python 3.8

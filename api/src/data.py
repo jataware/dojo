@@ -31,7 +31,7 @@ redis = Redis(
 q = Queue(connection=redis, default_timeout=-1)
 # Create queues
 default_queue = q
-datamodeling_queue = Queue('datamodeling', connection=Redis())
+datamodeling_queue = Queue('datamodeling', connection=redis)
 
 def get_queue(queue_name):
     if queue_name == 'datamodeling':
@@ -227,8 +227,13 @@ def job_status(uuid: str, job_string: str, queue_name: str = "default"):
     If a job exists, returns the full job data.
     """
     job_id = f"{uuid}_{job_string}"
+    if "data_modeling" in job_string:
+        queue_name = "datamodeling"
+    else:
+        queue_name = "default"
+    q_ = get_queue(queue_name)    
 
-    job = q.fetch_job(job_id)
+    job = q_.fetch_job(job_id)
 
     # It is None, since no job exists
     if not job:
