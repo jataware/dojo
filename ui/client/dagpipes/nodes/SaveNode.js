@@ -52,7 +52,7 @@ function FileSelect({
 
 function CustomNode({ id, data }) {
   return (
-    <NodeBase title={NodeTitles.SAVE}>
+    <NodeBase title={NodeTitles.SAVE} previews={data.previews} logPreviews={data.logPreviews}>
       <FileSelect
         nodeId={id}
         input={data.input}

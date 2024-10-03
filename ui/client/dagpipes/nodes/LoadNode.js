@@ -164,7 +164,7 @@ function SelectFeature({ input, nodeId, onChange }) {
 }
 
 const CustomNode = ({ id, data }) => (
-  <NodeBase title={NodeTitles.LOAD}>
+  <NodeBase title={NodeTitles.LOAD} previews={data.previews} logPreviews={data.logPreviews}>
     <SelectFeature
       nodeId={id}
       onChange={data.onChange}

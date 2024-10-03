@@ -108,7 +108,7 @@ function CustomNode({ id, data, handleId }) {
 
   return (
     <div>
-      <NodeBase title={NodeTitles.SELECT_SLICE} />
+      <NodeBase title={NodeTitles.SELECT_SLICE} previews={data.previews} logPreviews={data.logPreviews}/>
       <Handle
         type="target"
         position={Position.Top}

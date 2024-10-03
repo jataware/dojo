@@ -529,7 +529,7 @@ def run_partial_flowcast_job(context:PreviewFlowcastContext) -> dict:
 
         return {
             'message': 'successfully ran partial flowcast job',
-            'results': results
+            'previews': results
         }
     except Exception as e:
         # print exception with stack trace

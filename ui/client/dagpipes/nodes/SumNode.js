@@ -85,7 +85,7 @@ function DimensionCheckboxes({
 }
 
 const CustomNode = ({ id, data }) => (
-  <NodeBase title={NodeTitles.REDUCE_BY}>
+  <NodeBase title={NodeTitles.REDUCE_BY} previews={data.previews} logPreviews={data.logPreviews}>
     <DimensionCheckboxes
       nodeId={id}
       onChange={data.onChange}

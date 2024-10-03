@@ -42,7 +42,7 @@ function CustomNode({ id, data, handleId }) {
 
   return (
     <div>
-      <NodeBase title={NodeTitles.SCALAR_OPERATION} />
+      <NodeBase title={NodeTitles.SCALAR_OPERATION} previews={data.previews} logPreviews={data.logPreviews}/>
       <Handle
         type="target"
         position={Position.Top}

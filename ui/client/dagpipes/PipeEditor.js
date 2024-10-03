@@ -231,6 +231,7 @@ const PipeEditor = () => {
   const [previewsLoading, setPreviewsLoading] = useState(false);
   const [previewsSuccess, setPreviewsSuccess] = useState(false);
   const [previewsError, setPreviewsError] = useState(false);
+  const [previews, setPreviews] = useState({});
 
   const {
     geoResolutionColumn, timeResolutionColumn
@@ -503,6 +504,26 @@ const PipeEditor = () => {
           setPreviewsSuccess(true);
           setTimeout(() => setPreviewsSuccess(false), 10000); // Remove success icon after 10 seconds
           console.log('Job finished successfully', statusResponse.data.result.message);
+          console.log('Job finished. Preview images:', statusResponse.data.result.previews);
+          const previewData = statusResponse.data.result.previews;
+          setPreviews(previewData);  
+
+          setNodes((nds) =>
+            nds.map((node) => {
+              const nodePreviews = previewData[node.id]?.preview || [];
+              const nodeLogPreviews = previewData[node.id]?.log_preview || [];
+          
+              return {
+                ...node,
+                data: {
+                  ...node.data,
+                  previews: nodePreviews,
+                  logPreviews: nodeLogPreviews,
+                },
+              };
+            })
+          );
+  
         } else if (jobStatus === 'failed') {
           clearInterval(intervalId);
           setPreviewsLoading(false); // Set loading state to false
@@ -566,6 +587,13 @@ const PipeEditor = () => {
 
   const handleStatsClick = () => {
     setShowStats((prev) => !prev);
+  };
+
+  const renderNodePreviews = (nodeId) => {
+    const nodePreviews = previews[nodeId]?.preview || [];
+    return nodePreviews.map((img, index) => (
+      <img key={index} src={`data:image/png;base64,${img}`} alt={`Preview ${index}`} />
+    ));
   };
 
   return (

@@ -79,7 +79,7 @@ def make_sliced(fn: DualPreviewGenerator, max_images: int = 5) -> SlicedDualPrev
 
         # generate a sequence of images by slicing along the time dimension
         indices = np.unique(np.linspace(0, len(data['time']) - 1, max_images, dtype=int))
-        frames = [fn(data.isel(time=i), resolution, cmap, projection) for i in indices]
+        frames = [add_timestamp_to_image(data.isel(time=i), fn, resolution, cmap, projection, data['time'].values[i]) for i in indices]
         return tuple(zip(*frames))
 
     return generate_img
@@ -374,3 +374,45 @@ def plot_png64(img: png64):
     plt.imshow(img)
     plt.axis('off')
     plt.show()
+
+def add_timestamp_to_image(data: xr.DataArray, fn: PreviewGenerator, resolution: int, cmap: str, projection: ccrs.Projection, timestamp) -> tuple[png64, png64]:
+    """Generate images with timestamp as title"""
+    px = get_px_size()
+    
+    # Determine the extent from the data
+    lon_min, lon_max = data['lon'].min().item(), data['lon'].max().item()
+    lat_min, lat_max = data['lat'].min().item(), data['lat'].max().item()
+    
+    # Calculate aspect ratio based on data extent
+    aspect_ratio = (lon_max - lon_min) / (lat_max - lat_min)
+    
+    # Regular image with timestamp
+    fig = plt.figure(figsize=(resolution * px, resolution * px / aspect_ratio))
+    ax = plt.axes(projection=projection)
+    ax.set_title(f'Time: {timestamp}', fontsize=10)
+    ax.set_extent([lon_min, lon_max, lat_min, lat_max], crs=ccrs.PlateCarree())
+    ax.coastlines()
+    ax.add_feature(cfeature.BORDERS, edgecolor='black', facecolor='lightgray', alpha=0.7)
+    mesh = ax.pcolormesh(data['lon'], data['lat'], data, transform=ccrs.PlateCarree(), cmap=cmap, shading='auto')
+    plt.colorbar(mesh, ax=ax, orientation='vertical', pad=0.05)
+    ax.set_aspect(aspect_ratio)  # Maintain aspect ratio
+    ax.axis('off')  # Remove axis labels
+    img = save_fig_to_base64()
+    plt.close(fig)
+    
+    # Log-transformed image with timestamp
+    fig = plt.figure(figsize=(resolution * px, resolution * px / aspect_ratio))
+    ax = plt.axes(projection=projection)
+    ax.set_title(f'Time: {timestamp} (Log)', fontsize=10)
+    ax.set_extent([lon_min, lon_max, lat_min, lat_max], crs=ccrs.PlateCarree())
+    ax.coastlines()
+    ax.add_feature(cfeature.BORDERS, edgecolor='black', facecolor='lightgray', alpha=0.7)
+    log_data = symmetric_log(data)
+    mesh = ax.pcolormesh(log_data['lon'], log_data['lat'], log_data, transform=ccrs.PlateCarree(), cmap=cmap, shading='auto')
+    plt.colorbar(mesh, ax=ax, orientation='vertical', pad=0.05)
+    ax.set_aspect(aspect_ratio)  # Maintain aspect ratio
+    ax.axis('off')  # Remove axis labels
+    log_img = save_fig_to_base64()
+    plt.close(fig)
+    
+    return img, log_img

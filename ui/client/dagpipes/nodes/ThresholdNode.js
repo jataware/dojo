@@ -71,7 +71,7 @@ function Select({
 }
 
 const CustomNode = ({ id, data }) => (
-  <NodeBase title={NodeTitles.THRESHOLD}>
+  <NodeBase title={NodeTitles.THRESHOLD} previews={data.previews} logPreviews={data.logPreviews}>
     <Select
       nodeId={id}
       input={data.input}
