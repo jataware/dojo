@@ -13,7 +13,7 @@ function CustomNode({ id, data }) {
   const rightHandle = { left: '128px', ...topHandle };
   return (
     <div>
-      <NodeBase title={NodeTitles.MULTIPLY} />
+      <NodeBase title={NodeTitles.MULTIPLY} previews={data.previews} logPreviews={data.logPreviews}/>
       <div className="custom-node__multiply">
         <Handle
           type="target"

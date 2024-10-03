@@ -79,8 +79,13 @@ def make_sliced(fn: DualPreviewGenerator, max_images: int = 5) -> SlicedDualPrev
 
         # generate a sequence of images by slicing along the time dimension
         indices = np.unique(np.linspace(0, len(data['time']) - 1, max_images, dtype=int))
-        frames = [add_timestamp_to_image(data.isel(time=i), fn, resolution, cmap, projection, data['time'].values[i]) for i in indices]
-        return tuple(zip(*frames))
+        frames = [fn(data.isel(time=i), resolution, cmap, projection) for i in indices]
+        
+        # Add timestamps to the frames
+        timestamps = [str(data['time'].values[i]) for i in indices]
+        timestamped_frames = add_timestamp_to_frames(frames, timestamps)
+        
+        return tuple(zip(*timestamped_frames))
 
     return generate_img
 
@@ -375,44 +380,30 @@ def plot_png64(img: png64):
     plt.axis('off')
     plt.show()
 
-def add_timestamp_to_image(data: xr.DataArray, fn: PreviewGenerator, resolution: int, cmap: str, projection: ccrs.Projection, timestamp) -> tuple[png64, png64]:
-    """Generate images with timestamp as title"""
-    px = get_px_size()
+
+def add_timestamp_to_frames(frames: list[tuple[png64, png64]], timestamps: list) -> list[tuple[png64, png64]]:
+    """Add timestamps to a list of image frames."""
+    timestamped_frames = []
+    for (img, log_img), timestamp in zip(frames, timestamps):
+        # Decode the images, add the timestamp, and re-encode them
+        img_with_timestamp = add_timestamp_to_base64_image(img, timestamp)
+        log_img_with_timestamp = add_timestamp_to_base64_image(log_img, f"{timestamp} (Log)")
+        timestamped_frames.append((img_with_timestamp, log_img_with_timestamp))
+    return timestamped_frames
+
+
+def add_timestamp_to_base64_image(img_base64: png64, timestamp: str) -> png64:
+    """Add a timestamp to a base64-encoded image."""
+    img_data = base64.b64decode(img_base64)
+    img = plt.imread(BytesIO(img_data))
     
-    # Determine the extent from the data
-    lon_min, lon_max = data['lon'].min().item(), data['lon'].max().item()
-    lat_min, lat_max = data['lat'].min().item(), data['lat'].max().item()
-    
-    # Calculate aspect ratio based on data extent
-    aspect_ratio = (lon_max - lon_min) / (lat_max - lat_min)
-    
-    # Regular image with timestamp
-    fig = plt.figure(figsize=(resolution * px, resolution * px / aspect_ratio))
-    ax = plt.axes(projection=projection)
+    fig, ax = plt.subplots()
+    ax.imshow(img)
     ax.set_title(f'Time: {timestamp}', fontsize=10)
-    ax.set_extent([lon_min, lon_max, lat_min, lat_max], crs=ccrs.PlateCarree())
-    ax.coastlines()
-    ax.add_feature(cfeature.BORDERS, edgecolor='black', facecolor='lightgray', alpha=0.7)
-    mesh = ax.pcolormesh(data['lon'], data['lat'], data, transform=ccrs.PlateCarree(), cmap=cmap, shading='auto')
-    plt.colorbar(mesh, ax=ax, orientation='vertical', pad=0.05)
-    ax.set_aspect(aspect_ratio)  # Maintain aspect ratio
-    ax.axis('off')  # Remove axis labels
-    img = save_fig_to_base64()
+    ax.axis('off')
+    
+    buf = BytesIO()
+    plt.savefig(buf, format='png', bbox_inches='tight', pad_inches=0)
     plt.close(fig)
     
-    # Log-transformed image with timestamp
-    fig = plt.figure(figsize=(resolution * px, resolution * px / aspect_ratio))
-    ax = plt.axes(projection=projection)
-    ax.set_title(f'Time: {timestamp} (Log)', fontsize=10)
-    ax.set_extent([lon_min, lon_max, lat_min, lat_max], crs=ccrs.PlateCarree())
-    ax.coastlines()
-    ax.add_feature(cfeature.BORDERS, edgecolor='black', facecolor='lightgray', alpha=0.7)
-    log_data = symmetric_log(data)
-    mesh = ax.pcolormesh(log_data['lon'], log_data['lat'], log_data, transform=ccrs.PlateCarree(), cmap=cmap, shading='auto')
-    plt.colorbar(mesh, ax=ax, orientation='vertical', pad=0.05)
-    ax.set_aspect(aspect_ratio)  # Maintain aspect ratio
-    ax.axis('off')  # Remove axis labels
-    log_img = save_fig_to_base64()
-    plt.close(fig)
-    
-    return img, log_img
+    return base64.b64encode(buf.getvalue()).decode('utf-8')
