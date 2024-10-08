@@ -112,20 +112,28 @@ def generate_preview(data: xr.DataArray, resolution=512, cmap='viridis', project
     fn: SlicedDualPreviewGenerator
     if len(coords_set) == 0:
         fn = make_sliced_dual(generate_time_preview)
+        print('Generating time preview')
     elif coords_set == {'lat'}:
         fn = make_sliced_dual(generate_lat_preview)
+        print('Generating lat preview')
     elif coords_set == {'lon'}:
         fn = make_sliced_dual(generate_lon_preview)
+        print('Generating lon preview')
     elif coords_set == {'admin0'}:
         fn = make_sliced_dual(generate_country_preview)
+        print('Generating country preview')
     elif coords_set == {'lat', 'lon'}:
         fn = make_sliced_dual(generate_lat_lon_preview)
+        print('Generating lat/lon preview')
     elif coords_set == {'lat', 'admin0'}:
         fn = generate_lat_country_preview
+        print('Generating lat/country preview')
     elif coords_set == {'lon', 'admin0'}:
         fn = generate_lon_country_preview
+        print('Generating lon/country preview')
     elif coords_set == {'lat', 'lon', 'admin0'}:
         fn = make_sliced_dual(generate_country_lat_lon_preview)
+        print('Generating lat/lon/country preview')
 
     else:
         # raise ValueError(f'Unhandled data dimensions: {data.dims}')
@@ -158,7 +166,7 @@ def generate_time_preview(data: xr.DataArray, resolution: int, cmap: str, projec
 
     # regular plot
     fig, ax = plt.subplots(figsize=(resolution*px, resolution*px))
-    ax.axis('off')
+    # ax.axis('off')
     data.plot(ax=ax)
     preview = save_fig_to_base64()
 
@@ -269,6 +277,12 @@ def generate_country_lat_lon_preview(data: xr.DataArray, resolution: int, cmap, 
     lons = data['lon'].data
     # sum data along admin0 dimension to get rid of the extra dimension
     data = data.sum(dim='admin0', skipna=True, min_count=1).values
+
+    # Mask NaN and zero values
+    # TODO: figure out how best to handle NaN and zero values in the data after multiplication (since it will be a binary mask)
+    # masked_data = np.ma.masked_where((data == 0) | np.isnan(data), data)
+    # print(f'Number of NaN values: {np.sum(np.isnan(data))}')
+    # print(f'Number of zero values: {np.sum(data == 0)}')
 
     # determine the lat/lon extents of the data
     lat_bounds, lon_bounds, projection, aspect = get_best_view(lats, lons, projection)

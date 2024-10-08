@@ -488,6 +488,26 @@ const PipeEditor = () => {
       setPreviewsLoading(true); // Set loading state to true
       setPreviewsSuccess(false);
       setPreviewsError(false);
+
+      // Check local storage usage and clear old data if necessary
+      const checkAndClearStorage = () => {
+        const allKeys = Object.keys(localStorage);
+        const storageLimit = 5 * 1024 * 1024; // 5MB limit for local storage
+        let totalSize = 0;
+
+        allKeys.forEach(key => {
+          totalSize += localStorage.getItem(key).length;
+        });
+
+        if (totalSize >= storageLimit) {
+          console.warn('Local storage limit reached. Clearing old data...');
+          localStorage.clear();
+        }
+      };
+
+      checkAndClearStorage();      
+
+      // handle response
       const response = await axios.post(
         `/api/dojo/job/${UUID}/data_modeling.run_partial_flowcast_job`,
         { context: { dag: flowValue , node_id: null }},
