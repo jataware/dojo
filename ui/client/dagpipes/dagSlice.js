@@ -99,6 +99,25 @@ export const dagSlice = createSlice({
       const { datasetId, metadata } = action.payload;
       state.fetchedMetadata[datasetId] = metadata;
     },
+    setNodesAndEdges: (state, action) => {
+      const { nodes, edges } = action.payload;
+
+      // Ensure nodes are properly set in the state with their full data, including input
+      state.nodes = nodes.map((node) => ({
+        ...node, // Copy all node properties
+        data: {
+          ...node.data, // Preserve existing node data
+          input: node.data?.input || {}, // Ensure the input data is retained
+        },
+      }));
+
+      state.edges = edges;
+      state.nodeCount = nodes.length;
+      state.edgeCount = edges.length;
+    }, 
+    setModelerStep: (state, action) => {
+      state.modelerStep = action.payload;
+    },
   },
 });
 
@@ -124,6 +143,8 @@ export const {
   setFlowcastJobId,
   setCompletedDatasetIds,
   setFetchedMetadata,
+  setNodesAndEdges,
+  setModelerStep,
 } = dagSlice.actions;
 
 export default dagSlice.reducer;

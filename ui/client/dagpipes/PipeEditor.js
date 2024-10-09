@@ -35,6 +35,8 @@ import {
   setGeoResolutionColumn,
   setTimeResolutionColumn,
   setFlowcastJobId,
+  setNodesAndEdges,
+  setSavedDatasets
 } from './dagSlice';
 
 import LoadNode from './nodes/LoadNode';
@@ -222,6 +224,7 @@ const useStyles = makeStyles()((theme) => ({
 const PipeEditor = () => {
   const reactFlowWrapper = useRef(null);
   const { classes } = useStyles();
+  const dispatch = useDispatch();
 
   const [showStats, setShowStats] = useState(false);
   const [validationLoading, setValidationLoading] = useState(false);
@@ -234,7 +237,9 @@ const PipeEditor = () => {
   const [previews, setPreviews] = useState({});
 
   const {
-    geoResolutionColumn, timeResolutionColumn
+    geoResolutionColumn, 
+    timeResolutionColumn,
+    savedDatasets,  // Moved this here to the top level
   } = useSelector((state) => state.dag);
 
   const [nodes, setNodes, onNodesChange] = useNodesState([]);
@@ -242,8 +247,42 @@ const PipeEditor = () => {
   // TODO: only used in onRestore, remove if removing that
   // const { setViewport } = useReactFlow();
 
-  const dispatch = useDispatch();
+  useEffect(() => {
+    const savedFlow = localStorage.getItem('dagpipes-flow-session');
+    if (savedFlow) {
+      const flow = JSON.parse(savedFlow);
+  
+      const restoredNodes = flow.nodes.map((node) => {
+        const nodeWithDefaults = {
+          ...node,
+          data: {
+            ...node.data,
+            input: node.data.input || initialNodeTypeValues[node.type] || {},
+          },
+        };
+        console.log('Restored node:', nodeWithDefaults);  // Debugging log
+        return nodeWithDefaults;
+      });
+  
+      dispatch(setNodesAndEdges({
+        nodes: restoredNodes,
+        edges: flow.edges || [],
+      }));
+  
+      setNodes(restoredNodes);
+      setEdges(flow.edges || []);
+  
+      if (flow.savedDatasets) {
+        dispatch(setSavedDatasets(flow.savedDatasets));
+      }      
 
+      if (flow.resolution) {
+        dispatch(setGeoResolutionColumn(flow.resolution.geoResolutionColumn));
+        dispatch(setTimeResolutionColumn(flow.resolution.timeResolutionColumn));
+      }
+    }
+  }, [dispatch, setNodes, setEdges]);
+ 
   const { setShowSideBar } = useContext(ThemeContext);
 
   useEffect(() => {
@@ -358,43 +397,47 @@ const PipeEditor = () => {
   );
 
   const edgesWithUpdatedTypes = edges.map((edge) => {
-    // TODO: remove this when time, removing it breaks the connections at the moment
-    // we aren't using multiple types now
-    // eslint-disable-next-line no-param-reassign
-    edge.type = 'default';
-    return edge;
+    return { ...edge, type: 'default' };
   });
 
   const onSave = useCallback(() => {
     let forBackend;
+  
     if (reactFlowInstance) {
       const flow = reactFlowInstance.toObject();
-      // add our resolution as a top level key
+      
+      // Add resolution and savedDatasets to the flow object
       flow.resolution = { geoResolutionColumn, timeResolutionColumn };
-
-      // set the whole react-flow object in localStorage so we can recreate it
+      flow.savedDatasets = savedDatasets;  // Include saved datasets in the flow object
+  
+      // Save the entire session to localStorage
       window.localStorage.setItem('dagpipes-flow-session', JSON.stringify(flow));
-      // toggle the unsavedChanges state
+  
+      // Toggle unsavedChanges state in Redux
       dispatch(setSavedChanges());
-
-      // remove viewport as the backend doesn't need it
+  
+      // Prepare the data for backend (optional)
       forBackend = { ...flow };
-      delete forBackend.viewport;
-
-      // TODO: is this actually what the backend needs?
-      // parse the edges and nodes into just what the backend cares about
+      delete forBackend.viewport;  // Remove viewport as backend doesn't need it
+  
       forBackend.edges = forBackend.edges.map((e) => ({
         source: e.source,
         target: e.target,
         id: e.id,
         ...(e.targetHandle && { target_handle: e.targetHandle }),
       }));
-      forBackend.nodes = forBackend.nodes.map((e) => ({ type: e.type, data: e.data, id: e.id }));
-      // TODO: actually send the contents
-      console.log(JSON.stringify(forBackend, 2, null));
+  
+      forBackend.nodes = forBackend.nodes.map((e) => ({
+        type: e.type,
+        data: e.data,
+        id: e.id,
+      }));
+  
+      console.log(JSON.stringify(forBackend, 2, null));  // Debugging log for backend data
     }
+  
     return forBackend;
-  }, [reactFlowInstance, dispatch, geoResolutionColumn, timeResolutionColumn]);
+  }, [reactFlowInstance, dispatch, geoResolutionColumn, timeResolutionColumn, savedDatasets]);
 
   // // TODO: do we want to keep restore? it currently doesn't work with the redux state
   // const onRestore = useCallback(() => {
@@ -548,6 +591,7 @@ const PipeEditor = () => {
           clearInterval(intervalId);
           setPreviewsLoading(false); // Set loading state to false
           setPreviewsError(true);
+          setValidationError(true);          
           setErrorMessage(statusResponse.data.job_error);
           setTimeout(() => setPreviewsError(false), 10000); // Remove error icon after 10 seconds
           console.error('Job failed', statusResponse.data.job_error);
@@ -557,6 +601,7 @@ const PipeEditor = () => {
       setPreviewsLoading(false); // Set loading state to false
       setPreviewsError(true);
       setErrorMessage(error.message);
+      setValidationError(true);
       setTimeout(() => setPreviewsError(false), 10000); // Remove error icon after 10 seconds
       console.error('Error triggering preview generation job:', error);
     }

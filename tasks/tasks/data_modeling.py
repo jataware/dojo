@@ -536,10 +536,7 @@ def run_partial_flowcast_job(context:PreviewFlowcastContext) -> dict:
         traceback_str = traceback.format_exc()
         print(f'Partial flowcast job failed', flush=True)
         print(traceback_str, flush=True)
-        return {
-            'message': 'error running partial flowcast job',
-            'error': f'{e}\n{traceback_str}'
-        }
+        raise e
 
 
 ################################################################################

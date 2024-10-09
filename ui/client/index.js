@@ -1,5 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
+import { Provider } from 'react-redux';
+import { store } from './dagpipes/store';
 
 import './style.css';
 
@@ -69,7 +71,11 @@ export default function Main() {
           <Route component={ViewRuns} exact path="/runs" />
           <Route component={RunSummary} exact path="/runs/:runid" />
           <Route component={RunLogs} exact path="/runlogs/:runid" />
-          <Route component={DagpipesApp} exact path="/data-modeling" />
+          <Route exact path="/data-modeling">
+            <Provider store={store}>
+              <DagpipesApp />
+            </Provider>
+          </Route>
           <Route component={AIAssistant} exact path="/ai-assistant" />
           <Route path="/*" render={() => <h2>404 Not Found</h2>} />
         </Switch>
