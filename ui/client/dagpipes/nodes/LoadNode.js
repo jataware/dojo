@@ -40,10 +40,7 @@ function SelectFeature({ input, nodeId, onChange }) {
 
   const [geoSelected, setGeoSelected] = useState(input.data_source === geoResolutionColumn);
   const [timeSelected, setTimeSelected] = useState(input.data_source === timeResolutionColumn);  
-  console.log('Initial data source:', input.data_source);
   const [savedSelectValue, setSavedSelectValue] = useState(input.data_source || '');
-  console.log('Saved datasets:', savedDatasets);
-
 
   const handleGeoChange = (event) => {
     const isChecked = event.target.checked;

@@ -3,6 +3,7 @@ import React, {
 } from 'react';
 
 import axios from 'axios';
+import { debounce } from 'lodash';
 
 import ReactFlow, {
   addEdge,
@@ -11,6 +12,8 @@ import ReactFlow, {
   Background,
   useNodesState,
   useEdgesState,
+  applyNodeChanges,
+  applyEdgeChanges,
 } from 'reactflow';
 
 import Box from '@mui/material/Box';
@@ -61,6 +64,16 @@ import './overview.css';
 import {
   dimensions, threshold_ops,
 } from './constants';
+
+import { useHistory } from 'react-router-dom';
+
+// Custom hook to make future migration easier
+function useNavigation() {
+  const history = useHistory();
+  return {
+    navigate: (path) => history.push(path),
+  };
+}
 
 const nodeTypes = {
   load: LoadNode,
@@ -219,6 +232,12 @@ const useStyles = makeStyles()((theme) => ({
         backgroundColor: 'red',
       },
     },    
+    newModelButton: {
+      position: 'fixed',
+      top: theme.spacing(2),
+      left: theme.spacing(2),
+      zIndex: 1000,
+    },
 }));
 
 const PipeEditor = () => {
@@ -236,52 +255,79 @@ const PipeEditor = () => {
   const [previewsError, setPreviewsError] = useState(false);
   const [previews, setPreviews] = useState({});
 
-  const {
-    geoResolutionColumn, 
-    timeResolutionColumn,
-    savedDatasets,  // Moved this here to the top level
-  } = useSelector((state) => state.dag);
+  const savedDatasets = useSelector((state) => state.dag.savedDatasets);
+  const savedDatasetsRef = useRef(savedDatasets);
 
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const geoResolutionColumn = useSelector(state => state.dag.geoResolutionColumn);
+  const timeResolutionColumn = useSelector(state => state.dag.timeResolutionColumn); 
+
+  const [nodes, setNodes] = useNodesState([]);
+  const [edges, setEdges] = useEdgesState([]);
+
+  const onNodesChange = useCallback(
+    (changes) => {
+      setNodes((nds) => applyNodeChanges(changes, nds));
+      debouncedSave();
+    },
+    [setNodes, debouncedSave]
+  );
+
+  const onEdgesChange = useCallback(
+    (changes) => {
+      setEdges((eds) => applyEdgeChanges(changes, eds));
+      debouncedSave();
+    },
+    [setEdges, debouncedSave]
+  );
+
   // TODO: only used in onRestore, remove if removing that
   // const { setViewport } = useReactFlow();
 
+  // Effect to load saved DAG
   useEffect(() => {
     const savedFlow = localStorage.getItem('dagpipes-flow-session');
     if (savedFlow) {
       const flow = JSON.parse(savedFlow);
-  
-      const restoredNodes = flow.nodes.map((node) => {
-        const nodeWithDefaults = {
-          ...node,
-          data: {
-            ...node.data,
-            input: node.data.input || initialNodeTypeValues[node.type] || {},
-          },
-        };
-        console.log('Restored node:', nodeWithDefaults);  // Debugging log
-        return nodeWithDefaults;
-      });
-  
+
+      const restoredNodes = flow.nodes.map((node) => ({
+        ...node,
+        data: {
+          ...node.data,
+          input: node.data.input || initialNodeTypeValues[node.type] || {},
+        },
+      }));
+
+      // Dispatch serializable data to Redux
       dispatch(setNodesAndEdges({
         nodes: restoredNodes,
         edges: flow.edges || [],
       }));
-  
-      setNodes(restoredNodes);
+
+      // Set nodes in React state with onChange function
+      setNodes(restoredNodes.map(node => ({
+        ...node,
+        data: {
+          ...node.data,
+          onChange: onNodeChange,
+        },
+      })));
+
+      // Set edges
       setEdges(flow.edges || []);
-  
-      if (flow.savedDatasets) {
-        dispatch(setSavedDatasets(flow.savedDatasets));
-      }      
 
       if (flow.resolution) {
         dispatch(setGeoResolutionColumn(flow.resolution.geoResolutionColumn));
         dispatch(setTimeResolutionColumn(flow.resolution.timeResolutionColumn));
       }
+
+      // Restore other saved data
+      if (flow.savedDatasets && Object.keys(savedDatasets).length === 0) {
+        console.log('Setting savedDatasets:', JSON.stringify(flow.savedDatasets, null, 2));
+        dispatch(setSavedDatasets(flow.savedDatasets));
+      }
+
     }
-  }, [dispatch, setNodes, setEdges]);
+  }, [dispatch, setNodes, setEdges, onNodeChange, savedDatasets]);
  
   const { setShowSideBar } = useContext(ThemeContext);
 
@@ -301,14 +347,20 @@ const PipeEditor = () => {
     setSelectedNode(node);
   }, [nodes, setSelectedNode]);
 
-  const [reactFlowInstance, setReactFlowInstance] = useState(null);
+  const reactFlowInstanceRef = useRef(null);
 
   const onInit = (rfInstance) => {
     console.log('Flow loaded:', rfInstance);
-    setReactFlowInstance(rfInstance);
+    reactFlowInstanceRef.current = rfInstance;
   };
 
-  const onConnect = useCallback((params) => setEdges((eds) => addEdge(params, eds)), [setEdges]);
+  const onConnect = useCallback(
+    (connection) => {
+      setEdges((eds) => addEdge(connection, eds));
+      debouncedSave();
+    },
+    [setEdges, debouncedSave]
+  );
 
   const onDragOver = useCallback((event) => {
     event.preventDefault();
@@ -369,7 +421,10 @@ const PipeEditor = () => {
         },
       };
     }));
-  }, [setNodes]);
+
+    // Schedule onSave to run after the state update
+    setTimeout(onSave, 0);
+  }, [setNodes, onSave]);
 
   const onDrop = useCallback(
     (event) => {
@@ -381,7 +436,7 @@ const PipeEditor = () => {
         return;
       }
 
-      const position = reactFlowInstance.screenToFlowPosition({
+      const position = reactFlowInstanceRef.current.screenToFlowPosition({
         x: event.clientX,
         y: event.clientY,
       });
@@ -393,51 +448,58 @@ const PipeEditor = () => {
       dispatch(incrementNodeCount());
       setSelectedNode(newNode);
     },
-    [reactFlowInstance, dispatch, onNodeChange, setNodes, setSelectedNode]
+    [dispatch, onNodeChange, setNodes, setSelectedNode]
   );
 
   const edgesWithUpdatedTypes = edges.map((edge) => {
     return { ...edge, type: 'default' };
   });
 
+  const debouncedSave = useCallback(
+    debounce(() => {
+      console.log('Debounced save called');
+      onSave();
+    }, 500),
+    [onSave]
+  );
+
+  useEffect(() => {
+    savedDatasetsRef.current = savedDatasets;
+  }, [savedDatasets]);
+
+  const geoResolutionColumnRef = useRef(geoResolutionColumn);
+  const timeResolutionColumnRef = useRef(timeResolutionColumn);
+
+  useEffect(() => {
+    geoResolutionColumnRef.current = geoResolutionColumn;
+  }, [geoResolutionColumn]);
+
+  useEffect(() => {
+    timeResolutionColumnRef.current = timeResolutionColumn;
+  }, [timeResolutionColumn]);
+
   const onSave = useCallback(() => {
-    let forBackend;
-  
-    if (reactFlowInstance) {
-      const flow = reactFlowInstance.toObject();
-      
-      // Add resolution and savedDatasets to the flow object
-      flow.resolution = { geoResolutionColumn, timeResolutionColumn };
-      flow.savedDatasets = savedDatasets;  // Include saved datasets in the flow object
-  
-      // Save the entire session to localStorage
+    console.log('onSave called');
+    console.log('Current geoResolutionColumn:', geoResolutionColumnRef.current);
+    console.log('Current timeResolutionColumn:', timeResolutionColumnRef.current);
+
+    if (reactFlowInstanceRef.current) {
+      console.log('Saving flow....');
+      const flow = reactFlowInstanceRef.current.toObject();
+
+      flow.resolution = { 
+        geoResolutionColumn: geoResolutionColumnRef.current, 
+        timeResolutionColumn: timeResolutionColumnRef.current 
+      };
+      flow.savedDatasets = savedDatasetsRef.current;
+
+      // console.log('Flow to be saved:', JSON.stringify(flow, null, 2));
+
       window.localStorage.setItem('dagpipes-flow-session', JSON.stringify(flow));
-  
-      // Toggle unsavedChanges state in Redux
+
       dispatch(setSavedChanges());
-  
-      // Prepare the data for backend (optional)
-      forBackend = { ...flow };
-      delete forBackend.viewport;  // Remove viewport as backend doesn't need it
-  
-      forBackend.edges = forBackend.edges.map((e) => ({
-        source: e.source,
-        target: e.target,
-        id: e.id,
-        ...(e.targetHandle && { target_handle: e.targetHandle }),
-      }));
-  
-      forBackend.nodes = forBackend.nodes.map((e) => ({
-        type: e.type,
-        data: e.data,
-        id: e.id,
-      }));
-  
-      console.log(JSON.stringify(forBackend, 2, null));  // Debugging log for backend data
     }
-  
-    return forBackend;
-  }, [reactFlowInstance, dispatch, geoResolutionColumn, timeResolutionColumn, savedDatasets]);
+  }, [dispatch]);
 
   // // TODO: do we want to keep restore? it currently doesn't work with the redux state
   // const onRestore = useCallback(() => {
@@ -466,6 +528,7 @@ const PipeEditor = () => {
 
   const onNodesDelete = useCallback((deletedNodes) => {
     dispatch(decrementNodeCount());
+    debouncedSave();
     deletedNodes.forEach((node) => {
       if (node.type === 'load') {
         // All the following are in the redux state and not in react-flow, so manually manage them
@@ -479,7 +542,7 @@ const PipeEditor = () => {
         if (featureId === timeResolutionColumn) dispatch(setTimeResolutionColumn(null));
       }
     });
-  }, [dispatch, geoResolutionColumn, timeResolutionColumn]);
+  }, [dispatch, debouncedSave, geoResolutionColumn, timeResolutionColumn]);
 
   const handleValidateClick = async () => {
     try {
@@ -661,6 +724,44 @@ const PipeEditor = () => {
     ));
   };
 
+  useEffect(() => {
+    console.log('savedDatasets changed:', savedDatasets);
+  }, [savedDatasets]);
+  
+  useEffect(() => {
+    console.log('Component mounted or updated');
+    console.log('Current savedDatasets:', savedDatasets);
+    
+    // Log localStorage content
+    const savedFlow = localStorage.getItem('dagpipes-flow-session');
+    if (savedFlow) {
+      const parsedFlow = JSON.parse(savedFlow);
+      console.log('savedDatasets in localStorage:', parsedFlow.savedDatasets);
+    } else {
+      console.log('No saved flow in localStorage');
+    }
+  }, []);
+
+  const { navigate } = useNavigation();
+
+  const handleCreateNewModel = useCallback(() => {
+    if (window.confirm('Are you sure you want to create a new data model? This will delete your current model and take you back to the date modeling step.')) {
+      // Clear localStorage
+      localStorage.removeItem('dagpipes-flow-session');
+
+      // Reset Redux state
+      dispatch(setNodesAndEdges({ nodes: [], edges: [] }));
+      dispatch(setSavedDatasets({}));
+      dispatch(setGeoResolutionColumn(null));
+      dispatch(setTimeResolutionColumn(null));
+
+      console.log('Data model reset. Navigating back to date modeling step.');
+
+      // Navigate back to the date-modeling route
+      navigate('/date-modeling');
+    }
+  }, [dispatch, navigate]);
+
   return (
     <div className={classes.innerWrapper}>
       <div
@@ -794,6 +895,14 @@ const PipeEditor = () => {
               </Button>
             </span>
           </Tooltip>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={handleCreateNewModel}
+            className={classes.newModelButton}
+          >
+            Create New Data Model
+          </Button>
         </div>
       </div>
       <Snackbar open={validationError} autoHideDuration={5000} onClose={() => setValidationError(false)}>

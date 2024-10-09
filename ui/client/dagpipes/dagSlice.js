@@ -72,7 +72,10 @@ export const dagSlice = createSlice({
       state.unsavedChanges = false;
     },
     setSavedDatasets: (state, action) => {
-      state.savedDatasets = action.payload;
+      if (action.payload && Object.keys(action.payload).length > 0) {
+        state.savedDatasets = action.payload;
+      }
+      // Don't set to empty if payload is empty
     },
     setGeoResolutionColumn: (state, action) => {
       state.geoResolutionColumn = action.payload;
