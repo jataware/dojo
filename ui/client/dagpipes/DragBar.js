@@ -1,4 +1,7 @@
-import React from 'react';
+import React, { useCallback } from 'react';
+import { useDispatch } from 'react-redux';
+import { setNodesAndEdges, setSavedDatasets, setGeoResolutionColumn, setTimeResolutionColumn } from './dagSlice';
+import { setModelerStep } from './dagSlice';
 
 import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
 import Typography from '@mui/material/Typography';
@@ -20,7 +23,11 @@ const useStyles = makeStyles()((theme) => ({
       gap: 0,
       padding: `${theme.spacing(1)} ${theme.spacing(2)}`,
       cursor: 'default',
-    }
+    },
+    '& > button:first-of-type': {
+      justifyContent: 'center',
+      marginBottom: theme.spacing(2),
+    },
   },
 }));
 
@@ -53,16 +60,54 @@ const DragButton = ({
   </Tooltip>
 );
 
+const ClearDataModelButton = ({ onClick }) => (
+  <Tooltip title="Clear the current data model">
+    <Button
+      color="error"
+      variant="contained"
+      fullWidth
+      onClick={onClick}
+      sx={{ 
+        marginTop: 4,  // Add space above the button
+        marginBottom: 2,  // Keep some space below if needed
+        padding: 1.5,  // Increase padding to make the button more prominent
+      }}
+    >
+      Clear Data Model
+    </Button>
+  </Tooltip>
+);
+
 export default () => {
   const { classes } = useStyles();
+  const dispatch = useDispatch();
+
   const onDragStart = (event, nodeType) => {
     event.dataTransfer.setData('application/reactflow', nodeType);
-    // eslint-disable-next-line no-param-reassign
     event.dataTransfer.effectAllowed = 'move';
   };
 
+  const handleClearDataModel = useCallback(() => {
+    if (window.confirm('Are you sure you want to clear this data model? This will delete your current model and take you back to the dataset selection step.')) {
+      // Clear localStorage
+      localStorage.removeItem('dagpipes-flow-session');
+
+      // Reset Redux state
+      dispatch(setNodesAndEdges({ nodes: [], edges: [] }));
+      dispatch(setSavedDatasets({}));
+      dispatch(setGeoResolutionColumn(null));
+      dispatch(setTimeResolutionColumn(null));
+
+      // Set the modeler step to 0 (DagDatasetSelector)
+      dispatch(setModelerStep(0));
+
+      console.log('Data model cleared. Returning to dataset selection step.');
+    }
+  }, [dispatch]);
+
   return (
     <div className={classes.sidebar}>
+      <ClearDataModelButton onClick={handleClearDataModel} />
       <DragButton label={NodeTitles.LOAD} name="load" onDragStart={onDragStart} green />
       <DragButton label={NodeTitles.THRESHOLD} name="threshold" onDragStart={onDragStart} />
       <DragButton label={NodeTitles.MULTIPLY} name="multiply" onDragStart={onDragStart} />
