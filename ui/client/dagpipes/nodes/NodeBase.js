@@ -8,12 +8,14 @@ import PauseIcon from '@mui/icons-material/Pause';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 
 const NodeBase = ({
-  children, title, style, previews = [], logPreviews = []
+  children, title, style, previews = [], logPreviews = [], hideLogToggle = false
 }) => {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showLog, setShowLog] = useState(false);
   const [paused, setPaused] = useState(false);
   const [showOverlay, setShowOverlay] = useState(false);
+  const [showLogPreview, setShowLogPreview] = useState(false);
+  const [expanded, setExpanded] = useState(false);
 
   // parse the title with dashes for the link to the docs
   const dashedTitle = title.toLowerCase().split(' ').join('-');
@@ -39,7 +41,7 @@ const NodeBase = ({
   };
 
   const renderPreviews = () => {
-    const images = showLog ? logPreviews : previews;
+    const images = (showLog && logPreviews?.length > 0) ? logPreviews : previews;
     return (
       <div style={{ marginTop: '8px', padding: '8px' }}>
         {images.length > 0 && (
@@ -48,19 +50,21 @@ const NodeBase = ({
               <Typography variant="caption" sx={{ fontSize: '0.875rem' }}>
                 Preview:
               </Typography>
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={showLog}
-                    onChange={() => setShowLog(!showLog)}
-                    color="primary"
-                    size="small"
-                  />
-                }
-                label={<Typography variant="caption" sx={{ fontSize: '0.875rem' }}>Log</Typography>}
-                labelPlacement="start"
-                sx={{ margin: 0 }}
-              />
+              {!hideLogToggle && logPreviews && logPreviews.length > 0 && (
+                <FormControlLabel
+                  control={
+                    <Switch
+                      checked={showLog}
+                      onChange={() => setShowLog(!showLog)}
+                      color="primary"
+                      size="small"
+                    />
+                  }
+                  label={<Typography variant="caption" sx={{ fontSize: '0.875rem' }}>Log</Typography>}
+                  labelPlacement="start"
+                  sx={{ margin: 0 }}
+                />
+              )}
             </div>
             <div
               style={{
@@ -118,7 +122,7 @@ const NodeBase = ({
           </div>
         </>
       )}
-      {(previews.length > 0 || logPreviews.length > 0) && renderPreviews()}
+      {(previews?.length > 0 || (logPreviews && logPreviews.length > 0)) && renderPreviews()}
     </div>
   );
 };

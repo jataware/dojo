@@ -14,6 +14,7 @@ import matplotlib.cm as cm
 from flowcast.gadm import get_admin0_shapes
 from flowcast.spacetime import determine_tight_lon_bounds
 from shapely import MultiPolygon, Polygon
+from matplotlib.colors import ListedColormap
 
 
 # TODO: this is a bit hacky. in the future, want to import the underlying methods used in the pipeline rather than having to run a whole pipeline
@@ -24,7 +25,10 @@ def symmetric_log(data: xr.DataArray) -> xr.DataArray:
     """Apply a symmetric log transform to the data"""
     if (data.dtype == np.bool_):
         return data
-    return np.sign(data) * np.log(np.abs(data) + 1)
+        
+    # Add a small epsilon to avoid log(0)
+    epsilon = 1e-10
+    return np.sign(data) * np.log1p(np.abs(data) + epsilon)
 
 
 def get_px_size() -> float:
@@ -278,12 +282,6 @@ def generate_country_lat_lon_preview(data: xr.DataArray, resolution: int, cmap, 
     # sum data along admin0 dimension to get rid of the extra dimension
     data = data.sum(dim='admin0', skipna=True, min_count=1).values
 
-    # Mask NaN and zero values
-    # TODO: figure out how best to handle NaN and zero values in the data after multiplication (since it will be a binary mask)
-    # masked_data = np.ma.masked_where((data == 0) | np.isnan(data), data)
-    # print(f'Number of NaN values: {np.sum(np.isnan(data))}')
-    # print(f'Number of zero values: {np.sum(data == 0)}')
-
     # determine the lat/lon extents of the data
     lat_bounds, lon_bounds, projection, aspect = get_best_view(lats, lons, projection)
 
@@ -296,8 +294,20 @@ def generate_country_lat_lon_preview(data: xr.DataArray, resolution: int, cmap, 
     ax.set_global()
     ax.coastlines()
 
-    # Plot gridded data using pcolormesh, transformed to the map's projection
-    mesh = ax.pcolormesh(lons, lats, data, transform=ccrs.PlateCarree(), cmap=cmap, shading='auto')
+    # If the data is boolean or binary (0s and 1s), use a custom binary colormap
+    if data.dtype == np.bool_ or (np.array_equal(np.unique(data[~np.isnan(data)]), [0, 1])):
+        # Create custom colormap: light grey for 0, blue for 1
+        colors = [(0.9, 0.9, 0.9, 1),    # 0 values: light grey (90% white)
+                 (0, 0.3, 1, 1)]         # 1 values: blue
+        binary_cmap = ListedColormap(colors)
+        cmap = binary_cmap
+        
+        mesh = ax.pcolormesh(lons, lats, data, 
+                           transform=ccrs.PlateCarree(), 
+                           cmap=cmap, 
+                           shading='auto')
+    else:
+        mesh = ax.pcolormesh(lons, lats, data, transform=ccrs.PlateCarree(), cmap=cmap, shading='auto')
 
     # Add country borders and crop to the computed bounds
     ax.add_feature(cfeature.BORDERS, edgecolor='black', lw=0.8)

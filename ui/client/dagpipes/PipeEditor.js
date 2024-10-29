@@ -509,22 +509,24 @@ const PipeEditor = () => {
     console.log('Current timeResolutionColumn:', timeResolutionColumnRef.current);
 
     if (reactFlowInstanceRef.current) {
-      console.log('Saving flow....');
-      const flow = reactFlowInstanceRef.current.toObject();
+        console.log('Saving flow....');
+        const flow = reactFlowInstanceRef.current.toObject();
 
-      flow.resolution = { 
-        geoResolutionColumn: geoResolutionColumnRef.current, 
-        timeResolutionColumn: timeResolutionColumnRef.current 
-      };
-      flow.savedDatasets = savedDatasetsRef.current;
+        flow.resolution = { 
+            geoResolutionColumn: geoResolutionColumnRef.current, 
+            timeResolutionColumn: timeResolutionColumnRef.current 
+        };
+        flow.savedDatasets = savedDatasetsRef.current;
 
-      // console.log('Flow to be saved:', JSON.stringify(flow, null, 2));
+        window.localStorage.setItem('dagpipes-flow-session', JSON.stringify(flow));
 
-      window.localStorage.setItem('dagpipes-flow-session', JSON.stringify(flow));
-
-      dispatch(setSavedChanges());
+        dispatch(setSavedChanges());
+        
+        // Return the flow object
+        return flow;
     }
-  }, [dispatch]);
+    return null;
+}, [dispatch]);
 
   // // TODO: do we want to keep restore? it currently doesn't work with the redux state
   // const onRestore = useCallback(() => {
@@ -639,6 +641,7 @@ const PipeEditor = () => {
       checkAndClearStorage();      
 
       // handle response
+      console.log('Flow value:', flowValue);
       const response = await axios.post(
         `/api/dojo/job/${UUID}/data_modeling.run_partial_flowcast_job`,
         { context: { dag: flowValue , node_id: null }},
