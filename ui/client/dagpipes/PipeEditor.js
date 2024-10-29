@@ -23,6 +23,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
 import Snackbar from '@mui/material/Snackbar';
 import Alert from '@mui/material/Alert';
+import Divider from '@mui/material/Divider';
 
 import { makeStyles } from 'tss-react/mui';
 
@@ -39,7 +40,8 @@ import {
   setTimeResolutionColumn,
   setFlowcastJobId,
   setNodesAndEdges,
-  setSavedDatasets
+  setSavedDatasets,
+  setModelerStep
 } from './dagSlice';
 
 import LoadNode from './nodes/LoadNode';
@@ -238,6 +240,29 @@ const useStyles = makeStyles()((theme) => ({
       left: theme.spacing(2),
       zIndex: 1000,
     },
+    clearModelButton: {
+      marginTop: theme.spacing(2),
+      padding: theme.spacing(1.5),
+      color: theme.palette.error.main,
+      borderColor: theme.palette.error.main,
+      transition: 'all 0.3s',
+      '&:hover': {
+        backgroundColor: 'transparent',
+        borderColor: theme.palette.error.dark,
+        color: theme.palette.error.dark,
+      },
+    },
+    clearModelButtonConfirming: {
+      backgroundColor: theme.palette.error.main,
+      color: theme.palette.common.white, // Ensure text is white when button is filled
+      '&:hover': {
+        backgroundColor: theme.palette.error.dark,
+        color: theme.palette.common.white, // Keep text white on hover
+      },
+    },
+    divider: {
+      margin: `${theme.spacing(2)} 0`,
+    },
 }));
 
 const PipeEditor = () => {
@@ -324,7 +349,7 @@ const PipeEditor = () => {
       if (flow.savedDatasets && Object.keys(savedDatasets).length === 0) {
         console.log('Setting savedDatasets:', JSON.stringify(flow.savedDatasets, null, 2));
         dispatch(setSavedDatasets(flow.savedDatasets));
-      }
+      }     
 
     }
   }, [dispatch, setNodes, setEdges, onNodeChange, savedDatasets]);
@@ -742,25 +767,25 @@ const PipeEditor = () => {
     }
   }, []);
 
-  const { navigate } = useNavigation();
+  const [clearConfirmationState, setClearConfirmationState] = useState('initial');
 
-  const handleCreateNewModel = useCallback(() => {
-    if (window.confirm('Are you sure you want to create a new data model? This will delete your current model and take you back to the date modeling step.')) {
-      // Clear localStorage
+  const handleClearDataModel = useCallback(() => {
+    if (clearConfirmationState === 'initial') {
+      setClearConfirmationState('confirming');
+      // Set a timeout to reset the button state if not confirmed
+      setTimeout(() => setClearConfirmationState('initial'), 3000);
+    } else if (clearConfirmationState === 'confirming') {
+      // Clear the data model
       localStorage.removeItem('dagpipes-flow-session');
-
-      // Reset Redux state
       dispatch(setNodesAndEdges({ nodes: [], edges: [] }));
       dispatch(setSavedDatasets({}));
       dispatch(setGeoResolutionColumn(null));
       dispatch(setTimeResolutionColumn(null));
-
-      console.log('Data model reset. Navigating back to date modeling step.');
-
-      // Navigate back to the date-modeling route
-      navigate('/date-modeling');
+      dispatch(setModelerStep(0));
+      console.log('Data model cleared. Returning to dataset selection step.');
+      setClearConfirmationState('initial');
     }
-  }, [dispatch, navigate]);
+  }, [clearConfirmationState, dispatch]);
 
   return (
     <div className={classes.innerWrapper}>
@@ -895,14 +920,19 @@ const PipeEditor = () => {
               </Button>
             </span>
           </Tooltip>
-          <Button
-            variant="contained"
-            color="error"
-            onClick={handleCreateNewModel}
-            className={classes.newModelButton}
-          >
-            Create New Data Model
-          </Button>
+          
+          <Divider className={classes.divider} />
+          
+          <Tooltip title="Clear the current data model">
+            <Button
+              variant="outlined"
+              fullWidth
+              onClick={handleClearDataModel}
+              className={`${classes.clearModelButton} ${clearConfirmationState === 'confirming' ? classes.clearModelButtonConfirming : ''}`}
+            >
+              {clearConfirmationState === 'initial' ? 'Clear Data Model' : 'Confirm Clear'}
+            </Button>
+          </Tooltip>
         </div>
       </div>
       <Snackbar open={validationError} autoHideDuration={5000} onClose={() => setValidationError(false)}>
