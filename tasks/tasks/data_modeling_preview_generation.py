@@ -335,16 +335,16 @@ def generate_country_lat_lon_preview(data: xr.DataArray, resolution: int, cmap, 
                            vmax=1,
                            shading='auto')
 
-        # Create legend elements including NaN
+        # Create legend elements with True first, then False, then NaN
         legend_elements = [
-            Rectangle((0, 0), 1, 1, facecolor=colors[0], label='False'),
             Rectangle((0, 0), 1, 1, facecolor=colors[1], label='True'),
+            Rectangle((0, 0), 1, 1, facecolor=colors[0], label='False'),
             Rectangle((0, 0), 1, 1, facecolor='white', edgecolor='black', label='NaN')
         ]
         ax.legend(handles=legend_elements, 
                  loc='lower center',
                  bbox_to_anchor=(0.5, -0.1),
-                 ncol=3,  # Three columns now
+                 ncol=3,
                  frameon=False,
                  fontsize=10,
                  handlelength=1.5,

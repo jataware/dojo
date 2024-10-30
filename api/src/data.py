@@ -31,7 +31,7 @@ redis = Redis(
 q = Queue(connection=redis, default_timeout=-1)
 # Create queues
 default_queue = q
-datamodeling_queue = Queue('datamodeling', connection=redis)
+datamodeling_queue = Queue('datamodeling', connection=redis, default_timeout=600)
 
 def get_queue(queue_name):
     if queue_name == 'datamodeling':
