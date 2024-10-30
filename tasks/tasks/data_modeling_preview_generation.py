@@ -15,6 +15,7 @@ from flowcast.gadm import get_admin0_shapes
 from flowcast.spacetime import determine_tight_lon_bounds
 from shapely import MultiPolygon, Polygon
 from matplotlib.colors import ListedColormap
+from matplotlib.patches import Rectangle
 
 
 # TODO: this is a bit hacky. in the future, want to import the underlying methods used in the pipeline rather than having to run a whole pipeline
@@ -275,17 +276,15 @@ def generate_country_preview(data: xr.DataArray, resolution: int, cmap: str, pro
 
 
 def generate_country_lat_lon_preview(data: xr.DataArray, resolution: int, cmap, projection: ccrs.Projection) -> png64:
-
     # get lat/lon/data as numpy arrays
     lats = data['lat'].data
     lons = data['lon'].data
-    # sum data along admin0 dimension to get rid of the extra dimension
     data = data.sum(dim='admin0', skipna=True, min_count=1).values
 
     # determine the lat/lon extents of the data
     lat_bounds, lon_bounds, projection, aspect = get_best_view(lats, lons, projection)
 
-    # Create a figure with the given resolution and projection
+    # Create figure
     px = get_px_size()
     fig = plt.figure(figsize=(aspect*resolution*px, resolution*px))
     ax = plt.axes(projection=projection)
@@ -294,27 +293,91 @@ def generate_country_lat_lon_preview(data: xr.DataArray, resolution: int, cmap, 
     ax.set_global()
     ax.coastlines()
 
-    # If the data is boolean or binary (0s and 1s), use a custom binary colormap
-    if data.dtype == np.bool_ or (np.array_equal(np.unique(data[~np.isnan(data)]), [0, 1])):
-        # Create custom colormap: light grey for 0, blue for 1
-        colors = [(0.9, 0.9, 0.9, 1),    # 0 values: light grey (90% white)
-                 (0, 0.3, 1, 1)]         # 1 values: blue
+    # Check if data is all NaN
+    all_nan = np.all(np.isnan(data))
+    
+    # Check if data is boolean or binary (including all-zeros case)
+    is_binary = (not all_nan) and (
+        data.dtype == np.bool_ or 
+        np.array_equal(np.unique(data[~np.isnan(data)]), [0, 1]) or
+        np.array_equal(np.unique(data[~np.isnan(data)]), [0]) or  # all zeros
+        np.array_equal(np.unique(data[~np.isnan(data)]), [1])     # all ones
+    )
+
+    if all_nan:
+        # For all-NaN data, use a simple grey colormap
+        colors = [(0.9, 0.9, 0.9, 1)]  # light grey
+        cmap = ListedColormap(colors)
+        mesh = ax.pcolormesh(lons, lats, data, 
+                           transform=ccrs.PlateCarree(), 
+                           cmap=cmap,
+                           shading='auto')
+        
+        # Add a simple NaN legend
+        legend_elements = [
+            Rectangle((0, 0), 1, 1, facecolor='white', edgecolor='black', label='NaN')
+        ]
+        ax.legend(handles=legend_elements, 
+                 loc='lower center',
+                 bbox_to_anchor=(0.5, -0.1),
+                 frameon=False,
+                 fontsize=10)
+        
+    elif is_binary:
+        colors = [(0.9, 0.9, 0.9, 1), (0, 0.3, 1, 1)]  # light grey for 0, blue for 1
         binary_cmap = ListedColormap(colors)
         cmap = binary_cmap
         
         mesh = ax.pcolormesh(lons, lats, data, 
                            transform=ccrs.PlateCarree(), 
+                           cmap=cmap,
+                           vmin=0,
+                           vmax=1,
+                           shading='auto')
+
+        # Create legend elements including NaN
+        legend_elements = [
+            Rectangle((0, 0), 1, 1, facecolor=colors[0], label='False'),
+            Rectangle((0, 0), 1, 1, facecolor=colors[1], label='True'),
+            Rectangle((0, 0), 1, 1, facecolor='white', edgecolor='black', label='NaN')
+        ]
+        ax.legend(handles=legend_elements, 
+                 loc='lower center',
+                 bbox_to_anchor=(0.5, -0.1),
+                 ncol=3,  # Three columns now
+                 frameon=False,
+                 fontsize=10,
+                 handlelength=1.5,
+                 handletextpad=0.8,
+                 columnspacing=2.0)
+
+    else:
+        # For numerical data, use a light-to-dark colormap
+        if cmap == 'viridis':  # Only override if default viridis is being used
+            # cmap = 'YlOrBr'  # Yellow (light) to Orange to Brown (dark)
+            # Other options we could try:
+            # cmap = 'YlOrRd'  # Yellow to Orange to Red
+            cmap = 'YlGnBu'  # Yellow to Green to Blue
+            # cmap = 'Greens'  # Light green to dark green
+        
+        mesh = ax.pcolormesh(lons, lats, data, 
+                           transform=ccrs.PlateCarree(), 
                            cmap=cmap, 
                            shading='auto')
-    else:
-        mesh = ax.pcolormesh(lons, lats, data, transform=ccrs.PlateCarree(), cmap=cmap, shading='auto')
+        
+        # Regular colorbar for non-binary data
+        fig.colorbar(mesh, ax=ax, 
+                    orientation='horizontal',
+                    fraction=0.046,
+                    pad=0.04,
+                    label='Value')
 
-    # Add country borders and crop to the computed bounds
+    # Add country borders and crop to bounds
     ax.add_feature(cfeature.BORDERS, edgecolor='black', lw=0.8)
     ax.set_extent(lon_bounds + lat_bounds, crs=ccrs.PlateCarree())
 
-    # save and return the preview
     preview = save_fig_to_base64()
+    plt.close()
     return preview
 
 
