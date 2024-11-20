@@ -26,6 +26,20 @@ services:
       - --url
       - redis://${REDIS_HOST}:${REDIS_PORT}
       - rag   
+  rqworker-datamodeling:
+    build:
+      context: .
+      dockerfile: Dockerfile.datamodeling
+    container_name: dojo-rq-worker-datamodeling
+    networks:
+      - dojo
+    command:
+      - rq
+      - worker
+      - --url
+      - redis://${REDIS_HOST}:${REDIS_PORT}
+      - datamodeling
+      
     # deploy:
     #   resources:
     #     reservations:

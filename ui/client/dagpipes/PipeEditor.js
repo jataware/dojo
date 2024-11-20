@@ -3,6 +3,7 @@ import React, {
 } from 'react';
 
 import axios from 'axios';
+import { debounce } from 'lodash';
 
 import ReactFlow, {
   addEdge,
@@ -11,11 +12,18 @@ import ReactFlow, {
   Background,
   useNodesState,
   useEdgesState,
+  applyNodeChanges,
+  applyEdgeChanges,
 } from 'reactflow';
 
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Tooltip from '@mui/material/Tooltip';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import ErrorIcon from '@mui/icons-material/Error';
+import Snackbar from '@mui/material/Snackbar';
+import Alert from '@mui/material/Alert';
+import Divider from '@mui/material/Divider';
 
 import { makeStyles } from 'tss-react/mui';
 
@@ -31,6 +39,9 @@ import {
   setGeoResolutionColumn,
   setTimeResolutionColumn,
   setFlowcastJobId,
+  setNodesAndEdges,
+  setSavedDatasets,
+  setModelerStep
 } from './dagSlice';
 
 import LoadNode from './nodes/LoadNode';
@@ -55,6 +66,16 @@ import './overview.css';
 import {
   dimensions, threshold_ops,
 } from './constants';
+
+import { useHistory } from 'react-router-dom';
+
+// Custom hook to make future migration easier
+function useNavigation() {
+  const history = useHistory();
+  return {
+    navigate: (path) => history.push(path),
+  };
+}
 
 const nodeTypes = {
   load: LoadNode,
@@ -157,39 +178,182 @@ const useStyles = makeStyles()((theme) => ({
     minHeight: '400px',
     minWidth: '400px',
   },
-  opaqueButton: {
-    backgroundColor: 'white',
-    color: 'black',
-    '&:hover': {
-      backgroundColor: theme.palette.grey[100],
+    opaqueButton: {
+      backgroundColor: 'white',
+      color: 'black',
+      '&:hover': {
+        backgroundColor: theme.palette.grey[100],
+      },
     },
-  },
-  lowerSidebar: {
-    margin: `${theme.spacing(4)} ${theme.spacing(2)} ${theme.spacing(2)}`,
-  },
-  wholeSidebar: {
-    width: '275px',
-    minWidth: '275px',
-  },
+    lowerSidebar: {
+      margin: `${theme.spacing(4)} ${theme.spacing(2)} ${theme.spacing(2)}`,
+    },
+    wholeSidebar: {
+      width: '275px',
+      minWidth: '275px',
+    },
+    validateButton: {
+      backgroundColor: 'grey',
+      color: 'white',
+      '&:hover': {
+        backgroundColor: 'grey',
+      },
+    },
+    validateButtonSuccess: {
+      backgroundColor: 'green',
+      color: 'white',
+      '&:hover': {
+        backgroundColor: 'green',
+      },
+    },
+    validateButtonError: {
+      backgroundColor: 'red',
+      color: 'white',
+      '&:hover': {
+        backgroundColor: 'red',
+      },
+    },
+    generatePreviewsButton: {
+      backgroundColor: 'grey',
+      color: 'white',
+      '&:hover': {
+        backgroundColor: 'grey',
+      },
+    },
+    generatePreviewsButtonSuccess: {
+      backgroundColor: 'green',
+      color: 'white',
+      '&:hover': {
+        backgroundColor: 'green',
+      },
+    },
+    generatePreviewsButtonError: {
+      backgroundColor: 'red',
+      color: 'white',
+      '&:hover': {
+        backgroundColor: 'red',
+      },
+    },    
+    newModelButton: {
+      position: 'fixed',
+      top: theme.spacing(2),
+      left: theme.spacing(2),
+      zIndex: 1000,
+    },
+    clearModelButton: {
+      marginTop: theme.spacing(2),
+      padding: theme.spacing(1.5),
+      color: theme.palette.error.main,
+      borderColor: theme.palette.error.main,
+      transition: 'all 0.3s',
+      '&:hover': {
+        backgroundColor: 'transparent',
+        borderColor: theme.palette.error.dark,
+        color: theme.palette.error.dark,
+      },
+    },
+    clearModelButtonConfirming: {
+      backgroundColor: theme.palette.error.main,
+      color: theme.palette.common.white, // Ensure text is white when button is filled
+      '&:hover': {
+        backgroundColor: theme.palette.error.dark,
+        color: theme.palette.common.white, // Keep text white on hover
+      },
+    },
+    divider: {
+      margin: `${theme.spacing(2)} 0`,
+    },
 }));
 
 const PipeEditor = () => {
   const reactFlowWrapper = useRef(null);
   const { classes } = useStyles();
+  const dispatch = useDispatch();
 
   const [showStats, setShowStats] = useState(false);
+  const [validationLoading, setValidationLoading] = useState(false);
+  const [validationSuccess, setValidationSuccess] = useState(false);
+  const [validationError, setValidationError] = useState(false);
+  const [errorMessage, setErrorMessage] = useState('');  
+  const [previewsLoading, setPreviewsLoading] = useState(false);
+  const [previewsSuccess, setPreviewsSuccess] = useState(false);
+  const [previewsError, setPreviewsError] = useState(false);
+  const [previews, setPreviews] = useState({});
 
-  const {
-    geoResolutionColumn, timeResolutionColumn
-  } = useSelector((state) => state.dag);
+  const savedDatasets = useSelector((state) => state.dag.savedDatasets);
+  const savedDatasetsRef = useRef(savedDatasets);
 
-  const [nodes, setNodes, onNodesChange] = useNodesState([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState([]);
+  const geoResolutionColumn = useSelector(state => state.dag.geoResolutionColumn);
+  const timeResolutionColumn = useSelector(state => state.dag.timeResolutionColumn); 
+
+  const [nodes, setNodes] = useNodesState([]);
+  const [edges, setEdges] = useEdgesState([]);
+
+  const onNodesChange = useCallback(
+    (changes) => {
+      setNodes((nds) => applyNodeChanges(changes, nds));
+      debouncedSave();
+    },
+    [setNodes, debouncedSave]
+  );
+
+  const onEdgesChange = useCallback(
+    (changes) => {
+      setEdges((eds) => applyEdgeChanges(changes, eds));
+      debouncedSave();
+    },
+    [setEdges, debouncedSave]
+  );
+
   // TODO: only used in onRestore, remove if removing that
   // const { setViewport } = useReactFlow();
 
-  const dispatch = useDispatch();
+  // Effect to load saved DAG
+  useEffect(() => {
+    const savedFlow = localStorage.getItem('dagpipes-flow-session');
+    if (savedFlow) {
+      const flow = JSON.parse(savedFlow);
 
+      const restoredNodes = flow.nodes.map((node) => ({
+        ...node,
+        data: {
+          ...node.data,
+          input: node.data.input || initialNodeTypeValues[node.type] || {},
+        },
+      }));
+
+      // Dispatch serializable data to Redux
+      dispatch(setNodesAndEdges({
+        nodes: restoredNodes,
+        edges: flow.edges || [],
+      }));
+
+      // Set nodes in React state with onChange function
+      setNodes(restoredNodes.map(node => ({
+        ...node,
+        data: {
+          ...node.data,
+          onChange: onNodeChange,
+        },
+      })));
+
+      // Set edges
+      setEdges(flow.edges || []);
+
+      if (flow.resolution) {
+        dispatch(setGeoResolutionColumn(flow.resolution.geoResolutionColumn));
+        dispatch(setTimeResolutionColumn(flow.resolution.timeResolutionColumn));
+      }
+
+      // Restore other saved data
+      if (flow.savedDatasets && Object.keys(savedDatasets).length === 0) {
+        console.log('Setting savedDatasets:', JSON.stringify(flow.savedDatasets, null, 2));
+        dispatch(setSavedDatasets(flow.savedDatasets));
+      }     
+
+    }
+  }, [dispatch, setNodes, setEdges, onNodeChange, savedDatasets]);
+ 
   const { setShowSideBar } = useContext(ThemeContext);
 
   useEffect(() => {
@@ -208,14 +372,20 @@ const PipeEditor = () => {
     setSelectedNode(node);
   }, [nodes, setSelectedNode]);
 
-  const [reactFlowInstance, setReactFlowInstance] = useState(null);
+  const reactFlowInstanceRef = useRef(null);
 
   const onInit = (rfInstance) => {
     console.log('Flow loaded:', rfInstance);
-    setReactFlowInstance(rfInstance);
+    reactFlowInstanceRef.current = rfInstance;
   };
 
-  const onConnect = useCallback((params) => setEdges((eds) => addEdge(params, eds)), [setEdges]);
+  const onConnect = useCallback(
+    (connection) => {
+      setEdges((eds) => addEdge(connection, eds));
+      debouncedSave();
+    },
+    [setEdges, debouncedSave]
+  );
 
   const onDragOver = useCallback((event) => {
     event.preventDefault();
@@ -276,7 +446,10 @@ const PipeEditor = () => {
         },
       };
     }));
-  }, [setNodes]);
+
+    // Schedule onSave to run after the state update
+    setTimeout(onSave, 0);
+  }, [setNodes, onSave]);
 
   const onDrop = useCallback(
     (event) => {
@@ -288,7 +461,7 @@ const PipeEditor = () => {
         return;
       }
 
-      const position = reactFlowInstance.screenToFlowPosition({
+      const position = reactFlowInstanceRef.current.screenToFlowPosition({
         x: event.clientX,
         y: event.clientY,
       });
@@ -300,47 +473,60 @@ const PipeEditor = () => {
       dispatch(incrementNodeCount());
       setSelectedNode(newNode);
     },
-    [reactFlowInstance, dispatch, onNodeChange, setNodes, setSelectedNode]
+    [dispatch, onNodeChange, setNodes, setSelectedNode]
   );
 
   const edgesWithUpdatedTypes = edges.map((edge) => {
-    // TODO: remove this when time, removing it breaks the connections at the moment
-    // we aren't using multiple types now
-    // eslint-disable-next-line no-param-reassign
-    edge.type = 'default';
-    return edge;
+    return { ...edge, type: 'default' };
   });
 
+  const debouncedSave = useCallback(
+    debounce(() => {
+      console.log('Debounced save called');
+      onSave();
+    }, 500),
+    [onSave]
+  );
+
+  useEffect(() => {
+    savedDatasetsRef.current = savedDatasets;
+  }, [savedDatasets]);
+
+  const geoResolutionColumnRef = useRef(geoResolutionColumn);
+  const timeResolutionColumnRef = useRef(timeResolutionColumn);
+
+  useEffect(() => {
+    geoResolutionColumnRef.current = geoResolutionColumn;
+  }, [geoResolutionColumn]);
+
+  useEffect(() => {
+    timeResolutionColumnRef.current = timeResolutionColumn;
+  }, [timeResolutionColumn]);
+
   const onSave = useCallback(() => {
-    let forBackend;
-    if (reactFlowInstance) {
-      const flow = reactFlowInstance.toObject();
-      // add our resolution as a top level key
-      flow.resolution = { geoResolutionColumn, timeResolutionColumn };
+    console.log('onSave called');
+    console.log('Current geoResolutionColumn:', geoResolutionColumnRef.current);
+    console.log('Current timeResolutionColumn:', timeResolutionColumnRef.current);
 
-      // set the whole react-flow object in localStorage so we can recreate it
-      window.localStorage.setItem('dagpipes-flow-session', JSON.stringify(flow));
-      // toggle the unsavedChanges state
-      dispatch(setSavedChanges());
+    if (reactFlowInstanceRef.current) {
+        console.log('Saving flow....');
+        const flow = reactFlowInstanceRef.current.toObject();
 
-      // remove viewport as the backend doesn't need it
-      forBackend = { ...flow };
-      delete forBackend.viewport;
+        flow.resolution = { 
+            geoResolutionColumn: geoResolutionColumnRef.current, 
+            timeResolutionColumn: timeResolutionColumnRef.current 
+        };
+        flow.savedDatasets = savedDatasetsRef.current;
 
-      // TODO: is this actually what the backend needs?
-      // parse the edges and nodes into just what the backend cares about
-      forBackend.edges = forBackend.edges.map((e) => ({
-        source: e.source,
-        target: e.target,
-        id: e.id,
-        ...(e.targetHandle && { target_handle: e.targetHandle }),
-      }));
-      forBackend.nodes = forBackend.nodes.map((e) => ({ type: e.type, data: e.data, id: e.id }));
-      // TODO: actually send the contents
-      console.log(JSON.stringify(forBackend, 2, null));
+        window.localStorage.setItem('dagpipes-flow-session', JSON.stringify(flow));
+
+        dispatch(setSavedChanges());
+        
+        // Return the flow object
+        return flow;
     }
-    return forBackend;
-  }, [reactFlowInstance, dispatch, geoResolutionColumn, timeResolutionColumn]);
+    return null;
+}, [dispatch]);
 
   // // TODO: do we want to keep restore? it currently doesn't work with the redux state
   // const onRestore = useCallback(() => {
@@ -369,6 +555,7 @@ const PipeEditor = () => {
 
   const onNodesDelete = useCallback((deletedNodes) => {
     dispatch(decrementNodeCount());
+    debouncedSave();
     deletedNodes.forEach((node) => {
       if (node.type === 'load') {
         // All the following are in the redux state and not in react-flow, so manually manage them
@@ -382,7 +569,134 @@ const PipeEditor = () => {
         if (featureId === timeResolutionColumn) dispatch(setTimeResolutionColumn(null));
       }
     });
-  }, [dispatch, geoResolutionColumn, timeResolutionColumn]);
+  }, [dispatch, debouncedSave, geoResolutionColumn, timeResolutionColumn]);
+
+  const handleValidateClick = async () => {
+    try {
+      console.log("Validating data model");
+      const flowValue = onSave();
+      const UUID = crypto.randomUUID();
+      setValidationLoading(true); // Set loading state to true
+      setValidationSuccess(false);
+      setValidationError(false);
+      const response = await axios.post(
+        `/api/dojo/job/${UUID}/data_modeling.validate_flowcast_job`,
+        { context: { dag: flowValue } },
+        { headers: { 'Content-Type': 'application/json' } }
+      );
+      const jobId = response.data.id;
+      // Poll for job status
+      const intervalId = setInterval(async () => {
+        const statusResponse = await axios.get(`/api/dojo/job/${UUID}/data_modeling.validate_flowcast_job`);
+        const jobStatus = statusResponse.data.status;
+        if (jobStatus === 'finished') {
+          clearInterval(intervalId);
+          setValidationLoading(false); // Set loading state to false
+          setValidationSuccess(true);
+          setTimeout(() => setValidationSuccess(false), 10000); // Remove success icon after 10 seconds
+          console.log('Job finished successfully', statusResponse.data.result.message);
+        } else if (jobStatus === 'failed') {
+          clearInterval(intervalId);
+          setValidationLoading(false); // Set loading state to false
+          setValidationError(true);
+          setErrorMessage(statusResponse.data.job_error);
+          setTimeout(() => setValidationError(false), 10000); // Remove error icon after 10 seconds
+          console.error('Job failed', statusResponse.data.job_error);
+        }
+      }, 2000); // Poll every 2 seconds
+    } catch (error) {
+      setValidationLoading(false); // Set loading state to false
+      setValidationError(true);
+      setErrorMessage(error.message);
+      setTimeout(() => setValidationError(false), 10000); // Remove error icon after 10 seconds
+      console.error('Error triggering validation job:', error);
+    }
+  };
+
+  const handleGeneratePreviewsClick = async () => {
+    try {
+      console.log("Generating previews...");
+      const flowValue = onSave();
+      const UUID = crypto.randomUUID();
+      setPreviewsLoading(true); // Set loading state to true
+      setPreviewsSuccess(false);
+      setPreviewsError(false);
+
+      // Check local storage usage and clear old data if necessary
+      const checkAndClearStorage = () => {
+        const allKeys = Object.keys(localStorage);
+        const storageLimit = 5 * 1024 * 1024; // 5MB limit for local storage
+        let totalSize = 0;
+
+        allKeys.forEach(key => {
+          totalSize += localStorage.getItem(key).length;
+        });
+
+        if (totalSize >= storageLimit) {
+          console.warn('Local storage limit reached. Clearing old data...');
+          localStorage.clear();
+        }
+      };
+
+      checkAndClearStorage();      
+
+      // handle response
+      console.log('Flow value:', flowValue);
+      const response = await axios.post(
+        `/api/dojo/job/${UUID}/data_modeling.run_partial_flowcast_job`,
+        { context: { dag: flowValue , node_id: null }},
+        { headers: { 'Content-Type': 'application/json' } }
+      );
+      const jobId = response.data.id;
+      // Poll for job status
+      const intervalId = setInterval(async () => {
+        const statusResponse = await axios.get(`/api/dojo/job/${UUID}/data_modeling.run_partial_flowcast_job`);
+        const jobStatus = statusResponse.data.status;
+        if (jobStatus === 'finished') {
+          clearInterval(intervalId);
+          setPreviewsLoading(false); // Set loading state to false
+          setPreviewsSuccess(true);
+          setTimeout(() => setPreviewsSuccess(false), 10000); // Remove success icon after 10 seconds
+          console.log('Job finished successfully', statusResponse.data.result.message);
+          console.log('Job finished. Preview images:', statusResponse.data.result.previews);
+          const previewData = statusResponse.data.result.previews;
+          setPreviews(previewData);  
+
+          setNodes((nds) =>
+            nds.map((node) => {
+              const nodePreviews = previewData[node.id]?.preview || [];
+              const nodeLogPreviews = previewData[node.id]?.log_preview || [];
+          
+              return {
+                ...node,
+                data: {
+                  ...node.data,
+                  previews: nodePreviews,
+                  logPreviews: nodeLogPreviews,
+                },
+              };
+            })
+          );
+  
+        } else if (jobStatus === 'failed') {
+          clearInterval(intervalId);
+          setPreviewsLoading(false); // Set loading state to false
+          setPreviewsError(true);
+          setValidationError(true);          
+          setErrorMessage(statusResponse.data.job_error);
+          setTimeout(() => setPreviewsError(false), 10000); // Remove error icon after 10 seconds
+          console.error('Job failed', statusResponse.data.job_error);
+        }
+      }, 2000); // Poll every 2 seconds
+    } catch (error) {
+      setPreviewsLoading(false); // Set loading state to false
+      setPreviewsError(true);
+      setErrorMessage(error.message);
+      setValidationError(true);
+      setTimeout(() => setPreviewsError(false), 10000); // Remove error icon after 10 seconds
+      console.error('Error triggering preview generation job:', error);
+    }
+  };
 
   // TODO: don't let this happen/disable button if there are no nodes
   const onProcessClick = () => {
@@ -430,6 +744,51 @@ const PipeEditor = () => {
   const handleStatsClick = () => {
     setShowStats((prev) => !prev);
   };
+
+  const renderNodePreviews = (nodeId) => {
+    const nodePreviews = previews[nodeId]?.preview || [];
+    return nodePreviews.map((img, index) => (
+      <img key={index} src={`data:image/png;base64,${img}`} alt={`Preview ${index}`} />
+    ));
+  };
+
+  useEffect(() => {
+    console.log('savedDatasets changed:', savedDatasets);
+  }, [savedDatasets]);
+  
+  useEffect(() => {
+    console.log('Component mounted or updated');
+    console.log('Current savedDatasets:', savedDatasets);
+    
+    // Log localStorage content
+    const savedFlow = localStorage.getItem('dagpipes-flow-session');
+    if (savedFlow) {
+      const parsedFlow = JSON.parse(savedFlow);
+      console.log('savedDatasets in localStorage:', parsedFlow.savedDatasets);
+    } else {
+      console.log('No saved flow in localStorage');
+    }
+  }, []);
+
+  const [clearConfirmationState, setClearConfirmationState] = useState('initial');
+
+  const handleClearDataModel = useCallback(() => {
+    if (clearConfirmationState === 'initial') {
+      setClearConfirmationState('confirming');
+      // Set a timeout to reset the button state if not confirmed
+      setTimeout(() => setClearConfirmationState('initial'), 3000);
+    } else if (clearConfirmationState === 'confirming') {
+      // Clear the data model
+      localStorage.removeItem('dagpipes-flow-session');
+      dispatch(setNodesAndEdges({ nodes: [], edges: [] }));
+      dispatch(setSavedDatasets({}));
+      dispatch(setGeoResolutionColumn(null));
+      dispatch(setTimeResolutionColumn(null));
+      dispatch(setModelerStep(0));
+      console.log('Data model cleared. Returning to dataset selection step.');
+      setClearConfirmationState('initial');
+    }
+  }, [clearConfirmationState, dispatch]);
 
   return (
     <div className={classes.innerWrapper}>
@@ -495,6 +854,60 @@ const PipeEditor = () => {
           >
             {showStats ? 'Hide' : 'View'} Statistics
           </Button>
+          <Button
+            variant="contained"
+            disableElevation
+            fullWidth
+            className={
+              validationLoading
+                ? classes.validateButton
+                : validationSuccess
+                ? classes.validateButtonSuccess
+                : validationError
+                ? classes.validateButtonError
+                : classes.validateButton
+            }
+            sx={{ marginTop: 2 }}
+            onClick={handleValidateClick}
+            disabled={validationLoading}
+          >
+            {validationLoading ? (
+              <div className="spinner"></div>
+            ) : validationSuccess ? (
+              <CheckCircleIcon style={{ color: 'white' }} />
+            ) : validationError ? (
+              <ErrorIcon style={{ color: 'white' }} />
+            ) : (
+              'Validate Data Model'
+            )}
+          </Button>     
+          <Button
+            variant="contained"
+            disableElevation
+            fullWidth
+            className={
+              previewsLoading
+                ? classes.generatePreviewsButton
+                : previewsSuccess
+                ? classes.generatePreviewsButtonSuccess
+                : previewsError
+                ? classes.generatePreviewsButtonError
+                : classes.generatePreviewsButton
+            }
+            sx={{ marginTop: 2 }}
+            onClick={handleGeneratePreviewsClick}
+            disabled={previewsLoading}
+          >
+            {previewsLoading ? (
+              <div className="spinner"></div>
+            ) : previewsSuccess ? (
+              <CheckCircleIcon style={{ color: 'white' }} />
+            ) : previewsError ? (
+              <ErrorIcon style={{ color: 'white' }} />
+            ) : (
+              'Generate Previews'
+            )}
+          </Button>   
           <Tooltip title={processDisabled ? disabledProcessTooltip : ''}>
             <span>
               <Button
@@ -510,8 +923,26 @@ const PipeEditor = () => {
               </Button>
             </span>
           </Tooltip>
+          
+          <Divider className={classes.divider} />
+          
+          <Tooltip title="Clear the current data model">
+            <Button
+              variant="outlined"
+              fullWidth
+              onClick={handleClearDataModel}
+              className={`${classes.clearModelButton} ${clearConfirmationState === 'confirming' ? classes.clearModelButtonConfirming : ''}`}
+            >
+              {clearConfirmationState === 'initial' ? 'Clear Data Model' : 'Confirm Clear'}
+            </Button>
+          </Tooltip>
         </div>
       </div>
+      <Snackbar open={validationError} autoHideDuration={5000} onClose={() => setValidationError(false)}>
+        <Alert onClose={() => setValidationError(false)} severity="error" sx={{ width: '100%' }}>
+          {errorMessage}
+        </Alert>
+      </Snackbar>      
     </div>
   );
 };

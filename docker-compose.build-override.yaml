@@ -210,7 +210,16 @@ services:
     depends_on:
       - redis
     volumes:
-      - dataset-storage:/datasets      
+      - dataset-storage:/datasets     
+  rqworker-datamodeling:
+    env_file:
+      - envfile
+    networks:
+      - dojo-stack
+    depends_on:
+      - redis
+    volumes:
+      - dataset-storage:/datasets       
   perm-fixer:
     build:
       context: ./perm-fixer/

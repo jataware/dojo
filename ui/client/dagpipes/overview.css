@@ -1,14 +1,8 @@
-/*
-  The only styles in this file are those tapping into react-flow internals
-  Everything else is defined in makeStyles in each file
-*/
-
 .react-flow__node-save, .react-flow__node-load,
 .react-flow__node-sum, .react-flow__node-multiply,
 .react-flow__node-filter_by_country, .react-flow__node-threshold,
 .react-flow__node-scalar_operation, .react-flow__node-mask_to_distance_field,
-.react-flow__node-select_slice
-{
+.react-flow__node-select_slice {
   font-size: 10px;
   width: 180px;
   background: #f5f5f6;
@@ -16,9 +10,14 @@
   box-shadow: 0 4px 6px -1px rgb(0 0 0 / 15%), 0 2px 4px -1px rgb(0 0 0 / 8%);
   border-radius: 2px;
   border: 1px solid #f5f5f6;
-  &.selected {
-    border-color: #BBB;
-  }
+}
+
+.react-flow__node-save.selected, .react-flow__node-load.selected,
+.react-flow__node-sum.selected, .react-flow__node-multiply.selected,
+.react-flow__node-filter_by_country.selected, .react-flow__node-threshold.selected,
+.react-flow__node-scalar_operation.selected, .react-flow__node-mask_to_distance_field.selected,
+.react-flow__node-select_slice.selected {
+  border-color: #BBB;
 }
 
 .react-flow__node-sum,
@@ -31,6 +30,22 @@
   width: 16rem;
 }
 
-.react-flow__node-filter_by_country, {
+.react-flow__node-filter_by_country {
   width: 20rem;
+}
+
+/* Spinner Styles */
+.spinner {
+  border: 4px solid rgba(0, 0, 0, 0.1);
+  border-left-color: #000;
+  border-radius: 50%;
+  width: 24px;
+  height: 24px;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }
