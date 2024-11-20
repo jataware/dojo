@@ -8,6 +8,7 @@ from elasticsearch import Elasticsearch
 from fastapi import (
     APIRouter,
     HTTPException,
+    Header,
     # Response,
     status,
     # UploadFile,
@@ -127,20 +128,36 @@ class ElasticSearchDB(Database):
         return [self.format_paragraph_result(r) for r in hits]
 
     def query_titles(self, query: str, max_results: int = 10) -> list[MetadataResult]:
-        """perform a search over all document titles in the database for the given query"""
+        """perform a search over all document titles in the database for the given query allowing for fuzzy matching and wildcards"""
         p_query = {
             "query": {
-                "match": {
-                    "title": query
+                "bool": {
+                    "should": [
+                        {
+                            "match": {
+                                "title": {
+                                    "query": query,
+                                    "fuzziness": "AUTO"
+                                }
+                            }
+                        },
+                        {
+                            "wildcard": {
+                                "title": f"*{query}*"
+                            }
+                        }
+                    ]
                 }
             }
         }
+        logger.info(f"querying titles with query: {query}")
         results = self.es.search(
             index=self.DOCUMENTS_INDEX,
             body=p_query,
             size=max_results
         )
         hits = results["hits"]["hits"]
+        logger.info(f"found {len(hits)} hits")
 
         # Convert the elastic search results to MetadataResult objects
         return [self.format_metadata_result(r) for r in hits]
@@ -218,7 +235,6 @@ embedder = AdaEmbedder()
 db = ElasticSearchDB(embedder)
 agent = OpenAIAgent(model='gpt-4o')
 causal_agent = CausalRecommender(agent)
-librarian = MultihopRagAgent(db, agent)
 
 
 def load_file_as_json(file_path: str) -> dict:
@@ -254,7 +270,20 @@ def mock_message(query: str):
 
 
 @router.get("/knowledge/chat")
-def chat(query: str):
+def chat(query: str, chat_user_token: str):
+    if not chat_user_token:
+        raise HTTPException(status_code=400, detail="User token is required")
+    
+    # load messages if they exist for the user
+    messages_key = f"knowledge_messages:{chat_user_token}"
+    serialized_messages = redis.get(messages_key)
+    if serialized_messages is None:
+        messages = []
+    else:
+        messages = json.loads(serialized_messages)
+
+    # initialize librarian with messages (if present)
+    librarian = MultihopRagAgent(db, agent, messages=messages)
 
     def data_streamer():
         results, answer_gen = librarian.ask(query, stream=True)
@@ -266,9 +295,16 @@ def chat(query: str):
         for answer_chunk in answer_gen:
             yield ServerSentEvent(data=answer_chunk, event='stream-answer')
         time.sleep(0.5)  # delay to ensure the client has enough time to process before ending the stream
+        # Store librarian.messages to Redis after data_streamer is called
+        logger.info(librarian.messages)
+        serialized_messages = json.dumps(librarian.messages, default=str)
+        # store message history for 24 hours (86400 seconds)
+        redis.set(messages_key, serialized_messages, ex=86400)         
         yield ServerSentEvent(data="Stream Complete", event='stream-complete')
 
-    return EventSourceResponse(data_streamer(), media_type='text/event-stream')
+    response = EventSourceResponse(data_streamer(), media_type='text/event-stream')
+
+    return response
 
 
 @router.get("/knowledge/mock-chat")

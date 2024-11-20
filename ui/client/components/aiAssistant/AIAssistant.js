@@ -29,6 +29,8 @@ import { drawerWidth } from '../Sidebar';
 import { pageSlideAnimation } from '../NavBar';
 import usePageTitle from '../uiComponents/usePageTitle';
 
+import { v4 as uuidv4 } from 'uuid';
+
 const useStyles = makeStyles()((theme) => ({
   header: {
     padding: `${theme.spacing(4)} 0`,
@@ -55,6 +57,30 @@ const useStyles = makeStyles()((theme) => ({
     alignItems: 'center',
   },
 }));
+
+// Function to generate a user token
+const generateChatUserToken = () => {
+  // Generate a unique token using uuid
+  return uuidv4();
+};
+
+// Function to store the token in localStorage
+const storeChatUserToken = (token) => {
+  localStorage.setItem('chatuserToken', token);
+};
+
+// Function to retrieve the token from localStorage
+const getChatUserToken = () => {
+  return localStorage.getItem('chatuserToken');
+};
+
+// Ensure a token is generated and stored if not already present
+if (!getChatUserToken()) {
+  const newToken = generateChatUserToken();
+  storeChatUserToken(newToken);
+}
+
+const chatuserToken = getChatUserToken();
 
 const isScrolledToBottom = (buffer = 0) => {
   const totalPageHeight = document.body.scrollHeight;
@@ -130,10 +156,10 @@ const AIAssistant = () => {
       });
     };
 
-    const knowledgeEndpoint = process.env.NODE_ENV === 'production' ? 'chat' : 'mock-chat';
+    const knowledgeEndpoint = 'chat' //process.env.NODE_ENV === 'production' ? 'chat' : 'mock-chat';
 
     const assistantConnection = new EventSource(
-      `/api/dojo/knowledge/${knowledgeEndpoint}?query=${searchPhrase}`
+      `/api/dojo/knowledge/${knowledgeEndpoint}?query=${searchPhrase}&chat_user_token=${encodeURIComponent(chatuserToken)}`
     );
 
     // the main text
